@@ -43,6 +43,19 @@ class CommunityPolicy
         return $user->id === $community->owner_id;
     }
 
+    public function viewAnalytics(User $user, Community $community): bool
+    {
+        if ($user->id === $community->owner_id) {
+            return true;
+        }
+
+        $member = CommunityMember::where('community_id', $community->id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        return $member && $member->isAdmin();
+    }
+
     public function manageMember(User $user, Community $community): bool
     {
         $member = CommunityMember::where('community_id', $community->id)

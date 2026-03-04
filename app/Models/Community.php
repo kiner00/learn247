@@ -13,8 +13,8 @@ class Community extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'name', 'slug', 'owner_id', 'description',
-        'avatar', 'is_private', 'price', 'currency',
+        'name', 'slug', 'owner_id', 'description', 'category',
+        'avatar', 'cover_image', 'is_private', 'price', 'currency',
     ];
 
     protected function casts(): array

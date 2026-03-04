@@ -37,7 +37,30 @@ class HandleInertiaRequests extends Middleware
     {
         return [
             ...parent::share($request),
-            //
+            'auth' => [
+                'user' => $request->user() ? [
+                    'id'             => $request->user()->id,
+                    'name'           => $request->user()->name,
+                    'email'          => $request->user()->email,
+                    'is_super_admin' => $request->user()->is_super_admin,
+                ] : null,
+                'communities' => $request->user()
+                    ? $request->user()->communityMemberships()
+                        ->with('community:id,name,slug,avatar')
+                        ->get()
+                        ->map(fn ($m) => [
+                            'id'     => $m->community->id,
+                            'name'   => $m->community->name,
+                            'slug'   => $m->community->slug,
+                            'avatar' => $m->community->avatar,
+                        ])
+                        ->values()
+                    : [],
+            ],
+            'flash' => [
+                'success' => $request->session()->get('success'),
+                'error'   => $request->session()->get('error'),
+            ],
         ];
     }
 }
