@@ -12,7 +12,12 @@ class SubscriptionController extends Controller
 {
     public function checkout(Request $request, Community $community, StartSubscriptionCheckout $action): mixed
     {
-        $result = $action->execute($request->user(), $community);
+        $affiliateCode = $request->cookie('ref_code');
+
+        $result = $action->execute($request->user(), $community, $affiliateCode);
+
+        // Clear the ref cookie after checkout starts (one-use attribution)
+        cookie()->forget('ref_code');
 
         // Inertia::location triggers a full-page browser redirect (works for external URLs)
         return Inertia::location($result['checkout_url']);

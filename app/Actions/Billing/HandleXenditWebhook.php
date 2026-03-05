@@ -2,6 +2,7 @@
 
 namespace App\Actions\Billing;
 
+use App\Actions\Affiliate\RecordAffiliateConversion;
 use App\Models\Payment;
 use App\Models\Subscription;
 use App\Services\XenditService;
@@ -15,6 +16,7 @@ class HandleXenditWebhook
     public function __construct(
         private readonly XenditService $xendit,
         private readonly SyncMembershipFromSubscription $syncMembership,
+        private readonly RecordAffiliateConversion $recordConversion,
     ) {}
 
     /**
@@ -58,17 +60,23 @@ class HandleXenditWebhook
         DB::transaction(function () use ($subscription, $payload, $eventId, $status) {
             $newSubStatus = $this->mapSubscriptionStatus($status);
 
+            // Extend from existing expires_at so early renewals don't lose remaining days
+            $newExpiresAt = $subscription->expires_at && $subscription->expires_at->isFuture()
+                ? $subscription->expires_at->addMonth()
+                : now()->addMonth();
+
             $subscription->update([
                 'status'     => $newSubStatus,
                 'expires_at' => $newSubStatus === Subscription::STATUS_ACTIVE
-                    ? now()->addMonth()
+                    ? $newExpiresAt
                     : $subscription->expires_at,
             ]);
 
             // Only create payment records for terminal states
             $paymentStatus = $this->mapPaymentStatus($status);
+            $payment = null;
             if ($paymentStatus !== Payment::STATUS_PENDING) {
-                Payment::create([
+                $payment = Payment::create([
                     'subscription_id'    => $subscription->id,
                     'community_id'       => $subscription->community_id,
                     'user_id'            => $subscription->user_id,
@@ -80,6 +88,11 @@ class HandleXenditWebhook
                     'metadata'           => $payload,
                     'paid_at'            => $paymentStatus === Payment::STATUS_PAID ? now() : null,
                 ]);
+            }
+
+            // Record affiliate commission if this subscription came via a referral
+            if ($payment && $paymentStatus === Payment::STATUS_PAID && $subscription->affiliate_id) {
+                $this->recordConversion->execute($subscription->load('affiliate.community'), $payment);
             }
 
             $this->syncMembership->execute($subscription->fresh());

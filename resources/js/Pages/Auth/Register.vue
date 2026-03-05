@@ -24,6 +24,27 @@
                         <p v-if="form.errors.name" class="mt-1 text-xs text-red-600">{{ form.errors.name }}</p>
                     </div>
 
+                    <!-- Username -->
+                    <div class="mb-4">
+                        <label for="username" class="block text-sm font-medium text-gray-700 mb-1.5">
+                            Username <span class="text-gray-400 font-normal">(optional)</span>
+                        </label>
+                        <div class="relative">
+                            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
+                            <input
+                                id="username"
+                                v-model="form.username"
+                                type="text"
+                                autocomplete="off"
+                                placeholder="yourhandle"
+                                class="w-full pl-7 pr-3.5 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                :class="form.errors.username ? 'border-red-400' : 'border-gray-300'"
+                            />
+                        </div>
+                        <p v-if="form.errors.username" class="mt-1 text-xs text-red-600">{{ form.errors.username }}</p>
+                        <p v-else class="mt-1 text-xs text-gray-400">Letters and numbers only. Auto-generated if left blank.</p>
+                    </div>
+
                     <!-- Email -->
                     <div class="mb-4">
                         <label for="email" class="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
@@ -92,6 +113,7 @@ import { Link, useForm } from '@inertiajs/vue3';
 
 const form = useForm({
     name: '',
+    username: '',
     email: '',
     password: '',
     password_confirmation: '',

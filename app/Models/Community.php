@@ -15,13 +15,15 @@ class Community extends Model
     protected $fillable = [
         'name', 'slug', 'owner_id', 'description', 'category',
         'avatar', 'cover_image', 'is_private', 'price', 'currency',
+        'affiliate_commission_rate',
     ];
 
     protected function casts(): array
     {
         return [
-            'is_private' => 'boolean',
-            'price'      => 'decimal:2',
+            'is_private'                => 'boolean',
+            'price'                     => 'decimal:2',
+            'affiliate_commission_rate' => 'integer',
         ];
     }
 
@@ -62,10 +64,25 @@ class Community extends Model
         return $this->hasMany(Payment::class);
     }
 
+    public function affiliates(): HasMany
+    {
+        return $this->hasMany(Affiliate::class);
+    }
+
+    public function courses(): HasMany
+    {
+        return $this->hasMany(Course::class)->orderBy('position');
+    }
+
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     public function isFree(): bool
     {
         return $this->price <= 0;
+    }
+
+    public function hasAffiliateProgram(): bool
+    {
+        return $this->affiliate_commission_rate !== null && $this->affiliate_commission_rate > 0;
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Actions\Billing;
 
+use App\Models\Affiliate;
 use App\Models\Community;
 use App\Models\Subscription;
 use App\Models\User;
@@ -16,7 +17,7 @@ class StartSubscriptionCheckout
      * @return array{subscription: Subscription, checkout_url: string}
      * @throws ValidationException|\RuntimeException
      */
-    public function execute(User $user, Community $community): array
+    public function execute(User $user, Community $community, ?string $affiliateCode = null): array
     {
         if ($community->isFree()) {
             throw ValidationException::withMessages([
@@ -57,9 +58,20 @@ class StartSubscriptionCheckout
             ]],
         ]);
 
+        // Resolve affiliate from cookie code (must be active and for this community)
+        $affiliateId = null;
+        if ($affiliateCode) {
+            $affiliate = Affiliate::where('code', $affiliateCode)
+                ->where('community_id', $community->id)
+                ->where('status', Affiliate::STATUS_ACTIVE)
+                ->first();
+            $affiliateId = $affiliate?->id;
+        }
+
         $subscription = Subscription::create([
             'community_id'       => $community->id,
             'user_id'            => $user->id,
+            'affiliate_id'       => $affiliateId,
             'status'             => Subscription::STATUS_PENDING,
             'xendit_id'          => $invoice['id'],
             'xendit_invoice_url' => $invoice['invoice_url'],

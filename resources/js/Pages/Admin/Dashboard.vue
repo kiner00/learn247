@@ -23,6 +23,50 @@
             </div>
         </div>
 
+        <!-- Revenue Breakdown -->
+        <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm mb-8">
+            <div class="px-5 py-4 border-b border-gray-100">
+                <h2 class="text-sm font-bold text-gray-900">Platform Revenue Breakdown</h2>
+                <p class="text-xs text-gray-400 mt-0.5">Based on all collected payments</p>
+            </div>
+
+            <div class="grid grid-cols-2 lg:grid-cols-3 gap-px bg-gray-100">
+                <div class="bg-white px-5 py-4">
+                    <p class="text-xs font-medium text-gray-500 mb-1">Gross Revenue</p>
+                    <p class="text-xl font-black text-gray-900">₱{{ fmt(revenue.gross) }}</p>
+                    <p class="text-xs text-gray-400 mt-0.5">Total collected across all communities</p>
+                </div>
+                <div class="bg-white px-5 py-4">
+                    <p class="text-xs font-medium text-gray-500 mb-1">Platform Fees (3%)</p>
+                    <p class="text-xl font-black text-indigo-600">₱{{ fmt(revenue.platform_fee) }}</p>
+                    <p class="text-xs text-gray-400 mt-0.5">Platform income</p>
+                </div>
+                <div class="bg-white px-5 py-4 col-span-2 lg:col-span-1">
+                    <p class="text-xs font-medium text-gray-500 mb-1">Creator Net Income</p>
+                    <p class="text-xl font-black text-green-600">₱{{ fmt(revenue.creator_net) }}</p>
+                    <p class="text-xs text-gray-400 mt-0.5">After fees & affiliate commissions</p>
+                </div>
+            </div>
+
+            <div class="px-5 py-3 border-t border-gray-100 bg-indigo-50">
+                <p class="text-xs font-semibold text-indigo-700">Affiliate Commissions</p>
+            </div>
+            <div class="grid grid-cols-3 gap-px bg-gray-100">
+                <div class="bg-white px-5 py-4">
+                    <p class="text-xs font-medium text-gray-500 mb-1">Total Earned</p>
+                    <p class="text-lg font-black text-indigo-600">₱{{ fmt(revenue.affiliate_commission_total) }}</p>
+                </div>
+                <div class="bg-white px-5 py-4">
+                    <p class="text-xs font-medium text-gray-500 mb-1">Paid Out</p>
+                    <p class="text-lg font-black text-green-600">₱{{ fmt(revenue.affiliate_commission_paid) }}</p>
+                </div>
+                <div class="bg-white px-5 py-4">
+                    <p class="text-xs font-medium text-gray-500 mb-1">Pending Payout</p>
+                    <p class="text-lg font-black text-amber-500">₱{{ fmt(revenue.affiliate_commission_pending) }}</p>
+                </div>
+            </div>
+        </div>
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
             <!-- Recent Communities -->
@@ -121,6 +165,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 
 const props = defineProps({
     stats:              Object,
+    revenue:            Object,
     byCategory:         Array,
     recentCommunities:  Array,
     recentUsers:        Array,
@@ -163,4 +208,8 @@ const statCards = computed(() => [
 const maxCategoryTotal = computed(() =>
     Math.max(1, ...props.byCategory.map((r) => r.total))
 );
+
+function fmt(val) {
+    return Number(val ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
 </script>

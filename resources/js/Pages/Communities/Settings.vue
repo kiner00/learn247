@@ -151,6 +151,60 @@
                 </form>
             </div>
 
+            <!-- Affiliate Program -->
+            <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
+                <div class="flex items-center justify-between mb-1">
+                    <h2 class="text-base font-semibold text-gray-900">Affiliate Program</h2>
+                    <Link :href="`/communities/${community.slug}/affiliates`"
+                          class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+                        View affiliates →
+                    </Link>
+                </div>
+                <p class="text-sm text-gray-500 mb-5">
+                    Members can become affiliates and earn a commission for every new subscriber they refer.
+                    The platform always takes 3% off the top.
+                </p>
+                <form @submit.prevent="saveAffiliate">
+                    <div class="flex items-end gap-4">
+                        <div class="flex-1 max-w-xs">
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                Affiliate Commission Rate (%)
+                            </label>
+                            <input
+                                v-model="affiliateForm.affiliate_commission_rate"
+                                type="number"
+                                min="0"
+                                max="97"
+                                step="1"
+                                placeholder="e.g. 50"
+                                class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                :class="affiliateForm.errors.affiliate_commission_rate ? 'border-red-400' : ''"
+                            />
+                            <p class="mt-1 text-xs text-gray-400">
+                                0 = disable affiliate program. Max 97 (platform takes 3%).
+                            </p>
+                            <p v-if="affiliateForm.errors.affiliate_commission_rate" class="mt-1 text-xs text-red-600">
+                                {{ affiliateForm.errors.affiliate_commission_rate }}
+                            </p>
+                        </div>
+                        <button
+                            type="submit"
+                            :disabled="affiliateForm.processing"
+                            class="px-5 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                        >
+                            Save
+                        </button>
+                        <p v-if="affiliateSaved" class="text-sm text-green-600 self-center">Saved!</p>
+                    </div>
+                    <div v-if="community.affiliate_commission_rate" class="mt-3 p-3 bg-gray-50 rounded-lg text-xs text-gray-500">
+                        Example split on ₱{{ community.price }} sale:
+                        <strong class="text-red-500">Platform ₱{{ (community.price * 0.03).toFixed(2) }}</strong>
+                        · <strong class="text-orange-600">Affiliate ₱{{ (community.price * community.affiliate_commission_rate / 100).toFixed(2) }}</strong>
+                        · <strong class="text-green-700">You ₱{{ (community.price - community.price * 0.03 - community.price * community.affiliate_commission_rate / 100).toFixed(2) }}</strong>
+                    </div>
+                </form>
+            </div>
+
             <!-- Danger zone -->
             <div class="bg-white border border-red-200 rounded-2xl p-6">
                 <h2 class="text-base font-semibold text-red-600 mb-1">Danger zone</h2>
@@ -177,9 +231,10 @@ const props = defineProps({
     community: Object,
 });
 
-const saved       = ref(false);
-const coverPreview = ref(null);
-const coverInput   = ref(null);
+const saved          = ref(false);
+const affiliateSaved = ref(false);
+const coverPreview   = ref(null);
+const coverInput     = ref(null);
 
 const form = useForm({
     name:        props.community.name,
@@ -206,15 +261,30 @@ function removeCover() {
 }
 
 function save() {
-    form.post(`/communities/${props.community.slug}`, {
-        // Inertia uses POST + _method:PATCH for file uploads
-        headers: { 'X-HTTP-Method-Override': 'PATCH' },
-        onSuccess: () => {
-            coverPreview.value = null;
-            saved.value = true;
-            setTimeout(() => (saved.value = false), 3000);
-        },
-    });
+    // Use POST + _method spoofing so Laravel accepts multipart/form-data with files
+    form.transform(data => ({ ...data, _method: 'PATCH' }))
+        .post(`/communities/${props.community.slug}`, {
+            onSuccess: () => {
+                coverPreview.value = null;
+                saved.value = true;
+                setTimeout(() => (saved.value = false), 3000);
+            },
+        });
+}
+
+const affiliateForm = useForm({
+    name:                      props.community.name,   // required by the update validator
+    affiliate_commission_rate: props.community.affiliate_commission_rate ?? '',
+});
+
+function saveAffiliate() {
+    affiliateForm.transform(data => ({ ...data, _method: 'PATCH' }))
+        .post(`/communities/${props.community.slug}`, {
+            onSuccess: () => {
+                affiliateSaved.value = true;
+                setTimeout(() => (affiliateSaved.value = false), 3000);
+            },
+        });
 }
 
 function deleteCommunity() {

@@ -17,7 +17,7 @@ class Subscription extends Model
     public const STATUS_CANCELLED = 'cancelled';
 
     protected $fillable = [
-        'community_id', 'user_id', 'status',
+        'community_id', 'user_id', 'affiliate_id', 'status',
         'xendit_id', 'xendit_invoice_url', 'expires_at',
     ];
 
@@ -39,6 +39,11 @@ class Subscription extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function affiliate(): BelongsTo
+    {
+        return $this->belongsTo(Affiliate::class);
     }
 
     public function isActive(): bool

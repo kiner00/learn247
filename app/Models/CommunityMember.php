@@ -16,7 +16,41 @@ class CommunityMember extends Model
 
     public const ROLES = [self::ROLE_ADMIN, self::ROLE_MODERATOR, self::ROLE_MEMBER];
 
-    protected $fillable = ['community_id', 'user_id', 'role', 'joined_at'];
+    protected $fillable = ['community_id', 'user_id', 'role', 'points', 'joined_at', 'notif_prefs', 'chat_enabled'];
+
+    protected $casts = [
+        'notif_prefs'  => 'array',
+        'chat_enabled' => 'boolean',
+    ];
+
+    // Points per action
+    public const POINTS_POST    = 10;
+    public const POINTS_COMMENT = 5;
+    public const POINTS_LESSON  = 20;
+
+    // Level thresholds (index = level - 1)
+    public const LEVEL_THRESHOLDS = [0, 50, 150, 350, 700, 1250, 2000, 3000, 4500, 6500, 9000, 12500];
+
+    public static function computeLevel(int $points): int
+    {
+        $thresholds = array_reverse(self::LEVEL_THRESHOLDS);
+        foreach ($thresholds as $i => $threshold) {
+            if ($points >= $threshold) {
+                return count(self::LEVEL_THRESHOLDS) - $i;
+            }
+        }
+        return 1;
+    }
+
+    public function awardPoints(int $pts): void
+    {
+        $this->increment('points', max(0, $pts));
+    }
+
+    public function deductPoints(int $pts): void
+    {
+        $this->decrement('points', min($pts, $this->points));
+    }
 
     protected function casts(): array
     {

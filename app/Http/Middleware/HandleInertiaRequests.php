@@ -43,6 +43,7 @@ class HandleInertiaRequests extends Middleware
                     'name'           => $request->user()->name,
                     'email'          => $request->user()->email,
                     'is_super_admin' => $request->user()->is_super_admin,
+                    'theme'          => $request->user()->theme ?? 'light',
                 ] : null,
                 'communities' => $request->user()
                     ? $request->user()->communityMemberships()

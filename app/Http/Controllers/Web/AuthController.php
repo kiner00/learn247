@@ -44,6 +44,7 @@ class AuthController extends Controller
     {
         $data = $request->validate([
             'name'     => ['required', 'string', 'max:255'],
+            'username' => ['nullable', 'string', 'max:50', 'regex:/^[a-z0-9-]+$/', 'unique:users,username'],
             'email'    => ['required', 'email', 'unique:users,email'],
             'password' => ['required', 'confirmed', Password::defaults()],
         ]);
@@ -54,10 +55,24 @@ class AuthController extends Controller
             'password' => Hash::make($data['password']),
         ]);
 
+        $username = $data['username'] ?? $this->generateUsername($data['name'], $user->id);
+        $user->update(['username' => $username]);
+
         Auth::login($user);
         $request->session()->regenerate();
 
-        return redirect('/communities')->with('success', 'Welcome to Learn247!');
+        return redirect()->intended('/communities')->with('success', 'Welcome to Learn247!');
+    }
+
+    private function generateUsername(string $name, int $userId): string
+    {
+        $base = strtolower(preg_replace('/[^a-z0-9-]/', '', str_replace(' ', '-', trim($name))));
+        $base = trim(preg_replace('/-+/', '-', $base), '-');
+        if (! $base) {
+            $base = 'user';
+        }
+
+        return $base . '-' . $userId;
     }
 
     public function logout(Request $request): RedirectResponse

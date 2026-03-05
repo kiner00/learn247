@@ -13,16 +13,21 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, HasRoles, Notifiable;
 
-    protected $fillable = ['name', 'email', 'password', 'is_super_admin'];
+    protected $fillable = [
+        'name', 'username', 'bio', 'email', 'password', 'is_super_admin',
+        'timezone', 'theme', 'notification_prefs', 'chat_prefs',
+    ];
 
     protected $hidden = ['password', 'remember_token'];
 
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password'          => 'hashed',
-            'is_super_admin'    => 'boolean',
+            'email_verified_at'  => 'datetime',
+            'password'           => 'hashed',
+            'is_super_admin'     => 'boolean',
+            'notification_prefs' => 'array',
+            'chat_prefs'         => 'array',
         ];
     }
 

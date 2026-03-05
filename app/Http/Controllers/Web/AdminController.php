@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Models\AffiliateConversion;
 use App\Models\Community;
 use App\Models\CommunityMember;
+use App\Models\Payment;
 use App\Models\Subscription;
 use App\Models\User;
 use Inertia\Inertia;
@@ -23,6 +25,25 @@ class AdminController extends Controller
         $monthlyRevenue = Subscription::where('subscriptions.status', Subscription::STATUS_ACTIVE)
             ->join('communities', 'subscriptions.community_id', '=', 'communities.id')
             ->sum('communities.price');
+
+        // Platform-wide gross revenue from actual payments
+        $grossRevenue = (float) Payment::where('status', Payment::STATUS_PAID)->sum('amount');
+
+        // Affiliate conversion totals
+        $convTotals = AffiliateConversion::selectRaw(
+            'SUM(sale_amount) as gross, SUM(platform_fee) as platform_fee,
+             SUM(commission_amount) as commission, SUM(creator_amount) as creator'
+        )->first();
+
+        $affiliateGross          = (float) ($convTotals->gross ?? 0);
+        $affiliatePlatformFee    = (float) ($convTotals->platform_fee ?? 0);
+        $totalAffiliateCommission = (float) ($convTotals->commission ?? 0);
+        $paidAffiliateCommission  = (float) AffiliateConversion::where('status', AffiliateConversion::STATUS_PAID)->sum('commission_amount');
+        $pendingAffiliateCommission = round($totalAffiliateCommission - $paidAffiliateCommission, 2);
+
+        $nonAffiliateGross    = round($grossRevenue - $affiliateGross, 2);
+        $totalPlatformFee     = round($affiliatePlatformFee + ($nonAffiliateGross * 0.03), 2);
+        $totalCreatorNet      = round($grossRevenue - $totalPlatformFee - $totalAffiliateCommission, 2);
 
         // Communities by category
         $byCategory = Community::selectRaw("COALESCE(category, 'Uncategorized') as category, COUNT(*) as total")
@@ -65,6 +86,14 @@ class AdminController extends Controller
                 'total_members'        => $totalMembers,
                 'active_subscriptions' => $activeSubscriptions,
                 'monthly_revenue'      => (float) $monthlyRevenue,
+            ],
+            'revenue' => [
+                'gross'                        => $grossRevenue,
+                'platform_fee'                 => $totalPlatformFee,
+                'creator_net'                  => $totalCreatorNet,
+                'affiliate_commission_total'   => $totalAffiliateCommission,
+                'affiliate_commission_paid'    => $paidAffiliateCommission,
+                'affiliate_commission_pending' => $pendingAffiliateCommission,
             ],
             'byCategory'        => $byCategory,
             'recentCommunities' => $recentCommunities,

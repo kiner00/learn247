@@ -1,6 +1,8 @@
 <template>
     <AppLayout :title="community.name" :community="community">
 
+        <CommunityTabs :community="community" active-tab="community" />
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
             <!-- Posts feed (2/3) -->
@@ -255,6 +257,45 @@
                                 Members
                             </Link>
                         </div>
+
+                        <!-- Affiliate section (members only, when program is enabled) -->
+                        <template v-if="isMember && community.affiliate_commission_rate">
+                            <div class="mt-4 pt-4 border-t border-gray-100">
+                                <p class="text-xs font-semibold text-gray-700 mb-2">
+                                    🔗 Affiliate Program
+                                    <span class="font-normal text-gray-400 ml-1">{{ community.affiliate_commission_rate }}% commission</span>
+                                </p>
+
+                                <!-- Already an affiliate: show link -->
+                                <div v-if="affiliate">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <input
+                                            :value="affiliateUrl"
+                                            readonly
+                                            class="flex-1 text-xs px-2.5 py-1.5 border border-gray-200 rounded-lg bg-gray-50 font-mono"
+                                        />
+                                        <button @click="copyAffiliateUrl"
+                                                class="shrink-0 text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+                                            {{ affiliateCopied ? '✓' : 'Copy' }}
+                                        </button>
+                                    </div>
+                                    <Link href="/my-affiliates"
+                                          class="text-xs text-gray-400 hover:text-indigo-600">
+                                        View my earnings →
+                                    </Link>
+                                </div>
+
+                                <!-- Not yet an affiliate: join button -->
+                                <button
+                                    v-else
+                                    @click="joinAffiliate"
+                                    :disabled="affiliateForm.processing"
+                                    class="w-full py-2 border border-indigo-200 text-indigo-600 text-xs font-semibold rounded-xl hover:bg-indigo-50 transition-colors disabled:opacity-50"
+                                >
+                                    {{ affiliateForm.processing ? 'Joining...' : 'Become an Affiliate' }}
+                                </button>
+                            </div>
+                        </template>
                     </div>
                 </div>
             </div>
@@ -267,10 +308,12 @@
 import { ref, reactive, computed } from 'vue';
 import { Link, useForm, usePage, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import CommunityTabs from '@/Components/CommunityTabs.vue';
 
 const props = defineProps({
     community: Object,
     membership: Object,
+    affiliate:  Object,  // current user's affiliate record for this community (null if none)
 });
 
 const page = usePage();
@@ -350,6 +393,24 @@ function canDeleteComment(comment) {
         props.membership?.role === 'admin' ||
         props.membership?.role === 'moderator'
     );
+}
+
+// ─── Affiliate ────────────────────────────────────────────────────────────────
+
+const affiliateForm   = useForm({});
+const affiliateCopied = ref(false);
+const affiliateUrl    = computed(() =>
+    props.affiliate ? `${window.location.origin}/ref/${props.affiliate.code}` : ''
+);
+
+function joinAffiliate() {
+    affiliateForm.post(`/communities/${props.community.slug}/affiliates`);
+}
+
+async function copyAffiliateUrl() {
+    await navigator.clipboard.writeText(affiliateUrl.value);
+    affiliateCopied.value = true;
+    setTimeout(() => { affiliateCopied.value = false; }, 2000);
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

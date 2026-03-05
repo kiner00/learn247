@@ -1,0 +1,109 @@
+<?php
+
+namespace App\Http\Controllers\Web;
+
+use App\Actions\Affiliate\JoinAffiliate;
+use App\Actions\Affiliate\MarkAffiliateConversionPaid;
+use App\Http\Controllers\Controller;
+use App\Models\Affiliate;
+use App\Models\AffiliateConversion;
+use App\Models\Community;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class AffiliateController extends Controller
+{
+    /** GET /my-affiliates — user's own affiliate links + earnings */
+    public function index(Request $request): Response
+    {
+        $affiliates = Affiliate::where('user_id', $request->user()->id)
+            ->with('community')
+            ->latest()
+            ->get()
+            ->map(fn ($a) => [
+                'id'             => $a->id,
+                'code'           => $a->code,
+                'status'         => $a->status,
+                'total_earned'   => $a->total_earned,
+                'total_paid'     => $a->total_paid,
+                'pending_amount' => $a->pendingAmount(),
+                'referral_url'   => url("/ref/{$a->code}"),
+                'community'      => [
+                    'name' => $a->community->name,
+                    'slug' => $a->community->slug,
+                ],
+            ]);
+
+        return Inertia::render('Affiliates/Index', ['affiliates' => $affiliates]);
+    }
+
+    /** POST /communities/{community}/affiliates — join as affiliate */
+    public function store(Request $request, Community $community, JoinAffiliate $action): RedirectResponse
+    {
+        $action->execute($request->user(), $community);
+
+        return back()->with('success', 'You are now an affiliate! Share your link to start earning.');
+    }
+
+    /** GET /communities/{community}/affiliates — owner dashboard */
+    public function dashboard(Request $request, Community $community): Response
+    {
+        $this->authorize('update', $community);
+
+        $affiliates = Affiliate::where('community_id', $community->id)
+            ->with('user')
+            ->latest()
+            ->get()
+            ->map(fn ($a) => [
+                'id'             => $a->id,
+                'code'           => $a->code,
+                'status'         => $a->status,
+                'total_earned'   => $a->total_earned,
+                'total_paid'     => $a->total_paid,
+                'pending_amount' => $a->pendingAmount(),
+                'referral_url'   => url("/ref/{$a->code}"),
+                'user'           => ['name' => $a->user->name, 'email' => $a->user->email],
+            ]);
+
+        $conversions = AffiliateConversion::whereHas('affiliate', fn ($q) => $q->where('community_id', $community->id))
+            ->with(['affiliate.user', 'referredUser'])
+            ->latest()
+            ->get()
+            ->map(fn ($c) => [
+                'id'                => $c->id,
+                'date'              => $c->created_at->format('M j, Y'),
+                'referred_user'     => $c->referredUser->name,
+                'affiliate_name'    => $c->affiliate->user->name,
+                'sale_amount'       => $c->sale_amount,
+                'platform_fee'      => $c->platform_fee,
+                'commission_amount' => $c->commission_amount,
+                'creator_amount'    => $c->creator_amount,
+                'status'            => $c->status,
+                'paid_at'           => $c->paid_at?->format('M j, Y'),
+            ]);
+
+        $stats = [
+            'total_affiliates'    => $affiliates->count(),
+            'total_commissions'   => $affiliates->sum('total_earned'),
+            'total_paid_out'      => $affiliates->sum('total_paid'),
+        ];
+
+        return Inertia::render('Communities/Affiliates', compact('community', 'affiliates', 'conversions', 'stats'));
+    }
+
+    /** PATCH /affiliate-conversions/{conversion}/paid */
+    public function markPaid(AffiliateConversion $conversion, MarkAffiliateConversionPaid $action): RedirectResponse
+    {
+        $this->authorize('update', $conversion->affiliate->community);
+
+        if ($conversion->status === AffiliateConversion::STATUS_PAID) {
+            return back()->with('error', 'Already marked as paid.');
+        }
+
+        $action->execute($conversion);
+
+        return back()->with('success', 'Conversion marked as paid.');
+    }
+}

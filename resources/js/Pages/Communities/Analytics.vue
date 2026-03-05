@@ -30,6 +30,59 @@
                 </div>
             </div>
 
+            <!-- Revenue Breakdown -->
+            <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden mb-6">
+                <div class="px-5 py-4 border-b border-gray-100">
+                    <h2 class="text-sm font-bold text-gray-900">Revenue Breakdown</h2>
+                    <p class="text-xs text-gray-400 mt-0.5">Based on actual payments collected</p>
+                </div>
+
+                <div class="grid grid-cols-2 lg:grid-cols-3 gap-px bg-gray-100">
+                    <!-- Gross Revenue -->
+                    <div class="bg-white px-5 py-4">
+                        <p class="text-xs font-medium text-gray-500 mb-1">Gross Revenue</p>
+                        <p class="text-xl font-black text-gray-900">{{ curr }}{{ fmt(revenue.gross) }}</p>
+                        <p class="text-xs text-gray-400 mt-0.5">Total collected</p>
+                    </div>
+
+                    <!-- Platform Fee -->
+                    <div class="bg-white px-5 py-4">
+                        <p class="text-xs font-medium text-gray-500 mb-1">Platform Fee (3%)</p>
+                        <p class="text-xl font-black text-red-500">{{ curr }}{{ fmt(revenue.platform_fee) }}</p>
+                        <p class="text-xs text-gray-400 mt-0.5">Deducted from gross</p>
+                    </div>
+
+                    <!-- Creator Net -->
+                    <div class="bg-white px-5 py-4 col-span-2 lg:col-span-1">
+                        <p class="text-xs font-medium text-gray-500 mb-1">Your Net Income</p>
+                        <p class="text-xl font-black text-green-600">{{ curr }}{{ fmt(revenue.creator_net) }}</p>
+                        <p class="text-xs text-gray-400 mt-0.5">After all deductions</p>
+                    </div>
+                </div>
+
+                <!-- Affiliate split (only if there are affiliate-attributed sales) -->
+                <template v-if="revenue.has_affiliate_data">
+                    <div class="px-5 py-3 border-t border-gray-100 bg-indigo-50">
+                        <p class="text-xs font-semibold text-indigo-700">Affiliate Commission Breakdown</p>
+                    </div>
+                    <div class="grid grid-cols-3 gap-px bg-gray-100">
+                        <div class="bg-white px-5 py-4">
+                            <p class="text-xs font-medium text-gray-500 mb-1">Total Earned by Affiliates</p>
+                            <p class="text-lg font-black text-indigo-600">{{ curr }}{{ fmt(revenue.affiliate_commission_earned) }}</p>
+                        </div>
+                        <div class="bg-white px-5 py-4">
+                            <p class="text-xs font-medium text-gray-500 mb-1">Paid Out</p>
+                            <p class="text-lg font-black text-green-600">{{ curr }}{{ fmt(revenue.affiliate_commission_paid) }}</p>
+                        </div>
+                        <div class="bg-white px-5 py-4">
+                            <p class="text-xs font-medium text-gray-500 mb-1">Pending Payout</p>
+                            <p class="text-lg font-black text-amber-500">{{ curr }}{{ fmt(revenue.affiliate_commission_pending) }}</p>
+                            <p v-if="revenue.affiliate_commission_pending > 0" class="text-xs text-amber-500 mt-0.5">Needs to be paid</p>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
             <!-- Subscribers table -->
             <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
                 <div class="px-5 py-4 border-b border-gray-100">
@@ -88,15 +141,20 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 const props = defineProps({
     community:   Object,
     stats:       Object,
+    revenue:     Object,
     subscribers: Array,
 });
 
-const currencySymbol = props.community.currency === 'USD' ? '$' : '₱';
+const curr = props.community.currency === 'USD' ? '$' : '₱';
+
+function fmt(val) {
+    return Number(val ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
 
 const statCards = computed(() => [
     {
         label:  'Monthly Revenue',
-        value:  `${currencySymbol}${Number(props.stats.monthly_revenue).toLocaleString()}`,
+        value:  `${curr}${Number(props.stats.monthly_revenue).toLocaleString()}`,
         icon:   '💰',
         iconBg: 'bg-green-50',
         sub:    'from active subscriptions',

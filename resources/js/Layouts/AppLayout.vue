@@ -1,7 +1,7 @@
 <template>
-    <div class="min-h-screen bg-gray-50">
+    <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
         <!-- Sticky Navbar -->
-        <nav class="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
+        <nav class="sticky top-0 z-40 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-14 items-center">
 
@@ -9,12 +9,12 @@
                     <div class="flex items-center gap-1">
                         <!-- Community context (when inside a community) -->
                         <template v-if="props.community">
-                            <Link :href="`/communities/${props.community.slug}`" class="flex items-center gap-2 px-1 py-1 rounded-lg hover:bg-gray-100 transition-colors">
+                            <Link :href="`/communities/${props.community.slug}`" class="flex items-center gap-2 px-1 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                                 <div class="w-7 h-7 rounded-lg bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600 overflow-hidden shrink-0">
                                     <img v-if="props.community.avatar" :src="props.community.avatar" :alt="props.community.name" class="w-full h-full object-cover"/>
                                     <span v-else>{{ props.community.name.charAt(0).toUpperCase() }}</span>
                                 </div>
-                                <span class="text-sm font-bold text-gray-900 max-w-40 truncate">{{ props.community.name }}</span>
+                                <span class="text-sm font-bold text-gray-900 dark:text-gray-100 max-w-40 truncate">{{ props.community.name }}</span>
                             </Link>
                         </template>
                         <!-- Default: app logo → home -->
@@ -28,7 +28,7 @@
                         <div class="relative" ref="switcherRef">
                         <button
                             @click="switcherOpen = !switcherOpen"
-                            class="flex items-center justify-center w-7 h-7 rounded-lg hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-600"
+                            class="flex items-center justify-center w-7 h-7 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                             title="Switch community"
                         >
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -47,10 +47,10 @@
                         >
                             <div
                                 v-if="switcherOpen"
-                                class="absolute left-0 mt-1.5 w-64 bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden origin-top-left z-50"
+                                class="absolute left-0 mt-1.5 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl overflow-hidden origin-top-left z-50"
                             >
                                 <!-- Search -->
-                                <div class="p-2 border-b border-gray-100">
+                                <div class="p-2 border-b border-gray-100 dark:border-gray-700">
                                     <div class="relative">
                                         <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
@@ -59,17 +59,17 @@
                                             v-model="switcherSearch"
                                             type="text"
                                             placeholder="Search"
-                                            class="w-full pl-8 pr-3 py-1.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                            class="w-full pl-8 pr-3 py-1.5 text-sm bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:placeholder-gray-400 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                                         />
                                     </div>
                                 </div>
 
                                 <!-- Actions -->
-                                <div class="p-1.5 border-b border-gray-100">
+                                <div class="p-1.5 border-b border-gray-100 dark:border-gray-700">
                                     <button
                                         v-if="$page.props.auth?.user"
                                         @click="openCreate"
-                                        class="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                                        class="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
                                     >
                                         <span class="w-6 h-6 rounded-md bg-indigo-100 flex items-center justify-center shrink-0">
                                             <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -81,7 +81,7 @@
                                     <Link
                                         href="/communities"
                                         @click="switcherOpen = false"
-                                        class="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                                        class="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
                                     >
                                         <span class="w-6 h-6 rounded-md bg-gray-100 flex items-center justify-center shrink-0">
                                             <svg class="w-3.5 h-3.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -100,14 +100,14 @@
                                             :key="community.id"
                                             :href="`/communities/${community.slug}`"
                                             @click="switcherOpen = false"
-                                            class="flex items-center gap-2.5 w-full px-3 py-2 text-sm hover:bg-gray-50 transition-colors"
-                                            :class="$page.url === `/communities/${community.slug}` ? 'bg-indigo-50' : ''"
+                                            class="flex items-center gap-2.5 w-full px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                            :class="$page.url === `/communities/${community.slug}` ? 'bg-indigo-50 dark:bg-indigo-900/30' : ''"
                                         >
                                             <div class="w-7 h-7 rounded-lg bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600 shrink-0 overflow-hidden">
                                                 <img v-if="community.avatar" :src="community.avatar" :alt="community.name" class="w-full h-full object-cover"/>
                                                 <span v-else>{{ community.name.charAt(0).toUpperCase() }}</span>
                                             </div>
-                                            <span class="text-gray-800 font-medium truncate">{{ community.name }}</span>
+                                            <span class="text-gray-800 dark:text-gray-200 font-medium truncate">{{ community.name }}</span>
                                             <svg v-if="$page.url === `/communities/${community.slug}`" class="w-3.5 h-3.5 text-indigo-600 ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
                                             </svg>
@@ -129,12 +129,12 @@
                             <div class="relative" ref="menuRef">
                                 <button
                                     @click="menuOpen = !menuOpen"
-                                    class="flex items-center gap-2 pl-1 pr-2 py-1 rounded-lg hover:bg-gray-100 transition-colors"
+                                    class="flex items-center gap-2 pl-1 pr-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                                 >
                                     <span class="w-7 h-7 rounded-full bg-linear-to-br from-indigo-400 to-purple-500 flex items-center justify-center font-semibold text-white text-xs shrink-0">
                                         {{ initials }}
                                     </span>
-                                    <span class="hidden sm:block text-sm font-medium text-gray-700 max-w-28 truncate">
+                                    <span class="hidden sm:block text-sm font-medium text-gray-700 dark:text-gray-300 max-w-28 truncate">
                                         {{ $page.props.auth.user.name }}
                                     </span>
                                     <svg class="w-3.5 h-3.5 text-gray-400 hidden sm:block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -153,32 +153,73 @@
                                 >
                                     <div
                                         v-if="menuOpen"
-                                        class="absolute right-0 mt-1.5 w-48 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden origin-top-right"
+                                        class="absolute right-0 mt-1.5 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl overflow-hidden origin-top-right z-50"
                                     >
-                                        <div class="px-4 py-3 border-b border-gray-100">
-                                            <p class="text-xs text-gray-500">Signed in as</p>
-                                            <p class="text-sm font-medium text-gray-900 truncate">{{ $page.props.auth.user.email }}</p>
+                                        <!-- Email -->
+                                        <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ $page.props.auth.user.email }}</p>
                                         </div>
-                                        <div class="p-1">
+
+                                        <!-- Primary actions -->
+                                        <div class="p-1.5 border-b border-gray-100 dark:border-gray-700">
+                                            <Link
+                                                href="/profile"
+                                                class="block w-full px-3 py-2 text-sm font-semibold text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                                @click="menuOpen = false"
+                                            >
+                                                Profile
+                                            </Link>
+                                            <Link
+                                                href="/account/settings"
+                                                class="block w-full px-3 py-2 text-sm font-semibold text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                                @click="menuOpen = false"
+                                            >
+                                                Settings
+                                            </Link>
+                                            <Link
+                                                href="/my-affiliates"
+                                                class="block w-full px-3 py-2 text-sm font-semibold text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                                @click="menuOpen = false"
+                                            >
+                                                Affiliates
+                                            </Link>
                                             <Link
                                                 v-if="$page.props.auth.user.is_super_admin"
                                                 href="/admin"
-                                                class="flex items-center gap-2 w-full px-3 py-2 text-sm text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                                class="block w-full px-3 py-2 text-sm font-semibold text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
                                                 @click="menuOpen = false"
                                             >
-                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                                                </svg>
                                                 Admin Dashboard
                                             </Link>
+                                        </div>
+
+                                        <!-- Nav links -->
+                                        <div class="p-1.5 border-b border-gray-100 dark:border-gray-700">
+                                            <button
+                                                @click="menuOpen = false; openCreate()"
+                                                class="block w-full text-left px-3 py-2 text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                            >
+                                                Create a community
+                                            </button>
+                                            <Link
+                                                href="/communities"
+                                                class="block w-full px-3 py-2 text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                                @click="menuOpen = false"
+                                            >
+                                                Discover communities
+                                            </Link>
+                                        </div>
+
+                                        <!-- Log out -->
+                                        <div class="p-1.5">
                                             <Link
                                                 method="post"
                                                 href="/logout"
                                                 as="button"
-                                                class="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                class="block w-full text-left px-3 py-2 text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
                                                 @click="menuOpen = false"
                                             >
-                                                Sign out
+                                                Log out
                                             </Link>
                                         </div>
                                     </div>
@@ -213,15 +254,15 @@
             >
                 <div
                     v-if="flash.success"
-                    class="pointer-events-auto flex items-center gap-3 px-4 py-3 bg-white border border-green-200 rounded-xl shadow-lg max-w-sm"
+                    class="pointer-events-auto flex items-center gap-3 px-4 py-3 bg-white dark:bg-gray-800 border border-green-200 dark:border-green-700 rounded-xl shadow-lg max-w-sm"
                 >
                     <div class="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center shrink-0">
                         <svg class="w-3.5 h-3.5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
                         </svg>
                     </div>
-                    <p class="text-sm text-gray-800 font-medium flex-1">{{ flash.success }}</p>
-                    <button @click="flash.success = null" class="text-gray-400 hover:text-gray-600 shrink-0">
+                    <p class="text-sm text-gray-800 dark:text-gray-200 font-medium flex-1">{{ flash.success }}</p>
+                    <button @click="flash.success = null" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 shrink-0">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
@@ -238,15 +279,15 @@
             >
                 <div
                     v-if="flash.error"
-                    class="pointer-events-auto flex items-center gap-3 px-4 py-3 bg-white border border-red-200 rounded-xl shadow-lg max-w-sm"
+                    class="pointer-events-auto flex items-center gap-3 px-4 py-3 bg-white dark:bg-gray-800 border border-red-200 dark:border-red-700 rounded-xl shadow-lg max-w-sm"
                 >
                     <div class="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center shrink-0">
                         <svg class="w-3.5 h-3.5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
                     </div>
-                    <p class="text-sm text-gray-800 font-medium flex-1">{{ flash.error }}</p>
-                    <button @click="flash.error = null" class="text-gray-400 hover:text-gray-600 shrink-0">
+                    <p class="text-sm text-gray-800 dark:text-gray-200 font-medium flex-1">{{ flash.error }}</p>
+                    <button @click="flash.error = null" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 shrink-0">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
@@ -256,7 +297,7 @@
         </div>
 
         <!-- Page content -->
-        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-gray-900 dark:text-gray-100">
             <slot />
         </main>
 
@@ -274,9 +315,9 @@
                 class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
                 @click.self="closeCreateModal()"
             >
-                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-6">
                     <div class="flex items-center justify-between mb-5">
-                        <h2 class="text-lg font-bold text-gray-900">Create a Community</h2>
+                        <h2 class="text-lg font-bold text-gray-900 dark:text-gray-100">Create a Community</h2>
                         <button @click="closeCreateModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -286,7 +327,7 @@
                     <form @submit.prevent="createCommunity">
                         <div class="space-y-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                                     Name <span class="text-red-500">*</span>
                                 </label>
                                 <input
@@ -294,49 +335,40 @@
                                     type="text"
                                     required
                                     placeholder="e.g. PH Developers"
-                                    class="w-full px-3.5 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                    :class="createForm.errors.name ? 'border-red-400' : 'border-gray-300'"
+                                    class="w-full px-3.5 py-2.5 border rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-gray-200 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                    :class="createForm.errors.name ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'"
                                 />
                                 <p v-if="createForm.errors.name" class="mt-1 text-xs text-red-600">{{ createForm.errors.name }}</p>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Description</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Description</label>
                                 <textarea
                                     v-model="createForm.description"
                                     rows="2"
                                     placeholder="What is this community about?"
-                                    class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                                    class="w-full px-3.5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-gray-200 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
                                 />
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Category</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Category</label>
                                 <select
                                     v-model="createForm.category"
-                                    class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                                    class="w-full px-3.5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 dark:text-gray-200"
                                 >
                                     <option value="">No category</option>
                                     <option v-for="cat in CATEGORIES" :key="cat" :value="cat">{{ cat }}</option>
                                 </select>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Banner Image URL</label>
-                                <input
-                                    v-model="createForm.cover_image"
-                                    type="url"
-                                    placeholder="https://example.com/banner.jpg"
-                                    class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                />
-                            </div>
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Price (₱)</label>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Price (₱)</label>
                                     <input
                                         v-model="createForm.price"
                                         type="number"
                                         min="0"
                                         step="1"
                                         placeholder="0 = Free"
-                                        class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                        class="w-full px-3.5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-gray-200 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                                     />
                                 </div>
                                 <div class="flex items-end pb-1">
@@ -346,7 +378,7 @@
                                             type="checkbox"
                                             class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                                         />
-                                        <span class="text-sm text-gray-700">Private</span>
+                                        <span class="text-sm text-gray-700 dark:text-gray-300">Private</span>
                                     </label>
                                 </div>
                             </div>
@@ -356,7 +388,7 @@
                             <button
                                 type="button"
                                 @click="closeCreateModal()"
-                                class="flex-1 py-2.5 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                                class="flex-1 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                             >
                                 Cancel
                             </button>
@@ -376,7 +408,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, watch, watchEffect, onMounted, onBeforeUnmount } from 'vue';
 import { Link, usePage, useForm } from '@inertiajs/vue3';
 import { useCreateModal } from '@/composables/useCreateModal';
 
@@ -386,6 +418,13 @@ const props = defineProps({
 });
 
 const page = usePage();
+
+// ─── Dark mode ─────────────────────────────────────────────────────────────────
+
+watchEffect(() => {
+    const theme = page.props.auth?.user?.theme ?? 'light';
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+});
 
 // ─── Dropdowns ────────────────────────────────────────────────────────────────
 
@@ -434,7 +473,6 @@ const createForm = useForm({
     name:        '',
     description: '',
     category:    '',
-    cover_image: '',
     price:       0,
     is_private:  false,
 });
