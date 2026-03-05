@@ -10,6 +10,7 @@ use App\Http\Controllers\Web\CommunityMemberController;
 use App\Http\Controllers\Web\AccountSettingsController;
 use App\Http\Controllers\Web\LeaderboardController;
 use App\Http\Controllers\Web\ProfileController;
+use App\Http\Controllers\Web\LikeController;
 use App\Http\Controllers\Web\PostController;
 use App\Http\Controllers\Web\RefController;
 use App\Http\Controllers\Web\SubscriptionController;
@@ -17,7 +18,7 @@ use App\Http\Middleware\EnsureActiveMembership;
 use App\Http\Middleware\EnsureSuperAdmin;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', fn () => view('welcome'))->name('home');
+Route::get('/', fn () => redirect('/communities'))->name('home');
 
 // ─── Affiliate referral link (public) ─────────────────────────────────────────
 Route::get('/ref/{code}', [RefController::class, 'redirect'])->name('ref.redirect');
@@ -106,8 +107,10 @@ Route::middleware('auth')->group(function () {
 
     // Posts & comments (not community-scoped — community check done in Action)
     Route::delete('/posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
+    Route::post('/posts/{post}/like', [LikeController::class, 'togglePost'])->name('posts.like');
     Route::post('/posts/{post}/comments', [CommentController::class, 'store'])->name('comments.store');
     Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
+    Route::post('/comments/{comment}/like', [LikeController::class, 'toggleComment'])->name('comments.like');
 
     // ─── Affiliates ───────────────────────────────────────────────────────────
     Route::get('/my-affiliates', [AffiliateController::class, 'index'])->name('affiliates.index');

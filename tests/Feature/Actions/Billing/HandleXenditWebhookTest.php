@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Actions\Billing;
 
+use App\Actions\Affiliate\RecordAffiliateConversion;
 use App\Actions\Billing\HandleXenditWebhook;
 use App\Actions\Billing\SyncMembershipFromSubscription;
 use App\Models\Community;
@@ -29,7 +30,7 @@ class HandleXenditWebhookTest extends TestCase
 
         $this->xendit = Mockery::mock(XenditService::class);
         $this->sync   = new SyncMembershipFromSubscription();
-        $this->action = new HandleXenditWebhook($this->xendit, $this->sync);
+        $this->action = new HandleXenditWebhook($this->xendit, $this->sync, new RecordAffiliateConversion());
     }
 
     private function makeRequest(array $payload, string $token = 'valid_token'): Request

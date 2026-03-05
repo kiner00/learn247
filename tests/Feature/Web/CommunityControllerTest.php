@@ -62,12 +62,12 @@ class CommunityControllerTest extends TestCase
             ->assertOk();
     }
 
-    public function test_unauthenticated_user_is_redirected_to_login_on_show(): void
+    public function test_unauthenticated_user_can_view_public_community(): void
     {
         $community = Community::factory()->create(['is_private' => false]);
 
         $this->get("/communities/{$community->slug}")
-            ->assertRedirect('/login');
+            ->assertOk();
     }
 
     public function test_private_community_denies_non_member(): void

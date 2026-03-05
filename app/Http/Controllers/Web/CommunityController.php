@@ -40,10 +40,43 @@ class CommunityController extends Controller
     {
         $this->authorize('view', $community);
 
-        $community->load(['owner', 'posts' => fn ($q) => $q->with(['author', 'comments.user'])->latest()->take(20)]);
+        $userId = auth()->id();
+
+        $community->load([
+            'owner',
+            'posts' => fn ($q) => $q
+                ->with([
+                    'author',
+                    'likes',
+                    'comments' => fn ($cq) => $cq
+                        ->whereNull('parent_id')
+                        ->with([
+                            'author',
+                            'likes',
+                            'replies' => fn ($rq) => $rq->with(['author', 'likes']),
+                        ])
+                        ->latest(),
+                ])
+                ->withCount('likes', 'comments')
+                ->latest()
+                ->take(20),
+        ]);
         $community->loadCount('members');
 
-        $userId     = auth()->id();
+        if ($userId) {
+            $community->posts->each(function ($post) use ($userId) {
+                $post->user_has_liked = $post->likes->contains('user_id', $userId);
+                $post->comments->each(function ($comment) use ($userId) {
+                    $comment->user_has_liked = $comment->likes->contains('user_id', $userId);
+                    $comment->likes_count    = $comment->likes->count();
+                    $comment->replies->each(function ($reply) use ($userId) {
+                        $reply->user_has_liked = $reply->likes->contains('user_id', $userId);
+                        $reply->likes_count    = $reply->likes->count();
+                    });
+                });
+            });
+        }
+
         $membership = $userId ? $community->members()->where('user_id', $userId)->first() : null;
         $affiliate  = $userId ? $community->affiliates()->where('user_id', $userId)->first() : null;
 
@@ -58,7 +91,7 @@ class CommunityController extends Controller
             $query->where('role', 'admin');
         }
 
-        $members    = $query->orderByRaw("FIELD(role, 'admin', 'moderator', 'member')")->paginate(20)->withQueryString();
+        $members    = $query->orderByRaw("CASE role WHEN 'admin' THEN 0 WHEN 'moderator' THEN 1 ELSE 2 END")->paginate(20)->withQueryString();
         $totalCount = $community->members()->count();
         $adminCount = $community->members()->where('role', 'admin')->count();
 

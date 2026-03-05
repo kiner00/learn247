@@ -14,9 +14,12 @@ class CommentController extends Controller
 {
     public function store(Request $request, Post $post, CreateComment $action): RedirectResponse
     {
-        $request->validate(['content' => ['required', 'string']]);
+        $request->validate([
+            'content'   => ['required', 'string'],
+            'parent_id' => ['nullable', 'integer', 'exists:comments,id'],
+        ]);
 
-        $action->execute($request->user(), $post, $request->only('content'));
+        $action->execute($request->user(), $post, $request->only('content', 'parent_id'));
 
         return back();
     }

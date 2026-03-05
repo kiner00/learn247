@@ -3,46 +3,42 @@
         <div class="w-full max-w-md">
             <!-- Logo -->
             <div class="text-center mb-8">
-                <Link href="/" class="text-3xl font-bold text-indigo-600">Learn247</Link>
-                <p class="mt-2 text-gray-500 text-sm">Create your account</p>
+                <Link href="/" class="text-3xl font-black tracking-tight">
+                    <span class="text-indigo-600">learn</span><span class="text-gray-900">247</span>
+                </Link>
+                <p class="mt-2 text-gray-500 text-sm">Create your Learn247 account</p>
             </div>
 
             <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
                 <form @submit.prevent="submit">
-                    <!-- Name -->
-                    <div class="mb-4">
-                        <label for="name" class="block text-sm font-medium text-gray-700 mb-1.5">Full name</label>
-                        <input
-                            id="name"
-                            v-model="form.name"
-                            type="text"
-                            autocomplete="name"
-                            required
-                            class="w-full px-3.5 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                            :class="form.errors.name ? 'border-red-400' : 'border-gray-300'"
-                        />
-                        <p v-if="form.errors.name" class="mt-1 text-xs text-red-600">{{ form.errors.name }}</p>
-                    </div>
-
-                    <!-- Username -->
-                    <div class="mb-4">
-                        <label for="username" class="block text-sm font-medium text-gray-700 mb-1.5">
-                            Username <span class="text-gray-400 font-normal">(optional)</span>
-                        </label>
-                        <div class="relative">
-                            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
+                    <!-- First name + Last name -->
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <div>
+                            <label for="first_name" class="block text-sm font-medium text-gray-700 mb-1.5">First name</label>
                             <input
-                                id="username"
-                                v-model="form.username"
+                                id="first_name"
+                                v-model="form.first_name"
                                 type="text"
-                                autocomplete="off"
-                                placeholder="yourhandle"
-                                class="w-full pl-7 pr-3.5 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                :class="form.errors.username ? 'border-red-400' : 'border-gray-300'"
+                                autocomplete="given-name"
+                                required
+                                class="w-full px-3.5 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                :class="form.errors.first_name ? 'border-red-400' : 'border-gray-300'"
                             />
+                            <p v-if="form.errors.first_name" class="mt-1 text-xs text-red-600">{{ form.errors.first_name }}</p>
                         </div>
-                        <p v-if="form.errors.username" class="mt-1 text-xs text-red-600">{{ form.errors.username }}</p>
-                        <p v-else class="mt-1 text-xs text-gray-400">Letters and numbers only. Auto-generated if left blank.</p>
+                        <div>
+                            <label for="last_name" class="block text-sm font-medium text-gray-700 mb-1.5">Last name</label>
+                            <input
+                                id="last_name"
+                                v-model="form.last_name"
+                                type="text"
+                                autocomplete="family-name"
+                                required
+                                class="w-full px-3.5 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                :class="form.errors.last_name ? 'border-red-400' : 'border-gray-300'"
+                            />
+                            <p v-if="form.errors.last_name" class="mt-1 text-xs text-red-600">{{ form.errors.last_name }}</p>
+                        </div>
                     </div>
 
                     <!-- Email -->
@@ -75,11 +71,9 @@
                         <p v-if="form.errors.password" class="mt-1 text-xs text-red-600">{{ form.errors.password }}</p>
                     </div>
 
-                    <!-- Password confirmation -->
+                    <!-- Confirm Password -->
                     <div class="mb-6">
-                        <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1.5">
-                            Confirm password
-                        </label>
+                        <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1.5">Confirm password</label>
                         <input
                             id="password_confirmation"
                             v-model="form.password_confirmation"
@@ -93,16 +87,16 @@
                     <button
                         type="submit"
                         :disabled="form.processing"
-                        class="w-full py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="w-full py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {{ form.processing ? 'Creating account...' : 'Create account' }}
+                        {{ form.processing ? 'Creating account...' : 'SIGN UP' }}
                     </button>
                 </form>
             </div>
 
             <p class="text-center mt-6 text-sm text-gray-600">
                 Already have an account?
-                <Link href="/login" class="text-indigo-600 font-medium hover:underline">Sign in</Link>
+                <Link href="/login" class="text-indigo-600 font-medium hover:underline">Log in</Link>
             </p>
         </div>
     </div>
@@ -112,10 +106,10 @@
 import { Link, useForm } from '@inertiajs/vue3';
 
 const form = useForm({
-    name: '',
-    username: '',
-    email: '',
-    password: '',
+    first_name:            '',
+    last_name:             '',
+    email:                 '',
+    password:              '',
     password_confirmation: '',
 });
 
