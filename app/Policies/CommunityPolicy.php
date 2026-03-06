@@ -23,6 +23,10 @@ class CommunityPolicy
             return false;
         }
 
+        if ($user->id === $community->owner_id) {
+            return true;
+        }
+
         return CommunityMember::where('community_id', $community->id)
             ->where('user_id', $user->id)
             ->exists();
