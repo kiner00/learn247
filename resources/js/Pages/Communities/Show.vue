@@ -215,6 +215,14 @@
                             </Link>
                         </div>
 
+                        <button
+                            v-if="isMember"
+                            @click="showInviteModal = true"
+                            class="w-full mt-3 py-2 text-sm font-semibold border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        >
+                            Invite People
+                        </button>
+
                         <template v-if="isMember && community.affiliate_commission_rate">
                             <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
                                 <p class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
@@ -250,6 +258,14 @@
                 </div>
             </div>
         </div>
+
+        <!-- ─── Invite Modal ───────────────────────────────────────────────── -->
+        <InviteModal
+            :show="showInviteModal"
+            :community-name="community.name"
+            :invite-url="inviteUrl"
+            @close="showInviteModal = false"
+        />
 
         <!-- ─── Post Modal ──────────────────────────────────────────────────── -->
         <Teleport to="body">
@@ -446,6 +462,7 @@ import { ref, computed } from 'vue';
 import { Link, useForm, usePage, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import CommunityTabs from '@/Components/CommunityTabs.vue';
+import InviteModal from '@/Components/InviteModal.vue';
 
 const props = defineProps({
     community: Object,
@@ -575,6 +592,15 @@ function canDeleteComment(comment) {
         props.membership?.role === 'moderator'
     );
 }
+
+// ─── Invite ───────────────────────────────────────────────────────────────────
+
+const showInviteModal = ref(false);
+const inviteUrl = computed(() =>
+    props.affiliate?.code
+        ? `${window.location.origin}/ref/${props.affiliate.code}`
+        : `${window.location.origin}/communities/${props.community.slug}`
+);
 
 // ─── Affiliate ────────────────────────────────────────────────────────────────
 

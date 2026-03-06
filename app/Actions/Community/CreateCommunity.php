@@ -2,6 +2,7 @@
 
 namespace App\Actions\Community;
 
+use App\Models\Affiliate;
 use App\Models\Community;
 use App\Models\CommunityMember;
 use App\Models\User;
@@ -28,6 +29,18 @@ class CreateCommunity
             'user_id'      => $user->id,
             'role'         => CommunityMember::ROLE_ADMIN,
             'joined_at'    => now(),
+        ]);
+
+        // Owner gets an affiliate/invite code automatically
+        do {
+            $code = Str::random(12);
+        } while (Affiliate::where('code', $code)->exists());
+
+        Affiliate::create([
+            'community_id' => $community->id,
+            'user_id'      => $user->id,
+            'code'         => $code,
+            'status'       => Affiliate::STATUS_ACTIVE,
         ]);
 
         return $community;

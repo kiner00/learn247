@@ -94,8 +94,9 @@ class CommunityController extends Controller
         $members    = $query->orderByRaw("CASE role WHEN 'admin' THEN 0 WHEN 'moderator' THEN 1 ELSE 2 END")->paginate(20)->withQueryString();
         $totalCount = $community->members()->count();
         $adminCount = $community->members()->where('role', 'admin')->count();
+        $affiliate  = auth()->id() ? $community->affiliates()->where('user_id', auth()->id())->first() : null;
 
-        return Inertia::render('Communities/Members', compact('community', 'members', 'totalCount', 'adminCount'));
+        return Inertia::render('Communities/Members', compact('community', 'members', 'totalCount', 'adminCount', 'affiliate'));
     }
 
     public function settings(Community $community): Response

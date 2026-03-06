@@ -19,6 +19,7 @@ class ClassroomController extends Controller
     public function index(Community $community): Response
     {
         $userId  = auth()->id();
+        $community->loadCount('members');
         $courses = $community->courses()->with('modules.lessons')->get();
 
         $courses = $courses->map(function ($course) use ($userId) {

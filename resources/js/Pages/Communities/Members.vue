@@ -34,7 +34,8 @@
                     </div>
 
                     <button
-                        v-if="isOwner"
+                        v-if="isAdmin"
+                        @click="showInviteModal = true"
                         class="px-4 py-1.5 text-sm font-semibold rounded-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 transition-colors"
                     >
                         Invite
@@ -178,7 +179,8 @@
 
                         <!-- Invite button -->
                         <button
-                            v-if="isOwner"
+                            v-if="isAdmin"
+                            @click="showInviteModal = true"
                             class="w-full py-2 text-sm font-semibold border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors"
                         >
                             Invite People
@@ -187,20 +189,28 @@
                 </div>
             </div>
         </div>
+        <InviteModal
+            :show="showInviteModal"
+            :community-name="community.name"
+            :invite-url="inviteUrl"
+            @close="showInviteModal = false"
+        />
     </AppLayout>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import CommunityTabs from '@/Components/CommunityTabs.vue';
+import InviteModal from '@/Components/InviteModal.vue';
 
 const props = defineProps({
     community:  Object,
     members:    Object,
     totalCount: Number,
     adminCount: Number,
+    affiliate:  Object,
 });
 
 const page = usePage();
@@ -211,6 +221,14 @@ const currentFilter = computed(() => {
 });
 
 const currentUserId = computed(() => page.props.auth?.user?.id);
+
+const showInviteModal = ref(false);
+
+const inviteUrl = computed(() =>
+    props.affiliate?.code
+        ? `${window.location.origin}/ref/${props.affiliate.code}`
+        : `${window.location.origin}/communities/${props.community.slug}`
+);
 
 const isOwner = computed(() => currentUserId.value === props.community.owner_id);
 
