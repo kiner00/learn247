@@ -7,8 +7,11 @@ use App\Models\AffiliateConversion;
 use App\Models\Community;
 use App\Models\CommunityMember;
 use App\Models\Payment;
+use App\Models\Setting;
 use App\Models\Subscription;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -99,5 +102,12 @@ class AdminController extends Controller
             'recentCommunities' => $recentCommunities,
             'recentUsers'       => $recentUsers,
         ]);
+    }
+
+    public function updateSettings(Request $request): RedirectResponse
+    {
+        $request->validate(['app_theme' => 'required|in:green,yellow']);
+        Setting::set('app_theme', $request->app_theme);
+        return back()->with('success', 'Theme updated.');
     }
 }

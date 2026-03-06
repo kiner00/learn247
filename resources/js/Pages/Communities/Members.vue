@@ -157,7 +157,7 @@
 
                     <div class="p-4">
                         <h2 class="font-bold text-gray-900 text-sm">{{ community.name }}</h2>
-                        <p class="text-xs text-gray-400 mt-0.5 mb-3">learn247.com/communities/{{ community.slug }}</p>
+                        <p class="text-xs text-gray-400 mt-0.5 mb-3">curzzo.com/communities/{{ community.slug }}</p>
                         <p v-if="community.description" class="text-sm text-gray-600 mb-4 line-clamp-3">{{ community.description }}</p>
 
                         <!-- Stats -->

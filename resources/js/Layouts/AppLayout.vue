@@ -19,8 +19,12 @@
                         </template>
                         <!-- Default: app logo → home -->
                         <template v-else>
-                            <Link href="/communities" class="px-1 py-1.5 text-lg font-black tracking-tight">
-                                <span class="text-indigo-600">learn</span><span class="text-gray-900">247</span>
+                            <Link href="/communities" class="px-1 py-1.5">
+                                <img
+                                    :src="`/brand/logo-${page.props.app_theme ?? 'green'}.png`"
+                                    alt="Curzzo"
+                                    class="h-8 w-auto"
+                                />
                             </Link>
                         </template>
 

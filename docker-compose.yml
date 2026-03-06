@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
-    container_name: learn247_app
+    container_name: curzzo_app
     restart: unless-stopped
     working_dir: /var/www
     volumes:
@@ -17,12 +17,12 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - learn247
+      - curzzo
 
   # ── Nginx Web Server ───────────────────────────────────────────────────────
   nginx:
     image: nginx:1.25-alpine
-    container_name: learn247_nginx
+    container_name: curzzo_nginx
     restart: unless-stopped
     ports:
       - "8080:80"
@@ -32,16 +32,16 @@ services:
     depends_on:
       - app
     networks:
-      - learn247
+      - curzzo
 
   # ── MySQL ──────────────────────────────────────────────────────────────────
   mysql:
     image: mysql:8.0
-    container_name: learn247_mysql
+    container_name: curzzo_mysql
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE:      ${DB_DATABASE:-learn247}
+      MYSQL_DATABASE:      ${DB_DATABASE:-curzzo}
       MYSQL_USER:          ${DB_USERNAME:-sail}
       MYSQL_PASSWORD:      ${DB_PASSWORD:-password}
     volumes:
@@ -49,7 +49,7 @@ services:
     ports:
       - "3307:3306"    # use 3307 on host to avoid conflicts with local MySQL
     networks:
-      - learn247
+      - curzzo
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
       interval: 10s
@@ -59,7 +59,7 @@ services:
   # ── Redis ──────────────────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
-    container_name: learn247_redis
+    container_name: curzzo_redis
     restart: unless-stopped
     command: redis-server --appendonly yes
     volumes:
@@ -67,7 +67,7 @@ services:
     ports:
       - "6379:6379"
     networks:
-      - learn247
+      - curzzo
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -79,7 +79,7 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
-    container_name: learn247_queue
+    container_name: curzzo_queue
     restart: unless-stopped
     working_dir: /var/www
     volumes:
@@ -92,14 +92,14 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - learn247
+      - curzzo
     profiles:
       - full  # run with: docker compose --profile full up
 
   # ── Node / Vite Dev Server ────────────────────────────────────────────────
   node:
     image: node:20-alpine
-    container_name: learn247_node
+    container_name: curzzo_node
     working_dir: /var/www
     volumes:
       - .:/var/www
@@ -108,20 +108,20 @@ services:
     ports:
       - "5173:5173"
     networks:
-      - learn247
+      - curzzo
     profiles:
       - full  # run with: docker compose --profile full up
 
   # ── Mailpit (local email UI) ───────────────────────────────────────────────
   mailpit:
     image: axllent/mailpit:latest
-    container_name: learn247_mailpit
+    container_name: curzzo_mailpit
     restart: unless-stopped
     ports:
       - "8025:8025"   # Web UI  → http://localhost:8025
       - "1025:1025"   # SMTP
     networks:
-      - learn247
+      - curzzo
     profiles:
       - full
 
@@ -130,5 +130,5 @@ volumes:
   redis_data:
 
 networks:
-  learn247:
+  curzzo:
     driver: bridge

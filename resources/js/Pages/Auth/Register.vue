@@ -3,10 +3,10 @@
         <div class="w-full max-w-md">
             <!-- Logo -->
             <div class="text-center mb-8">
-                <Link href="/" class="text-3xl font-black tracking-tight">
-                    <span class="text-indigo-600">learn</span><span class="text-gray-900">247</span>
+                <Link href="/" class="inline-block">
+                    <img :src="`/brand/logo-${page.props.app_theme ?? 'green'}.png`" alt="Curzzo" class="h-10 w-auto mx-auto" />
                 </Link>
-                <p class="mt-2 text-gray-500 text-sm">Create your Learn247 account</p>
+                <p class="mt-2 text-gray-500 text-sm">Create your Curzzo account</p>
             </div>
 
             <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
@@ -103,7 +103,8 @@
 </template>
 
 <script setup>
-import { Link, useForm } from '@inertiajs/vue3';
+import { Link, useForm, usePage } from '@inertiajs/vue3';
+const page = usePage();
 
 const form = useForm({
     first_name:            '',

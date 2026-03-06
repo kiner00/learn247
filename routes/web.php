@@ -38,6 +38,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->n
 
 Route::middleware(['auth', EnsureSuperAdmin::class])->prefix('admin')->group(function () {
     Route::get('/', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+    Route::patch('/settings', [AdminController::class, 'updateSettings'])->name('admin.settings.update');
 });
 
 // ─── Profile ───────────────────────────────────────────────────────────────────

@@ -60,7 +60,7 @@ class AuthController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
-        return redirect()->intended('/communities')->with('success', 'Welcome to Learn247!');
+        return redirect()->intended('/communities')->with('success', 'Welcome to Curzzo!');
     }
 
     private function generateUsername(string $firstName, string $lastName, int $userId): string
