@@ -2,8 +2,10 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\DirectMessage;
 use App\Models\Setting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -22,6 +24,21 @@ class HandleInertiaRequests extends Middleware
      *
      * @see https://inertiajs.com/asset-versioning
      */
+    private function unreadMessageCount(int $userId): int
+    {
+        return (int) DB::table('messages')
+            ->join('community_members', function ($join) use ($userId) {
+                $join->on('messages.community_id', '=', 'community_members.community_id')
+                     ->where('community_members.user_id', '=', $userId);
+            })
+            ->where('messages.user_id', '!=', $userId)
+            ->where(function ($q) {
+                $q->whereNull('community_members.messages_last_read_at')
+                  ->orWhereColumn('messages.created_at', '>', 'community_members.messages_last_read_at');
+            })
+            ->count();
+    }
+
     public function version(Request $request): ?string
     {
         return parent::version($request);
@@ -63,6 +80,10 @@ class HandleInertiaRequests extends Middleware
                 'success' => $request->session()->get('success'),
                 'error'   => $request->session()->get('error'),
             ],
+            'unread_messages' => $request->user() ? $this->unreadMessageCount($request->user()->id) : 0,
+            'unread_dms'      => $request->user()
+                ? DirectMessage::where('receiver_id', $request->user()->id)->whereNull('read_at')->count()
+                : 0,
             'app_theme' => Setting::get('app_theme', 'green'),
         ];
     }

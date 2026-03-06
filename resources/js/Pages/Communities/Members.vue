@@ -88,13 +88,17 @@
 
                         <!-- Right actions -->
                         <div class="flex items-center gap-2 shrink-0 pt-1">
-                            <!-- Chat placeholder -->
-                            <button class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-gray-200 rounded-full text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-colors">
+                            <!-- DM chat button (only show to other users) -->
+                            <Link
+                                v-if="$page.props.auth?.user && member.user?.id !== $page.props.auth.user.id"
+                                :href="`/messages/${member.user?.username ?? member.user?.id}`"
+                                class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-gray-200 rounded-full text-gray-500 hover:border-indigo-300 hover:text-indigo-600 transition-colors"
+                            >
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
                                 </svg>
                                 Chat
-                            </button>
+                            </Link>
 
                             <!-- Admin role change + remove -->
                             <template v-if="isAdmin && member.user?.id !== community.owner_id">

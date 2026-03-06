@@ -129,6 +129,189 @@
                     <!-- Right: auth -->
                     <div class="flex items-center gap-2">
                         <template v-if="$page.props.auth?.user">
+
+                            <!-- Direct messages dropdown -->
+                            <div class="relative" ref="dmRef">
+                                <button
+                                    @click="toggleDm"
+                                    class="relative flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-500 dark:text-gray-400"
+                                    title="Messages"
+                                >
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                                    </svg>
+                                    <span
+                                        v-if="$page.props.unread_dms > 0"
+                                        class="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none"
+                                    >
+                                        {{ $page.props.unread_dms > 99 ? '99+' : $page.props.unread_dms }}
+                                    </span>
+                                </button>
+
+                                <!-- DM panel -->
+                                <Transition
+                                    enter-active-class="transition ease-out duration-100"
+                                    enter-from-class="opacity-0 scale-95"
+                                    enter-to-class="opacity-100 scale-100"
+                                    leave-active-class="transition ease-in duration-75"
+                                    leave-from-class="opacity-100 scale-100"
+                                    leave-to-class="opacity-0 scale-95"
+                                >
+                                    <div
+                                        v-if="dmOpen"
+                                        class="absolute right-0 mt-1.5 w-80 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl overflow-hidden origin-top-right z-50 flex flex-col"
+                                        style="max-height: 480px;"
+                                    >
+                                        <!-- Header -->
+                                        <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between shrink-0">
+                                            <p class="text-sm font-bold text-gray-900 dark:text-gray-100">Chats</p>
+                                        </div>
+
+                                        <!-- Search -->
+                                        <div class="px-3 py-2 border-b border-gray-100 dark:border-gray-700 shrink-0">
+                                            <div class="relative">
+                                                <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
+                                                </svg>
+                                                <input
+                                                    v-model="dmSearch"
+                                                    type="text"
+                                                    placeholder="Search users"
+                                                    class="w-full pl-8 pr-3 py-1.5 text-sm bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:placeholder-gray-400 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                    @input="searchUsers"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <!-- Search results -->
+                                        <div v-if="dmSearch && dmSearchResults.length" class="overflow-y-auto">
+                                            <Link
+                                                v-for="user in dmSearchResults"
+                                                :key="user.id"
+                                                :href="`/messages/${user.username ?? user.id}`"
+                                                @click="dmOpen = false; dmSearch = ''"
+                                                class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                            >
+                                                <div class="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-sm font-bold text-indigo-600 shrink-0">
+                                                    {{ user.name?.charAt(0)?.toUpperCase() }}
+                                                </div>
+                                                <div>
+                                                    <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ user.name }}</p>
+                                                    <p class="text-xs text-gray-400">@{{ user.username }}</p>
+                                                </div>
+                                            </Link>
+                                        </div>
+
+                                        <!-- No search results -->
+                                        <div v-else-if="dmSearch && !dmSearchResults.length" class="px-4 py-6 text-center">
+                                            <p class="text-sm text-gray-400">No users found</p>
+                                        </div>
+
+                                        <!-- Conversations list -->
+                                        <div v-else class="overflow-y-auto flex-1">
+                                            <div v-if="dmLoading" class="px-4 py-8 text-center">
+                                                <p class="text-sm text-gray-400">Loading…</p>
+                                            </div>
+                                            <div v-else-if="!dmConversations.length" class="px-4 py-10 text-center">
+                                                <p class="text-sm text-gray-500 font-medium">No chats yet</p>
+                                                <p class="text-xs text-gray-400 mt-1">Search for a member to start a conversation</p>
+                                            </div>
+                                            <Link
+                                                v-for="conv in dmConversations"
+                                                :key="conv.user?.id"
+                                                :href="`/messages/${conv.user?.username ?? conv.user?.id}`"
+                                                @click="dmOpen = false"
+                                                class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-50 dark:border-gray-700 last:border-0"
+                                            >
+                                                <div class="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-sm font-bold text-indigo-600 shrink-0">
+                                                    {{ conv.user?.name?.charAt(0)?.toUpperCase() }}
+                                                </div>
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="flex items-center justify-between">
+                                                        <p class="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">{{ conv.user?.name }}</p>
+                                                        <p class="text-[10px] text-gray-400 shrink-0 ml-1">{{ dmFormatTime(conv.latest_message?.created_at) }}</p>
+                                                    </div>
+                                                    <p class="text-xs text-gray-500 truncate">
+                                                        <span v-if="conv.latest_message?.is_mine" class="text-gray-400">You: </span>
+                                                        {{ conv.latest_message?.content ?? '' }}
+                                                    </p>
+                                                </div>
+                                                <span v-if="conv.unread_count > 0" class="shrink-0 min-w-4 h-4 px-0.5 bg-indigo-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                                                    {{ conv.unread_count }}
+                                                </span>
+                                            </Link>
+                                        </div>
+                                    </div>
+                                </Transition>
+                            </div>
+
+                            <!-- Notification bell -->
+                            <div class="relative" ref="notifRef">
+                                <button
+                                    @click="notifOpen = !notifOpen"
+                                    class="relative flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-500 dark:text-gray-400"
+                                    title="Notifications"
+                                >
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                                    </svg>
+                                    <span
+                                        v-if="$page.props.unread_messages > 0"
+                                        class="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none"
+                                    >
+                                        {{ $page.props.unread_messages > 99 ? '99+' : $page.props.unread_messages }}
+                                    </span>
+                                </button>
+
+                                <!-- Notification dropdown -->
+                                <Transition
+                                    enter-active-class="transition ease-out duration-100"
+                                    enter-from-class="opacity-0 scale-95"
+                                    enter-to-class="opacity-100 scale-100"
+                                    leave-active-class="transition ease-in duration-75"
+                                    leave-from-class="opacity-100 scale-100"
+                                    leave-to-class="opacity-0 scale-95"
+                                >
+                                    <div
+                                        v-if="notifOpen"
+                                        class="absolute right-0 mt-1.5 w-72 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl overflow-hidden origin-top-right z-50"
+                                    >
+                                        <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                                            <p class="text-sm font-bold text-gray-900 dark:text-gray-100">Notifications</p>
+                                            <span v-if="$page.props.unread_messages > 0" class="text-xs text-indigo-600 font-semibold">
+                                                {{ $page.props.unread_messages }} unread
+                                            </span>
+                                        </div>
+                                        <div class="max-h-80 overflow-y-auto">
+                                            <template v-if="($page.props.auth?.communities ?? []).length">
+                                                <Link
+                                                    v-for="c in $page.props.auth.communities"
+                                                    :key="c.id"
+                                                    :href="`/communities/${c.slug}/chat`"
+                                                    @click="notifOpen = false"
+                                                    class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                                >
+                                                    <div class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600 shrink-0 overflow-hidden">
+                                                        <img v-if="c.avatar" :src="c.avatar" :alt="c.name" class="w-full h-full object-cover"/>
+                                                        <span v-else>{{ c.name.charAt(0).toUpperCase() }}</span>
+                                                    </div>
+                                                    <div class="flex-1 min-w-0">
+                                                        <p class="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{{ c.name }}</p>
+                                                        <p class="text-xs text-gray-400">Go to chat</p>
+                                                    </div>
+                                                    <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                                    </svg>
+                                                </Link>
+                                            </template>
+                                            <div v-else class="px-4 py-8 text-center">
+                                                <p class="text-sm text-gray-400">No communities yet</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </Transition>
+                            </div>
+
                             <!-- User dropdown -->
                             <div class="relative" ref="menuRef">
                                 <button
@@ -436,8 +619,59 @@ const switcherOpen   = ref(false);
 const switcherSearch = ref('');
 const switcherRef    = ref(null);
 
-const menuOpen = ref(false);
-const menuRef  = ref(null);
+const menuOpen  = ref(false);
+const menuRef   = ref(null);
+
+const notifOpen = ref(false);
+const notifRef  = ref(null);
+
+// ─── DM panel ──────────────────────────────────────────────────────────────────
+const dmOpen            = ref(false);
+const dmRef             = ref(null);
+const dmLoading         = ref(false);
+const dmConversations   = ref([]);
+const dmSearch          = ref('');
+const dmSearchResults   = ref([]);
+let   dmSearchTimer     = null;
+
+async function toggleDm() {
+    dmOpen.value = !dmOpen.value;
+    if (dmOpen.value && !dmConversations.value.length) {
+        dmLoading.value = true;
+        try {
+            const res = await (await import('axios')).default.get('/messages', {
+                headers: { Accept: 'application/json' },
+            });
+            dmConversations.value = res.data.conversations ?? [];
+        } catch { /* ignore */ } finally {
+            dmLoading.value = false;
+        }
+    }
+}
+
+async function searchUsers() {
+    clearTimeout(dmSearchTimer);
+    if (!dmSearch.value.trim()) { dmSearchResults.value = []; return; }
+    dmSearchTimer = setTimeout(async () => {
+        try {
+            const res = await (await import('axios')).default.get('/users/search', {
+                params: { q: dmSearch.value },
+            });
+            dmSearchResults.value = res.data.users ?? [];
+        } catch { /* ignore */ }
+    }, 300);
+}
+
+function dmFormatTime(str) {
+    if (!str) return '';
+    const d = new Date(str);
+    const now = new Date();
+    const diffDays = Math.floor((now - d) / 86400000);
+    if (diffDays === 0) return d.toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' });
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7)  return d.toLocaleDateString('en-PH', { weekday: 'short' });
+    return d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
+}
 
 // ─── Flash ────────────────────────────────────────────────────────────────────
 
@@ -511,6 +745,14 @@ function handleOutsideClick(e) {
     }
     if (menuRef.value && !menuRef.value.contains(e.target)) {
         menuOpen.value = false;
+    }
+    if (notifRef.value && !notifRef.value.contains(e.target)) {
+        notifOpen.value = false;
+    }
+    if (dmRef.value && !dmRef.value.contains(e.target)) {
+        dmOpen.value = false;
+        dmSearch.value = '';
+        dmSearchResults.value = [];
     }
 }
 

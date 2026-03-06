@@ -26,10 +26,11 @@ const props = defineProps({
 const slug = computed(() => props.community.slug);
 
 const tabs = computed(() => [
-    { name: 'community',   label: 'Community',   icon: '💬', href: `/communities/${slug.value}` },
-    { name: 'classroom',   label: 'Classroom',   icon: '🎓', href: `/communities/${slug.value}/classroom` },
-    { name: 'members',     label: 'Members',     icon: '👥', href: `/communities/${slug.value}/members` },
-    { name: 'leaderboard', label: 'Leaderboards', icon: '🏆', href: `/communities/${slug.value}/leaderboard` },
-    { name: 'about',       label: 'About',       icon: 'ℹ️', href: `/communities/${slug.value}/about` },
+    { name: 'community',   label: 'Community',    href: `/communities/${slug.value}` },
+    { name: 'classroom',   label: 'Classroom',    href: `/communities/${slug.value}/classroom` },
+    { name: 'members',     label: 'Members',      href: `/communities/${slug.value}/members` },
+    { name: 'chat',        label: 'Chat',         href: `/communities/${slug.value}/chat` },
+    { name: 'leaderboard', label: 'Leaderboards', href: `/communities/${slug.value}/leaderboard` },
+    { name: 'about',       label: 'About',        href: `/communities/${slug.value}/about` },
 ]);
 </script>

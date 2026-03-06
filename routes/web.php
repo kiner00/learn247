@@ -3,7 +3,9 @@
 use App\Http\Controllers\Web\AdminController;
 use App\Http\Controllers\Web\AffiliateController;
 use App\Http\Controllers\Web\AuthController;
+use App\Http\Controllers\Web\ChatController;
 use App\Http\Controllers\Web\ClassroomController;
+use App\Http\Controllers\Web\DirectMessageController;
 use App\Http\Controllers\Web\CommentController;
 use App\Http\Controllers\Web\CommunityController;
 use App\Http\Controllers\Web\CommunityMemberController;
@@ -102,6 +104,11 @@ Route::middleware('auth')->group(function () {
         Route::post('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/complete', [ClassroomController::class, 'completeLesson'])->name('communities.classroom.lessons.complete');
         Route::match(['patch', 'post'], '/communities/{community}/classroom/courses/{course}/modules/{module}/lessons/{lesson}', [ClassroomController::class, 'updateLesson'])->name('communities.classroom.lessons.update');
 
+        // ─── Chat ─────────────────────────────────────────────────────────────
+        Route::get('/communities/{community}/chat', [ChatController::class, 'index'])->name('communities.chat');
+        Route::post('/communities/{community}/chat', [ChatController::class, 'store'])->name('communities.chat.store');
+        Route::get('/communities/{community}/chat/poll', [ChatController::class, 'poll'])->name('communities.chat.poll');
+
         // ─── Leaderboard ──────────────────────────────────────────────────────
         Route::get('/communities/{community}/leaderboard', [LeaderboardController::class, 'show'])->name('communities.leaderboard');
     });
@@ -112,6 +119,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/posts/{post}/comments', [CommentController::class, 'store'])->name('comments.store');
     Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
     Route::post('/comments/{comment}/like', [LikeController::class, 'toggleComment'])->name('comments.like');
+
+    // ─── Direct Messages ──────────────────────────────────────────────────────
+    Route::get('/messages', [DirectMessageController::class, 'index'])->name('messages.index');
+    Route::get('/users/search', [DirectMessageController::class, 'search'])->name('users.search');
+    Route::get('/messages/{user:username}', [DirectMessageController::class, 'show'])->name('messages.show');
+    Route::post('/messages/{user:username}', [DirectMessageController::class, 'store'])->name('messages.store');
+    Route::get('/messages/{user:username}/poll', [DirectMessageController::class, 'poll'])->name('messages.poll');
 
     // ─── Affiliates ───────────────────────────────────────────────────────────
     Route::get('/my-affiliates', [AffiliateController::class, 'index'])->name('affiliates.index');

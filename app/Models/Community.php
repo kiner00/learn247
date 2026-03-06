@@ -74,6 +74,11 @@ class Community extends Model
         return $this->hasMany(Course::class)->orderBy('position');
     }
 
+    public function messages(): HasMany
+    {
+        return $this->hasMany(Message::class);
+    }
+
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     public function isFree(): bool
