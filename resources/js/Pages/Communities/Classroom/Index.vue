@@ -132,14 +132,14 @@
         <InviteModal
             :show="showInviteModal"
             :community-name="community.name"
-            :invite-url="`${origin}/communities/${community.slug}`"
+            :invite-url="inviteUrl"
             @close="showInviteModal = false"
         />
     </AppLayout>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { Link, useForm, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import CommunityTabs from '@/Components/CommunityTabs.vue';
@@ -148,13 +148,19 @@ import InviteModal from '@/Components/InviteModal.vue';
 const props = defineProps({
     community: Object,
     courses:   Array,
+    affiliate: Object,
 });
 
 const page     = usePage();
 const isOwner  = props.community.owner_id === page.props.auth?.user?.id;
 const showForm = ref(false);
 const showInviteModal = ref(false);
-const origin = window.location.origin;
+
+const inviteUrl = computed(() =>
+    props.affiliate?.code
+        ? `${window.location.origin}/ref/${props.affiliate.code}`
+        : `${window.location.origin}/communities/${props.community.slug}`
+);
 
 const courseForm = useForm({ title: '', description: '' });
 

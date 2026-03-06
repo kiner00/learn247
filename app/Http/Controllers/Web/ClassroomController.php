@@ -39,7 +39,9 @@ class ClassroomController extends Controller
             ];
         });
 
-        return Inertia::render('Communities/Classroom/Index', compact('community', 'courses'));
+        $affiliate = $userId ? $community->affiliates()->where('user_id', $userId)->first() : null;
+
+        return Inertia::render('Communities/Classroom/Index', compact('community', 'courses', 'affiliate'));
     }
 
     public function storeCourse(Request $request, Community $community): RedirectResponse

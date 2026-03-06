@@ -34,7 +34,7 @@
                     </div>
 
                     <button
-                        v-if="isAdmin"
+                        v-if="$page.props.auth?.user"
                         @click="showInviteModal = true"
                         class="px-4 py-1.5 text-sm font-semibold rounded-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 transition-colors"
                     >
@@ -179,7 +179,7 @@
 
                         <!-- Invite button -->
                         <button
-                            v-if="isAdmin"
+                            v-if="$page.props.auth?.user"
                             @click="showInviteModal = true"
                             class="w-full py-2 text-sm font-semibold border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors"
                         >

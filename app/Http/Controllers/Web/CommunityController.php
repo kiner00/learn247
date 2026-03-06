@@ -225,7 +225,8 @@ class CommunityController extends Controller
     public function about(Community $community): Response
     {
         $community->load('owner')->loadCount('members');
+        $affiliate = auth()->id() ? $community->affiliates()->where('user_id', auth()->id())->first() : null;
 
-        return Inertia::render('Communities/About', compact('community'));
+        return Inertia::render('Communities/About', compact('community', 'affiliate'));
     }
 }
