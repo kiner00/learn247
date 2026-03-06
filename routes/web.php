@@ -52,7 +52,8 @@ Route::get('/profile/{username}', [ProfileController::class, 'show'])->name('pro
 
 Route::middleware('auth')->prefix('account')->group(function () {
     Route::get('/settings', [AccountSettingsController::class, 'show'])->name('account.settings');
-    Route::patch('/settings/profile', [AccountSettingsController::class, 'updateProfile'])->name('account.settings.profile');
+    Route::match(['patch', 'post'], '/settings/profile', [AccountSettingsController::class, 'updateProfile'])->name('account.settings.profile');
+    Route::patch('/settings/profile/visibility/{communityId}', [AccountSettingsController::class, 'updateMembershipVisibility'])->name('account.settings.profile.visibility');
     Route::patch('/settings/email', [AccountSettingsController::class, 'updateEmail'])->name('account.settings.email');
     Route::patch('/settings/password', [AccountSettingsController::class, 'updatePassword'])->name('account.settings.password');
     Route::patch('/settings/timezone', [AccountSettingsController::class, 'updateTimezone'])->name('account.settings.timezone');

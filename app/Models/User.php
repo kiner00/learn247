@@ -16,6 +16,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name', 'username', 'bio', 'email', 'password', 'is_super_admin',
         'timezone', 'theme', 'notification_prefs', 'chat_prefs',
+        'avatar', 'location', 'social_links', 'hide_from_search',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -28,6 +29,8 @@ class User extends Authenticatable
             'is_super_admin'     => 'boolean',
             'notification_prefs' => 'array',
             'chat_prefs'         => 'array',
+            'social_links'       => 'array',
+            'hide_from_search'   => 'boolean',
         ];
     }
 

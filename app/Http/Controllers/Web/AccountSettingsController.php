@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -52,17 +53,23 @@ class AccountSettingsController extends Controller
                 'is_owner'     => $m->community?->owner_id === $user->id,
                 'role'         => $m->role,
                 'joined_at'    => $m->joined_at,
-                'notif_prefs'  => array_merge($this->defaultCommunityNotifPrefs, $m->notif_prefs ?? []),
-                'chat_enabled' => $m->chat_enabled ?? true,
+                'notif_prefs'     => array_merge($this->defaultCommunityNotifPrefs, $m->notif_prefs ?? []),
+                'chat_enabled'    => $m->chat_enabled ?? true,
+                'show_on_profile' => $m->show_on_profile ?? true,
             ]);
 
         return Inertia::render('Account/Settings', [
             'tab'          => $request->get('tab', 'communities'),
             'profileUser'  => [
-                'name'     => $user->name,
-                'username' => $user->username,
-                'bio'      => $user->bio,
-                'email'    => $user->email,
+                'first_name'       => explode(' ', $user->name, 2)[0] ?? '',
+                'last_name'        => explode(' ', $user->name, 2)[1] ?? '',
+                'username'         => $user->username,
+                'bio'              => $user->bio,
+                'email'            => $user->email,
+                'avatar'           => $user->avatar,
+                'location'         => $user->location,
+                'social_links'     => $user->social_links ?? [],
+                'hide_from_search' => $user->hide_from_search ?? false,
             ],
             'memberships'     => $memberships->values(),
             'affiliateLink'   => url('/register?ref=' . $user->username),
@@ -78,13 +85,45 @@ class AccountSettingsController extends Controller
         $user = $request->user();
 
         $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'bio'  => ['nullable', 'string', 'max:300'],
+            'first_name'       => ['required', 'string', 'max:255'],
+            'last_name'        => ['required', 'string', 'max:255'],
+            'bio'              => ['nullable', 'string', 'max:300'],
+            'location'         => ['nullable', 'string', 'max:255'],
+            'social_links'     => ['nullable', 'array'],
+            'social_links.*'   => ['nullable', 'string', 'max:500'],
+            'hide_from_search' => ['nullable', 'boolean'],
+            'avatar'           => ['nullable', 'image', 'max:5120'],
         ]);
+
+        $data['name'] = trim($data['first_name'] . ' ' . $data['last_name']);
+        unset($data['first_name'], $data['last_name']);
+
+        if ($request->hasFile('avatar')) {
+            if ($user->avatar && str_starts_with($user->avatar, '/storage/')) {
+                Storage::disk('public')->delete(ltrim(str_replace('/storage/', '', $user->avatar), '/'));
+            }
+            $path = $request->file('avatar')->store('user-avatars', 'public');
+            $data['avatar'] = Storage::url($path);
+        } else {
+            unset($data['avatar']);
+        }
 
         $user->update($data);
 
         return back()->with('success', 'Profile updated!');
+    }
+
+    public function updateMembershipVisibility(Request $request, int $communityId): RedirectResponse
+    {
+        $data = $request->validate(['show_on_profile' => ['required', 'boolean']]);
+
+        $member = CommunityMember::where('user_id', $request->user()->id)
+            ->where('community_id', $communityId)
+            ->firstOrFail();
+
+        $member->update($data);
+
+        return back()->with('success', 'Membership visibility updated!');
     }
 
     public function updateEmail(Request $request): RedirectResponse

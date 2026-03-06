@@ -16,7 +16,7 @@ class CommunityMember extends Model
 
     public const ROLES = [self::ROLE_ADMIN, self::ROLE_MODERATOR, self::ROLE_MEMBER];
 
-    protected $fillable = ['community_id', 'user_id', 'role', 'points', 'joined_at', 'notif_prefs', 'chat_enabled'];
+    protected $fillable = ['community_id', 'user_id', 'role', 'points', 'joined_at', 'notif_prefs', 'chat_enabled', 'show_on_profile'];
 
     protected $casts = [
         'notif_prefs'  => 'array',
@@ -54,7 +54,12 @@ class CommunityMember extends Model
 
     protected function casts(): array
     {
-        return ['joined_at' => 'datetime'];
+        return [
+            'joined_at'       => 'datetime',
+            'notif_prefs'     => 'array',
+            'chat_enabled'    => 'boolean',
+            'show_on_profile' => 'boolean',
+        ];
     }
 
     // ─── Relationships ────────────────────────────────────────────────────────
