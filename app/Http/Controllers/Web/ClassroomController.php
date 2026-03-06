@@ -97,17 +97,10 @@ class ClassroomController extends Controller
         abort_unless($request->user()->id === $community->owner_id, 403);
 
         $data = $request->validate([
-            'title'       => ['required', 'string', 'max:255'],
-            'content'     => ['nullable', 'string'],
-            'video_url'   => ['nullable', 'url', 'max:500'],
-            'video_file'  => ['nullable', 'file', 'mimetypes:video/mp4,video/webm,video/ogg,video/quicktime', 'max:512000'],
+            'title'     => ['required', 'string', 'max:255'],
+            'content'   => ['nullable', 'string'],
+            'video_url' => ['nullable', 'url', 'max:500'],
         ]);
-
-        if ($request->hasFile('video_file')) {
-            $data['video_path'] = $request->file('video_file')->store('lesson-videos', 'public');
-            $data['video_url']  = null;
-        }
-        unset($data['video_file']);
 
         $position = $module->lessons()->max('position') + 1;
         $module->lessons()->create(array_merge($data, ['position' => $position]));
@@ -130,26 +123,15 @@ class ClassroomController extends Controller
         abort_unless($request->user()->id === $community->owner_id, 403);
 
         $data = $request->validate([
-            'content'    => ['nullable', 'string'],
-            'video_url'  => ['nullable', 'url', 'max:500'],
-            'video_file' => ['nullable', 'file', 'mimetypes:video/mp4,video/webm,video/ogg,video/quicktime', 'max:512000'],
+            'content'   => ['nullable', 'string'],
+            'video_url' => ['nullable', 'url', 'max:500'],
         ]);
 
-        if ($request->hasFile('video_file')) {
-            // Delete old uploaded file if present
-            if ($lesson->video_path) {
-                Storage::disk('public')->delete($lesson->video_path);
-            }
-            $data['video_path'] = $request->file('video_file')->store('lesson-videos', 'public');
-            $data['video_url']  = null;
-        } elseif (!empty($data['video_url'])) {
-            // Switched to URL — clear any uploaded file
-            if ($lesson->video_path) {
-                Storage::disk('public')->delete($lesson->video_path);
-            }
+        // If a URL is provided, clear any previously uploaded file
+        if (!empty($data['video_url']) && $lesson->video_path) {
+            Storage::disk('public')->delete($lesson->video_path);
             $data['video_path'] = null;
         }
-        unset($data['video_file']);
 
         $lesson->update($data);
 

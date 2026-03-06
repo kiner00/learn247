@@ -83,33 +83,11 @@
                                     class="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 />
 
-                                <!-- Video source toggle -->
-                                <div class="flex gap-1 text-xs">
-                                    <button type="button" @click="lessonVideoMode = 'url'"
-                                        class="flex-1 py-1 rounded border transition-colors"
-                                        :class="lessonVideoMode === 'url' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 text-gray-500'">
-                                        YouTube / URL
-                                    </button>
-                                    <button type="button" @click="lessonVideoMode = 'upload'"
-                                        class="flex-1 py-1 rounded border transition-colors"
-                                        :class="lessonVideoMode === 'upload' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 text-gray-500'">
-                                        Upload Video
-                                    </button>
-                                </div>
-
                                 <input
-                                    v-if="lessonVideoMode === 'url'"
                                     v-model="lessonForm.video_url"
                                     type="url"
                                     placeholder="https://youtube.com/watch?v=..."
                                     class="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                />
-                                <input
-                                    v-else
-                                    type="file"
-                                    accept="video/mp4,video/webm,video/ogg,video/quicktime"
-                                    @change="lessonForm.video_file = $event.target.files[0]"
-                                    class="w-full text-xs text-gray-600 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-indigo-50 file:text-indigo-700"
                                 />
 
                                 <div class="flex gap-1.5">
@@ -122,7 +100,7 @@
                             </form>
                             <button
                                 v-else
-                                @click="addingLessonToModule = mod.id; lessonForm.reset(); lessonVideoMode = 'url'"
+                                @click="addingLessonToModule = mod.id; lessonForm.reset()"
                                 class="text-xs text-indigo-500 hover:text-indigo-700 font-medium"
                             >
                                 + Add Lesson
@@ -202,44 +180,13 @@
                             />
 
                             <div>
-                                <p class="text-xs text-gray-500 mb-1.5 font-medium">Video source</p>
-                                <div class="flex gap-1.5 mb-2">
-                                    <button type="button" @click="editVideoMode = 'url'"
-                                        class="flex-1 py-1.5 text-xs rounded-lg border transition-colors"
-                                        :class="editVideoMode === 'url' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 text-gray-500 hover:border-indigo-300'">
-                                        YouTube / URL
-                                    </button>
-                                    <button type="button" @click="editVideoMode = 'upload'"
-                                        class="flex-1 py-1.5 text-xs rounded-lg border transition-colors"
-                                        :class="editVideoMode === 'upload' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 text-gray-500 hover:border-indigo-300'">
-                                        Upload Video
-                                    </button>
-                                    <button type="button" @click="editVideoMode = 'none'"
-                                        class="flex-1 py-1.5 text-xs rounded-lg border transition-colors"
-                                        :class="editVideoMode === 'none' ? 'bg-gray-500 text-white border-gray-500' : 'border-gray-200 text-gray-500 hover:border-gray-300'">
-                                        No Video
-                                    </button>
-                                </div>
-
+                                <p class="text-xs text-gray-500 mb-1.5 font-medium">Video URL</p>
                                 <input
-                                    v-if="editVideoMode === 'url'"
                                     v-model="contentForm.video_url"
                                     type="url"
                                     placeholder="https://youtube.com/watch?v=..."
                                     class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 />
-                                <div v-else-if="editVideoMode === 'upload'">
-                                    <input
-                                        type="file"
-                                        accept="video/mp4,video/webm,video/ogg,video/quicktime"
-                                        @change="contentForm.video_file = $event.target.files[0]"
-                                        class="w-full text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
-                                    />
-                                    <p v-if="selectedLesson.video_path" class="text-xs text-gray-400 mt-1">
-                                        Currently has an uploaded video — select a new file to replace it.
-                                    </p>
-                                </div>
-                                <p v-else class="text-xs text-gray-400">Video will be removed from this lesson.</p>
                             </div>
 
                             <div class="flex gap-2 justify-end">
@@ -372,8 +319,7 @@ function createModule() {
 
 // ─── Add lesson ────────────────────────────────────────────────────────────────
 const addingLessonToModule = ref(null);
-const lessonVideoMode      = ref('url');
-const lessonForm = useForm({ title: '', content: '', video_url: '', video_file: null });
+const lessonForm = useForm({ title: '', content: '', video_url: '' });
 
 function createLesson(mod) {
     lessonForm.post(
@@ -384,23 +330,17 @@ function createLesson(mod) {
 
 // ─── Edit lesson ──────────────────────────────────────────────────────────────
 const editingLesson = ref(false);
-const editVideoMode = ref('url');
-const contentForm   = useForm({ content: '', video_url: '', video_file: null });
+const contentForm   = useForm({ content: '', video_url: '' });
 
 function startEdit() {
     const l = selectedLesson.value;
-    contentForm.content    = l?.content ?? '';
-    contentForm.video_url  = l?.video_url ?? '';
-    contentForm.video_file = null;
-    editVideoMode.value    = l?.video_path ? 'upload' : l?.video_url ? 'url' : 'none';
-    editingLesson.value    = true;
+    contentForm.content   = l?.content ?? '';
+    contentForm.video_url = l?.video_url ?? '';
+    editingLesson.value   = true;
 }
 
 function saveContent() {
     const lesson = selectedLesson.value;
-    contentForm.video_url  = editVideoMode.value === 'url'    ? contentForm.video_url : null;
-    contentForm.video_file = editVideoMode.value === 'upload' ? contentForm.video_file : null;
-
     contentForm
         .transform((data) => ({ ...data, _method: 'PATCH' }))
         .post(
