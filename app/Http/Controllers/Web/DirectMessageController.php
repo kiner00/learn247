@@ -151,4 +151,13 @@ class DirectMessageController extends Controller
 
         return response()->json(['messages' => $messages]);
     }
+
+    public function destroy(Request $request, DirectMessage $directMessage): JsonResponse
+    {
+        abort_unless($directMessage->sender_id === $request->user()->id, 403);
+
+        $directMessage->delete();
+
+        return response()->json(['deleted' => $directMessage->id]);
+    }
 }

@@ -146,6 +146,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/messages/{user:username}', [DirectMessageController::class, 'show'])->name('messages.show');
     Route::post('/messages/{user:username}', [DirectMessageController::class, 'store'])->name('messages.store');
     Route::get('/messages/{user:username}/poll', [DirectMessageController::class, 'poll'])->name('messages.poll');
+    Route::delete('/direct-messages/{directMessage}', [DirectMessageController::class, 'destroy'])->name('messages.destroy');
 
     // ─── Affiliates ───────────────────────────────────────────────────────────
     Route::get('/my-affiliates', [AffiliateController::class, 'index'])->name('affiliates.index');

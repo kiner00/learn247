@@ -61,11 +61,22 @@
                         </div>
 
                         <!-- My message -->
-                        <div v-else class="max-w-xs">
-                            <div class="px-3.5 py-2 bg-indigo-600 rounded-2xl rounded-br-sm text-sm text-white leading-relaxed">
-                                {{ msg.content }}
+                        <div v-else class="flex items-end gap-1 group">
+                            <button
+                                @click="deleteMessage(msg)"
+                                class="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-500 transition-all mb-4"
+                                title="Delete message"
+                            >
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
+                            <div class="max-w-xs">
+                                <div class="px-3.5 py-2 bg-indigo-600 rounded-2xl rounded-br-sm text-sm text-white leading-relaxed">
+                                    {{ msg.content }}
+                                </div>
+                                <p class="text-[10px] text-gray-400 mt-0.5 text-right mr-1">{{ formatTime(msg.created_at) }}</p>
                             </div>
-                            <p class="text-[10px] text-gray-400 mt-0.5 text-right mr-1">{{ formatTime(msg.created_at) }}</p>
                         </div>
                     </div>
                 </div>
@@ -150,6 +161,16 @@ function scrollToBottom(smooth = false) {
             messagesEl.value.scrollTo({ top: messagesEl.value.scrollHeight, behavior: smooth ? 'smooth' : 'instant' });
         }
     });
+}
+
+async function deleteMessage(msg) {
+    if (!confirm('Delete this message?')) return;
+    try {
+        await axios.delete(`/direct-messages/${msg.id}`, {
+            headers: { 'X-CSRF-TOKEN': csrfToken },
+        });
+        messages.value = messages.value.filter(m => m.id !== msg.id);
+    } catch { /* ignore */ }
 }
 
 async function send() {
