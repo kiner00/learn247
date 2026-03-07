@@ -9,4 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('subscriptions:renew')->dailyAt('08:00');
-Schedule::command('pulse:check')->everyMinute();
+// Schedule::command('pulse:check')->everyMinute();
