@@ -605,6 +605,42 @@
                     </div>
                 </div>
 
+                <!-- Payout Settings -->
+                <div v-else-if="activeTab === 'payouts'">
+                    <div class="bg-white border border-gray-200 rounded-2xl p-6">
+                        <h2 class="text-base font-bold text-gray-900 mb-1">Payout Settings</h2>
+                        <p class="text-sm text-gray-400 mb-6">
+                            Set where you want to receive your earnings as a community owner.
+                            This applies to all communities you own.
+                        </p>
+                        <form @submit.prevent="savePayout" class="max-w-sm space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Payout Method</label>
+                                <select v-model="payoutForm.payout_method"
+                                        class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    <option value="gcash">GCash</option>
+                                    <option value="maya">Maya</option>
+                                    <option value="bank">Bank Transfer</option>
+                                    <option value="paypal">PayPal</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">
+                                    {{ payoutForm.payout_method === 'bank' ? 'Account Number / Bank Name' : 'Account / Mobile Number' }}
+                                </label>
+                                <input v-model="payoutForm.payout_details" type="text"
+                                       placeholder="e.g. 09xxxxxxxxx or account number"
+                                       class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                            </div>
+                            <button type="submit" :disabled="payoutForm.processing"
+                                    class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-lg transition-colors disabled:opacity-50">
+                                {{ payoutForm.processing ? 'Saving...' : 'SAVE PAYOUT DETAILS' }}
+                            </button>
+                            <p v-if="payoutForm.recentlySuccessful" class="text-xs text-green-600 font-medium text-center">Saved!</p>
+                        </form>
+                    </div>
+                </div>
+
                 <!-- Placeholder tabs -->
                 <div v-else>
                     <div class="bg-white border border-gray-200 rounded-2xl p-16 text-center">
@@ -631,6 +667,8 @@ const props = defineProps({
     theme:         String,
     notifPrefs:    Object,
     chatPrefs:     Object,
+    payoutMethod:  String,
+    payoutDetails: String,
 });
 
 // Mutable copy of memberships for local toggle state
@@ -734,6 +772,15 @@ function savePassword() {
         preserveScroll: true,
         onSuccess: () => { showPasswordForm.value = false; passwordForm.reset(); },
     });
+}
+
+// ── Payout ────────────────────────────────────────────────────────────────────
+const payoutForm = useForm({
+    payout_method:  props.payoutMethod  ?? 'gcash',
+    payout_details: props.payoutDetails ?? '',
+});
+function savePayout() {
+    payoutForm.patch('/account/settings/payout', { preserveScroll: true });
 }
 
 // ── Timezone ──────────────────────────────────────────────────────────────────

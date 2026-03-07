@@ -77,6 +77,8 @@ class AccountSettingsController extends Controller
             'theme'           => $user->theme ?? 'light',
             'notifPrefs'      => array_merge($this->defaultNotifPrefs, $user->notification_prefs ?? []),
             'chatPrefs'       => array_merge($this->defaultChatPrefs, $user->chat_prefs ?? []),
+            'payoutMethod'    => $user->payout_method,
+            'payoutDetails'   => $user->payout_details,
         ]);
     }
 
@@ -248,5 +250,17 @@ class AccountSettingsController extends Controller
         $request->user()->update(['theme' => $data['theme']]);
 
         return back()->with('success', 'Theme saved!');
+    }
+
+    public function updatePayout(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'payout_method'  => ['required', 'string', 'in:gcash,maya,bank,paypal'],
+            'payout_details' => ['required', 'string', 'max:255'],
+        ]);
+
+        $request->user()->update($data);
+
+        return back()->with('success', 'Payout details saved!');
     }
 }

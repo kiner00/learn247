@@ -110,11 +110,17 @@
                                 </span>
                             </td>
                             <td class="px-5 py-3 text-right">
-                                <button v-if="c.status === 'pending'"
-                                        @click="markPaid(c.id)"
-                                        class="text-xs text-indigo-600 hover:text-indigo-800 font-medium whitespace-nowrap">
-                                    Mark Paid
-                                </button>
+                                <template v-if="c.status === 'pending'">
+                                    <button v-if="c.can_disburse"
+                                            @click="disburse(c.id)"
+                                            class="text-xs text-green-700 hover:text-green-900 font-semibold whitespace-nowrap mr-2">
+                                        Pay via Xendit
+                                    </button>
+                                    <button @click="markPaid(c.id)"
+                                            class="text-xs text-indigo-600 hover:text-indigo-800 font-medium whitespace-nowrap">
+                                        Mark Paid
+                                    </button>
+                                </template>
                             </td>
                         </tr>
                     </tbody>
@@ -137,5 +143,9 @@ const props = defineProps({
 
 function markPaid(conversionId) {
     router.patch(`/affiliate-conversions/${conversionId}/paid`)
+}
+
+function disburse(conversionId) {
+    router.post(`/affiliate-conversions/${conversionId}/disburse`)
 }
 </script>

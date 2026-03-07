@@ -55,6 +55,29 @@ class XenditService
     }
 
     /**
+     * Create a Xendit Payout (send money to e-wallet or bank via /payouts API).
+     * @throws \RuntimeException
+     */
+    public function createPayout(array $data): array
+    {
+        $idempotencyKey = $data['reference_id'] ?? uniqid('payout-');
+
+        $response = Http::withBasicAuth($this->secretKey, '')
+            ->withHeaders(['Idempotency-key' => $idempotencyKey])
+            ->post(self::BASE_URL . '/v2/payouts', $data);
+
+        if ($response->failed()) {
+            Log::error('XenditService::createPayout failed', [
+                'status' => $response->status(),
+                'body'   => $response->json(),
+            ]);
+            throw new \RuntimeException('Xendit payout failed: ' . ($response->json()['message'] ?? $response->body()));
+        }
+
+        return $response->json();
+    }
+
+    /**
      * Verify the Xendit x-callback-token header using constant-time comparison.
      */
     public function verifyCallbackToken(?string $token): bool

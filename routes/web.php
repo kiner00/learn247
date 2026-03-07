@@ -47,6 +47,10 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->n
 Route::middleware(['auth', EnsureSuperAdmin::class])->prefix('admin')->group(function () {
     Route::get('/', [AdminController::class, 'dashboard'])->name('admin.dashboard');
     Route::patch('/settings', [AdminController::class, 'updateSettings'])->name('admin.settings.update');
+    Route::get('/payouts', [AdminController::class, 'payouts'])->name('admin.payouts');
+    Route::post('/payouts/owner/{community}', [AdminController::class, 'payOwner'])->name('admin.payouts.owner');
+    Route::post('/payouts/owners/batch', [AdminController::class, 'batchPayOwners'])->name('admin.payouts.owners.batch');
+    Route::post('/payouts/affiliates/batch', [AdminController::class, 'batchPayAffiliates'])->name('admin.payouts.affiliates.batch');
 });
 
 // ─── Profile ───────────────────────────────────────────────────────────────────
@@ -69,6 +73,7 @@ Route::middleware('auth')->prefix('account')->group(function () {
     Route::patch('/settings/chat', [AccountSettingsController::class, 'updateChat'])->name('account.settings.chat');
     Route::patch('/settings/chat/{communityId}', [AccountSettingsController::class, 'updateCommunityChat'])->name('account.settings.chat.community');
     Route::patch('/settings/theme', [AccountSettingsController::class, 'updateTheme'])->name('account.settings.theme');
+    Route::patch('/settings/payout', [AccountSettingsController::class, 'updatePayout'])->name('account.settings.payout');
 });
 
 // ─── Communities ───────────────────────────────────────────────────────────────
@@ -153,5 +158,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/communities/{community}/affiliates', [AffiliateController::class, 'store'])->name('communities.affiliates.join');
     Route::get('/communities/{community}/affiliates', [AffiliateController::class, 'dashboard'])->name('communities.affiliates');
     Route::patch('/affiliate-conversions/{conversion}/paid', [AffiliateController::class, 'markPaid'])->name('affiliate-conversions.paid');
+    Route::post('/affiliate-conversions/{conversion}/disburse', [AffiliateController::class, 'disburse'])->name('affiliate-conversions.disburse');
     Route::patch('/affiliates/{affiliate}/payout', [AffiliateController::class, 'updatePayout'])->name('affiliates.payout');
 });

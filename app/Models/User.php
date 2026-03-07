@@ -17,6 +17,7 @@ class User extends Authenticatable
         'name', 'username', 'bio', 'email', 'password', 'is_super_admin',
         'timezone', 'theme', 'notification_prefs', 'chat_prefs',
         'avatar', 'location', 'social_links', 'hide_from_search',
+        'payout_method', 'payout_details',
     ];
 
     protected $hidden = ['password', 'remember_token'];

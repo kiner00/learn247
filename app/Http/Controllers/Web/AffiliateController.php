@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Actions\Affiliate\DisbursePayout;
 use App\Actions\Affiliate\JoinAffiliate;
 use App\Actions\Affiliate\MarkAffiliateConversionPaid;
 use App\Http\Controllers\Controller;
@@ -86,6 +87,8 @@ class AffiliateController extends Controller
                 'creator_amount'    => $c->creator_amount,
                 'status'            => $c->status,
                 'paid_at'           => $c->paid_at?->format('M j, Y'),
+                'payout_method'     => $c->affiliate->payout_method,
+                'can_disburse'      => DisbursePayout::supports($c->affiliate->payout_method ?? ''),
             ]);
 
         $stats = [
@@ -110,6 +113,24 @@ class AffiliateController extends Controller
         $affiliate->update($data);
 
         return back()->with('success', 'Payout details saved.');
+    }
+
+    /** POST /affiliate-conversions/{conversion}/disburse — pay via Xendit + mark paid */
+    public function disburse(AffiliateConversion $conversion, DisbursePayout $disburse, MarkAffiliateConversionPaid $mark): RedirectResponse
+    {
+        $this->authorize('update', $conversion->affiliate->community);
+
+        if ($conversion->status === AffiliateConversion::STATUS_PAID) {
+            return back()->with('error', 'Already paid.');
+        }
+
+        try {
+            $disburse->execute($conversion);
+            $mark->execute($conversion);
+            return back()->with('success', 'Payout sent via Xendit and marked as paid.');
+        } catch (\RuntimeException $e) {
+            return back()->with('error', 'Xendit disbursement failed: ' . $e->getMessage());
+        }
     }
 
     /** PATCH /affiliate-conversions/{conversion}/paid */
