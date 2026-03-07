@@ -3,6 +3,7 @@
 use App\Http\Controllers\Web\AdminController;
 use App\Http\Controllers\Web\AffiliateController;
 use App\Http\Controllers\Web\AuthController;
+use App\Http\Controllers\Web\CertificateController;
 use App\Http\Controllers\Web\ChatController;
 use App\Http\Controllers\Web\ClassroomController;
 use App\Http\Controllers\Web\DirectMessageController;
@@ -11,9 +12,11 @@ use App\Http\Controllers\Web\CommunityController;
 use App\Http\Controllers\Web\CommunityMemberController;
 use App\Http\Controllers\Web\AccountSettingsController;
 use App\Http\Controllers\Web\LeaderboardController;
+use App\Http\Controllers\Web\LessonCommentController;
 use App\Http\Controllers\Web\ProfileController;
 use App\Http\Controllers\Web\LikeController;
 use App\Http\Controllers\Web\PostController;
+use App\Http\Controllers\Web\QuizController;
 use App\Http\Controllers\Web\RefController;
 use App\Http\Controllers\Web\SubscriptionController;
 use App\Http\Middleware\EnsureActiveMembership;
@@ -21,6 +24,9 @@ use App\Http\Middleware\EnsureSuperAdmin;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect('/communities'))->name('home');
+
+// ─── Certificates (public shareable link) ─────────────────────────────────────
+Route::get('/certificates/{uuid}', [CertificateController::class, 'show'])->name('certificates.show');
 
 // ─── Affiliate referral link (public) ─────────────────────────────────────────
 Route::get('/ref/{code}', [RefController::class, 'redirect'])->name('ref.redirect');
@@ -104,6 +110,18 @@ Route::middleware('auth')->group(function () {
         Route::post('/communities/{community}/classroom/courses/{course}/modules/{module}/lessons', [ClassroomController::class, 'storeLesson'])->name('communities.classroom.lessons.store');
         Route::post('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/complete', [ClassroomController::class, 'completeLesson'])->name('communities.classroom.lessons.complete');
         Route::match(['patch', 'post'], '/communities/{community}/classroom/courses/{course}/modules/{module}/lessons/{lesson}', [ClassroomController::class, 'updateLesson'])->name('communities.classroom.lessons.update');
+
+        // Lesson comments
+        Route::post('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/comments', [LessonCommentController::class, 'store'])->name('lesson.comments.store');
+        Route::delete('/lesson-comments/{comment}', [LessonCommentController::class, 'destroy'])->name('lesson.comments.destroy');
+
+        // Quizzes
+        Route::post('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/quiz', [QuizController::class, 'store'])->name('lesson.quiz.store');
+        Route::post('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/quiz/{quiz}/submit', [QuizController::class, 'submit'])->name('lesson.quiz.submit');
+        Route::delete('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/quiz/{quiz}', [QuizController::class, 'destroy'])->name('lesson.quiz.destroy');
+
+        // Certificates
+        Route::post('/communities/{community}/classroom/courses/{course}/certificate', [CertificateController::class, 'issue'])->name('communities.classroom.courses.certificate');
 
         // ─── Chat ─────────────────────────────────────────────────────────────
         Route::get('/communities/{community}/chat', [ChatController::class, 'index'])->name('communities.chat');

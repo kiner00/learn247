@@ -77,8 +77,9 @@ class HandleInertiaRequests extends Middleware
                     : [],
             ],
             'flash' => [
-                'success' => $request->session()->get('success'),
-                'error'   => $request->session()->get('error'),
+                'success'     => $request->session()->get('success'),
+                'error'       => $request->session()->get('error'),
+                'quiz_result' => $request->session()->get('quiz_result'),
             ],
             'unread_messages' => $request->user() ? $this->unreadMessageCount($request->user()->id) : 0,
             'unread_dms'      => $request->user()

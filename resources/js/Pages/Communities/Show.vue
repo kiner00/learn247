@@ -5,127 +5,99 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-            <!-- Posts feed (2/3) -->
+            <!-- ── Posts feed ──────────────────────────────────────────────── -->
             <div class="lg:col-span-2 space-y-4">
 
-                <!-- Community title + meta row -->
-                <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl px-5 py-4 shadow-sm">
-                    <h1 class="text-lg font-black text-gray-900 dark:text-gray-100 mb-2">{{ community.name }}</h1>
-                    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
-                        <span class="flex items-center gap-1">
-                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                            </svg>
-                            {{ community.is_private ? 'Private' : 'Public' }}
-                        </span>
-                        <span class="flex items-center gap-1">
-                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-                            </svg>
-                            {{ community.members_count }} {{ community.members_count === 1 ? 'member' : 'members' }}
-                        </span>
-                        <span class="flex items-center gap-1">
-                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            {{ community.price > 0 ? `₱${Number(community.price).toLocaleString()}/month` : 'Free' }}
-                        </span>
-                        <span v-if="community.owner" class="flex items-center gap-1">
-                            By {{ community.owner.name }}
-                        </span>
+                <!-- Compose box -->
+                <div v-if="isMember" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm">
+                    <!-- Collapsed -->
+                    <div v-if="!composing" class="flex items-center gap-3 px-4 py-3 cursor-text" @click="composing = true">
+                        <UserAvatar :name="page.props.auth?.user?.name" :avatar="page.props.auth?.user?.avatar" size="8" />
+                        <span class="text-sm text-gray-400 flex-1">Write something...</span>
                     </div>
-                </div>
-
-                <!-- Create post (members only) -->
-                <div v-if="isMember" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-5 shadow-sm">
-                    <div class="flex items-start gap-3">
-                        <div class="w-8 h-8 rounded-full bg-linear-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-xs font-bold text-white shrink-0">
-                            {{ userInitial }}
-                        </div>
-                        <form class="flex-1" @submit.prevent="createPost">
-                            <input
-                                v-model="postForm.title"
-                                type="text"
-                                placeholder="Post title (optional)"
-                                class="w-full px-3.5 py-2 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent mb-2"
-                            />
-                            <textarea
-                                v-model="postForm.content"
-                                rows="3"
-                                placeholder="Share something with the community..."
-                                required
-                                class="w-full px-3.5 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none dark:bg-gray-700 dark:text-gray-100"
-                                :class="postForm.errors.content ? 'border-red-400' : 'border-gray-200 dark:border-gray-600'"
-                            />
-                            <p v-if="postForm.errors.content" class="mt-1 text-xs text-red-600">{{ postForm.errors.content }}</p>
-                            <div class="flex justify-end mt-2">
-                                <button
-                                    type="submit"
-                                    :disabled="postForm.processing || !postForm.content.trim()"
-                                    class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                >
-                                    {{ postForm.processing ? 'Posting...' : 'Post' }}
-                                </button>
+                    <!-- Expanded -->
+                    <form v-else @submit.prevent="createPost" class="p-4 space-y-2">
+                        <div class="flex items-start gap-3">
+                            <UserAvatar :name="page.props.auth?.user?.name" :avatar="page.props.auth?.user?.avatar" size="8" class="mt-0.5" />
+                            <div class="flex-1 space-y-2">
+                                <input v-model="postForm.title" type="text" placeholder="Title (optional)" autofocus
+                                    class="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                <textarea v-model="postForm.content" rows="3" placeholder="Share something with the community..." required
+                                    class="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                                    :class="postForm.errors.content ? 'border-red-400' : ''" />
                             </div>
-                        </form>
-                    </div>
+                        </div>
+                        <div class="flex justify-end gap-2">
+                            <button type="button" @click="composing = false; postForm.reset()"
+                                class="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 rounded-xl">Cancel</button>
+                            <button type="submit" :disabled="postForm.processing || !postForm.content.trim()"
+                                class="px-5 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 disabled:opacity-40 transition-colors">
+                                {{ postForm.processing ? 'Posting...' : 'Post' }}
+                            </button>
+                        </div>
+                    </form>
                 </div>
 
                 <!-- Post list -->
                 <template v-if="community.posts?.length">
-                    <div
-                        v-for="post in community.posts"
-                        :key="post.id"
+                    <div v-for="post in community.posts" :key="post.id"
                         class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-5 shadow-sm hover:border-indigo-200 dark:hover:border-indigo-700 transition-colors cursor-pointer"
                         @click="openPost(post)"
                     >
+                        <!-- Author row -->
                         <div class="flex items-start justify-between mb-3">
                             <div class="flex items-center gap-2.5">
-                                <div class="w-9 h-9 rounded-full bg-linear-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-xs font-bold text-white shrink-0">
-                                    {{ post.author?.name?.charAt(0)?.toUpperCase() }}
-                                </div>
+                                <UserAvatar :name="post.author?.name" :avatar="post.author?.avatar" size="9" />
                                 <div>
-                                    <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ post.author?.name }}</p>
+                                    <p class="text-sm font-semibold text-gray-900 dark:text-gray-100 leading-tight">{{ post.author?.name }}</p>
                                     <p class="text-xs text-gray-400">{{ formatDate(post.created_at) }}</p>
                                 </div>
                             </div>
-                            <button
-                                v-if="canDeletePost(post)"
-                                @click.stop="deletePost(post)"
-                                class="text-xs text-gray-400 hover:text-red-500 transition-colors px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
-                            >
+                            <button v-if="canDeletePost(post)" @click.stop="deletePost(post)"
+                                class="text-xs text-gray-400 hover:text-red-500 transition-colors px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20">
                                 Delete
                             </button>
                         </div>
 
+                        <!-- Content -->
                         <h3 v-if="post.title" class="font-bold text-gray-900 dark:text-gray-100 mb-1.5">{{ post.title }}</h3>
                         <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line leading-relaxed line-clamp-4">{{ post.content }}</p>
 
                         <!-- Reaction bar -->
                         <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center gap-4">
-                            <button
-                                @click.stop="togglePostLike(post)"
+                            <button @click.stop="togglePostLike(post)"
                                 class="flex items-center gap-1.5 text-xs transition-colors"
-                                :class="post.user_has_liked ? 'text-indigo-600 font-semibold' : 'text-gray-500 hover:text-indigo-500'"
-                            >
+                                :class="post.user_has_liked ? 'text-indigo-600 font-semibold' : 'text-gray-500 hover:text-indigo-500'">
                                 <svg class="w-4 h-4" :fill="post.user_has_liked ? 'currentColor' : 'none'" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
                                 </svg>
-                                {{ post.likes_count ?? post.likes?.length ?? 0 }}
+                                {{ post.likes_count ?? 0 }}
                             </button>
-                            <button
-                                class="flex items-center gap-1.5 text-xs text-gray-500 hover:text-indigo-500 transition-colors"
-                            >
+                            <button class="flex items-center gap-1.5 text-xs text-gray-500 hover:text-indigo-500 transition-colors">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
                                 </svg>
-                                {{ post.comments_count ?? post.comments?.length ?? 0 }} comments
+                                {{ post.comments_count ?? 0 }}
                             </button>
+
+                            <!-- Commenter avatars + last comment -->
+                            <div v-if="post.commenter_avatars?.length" class="flex items-center gap-2 ml-auto">
+                                <div class="flex -space-x-1.5">
+                                    <div v-for="(c, i) in post.commenter_avatars" :key="i"
+                                        class="w-5 h-5 rounded-full ring-2 ring-white dark:ring-gray-800 shrink-0 overflow-hidden bg-indigo-100 flex items-center justify-center">
+                                        <img v-if="c.avatar" :src="c.avatar" :alt="c.name" class="w-full h-full object-cover" />
+                                        <span v-else class="text-indigo-600 font-bold text-[8px]">{{ c.name?.charAt(0)?.toUpperCase() }}</span>
+                                    </div>
+                                </div>
+                                <span v-if="post.last_comment_at" class="text-xs text-gray-400">
+                                    Last comment {{ formatRelative(post.last_comment_at) }}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </template>
 
-                <!-- Empty posts -->
+                <!-- Empty -->
                 <div v-else class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-12 text-center shadow-sm">
                     <div class="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center mx-auto mb-3">
                         <svg class="w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -137,92 +109,71 @@
                 </div>
             </div>
 
-            <!-- Sidebar -->
+            <!-- ── Sidebar ──────────────────────────────────────────────────── -->
             <div class="space-y-4">
+
+                <!-- Community card -->
                 <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden shadow-sm">
                     <div class="h-32 overflow-hidden">
-                        <img
-                            v-if="community.cover_image"
-                            :src="community.cover_image"
-                            :alt="community.name"
-                            class="w-full h-full object-cover"
-                        />
+                        <img v-if="community.cover_image" :src="community.cover_image" :alt="community.name" class="w-full h-full object-cover" />
                         <div v-else class="w-full h-full bg-linear-to-br from-indigo-500 to-purple-700" />
                     </div>
 
                     <div class="p-4">
-                        <h3 class="font-bold text-gray-900 dark:text-gray-100 text-base mb-1">{{ community.name }}</h3>
-                        <p v-if="community.description" class="text-sm text-gray-500 dark:text-gray-400 mb-4 leading-relaxed">
-                            {{ community.description }}
-                        </p>
+                        <h3 class="font-bold text-gray-900 dark:text-gray-100 text-base mb-0.5">{{ community.name }}</h3>
+                        <p class="text-xs text-gray-400 mb-2">curzzo.com/communities/{{ community.slug }}</p>
+                        <p v-if="community.description" class="text-sm text-gray-500 dark:text-gray-400 mb-4 leading-relaxed">{{ community.description }}</p>
 
-                        <div class="flex items-center divide-x divide-gray-100 dark:divide-gray-700 mb-4">
-                            <div class="flex-1 text-center pr-3">
-                                <p class="text-lg font-black text-gray-900 dark:text-gray-100">{{ formatCount(community.members_count) }}</p>
-                                <p class="text-xs text-gray-500">Members</p>
+                        <!-- Stats -->
+                        <div class="flex items-center justify-around text-center border-y border-gray-100 dark:border-gray-700 py-3 mb-4">
+                            <div>
+                                <p class="text-base font-black text-gray-900 dark:text-gray-100">{{ formatCount(community.members_count) }}</p>
+                                <p class="text-xs text-gray-400">Members</p>
                             </div>
-                            <div class="flex-1 text-center px-3">
-                                <p class="text-lg font-black text-gray-900 dark:text-gray-100">
-                                    {{ community.price > 0 ? `₱${Number(community.price).toLocaleString()}` : '—' }}
-                                </p>
-                                <p class="text-xs text-gray-500">{{ community.price > 0 ? '/month' : 'Free' }}</p>
+                            <div>
+                                <p class="text-base font-black text-gray-900 dark:text-gray-100">0</p>
+                                <p class="text-xs text-gray-400">Online</p>
                             </div>
-                            <div class="flex-1 text-center pl-3">
-                                <p class="text-lg font-black text-gray-900 dark:text-gray-100">{{ community.is_private ? '🔒' : '🌐' }}</p>
-                                <p class="text-xs text-gray-500">{{ community.is_private ? 'Private' : 'Public' }}</p>
+                            <div>
+                                <p class="text-base font-black text-gray-900 dark:text-gray-100">{{ adminCount }}</p>
+                                <p class="text-xs text-gray-400">{{ adminCount === 1 ? 'Admin' : 'Admins' }}</p>
                             </div>
                         </div>
 
+                        <!-- Join / member buttons -->
                         <div v-if="!isMember" class="space-y-2">
-                            <button
-                                v-if="!community.price"
-                                @click="join"
-                                :disabled="joinForm.processing"
-                                class="w-full py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50"
-                            >
+                            <button v-if="!community.price" @click="join" :disabled="joinForm.processing"
+                                class="w-full py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50">
                                 {{ joinForm.processing ? 'Joining...' : 'Join for free' }}
                             </button>
-                            <button
-                                v-else
-                                @click="checkout"
-                                :disabled="checkoutForm.processing"
-                                class="w-full py-2.5 bg-amber-500 text-white text-sm font-bold rounded-xl hover:bg-amber-600 transition-colors disabled:opacity-50"
-                            >
+                            <button v-else @click="checkout" :disabled="checkoutForm.processing"
+                                class="w-full py-2.5 bg-amber-500 text-white text-sm font-bold rounded-xl hover:bg-amber-600 transition-colors disabled:opacity-50">
                                 {{ checkoutForm.processing ? 'Redirecting...' : `Join · ₱${Number(community.price).toLocaleString()}/mo` }}
                             </button>
                         </div>
 
-                        <div v-else class="flex gap-2">
-                            <Link
-                                v-if="isOwner"
-                                :href="`/communities/${community.slug}/settings`"
-                                class="flex-1 text-center py-2 text-xs font-medium border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                            >
-                                Settings
-                            </Link>
-                            <Link
-                                v-if="isAdmin"
-                                :href="`/communities/${community.slug}/analytics`"
-                                class="flex-1 text-center py-2 text-xs font-medium border border-gray-200 dark:border-gray-600 text-indigo-600 dark:text-indigo-400 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
-                            >
-                                📊 Analytics
-                            </Link>
-                            <Link
-                                :href="`/communities/${community.slug}/members`"
-                                class="flex-1 text-center py-2 text-xs font-medium border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                            >
-                                Members
-                            </Link>
+                        <div v-else class="space-y-2">
+                            <button @click="showInviteModal = true"
+                                class="w-full py-2 text-sm font-bold border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors uppercase tracking-wide">
+                                Invite People
+                            </button>
+                            <div v-if="isOwner || isAdmin" class="flex gap-2">
+                                <Link v-if="isOwner" :href="`/communities/${community.slug}/settings`"
+                                    class="flex-1 text-center py-1.5 text-xs font-medium border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                    Settings
+                                </Link>
+                                <Link v-if="isAdmin" :href="`/communities/${community.slug}/analytics`"
+                                    class="flex-1 text-center py-1.5 text-xs font-medium border border-gray-200 dark:border-gray-600 text-indigo-600 dark:text-indigo-400 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors">
+                                    📊 Analytics
+                                </Link>
+                                <Link :href="`/communities/${community.slug}/members`"
+                                    class="flex-1 text-center py-1.5 text-xs font-medium border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                    Members
+                                </Link>
+                            </div>
                         </div>
 
-                        <button
-                            v-if="isMember"
-                            @click="showInviteModal = true"
-                            class="w-full mt-3 py-2 text-sm font-semibold border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                        >
-                            Invite People
-                        </button>
-
+                        <!-- Affiliate -->
                         <template v-if="isMember && community.affiliate_commission_rate">
                             <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
                                 <p class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
@@ -231,67 +182,76 @@
                                 </p>
                                 <div v-if="affiliate">
                                     <div class="flex items-center gap-2 mb-1">
-                                        <input
-                                            :value="affiliateUrl"
-                                            readonly
-                                            class="flex-1 text-xs px-2.5 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 dark:text-gray-100 font-mono"
-                                        />
+                                        <input :value="affiliateUrl" readonly
+                                            class="flex-1 text-xs px-2.5 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 dark:text-gray-100 font-mono" />
                                         <button @click="copyAffiliateUrl" class="shrink-0 text-xs text-indigo-600 hover:text-indigo-800 font-medium">
                                             {{ affiliateCopied ? '✓' : 'Copy' }}
                                         </button>
                                     </div>
-                                    <Link href="/my-affiliates" class="text-xs text-gray-400 hover:text-indigo-600">
-                                        View my earnings →
-                                    </Link>
+                                    <Link href="/my-affiliates" class="text-xs text-gray-400 hover:text-indigo-600">View my earnings →</Link>
                                 </div>
-                                <button
-                                    v-else
-                                    @click="joinAffiliate"
-                                    :disabled="affiliateForm.processing"
-                                    class="w-full py-2 border border-indigo-200 text-indigo-600 text-xs font-semibold rounded-xl hover:bg-indigo-50 transition-colors disabled:opacity-50"
-                                >
+                                <button v-else @click="joinAffiliate" :disabled="affiliateForm.processing"
+                                    class="w-full py-2 border border-indigo-200 text-indigo-600 text-xs font-semibold rounded-xl hover:bg-indigo-50 transition-colors disabled:opacity-50">
                                     {{ affiliateForm.processing ? 'Joining...' : 'Become an Affiliate' }}
                                 </button>
                             </div>
                         </template>
                     </div>
                 </div>
+
+                <!-- Leaderboard widget -->
+                <div v-if="topMembers?.length" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden shadow-sm">
+                    <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                        <h4 class="text-sm font-bold text-gray-900 dark:text-gray-100">Leaderboard</h4>
+                        <Link :href="`/communities/${community.slug}/leaderboard`"
+                            class="text-xs text-indigo-500 hover:text-indigo-700 font-medium">
+                            See all leaderboards
+                        </Link>
+                    </div>
+                    <div class="divide-y divide-gray-50 dark:divide-gray-700/50">
+                        <div v-for="(member, i) in topMembers" :key="member.user_id"
+                            class="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                            <!-- Rank medal -->
+                            <span class="w-6 text-center shrink-0 text-base">
+                                <template v-if="i === 0">🥇</template>
+                                <template v-else-if="i === 1">🥈</template>
+                                <template v-else-if="i === 2">🥉</template>
+                                <span v-else class="text-xs font-bold text-gray-400">{{ i + 1 }}</span>
+                            </span>
+                            <!-- Avatar -->
+                            <UserAvatar :name="member.name" :avatar="member.avatar" size="7" />
+                            <!-- Name + points -->
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs font-semibold text-gray-800 dark:text-gray-100 truncate">{{ member.name }}</p>
+                                <p class="text-xs text-gray-400">{{ member.points.toLocaleString() }} pts</p>
+                            </div>
+                            <!-- Level badge -->
+                            <span class="text-xs font-bold px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 shrink-0">
+                                Lv {{ member.level }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
 
-        <!-- ─── Invite Modal ───────────────────────────────────────────────── -->
-        <InviteModal
-            :show="showInviteModal"
-            :community-name="community.name"
-            :invite-url="inviteUrl"
-            @close="showInviteModal = false"
-        />
+        <!-- ─── Invite Modal ─────────────────────────────────────────────────── -->
+        <InviteModal :show="showInviteModal" :community-name="community.name" :invite-url="inviteUrl" @close="showInviteModal = false" />
 
-        <!-- ─── Post Modal ──────────────────────────────────────────────────── -->
+        <!-- ─── Post Modal ───────────────────────────────────────────────────── -->
         <Teleport to="body">
-            <Transition
-                enter-active-class="transition-opacity duration-200"
-                enter-from-class="opacity-0"
-                enter-to-class="opacity-100"
-                leave-active-class="transition-opacity duration-150"
-                leave-from-class="opacity-100"
-                leave-to-class="opacity-0"
-            >
-                <div
-                    v-if="activePost"
+            <Transition enter-active-class="transition-opacity duration-200" enter-from-class="opacity-0" enter-to-class="opacity-100"
+                leave-active-class="transition-opacity duration-150" leave-from-class="opacity-100" leave-to-class="opacity-0">
+                <div v-if="activePost"
                     class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-12 bg-black/50 backdrop-blur-sm overflow-y-auto"
-                    @click.self="closeModal"
-                >
-                    <div
-                        class="w-full max-w-2xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl relative"
-                        @click.stop
-                    >
-                        <!-- Modal header -->
+                    @click.self="closeModal">
+                    <div class="w-full max-w-2xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl relative" @click.stop>
+
+                        <!-- Header -->
                         <div class="flex items-start justify-between p-5 border-b border-gray-100 dark:border-gray-800">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-linear-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-sm font-bold text-white shrink-0">
-                                    {{ activePost.author?.name?.charAt(0)?.toUpperCase() }}
-                                </div>
+                                <UserAvatar :name="activePost.author?.name" :avatar="activePost.author?.avatar" size="10" />
                                 <div>
                                     <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ activePost.author?.name }}</p>
                                     <p class="text-xs text-gray-400">{{ formatDate(activePost.created_at) }}</p>
@@ -304,23 +264,21 @@
                             </button>
                         </div>
 
-                        <!-- Post body -->
+                        <!-- Body -->
                         <div class="p-5">
                             <h2 v-if="activePost.title" class="text-xl font-black text-gray-900 dark:text-gray-100 mb-3">{{ activePost.title }}</h2>
                             <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line leading-relaxed">{{ activePost.content }}</p>
                         </div>
 
-                        <!-- Post reaction bar -->
+                        <!-- Reaction bar -->
                         <div class="px-5 pb-4 flex items-center gap-5 border-b border-gray-100 dark:border-gray-800">
-                            <button
-                                @click="togglePostLike(activePost)"
+                            <button @click="togglePostLike(activePost)"
                                 class="flex items-center gap-2 text-sm font-medium transition-colors"
-                                :class="activePost.user_has_liked ? 'text-indigo-600' : 'text-gray-500 hover:text-indigo-500'"
-                            >
+                                :class="activePost.user_has_liked ? 'text-indigo-600' : 'text-gray-500 hover:text-indigo-500'">
                                 <svg class="w-5 h-5" :fill="activePost.user_has_liked ? 'currentColor' : 'none'" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
                                 </svg>
-                                {{ activePost.likes_count ?? activePost.likes?.length ?? 0 }} {{ activePost.likes_count === 1 ? 'Like' : 'Likes' }}
+                                {{ activePost.likes_count ?? activePost.likes?.length ?? 0 }} {{ (activePost.likes_count ?? 0) === 1 ? 'Like' : 'Likes' }}
                             </button>
                             <span class="flex items-center gap-2 text-sm text-gray-500">
                                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -328,64 +286,36 @@
                                 </svg>
                                 {{ activePost.comments?.length ?? 0 }} Comments
                             </span>
-                            <button
-                                v-if="canDeletePost(activePost)"
-                                @click="deletePost(activePost); closeModal()"
-                                class="ml-auto text-xs text-gray-400 hover:text-red-500 transition-colors"
-                            >
-                                Delete post
-                            </button>
+                            <button v-if="canDeletePost(activePost)" @click="deletePost(activePost); closeModal()"
+                                class="ml-auto text-xs text-gray-400 hover:text-red-500 transition-colors">Delete post</button>
                         </div>
 
                         <!-- Comments -->
                         <div class="p-5 space-y-4 max-h-[50vh] overflow-y-auto">
-                            <div v-if="!activePost.comments?.length" class="text-center py-8 text-sm text-gray-400">
-                                No comments yet. Be the first!
-                            </div>
-
+                            <div v-if="!activePost.comments?.length" class="text-center py-8 text-sm text-gray-400">No comments yet. Be the first!</div>
                             <div v-for="comment in activePost.comments" :key="comment.id">
-                                <!-- Top-level comment -->
                                 <div class="flex gap-3">
-                                    <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-semibold text-gray-600 dark:text-gray-300 shrink-0 mt-0.5">
-                                        {{ comment.author?.name?.charAt(0)?.toUpperCase() }}
-                                    </div>
+                                    <UserAvatar :name="comment.author?.name" :avatar="comment.author?.avatar" size="8" class="mt-0.5 shrink-0" />
                                     <div class="flex-1 min-w-0">
                                         <div class="bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3">
                                             <p class="text-xs font-semibold text-gray-700 dark:text-gray-200 mb-0.5">{{ comment.author?.name }}</p>
                                             <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{{ comment.content }}</p>
                                         </div>
-                                        <!-- Comment actions -->
                                         <div class="flex items-center gap-3 mt-1.5 ml-1">
                                             <p class="text-xs text-gray-400">{{ formatRelative(comment.created_at) }}</p>
-                                            <button
-                                                @click="toggleCommentLike(comment)"
-                                                class="text-xs font-medium transition-colors"
-                                                :class="comment.user_has_liked ? 'text-indigo-600' : 'text-gray-400 hover:text-indigo-500'"
-                                            >
+                                            <button @click="toggleCommentLike(comment)" class="text-xs font-medium transition-colors"
+                                                :class="comment.user_has_liked ? 'text-indigo-600' : 'text-gray-400 hover:text-indigo-500'">
                                                 {{ comment.user_has_liked ? '♥' : '♡' }} {{ comment.likes_count || '' }}
                                             </button>
-                                            <button
-                                                v-if="isMember"
-                                                @click="setReplyTarget(comment)"
-                                                class="text-xs text-gray-400 hover:text-indigo-500 font-medium transition-colors"
-                                            >
-                                                Reply
-                                            </button>
-                                            <button
-                                                v-if="canDeleteComment(comment)"
-                                                @click="deleteComment(comment)"
-                                                class="text-xs text-gray-400 hover:text-red-500 transition-colors ml-auto"
-                                            >
-                                                Delete
-                                            </button>
+                                            <button v-if="isMember" @click="setReplyTarget(comment)"
+                                                class="text-xs text-gray-400 hover:text-indigo-500 font-medium transition-colors">Reply</button>
+                                            <button v-if="canDeleteComment(comment)" @click="deleteComment(comment)"
+                                                class="text-xs text-gray-400 hover:text-red-500 transition-colors ml-auto">Delete</button>
                                         </div>
-
                                         <!-- Replies -->
                                         <div v-if="comment.replies?.length" class="mt-3 space-y-3 ml-2 pl-3 border-l-2 border-gray-100 dark:border-gray-700">
                                             <div v-for="reply in comment.replies" :key="reply.id" class="flex gap-2.5">
-                                                <div class="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-semibold text-gray-600 dark:text-gray-300 shrink-0 mt-0.5">
-                                                    {{ reply.author?.name?.charAt(0)?.toUpperCase() }}
-                                                </div>
+                                                <UserAvatar :name="reply.author?.name" :avatar="reply.author?.avatar" size="7" class="mt-0.5 shrink-0" />
                                                 <div class="flex-1 min-w-0">
                                                     <div class="bg-gray-50 dark:bg-gray-800 rounded-xl px-3 py-2.5">
                                                         <p class="text-xs font-semibold text-gray-700 dark:text-gray-200 mb-0.5">{{ reply.author?.name }}</p>
@@ -393,20 +323,12 @@
                                                     </div>
                                                     <div class="flex items-center gap-3 mt-1 ml-1">
                                                         <p class="text-xs text-gray-400">{{ formatRelative(reply.created_at) }}</p>
-                                                        <button
-                                                            @click="toggleCommentLike(reply)"
-                                                            class="text-xs font-medium transition-colors"
-                                                            :class="reply.user_has_liked ? 'text-indigo-600' : 'text-gray-400 hover:text-indigo-500'"
-                                                        >
+                                                        <button @click="toggleCommentLike(reply)" class="text-xs font-medium transition-colors"
+                                                            :class="reply.user_has_liked ? 'text-indigo-600' : 'text-gray-400 hover:text-indigo-500'">
                                                             {{ reply.user_has_liked ? '♥' : '♡' }} {{ reply.likes_count || '' }}
                                                         </button>
-                                                        <button
-                                                            v-if="canDeleteComment(reply)"
-                                                            @click="deleteComment(reply)"
-                                                            class="text-xs text-gray-400 hover:text-red-500 transition-colors ml-auto"
-                                                        >
-                                                            Delete
-                                                        </button>
+                                                        <button v-if="canDeleteComment(reply)" @click="deleteComment(reply)"
+                                                            class="text-xs text-gray-400 hover:text-red-500 transition-colors ml-auto">Delete</button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -418,7 +340,6 @@
 
                         <!-- Comment input -->
                         <div v-if="isMember" class="p-4 border-t border-gray-100 dark:border-gray-800">
-                            <!-- Reply indicator -->
                             <div v-if="replyTarget" class="flex items-center gap-2 text-xs text-indigo-600 dark:text-indigo-400 mb-2 bg-indigo-50 dark:bg-indigo-900/20 px-3 py-1.5 rounded-lg">
                                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
@@ -426,24 +347,15 @@
                                 Replying to <span class="font-semibold">{{ replyTarget.author?.name }}</span>
                                 <button @click="replyTarget = null" class="ml-auto text-gray-400 hover:text-gray-600">✕</button>
                             </div>
-
                             <div class="flex gap-3 items-end">
-                                <div class="w-8 h-8 rounded-full bg-linear-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-xs font-bold text-white shrink-0">
-                                    {{ userInitial }}
-                                </div>
+                                <UserAvatar :name="page.props.auth?.user?.name" :avatar="page.props.auth?.user?.avatar" size="8" class="shrink-0" />
                                 <div class="flex-1 flex gap-2">
-                                    <textarea
-                                        v-model="modalCommentInput"
-                                        rows="1"
+                                    <textarea v-model="modalCommentInput" rows="1"
                                         :placeholder="replyTarget ? `Reply to ${replyTarget.author?.name}...` : 'Write a comment...'"
-                                        class="flex-1 px-3.5 py-2.5 border border-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent resize-none"
-                                        @keydown.enter.exact.prevent="submitModalComment"
-                                    />
-                                    <button
-                                        @click="submitModalComment"
-                                        :disabled="!modalCommentInput.trim()"
-                                        class="px-4 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-40 self-end"
-                                    >
+                                        class="flex-1 px-3.5 py-2.5 border border-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
+                                        @keydown.enter.exact.prevent="submitModalComment" />
+                                    <button @click="submitModalComment" :disabled="!modalCommentInput.trim()"
+                                        class="px-4 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-40 self-end">
                                         Post
                                     </button>
                                 </div>
@@ -463,27 +375,30 @@ import { Link, useForm, usePage, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import CommunityTabs from '@/Components/CommunityTabs.vue';
 import InviteModal from '@/Components/InviteModal.vue';
+import UserAvatar from '@/Components/UserAvatar.vue';
 
 const props = defineProps({
-    community: Object,
+    community:  Object,
     membership: Object,
     affiliate:  Object,
+    adminCount: { type: Number, default: 0 },
+    topMembers: { type: Array, default: () => [] },
 });
 
 const page = usePage();
 
-const isMember    = computed(() => !!props.membership || isOwner.value);
-const isOwner     = computed(() => props.community.owner_id === page.props.auth?.user?.id);
-const isAdmin     = computed(() => isOwner.value || props.membership?.role === 'admin');
-const userInitial = computed(() => page.props.auth?.user?.name?.charAt(0)?.toUpperCase() ?? '?');
+const isMember = computed(() => !!props.membership || isOwner.value);
+const isOwner  = computed(() => props.community.owner_id === page.props.auth?.user?.id);
+const isAdmin  = computed(() => isOwner.value || props.membership?.role === 'admin');
 
-// ─── Post modal ────────────────────────────────────────────────────────────────
+// ─── Compose ──────────────────────────────────────────────────────────────────
+const composing = ref(false);
 
+// ─── Post modal ───────────────────────────────────────────────────────────────
 const activePostId      = ref(null);
 const modalCommentInput = ref('');
 const replyTarget       = ref(null);
 
-// Always derived from live props so likes/comments refresh instantly
 const activePost = computed(() =>
     props.community.posts?.find(p => p.id === activePostId.value) ?? null
 );
@@ -500,31 +415,21 @@ function closeModal() {
     document.body.style.overflow = '';
 }
 
-function setReplyTarget(comment) {
-    replyTarget.value = comment;
-}
+function setReplyTarget(comment) { replyTarget.value = comment; }
 
-// ─── Join ──────────────────────────────────────────────────────────────────────
-
+// ─── Join / Checkout ──────────────────────────────────────────────────────────
 const joinForm = useForm({});
-function join() {
-    joinForm.post(`/communities/${props.community.slug}/join`);
-}
-
-// ─── Checkout ─────────────────────────────────────────────────────────────────
+function join() { joinForm.post(`/communities/${props.community.slug}/join`); }
 
 const checkoutForm = useForm({});
-function checkout() {
-    checkoutForm.post(`/communities/${props.community.slug}/checkout`);
-}
+function checkout() { checkoutForm.post(`/communities/${props.community.slug}/checkout`); }
 
 // ─── Posts ────────────────────────────────────────────────────────────────────
-
 const postForm = useForm({ title: '', content: '' });
 
 function createPost() {
     postForm.post(`/communities/${props.community.slug}/posts`, {
-        onSuccess: () => postForm.reset(),
+        onSuccess: () => { postForm.reset(); composing.value = false; },
         preserveScroll: true,
     });
 }
@@ -537,45 +442,29 @@ function deletePost(post) {
 
 function canDeletePost(post) {
     const userId = page.props.auth?.user?.id;
-    return userId && (
-        post.user_id === userId ||
-        props.membership?.role === 'admin' ||
-        props.membership?.role === 'moderator'
-    );
+    return userId && (post.user_id === userId || props.membership?.role === 'admin' || props.membership?.role === 'moderator');
 }
 
 // ─── Likes ────────────────────────────────────────────────────────────────────
-
 function togglePostLike(post) {
     if (!page.props.auth?.user) return;
-    router.post(`/posts/${post.id}/like`, {}, {
-        preserveScroll: true,
-        preserveState:  true,
-    });
+    router.post(`/posts/${post.id}/like`, {}, { preserveScroll: true, preserveState: true });
 }
 
 function toggleCommentLike(comment) {
     if (!page.props.auth?.user) return;
-    router.post(`/comments/${comment.id}/like`, {}, {
-        preserveScroll: true,
-        preserveState:  true,
-    });
+    router.post(`/comments/${comment.id}/like`, {}, { preserveScroll: true, preserveState: true });
 }
 
 // ─── Comments ─────────────────────────────────────────────────────────────────
-
 function submitModalComment() {
     const content = modalCommentInput.value.trim();
     if (!content || !activePost.value) return;
-
     router.post(`/posts/${activePost.value.id}/comments`, {
         content,
         parent_id: replyTarget.value?.id ?? null,
     }, {
-        onSuccess: () => {
-            modalCommentInput.value = '';
-            replyTarget.value       = null;
-        },
+        onSuccess: () => { modalCommentInput.value = ''; replyTarget.value = null; },
         preserveScroll: true,
     });
 }
@@ -586,15 +475,10 @@ function deleteComment(comment) {
 
 function canDeleteComment(comment) {
     const userId = page.props.auth?.user?.id;
-    return userId && (
-        comment.user_id === userId ||
-        props.membership?.role === 'admin' ||
-        props.membership?.role === 'moderator'
-    );
+    return userId && (comment.user_id === userId || props.membership?.role === 'admin' || props.membership?.role === 'moderator');
 }
 
 // ─── Invite ───────────────────────────────────────────────────────────────────
-
 const showInviteModal = ref(false);
 const inviteUrl = computed(() =>
     props.affiliate?.code
@@ -603,16 +487,13 @@ const inviteUrl = computed(() =>
 );
 
 // ─── Affiliate ────────────────────────────────────────────────────────────────
-
 const affiliateForm   = useForm({});
 const affiliateCopied = ref(false);
 const affiliateUrl    = computed(() =>
     props.affiliate ? `${window.location.origin}/ref/${props.affiliate.code}` : ''
 );
 
-function joinAffiliate() {
-    affiliateForm.post(`/communities/${props.community.slug}/affiliates`);
-}
+function joinAffiliate() { affiliateForm.post(`/communities/${props.community.slug}/affiliates`); }
 
 async function copyAffiliateUrl() {
     await navigator.clipboard.writeText(affiliateUrl.value);
@@ -621,12 +502,9 @@ async function copyAffiliateUrl() {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
 function formatDate(dateStr) {
     if (!dateStr) return '';
-    return new Date(dateStr).toLocaleDateString('en-PH', {
-        month: 'short', day: 'numeric', year: 'numeric',
-    });
+    return new Date(dateStr).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function formatRelative(dateStr) {

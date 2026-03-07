@@ -1,0 +1,87 @@
+<template>
+    <Head :title="`Certificate – ${certificate.course_title}`" />
+
+    <div class="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-amber-50 flex items-center justify-center p-6">
+        <div class="w-full max-w-2xl">
+
+            <!-- Certificate card -->
+            <div class="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 print:shadow-none">
+
+                <!-- Top banner -->
+                <div class="bg-gradient-to-r from-indigo-600 to-indigo-800 px-8 py-6 flex items-center justify-between">
+                    <div>
+                        <p class="text-indigo-200 text-xs font-semibold uppercase tracking-widest mb-1">Certificate of Completion</p>
+                        <h1 class="text-white text-xl font-black">{{ certificate.community_name }}</h1>
+                    </div>
+                    <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-2xl">🏆</div>
+                </div>
+
+                <!-- Body -->
+                <div class="px-10 py-10 text-center">
+                    <p class="text-gray-500 text-sm mb-4">This is to certify that</p>
+
+                    <!-- Avatar + name -->
+                    <div class="flex flex-col items-center mb-6">
+                        <img
+                            v-if="certificate.student_avatar"
+                            :src="certificate.student_avatar"
+                            :alt="certificate.student_name"
+                            class="w-20 h-20 rounded-full object-cover border-4 border-indigo-100 mb-3"
+                        />
+                        <div v-else class="w-20 h-20 rounded-full bg-indigo-100 flex items-center justify-center text-3xl font-black text-indigo-600 mb-3">
+                            {{ certificate.student_name.charAt(0).toUpperCase() }}
+                        </div>
+                        <h2 class="text-3xl font-black text-gray-900">{{ certificate.student_name }}</h2>
+                    </div>
+
+                    <p class="text-gray-500 text-sm mb-2">has successfully completed</p>
+                    <h3 class="text-xl font-bold text-indigo-700 mb-6">{{ certificate.course_title }}</h3>
+
+                    <div class="h-px bg-gray-100 mb-6" />
+
+                    <p class="text-xs text-gray-400">Issued on {{ certificate.issued_at }}</p>
+                    <p class="text-xs text-gray-300 mt-1 font-mono">{{ certificate.uuid }}</p>
+                </div>
+
+                <!-- Footer -->
+                <div class="bg-gray-50 px-10 py-4 flex items-center justify-between border-t border-gray-100">
+                    <span class="text-xs text-gray-400">curzzo.com/communities/{{ certificate.community_slug }}</span>
+                    <button
+                        @click="print"
+                        class="px-4 py-2 bg-indigo-600 text-white text-xs font-semibold rounded-lg hover:bg-indigo-700 transition-colors print:hidden"
+                    >
+                        Print / Save PDF
+                    </button>
+                </div>
+            </div>
+
+            <!-- Back link -->
+            <div class="text-center mt-6 print:hidden">
+                <a
+                    :href="`/communities/${certificate.community_slug}/classroom`"
+                    class="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                >
+                    ← Back to Classroom
+                </a>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script setup>
+import { Head } from '@inertiajs/vue3';
+
+defineProps({ certificate: Object });
+
+function print() {
+    window.print();
+}
+</script>
+
+<style>
+@media print {
+    body { background: white; }
+    .print\:hidden { display: none !important; }
+    .print\:shadow-none { box-shadow: none !important; }
+}
+</style>

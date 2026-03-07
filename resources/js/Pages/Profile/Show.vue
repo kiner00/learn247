@@ -13,6 +13,25 @@
                     </div>
                 </div>
 
+                <!-- Badges -->
+                <div v-if="badges?.length" class="bg-white border border-gray-200 rounded-2xl p-5">
+                    <h2 class="text-sm font-bold text-gray-900 mb-4">Badges</h2>
+                    <div class="flex flex-wrap gap-3">
+                        <div
+                            v-for="badge in badges"
+                            :key="badge.name"
+                            class="flex items-center gap-2 px-3 py-2 bg-indigo-50 border border-indigo-100 rounded-xl"
+                            :title="badge.description"
+                        >
+                            <span class="text-xl">{{ badge.icon }}</span>
+                            <div>
+                                <p class="text-xs font-bold text-indigo-700">{{ badge.name }}</p>
+                                <p class="text-xs text-indigo-400">{{ badge.description }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Memberships -->
                 <div class="bg-white border border-gray-200 rounded-2xl p-5">
                     <h2 class="text-sm font-bold text-gray-900 mb-4">Memberships</h2>
@@ -71,7 +90,14 @@
 
                     <!-- Avatar + level badge -->
                     <div class="relative inline-block mb-3">
+                        <img
+                            v-if="profileUser.avatar"
+                            :src="profileUser.avatar"
+                            :alt="profileUser.name"
+                            class="w-24 h-24 rounded-full object-cover mx-auto ring-4 ring-white shadow"
+                        />
                         <div
+                            v-else
                             class="w-24 h-24 rounded-full flex items-center justify-center text-3xl font-black text-white mx-auto"
                             :style="{ background: levelColor(myLevel) }"
                         >
@@ -156,6 +182,7 @@ const props = defineProps({
     activityMap:        Object,
     contributionsCount: Number,
     selectedCommunity:  String,
+    badges:             { type: Array, default: () => [] },
 });
 
 const LEVEL_COLORS = [

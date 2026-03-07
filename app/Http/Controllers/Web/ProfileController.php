@@ -8,6 +8,7 @@ use App\Models\Comment;
 use App\Models\Post;
 use App\Models\LessonCompletion;
 use App\Models\User;
+use App\Models\UserBadge;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Inertia\Inertia;
@@ -92,12 +93,27 @@ class ProfileController extends Controller
                 + Comment::where('user_id', $user->id)->where('community_id', $selectedCommunityId)->whereNull('deleted_at')->count();
         }
 
+        // ── Badges ───────────────────────────────────────────────────────────
+        $badges = UserBadge::where('user_id', $user->id)
+            ->with('badge:id,name,icon,description')
+            ->get()
+            ->map(fn ($ub) => [
+                'name'        => $ub->badge->name,
+                'icon'        => $ub->badge->icon,
+                'description' => $ub->badge->description,
+                'earned_at'   => $ub->earned_at?->toDateString(),
+            ])
+            ->unique('name')
+            ->values();
+
         return Inertia::render('Profile/Show', [
             'profileUser'         => [
                 'id'         => $user->id,
                 'name'       => $user->name,
                 'username'   => $user->username,
                 'bio'        => $user->bio,
+                'avatar'     => $user->avatar,
+                'location'   => $user->location,
                 'created_at' => $user->created_at,
             ],
             'isOwn'               => $isOwn,
@@ -108,6 +124,7 @@ class ProfileController extends Controller
             'activityMap'         => $activityMap,
             'contributionsCount'  => $contributionsCount,
             'selectedCommunity'   => $selectedMembership ? $selectedMembership['name'] : null,
+            'badges'              => $badges,
         ]);
     }
 }

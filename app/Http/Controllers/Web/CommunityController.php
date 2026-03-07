@@ -8,7 +8,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CreateCommunityRequest;
 use App\Models\AffiliateConversion;
 use App\Models\Community;
+use App\Models\CommunityMember;
+use App\Models\LessonCompletion;
 use App\Models\Payment;
+use App\Models\QuizAttempt;
 use App\Models\Subscription;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -46,14 +49,14 @@ class CommunityController extends Controller
             'owner',
             'posts' => fn ($q) => $q
                 ->with([
-                    'author',
+                    'author:id,name,avatar',
                     'likes',
                     'comments' => fn ($cq) => $cq
                         ->whereNull('parent_id')
                         ->with([
-                            'author',
+                            'author:id,name,avatar',
                             'likes',
-                            'replies' => fn ($rq) => $rq->with(['author', 'likes']),
+                            'replies' => fn ($rq) => $rq->with(['author:id,name,avatar', 'likes']),
                         ])
                         ->latest(),
                 ])
@@ -77,10 +80,41 @@ class CommunityController extends Controller
             });
         }
 
-        $membership = $userId ? $community->members()->where('user_id', $userId)->first() : null;
-        $affiliate  = $userId ? $community->affiliates()->where('user_id', $userId)->first() : null;
+        // Enrich posts with commenter avatars + last comment timestamp
+        $community->posts->each(function ($post) {
+            $commenters = $post->comments
+                ->sortByDesc('created_at')
+                ->unique('user_id')
+                ->take(4)
+                ->map(fn ($c) => ['name' => $c->author?->name, 'avatar' => $c->author?->avatar])
+                ->values();
 
-        return Inertia::render('Communities/Show', compact('community', 'membership', 'affiliate'));
+            $post->commenter_avatars  = $commenters;
+            $post->last_comment_at    = $post->comments->max('created_at');
+        });
+
+        $membership  = $userId ? $community->members()->where('user_id', $userId)->first() : null;
+        $affiliate   = $userId ? $community->affiliates()->where('user_id', $userId)->first() : null;
+        $adminCount  = $community->members()->where('role', CommunityMember::ROLE_ADMIN)->count();
+
+        // Top 5 members for leaderboard sidebar widget
+        $topMembers = CommunityMember::where('community_id', $community->id)
+            ->with('user:id,name,username,avatar')
+            ->orderByDesc('points')
+            ->take(5)
+            ->get()
+            ->map(fn ($m) => [
+                'user_id'  => $m->user_id,
+                'name'     => $m->user?->name,
+                'username' => $m->user?->username,
+                'avatar'   => $m->user?->avatar,
+                'points'   => $m->points,
+                'level'    => CommunityMember::computeLevel($m->points),
+            ]);
+
+        return Inertia::render('Communities/Show', compact(
+            'community', 'membership', 'affiliate', 'adminCount', 'topMembers'
+        ));
     }
 
     public function members(Community $community, \Illuminate\Http\Request $request): Response
@@ -194,6 +228,42 @@ class CommunityController extends Controller
         $totalPlatformFee  = round($affiliatePlatformFee + $nonAffiliatePlatformFee, 2);
         $totalCreatorNet   = round($affiliateCreator + $nonAffiliateCreator, 2);
 
+        // ─── Classroom analytics ──────────────────────────────────────────────
+        $courses = $community->courses()->with('modules.lessons')->get();
+
+        $courseStats = $courses->map(function ($course) use ($community) {
+            $lessonIds  = $course->modules->flatMap(fn ($m) => $m->lessons->pluck('id'));
+            $totalLessons = $lessonIds->count();
+
+            // Number of members who completed all lessons
+            $completedMembers = $totalLessons > 0
+                ? LessonCompletion::whereIn('lesson_id', $lessonIds)
+                    ->selectRaw('user_id, count(*) as cnt')
+                    ->groupBy('user_id')
+                    ->havingRaw('cnt >= ?', [$totalLessons])
+                    ->count()
+                : 0;
+
+            // Total lesson completions
+            $totalCompletions = LessonCompletion::whereIn('lesson_id', $lessonIds)->count();
+
+            // Quiz pass rate
+            $quizIds = \App\Models\Quiz::whereIn('lesson_id', $lessonIds)->pluck('id');
+            $quizAttempts = QuizAttempt::whereIn('quiz_id', $quizIds)->count();
+            $quizPasses   = QuizAttempt::whereIn('quiz_id', $quizIds)->where('passed', true)->count();
+
+            return [
+                'id'                => $course->id,
+                'title'             => $course->title,
+                'total_lessons'     => $totalLessons,
+                'total_completions' => $totalCompletions,
+                'completed_members' => $completedMembers,
+                'quiz_attempts'     => $quizAttempts,
+                'quiz_passes'       => $quizPasses,
+                'quiz_pass_rate'    => $quizAttempts > 0 ? round($quizPasses / $quizAttempts * 100) : null,
+            ];
+        });
+
         return Inertia::render('Communities/Analytics', [
             'community' => $community,
             'stats' => [
@@ -211,7 +281,8 @@ class CommunityController extends Controller
                 'creator_net'                 => $totalCreatorNet,
                 'has_affiliate_data'          => $affiliateGross > 0,
             ],
-            'subscribers' => $subscribers,
+            'subscribers'  => $subscribers,
+            'course_stats' => $courseStats->values(),
         ]);
     }
 

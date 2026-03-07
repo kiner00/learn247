@@ -28,6 +28,33 @@
             <span class="text-sm font-black text-indigo-600 shrink-0">{{ currentProgress }}%</span>
         </div>
 
+        <!-- Certificate banner (100% complete) -->
+        <div v-if="currentProgress === 100" class="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6 flex items-center justify-between shadow-sm">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">🏆</span>
+                <div>
+                    <p class="text-sm font-bold text-amber-900">Course Complete!</p>
+                    <p class="text-xs text-amber-700">You've finished all lessons.</p>
+                </div>
+            </div>
+            <a
+                v-if="certUuid"
+                :href="`/certificates/${certUuid}`"
+                target="_blank"
+                class="px-4 py-2 bg-amber-500 text-white text-xs font-bold rounded-xl hover:bg-amber-600 transition-colors"
+            >
+                View Certificate
+            </a>
+            <button
+                v-else
+                @click="issueCert"
+                :disabled="certForm.processing"
+                class="px-4 py-2 bg-amber-500 text-white text-xs font-bold rounded-xl hover:bg-amber-600 disabled:opacity-50 transition-colors"
+            >
+                {{ certForm.processing ? 'Generating...' : 'Get Certificate' }}
+            </button>
+        </div>
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
             <!-- Sidebar: module + lesson tree -->
@@ -70,6 +97,11 @@
                             >
                                 {{ lesson.title }}
                             </span>
+                            <!-- Quiz indicator -->
+                            <span v-if="lesson.quiz" class="ml-auto shrink-0 text-xs px-1.5 py-0.5 rounded-full"
+                                :class="bestAttempt(lesson.quiz?.id)?.passed ? 'bg-green-100 text-green-700' : 'bg-indigo-50 text-indigo-500'">
+                                {{ bestAttempt(lesson.quiz?.id)?.passed ? '✓ Quiz' : '📝' }}
+                            </span>
                         </button>
 
                         <!-- Add lesson (owner only) -->
@@ -82,14 +114,12 @@
                                     required
                                     class="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 />
-
                                 <input
                                     v-model="lessonForm.video_url"
                                     type="url"
                                     placeholder="https://youtube.com/watch?v=..."
                                     class="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 />
-
                                 <div class="flex gap-1.5">
                                     <button type="button" @click="addingLessonToModule = null" class="flex-1 py-1 text-xs text-gray-500">Cancel</button>
                                     <button type="submit" :disabled="lessonForm.processing"
@@ -132,7 +162,7 @@
             </div>
 
             <!-- Main content area -->
-            <div class="lg:col-span-2">
+            <div class="lg:col-span-2 space-y-4">
                 <div v-if="selectedLesson" class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
                     <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                         <h2 class="text-lg font-black text-gray-900">{{ selectedLesson.title }}</h2>
@@ -142,7 +172,7 @@
                         </span>
                     </div>
 
-                    <!-- Uploaded video → HTML5 player -->
+                    <!-- Uploaded video -->
                     <div v-if="selectedLesson.video_path" class="bg-black">
                         <video
                             :src="`/storage/${selectedLesson.video_path}`"
@@ -152,7 +182,7 @@
                         />
                     </div>
 
-                    <!-- YouTube / external URL → iframe -->
+                    <!-- YouTube / external URL -->
                     <div v-else-if="selectedLesson.video_url" class="aspect-video bg-gray-900">
                         <iframe
                             :src="embedUrl(selectedLesson.video_url)"
@@ -171,14 +201,12 @@
                         <!-- Edit form (owner only) -->
                         <div v-if="isOwner && editingLesson" class="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-3">
                             <p class="text-xs font-semibold text-gray-700">Edit Lesson</p>
-
                             <textarea
                                 v-model="contentForm.content"
                                 rows="4"
                                 placeholder="Lesson description / notes..."
                                 class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
                             />
-
                             <div>
                                 <p class="text-xs text-gray-500 mb-1.5 font-medium">Video URL</p>
                                 <input
@@ -188,15 +216,10 @@
                                     class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 />
                             </div>
-
                             <div class="flex gap-2 justify-end">
                                 <button type="button" @click="editingLesson = false" class="px-4 py-2 text-sm text-gray-500">Cancel</button>
-                                <button
-                                    type="button"
-                                    @click="saveContent"
-                                    :disabled="contentForm.processing"
-                                    class="px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-50"
-                                >
+                                <button type="button" @click="saveContent" :disabled="contentForm.processing"
+                                    class="px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-50">
                                     {{ contentForm.processing ? 'Saving...' : 'Save Changes' }}
                                 </button>
                             </div>
@@ -214,7 +237,6 @@
                             >
                                 {{ isCompleted(selectedLesson.id) ? '✓ Completed' : 'Mark as Complete' }}
                             </button>
-
                             <button
                                 v-if="isOwner && !editingLesson"
                                 @click="startEdit"
@@ -226,8 +248,216 @@
                     </div>
                 </div>
 
+                <!-- ─── Quiz section ─────────────────────────────────────────────── -->
+                <div v-if="selectedLesson?.quiz" class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+                    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                        <div>
+                            <h3 class="font-bold text-gray-900 text-base">📝 {{ selectedLesson.quiz.title }}</h3>
+                            <p class="text-xs text-gray-400 mt-0.5">Pass score: {{ selectedLesson.quiz.pass_score }}%</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span v-if="currentAttempt?.passed"
+                                class="text-xs font-semibold text-green-700 bg-green-50 px-2.5 py-1 rounded-full">
+                                ✓ Passed {{ currentAttempt.score }}%
+                            </span>
+                            <span v-else-if="currentAttempt"
+                                class="text-xs font-semibold text-red-600 bg-red-50 px-2.5 py-1 rounded-full">
+                                {{ currentAttempt.score }}% – Retake available
+                            </span>
+                            <!-- Owner: delete quiz -->
+                            <button v-if="isOwner" @click="deleteQuiz"
+                                class="text-xs text-red-400 hover:text-red-600 border border-red-200 px-2.5 py-1 rounded-lg">
+                                Delete Quiz
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Quiz result banner -->
+                    <div v-if="quizResult" class="mx-6 mt-4 p-4 rounded-xl border"
+                        :class="quizResult.passed ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'">
+                        <p class="font-bold text-sm" :class="quizResult.passed ? 'text-green-800' : 'text-red-800'">
+                            {{ quizResult.passed ? '🎉 You passed!' : '😕 Not quite' }}
+                        </p>
+                        <p class="text-xs mt-0.5" :class="quizResult.passed ? 'text-green-600' : 'text-red-600'">
+                            Score: {{ quizResult.score }}% ({{ quizResult.correct }}/{{ quizResult.total }} correct)
+                        </p>
+                    </div>
+
+                    <!-- Take quiz -->
+                    <div v-if="!quizResult || !quizResult.passed" class="p-6 space-y-6">
+                        <div
+                            v-for="(question, qi) in selectedLesson.quiz.questions"
+                            :key="question.id"
+                            class="space-y-2"
+                        >
+                            <p class="text-sm font-semibold text-gray-800">{{ qi + 1 }}. {{ question.question }}</p>
+                            <div class="space-y-1.5">
+                                <label
+                                    v-for="option in question.options"
+                                    :key="option.id"
+                                    class="flex items-center gap-3 px-3 py-2 rounded-lg border cursor-pointer transition-colors"
+                                    :class="quizAnswers[question.id] === option.id
+                                        ? 'border-indigo-400 bg-indigo-50'
+                                        : 'border-gray-200 hover:bg-gray-50'"
+                                >
+                                    <input
+                                        type="radio"
+                                        :name="`q_${question.id}`"
+                                        :value="option.id"
+                                        v-model="quizAnswers[question.id]"
+                                        class="accent-indigo-600"
+                                    />
+                                    <span class="text-sm text-gray-700">{{ option.label }}</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <button
+                            @click="submitQuiz"
+                            :disabled="quizForm.processing || !allAnswered"
+                            class="w-full py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                        >
+                            {{ quizForm.processing ? 'Submitting...' : 'Submit Quiz' }}
+                        </button>
+                    </div>
+
+                    <!-- Retake button -->
+                    <div v-if="quizResult && !quizResult.passed" class="px-6 pb-6">
+                        <button @click="retakeQuiz" class="text-sm text-indigo-600 font-medium hover:text-indigo-800">
+                            ↺ Retake Quiz
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Owner: Add quiz (when no quiz exists) -->
+                <div v-if="isOwner && selectedLesson && !selectedLesson.quiz" class="bg-white border border-dashed border-gray-300 rounded-2xl p-5">
+                    <div v-if="!showQuizBuilder">
+                        <button @click="showQuizBuilder = true"
+                            class="w-full text-sm text-gray-400 hover:text-indigo-600 text-center font-medium">
+                            + Add Quiz to this Lesson
+                        </button>
+                    </div>
+
+                    <!-- Quiz builder -->
+                    <div v-else class="space-y-4">
+                        <h4 class="text-sm font-bold text-gray-800">Quiz Builder</h4>
+
+                        <input v-model="quizBuilderForm.title" type="text" placeholder="Quiz title"
+                            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+
+                        <div class="flex items-center gap-3">
+                            <label class="text-xs text-gray-500 shrink-0">Pass score (%)</label>
+                            <input v-model.number="quizBuilderForm.pass_score" type="number" min="1" max="100"
+                                class="w-24 px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                        </div>
+
+                        <div v-for="(q, qi) in quizBuilderForm.questions" :key="qi" class="p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-2">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold text-gray-500">Q{{ qi + 1 }}</span>
+                                <input v-model="q.question" type="text" placeholder="Question text"
+                                    class="flex-1 px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                <button @click="quizBuilderForm.questions.splice(qi, 1)" class="text-red-400 hover:text-red-600 text-xs">✕</button>
+                            </div>
+
+                            <div v-for="(opt, oi) in q.options" :key="oi" class="flex items-center gap-2 pl-6">
+                                <input type="radio" :name="`builder_q_${qi}`" @change="setCorrect(qi, oi)"
+                                    :checked="opt.is_correct" class="accent-indigo-600" title="Mark as correct" />
+                                <input v-model="opt.label" type="text" :placeholder="`Option ${oi + 1}`"
+                                    class="flex-1 px-2.5 py-1 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                <button v-if="q.options.length > 2" @click="q.options.splice(oi, 1)" class="text-red-400 text-xs">✕</button>
+                            </div>
+                            <button @click="q.options.push({ label: '', is_correct: false })"
+                                class="text-xs text-indigo-500 hover:text-indigo-700 pl-6 font-medium">+ Add Option</button>
+                        </div>
+
+                        <button @click="addQuestion"
+                            class="w-full py-2 border border-dashed border-indigo-300 text-sm text-indigo-500 hover:text-indigo-700 rounded-xl">
+                            + Add Question
+                        </button>
+
+                        <div class="flex gap-2 justify-end">
+                            <button @click="showQuizBuilder = false; resetQuizBuilder()" class="px-4 py-2 text-sm text-gray-500">Cancel</button>
+                            <button @click="saveQuiz" :disabled="quizBuilderForm.processing"
+                                class="px-5 py-2 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 disabled:opacity-50">
+                                {{ quizBuilderForm.processing ? 'Saving...' : 'Save Quiz' }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ─── Lesson comments ──────────────────────────────────────────── -->
+                <div v-if="selectedLesson" class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+                    <div class="px-6 py-4 border-b border-gray-100">
+                        <h3 class="font-bold text-gray-900 text-base">
+                            💬 Discussion
+                            <span class="text-sm font-normal text-gray-400 ml-1">({{ currentComments.length }})</span>
+                        </h3>
+                    </div>
+
+                    <div class="p-6 space-y-4">
+                        <!-- Comment form -->
+                        <form @submit.prevent="postComment" class="flex gap-3">
+                            <div class="flex-1">
+                                <textarea
+                                    v-model="commentForm.content"
+                                    rows="2"
+                                    placeholder="Ask a question or leave a comment..."
+                                    class="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                                />
+                            </div>
+                            <button type="submit" :disabled="commentForm.processing || !commentForm.content.trim()"
+                                class="self-end px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+                                Post
+                            </button>
+                        </form>
+
+                        <!-- Comments list -->
+                        <div v-if="currentComments.length" class="space-y-3">
+                            <div v-for="comment in currentComments" :key="comment.id"
+                                class="flex gap-3">
+                                <!-- Avatar -->
+                                <div class="shrink-0">
+                                    <img v-if="comment.author?.avatar" :src="comment.author.avatar"
+                                        class="w-8 h-8 rounded-full object-cover" />
+                                    <div v-else class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600">
+                                        {{ comment.author?.name?.charAt(0) }}
+                                    </div>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="bg-gray-50 rounded-xl px-4 py-3">
+                                        <div class="flex items-center justify-between mb-1">
+                                            <span class="text-xs font-bold text-gray-800">{{ comment.author?.name }}</span>
+                                            <button
+                                                v-if="comment.author?.id === authUserId || isOwner"
+                                                @click="deleteComment(comment.id)"
+                                                class="text-xs text-red-400 hover:text-red-600"
+                                            >✕</button>
+                                        </div>
+                                        <p class="text-sm text-gray-700 whitespace-pre-line">{{ comment.content }}</p>
+                                    </div>
+                                    <!-- Replies -->
+                                    <div v-if="comment.replies?.length" class="ml-4 mt-2 space-y-2">
+                                        <div v-for="reply in comment.replies" :key="reply.id" class="flex gap-2">
+                                            <img v-if="reply.author?.avatar" :src="reply.author.avatar"
+                                                class="w-6 h-6 rounded-full object-cover shrink-0" />
+                                            <div v-else class="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500 shrink-0">
+                                                {{ reply.author?.name?.charAt(0) }}
+                                            </div>
+                                            <div class="bg-gray-50 rounded-xl px-3 py-2 flex-1">
+                                                <p class="text-xs font-bold text-gray-800 mb-0.5">{{ reply.author?.name }}</p>
+                                                <p class="text-xs text-gray-700">{{ reply.content }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <p v-else class="text-sm text-gray-400 text-center py-4">No comments yet. Be the first to ask a question!</p>
+                    </div>
+                </div>
+
                 <!-- No lesson selected -->
-                <div v-else class="bg-white border border-gray-200 rounded-2xl p-14 text-center shadow-sm">
+                <div v-if="!selectedLesson" class="bg-white border border-gray-200 rounded-2xl p-14 text-center shadow-sm">
                     <span class="text-4xl block mb-3">🎓</span>
                     <p class="text-sm font-medium text-gray-700 mb-1">{{ course.description || course.title }}</p>
                     <p class="text-xs text-gray-400">Select a lesson from the sidebar to get started</p>
@@ -238,24 +468,27 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { Link, useForm, usePage } from '@inertiajs/vue3';
+import { ref, computed, watch } from 'vue';
+import { Link, useForm, usePage, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import CommunityTabs from '@/Components/CommunityTabs.vue';
 
 const props = defineProps({
-    community:    Object,
-    course:       Object,
-    completedIds: Array,
-    progress:     Number,
+    community:      Object,
+    course:         Object,
+    completedIds:   Array,
+    progress:       Number,
+    lessonComments: Object,   // { [lesson_id]: Comment[] }
+    quizAttempts:   Object,   // { [quiz_id]: QuizAttempt }
+    certificate:    Object,   // { uuid } or null
 });
 
-const page    = usePage();
-const isOwner = props.community.owner_id === page.props.auth?.user?.id;
+const page      = usePage();
+const isOwner   = props.community.owner_id === page.props.auth?.user?.id;
+const authUserId = page.props.auth?.user?.id;
 
 // ─── Completion ───────────────────────────────────────────────────────────────
 const doneIds = ref(new Set(props.completedIds));
-
 const isCompleted = (id) => doneIds.value.has(id);
 
 const totalLessons = computed(() =>
@@ -285,6 +518,9 @@ const selectedLesson = ref(props.course.modules[0]?.lessons[0] ?? null);
 function selectLesson(lesson) {
     selectedLesson.value = lesson;
     editingLesson.value  = false;
+    quizResult.value     = null;
+    resetQuizAnswers();
+    commentForm.reset();
 }
 
 // ─── Mark complete ─────────────────────────────────────────────────────────────
@@ -355,5 +591,144 @@ function embedUrl(url) {
     url = url.replace('youtu.be/', 'www.youtube.com/embed/');
     url = url.replace('youtube.com/watch?v=', 'youtube.com/embed/');
     return url.split('&')[0];
+}
+
+// ─── Quiz ─────────────────────────────────────────────────────────────────────
+const quizAnswers  = ref({});
+const quizResult   = ref(null);
+const quizForm     = useForm({});
+
+function bestAttempt(quizId) {
+    return quizId ? props.quizAttempts?.[quizId] : null;
+}
+
+const currentAttempt = computed(() => {
+    const quiz = selectedLesson.value?.quiz;
+    return quiz ? bestAttempt(quiz.id) : null;
+});
+
+const allAnswered = computed(() => {
+    const quiz = selectedLesson.value?.quiz;
+    if (!quiz) return false;
+    return quiz.questions.every((q) => quizAnswers.value[q.id] != null);
+});
+
+function resetQuizAnswers() {
+    quizAnswers.value = {};
+}
+
+function submitQuiz() {
+    const lesson = selectedLesson.value;
+    const quiz   = lesson?.quiz;
+    if (!quiz) return;
+
+    quizForm
+        .transform(() => ({ answers: quizAnswers.value }))
+        .post(
+            `/communities/${props.community.slug}/classroom/courses/${props.course.id}/lessons/${lesson.id}/quiz/${quiz.id}/submit`,
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    const flash = page.props.flash?.quiz_result;
+                    if (flash) quizResult.value = flash;
+                },
+            }
+        );
+}
+
+function retakeQuiz() {
+    quizResult.value = null;
+    resetQuizAnswers();
+}
+
+function deleteQuiz() {
+    const lesson = selectedLesson.value;
+    const quiz   = lesson?.quiz;
+    if (!quiz || !confirm('Delete this quiz?')) return;
+    router.delete(
+        `/communities/${props.community.slug}/classroom/courses/${props.course.id}/lessons/${lesson.id}/quiz/${quiz.id}`,
+        { preserveScroll: true }
+    );
+}
+
+// ─── Quiz Builder (owner) ─────────────────────────────────────────────────────
+const showQuizBuilder    = ref(false);
+const quizBuilderForm    = useForm({
+    title:      '',
+    pass_score: 70,
+    questions:  [],
+});
+
+function addQuestion() {
+    quizBuilderForm.questions.push({
+        question: '',
+        type:     'multiple_choice',
+        options:  [
+            { label: '', is_correct: true },
+            { label: '', is_correct: false },
+        ],
+    });
+}
+
+function setCorrect(qi, oi) {
+    quizBuilderForm.questions[qi].options.forEach((o, i) => {
+        o.is_correct = i === oi;
+    });
+}
+
+function resetQuizBuilder() {
+    quizBuilderForm.reset();
+    quizBuilderForm.questions = [];
+}
+
+function saveQuiz() {
+    const lesson = selectedLesson.value;
+    quizBuilderForm.post(
+        `/communities/${props.community.slug}/classroom/courses/${props.course.id}/lessons/${lesson.id}/quiz`,
+        {
+            onSuccess: () => {
+                showQuizBuilder.value = false;
+                resetQuizBuilder();
+            },
+        }
+    );
+}
+
+// ─── Lesson comments ──────────────────────────────────────────────────────────
+const commentForm = useForm({ content: '' });
+
+const currentComments = computed(() => {
+    if (!selectedLesson.value) return [];
+    return props.lessonComments?.[selectedLesson.value.id] ?? [];
+});
+
+function postComment() {
+    const lesson = selectedLesson.value;
+    commentForm.post(
+        `/communities/${props.community.slug}/classroom/courses/${props.course.id}/lessons/${lesson.id}/comments`,
+        {
+            preserveScroll: true,
+            onSuccess: () => commentForm.reset(),
+        }
+    );
+}
+
+function deleteComment(commentId) {
+    router.delete(`/lesson-comments/${commentId}`, { preserveScroll: true });
+}
+
+// ─── Certificate ──────────────────────────────────────────────────────────────
+const certUuid  = ref(props.certificate?.uuid ?? null);
+const certForm  = useForm({});
+
+function issueCert() {
+    certForm.post(
+        `/communities/${props.community.slug}/classroom/courses/${props.course.id}/certificate`,
+        {
+            onSuccess: () => {
+                // Inertia redirects to certificate page — no local state needed
+            },
+        }
+    );
 }
 </script>

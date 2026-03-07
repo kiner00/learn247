@@ -83,6 +83,44 @@
                 </template>
             </div>
 
+            <!-- Classroom analytics -->
+            <div v-if="course_stats?.length" class="bg-white border border-gray-200 rounded-2xl overflow-hidden mb-6">
+                <div class="px-5 py-4 border-b border-gray-100">
+                    <h2 class="text-sm font-bold text-gray-900">Classroom Analytics</h2>
+                    <p class="text-xs text-gray-400 mt-0.5">Completion and quiz performance per course</p>
+                </div>
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-gray-100 bg-gray-50">
+                            <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Course</th>
+                            <th class="text-center px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Lessons</th>
+                            <th class="text-center px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Completions</th>
+                            <th class="text-center px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Finished</th>
+                            <th class="text-center px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Quiz Pass Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        <tr v-for="c in course_stats" :key="c.id" class="hover:bg-gray-50 transition-colors">
+                            <td class="px-5 py-3 font-medium text-gray-900">{{ c.title }}</td>
+                            <td class="px-4 py-3 text-center text-gray-500">{{ c.total_lessons }}</td>
+                            <td class="px-4 py-3 text-center text-gray-500">{{ c.total_completions }}</td>
+                            <td class="px-4 py-3 text-center">
+                                <span class="text-xs font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full">
+                                    {{ c.completed_members }} members
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                <span v-if="c.quiz_pass_rate !== null" class="text-xs font-semibold px-2 py-0.5 rounded-full"
+                                    :class="c.quiz_pass_rate >= 70 ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'">
+                                    {{ c.quiz_pass_rate }}%
+                                </span>
+                                <span v-else class="text-xs text-gray-300">No quizzes</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
             <!-- Subscribers table -->
             <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
                 <div class="px-5 py-4 border-b border-gray-100">
@@ -139,10 +177,11 @@ import { Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
 const props = defineProps({
-    community:   Object,
-    stats:       Object,
-    revenue:     Object,
-    subscribers: Array,
+    community:    Object,
+    stats:        Object,
+    revenue:      Object,
+    subscribers:  Array,
+    course_stats: Array,
 });
 
 const curr = props.community.currency === 'USD' ? '$' : '₱';

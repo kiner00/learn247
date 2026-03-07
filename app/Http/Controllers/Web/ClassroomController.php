@@ -3,11 +3,15 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Models\Certificate;
+use App\Models\Comment;
 use App\Models\Community;
 use App\Models\Course;
 use App\Models\CourseLesson;
 use App\Models\CourseModule;
 use App\Models\LessonCompletion;
+use App\Models\QuizAttempt;
+use App\Services\BadgeService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -62,10 +66,10 @@ class ClassroomController extends Controller
     public function showCourse(Community $community, Course $course): Response
     {
         $userId = auth()->id();
-        $course->load('modules.lessons');
+        $course->load('modules.lessons.quiz.questions.options');
 
-        $lessonIds     = $course->modules->flatMap(fn ($m) => $m->lessons->pluck('id'));
-        $completedIds  = LessonCompletion::where('user_id', $userId)
+        $lessonIds    = $course->modules->flatMap(fn ($m) => $m->lessons->pluck('id'));
+        $completedIds = LessonCompletion::where('user_id', $userId)
             ->whereIn('lesson_id', $lessonIds)
             ->pluck('lesson_id')
             ->all();
@@ -73,11 +77,35 @@ class ClassroomController extends Controller
         $total    = $lessonIds->count();
         $progress = $total > 0 ? round(count($completedIds) / $total * 100) : 0;
 
+        // Load lesson comments keyed by lesson_id
+        $lessonComments = Comment::whereIn('lesson_id', $lessonIds)
+            ->whereNull('parent_id')
+            ->with(['author:id,name,username,avatar', 'replies.author:id,name,username,avatar'])
+            ->latest()
+            ->get()
+            ->groupBy('lesson_id')
+            ->map(fn ($comments) => $comments->values());
+
+        // Best quiz attempt per quiz (for this user)
+        $quizAttempts = QuizAttempt::where('user_id', $userId)
+            ->whereHas('quiz', fn ($q) => $q->whereIn('lesson_id', $lessonIds))
+            ->get()
+            ->groupBy('quiz_id')
+            ->map(fn ($attempts) => $attempts->sortByDesc('score')->first());
+
+        // Certificate if already issued
+        $certificate = Certificate::where('user_id', $userId)
+            ->where('course_id', $course->id)
+            ->first();
+
         return Inertia::render('Communities/Classroom/Show', [
-            'community'    => $community,
-            'course'       => $course,
-            'completedIds' => $completedIds,
-            'progress'     => $progress,
+            'community'      => $community,
+            'course'         => $course,
+            'completedIds'   => $completedIds,
+            'progress'       => $progress,
+            'lessonComments' => $lessonComments,
+            'quizAttempts'   => $quizAttempts,
+            'certificate'    => $certificate ? ['uuid' => $certificate->uuid] : null,
         ]);
     }
 
@@ -110,10 +138,15 @@ class ClassroomController extends Controller
 
     public function completeLesson(Request $request, Community $community, Course $course, CourseLesson $lesson): RedirectResponse
     {
+        $user = $request->user();
+
         LessonCompletion::firstOrCreate([
-            'user_id'   => $request->user()->id,
+            'user_id'   => $user->id,
             'lesson_id' => $lesson->id,
         ]);
+
+        // Award badges
+        app(BadgeService::class)->evaluate($user, $community->id);
 
         return back()->with('success', 'Lesson marked as complete!');
     }
