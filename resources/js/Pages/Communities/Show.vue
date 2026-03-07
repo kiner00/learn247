@@ -174,7 +174,7 @@
                         </div>
 
                         <!-- Affiliate -->
-                        <template v-if="isMember && community.affiliate_commission_rate">
+                        <template v-if="isMember && !isOwner && community.affiliate_commission_rate">
                             <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
                                 <p class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
                                     🔗 Affiliate Program
