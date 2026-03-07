@@ -178,7 +178,7 @@ class AdminController extends Controller
                 'payout_details' => $a->payout_details,
                 'can_disburse'   => DisbursePayout::supports($a->payout_method ?? ''),
             ])
-            ->filter(fn ($a) => $a['pending'] > 0)
+            ->filter(fn ($a) => $a['total_earned'] > 0)
             ->values();
 
         // ── Summary stats ────────────────────────────────────────────────────
