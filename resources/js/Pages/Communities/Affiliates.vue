@@ -41,6 +41,7 @@
                             <th class="text-right px-5 py-3 font-semibold text-gray-600">Earned</th>
                             <th class="text-right px-5 py-3 font-semibold text-gray-600">Paid</th>
                             <th class="text-right px-5 py-3 font-semibold text-gray-600">Pending</th>
+                            <th class="text-left px-5 py-3 font-semibold text-gray-600">Payout Info</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
@@ -56,6 +57,13 @@
                                 <span :class="a.pending_amount > 0 ? 'text-green-700 font-semibold' : 'text-gray-400'">
                                     ₱{{ Number(a.pending_amount).toFixed(2) }}
                                 </span>
+                            </td>
+                            <td class="px-5 py-3">
+                                <span v-if="a.payout_method" class="text-xs text-gray-700">
+                                    <span class="font-semibold uppercase">{{ a.payout_method }}</span>
+                                    · {{ a.payout_details }}
+                                </span>
+                                <span v-else class="text-xs text-gray-400 italic">Not set</span>
                             </td>
                         </tr>
                     </tbody>

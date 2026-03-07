@@ -28,9 +28,11 @@ class AffiliateController extends Controller
                 'status'         => $a->status,
                 'total_earned'   => $a->total_earned,
                 'total_paid'     => $a->total_paid,
-                'pending_amount' => $a->pendingAmount(),
-                'referral_url'   => url("/ref/{$a->code}"),
-                'community'      => [
+                'pending_amount'  => $a->pendingAmount(),
+                'referral_url'    => url("/ref/{$a->code}"),
+                'payout_method'   => $a->payout_method,
+                'payout_details'  => $a->payout_details,
+                'community'       => [
                     'name' => $a->community->name,
                     'slug' => $a->community->slug,
                 ],
@@ -65,6 +67,8 @@ class AffiliateController extends Controller
                 'pending_amount' => $a->pendingAmount(),
                 'referral_url'   => url("/ref/{$a->code}"),
                 'user'           => ['name' => $a->user->name, 'email' => $a->user->email],
+                'payout_method'  => $a->payout_method,
+                'payout_details' => $a->payout_details,
             ]);
 
         $conversions = AffiliateConversion::whereHas('affiliate', fn ($q) => $q->where('community_id', $community->id))
@@ -91,6 +95,21 @@ class AffiliateController extends Controller
         ];
 
         return Inertia::render('Communities/Affiliates', compact('community', 'affiliates', 'conversions', 'stats'));
+    }
+
+    /** PATCH /affiliates/{affiliate}/payout — affiliate sets their payout details */
+    public function updatePayout(Request $request, Affiliate $affiliate): RedirectResponse
+    {
+        abort_unless($affiliate->user_id === $request->user()->id, 403);
+
+        $data = $request->validate([
+            'payout_method'  => ['required', 'string', 'in:gcash,bank,paypal,maya'],
+            'payout_details' => ['required', 'string', 'max:255'],
+        ]);
+
+        $affiliate->update($data);
+
+        return back()->with('success', 'Payout details saved.');
     }
 
     /** PATCH /affiliate-conversions/{conversion}/paid */

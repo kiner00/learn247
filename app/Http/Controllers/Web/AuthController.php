@@ -14,8 +14,12 @@ use Inertia\Response;
 
 class AuthController extends Controller
 {
-    public function showLogin(): Response
+    public function showLogin(Request $request): Response
     {
+        if ($redirect = $request->query('redirect')) {
+            session()->put('url.intended', url($redirect));
+        }
+
         return Inertia::render('Auth/Login');
     }
 
@@ -35,8 +39,12 @@ class AuthController extends Controller
         return redirect()->intended('/communities');
     }
 
-    public function showRegister(): Response
+    public function showRegister(Request $request): Response
     {
+        if ($redirect = $request->query('redirect')) {
+            session()->put('url.intended', url($redirect));
+        }
+
         return Inertia::render('Auth/Register');
     }
 

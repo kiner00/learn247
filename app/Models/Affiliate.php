@@ -15,7 +15,7 @@ class Affiliate extends Model
     public const STATUS_INACTIVE = 'inactive';
 
     protected $fillable = [
-        'community_id', 'user_id', 'code', 'status', 'total_earned', 'total_paid',
+        'community_id', 'user_id', 'code', 'status', 'total_earned', 'total_paid', 'payout_method', 'payout_details',
     ];
 
     protected function casts(): array

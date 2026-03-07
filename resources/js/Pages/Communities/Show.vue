@@ -236,6 +236,34 @@
             </div>
         </div>
 
+        <!-- ─── Auth Prompt Modal ───────────────────────────────────────────── -->
+        <Teleport to="body">
+            <Transition enter-active-class="transition-opacity duration-200" enter-from-class="opacity-0" enter-to-class="opacity-100"
+                leave-active-class="transition-opacity duration-150" leave-from-class="opacity-100" leave-to-class="opacity-0">
+                <div v-if="showAuthPrompt" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" @click.self="showAuthPrompt = false">
+                    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+                        <div class="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-6 h-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-base font-bold text-gray-900 mb-1">Join {{ community.name }}</h3>
+                        <p class="text-sm text-gray-500 mb-5">Create an account or log in to continue.</p>
+                        <div class="flex gap-3">
+                            <Link :href="`/login?redirect=/communities/${community.slug}`"
+                                class="flex-1 py-2.5 border border-gray-300 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-50 transition-colors text-center">
+                                Log in
+                            </Link>
+                            <Link :href="`/register?redirect=/communities/${community.slug}`"
+                                class="flex-1 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition-colors text-center">
+                                Sign up
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </Transition>
+        </Teleport>
+
         <!-- ─── Invite Modal ─────────────────────────────────────────────────── -->
         <InviteModal :show="showInviteModal" :community-name="community.name" :invite-url="inviteUrl" @close="showInviteModal = false" />
 
@@ -418,11 +446,27 @@ function closeModal() {
 function setReplyTarget(comment) { replyTarget.value = comment; }
 
 // ─── Join / Checkout ──────────────────────────────────────────────────────────
+const showAuthPrompt = ref(false);
+
+function requireAuth() {
+    if (!page.props.auth?.user) {
+        showAuthPrompt.value = true;
+        return false;
+    }
+    return true;
+}
+
 const joinForm = useForm({});
-function join() { joinForm.post(`/communities/${props.community.slug}/join`); }
+function join() {
+    if (!requireAuth()) return;
+    joinForm.post(`/communities/${props.community.slug}/join`);
+}
 
 const checkoutForm = useForm({});
-function checkout() { checkoutForm.post(`/communities/${props.community.slug}/checkout`); }
+function checkout() {
+    if (!requireAuth()) return;
+    checkoutForm.post(`/communities/${props.community.slug}/checkout`);
+}
 
 // ─── Posts ────────────────────────────────────────────────────────────────────
 const postForm = useForm({ title: '', content: '' });
