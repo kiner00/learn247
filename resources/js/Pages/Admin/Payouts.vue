@@ -178,7 +178,7 @@
                     <tbody class="divide-y divide-gray-100">
                         <tr v-for="a in filteredAffiliates" :key="a.id" class="hover:bg-gray-50">
                             <td class="px-5 py-3">
-                                <input v-if="a.can_disburse"
+                                <input v-if="a.can_disburse && a.pending > 0"
                                        type="checkbox"
                                        :value="a.id"
                                        :checked="selectedAffiliateIds.has(a.id)"
