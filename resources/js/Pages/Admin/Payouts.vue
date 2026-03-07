@@ -33,7 +33,16 @@
         <div v-if="activeTab === 'owners'">
             <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
                 <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-                    <h2 class="font-semibold text-gray-800">Community Owners</h2>
+                    <div class="flex items-center gap-3">
+                        <h2 class="font-semibold text-gray-800">Community Owners</h2>
+                        <div class="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
+                            <button v-for="s in statusTabs" :key="s.key" @click="ownerStatus = s.key"
+                                    class="px-3 py-1 text-xs font-semibold rounded-md transition-all"
+                                    :class="ownerStatus === s.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'">
+                                {{ s.label }}
+                            </button>
+                        </div>
+                    </div>
                     <div class="flex items-center gap-2">
                         <button v-if="selectedOwnerIds.size > 0"
                                 @click="paySelectedOwners"
@@ -47,12 +56,12 @@
                     </div>
                 </div>
 
-                <div v-if="owners.length === 0" class="px-5 py-10 text-center text-sm text-gray-400">
-                    No pending owner payouts.
+                <div v-if="filteredOwners.length === 0" class="px-5 py-10 text-center text-sm text-gray-400">
+                    No {{ ownerStatus === 'all' ? '' : ownerStatus }} owner payouts.
                 </div>
 
                 <div v-else>
-                    <div v-for="owner in owners" :key="owner.user_id"
+                    <div v-for="owner in filteredOwners" :key="owner.user_id"
                          class="border-b border-gray-100 last:border-0">
                         <!-- Owner header -->
                         <div class="px-5 py-3 bg-gray-50 flex items-center justify-between">
@@ -127,7 +136,16 @@
         <div v-else-if="activeTab === 'affiliates'">
             <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
                 <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-                    <h2 class="font-semibold text-gray-800">Affiliates with Pending Commissions</h2>
+                    <div class="flex items-center gap-3">
+                        <h2 class="font-semibold text-gray-800">Affiliates</h2>
+                        <div class="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
+                            <button v-for="s in statusTabs" :key="s.key" @click="affiliateStatus = s.key"
+                                    class="px-3 py-1 text-xs font-semibold rounded-md transition-all"
+                                    :class="affiliateStatus === s.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'">
+                                {{ s.label }}
+                            </button>
+                        </div>
+                    </div>
                     <div class="flex items-center gap-2">
                         <button v-if="selectedAffiliateIds.size > 0"
                                 @click="paySelectedAffiliates"
@@ -141,8 +159,8 @@
                     </div>
                 </div>
 
-                <div v-if="affiliates.length === 0" class="px-5 py-10 text-center text-sm text-gray-400">
-                    No pending affiliate payouts.
+                <div v-if="filteredAffiliates.length === 0" class="px-5 py-10 text-center text-sm text-gray-400">
+                    No {{ affiliateStatus === 'all' ? '' : affiliateStatus }} affiliate payouts.
                 </div>
 
                 <table v-else class="w-full text-sm">
@@ -158,7 +176,7 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
-                        <tr v-for="a in affiliates" :key="a.id" class="hover:bg-gray-50">
+                        <tr v-for="a in filteredAffiliates" :key="a.id" class="hover:bg-gray-50">
                             <td class="px-5 py-3">
                                 <input v-if="a.can_disburse"
                                        type="checkbox"
@@ -190,7 +208,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
@@ -205,6 +223,26 @@ const tabs = [
     { key: 'owners',     label: 'Community Owners' },
     { key: 'affiliates', label: 'Affiliates' },
 ]
+
+const ownerStatus     = ref('pending')
+const affiliateStatus = ref('pending')
+const statusTabs = [
+    { key: 'all',     label: 'All' },
+    { key: 'pending', label: 'Pending' },
+    { key: 'paid',    label: 'Paid' },
+]
+
+const filteredOwners = computed(() => {
+    if (ownerStatus.value === 'pending') return props.owners.filter(o => o.total_pending > 0)
+    if (ownerStatus.value === 'paid')    return props.owners.filter(o => o.total_pending <= 0)
+    return props.owners
+})
+
+const filteredAffiliates = computed(() => {
+    if (affiliateStatus.value === 'pending') return props.affiliates.filter(a => a.pending > 0)
+    if (affiliateStatus.value === 'paid')    return props.affiliates.filter(a => a.pending <= 0)
+    return props.affiliates
+})
 
 const selectedOwnerIds    = reactive(new Set())
 const selectedAffiliateIds = reactive(new Set())
