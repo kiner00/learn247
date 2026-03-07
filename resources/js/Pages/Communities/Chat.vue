@@ -62,7 +62,19 @@
                                     <span class="text-xs text-gray-400">{{ formatTime(msg.created_at) }}</span>
                                 </div>
 
-                                <p class="text-sm text-gray-700 leading-relaxed break-words">{{ msg.content }}</p>
+                                <div class="flex items-start gap-2">
+                                    <p class="flex-1 text-sm text-gray-700 leading-relaxed break-words">{{ msg.content }}</p>
+                                    <button
+                                        v-if="canDelete(msg)"
+                                        @click="deleteMessage(msg)"
+                                        class="opacity-0 group-hover:opacity-100 shrink-0 text-gray-300 hover:text-red-500 transition-all mt-0.5"
+                                        title="Delete message"
+                                    >
+                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -221,6 +233,23 @@ function scrollToBottom(smooth = false) {
             messagesEl.value.scrollTo({ top: messagesEl.value.scrollHeight, behavior: smooth ? 'smooth' : 'instant' });
         }
     });
+}
+
+// ── Delete message ─────────────────────────────────────────────────────────────
+function canDelete(msg) {
+    const authUser = page.props.auth?.user;
+    if (!authUser) return false;
+    return msg.user?.id === authUser.id || authUser.is_super_admin;
+}
+
+async function deleteMessage(msg) {
+    if (!confirm('Delete this message?')) return;
+    try {
+        await axios.delete(`/communities/${props.community.slug}/chat/${msg.id}`, {
+            headers: { 'X-CSRF-TOKEN': csrfToken },
+        });
+        messages.value = messages.value.filter(m => m.id !== msg.id);
+    } catch { /* ignore */ }
 }
 
 // ── Send message ───────────────────────────────────────────────────────────────

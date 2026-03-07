@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Community;
 use App\Models\Message;
+use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -100,5 +101,20 @@ class ChatController extends Controller
         }
 
         return response()->json(['messages' => $messages]);
+    }
+
+    public function destroy(Request $request, Community $community, Message $message): JsonResponse
+    {
+        $user = $request->user();
+
+        abort_unless(
+            $message->community_id === $community->id &&
+            ($message->user_id === $user->id || $user->is_super_admin),
+            403
+        );
+
+        $message->delete();
+
+        return response()->json(['deleted' => $message->id]);
     }
 }
