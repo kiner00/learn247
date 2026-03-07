@@ -20,6 +20,7 @@ use App\Http\Controllers\Web\QuizController;
 use App\Http\Controllers\Web\RefController;
 use App\Http\Controllers\Web\SubscriptionController;
 use App\Http\Middleware\EnsureActiveMembership;
+use App\Http\Controllers\XenditWebhookController;
 use App\Http\Middleware\EnsureSuperAdmin;
 use Illuminate\Support\Facades\Route;
 
@@ -50,7 +51,9 @@ Route::middleware(['auth', EnsureSuperAdmin::class])->prefix('admin')->group(fun
     Route::get('/payouts', [AdminController::class, 'payouts'])->name('admin.payouts');
     Route::post('/payouts/owner/{community}', [AdminController::class, 'payOwner'])->name('admin.payouts.owner');
     Route::post('/payouts/owners/batch', [AdminController::class, 'batchPayOwners'])->name('admin.payouts.owners.batch');
+    Route::post('/payouts/owners/selected', [AdminController::class, 'paySelectedOwners'])->name('admin.payouts.owners.selected');
     Route::post('/payouts/affiliates/batch', [AdminController::class, 'batchPayAffiliates'])->name('admin.payouts.affiliates.batch');
+    Route::post('/payouts/affiliates/selected', [AdminController::class, 'paySelectedAffiliates'])->name('admin.payouts.affiliates.selected');
 });
 
 // ─── Profile ───────────────────────────────────────────────────────────────────
@@ -161,3 +164,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/affiliate-conversions/{conversion}/disburse', [AffiliateController::class, 'disburse'])->name('affiliate-conversions.disburse');
     Route::patch('/affiliates/{affiliate}/payout', [AffiliateController::class, 'updatePayout'])->name('affiliates.payout');
 });
+
+// ─── Xendit Webhooks (no auth, no CSRF) ────────────────────────────────────
+Route::post('/webhooks/xendit/payouts', [XenditWebhookController::class, 'payouts'])->name('webhooks.xendit.payouts');

@@ -34,10 +34,17 @@
             <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
                 <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
                     <h2 class="font-semibold text-gray-800">Community Owners</h2>
-                    <button @click="batchPayOwners"
-                            class="text-sm bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-1.5 rounded-lg transition-colors">
-                        Batch Pay All (Xendit)
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <button v-if="selectedOwnerIds.size > 0"
+                                @click="paySelectedOwners"
+                                class="text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-1.5 rounded-lg transition-colors">
+                            Pay Selected ({{ selectedOwnerIds.size }})
+                        </button>
+                        <button @click="batchPayOwners"
+                                class="text-sm bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-1.5 rounded-lg transition-colors">
+                            Batch Pay All (Xendit)
+                        </button>
+                    </div>
                 </div>
 
                 <div v-if="owners.length === 0" class="px-5 py-10 text-center text-sm text-gray-400">
@@ -68,6 +75,7 @@
                         <table class="w-full text-sm">
                             <thead class="bg-white border-b border-gray-100">
                                 <tr>
+                                    <th class="px-5 py-2 w-8"></th>
                                     <th class="text-left px-5 py-2 text-xs font-semibold text-gray-500">Community</th>
                                     <th class="text-right px-5 py-2 text-xs font-semibold text-gray-500">Gross</th>
                                     <th class="text-right px-5 py-2 text-xs font-semibold text-gray-500">Platform (3%)</th>
@@ -80,6 +88,14 @@
                             </thead>
                             <tbody class="divide-y divide-gray-50">
                                 <tr v-for="c in owner.communities" :key="c.community_id" class="hover:bg-gray-50">
+                                    <td class="px-5 py-2.5">
+                                        <input v-if="c.pending > 0 && owner.can_disburse"
+                                               type="checkbox"
+                                               :value="c.community_id"
+                                               :checked="selectedOwnerIds.has(c.community_id)"
+                                               @change="toggleOwner(c.community_id)"
+                                               class="w-4 h-4 rounded border-gray-300 text-indigo-600 cursor-pointer" />
+                                    </td>
                                     <td class="px-5 py-2.5 font-medium text-gray-900">{{ c.community_name }}</td>
                                     <td class="px-5 py-2.5 text-right text-gray-600">₱{{ fmt(c.gross) }}</td>
                                     <td class="px-5 py-2.5 text-right text-red-500">−₱{{ fmt(c.platform_fee) }}</td>
@@ -112,10 +128,17 @@
             <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
                 <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
                     <h2 class="font-semibold text-gray-800">Affiliates with Pending Commissions</h2>
-                    <button @click="batchPayAffiliates"
-                            class="text-sm bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-1.5 rounded-lg transition-colors">
-                        Batch Pay All (Xendit)
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <button v-if="selectedAffiliateIds.size > 0"
+                                @click="paySelectedAffiliates"
+                                class="text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-1.5 rounded-lg transition-colors">
+                            Pay Selected ({{ selectedAffiliateIds.size }})
+                        </button>
+                        <button @click="batchPayAffiliates"
+                                class="text-sm bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-1.5 rounded-lg transition-colors">
+                            Batch Pay All (Xendit)
+                        </button>
+                    </div>
                 </div>
 
                 <div v-if="affiliates.length === 0" class="px-5 py-10 text-center text-sm text-gray-400">
@@ -125,6 +148,7 @@
                 <table v-else class="w-full text-sm">
                     <thead class="bg-gray-50 border-b border-gray-200">
                         <tr>
+                            <th class="px-5 py-3 w-8"></th>
                             <th class="text-left px-5 py-3 font-semibold text-gray-600">Affiliate</th>
                             <th class="text-left px-5 py-3 font-semibold text-gray-600">Community</th>
                             <th class="text-right px-5 py-3 font-semibold text-gray-600">Earned</th>
@@ -135,6 +159,14 @@
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         <tr v-for="a in affiliates" :key="a.id" class="hover:bg-gray-50">
+                            <td class="px-5 py-3">
+                                <input v-if="a.can_disburse"
+                                       type="checkbox"
+                                       :value="a.id"
+                                       :checked="selectedAffiliateIds.has(a.id)"
+                                       @change="toggleAffiliate(a.id)"
+                                       class="w-4 h-4 rounded border-gray-300 text-indigo-600 cursor-pointer" />
+                            </td>
                             <td class="px-5 py-3">
                                 <p class="font-medium text-gray-900">{{ a.name }}</p>
                                 <p class="text-xs text-gray-400">{{ a.email }}</p>
@@ -158,7 +190,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
@@ -174,6 +206,17 @@ const tabs = [
     { key: 'affiliates', label: 'Affiliates' },
 ]
 
+const selectedOwnerIds    = reactive(new Set())
+const selectedAffiliateIds = reactive(new Set())
+
+function toggleOwner(id) {
+    selectedOwnerIds.has(id) ? selectedOwnerIds.delete(id) : selectedOwnerIds.add(id)
+}
+
+function toggleAffiliate(id) {
+    selectedAffiliateIds.has(id) ? selectedAffiliateIds.delete(id) : selectedAffiliateIds.add(id)
+}
+
 function fmt(val) {
     return Number(val ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
@@ -182,8 +225,20 @@ function payOwner(communityId) {
     router.post(`/admin/payouts/owner/${communityId}`)
 }
 
+function paySelectedOwners() {
+    router.post('/admin/payouts/owners/selected', { community_ids: [...selectedOwnerIds] }, {
+        onSuccess: () => selectedOwnerIds.clear(),
+    })
+}
+
 function batchPayOwners() {
     router.post('/admin/payouts/owners/batch')
+}
+
+function paySelectedAffiliates() {
+    router.post('/admin/payouts/affiliates/selected', { affiliate_ids: [...selectedAffiliateIds] }, {
+        onSuccess: () => selectedAffiliateIds.clear(),
+    })
 }
 
 function batchPayAffiliates() {

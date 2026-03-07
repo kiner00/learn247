@@ -12,6 +12,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->validateCsrfTokens(except: ['webhooks/*']);
+
         // Inertia: encrypt sessions and share flash data
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,

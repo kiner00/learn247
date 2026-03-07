@@ -131,7 +131,7 @@ class AdminController extends Controller
                     $affiliateCommission = (float) AffiliateConversion::whereHas('affiliate', fn ($q) => $q->where('community_id', $community->id))->sum('commission_amount');
                     $platformFee        = round($gross * 0.03, 2);
                     $earned             = round($gross - $platformFee - $affiliateCommission, 2);
-                    $paid               = (float) OwnerPayout::where('community_id', $community->id)->sum('amount');
+                    $paid               = (float) OwnerPayout::where('community_id', $community->id)->where('status', '!=', 'failed')->sum('amount');
                     $pending            = round($earned - $paid, 2);
 
                     return [
@@ -200,7 +200,7 @@ class AdminController extends Controller
         $affiliateCommission = (float) AffiliateConversion::whereHas('affiliate', fn ($q) => $q->where('community_id', $community->id))->sum('commission_amount');
         $platformFee        = round($gross * 0.03, 2);
         $earned             = round($gross - $platformFee - $affiliateCommission, 2);
-        $paid               = (float) OwnerPayout::where('community_id', $community->id)->sum('amount');
+        $paid               = (float) OwnerPayout::where('community_id', $community->id)->where('status', '!=', 'failed')->sum('amount');
         $pending            = round($earned - $paid, 2);
 
         if ($pending <= 0) {
@@ -227,7 +227,7 @@ class AdminController extends Controller
                 'community_id'     => $community->id,
                 'user_id'          => $owner->id,
                 'amount'           => $pending,
-                'status'           => 'paid',
+                'status'           => 'accepted',
                 'xendit_reference' => $result['id'] ?? $referenceId,
                 'paid_at'          => now(),
             ]);
@@ -252,7 +252,7 @@ class AdminController extends Controller
             $affiliateCommission = (float) AffiliateConversion::whereHas('affiliate', fn ($q) => $q->where('community_id', $community->id))->sum('commission_amount');
             $platformFee        = round($gross * 0.03, 2);
             $earned             = round($gross - $platformFee - $affiliateCommission, 2);
-            $paidOut            = (float) OwnerPayout::where('community_id', $community->id)->sum('amount');
+            $paidOut            = (float) OwnerPayout::where('community_id', $community->id)->where('status', '!=', 'failed')->sum('amount');
             $pending            = round($earned - $paidOut, 2);
 
             if ($pending <= 0) continue;
@@ -277,7 +277,7 @@ class AdminController extends Controller
                     'community_id'     => $community->id,
                     'user_id'          => $owner->id,
                     'amount'           => $pending,
-                    'status'           => 'paid',
+                    'status'           => 'accepted',
                     'xendit_reference' => $result['id'] ?? $referenceId,
                     'paid_at'          => now(),
                 ]);
@@ -288,6 +288,92 @@ class AdminController extends Controller
         }
 
         $msg = "Paid {$paid} community owner(s).";
+        if ($errors) $msg .= ' Errors: ' . implode('; ', $errors);
+
+        return back()->with($errors ? 'error' : 'success', $msg);
+    }
+
+    public function paySelectedOwners(Request $request, XenditService $xendit): RedirectResponse
+    {
+        $ids = $request->validate(['community_ids' => 'required|array', 'community_ids.*' => 'integer'])['community_ids'];
+
+        $communities = Community::with('owner')->whereIn('id', $ids)->get();
+        $paid = 0;
+        $errors = [];
+
+        foreach ($communities as $community) {
+            $owner = $community->owner;
+            if (!in_array($owner->payout_method, ['gcash', 'maya']) || !$owner->payout_details) continue;
+
+            $gross               = (float) Payment::where('community_id', $community->id)->where('status', Payment::STATUS_PAID)->sum('amount');
+            $affiliateCommission = (float) AffiliateConversion::whereHas('affiliate', fn ($q) => $q->where('community_id', $community->id))->sum('commission_amount');
+            $platformFee         = round($gross * 0.03, 2);
+            $earned              = round($gross - $platformFee - $affiliateCommission, 2);
+            $paidOut             = (float) OwnerPayout::where('community_id', $community->id)->where('status', '!=', 'failed')->sum('amount');
+            $pending             = round($earned - $paidOut, 2);
+
+            if ($pending <= 0) continue;
+
+            $channelCode = $owner->payout_method === 'gcash' ? 'PH_GCASH' : 'PH_PAYMAYA';
+            $referenceId = 'owner-' . $community->id . '-' . time();
+
+            try {
+                $result = $xendit->createPayout([
+                    'reference_id'       => $referenceId,
+                    'currency'           => 'PHP',
+                    'channel_code'       => $channelCode,
+                    'channel_properties' => [
+                        'account_holder_name' => $owner->name,
+                        'account_number'      => $owner->payout_details,
+                    ],
+                    'amount'      => $pending,
+                    'description' => "Owner earnings – {$community->name}",
+                ]);
+
+                OwnerPayout::create([
+                    'community_id'     => $community->id,
+                    'user_id'          => $owner->id,
+                    'amount'           => $pending,
+                    'status'           => 'accepted',
+                    'xendit_reference' => $result['id'] ?? $referenceId,
+                    'paid_at'          => now(),
+                ]);
+                $paid++;
+            } catch (\RuntimeException $e) {
+                $errors[] = "{$community->name}: " . $e->getMessage();
+            }
+        }
+
+        $msg = "Paid {$paid} selected owner(s).";
+        if ($errors) $msg .= ' Errors: ' . implode('; ', $errors);
+
+        return back()->with($errors ? 'error' : 'success', $msg);
+    }
+
+    public function paySelectedAffiliates(Request $request, DisbursePayout $disburse, MarkAffiliateConversionPaid $mark): RedirectResponse
+    {
+        $ids = $request->validate(['affiliate_ids' => 'required|array', 'affiliate_ids.*' => 'integer'])['affiliate_ids'];
+
+        $conversions = AffiliateConversion::where('status', AffiliateConversion::STATUS_PENDING)
+            ->whereIn('affiliate_id', $ids)
+            ->with(['affiliate.user', 'affiliate.community'])
+            ->get()
+            ->filter(fn ($c) => DisbursePayout::supports($c->affiliate->payout_method ?? ''));
+
+        $paid = 0;
+        $errors = [];
+
+        foreach ($conversions as $conversion) {
+            try {
+                $disburse->execute($conversion);
+                $mark->execute($conversion);
+                $paid++;
+            } catch (\RuntimeException $e) {
+                $errors[] = "Conversion #{$conversion->id}: " . $e->getMessage();
+            }
+        }
+
+        $msg = "Paid {$paid} selected affiliate conversion(s).";
         if ($errors) $msg .= ' Errors: ' . implode('; ', $errors);
 
         return back()->with($errors ? 'error' : 'success', $msg);
