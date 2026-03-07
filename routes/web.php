@@ -49,7 +49,7 @@ Route::middleware(['auth', EnsureSuperAdmin::class])->prefix('admin')->group(fun
     Route::get('/', [AdminController::class, 'dashboard'])->name('admin.dashboard');
     Route::patch('/settings', [AdminController::class, 'updateSettings'])->name('admin.settings.update');
     Route::get('/payouts', [AdminController::class, 'payouts'])->name('admin.payouts');
-    Route::post('/payouts/owner/{community}', [AdminController::class, 'payOwner'])->name('admin.payouts.owner');
+    Route::post('/payouts/owner/{community:id}', [AdminController::class, 'payOwner'])->name('admin.payouts.owner');
     Route::post('/payouts/owners/batch', [AdminController::class, 'batchPayOwners'])->name('admin.payouts.owners.batch');
     Route::post('/payouts/owners/selected', [AdminController::class, 'paySelectedOwners'])->name('admin.payouts.owners.selected');
     Route::post('/payouts/affiliates/batch', [AdminController::class, 'batchPayAffiliates'])->name('admin.payouts.affiliates.batch');
