@@ -63,9 +63,9 @@
                                 </span>
                             </td>
                             <td class="px-5 py-4 text-right">
-                                <button @click="editPayout(a)"
+                                <button @click="showPayoutModal = true"
                                         class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
-                                    {{ a.payout_method ? '✓ ' + a.payout_method.toUpperCase() : 'Set payout' }}
+                                    {{ payoutMethod ? '✓ ' + payoutMethod.toUpperCase() : 'Set payout' }}
                                 </button>
                             </td>
                         </tr>
@@ -77,9 +77,10 @@
 
         <!-- Payout modal -->
         <Teleport to="body">
-            <div v-if="payoutTarget" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" @click.self="payoutTarget = null">
+            <div v-if="showPayoutModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" @click.self="showPayoutModal = false">
                 <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
-                    <h3 class="text-base font-bold text-gray-900 mb-4">Payout Details</h3>
+                    <h3 class="text-base font-bold text-gray-900 mb-1">Payout Details</h3>
+                    <p class="text-xs text-gray-400 mb-4">This applies to all your affiliate earnings.</p>
                     <form @submit.prevent="savePayout" class="space-y-3">
                         <div>
                             <label class="block text-xs font-semibold text-gray-600 mb-1">Method</label>
@@ -100,7 +101,7 @@
                                    class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                         </div>
                         <div class="flex gap-3 pt-1">
-                            <button type="button" @click="payoutTarget = null"
+                            <button type="button" @click="showPayoutModal = false"
                                     class="flex-1 py-2 border border-gray-200 text-gray-600 text-sm rounded-xl hover:bg-gray-50">
                                 Cancel
                             </button>
@@ -121,13 +122,18 @@ import { ref, reactive } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
-defineProps({
+const props = defineProps({
     affiliates: Array,
+    payoutMethod: String,
+    payoutDetails: String,
 })
 
 const copied = ref(null)
-const payoutTarget = ref(null)
-const payoutForm = reactive({ payout_method: 'gcash', payout_details: '' })
+const showPayoutModal = ref(false)
+const payoutForm = reactive({
+    payout_method:  props.payoutMethod  ?? 'gcash',
+    payout_details: props.payoutDetails ?? '',
+})
 
 async function copy(url) {
     await navigator.clipboard.writeText(url)
@@ -135,15 +141,9 @@ async function copy(url) {
     setTimeout(() => { copied.value = null }, 2000)
 }
 
-function editPayout(affiliate) {
-    payoutTarget.value = affiliate
-    payoutForm.payout_method = affiliate.payout_method ?? 'gcash'
-    payoutForm.payout_details = affiliate.payout_details ?? ''
-}
-
 function savePayout() {
-    router.patch(`/affiliates/${payoutTarget.value.id}/payout`, payoutForm, {
-        onSuccess: () => { payoutTarget.value = null },
+    router.patch('/account/settings/payout', payoutForm, {
+        onSuccess: () => { showPayoutModal.value = false },
         preserveScroll: true,
     })
 }

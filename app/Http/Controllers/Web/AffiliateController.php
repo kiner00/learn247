@@ -19,7 +19,9 @@ class AffiliateController extends Controller
     /** GET /my-affiliates — user's own affiliate links + earnings */
     public function index(Request $request): Response
     {
-        $affiliates = Affiliate::where('user_id', $request->user()->id)
+        $user = $request->user();
+
+        $affiliates = Affiliate::where('user_id', $user->id)
             ->with('community')
             ->latest()
             ->get()
@@ -31,15 +33,17 @@ class AffiliateController extends Controller
                 'total_paid'     => $a->total_paid,
                 'pending_amount'  => $a->pendingAmount(),
                 'referral_url'    => url("/ref/{$a->code}"),
-                'payout_method'   => $a->payout_method,
-                'payout_details'  => $a->payout_details,
                 'community'       => [
                     'name' => $a->community->name,
                     'slug' => $a->community->slug,
                 ],
             ]);
 
-        return Inertia::render('Affiliates/Index', ['affiliates' => $affiliates]);
+        return Inertia::render('Affiliates/Index', [
+            'affiliates'    => $affiliates,
+            'payoutMethod'  => $user->payout_method,
+            'payoutDetails' => $user->payout_details,
+        ]);
     }
 
     /** POST /communities/{community}/affiliates — join as affiliate */
@@ -68,8 +72,8 @@ class AffiliateController extends Controller
                 'pending_amount' => $a->pendingAmount(),
                 'referral_url'   => url("/ref/{$a->code}"),
                 'user'           => ['name' => $a->user->name, 'email' => $a->user->email],
-                'payout_method'  => $a->payout_method,
-                'payout_details' => $a->payout_details,
+                'payout_method'  => $a->user->payout_method,
+                'payout_details' => $a->user->payout_details,
             ]);
 
         $conversions = AffiliateConversion::whereHas('affiliate', fn ($q) => $q->where('community_id', $community->id))
@@ -87,8 +91,8 @@ class AffiliateController extends Controller
                 'creator_amount'    => $c->creator_amount,
                 'status'            => $c->status,
                 'paid_at'           => $c->paid_at?->format('M j, Y'),
-                'payout_method'     => $c->affiliate->payout_method,
-                'can_disburse'      => DisbursePayout::supports($c->affiliate->payout_method ?? ''),
+                'payout_method'     => $c->affiliate->user->payout_method,
+                'can_disburse'      => DisbursePayout::supports($c->affiliate->user->payout_method ?? ''),
             ]);
 
         $stats = [
