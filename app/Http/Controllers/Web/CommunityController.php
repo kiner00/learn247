@@ -66,19 +66,23 @@ class CommunityController extends Controller
         ]);
         $community->loadCount('members');
 
-        if ($userId) {
-            $community->posts->each(function ($post) use ($userId) {
-                $post->user_has_liked = $post->likes->contains('user_id', $userId);
-                $post->comments->each(function ($comment) use ($userId) {
-                    $comment->user_has_liked = $comment->likes->contains('user_id', $userId);
-                    $comment->likes_count    = $comment->likes->count();
-                    $comment->replies->each(function ($reply) use ($userId) {
-                        $reply->user_has_liked = $reply->likes->contains('user_id', $userId);
-                        $reply->likes_count    = $reply->likes->count();
-                    });
+        $community->posts->each(function ($post) use ($userId) {
+            $post->reactions      = $this->reactionCounts($post->likes);
+            $post->user_reaction  = $userId ? $post->likes->firstWhere('user_id', $userId)?->type : null;
+            $post->user_has_liked = (bool) $post->user_reaction; // backward compat
+            $post->comments->each(function ($comment) use ($userId) {
+                $comment->reactions      = $this->reactionCounts($comment->likes);
+                $comment->user_reaction  = $userId ? $comment->likes->firstWhere('user_id', $userId)?->type : null;
+                $comment->user_has_liked = (bool) $comment->user_reaction;
+                $comment->likes_count    = $comment->likes->count();
+                $comment->replies->each(function ($reply) use ($userId) {
+                    $reply->reactions      = $this->reactionCounts($reply->likes);
+                    $reply->user_reaction  = $userId ? $reply->likes->firstWhere('user_id', $userId)?->type : null;
+                    $reply->user_has_liked = (bool) $reply->user_reaction;
+                    $reply->likes_count    = $reply->likes->count();
                 });
             });
-        }
+        });
 
         // Enrich posts with commenter avatars + last comment timestamp
         $community->posts->each(function ($post) {
@@ -340,5 +344,15 @@ class CommunityController extends Controller
         $affiliate = auth()->id() ? $community->affiliates()->where('user_id', auth()->id())->first() : null;
 
         return Inertia::render('Communities/About', compact('community', 'affiliate'));
+    }
+
+    private function reactionCounts(\Illuminate\Support\Collection $likes): array
+    {
+        $grouped = $likes->groupBy('type');
+        return [
+            'like'      => $grouped->get('like',      collect())->count(),
+            'handshake' => $grouped->get('handshake', collect())->count(),
+            'trophy'    => $grouped->get('trophy',    collect())->count(),
+        ];
     }
 }

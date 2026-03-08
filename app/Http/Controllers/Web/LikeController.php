@@ -12,12 +12,17 @@ class LikeController extends Controller
 {
     public function togglePost(Request $request, Post $post): RedirectResponse
     {
+        $type     = in_array($request->input('type'), ['like', 'handshake', 'trophy'])
+                        ? $request->input('type')
+                        : 'like';
         $existing = $post->likes()->where('user_id', $request->user()->id)->first();
 
-        if ($existing) {
+        if ($existing && $existing->type === $type) {
             $existing->delete();
+        } elseif ($existing) {
+            $existing->update(['type' => $type]);
         } else {
-            $post->likes()->create(['user_id' => $request->user()->id]);
+            $post->likes()->create(['user_id' => $request->user()->id, 'type' => $type]);
         }
 
         return back(fallback: route('communities.show', $post->community->slug));
@@ -25,12 +30,17 @@ class LikeController extends Controller
 
     public function toggleComment(Request $request, Comment $comment): RedirectResponse
     {
+        $type     = in_array($request->input('type'), ['like', 'handshake', 'trophy'])
+                        ? $request->input('type')
+                        : 'like';
         $existing = $comment->likes()->where('user_id', $request->user()->id)->first();
 
-        if ($existing) {
+        if ($existing && $existing->type === $type) {
             $existing->delete();
+        } elseif ($existing) {
+            $existing->update(['type' => $type]);
         } else {
-            $comment->likes()->create(['user_id' => $request->user()->id]);
+            $comment->likes()->create(['user_id' => $request->user()->id, 'type' => $type]);
         }
 
         return back();

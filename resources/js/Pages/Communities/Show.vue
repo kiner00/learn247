@@ -65,14 +65,19 @@
 
                         <!-- Reaction bar -->
                         <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center gap-4">
-                            <button @click.stop="togglePostLike(post)"
-                                class="flex items-center gap-1.5 text-xs transition-colors"
-                                :class="post.user_has_liked ? 'text-indigo-600 font-semibold' : 'text-gray-500 hover:text-indigo-500'">
-                                <svg class="w-4 h-4" :fill="post.user_has_liked ? 'currentColor' : 'none'" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-                                </svg>
-                                {{ post.likes_count ?? 0 }}
-                            </button>
+                            <!-- Reactions -->
+                            <div class="flex items-center gap-1">
+                                <button v-for="r in REACTIONS" :key="r.type"
+                                    @click.stop="togglePostReaction(post, r.type)"
+                                    class="flex items-center gap-1 px-2 py-1 rounded-lg text-xs transition-colors"
+                                    :class="post.user_reaction === r.type
+                                        ? 'bg-indigo-50 text-indigo-700 font-semibold dark:bg-indigo-900/30 dark:text-indigo-300'
+                                        : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700'"
+                                    :title="r.label">
+                                    <span>{{ r.emoji }}</span>
+                                    <span v-if="post.reactions?.[r.type]">{{ post.reactions[r.type] }}</span>
+                                </button>
+                            </div>
                             <button class="flex items-center gap-1.5 text-xs text-gray-500 hover:text-indigo-500 transition-colors">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
@@ -300,14 +305,18 @@
 
                         <!-- Reaction bar -->
                         <div class="px-5 pb-4 flex items-center gap-5 border-b border-gray-100 dark:border-gray-800">
-                            <button @click="togglePostLike(activePost)"
-                                class="flex items-center gap-2 text-sm font-medium transition-colors"
-                                :class="activePost.user_has_liked ? 'text-indigo-600' : 'text-gray-500 hover:text-indigo-500'">
-                                <svg class="w-5 h-5" :fill="activePost.user_has_liked ? 'currentColor' : 'none'" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-                                </svg>
-                                {{ activePost.likes_count ?? activePost.likes?.length ?? 0 }} {{ (activePost.likes_count ?? 0) === 1 ? 'Like' : 'Likes' }}
-                            </button>
+                            <div class="flex items-center gap-1">
+                                <button v-for="r in REACTIONS" :key="r.type"
+                                    @click="togglePostReaction(activePost, r.type)"
+                                    class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors"
+                                    :class="activePost.user_reaction === r.type
+                                        ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
+                                        : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700'"
+                                    :title="r.label">
+                                    <span>{{ r.emoji }}</span>
+                                    <span>{{ activePost.reactions?.[r.type] || 0 }} {{ r.label }}</span>
+                                </button>
+                            </div>
                             <span class="flex items-center gap-2 text-sm text-gray-500">
                                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
@@ -331,10 +340,18 @@
                                         </div>
                                         <div class="flex items-center gap-3 mt-1.5 ml-1">
                                             <p class="text-xs text-gray-400">{{ formatRelative(comment.created_at) }}</p>
-                                            <button @click="toggleCommentLike(comment)" class="text-xs font-medium transition-colors"
-                                                :class="comment.user_has_liked ? 'text-indigo-600' : 'text-gray-400 hover:text-indigo-500'">
-                                                {{ comment.user_has_liked ? '♥' : '♡' }} {{ comment.likes_count || '' }}
-                                            </button>
+                                            <div class="flex items-center gap-0.5">
+                                                <button v-for="r in REACTIONS" :key="r.type"
+                                                    @click="toggleCommentReaction(comment, r.type)"
+                                                    class="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs transition-colors"
+                                                    :class="comment.user_reaction === r.type
+                                                        ? 'bg-indigo-50 text-indigo-700 font-medium dark:bg-indigo-900/30'
+                                                        : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'"
+                                                    :title="r.label">
+                                                    <span>{{ r.emoji }}</span>
+                                                    <span v-if="comment.reactions?.[r.type]">{{ comment.reactions[r.type] }}</span>
+                                                </button>
+                                            </div>
                                             <button v-if="isMember" @click="setReplyTarget(comment)"
                                                 class="text-xs text-gray-400 hover:text-indigo-500 font-medium transition-colors">Reply</button>
                                             <button v-if="canDeleteComment(comment)" @click="deleteComment(comment)"
@@ -351,10 +368,18 @@
                                                     </div>
                                                     <div class="flex items-center gap-3 mt-1 ml-1">
                                                         <p class="text-xs text-gray-400">{{ formatRelative(reply.created_at) }}</p>
-                                                        <button @click="toggleCommentLike(reply)" class="text-xs font-medium transition-colors"
-                                                            :class="reply.user_has_liked ? 'text-indigo-600' : 'text-gray-400 hover:text-indigo-500'">
-                                                            {{ reply.user_has_liked ? '♥' : '♡' }} {{ reply.likes_count || '' }}
-                                                        </button>
+                                                        <div class="flex items-center gap-0.5">
+                                                            <button v-for="r in REACTIONS" :key="r.type"
+                                                                @click="toggleCommentReaction(reply, r.type)"
+                                                                class="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs transition-colors"
+                                                                :class="reply.user_reaction === r.type
+                                                                    ? 'bg-indigo-50 text-indigo-700 font-medium dark:bg-indigo-900/30'
+                                                                    : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'"
+                                                                :title="r.label">
+                                                                <span>{{ r.emoji }}</span>
+                                                                <span v-if="reply.reactions?.[r.type]">{{ reply.reactions[r.type] }}</span>
+                                                            </button>
+                                                        </div>
                                                         <button v-if="canDeleteComment(reply)" @click="deleteComment(reply)"
                                                             class="text-xs text-gray-400 hover:text-red-500 transition-colors ml-auto">Delete</button>
                                                     </div>
@@ -489,15 +514,21 @@ function canDeletePost(post) {
     return userId && (post.user_id === userId || props.membership?.role === 'admin' || props.membership?.role === 'moderator');
 }
 
-// ─── Likes ────────────────────────────────────────────────────────────────────
-function togglePostLike(post) {
+// ─── Reactions ────────────────────────────────────────────────────────────────
+const REACTIONS = [
+    { type: 'like',      emoji: '❤️',  label: 'Like'              },
+    { type: 'handshake', emoji: '🤝',  label: 'Helpful'           },
+    { type: 'trophy',    emoji: '🏆',  label: 'Solution Accepted' },
+];
+
+function togglePostReaction(post, type) {
     if (!page.props.auth?.user) return;
-    router.post(`/posts/${post.id}/like`, {}, { preserveScroll: true, preserveState: true });
+    router.post(`/posts/${post.id}/like`, { type }, { preserveScroll: true, preserveState: true });
 }
 
-function toggleCommentLike(comment) {
+function toggleCommentReaction(comment, type) {
     if (!page.props.auth?.user) return;
-    router.post(`/comments/${comment.id}/like`, {}, { preserveScroll: true, preserveState: true });
+    router.post(`/comments/${comment.id}/like`, { type }, { preserveScroll: true, preserveState: true });
 }
 
 // ─── Comments ─────────────────────────────────────────────────────────────────

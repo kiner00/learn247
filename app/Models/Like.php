@@ -8,7 +8,11 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Like extends Model
 {
-    protected $fillable = ['user_id', 'likeable_type', 'likeable_id'];
+    const TYPE_LIKE      = 'like';
+    const TYPE_HANDSHAKE = 'handshake';
+    const TYPE_TROPHY    = 'trophy';
+
+    protected $fillable = ['user_id', 'likeable_type', 'likeable_id', 'type'];
 
     public function user(): BelongsTo
     {
