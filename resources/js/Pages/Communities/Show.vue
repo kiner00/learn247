@@ -516,7 +516,7 @@ function canDeletePost(post) {
 
 // ─── Reactions ────────────────────────────────────────────────────────────────
 const REACTIONS = [
-    { type: 'like',      emoji: '❤️',  label: 'Like'              },
+    { type: 'like',      emoji: '👍',  label: 'Like'              },
     { type: 'handshake', emoji: '🤝',  label: 'Helpful'           },
     { type: 'trophy',    emoji: '🏆',  label: 'Solution Accepted' },
 ];
