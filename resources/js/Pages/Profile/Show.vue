@@ -31,15 +31,20 @@
                             <div
                                 v-for="badge in memberBadges"
                                 :key="badge.key"
-                                class="flex flex-col items-center text-center p-3 rounded-xl border transition-all"
+                                class="relative group flex flex-col items-center text-center p-3 rounded-xl border transition-all cursor-default"
                                 :class="badge.earned
                                     ? 'bg-white border-indigo-100 shadow-sm'
                                     : 'bg-gray-50 border-gray-100 opacity-40 grayscale'"
-                                :title="badge.earned ? `Earned ${badge.earned_at}` : `How to earn: ${badge.how_to_earn}`"
                             >
                                 <span class="text-2xl mb-1 leading-none">{{ badge.icon }}</span>
                                 <p class="text-[11px] font-semibold text-gray-800 leading-tight">{{ badge.name }}</p>
                                 <p v-if="badge.earned" class="text-[10px] text-green-600 mt-0.5">✓ Earned</p>
+                                <div class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-44 bg-gray-900 text-white text-[11px] rounded-lg px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-10 text-left shadow-lg">
+                                    <p class="font-semibold mb-0.5">{{ badge.name }}</p>
+                                    <p v-if="badge.earned" class="text-green-400">✓ Earned {{ badge.earned_at }}</p>
+                                    <p v-else class="text-gray-300 leading-snug">{{ badge.how_to_earn }}</p>
+                                    <div class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -51,15 +56,20 @@
                             <div
                                 v-for="badge in creatorBadges"
                                 :key="badge.key"
-                                class="flex flex-col items-center text-center p-3 rounded-xl border transition-all"
+                                class="relative group flex flex-col items-center text-center p-3 rounded-xl border transition-all cursor-default"
                                 :class="badge.earned
                                     ? 'bg-white border-amber-100 shadow-sm'
                                     : 'bg-gray-50 border-gray-100 opacity-40 grayscale'"
-                                :title="badge.earned ? `Earned ${badge.earned_at}` : `How to earn: ${badge.how_to_earn}`"
                             >
                                 <span class="text-2xl mb-1 leading-none">{{ badge.icon }}</span>
                                 <p class="text-[11px] font-semibold text-gray-800 leading-tight">{{ badge.name }}</p>
                                 <p v-if="badge.earned" class="text-[10px] text-green-600 mt-0.5">✓ Earned</p>
+                                <div class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-44 bg-gray-900 text-white text-[11px] rounded-lg px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-10 text-left shadow-lg">
+                                    <p class="font-semibold mb-0.5">{{ badge.name }}</p>
+                                    <p v-if="badge.earned" class="text-green-400">✓ Earned {{ badge.earned_at }}</p>
+                                    <p v-else class="text-gray-300 leading-snug">{{ badge.how_to_earn }}</p>
+                                    <div class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
