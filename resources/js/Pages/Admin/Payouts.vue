@@ -87,7 +87,7 @@
                                     <th class="px-5 py-2 w-8"></th>
                                     <th class="text-left px-5 py-2 text-xs font-semibold text-gray-500">Community</th>
                                     <th class="text-right px-5 py-2 text-xs font-semibold text-gray-500">Gross</th>
-                                    <th class="text-right px-5 py-2 text-xs font-semibold text-gray-500">Platform (3%)</th>
+                                    <th class="text-right px-5 py-2 text-xs font-semibold text-gray-500">Platform (15%)</th>
                                     <th class="text-right px-5 py-2 text-xs font-semibold text-gray-500">Commissions</th>
                                     <th class="text-right px-5 py-2 text-xs font-semibold text-gray-500">Earned</th>
                                     <th class="text-right px-5 py-2 text-xs font-semibold text-gray-500">Paid</th>

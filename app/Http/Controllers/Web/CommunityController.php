@@ -153,7 +153,7 @@ class CommunityController extends Controller
             'price'                    => ['nullable', 'numeric', 'min:0'],
             'currency'                 => ['nullable', 'string', 'in:PHP,USD'],
             'is_private'               => ['boolean'],
-            'affiliate_commission_rate' => ['nullable', 'integer', 'min:0', 'max:97'],
+            'affiliate_commission_rate' => ['nullable', 'integer', 'min:0', 'max:85'],
         ]);
 
         if ($request->hasFile('cover_image')) {
@@ -222,7 +222,7 @@ class CommunityController extends Controller
         $affiliatePending      = (float) (clone $conversionBase)->where('status', AffiliateConversion::STATUS_PENDING)->sum('commission_amount');
 
         $nonAffiliateGross       = round($grossRevenue - $affiliateGross, 2);
-        $nonAffiliatePlatformFee = round($nonAffiliateGross * 0.03, 2);
+        $nonAffiliatePlatformFee = round($nonAffiliateGross * 0.15, 2);
         $nonAffiliateCreator     = round($nonAffiliateGross - $nonAffiliatePlatformFee, 2);
 
         $totalPlatformFee  = round($affiliatePlatformFee + $nonAffiliatePlatformFee, 2);

@@ -50,7 +50,7 @@ class AdminController extends Controller
         $pendingAffiliateCommission = round($totalAffiliateCommission - $paidAffiliateCommission, 2);
 
         $nonAffiliateGross    = round($grossRevenue - $affiliateGross, 2);
-        $totalPlatformFee     = round($affiliatePlatformFee + ($nonAffiliateGross * 0.03), 2);
+        $totalPlatformFee     = round($affiliatePlatformFee + ($nonAffiliateGross * 0.15), 2);
         $totalCreatorNet      = round($grossRevenue - $totalPlatformFee - $totalAffiliateCommission, 2);
 
         // Communities by category
@@ -129,7 +129,7 @@ class AdminController extends Controller
                 $rows = $communities->map(function ($community) {
                     $gross              = (float) Payment::where('community_id', $community->id)->where('status', Payment::STATUS_PAID)->sum('amount');
                     $affiliateCommission = (float) AffiliateConversion::whereHas('affiliate', fn ($q) => $q->where('community_id', $community->id))->sum('commission_amount');
-                    $platformFee        = round($gross * 0.03, 2);
+                    $platformFee        = round($gross * 0.15, 2);
                     $earned             = round($gross - $platformFee - $affiliateCommission, 2);
                     $paid               = (float) OwnerPayout::where('community_id', $community->id)->where('status', '!=', 'failed')->sum('amount');
                     $pending            = round($earned - $paid, 2);
@@ -198,7 +198,7 @@ class AdminController extends Controller
 
         $gross              = (float) Payment::where('community_id', $community->id)->where('status', Payment::STATUS_PAID)->sum('amount');
         $affiliateCommission = (float) AffiliateConversion::whereHas('affiliate', fn ($q) => $q->where('community_id', $community->id))->sum('commission_amount');
-        $platformFee        = round($gross * 0.03, 2);
+        $platformFee        = round($gross * 0.15, 2);
         $earned             = round($gross - $platformFee - $affiliateCommission, 2);
         $paid               = (float) OwnerPayout::where('community_id', $community->id)->where('status', '!=', 'failed')->sum('amount');
         $pending            = round($earned - $paid, 2);
@@ -250,7 +250,7 @@ class AdminController extends Controller
 
             $gross              = (float) Payment::where('community_id', $community->id)->where('status', Payment::STATUS_PAID)->sum('amount');
             $affiliateCommission = (float) AffiliateConversion::whereHas('affiliate', fn ($q) => $q->where('community_id', $community->id))->sum('commission_amount');
-            $platformFee        = round($gross * 0.03, 2);
+            $platformFee        = round($gross * 0.15, 2);
             $earned             = round($gross - $platformFee - $affiliateCommission, 2);
             $paidOut            = (float) OwnerPayout::where('community_id', $community->id)->where('status', '!=', 'failed')->sum('amount');
             $pending            = round($earned - $paidOut, 2);
@@ -307,7 +307,7 @@ class AdminController extends Controller
 
             $gross               = (float) Payment::where('community_id', $community->id)->where('status', Payment::STATUS_PAID)->sum('amount');
             $affiliateCommission = (float) AffiliateConversion::whereHas('affiliate', fn ($q) => $q->where('community_id', $community->id))->sum('commission_amount');
-            $platformFee         = round($gross * 0.03, 2);
+            $platformFee         = round($gross * 0.15, 2);
             $earned              = round($gross - $platformFee - $affiliateCommission, 2);
             $paidOut             = (float) OwnerPayout::where('community_id', $community->id)->where('status', '!=', 'failed')->sum('amount');
             $pending             = round($earned - $paidOut, 2);

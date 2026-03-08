@@ -85,7 +85,7 @@
                             <th class="text-left px-5 py-3 font-semibold text-gray-600">Referred</th>
                             <th class="text-left px-5 py-3 font-semibold text-gray-600">Affiliate</th>
                             <th class="text-right px-5 py-3 font-semibold text-gray-600">Sale</th>
-                            <th class="text-right px-5 py-3 font-semibold text-gray-600">Platform (3%)</th>
+                            <th class="text-right px-5 py-3 font-semibold text-gray-600">Platform (15%)</th>
                             <th class="text-right px-5 py-3 font-semibold text-gray-600">Commission</th>
                             <th class="text-right px-5 py-3 font-semibold text-gray-600">You Get</th>
                             <th class="text-center px-5 py-3 font-semibold text-gray-600">Status</th>

@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 
 class RecordAffiliateConversion
 {
-    private const PLATFORM_FEE_RATE = 0.03;
+    private const PLATFORM_FEE_RATE = 0.15;
 
     public function execute(Subscription $subscription, Payment $payment): void
     {

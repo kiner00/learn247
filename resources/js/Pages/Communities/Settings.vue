@@ -162,7 +162,7 @@
                 </div>
                 <p class="text-sm text-gray-500 mb-5">
                     Members can become affiliates and earn a commission for every new subscriber they refer.
-                    The platform always takes 3% off the top.
+                    The platform always takes 15% off the top.
                 </p>
                 <form @submit.prevent="saveAffiliate">
                     <div class="flex items-end gap-4">
@@ -174,14 +174,14 @@
                                 v-model="affiliateForm.affiliate_commission_rate"
                                 type="number"
                                 min="0"
-                                max="97"
+                                max="85"
                                 step="1"
                                 placeholder="e.g. 50"
                                 class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                                 :class="affiliateForm.errors.affiliate_commission_rate ? 'border-red-400' : ''"
                             />
                             <p class="mt-1 text-xs text-gray-400">
-                                0 = disable affiliate program. Max 97 (platform takes 3%).
+                                0 = disable affiliate program. Max 85 (platform takes 15%).
                             </p>
                             <p v-if="affiliateForm.errors.affiliate_commission_rate" class="mt-1 text-xs text-red-600">
                                 {{ affiliateForm.errors.affiliate_commission_rate }}

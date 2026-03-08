@@ -37,7 +37,7 @@
                     <p class="text-xs text-gray-400 mt-0.5">Total collected across all communities</p>
                 </div>
                 <div class="bg-white px-5 py-4">
-                    <p class="text-xs font-medium text-gray-500 mb-1">Platform Fees (3%)</p>
+                    <p class="text-xs font-medium text-gray-500 mb-1">Platform Fees (15%)</p>
                     <p class="text-xl font-black text-indigo-600">₱{{ fmt(revenue.platform_fee) }}</p>
                     <p class="text-xs text-gray-400 mt-0.5">Platform income</p>
                 </div>
