@@ -9,7 +9,7 @@
         </div>
 
         <!-- Summary stats -->
-        <div class="grid grid-cols-2 gap-4 mb-6">
+        <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
             <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5">
                 <p class="text-xs font-semibold text-amber-600 uppercase tracking-wide mb-1">Owner Pending</p>
                 <p class="text-2xl font-black text-amber-700">₱{{ fmt(stats.owners_pending) }}</p>
@@ -17,6 +17,11 @@
             <div class="bg-indigo-50 border border-indigo-200 rounded-2xl p-5">
                 <p class="text-xs font-semibold text-indigo-600 uppercase tracking-wide mb-1">Affiliate Pending</p>
                 <p class="text-2xl font-black text-indigo-700">₱{{ fmt(stats.affiliates_pending) }}</p>
+            </div>
+            <div class="bg-teal-50 border border-teal-200 rounded-2xl p-5 col-span-2 lg:col-span-1">
+                <p class="text-xs font-semibold text-teal-600 uppercase tracking-wide mb-1">Xendit Cash Balance</p>
+                <p class="text-2xl font-black text-teal-700">₱{{ fmt(xenditBalance ?? 0) }}</p>
+                <p class="text-xs text-teal-500 mt-1">Available for payouts</p>
             </div>
         </div>
 
@@ -213,9 +218,10 @@ import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
 const props = defineProps({
-    owners:     Array,
-    affiliates: Array,
-    stats:      Object,
+    owners:        Array,
+    affiliates:    Array,
+    stats:         Object,
+    xenditBalance: Number,
 })
 
 const activeTab = ref('owners')

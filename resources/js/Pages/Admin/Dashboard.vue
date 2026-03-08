@@ -6,7 +6,7 @@
         </div>
 
         <!-- Stat cards -->
-        <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+        <div class="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
             <div
                 v-for="stat in statCards"
                 :key="stat.label"
@@ -204,6 +204,7 @@ const props = defineProps({
     byCategory:         Array,
     recentCommunities:  Array,
     recentUsers:        Array,
+    xenditBalance:      Number,
 });
 
 const statCards = computed(() => [
@@ -237,6 +238,13 @@ const statCards = computed(() => [
         icon:   '💰',
         iconBg: 'bg-green-50',
         sub:    'from active subscriptions',
+    },
+    {
+        label:  'Xendit Balance',
+        value:  `₱${fmt(props.xenditBalance ?? 0)}`,
+        icon:   '🏦',
+        iconBg: 'bg-teal-50',
+        sub:    'available cash balance',
     },
 ]);
 

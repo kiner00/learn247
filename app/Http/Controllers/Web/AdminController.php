@@ -22,8 +22,9 @@ use Inertia\Response;
 
 class AdminController extends Controller
 {
-    public function dashboard(): Response
+    public function dashboard(XenditService $xendit): Response
     {
+        $xenditBalance = $xendit->getBalance();
         $totalUsers          = User::count();
         $totalCommunities    = Community::count();
         $totalMembers        = CommunityMember::count();
@@ -88,6 +89,7 @@ class AdminController extends Controller
             ]);
 
         return Inertia::render('Admin/Dashboard', [
+            'xenditBalance' => $xenditBalance,
             'stats' => [
                 'total_users'          => $totalUsers,
                 'total_communities'    => $totalCommunities,
@@ -116,8 +118,9 @@ class AdminController extends Controller
         return back()->with('success', 'Theme updated.');
     }
 
-    public function payouts(): Response
+    public function payouts(XenditService $xendit): Response
     {
+        $xenditBalance = $xendit->getBalance();
         // ── Community Owners ─────────────────────────────────────────────────
         $owners = Community::with('owner')
             ->where('price', '>', 0)
@@ -187,7 +190,7 @@ class AdminController extends Controller
             'affiliates_pending' => $affiliates->sum('pending'),
         ];
 
-        return Inertia::render('Admin/Payouts', compact('owners', 'affiliates', 'stats'));
+        return Inertia::render('Admin/Payouts', compact('owners', 'affiliates', 'stats', 'xenditBalance'));
     }
 
     public function payOwner(Community $community, XenditService $xendit): RedirectResponse

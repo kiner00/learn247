@@ -78,6 +78,26 @@ class XenditService
     }
 
     /**
+     * Get Xendit account balance.
+     * @param string $accountType CASH | HOLDING | TAX
+     */
+    public function getBalance(string $accountType = 'CASH'): float
+    {
+        $response = Http::withBasicAuth($this->secretKey, '')
+            ->get(self::BASE_URL . '/balance', ['account_type' => $accountType]);
+
+        if ($response->failed()) {
+            Log::error('XenditService::getBalance failed', [
+                'status' => $response->status(),
+                'body'   => $response->json(),
+            ]);
+            return 0.0;
+        }
+
+        return (float) ($response->json('balance') ?? 0);
+    }
+
+    /**
      * Verify the Xendit x-callback-token header using constant-time comparison.
      */
     public function verifyCallbackToken(?string $token): bool
