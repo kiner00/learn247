@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Web\AdminController;
 use App\Http\Controllers\Web\AffiliateController;
+use App\Http\Controllers\Web\BadgeController;
 use App\Http\Controllers\Web\CreatorController;
 use App\Http\Controllers\Web\PayoutRequestController;
 use App\Http\Controllers\Web\AuthController;
@@ -64,6 +65,10 @@ Route::middleware(['auth', EnsureSuperAdmin::class])->prefix('admin')->group(fun
 
 Route::get('/profile', [ProfileController::class, 'me'])->middleware('auth')->name('profile');
 Route::get('/profile/{username}', [ProfileController::class, 'show'])->name('profile.show');
+
+// ─── Badges ────────────────────────────────────────────────────────────────────
+
+Route::get('/badges', [BadgeController::class, 'index'])->middleware('auth')->name('badges');
 
 // ─── Account Settings ──────────────────────────────────────────────────────────
 

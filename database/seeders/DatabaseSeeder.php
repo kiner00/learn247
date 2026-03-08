@@ -10,6 +10,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             BadgeSeeder::class,
+            SuperAdminSeeder::class,
         ]);
     }
 }

@@ -5,6 +5,8 @@ namespace App\Actions\Affiliate;
 use App\Models\AffiliateConversion;
 use App\Models\Payment;
 use App\Models\Subscription;
+use App\Models\User;
+use App\Services\BadgeService;
 use Illuminate\Support\Facades\Log;
 
 class RecordAffiliateConversion
@@ -50,5 +52,11 @@ class RecordAffiliateConversion
         ]);
 
         $affiliate->increment('total_earned', $commission);
+
+        // Check affiliate-related badges for the affiliate user
+        $affiliateUser = User::find($affiliate->user_id);
+        if ($affiliateUser) {
+            app(BadgeService::class)->evaluate($affiliateUser);
+        }
     }
 }

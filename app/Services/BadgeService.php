@@ -2,9 +2,14 @@
 
 namespace App\Services;
 
+use App\Models\AffiliateConversion;
 use App\Models\Badge;
+use App\Models\Certificate;
 use App\Models\CommunityMember;
 use App\Models\LessonCompletion;
+use App\Models\OwnerPayout;
+use App\Models\Post;
+use App\Models\Subscription;
 use App\Models\User;
 use App\Models\UserBadge;
 use Illuminate\Support\Facades\DB;
@@ -12,8 +17,8 @@ use Illuminate\Support\Facades\DB;
 class BadgeService
 {
     /**
-     * Evaluate and award all applicable badges for a user within a community context.
-     * Call this after significant events (lesson complete, post created, quiz passed).
+     * Evaluate and award all applicable badges for a user.
+     * Call after significant events (lesson complete, quiz passed, payment received, etc.)
      */
     public function evaluate(User $user, ?int $communityId = null): void
     {
@@ -51,22 +56,40 @@ class BadgeService
     private function conditionMet(User $user, Badge $badge, ?int $communityId): bool
     {
         return match ($badge->condition_type) {
+            // ── Legacy / learning conditions ──────────────────────────────────
             'lessons_completed' => $this->countLessonsCompleted($user->id, $communityId) >= $badge->condition_value,
             'posts_created'     => $user->posts()
                                         ->when($communityId, fn ($q) => $q->where('community_id', $communityId))
                                         ->count() >= $badge->condition_value,
             'level_reached'     => $this->getMemberLevel($user->id, $communityId) >= $badge->condition_value,
             'quiz_passed'       => $this->countQuizzesPassed($user->id, $communityId) >= $badge->condition_value,
-            default             => false,
+
+            // ── Platform badges ────────────────────────────────────────────────
+            'pioneer_member'        => $this->isPioneerMember($user),
+            'course_crusader'       => $this->hasCompletedCourseIn30Days($user->id),
+            'affiliate_referrals'   => $this->countPaidReferrals($user->id) >= $badge->condition_value,
+            'affiliate_commission'  => $this->totalAffiliateCommission($user->id) >= $badge->condition_value,
+            'pioneer_creator'       => $this->isPioneerCreator($user),
+            'certified_completions' => $this->countCertifiedCompletions($user->id) >= $badge->condition_value,
+            'affiliate_overlord'    => $this->countActiveAffiliatesWithSale($user->id) >= $badge->condition_value,
+            'pinned_posts'          => $this->countPinnedPosts($user->id) >= $badge->condition_value,
+            'total_payout'          => $this->totalOwnerPayout($user->id) >= $badge->condition_value,
+
+            // Conditions requiring features not yet implemented — never auto-award
+            'seven_day_streak', 'helpful_reaction', 'solution_accepted',
+            'social_connector', 'bridge_builder' => false,
+
+            default => false,
         };
     }
+
+    // ── Condition helpers ──────────────────────────────────────────────────────
 
     private function countLessonsCompleted(int $userId, ?int $communityId): int
     {
         $query = LessonCompletion::where('user_id', $userId);
 
         if ($communityId) {
-            // Join through course_lessons → course_modules → courses → communities
             $query->whereHas('lesson.module.course', fn ($q) => $q->where('community_id', $communityId));
         }
 
@@ -75,13 +98,13 @@ class BadgeService
 
     private function getMemberLevel(int $userId, ?int $communityId): int
     {
-        if (!$communityId) return 1;
+        if (! $communityId) return 1;
 
         $member = CommunityMember::where('user_id', $userId)
             ->where('community_id', $communityId)
             ->first();
 
-        return $member ? \App\Models\CommunityMember::computeLevel($member->points) : 1;
+        return $member ? CommunityMember::computeLevel($member->points) : 1;
     }
 
     private function countQuizzesPassed(int $userId, ?int $communityId): int
@@ -95,38 +118,326 @@ class BadgeService
             ->count('quiz_id');
     }
 
+    private function isPioneerMember(User $user): bool
+    {
+        return User::where('id', '<=', $user->id)->count() <= 100000;
+    }
+
+    private function hasCompletedCourseIn30Days(int $userId): bool
+    {
+        $courses = \App\Models\Course::whereHas('modules.lessons.completions', fn ($q) => $q->where('user_id', $userId))
+            ->with('modules.lessons')
+            ->get();
+
+        foreach ($courses as $course) {
+            $lessonIds    = $course->modules->flatMap(fn ($m) => $m->lessons->pluck('id'));
+            $totalLessons = $lessonIds->count();
+            if ($totalLessons === 0) continue;
+
+            $completions = LessonCompletion::where('user_id', $userId)
+                ->whereIn('lesson_id', $lessonIds)
+                ->orderBy('created_at')
+                ->pluck('created_at');
+
+            if ($completions->count() >= $totalLessons) {
+                if ($completions->first()->diffInDays($completions->last()) <= 30) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private function countPaidReferrals(int $userId): int
+    {
+        return AffiliateConversion::whereHas('affiliate', fn ($q) => $q->where('user_id', $userId))
+            ->where('status', AffiliateConversion::STATUS_PAID)
+            ->count();
+    }
+
+    private function totalAffiliateCommission(int $userId): float
+    {
+        return (float) AffiliateConversion::whereHas('affiliate', fn ($q) => $q->where('user_id', $userId))
+            ->sum('commission_amount');
+    }
+
+    private function isPioneerCreator(User $user): bool
+    {
+        $ownedCommunityIds = \App\Models\Community::where('owner_id', $user->id)->pluck('id');
+        if ($ownedCommunityIds->isEmpty()) return false;
+
+        $has100Subs = Subscription::whereIn('community_id', $ownedCommunityIds)
+            ->where('status', 'active')
+            ->count() >= 100;
+
+        if (! $has100Subs) return false;
+
+        // Among the first 1,000 community owners to reach 100+ subs
+        $pioneerCreatorIds = \App\Models\Community::selectRaw('owner_id, count(*) as active_subs')
+            ->join('subscriptions', 'subscriptions.community_id', '=', 'communities.id')
+            ->where('subscriptions.status', 'active')
+            ->groupBy('owner_id')
+            ->having('active_subs', '>=', 100)
+            ->orderBy('owner_id')
+            ->limit(1000)
+            ->pluck('owner_id');
+
+        return $pioneerCreatorIds->contains($user->id);
+    }
+
+    private function countCertifiedCompletions(int $userId): int
+    {
+        return Certificate::whereHas('course.community', fn ($q) => $q->where('owner_id', $userId))->count();
+    }
+
+    private function countActiveAffiliatesWithSale(int $userId): int
+    {
+        return \App\Models\Affiliate::whereHas('community', fn ($q) => $q->where('owner_id', $userId))
+            ->whereHas('conversions', fn ($q) => $q->where('status', AffiliateConversion::STATUS_PAID))
+            ->count();
+    }
+
+    private function countPinnedPosts(int $userId): int
+    {
+        return Post::whereHas('community', fn ($q) => $q->where('owner_id', $userId))
+            ->where('is_pinned', true)
+            ->count();
+    }
+
+    private function totalOwnerPayout(int $userId): float
+    {
+        return (float) OwnerPayout::where('user_id', $userId)
+            ->where('status', 'succeeded')
+            ->sum('amount');
+    }
+
+    // ── Seeder ─────────────────────────────────────────────────────────────────
+
     /**
-     * Seed default global badges. Safe to run multiple times — updates existing badges
-     * if name/icon/description changed, never deletes user_badges records.
+     * Seed all platform-wide badges. Safe to run multiple times.
      */
     public static function seedDefaults(): void
     {
-        $defaults = [
-            ['name' => 'First Step',       'icon' => '🐣', 'condition_type' => 'lessons_completed', 'condition_value' => 1,  'description' => 'Complete your first lesson'],
-            ['name' => 'Getting Started',  'icon' => '🚀', 'condition_type' => 'lessons_completed', 'condition_value' => 5,  'description' => 'Complete 5 lessons'],
-            ['name' => 'Dedicated',        'icon' => '📚', 'condition_type' => 'lessons_completed', 'condition_value' => 25, 'description' => 'Complete 25 lessons'],
-            ['name' => 'First Post',       'icon' => '✍️', 'condition_type' => 'posts_created',     'condition_value' => 1,  'description' => 'Create your first post'],
-            ['name' => 'Conversationalist','icon' => '💬', 'condition_type' => 'posts_created',     'condition_value' => 10, 'description' => 'Create 10 posts'],
-            ['name' => 'Level 3',          'icon' => '⭐', 'condition_type' => 'level_reached',     'condition_value' => 3,  'description' => 'Reach level 3'],
-            ['name' => 'Level 5',          'icon' => '🌟', 'condition_type' => 'level_reached',     'condition_value' => 5,  'description' => 'Reach level 5'],
-            ['name' => 'Quiz Ace',         'icon' => '🏆', 'condition_type' => 'quiz_passed',       'condition_value' => 1,  'description' => 'Pass your first quiz'],
-            ['name' => 'Quiz Master',      'icon' => '🎯', 'condition_type' => 'quiz_passed',       'condition_value' => 5,  'description' => 'Pass 5 quizzes'],
+        $badges = [
+            // ── Member Badges ──────────────────────────────────────────────────
+            [
+                'key'             => 'pioneer_member',
+                'type'            => 'member',
+                'name'            => 'The Pioneer Member',
+                'icon'            => '🏅',
+                'description'     => 'Early Adopter — one of the first 100,000 members',
+                'how_to_earn'     => 'Be one of the first 100,000 members to join the platform.',
+                'condition_type'  => 'pioneer_member',
+                'condition_value' => 1,
+                'sort_order'      => 10,
+            ],
+            [
+                'key'             => 'insight_architect',
+                'type'            => 'member',
+                'name'            => 'Insight Architect',
+                'icon'            => '💡',
+                'description'     => 'Your content gets recognized as genuinely helpful',
+                'how_to_earn'     => 'Log in and engage for 7 consecutive days, or receive a "Helpful" reaction on your content.',
+                'condition_type'  => 'helpful_reaction',
+                'condition_value' => 1,
+                'sort_order'      => 20,
+            ],
+            [
+                'key'             => 'seven_day_streak',
+                'type'            => 'member',
+                'name'            => 'Seven-Day Streak',
+                'icon'            => '🔥',
+                'description'     => 'A week of consistent engagement',
+                'how_to_earn'     => 'Log in and engage (post, comment, or like) for 7 consecutive days.',
+                'condition_type'  => 'seven_day_streak',
+                'condition_value' => 7,
+                'sort_order'      => 30,
+            ],
+            [
+                'key'             => 'the_heartthrob',
+                'type'            => 'member',
+                'name'            => 'The Heartthrob',
+                'icon'            => '❤️',
+                'description'     => 'Your answer solved someone\'s problem',
+                'how_to_earn'     => 'Provide the "Accepted Solution" or most-liked reply on a Question-styled post.',
+                'condition_type'  => 'solution_accepted',
+                'condition_value' => 1,
+                'sort_order'      => 40,
+            ],
+            [
+                'key'             => 'silent_guardian',
+                'type'            => 'member',
+                'name'            => 'Silent Guardian',
+                'icon'            => '🛡️',
+                'description'     => 'You help others find answers without seeking the spotlight',
+                'how_to_earn'     => 'Receive a "Solution Accepted" reaction on 5 replies.',
+                'condition_type'  => 'solution_accepted',
+                'condition_value' => 5,
+                'sort_order'      => 50,
+            ],
+            [
+                'key'             => 'course_crusader',
+                'type'            => 'member',
+                'name'            => 'Course Crusader',
+                'icon'            => '⚔️',
+                'description'     => 'You finished what you started — fast',
+                'how_to_earn'     => 'Complete 100% of your first course within 30 days of purchase.',
+                'condition_type'  => 'course_crusader',
+                'condition_value' => 1,
+                'sort_order'      => 60,
+            ],
+            [
+                'key'             => 'social_connector',
+                'type'            => 'member',
+                'name'            => 'Social Connector',
+                'icon'            => '🤝',
+                'description'     => 'You\'ve built real connections on the platform',
+                'how_to_earn'     => 'Follow 10 other members and have 10 members follow you back.',
+                'condition_type'  => 'social_connector',
+                'condition_value' => 10,
+                'sort_order'      => 70,
+            ],
+            [
+                'key'             => 'affiliate',
+                'type'            => 'member',
+                'name'            => 'Affiliate',
+                'icon'            => '🔗',
+                'description'     => 'You\'ve successfully referred paying members',
+                'how_to_earn'     => 'Successfully refer 5 new paying members to a community.',
+                'condition_type'  => 'affiliate_referrals',
+                'condition_value' => 5,
+                'sort_order'      => 80,
+            ],
+            [
+                'key'             => 'affiliate_10k',
+                'type'            => 'member',
+                'name'            => 'Affiliate 10k',
+                'icon'            => '💰',
+                'description'     => 'Earned ₱10,000 in affiliate commissions',
+                'how_to_earn'     => 'Earn a cumulative total of ₱10,000 in affiliate commissions.',
+                'condition_type'  => 'affiliate_commission',
+                'condition_value' => 10000,
+                'sort_order'      => 90,
+            ],
+            [
+                'key'             => 'affiliate_50k',
+                'type'            => 'member',
+                'name'            => 'Affiliate 50k',
+                'icon'            => '💎',
+                'description'     => 'Earned ₱50,000 in affiliate commissions',
+                'how_to_earn'     => 'Earn a cumulative total of ₱50,000 in affiliate commissions.',
+                'condition_type'  => 'affiliate_commission',
+                'condition_value' => 50000,
+                'sort_order'      => 100,
+            ],
+            [
+                'key'             => 'affiliate_100k',
+                'type'            => 'member',
+                'name'            => 'Affiliate 100k',
+                'icon'            => '🏆',
+                'description'     => 'Earned ₱100,000 in affiliate commissions',
+                'how_to_earn'     => 'Earn a cumulative total of ₱100,000 in affiliate commissions.',
+                'condition_type'  => 'affiliate_commission',
+                'condition_value' => 100000,
+                'sort_order'      => 110,
+            ],
+            [
+                'key'             => 'affiliate_500k',
+                'type'            => 'member',
+                'name'            => 'Affiliate 500k',
+                'icon'            => '👑',
+                'description'     => 'Earned ₱500,000 in affiliate commissions',
+                'how_to_earn'     => 'Earn a cumulative total of ₱500,000 in affiliate commissions.',
+                'condition_type'  => 'affiliate_commission',
+                'condition_value' => 500000,
+                'sort_order'      => 120,
+            ],
+            [
+                'key'             => 'affiliate_1m',
+                'type'            => 'member',
+                'name'            => 'Affiliate 1M',
+                'icon'            => '🌟',
+                'description'     => 'Earned ₱1,000,000 in affiliate commissions',
+                'how_to_earn'     => 'Earn a cumulative total of ₱1,000,000 in affiliate commissions.',
+                'condition_type'  => 'affiliate_commission',
+                'condition_value' => 1000000,
+                'sort_order'      => 130,
+            ],
+
+            // ── Creator Badges ─────────────────────────────────────────────────
+            [
+                'key'             => 'pioneer_creator',
+                'type'            => 'creator',
+                'name'            => 'The Pioneer Creator',
+                'icon'            => '🚀',
+                'description'     => 'Early Adopter — one of the first 1,000 creators with 100+ paid subscribers',
+                'how_to_earn'     => 'Be one of the first 1,000 creators to reach 100+ active paid subscribers.',
+                'condition_type'  => 'pioneer_creator',
+                'condition_value' => 1,
+                'sort_order'      => 200,
+            ],
+            [
+                'key'             => 'community_architect',
+                'type'            => 'creator',
+                'name'            => 'Community Architect',
+                'icon'            => '🏛️',
+                'description'     => 'Your classroom produces real results',
+                'how_to_earn'     => 'Have 50 or more certified course completions across your communities.',
+                'condition_type'  => 'certified_completions',
+                'condition_value' => 50,
+                'sort_order'      => 210,
+            ],
+            [
+                'key'             => 'affiliate_overlord',
+                'type'            => 'creator',
+                'name'            => 'Affiliate Overlord',
+                'icon'            => '⚡',
+                'description'     => 'You\'ve built your own sales army',
+                'how_to_earn'     => 'Recruit and activate 10 affiliates who each generate at least 1 sale.',
+                'condition_type'  => 'affiliate_overlord',
+                'condition_value' => 10,
+                'sort_order'      => 220,
+            ],
+            [
+                'key'             => 'the_curator',
+                'type'            => 'creator',
+                'name'            => 'The Curator',
+                'icon'            => '📌',
+                'description'     => 'You champion your community\'s best content',
+                'how_to_earn'     => 'Pin 50 high-quality member posts to the featured section.',
+                'condition_type'  => 'pinned_posts',
+                'condition_value' => 50,
+                'sort_order'      => 230,
+            ],
+            [
+                'key'             => 'revenue_titan',
+                'type'            => 'creator',
+                'name'            => 'Revenue Titan',
+                'icon'            => '💰',
+                'description'     => 'Your community has generated serious income',
+                'how_to_earn'     => 'Cross the ₱100,000 total payout milestone as a community creator.',
+                'condition_type'  => 'total_payout',
+                'condition_value' => 100000,
+                'sort_order'      => 240,
+            ],
+            [
+                'key'             => 'bridge_builder',
+                'type'            => 'creator',
+                'name'            => 'Bridge Builder',
+                'icon'            => '🌉',
+                'description'     => 'You grow the ecosystem by collaborating with peers',
+                'how_to_earn'     => 'Host a collaborative event (live stream or workshop) with another platform creator.',
+                'condition_type'  => 'bridge_builder',
+                'condition_value' => 1,
+                'sort_order'      => 250,
+            ],
         ];
 
-        foreach ($defaults as $b) {
-            // Match on the logical key (type + value + no community).
-            // Update name/icon/description if they changed — never touches user_badges.
+        foreach ($badges as $b) {
             Badge::updateOrCreate(
-                [
-                    'community_id'    => null,
-                    'condition_type'  => $b['condition_type'],
-                    'condition_value' => $b['condition_value'],
-                ],
-                [
-                    'name'        => $b['name'],
-                    'icon'        => $b['icon'],
-                    'description' => $b['description'],
-                ]
+                ['key' => $b['key']],
+                array_merge($b, ['community_id' => null])
             );
         }
     }
