@@ -11,6 +11,8 @@ use App\Models\AffiliateConversion;
 use App\Models\Community;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -45,6 +47,146 @@ class AffiliateController extends Controller
             'payoutMethod'  => $user->payout_method,
             'payoutDetails' => $user->payout_details,
         ]);
+    }
+
+    /** GET /my-affiliates/analytics */
+    public function analytics(Request $request): Response
+    {
+        $user        = $request->user();
+        $period      = $request->get('period', 'month');   // week|month|year|all
+        $communityId = $request->get('community');          // null = all
+
+        // All affiliate IDs for this user (optionally filtered by community)
+        $affiliateQuery = Affiliate::where('user_id', $user->id);
+        if ($communityId) {
+            $affiliateQuery->where('community_id', $communityId);
+        }
+        $affiliateIds = $affiliateQuery->pluck('id');
+
+        // Period bounds
+        $from = match ($period) {
+            'week'  => Carbon::now()->startOfWeek(),
+            'month' => Carbon::now()->startOfMonth(),
+            'year'  => Carbon::now()->startOfYear(),
+            default => null,
+        };
+
+        // Base conversion query
+        $base = AffiliateConversion::whereIn('affiliate_id', $affiliateIds)
+            ->when($from, fn ($q) => $q->where('created_at', '>=', $from));
+
+        // ── Summary stats ──────────────────────────────────────────────────
+        $totalEarned      = (float) (clone $base)->sum('commission_amount');
+        $totalPaid        = (float) (clone $base)->where('status', AffiliateConversion::STATUS_PAID)->sum('commission_amount');
+        $totalPending     = (float) (clone $base)->where('status', AffiliateConversion::STATUS_PENDING)->sum('commission_amount');
+        $totalConversions = (clone $base)->count();
+        $avgPerReferral   = $totalConversions > 0 ? round($totalEarned / $totalConversions, 2) : 0;
+
+        // Best month (all time, regardless of period filter)
+        $bestMonth = AffiliateConversion::whereIn('affiliate_id', $affiliateIds)
+            ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as month, SUM(commission_amount) as total")
+            ->groupBy('month')
+            ->orderByDesc('total')
+            ->first();
+
+        // ── Chart data — earnings grouped by sub-period ───────────────────
+        $chartData = match ($period) {
+            'week'  => $this->chartByDay($affiliateIds, $from, 7),
+            'month' => $this->chartByDay($affiliateIds, $from, Carbon::now()->daysInMonth),
+            'year'  => $this->chartByMonth($affiliateIds, $from),
+            default => $this->chartByMonth($affiliateIds, Carbon::now()->subYear(2)),
+        };
+
+        // ── Conversion history ─────────────────────────────────────────────
+        $conversions = (clone $base)
+            ->with(['affiliate.community'])
+            ->latest()
+            ->limit(100)
+            ->get()
+            ->map(fn ($c) => [
+                'id'                => $c->id,
+                'date'              => $c->created_at->format('M j, Y'),
+                'community'         => $c->affiliate->community->name,
+                'sale_amount'       => (float) $c->sale_amount,
+                'commission_amount' => (float) $c->commission_amount,
+                'status'            => $c->status,
+                'paid_at'           => $c->paid_at?->format('M j, Y'),
+            ]);
+
+        // ── Community breakdown ────────────────────────────────────────────
+        $communities = Affiliate::where('user_id', $user->id)
+            ->with('community:id,name,slug')
+            ->get()
+            ->map(fn ($a) => [
+                'id'   => $a->community_id,
+                'name' => $a->community->name,
+            ]);
+
+        // ── Per-community earnings (all time) ──────────────────────────────
+        $byComm = AffiliateConversion::whereIn('affiliate_id',
+                    Affiliate::where('user_id', $user->id)->pluck('id'))
+            ->select('affiliate_id', DB::raw('SUM(commission_amount) as total'))
+            ->with('affiliate.community:id,name')
+            ->groupBy('affiliate_id')
+            ->get()
+            ->map(fn ($c) => [
+                'community' => $c->affiliate->community->name,
+                'total'     => (float) $c->total,
+            ])
+            ->sortByDesc('total')
+            ->values();
+
+        return Inertia::render('Affiliates/Analytics', [
+            'period'      => $period,
+            'communityId' => $communityId ? (int) $communityId : null,
+            'summary' => [
+                'total_earned'      => $totalEarned,
+                'total_paid'        => $totalPaid,
+                'total_pending'     => $totalPending,
+                'total_conversions' => $totalConversions,
+                'avg_per_referral'  => $avgPerReferral,
+                'best_month'        => $bestMonth?->month,
+                'best_month_total'  => (float) ($bestMonth?->total ?? 0),
+            ],
+            'chartData'    => $chartData,
+            'conversions'  => $conversions,
+            'communities'  => $communities,
+            'byComm'       => $byComm,
+        ]);
+    }
+
+    private function chartByDay(mixed $affiliateIds, Carbon $from, int $days): array
+    {
+        $rows = AffiliateConversion::whereIn('affiliate_id', $affiliateIds)
+            ->where('created_at', '>=', $from)
+            ->selectRaw("DATE(created_at) as label, SUM(commission_amount) as total")
+            ->groupBy('label')
+            ->pluck('total', 'label');
+
+        $result = [];
+        for ($i = 0; $i < $days; $i++) {
+            $d = $from->copy()->addDays($i)->toDateString();
+            $result[] = ['label' => Carbon::parse($d)->format('M j'), 'total' => (float) ($rows[$d] ?? 0)];
+        }
+        return $result;
+    }
+
+    private function chartByMonth(mixed $affiliateIds, Carbon $from): array
+    {
+        $rows = AffiliateConversion::whereIn('affiliate_id', $affiliateIds)
+            ->where('created_at', '>=', $from)
+            ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as label, SUM(commission_amount) as total")
+            ->groupBy('label')
+            ->pluck('total', 'label');
+
+        $result = [];
+        $cursor = $from->copy()->startOfMonth();
+        while ($cursor <= Carbon::now()) {
+            $key = $cursor->format('Y-m');
+            $result[] = ['label' => $cursor->format('M Y'), 'total' => (float) ($rows[$key] ?? 0)];
+            $cursor->addMonth();
+        }
+        return $result;
     }
 
     /** POST /communities/{community}/affiliates — join as affiliate */

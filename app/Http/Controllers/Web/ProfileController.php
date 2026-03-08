@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Models\Badge;
 use App\Models\CommunityMember;
 use App\Models\Comment;
 use App\Models\Post;
@@ -94,17 +95,44 @@ class ProfileController extends Controller
         }
 
         // ── Badges ───────────────────────────────────────────────────────────
-        $badges = UserBadge::where('user_id', $user->id)
-            ->with('badge:id,name,icon,description')
-            ->get()
-            ->map(fn ($ub) => [
-                'name'        => $ub->badge->name,
-                'icon'        => $ub->badge->icon,
-                'description' => $ub->badge->description,
-                'earned_at'   => $ub->earned_at?->toDateString(),
-            ])
-            ->unique('name')
-            ->values();
+        $earnedBadgeIds = UserBadge::where('user_id', $user->id)
+            ->pluck('earned_at', 'badge_id');
+
+        if ($isOwn) {
+            // Show ALL platform badges — earned or locked
+            $allBadges = Badge::whereNull('community_id')
+                ->whereNotNull('key')
+                ->orderBy('sort_order')
+                ->get();
+
+            $badges = $allBadges->map(fn ($b) => [
+                'key'         => $b->key,
+                'name'        => $b->name,
+                'icon'        => $b->icon,
+                'description' => $b->description,
+                'how_to_earn' => $b->how_to_earn,
+                'type'        => $b->type,
+                'earned'      => $earnedBadgeIds->has($b->id),
+                'earned_at'   => $earnedBadgeIds->get($b->id)?->toDateString(),
+            ])->values();
+        } else {
+            // Other profiles: only earned badges
+            $badges = Badge::whereNull('community_id')
+                ->whereNotNull('key')
+                ->whereIn('id', $earnedBadgeIds->keys())
+                ->orderBy('sort_order')
+                ->get()
+                ->map(fn ($b) => [
+                    'key'         => $b->key,
+                    'name'        => $b->name,
+                    'icon'        => $b->icon,
+                    'description' => $b->description,
+                    'how_to_earn' => $b->how_to_earn,
+                    'type'        => $b->type,
+                    'earned'      => true,
+                    'earned_at'   => $earnedBadgeIds->get($b->id)?->toDateString(),
+                ])->values();
+        }
 
         return Inertia::render('Profile/Show', [
             'profileUser'         => [

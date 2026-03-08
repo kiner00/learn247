@@ -15,18 +15,51 @@
 
                 <!-- Badges -->
                 <div v-if="badges?.length" class="bg-white border border-gray-200 rounded-2xl p-5">
-                    <h2 class="text-sm font-bold text-gray-900 mb-4">Badges</h2>
-                    <div class="flex flex-wrap gap-3">
-                        <div
-                            v-for="badge in badges"
-                            :key="badge.name"
-                            class="flex items-center gap-2 px-3 py-2 bg-indigo-50 border border-indigo-100 rounded-xl"
-                            :title="badge.description"
-                        >
-                            <span class="text-xl">{{ badge.icon }}</span>
-                            <div>
-                                <p class="text-xs font-bold text-indigo-700">{{ badge.name }}</p>
-                                <p class="text-xs text-indigo-400">{{ badge.description }}</p>
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-sm font-bold text-gray-900">
+                            Badges
+                            <span class="text-gray-400 font-normal ml-1">
+                                {{ badges.filter(b => b.earned).length }}/{{ badges.length }}
+                            </span>
+                        </h2>
+                    </div>
+
+                    <!-- Member badges -->
+                    <div v-if="memberBadges.length">
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Member</p>
+                        <div class="grid grid-cols-3 sm:grid-cols-4 gap-3 mb-5">
+                            <div
+                                v-for="badge in memberBadges"
+                                :key="badge.key"
+                                class="flex flex-col items-center text-center p-3 rounded-xl border transition-all"
+                                :class="badge.earned
+                                    ? 'bg-white border-indigo-100 shadow-sm'
+                                    : 'bg-gray-50 border-gray-100 opacity-40 grayscale'"
+                                :title="badge.earned ? `Earned ${badge.earned_at}` : `How to earn: ${badge.how_to_earn}`"
+                            >
+                                <span class="text-2xl mb-1 leading-none">{{ badge.icon }}</span>
+                                <p class="text-[11px] font-semibold text-gray-800 leading-tight">{{ badge.name }}</p>
+                                <p v-if="badge.earned" class="text-[10px] text-green-600 mt-0.5">✓ Earned</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Creator badges -->
+                    <div v-if="creatorBadges.length">
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Creator</p>
+                        <div class="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                            <div
+                                v-for="badge in creatorBadges"
+                                :key="badge.key"
+                                class="flex flex-col items-center text-center p-3 rounded-xl border transition-all"
+                                :class="badge.earned
+                                    ? 'bg-white border-amber-100 shadow-sm'
+                                    : 'bg-gray-50 border-gray-100 opacity-40 grayscale'"
+                                :title="badge.earned ? `Earned ${badge.earned_at}` : `How to earn: ${badge.how_to_earn}`"
+                            >
+                                <span class="text-2xl mb-1 leading-none">{{ badge.icon }}</span>
+                                <p class="text-[11px] font-semibold text-gray-800 leading-tight">{{ badge.name }}</p>
+                                <p v-if="badge.earned" class="text-[10px] text-green-600 mt-0.5">✓ Earned</p>
                             </div>
                         </div>
                     </div>
@@ -167,6 +200,7 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
@@ -184,6 +218,9 @@ const props = defineProps({
     selectedCommunity:  String,
     badges:             { type: Array, default: () => [] },
 });
+
+const memberBadges  = computed(() => props.badges.filter(b => b.type === 'member'));
+const creatorBadges = computed(() => props.badges.filter(b => b.type === 'creator'));
 
 const LEVEL_COLORS = [
     '#6b7280','#10b981','#3b82f6','#8b5cf6','#ec4899',

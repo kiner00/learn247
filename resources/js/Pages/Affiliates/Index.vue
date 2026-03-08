@@ -1,7 +1,15 @@
 <template>
     <AppLayout title="My Affiliates">
         <div class="max-w-5xl mx-auto px-4 py-8">
-            <h1 class="text-2xl font-bold text-gray-900 mb-1">My Affiliate Links</h1>
+            <div class="flex items-start justify-between mb-1">
+                <h1 class="text-2xl font-bold text-gray-900">My Affiliate Links</h1>
+                <Link
+                    href="/my-affiliates/analytics"
+                    class="flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors"
+                >
+                    <span>📊</span> Analytics
+                </Link>
+            </div>
             <p class="text-gray-500 mb-8 text-sm">
                 Share your referral links. When someone subscribes through your link, you earn your community's commission.
             </p>
