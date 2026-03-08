@@ -171,7 +171,6 @@ Route::middleware('auth')->group(function () {
 
     // ─── Affiliates ───────────────────────────────────────────────────────────
     Route::get('/my-affiliates', [AffiliateController::class, 'index'])->name('affiliates.index');
-    Route::get('/my-affiliates/analytics', [AffiliateController::class, 'analytics'])->name('affiliates.analytics');
     Route::post('/communities/{community}/affiliates', [AffiliateController::class, 'store'])->name('communities.affiliates.join');
     Route::get('/communities/{community}/affiliates', [AffiliateController::class, 'dashboard'])->name('communities.affiliates');
     Route::patch('/affiliate-conversions/{conversion}/paid', [AffiliateController::class, 'markPaid'])->name('affiliate-conversions.paid');
