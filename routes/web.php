@@ -104,6 +104,7 @@ Route::middleware('auth')->group(function () {
 
     // Owner-only mutations
     Route::match(['patch', 'post'], '/communities/{community}', [CommunityController::class, 'update'])->name('communities.update');
+    Route::patch('/communities/{community}/level-perks', [CommunityController::class, 'updateLevelPerks'])->name('communities.level-perks');
     Route::delete('/communities/{community}', [CommunityController::class, 'destroy'])->name('communities.destroy');
 
     // Member management (admin only — enforced by Action)

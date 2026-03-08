@@ -161,7 +161,11 @@ class CommunityController extends Controller
             && $pricingGate['has_description']
             && $pricingGate['profile_complete'];
 
-        return Inertia::render('Communities/Settings', compact('community', 'pricingGate'));
+        $levelPerks = \App\Models\CommunityLevelPerk::where('community_id', $community->id)
+            ->pluck('description', 'level')
+            ->toArray();
+
+        return Inertia::render('Communities/Settings', compact('community', 'pricingGate', 'levelPerks'));
     }
 
     public function update(Request $request, Community $community): RedirectResponse
@@ -215,6 +219,29 @@ class CommunityController extends Controller
         $community->update($data);
 
         return back()->with('success', 'Community updated.');
+    }
+
+    public function updateLevelPerks(Request $request, Community $community): RedirectResponse
+    {
+        $this->authorize('update', $community);
+
+        $data = $request->validate([
+            'perks'   => ['nullable', 'array'],
+            'perks.*' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        foreach ($data['perks'] ?? [] as $level => $description) {
+            if (blank($description)) {
+                \App\Models\CommunityLevelPerk::where('community_id', $community->id)->where('level', $level)->delete();
+            } else {
+                \App\Models\CommunityLevelPerk::updateOrCreate(
+                    ['community_id' => $community->id, 'level' => $level],
+                    ['description'  => $description],
+                );
+            }
+        }
+
+        return back()->with('success', 'Level perks saved.');
     }
 
     public function destroy(Community $community): RedirectResponse

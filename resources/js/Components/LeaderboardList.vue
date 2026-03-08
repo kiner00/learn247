@@ -14,11 +14,10 @@
             </div>
 
             <!-- Avatar -->
-            <div
-                class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-                :class="avatarBg(index)"
-            >
-                {{ entry.name.charAt(0).toUpperCase() }}
+            <div class="w-8 h-8 rounded-full shrink-0 overflow-hidden flex items-center justify-center text-xs font-bold text-white"
+                :class="entry.avatar ? '' : avatarBg(index)">
+                <img v-if="entry.avatar" :src="entry.avatar" :alt="entry.name" class="w-full h-full object-cover" />
+                <span v-else>{{ entry.name.charAt(0).toUpperCase() }}</span>
             </div>
 
             <!-- Name -->

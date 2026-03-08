@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\Comment;
+use App\Models\CommunityLevelPerk;
 use App\Models\CommunityMember;
 use App\Models\Community;
 use App\Models\Post;
@@ -41,15 +42,21 @@ class LeaderboardController extends Controller
                 $levelCounts[$level] = ($levelCounts[$level] ?? 0) + 1;
             });
 
+        // ── Level perks ──────────────────────────────────────────────────────
+        $perks = CommunityLevelPerk::where('community_id', $community->id)
+            ->pluck('description', 'level');
+
         $levelDistribution = collect(range(1, count($thresholds)))->map(fn ($l) => [
-            'level'   => $l,
-            'count'   => $levelCounts[$l] ?? 0,
-            'percent' => $totalMembers > 0 ? round(($levelCounts[$l] ?? 0) / $totalMembers * 100) : 0,
+            'level'       => $l,
+            'count'       => $levelCounts[$l] ?? 0,
+            'percent'     => $totalMembers > 0 ? round(($levelCounts[$l] ?? 0) / $totalMembers * 100) : 0,
+            'perk'        => $perks[$l] ?? null,
+            'threshold'   => $thresholds[$l - 1],
         ])->all();
 
         // ── All-time leaderboard (stored points) ─────────────────────────────
         $allTime = CommunityMember::where('community_id', $community->id)
-            ->with('user:id,name,username')
+            ->with('user:id,name,username,avatar')
             ->orderByDesc('points')
             ->take(10)
             ->get()
@@ -57,6 +64,7 @@ class LeaderboardController extends Controller
                 'user_id'  => $m->user_id,
                 'name'     => $m->user?->name ?? 'Unknown',
                 'username' => $m->user?->username,
+                'avatar'   => $m->user?->avatar,
                 'points'   => $m->points,
                 'level'    => CommunityMember::computeLevel($m->points),
             ])->values()->all();
@@ -68,6 +76,7 @@ class LeaderboardController extends Controller
         return Inertia::render('Communities/Leaderboard', [
             'community'         => $community,
             'myName'            => $myMembership?->user?->name,
+            'myAvatar'          => $myMembership?->user?->avatar,
             'myPoints'          => $myPoints,
             'myLevel'           => $myLevel,
             'pointsToNextLevel' => $ptsToNext,
@@ -101,13 +110,14 @@ class LeaderboardController extends Controller
 
         if ($userIds->isEmpty()) return [];
 
-        $users = User::whereIn('id', $userIds)->select('id', 'name', 'username')->get()->keyBy('id');
+        $users = User::whereIn('id', $userIds)->select('id', 'name', 'username', 'avatar')->get()->keyBy('id');
 
         return $userIds->map(function ($uid) use ($postPts, $commentPts, $users) {
             return [
                 'user_id'  => $uid,
                 'name'     => $users[$uid]?->name ?? 'Unknown',
                 'username' => $users[$uid]?->username,
+                'avatar'   => $users[$uid]?->avatar,
                 'points'   => (int) ($postPts[$uid] ?? 0) + (int) ($commentPts[$uid] ?? 0),
             ];
         })->sortByDesc('points')->values()->take(10)->all();

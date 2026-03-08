@@ -28,8 +28,8 @@ class CommunityMember extends Model
     public const POINTS_COMMENT = 5;
     public const POINTS_LESSON  = 20;
 
-    // Level thresholds (index = level - 1)
-    public const LEVEL_THRESHOLDS = [0, 50, 150, 350, 700, 1250, 2000, 3000, 4500, 6500, 9000, 12500];
+    // Level thresholds — 9 levels (index = level - 1)
+    public const LEVEL_THRESHOLDS = [0, 5, 20, 65, 155, 515, 2015, 8015, 33015];
 
     public static function computeLevel(int $points): int
     {
