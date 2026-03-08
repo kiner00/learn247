@@ -25,6 +25,40 @@
             </div>
         </div>
 
+        <!-- Balance vs Payout comparison -->
+        <div class="bg-white border rounded-2xl overflow-hidden shadow-sm mb-6"
+             :class="netPosition >= 0 ? 'border-green-200' : 'border-red-200'">
+            <div class="px-5 py-3 border-b flex items-center justify-between"
+                 :class="netPosition >= 0 ? 'border-green-100 bg-green-50' : 'border-red-100 bg-red-50'">
+                <div>
+                    <p class="text-sm font-bold" :class="netPosition >= 0 ? 'text-green-800' : 'text-red-800'">
+                        {{ netPosition >= 0 ? '✅ Sufficient balance to cover all payouts' : '⚠️ Insufficient balance — top up Xendit before paying out' }}
+                    </p>
+                </div>
+                <p class="text-lg font-black" :class="netPosition >= 0 ? 'text-green-700' : 'text-red-600'">
+                    {{ netPosition >= 0 ? '+' : '' }}₱{{ fmt(netPosition) }}
+                </p>
+            </div>
+            <div class="grid grid-cols-3 divide-x divide-gray-100">
+                <div class="px-5 py-4">
+                    <p class="text-xs font-medium text-gray-500 mb-1">Xendit Cash Balance</p>
+                    <p class="text-xl font-black text-teal-700">₱{{ fmt(xenditBalance ?? 0) }}</p>
+                </div>
+                <div class="px-5 py-4">
+                    <p class="text-xs font-medium text-gray-500 mb-1">Total Pending Payouts</p>
+                    <p class="text-xl font-black text-amber-700">₱{{ fmt(totalPending) }}</p>
+                    <p class="text-xs text-gray-400 mt-0.5">Owners ₱{{ fmt(stats.owners_pending) }} + Affiliates ₱{{ fmt(stats.affiliates_pending) }}</p>
+                </div>
+                <div class="px-5 py-4">
+                    <p class="text-xs font-medium text-gray-500 mb-1">Net Position</p>
+                    <p class="text-xl font-black" :class="netPosition >= 0 ? 'text-green-600' : 'text-red-600'">
+                        {{ netPosition >= 0 ? '+' : '' }}₱{{ fmt(netPosition) }}
+                    </p>
+                    <p class="text-xs text-gray-400 mt-0.5">{{ netPosition >= 0 ? 'Surplus after full payout' : 'Shortfall to cover' }}</p>
+                </div>
+            </div>
+        </div>
+
         <!-- Tabs -->
         <div class="flex gap-1 mb-6 bg-gray-100 rounded-xl p-1 w-fit">
             <button v-for="t in tabs" :key="t.key" @click="activeTab = t.key"
@@ -237,6 +271,9 @@ const statusTabs = [
     { key: 'pending', label: 'Pending' },
     { key: 'paid',    label: 'Paid' },
 ]
+
+const totalPending  = computed(() => (props.stats.owners_pending ?? 0) + (props.stats.affiliates_pending ?? 0))
+const netPosition   = computed(() => (props.xenditBalance ?? 0) - totalPending.value)
 
 const filteredOwners = computed(() => {
     if (ownerStatus.value === 'pending') return props.owners.filter(o => o.total_pending > 0)
