@@ -32,7 +32,7 @@ class CommunityAssistant implements Agent, Conversational
             $lines[] = "── COMMUNITY: {$c['name']} (role: {$c['role']}, level: {$c['level']}, points: {$c['points']})";
             $lines[] = "   Lessons completed: {$c['lessons_done']} / {$c['lessons_total']}";
 
-            if ($c['lessons_pending'] > 0) {
+            if (!empty($c['lessons_pending_names'])) {
                 $lines[] = "   Pending lessons: " . implode(', ', $c['lessons_pending_names']);
             }
 
