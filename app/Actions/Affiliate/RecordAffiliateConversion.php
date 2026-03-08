@@ -5,6 +5,7 @@ namespace App\Actions\Affiliate;
 use App\Models\AffiliateConversion;
 use App\Models\Payment;
 use App\Models\Subscription;
+use Illuminate\Support\Facades\Log;
 
 class RecordAffiliateConversion
 {
@@ -15,6 +16,18 @@ class RecordAffiliateConversion
         $affiliate = $subscription->affiliate;
 
         if (! $affiliate) {
+            return;
+        }
+
+        // Affiliate must be subscribed to earn commission this month
+        $affiliateSubscribed = Subscription::where('user_id', $affiliate->user_id)
+            ->where('community_id', $affiliate->community_id)
+            ->where('status', Subscription::STATUS_ACTIVE)
+            ->where('expires_at', '>', now())
+            ->exists();
+
+        if (! $affiliateSubscribed) {
+            Log::info('Affiliate commission skipped — affiliate not subscribed', ['affiliate_id' => $affiliate->id]);
             return;
         }
 

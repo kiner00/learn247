@@ -16,13 +16,16 @@ class SubscriptionRenewalReminder extends Mailable
     public function __construct(
         public readonly Subscription $subscription,
         public readonly string $renewalUrl,
+        public readonly bool $urgent = false,
     ) {}
 
     public function envelope(): Envelope
     {
-        return new Envelope(
-            subject: "Your subscription to {$this->subscription->community->name} is expiring soon",
-        );
+        $subject = $this->urgent
+            ? "Last chance — your {$this->subscription->community->name} subscription expires tomorrow"
+            : "Your subscription to {$this->subscription->community->name} is expiring in 5 days";
+
+        return new Envelope(subject: $subject);
     }
 
     public function content(): Content

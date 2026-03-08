@@ -4,6 +4,7 @@ namespace App\Actions\Affiliate;
 
 use App\Models\Affiliate;
 use App\Models\Community;
+use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -18,6 +19,18 @@ class JoinAffiliate
         if (! $community->hasAffiliateProgram()) {
             throw ValidationException::withMessages([
                 'affiliate' => 'This community does not have an affiliate program.',
+            ]);
+        }
+
+        $isSubscribed = Subscription::where('user_id', $user->id)
+            ->where('community_id', $community->id)
+            ->where('status', Subscription::STATUS_ACTIVE)
+            ->where('expires_at', '>', now())
+            ->exists();
+
+        if (! $isSubscribed) {
+            throw ValidationException::withMessages([
+                'affiliate' => 'You must be subscribed to this community to become an affiliate.',
             ]);
         }
 
