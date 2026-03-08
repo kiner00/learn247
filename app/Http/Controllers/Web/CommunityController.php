@@ -137,7 +137,27 @@ class CommunityController extends Controller
     {
         $this->authorize('update', $community);
 
-        return Inertia::render('Communities/Settings', compact('community'));
+        $moduleCount = $community->courses()
+            ->withCount('modules')
+            ->get()
+            ->sum('modules_count');
+
+        $owner = $community->owner;
+
+        $pricingGate = [
+            'module_count'       => $moduleCount,
+            'has_banner'         => (bool) $community->cover_image,
+            'has_description'    => (bool) ($community->description && strlen(trim($community->description)) > 0),
+            'profile_complete'   => (bool) ($owner && $owner->name && $owner->bio && $owner->avatar),
+            'can_enable_pricing' => false, // computed below
+        ];
+
+        $pricingGate['can_enable_pricing'] = $moduleCount >= 5
+            && $pricingGate['has_banner']
+            && $pricingGate['has_description']
+            && $pricingGate['profile_complete'];
+
+        return Inertia::render('Communities/Settings', compact('community', 'pricingGate'));
     }
 
     public function update(Request $request, Community $community): RedirectResponse
@@ -155,6 +175,27 @@ class CommunityController extends Controller
             'is_private'               => ['boolean'],
             'affiliate_commission_rate' => ['nullable', 'integer', 'min:0', 'max:85'],
         ]);
+
+        // Pricing gate: block price > 0 unless community meets all requirements
+        if (isset($data['price']) && (float) $data['price'] > 0) {
+            $moduleCount = $community->courses()->withCount('modules')->get()->sum('modules_count');
+            $owner       = $community->owner;
+
+            $errors = [];
+            if ($moduleCount < 5) {
+                $errors['price'] = "You need at least 5 modules to enable pricing (you have {$moduleCount}).";
+            } elseif (empty($community->cover_image) && ! $request->hasFile('cover_image')) {
+                $errors['price'] = 'Upload a banner image before enabling pricing.';
+            } elseif (empty(trim($data['description'] ?? $community->description ?? ''))) {
+                $errors['price'] = 'Add a community description before enabling pricing.';
+            } elseif (! ($owner && $owner->name && $owner->bio && $owner->avatar)) {
+                $errors['price'] = 'Complete your profile (name, bio, avatar) before enabling pricing.';
+            }
+
+            if ($errors) {
+                return back()->withErrors($errors);
+            }
+        }
 
         if ($request->hasFile('cover_image')) {
             // Delete old stored file if present

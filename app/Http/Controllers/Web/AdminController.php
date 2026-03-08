@@ -11,6 +11,7 @@ use App\Models\Community;
 use App\Models\CommunityMember;
 use App\Models\OwnerPayout;
 use App\Models\Payment;
+use App\Models\PayoutRequest;
 use App\Models\Setting;
 use App\Models\Subscription;
 use App\Models\User;
@@ -184,13 +185,38 @@ class AdminController extends Controller
             ->filter(fn ($a) => $a['total_earned'] > 0)
             ->values();
 
+        // ── Payout Requests ──────────────────────────────────────────────────
+        $payoutRequests = PayoutRequest::with(['user', 'community'])
+            ->latest()
+            ->get()
+            ->map(fn ($r) => [
+                'id'               => $r->id,
+                'user_name'        => $r->user->name,
+                'user_email'       => $r->user->email,
+                'payout_method'    => $r->type === PayoutRequest::TYPE_OWNER
+                    ? $r->user->payout_method
+                    : optional(Affiliate::find($r->affiliate_id))->payout_method,
+                'payout_details'   => $r->type === PayoutRequest::TYPE_OWNER
+                    ? $r->user->payout_details
+                    : optional(Affiliate::find($r->affiliate_id))->payout_details,
+                'type'             => $r->type,
+                'community_name'   => $r->community?->name,
+                'amount'           => (float) $r->amount,
+                'eligible_amount'  => (float) $r->eligible_amount,
+                'status'           => $r->status,
+                'rejection_reason' => $r->rejection_reason,
+                'requested_at'     => $r->created_at->toDateString(),
+                'processed_at'     => $r->processed_at?->toDateString(),
+            ]);
+
         // ── Summary stats ────────────────────────────────────────────────────
         $stats = [
-            'owners_pending'     => $owners->sum('total_pending'),
-            'affiliates_pending' => $affiliates->sum('pending'),
+            'owners_pending'           => $owners->sum('total_pending'),
+            'affiliates_pending'       => $affiliates->sum('pending'),
+            'payout_requests_pending'  => PayoutRequest::where('status', PayoutRequest::STATUS_PENDING)->count(),
         ];
 
-        return Inertia::render('Admin/Payouts', compact('owners', 'affiliates', 'stats', 'xenditBalance'));
+        return Inertia::render('Admin/Payouts', compact('owners', 'affiliates', 'stats', 'xenditBalance', 'payoutRequests'));
     }
 
     public function payOwner(Community $community, XenditService $xendit): RedirectResponse
@@ -406,5 +432,85 @@ class AdminController extends Controller
         if ($errors) $msg .= ' Errors: ' . implode('; ', $errors);
 
         return back()->with($errors ? 'error' : 'success', $msg);
+    }
+
+    public function approvePayoutRequest(PayoutRequest $payoutRequest, XenditService $xendit): RedirectResponse
+    {
+        abort_unless($payoutRequest->isPending(), 422, 'Request is no longer pending.');
+
+        $user = $payoutRequest->user;
+
+        if ($payoutRequest->type === PayoutRequest::TYPE_OWNER) {
+            $payoutMethod  = $user->payout_method;
+            $payoutDetails = $user->payout_details;
+            $holderName    = $user->name;
+        } else {
+            $affiliate     = Affiliate::findOrFail($payoutRequest->affiliate_id);
+            $payoutMethod  = $affiliate->payout_method;
+            $payoutDetails = $affiliate->payout_details;
+            $holderName    = $user->name;
+        }
+
+        abort_unless(
+            in_array($payoutMethod, ['gcash', 'maya']) && $payoutDetails,
+            422,
+            'User has no valid payout method on file.'
+        );
+
+        $channelCode = $payoutMethod === 'gcash' ? 'PH_GCASH' : 'PH_PAYMAYA';
+        $referenceId = 'req-' . $payoutRequest->id . '-' . time();
+
+        try {
+            $result = $xendit->createPayout([
+                'reference_id'       => $referenceId,
+                'currency'           => 'PHP',
+                'channel_code'       => $channelCode,
+                'channel_properties' => [
+                    'account_holder_name' => $holderName,
+                    'account_number'      => $payoutDetails,
+                ],
+                'amount'      => $payoutRequest->amount,
+                'description' => "Payout request #{$payoutRequest->id}",
+            ]);
+
+            // Record in owner_payouts if type is owner
+            if ($payoutRequest->type === PayoutRequest::TYPE_OWNER) {
+                OwnerPayout::create([
+                    'community_id'     => $payoutRequest->community_id,
+                    'user_id'          => $user->id,
+                    'amount'           => $payoutRequest->amount,
+                    'status'           => 'accepted',
+                    'xendit_reference' => $result['id'] ?? $referenceId,
+                    'paid_at'          => now(),
+                ]);
+            }
+
+            $payoutRequest->update([
+                'status'           => PayoutRequest::STATUS_APPROVED,
+                'xendit_reference' => $result['id'] ?? $referenceId,
+                'processed_at'     => now(),
+            ]);
+
+            return back()->with('success', "Approved & sent ₱" . number_format($payoutRequest->amount, 2) . " to {$user->name}.");
+        } catch (\RuntimeException $e) {
+            return back()->with('error', 'Xendit payout failed: ' . $e->getMessage());
+        }
+    }
+
+    public function rejectPayoutRequest(PayoutRequest $payoutRequest, Request $request): RedirectResponse
+    {
+        abort_unless($payoutRequest->isPending(), 422, 'Request is no longer pending.');
+
+        $validated = $request->validate([
+            'reason' => 'nullable|string|max:255',
+        ]);
+
+        $payoutRequest->update([
+            'status'           => PayoutRequest::STATUS_REJECTED,
+            'rejection_reason' => $validated['reason'] ?? null,
+            'processed_at'     => now(),
+        ]);
+
+        return back()->with('success', "Payout request #{$payoutRequest->id} rejected.");
     }
 }

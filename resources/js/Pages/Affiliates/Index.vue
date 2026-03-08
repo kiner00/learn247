@@ -31,15 +31,21 @@
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         <template v-for="a in affiliates" :key="a.id">
-                        <tr class="hover:bg-gray-50">
+                        <tr :class="['hover:bg-gray-50', !a.is_active ? 'opacity-60' : '']">
                             <td class="px-5 py-4 font-medium text-gray-900">
-                                <Link :href="`/communities/${a.community.slug}`"
-                                      class="hover:text-indigo-600">
-                                    {{ a.community.name }}
-                                </Link>
+                                <div class="flex items-center gap-2">
+                                    <Link :href="`/communities/${a.community.slug}`"
+                                          class="hover:text-indigo-600">
+                                        {{ a.community.name }}
+                                    </Link>
+                                    <span v-if="!a.is_active"
+                                          class="text-xs font-bold uppercase bg-red-100 text-red-600 px-2 py-0.5 rounded-full">
+                                        Suspended
+                                    </span>
+                                </div>
                             </td>
                             <td class="px-5 py-4">
-                                <div class="flex items-center gap-2">
+                                <div v-if="a.is_active" class="flex items-center gap-2">
                                     <span class="font-mono text-xs text-gray-500 truncate max-w-48">
                                         {{ a.referral_url }}
                                     </span>
@@ -48,6 +54,9 @@
                                         {{ copied === a.referral_url ? '✓ Copied' : 'Copy' }}
                                     </button>
                                 </div>
+                                <span v-else class="text-xs text-red-500 italic">
+                                    Renew subscription to reactivate
+                                </span>
                             </td>
                             <td class="px-5 py-4 text-right text-gray-900 font-medium">
                                 ₱{{ Number(a.total_earned).toFixed(2) }}

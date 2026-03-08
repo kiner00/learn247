@@ -29,6 +29,7 @@ class AffiliateController extends Controller
                 'id'             => $a->id,
                 'code'           => $a->code,
                 'status'         => $a->status,
+                'is_active'      => $a->isActive(),
                 'total_earned'   => $a->total_earned,
                 'total_paid'     => $a->total_paid,
                 'pending_amount'  => $a->pendingAmount(),

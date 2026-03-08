@@ -68,8 +68,108 @@
             </button>
         </div>
 
+        <!-- ── Payout Requests tab ────────────────────────────────────────────── -->
+        <div v-if="activeTab === 'requests'">
+            <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                <div class="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
+                    <h2 class="font-semibold text-gray-800">Payout Requests</h2>
+                    <div class="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
+                        <button v-for="s in requestStatusTabs" :key="s.key" @click="requestStatus = s.key"
+                                class="px-3 py-1 text-xs font-semibold rounded-md transition-all"
+                                :class="requestStatus === s.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'">
+                            {{ s.label }}
+                        </button>
+                    </div>
+                </div>
+
+                <div v-if="filteredRequests.length === 0" class="px-5 py-10 text-center text-sm text-gray-400">
+                    No {{ requestStatus }} payout requests.
+                </div>
+
+                <table v-else class="w-full text-sm">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500">User</th>
+                            <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500">Type</th>
+                            <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500">Community</th>
+                            <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500">Payout To</th>
+                            <th class="text-right px-5 py-3 text-xs font-semibold text-gray-500">Requested</th>
+                            <th class="text-right px-5 py-3 text-xs font-semibold text-gray-500">Eligible at Request</th>
+                            <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500">Status</th>
+                            <th class="text-right px-5 py-3 text-xs font-semibold text-gray-500">Date</th>
+                            <th class="px-5 py-3"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        <template v-for="r in filteredRequests" :key="r.id">
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-5 py-3">
+                                    <p class="font-medium text-gray-900">{{ r.user_name }}</p>
+                                    <p class="text-xs text-gray-400">{{ r.user_email }}</p>
+                                </td>
+                                <td class="px-5 py-3">
+                                    <span class="text-xs font-semibold uppercase px-2 py-0.5 rounded-full"
+                                          :class="r.type === 'owner' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'">
+                                        {{ r.type }}
+                                    </span>
+                                </td>
+                                <td class="px-5 py-3 text-gray-700">{{ r.community_name ?? '—' }}</td>
+                                <td class="px-5 py-3">
+                                    <span v-if="r.payout_method" class="text-xs font-semibold uppercase text-gray-700">
+                                        {{ r.payout_method }} · {{ r.payout_details }}
+                                    </span>
+                                    <span v-else class="text-xs text-red-400 italic">Not set</span>
+                                </td>
+                                <td class="px-5 py-3 text-right font-semibold text-gray-900">₱{{ fmt(r.amount) }}</td>
+                                <td class="px-5 py-3 text-right text-gray-400">₱{{ fmt(r.eligible_amount) }}</td>
+                                <td class="px-5 py-3">
+                                    <span class="text-xs font-bold uppercase px-2 py-0.5 rounded-full"
+                                          :class="{
+                                              'bg-amber-100 text-amber-700': r.status === 'pending',
+                                              'bg-green-100 text-green-700': r.status === 'approved',
+                                              'bg-red-100 text-red-700':    r.status === 'rejected',
+                                          }">
+                                        {{ r.status }}
+                                    </span>
+                                    <p v-if="r.rejection_reason" class="text-xs text-red-500 mt-0.5 max-w-40 truncate">{{ r.rejection_reason }}</p>
+                                </td>
+                                <td class="px-5 py-3 text-right text-xs text-gray-400">{{ r.requested_at }}</td>
+                                <td class="px-5 py-3 text-right">
+                                    <div v-if="r.status === 'pending'" class="flex items-center justify-end gap-2">
+                                        <button @click="approveRequest(r.id)"
+                                                class="text-xs bg-green-600 hover:bg-green-700 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors">
+                                            Approve
+                                        </button>
+                                        <button @click="rejectingId = rejectingId === r.id ? null : r.id"
+                                                class="text-xs bg-red-50 hover:bg-red-100 text-red-600 font-semibold px-3 py-1.5 rounded-lg transition-colors border border-red-200">
+                                            Reject
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <!-- Inline reject form -->
+                            <tr v-if="rejectingId === r.id" class="bg-red-50">
+                                <td colspan="9" class="px-5 py-3">
+                                    <div class="flex items-center gap-3">
+                                        <input v-model="rejectReason" type="text" placeholder="Reason (optional)"
+                                               class="flex-1 max-w-sm border border-red-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+                                        <button @click="confirmReject(r.id)"
+                                                class="text-xs bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-1.5 rounded-lg transition-colors">
+                                            Confirm Reject
+                                        </button>
+                                        <button @click="rejectingId = null; rejectReason = ''"
+                                                class="text-xs text-gray-500 hover:text-gray-700">Cancel</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- ── Community Owners tab ─────────────────────────────────────────── -->
-        <div v-if="activeTab === 'owners'">
+        <div v-else-if="activeTab === 'owners'">
             <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
                 <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
                     <div class="flex items-center gap-3">
@@ -252,17 +352,44 @@ import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
 const props = defineProps({
-    owners:        Array,
-    affiliates:    Array,
-    stats:         Object,
-    xenditBalance: Number,
+    owners:         Array,
+    affiliates:     Array,
+    payoutRequests: Array,
+    stats:          Object,
+    xenditBalance:  Number,
 })
 
-const activeTab = ref('owners')
-const tabs = [
+const activeTab = ref('requests')
+const tabs = computed(() => [
+    { key: 'requests',   label: `Payout Requests${props.stats.payout_requests_pending > 0 ? ` (${props.stats.payout_requests_pending})` : ''}` },
     { key: 'owners',     label: 'Community Owners' },
     { key: 'affiliates', label: 'Affiliates' },
+])
+
+const requestStatus = ref('pending')
+const requestStatusTabs = [
+    { key: 'pending',  label: 'Pending' },
+    { key: 'approved', label: 'Approved' },
+    { key: 'rejected', label: 'Rejected' },
+    { key: 'all',      label: 'All' },
 ]
+const filteredRequests = computed(() => {
+    if (requestStatus.value === 'all') return props.payoutRequests
+    return props.payoutRequests.filter(r => r.status === requestStatus.value)
+})
+
+const rejectingId  = ref(null)
+const rejectReason = ref('')
+
+function approveRequest(id) {
+    router.post(`/admin/payout-requests/${id}/approve`)
+}
+
+function confirmReject(id) {
+    router.post(`/admin/payout-requests/${id}/reject`, { reason: rejectReason.value }, {
+        onSuccess: () => { rejectingId.value = null; rejectReason.value = '' },
+    })
+}
 
 const ownerStatus     = ref('pending')
 const affiliateStatus = ref('pending')

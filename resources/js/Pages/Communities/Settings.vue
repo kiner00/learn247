@@ -100,6 +100,29 @@
                             />
                         </div>
 
+                        <!-- Pricing requirements checklist -->
+                        <div v-if="pricingGate && !pricingGate.can_enable_pricing" class="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                            <p class="text-sm font-semibold text-amber-800 mb-3">Complete these requirements to enable paid pricing:</p>
+                            <ul class="space-y-2 text-sm">
+                                <li class="flex items-center gap-2" :class="pricingGate.module_count >= 5 ? 'text-green-700' : 'text-gray-600'">
+                                    <span>{{ pricingGate.module_count >= 5 ? '✅' : '☐' }}</span>
+                                    <span>At least 5 modules <span class="text-gray-400">({{ pricingGate.module_count }}/5)</span></span>
+                                </li>
+                                <li class="flex items-center gap-2" :class="pricingGate.has_banner ? 'text-green-700' : 'text-gray-600'">
+                                    <span>{{ pricingGate.has_banner ? '✅' : '☐' }}</span>
+                                    <span>Banner image uploaded</span>
+                                </li>
+                                <li class="flex items-center gap-2" :class="pricingGate.has_description ? 'text-green-700' : 'text-gray-600'">
+                                    <span>{{ pricingGate.has_description ? '✅' : '☐' }}</span>
+                                    <span>Community description filled</span>
+                                </li>
+                                <li class="flex items-center gap-2" :class="pricingGate.profile_complete ? 'text-green-700' : 'text-gray-600'">
+                                    <span>{{ pricingGate.profile_complete ? '✅' : '☐' }}</span>
+                                    <span>Your profile complete (name, bio, avatar)</span>
+                                </li>
+                            </ul>
+                        </div>
+
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1.5">Price (₱ per month)</label>
@@ -108,9 +131,12 @@
                                     type="number"
                                     min="0"
                                     step="1"
-                                    class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                    :disabled="pricingGate && !pricingGate.can_enable_pricing && Number(form.price) === 0"
+                                    class="w-full px-3.5 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                    :class="form.errors.price ? 'border-red-400' : 'border-gray-300'"
                                 />
-                                <p class="mt-1 text-xs text-gray-400">Set to 0 for free access</p>
+                                <p v-if="form.errors.price" class="mt-1 text-xs text-red-600">{{ form.errors.price }}</p>
+                                <p v-else class="mt-1 text-xs text-gray-400">Set to 0 for free access</p>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1.5">Currency</label>
@@ -228,7 +254,8 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 const CATEGORIES = ['Tech', 'Business', 'Design', 'Health', 'Education', 'Finance', 'Other'];
 
 const props = defineProps({
-    community: Object,
+    community:   Object,
+    pricingGate: Object,
 });
 
 const saved          = ref(false);

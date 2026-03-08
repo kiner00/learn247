@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Web\AdminController;
 use App\Http\Controllers\Web\AffiliateController;
+use App\Http\Controllers\Web\CreatorController;
+use App\Http\Controllers\Web\PayoutRequestController;
 use App\Http\Controllers\Web\AuthController;
 use App\Http\Controllers\Web\CertificateController;
 use App\Http\Controllers\Web\ChatController;
@@ -54,6 +56,8 @@ Route::middleware(['auth', EnsureSuperAdmin::class])->prefix('admin')->group(fun
     Route::post('/payouts/owners/selected', [AdminController::class, 'paySelectedOwners'])->name('admin.payouts.owners.selected');
     Route::post('/payouts/affiliates/batch', [AdminController::class, 'batchPayAffiliates'])->name('admin.payouts.affiliates.batch');
     Route::post('/payouts/affiliates/selected', [AdminController::class, 'paySelectedAffiliates'])->name('admin.payouts.affiliates.selected');
+    Route::post('/payout-requests/{payoutRequest}/approve', [AdminController::class, 'approvePayoutRequest'])->name('admin.payout-requests.approve');
+    Route::post('/payout-requests/{payoutRequest}/reject', [AdminController::class, 'rejectPayoutRequest'])->name('admin.payout-requests.reject');
 });
 
 // ─── Profile ───────────────────────────────────────────────────────────────────
@@ -156,6 +160,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/messages/{user:username}/poll', [DirectMessageController::class, 'poll'])->name('messages.poll');
     Route::delete('/direct-messages/{directMessage}', [DirectMessageController::class, 'destroy'])->name('messages.destroy');
 
+    // ─── Creator Dashboard ────────────────────────────────────────────────────
+    Route::get('/creator/dashboard', [CreatorController::class, 'dashboard'])->name('creator.dashboard');
+    Route::post('/creator/payout-request/{community:id}', [PayoutRequestController::class, 'storeOwner'])->name('creator.payout-request.store');
+
     // ─── Affiliates ───────────────────────────────────────────────────────────
     Route::get('/my-affiliates', [AffiliateController::class, 'index'])->name('affiliates.index');
     Route::post('/communities/{community}/affiliates', [AffiliateController::class, 'store'])->name('communities.affiliates.join');
@@ -163,6 +171,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/affiliate-conversions/{conversion}/paid', [AffiliateController::class, 'markPaid'])->name('affiliate-conversions.paid');
     Route::post('/affiliate-conversions/{conversion}/disburse', [AffiliateController::class, 'disburse'])->name('affiliate-conversions.disburse');
     Route::patch('/affiliates/{affiliate}/payout', [AffiliateController::class, 'updatePayout'])->name('affiliates.payout');
+    Route::post('/affiliates/{affiliate}/payout-request', [PayoutRequestController::class, 'storeAffiliate'])->name('affiliates.payout-request.store');
 });
 
 // ─── Xendit Webhooks (no auth, no CSRF) ────────────────────────────────────
