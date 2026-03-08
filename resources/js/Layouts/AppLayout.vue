@@ -124,6 +124,22 @@
                             </div>
                         </Transition>
                         </div><!-- end switcherRef -->
+
+                        <!-- AI Assistant button -->
+                        <button
+                            v-if="($page.props.auth?.communities ?? []).length > 0"
+                            @click="aiOpen = !aiOpen"
+                            class="flex items-center gap-1 ml-1 px-2 py-1 rounded-lg text-xs font-semibold transition-colors"
+                            :class="aiOpen
+                                ? 'bg-indigo-100 text-indigo-700 border border-indigo-300'
+                                : 'text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 border border-transparent'"
+                            title="AI Assistant"
+                        >
+                            <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
+                            </svg>
+                            <span class="hidden sm:inline">AI</span>
+                        </button>
                     </div><!-- end logo+switcher flex -->
 
                     <!-- Right: auth -->
@@ -606,11 +622,113 @@
                 </div>
             </div>
         </Transition>
+
+        <!-- ─── AI Assistant Panel ──────────────────────────────────────────── -->
+        <Transition
+            enter-active-class="transition ease-out duration-200"
+            enter-from-class="opacity-0 translate-x-4"
+            enter-to-class="opacity-100 translate-x-0"
+            leave-active-class="transition ease-in duration-150"
+            leave-from-class="opacity-100 translate-x-0"
+            leave-to-class="opacity-0 translate-x-4"
+        >
+            <div
+                v-if="aiOpen"
+                class="fixed top-14 right-0 bottom-0 w-80 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 shadow-xl z-40 flex flex-col"
+            >
+                <!-- Header -->
+                <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between shrink-0">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
+                        </svg>
+                        <p class="text-sm font-bold text-gray-900 dark:text-gray-100">AI Assistant</p>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button
+                            @click="aiNewChat"
+                            class="text-xs text-gray-400 hover:text-indigo-600 px-2 py-1 rounded-lg hover:bg-indigo-50 transition-colors"
+                            title="New conversation"
+                        >New chat</button>
+                        <button
+                            @click="aiOpen = false"
+                            class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        >
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Messages -->
+                <div ref="aiScrollRef" class="flex-1 overflow-y-auto p-4 space-y-3">
+                    <div v-if="!aiMessages.length" class="flex flex-col items-center justify-center h-full text-center text-gray-400">
+                        <svg class="w-8 h-8 mb-2 text-indigo-200" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
+                        </svg>
+                        <p class="text-xs font-medium">Ask me anything!</p>
+                        <p class="text-xs mt-1 text-gray-300">I know your lessons, quizzes &amp; progress.</p>
+                    </div>
+
+                    <template v-for="(msg, i) in aiMessages" :key="i">
+                        <!-- User message -->
+                        <div v-if="msg.role === 'user'" class="flex justify-end">
+                            <div class="max-w-[85%] px-3 py-2 bg-indigo-600 text-white text-sm rounded-2xl rounded-tr-sm">
+                                {{ msg.content }}
+                            </div>
+                        </div>
+                        <!-- AI message -->
+                        <div v-else class="flex justify-start">
+                            <div class="max-w-[85%] px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm rounded-2xl rounded-tl-sm whitespace-pre-wrap">
+                                {{ msg.content }}
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Loading dots -->
+                    <div v-if="aiLoading" class="flex justify-start">
+                        <div class="px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-2xl rounded-tl-sm">
+                            <span class="flex gap-1">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay:0ms"></span>
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay:150ms"></span>
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay:300ms"></span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input -->
+                <div class="p-3 border-t border-gray-100 dark:border-gray-700 shrink-0">
+                    <div class="flex gap-2 items-end">
+                        <textarea
+                            v-model="aiInput"
+                            @keydown.enter.exact.prevent="sendAiMessage"
+                            placeholder="Ask about your progress..."
+                            rows="1"
+                            class="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 dark:text-gray-200 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                            style="max-height:100px; overflow-y:auto;"
+                            :disabled="aiLoading"
+                        ></textarea>
+                        <button
+                            @click="sendAiMessage"
+                            :disabled="aiLoading || !aiInput.trim()"
+                            class="shrink-0 w-8 h-8 flex items-center justify-center bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:opacity-40 transition-colors"
+                        >
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <p class="text-[10px] text-gray-300 mt-1.5 text-center">Enter to send · Shift+Enter for newline</p>
+                </div>
+            </div>
+        </Transition>
     </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, watchEffect, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, watch, watchEffect, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { Link, usePage, useForm } from '@inertiajs/vue3';
 import { useCreateModal } from '@/composables/useCreateModal';
 
@@ -773,4 +891,50 @@ function handleOutsideClick(e) {
 
 onMounted(()      => document.addEventListener('click', handleOutsideClick));
 onBeforeUnmount(() => document.removeEventListener('click', handleOutsideClick));
+
+// ─── AI Assistant ──────────────────────────────────────────────────────────────
+
+const aiOpen           = ref(false);
+const aiMessages       = ref([]);
+const aiInput          = ref('');
+const aiLoading        = ref(false);
+const aiConversationId = ref(null);
+const aiScrollRef      = ref(null);
+
+function aiNewChat() {
+    aiMessages.value       = [];
+    aiConversationId.value = null;
+}
+
+async function sendAiMessage() {
+    const text = aiInput.value.trim();
+    if (!text || aiLoading.value) return;
+
+    aiMessages.value.push({ role: 'user', content: text });
+    aiInput.value  = '';
+    aiLoading.value = true;
+
+    await nextTick();
+    if (aiScrollRef.value) aiScrollRef.value.scrollTop = aiScrollRef.value.scrollHeight;
+
+    try {
+        const axios = (await import('axios')).default;
+        const res   = await axios.post('/ai/chat', {
+            message:         text,
+            conversation_id: aiConversationId.value,
+        });
+
+        aiConversationId.value = res.data.conversation_id;
+        aiMessages.value.push({ role: 'assistant', content: res.data.message });
+    } catch (e) {
+        const msg = e?.response?.data?.message
+            ?? e?.response?.data?.error
+            ?? 'Something went wrong. Please try again.';
+        aiMessages.value.push({ role: 'assistant', content: msg });
+    } finally {
+        aiLoading.value = false;
+        await nextTick();
+        if (aiScrollRef.value) aiScrollRef.value.scrollTop = aiScrollRef.value.scrollHeight;
+    }
+}
 </script>

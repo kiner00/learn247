@@ -19,6 +19,7 @@ use App\Http\Controllers\Web\LessonCommentController;
 use App\Http\Controllers\Web\ProfileController;
 use App\Http\Controllers\Web\LikeController;
 use App\Http\Controllers\Web\PostController;
+use App\Http\Controllers\Web\AIAssistantController;
 use App\Http\Controllers\Web\QuizController;
 use App\Http\Controllers\Web\RefController;
 use App\Http\Controllers\Web\SubscriptionController;
@@ -178,6 +179,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/affiliate-conversions/{conversion}/disburse', [AffiliateController::class, 'disburse'])->name('affiliate-conversions.disburse');
     Route::patch('/affiliates/{affiliate}/payout', [AffiliateController::class, 'updatePayout'])->name('affiliates.payout');
     Route::post('/affiliates/{affiliate}/payout-request', [PayoutRequestController::class, 'storeAffiliate'])->name('affiliates.payout-request.store');
+
+    // ─── AI Assistant ─────────────────────────────────────────────────────────
+    Route::post('/ai/chat', [AIAssistantController::class, 'chat'])->name('ai.chat');
 });
 
 // ─── Xendit Webhooks (no auth, no CSRF) ────────────────────────────────────
