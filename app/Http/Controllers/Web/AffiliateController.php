@@ -24,6 +24,7 @@ class AffiliateController extends Controller
         $user        = $request->user();
         $period      = $request->get('period', 'month');
         $communityId = $request->get('community');
+        $tab         = $request->get('tab', 'links');
 
         $affiliates = Affiliate::where('user_id', $user->id)
             ->with('community')
@@ -118,6 +119,7 @@ class AffiliateController extends Controller
             'payoutDetails' => $user->payout_details,
             'period'        => $period,
             'communityId'   => $communityId,
+            'tab'           => $tab,
             'analytics'     => [
                 'summary' => [
                     'total_earned'      => $totalEarned,

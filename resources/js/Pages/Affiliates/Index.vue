@@ -272,6 +272,7 @@ const props = defineProps({
     period:        { type: String, default: 'month' },
     communityId:   { type: String, default: null },
     analytics:     Object,
+    tab:           { type: String, default: 'links' },
 });
 
 const TABS = [
@@ -292,7 +293,7 @@ const STATUS_FILTERS = [
     { value: 'paid',    label: 'Paid'    },
 ];
 
-const activeTab       = ref('links');
+const activeTab       = ref(props.tab ?? 'links');
 const statusFilter    = ref('all');
 const copied          = ref(null);
 const showPayoutModal = ref(false);
@@ -329,10 +330,9 @@ function savePayout() {
 }
 
 function applyFilter(key, value) {
-    const params = { period: props.period, community: props.communityId };
+    const params = { period: props.period, community: props.communityId, tab: activeTab.value };
     params[key] = value;
     if (!params.community) delete params.community;
     router.get('/my-affiliates', params, { preserveScroll: true, preserveState: true });
-    activeTab.value = 'analytics';
 }
 </script>
