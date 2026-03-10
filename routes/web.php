@@ -38,16 +38,17 @@ Route::get('/certificates/{uuid}', [CertificateController::class, 'show'])->name
 // ─── Affiliate referral link (public) ─────────────────────────────────────────
 Route::get('/ref/{code}', [RefController::class, 'redirect'])->name('ref.redirect');
 
-// ─── Guest checkout via affiliate link (public) ───────────────────────────────
-Route::get('/ref-checkout/{code}', [GuestCheckoutController::class, 'show'])->name('ref.checkout');
+// ─── Guest checkout via affiliate link (public, POST only) ───────────────────
 Route::post('/ref-checkout/{code}', [GuestCheckoutController::class, 'process'])->name('ref.checkout.process');
 
 // ─── Checkout success (public) ────────────────────────────────────────────────
 Route::get('/checkout-success', fn () => inertia('CheckoutSuccess'))->name('checkout.success');
 
-// ─── Set password after guest checkout (public) ───────────────────────────────
-Route::get('/set-password', [SetPasswordController::class, 'show'])->name('password.setup');
-Route::post('/set-password', [SetPasswordController::class, 'store'])->name('password.setup.store');
+// ─── Set permanent password (auth required) ───────────────────────────────────
+Route::middleware('auth')->group(function () {
+    Route::get('/set-password', [SetPasswordController::class, 'show'])->name('password.setup');
+    Route::post('/set-password', [SetPasswordController::class, 'store'])->name('password.setup.store');
+});
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 

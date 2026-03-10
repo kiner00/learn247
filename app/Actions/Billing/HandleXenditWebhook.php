@@ -3,15 +3,16 @@
 namespace App\Actions\Billing;
 
 use App\Actions\Affiliate\RecordAffiliateConversion;
-use App\Mail\SetPasswordMail;
+use App\Mail\TempPasswordMail;
 use App\Models\Payment;
 use App\Models\Subscription;
 use App\Services\XenditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class HandleXenditWebhook
@@ -98,13 +99,15 @@ class HandleXenditWebhook
                 $this->recordConversion->execute($subscription->load('affiliate.community'), $payment);
             }
 
-            // Send set-password email for guest checkouts
+            // Send temporary password email for guest checkouts
             if ($payment && $paymentStatus === Payment::STATUS_PAID) {
                 $user = $subscription->user;
                 if ($user->needs_password_setup) {
-                    $token = Password::broker()->createToken($user);
+                    $tempPassword = 'Tmp@' . Str::upper(Str::random(3)) . Str::random(3);
+                    $user->forceFill(['password' => Hash::make($tempPassword)])->save();
+
                     Mail::to($user->email)->send(
-                        new SetPasswordMail($user, $token, $subscription->community)
+                        new TempPasswordMail($user, $tempPassword, $subscription->community)
                     );
                 }
             }

@@ -6,6 +6,7 @@ use App\Actions\Community\CreateCommunity;
 use App\Actions\Community\JoinCommunity;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CreateCommunityRequest;
+use App\Models\Affiliate;
 use App\Models\AffiliateConversion;
 use App\Models\Community;
 use App\Models\CommunityMember;
@@ -365,12 +366,30 @@ class CommunityController extends Controller
         return back()->with('success', 'You have joined the community!');
     }
 
-    public function about(Community $community): Response
+    public function about(Request $request, Community $community): Response
     {
         $community->load('owner')->loadCount('members');
         $affiliate = auth()->id() ? $community->affiliates()->where('user_id', auth()->id())->first() : null;
 
-        return Inertia::render('Communities/About', compact('community', 'affiliate'));
+        // Resolve who invited this visitor (from ref_code cookie)
+        $invitedBy = null;
+        $refCode = $request->cookie('ref_code');
+        if ($refCode) {
+            $refAffiliate = Affiliate::where('code', $refCode)
+                ->where('community_id', $community->id)
+                ->where('status', Affiliate::STATUS_ACTIVE)
+                ->with('user:id,name,avatar')
+                ->first();
+            if ($refAffiliate) {
+                $invitedBy = [
+                    'name'   => $refAffiliate->user->name,
+                    'avatar' => $refAffiliate->user->avatar,
+                    'code'   => $refCode,
+                ];
+            }
+        }
+
+        return Inertia::render('Communities/About', compact('community', 'affiliate', 'invitedBy'));
     }
 
     private function reactionCounts(\Illuminate\Support\Collection $likes): array

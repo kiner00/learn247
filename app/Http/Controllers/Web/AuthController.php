@@ -36,6 +36,10 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
 
+        if (Auth::user()->needs_password_setup) {
+            return redirect()->route('password.setup');
+        }
+
         return redirect()->intended('/communities');
     }
 

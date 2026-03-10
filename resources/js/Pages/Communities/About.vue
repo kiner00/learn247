@@ -2,6 +2,17 @@
     <AppLayout :title="`${community.name} · About`" :community="community">
         <CommunityTabs :community="community" active-tab="about" />
 
+        <!-- Invited by banner -->
+        <div v-if="invitedBy" class="mb-4 flex items-center gap-3 bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3">
+            <div class="w-9 h-9 rounded-full bg-indigo-200 flex items-center justify-center text-sm font-bold text-indigo-700 shrink-0 overflow-hidden">
+                <img v-if="invitedBy.avatar" :src="invitedBy.avatar" class="w-full h-full object-cover" />
+                <span v-else>{{ invitedBy.name.charAt(0).toUpperCase() }}</span>
+            </div>
+            <p class="text-sm text-indigo-700">
+                <strong>{{ invitedBy.name }}</strong> invited you to join this community.
+            </p>
+        </div>
+
         <div class="flex gap-6 items-start">
 
             <!-- Main content -->
@@ -100,8 +111,17 @@
                             </div>
                         </div>
 
+                        <!-- Join button (shown when coming via affiliate link and not logged in) -->
                         <button
-                            v-if="$page.props.auth?.user"
+                            v-if="invitedBy && !$page.props.auth?.user"
+                            @click="showJoinModal = true"
+                            class="w-full py-2.5 bg-amber-500 text-white text-sm font-bold rounded-xl hover:bg-amber-600 transition-colors mb-2"
+                        >
+                            {{ community.price ? `Join · ₱${Number(community.price).toLocaleString()}/mo` : 'Join Group' }}
+                        </button>
+
+                        <button
+                            v-else-if="$page.props.auth?.user"
                             @click="showInviteModal = true"
                             class="w-full py-2 text-sm font-semibold border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors"
                         >
@@ -111,6 +131,67 @@
                 </div>
             </div>
         </div>
+
+        <!-- Guest Join Modal -->
+        <Teleport to="body">
+            <div v-if="showJoinModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+                    <div class="flex items-center justify-between mb-5">
+                        <h3 class="text-base font-bold text-gray-900">Join {{ community.name }}</h3>
+                        <button @click="showJoinModal = false" class="text-gray-400 hover:text-gray-600 p-1">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <form @submit.prevent="submitJoin">
+                        <div class="grid grid-cols-2 gap-3 mb-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">First name</label>
+                                <input v-model="joinForm.first_name" type="text" required autocomplete="given-name"
+                                    class="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    :class="joinForm.errors.first_name ? 'border-red-400' : 'border-gray-300'" />
+                                <p v-if="joinForm.errors.first_name" class="mt-1 text-xs text-red-600">{{ joinForm.errors.first_name }}</p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Last name</label>
+                                <input v-model="joinForm.last_name" type="text" required autocomplete="family-name"
+                                    class="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    :class="joinForm.errors.last_name ? 'border-red-400' : 'border-gray-300'" />
+                                <p v-if="joinForm.errors.last_name" class="mt-1 text-xs text-red-600">{{ joinForm.errors.last_name }}</p>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Email</label>
+                            <input v-model="joinForm.email" type="email" required autocomplete="email"
+                                class="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                :class="joinForm.errors.email ? 'border-red-400' : 'border-gray-300'" />
+                            <p v-if="joinForm.errors.email" class="mt-1 text-xs text-red-600">{{ joinForm.errors.email }}</p>
+                        </div>
+
+                        <div class="mb-5">
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Phone number</label>
+                            <input v-model="joinForm.phone" type="tel" required autocomplete="tel"
+                                class="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                :class="joinForm.errors.phone ? 'border-red-400' : 'border-gray-300'"
+                                placeholder="+63 9XX XXX XXXX" />
+                            <p v-if="joinForm.errors.phone" class="mt-1 text-xs text-red-600">{{ joinForm.errors.phone }}</p>
+                        </div>
+
+                        <button type="submit" :disabled="joinForm.processing"
+                            class="w-full py-2.5 bg-amber-500 text-white text-sm font-bold rounded-xl hover:bg-amber-600 transition-colors disabled:opacity-50">
+                            {{ joinForm.processing ? 'Redirecting to payment...' : `Proceed to Payment · ₱${Number(community.price).toLocaleString()}/mo` }}
+                        </button>
+
+                        <p class="text-xs text-gray-400 text-center mt-3">
+                            You'll receive your login via email after payment.
+                        </p>
+                    </form>
+                </div>
+            </div>
+        </Teleport>
 
         <InviteModal
             :show="showInviteModal"
@@ -123,22 +204,36 @@
 
 <script setup>
 import { ref, computed } from 'vue';
+import { useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import CommunityTabs from '@/Components/CommunityTabs.vue';
 import InviteModal from '@/Components/InviteModal.vue';
 
 const props = defineProps({
     community: Object,
-    affiliate: Object,
+    affiliate:  Object,
+    invitedBy:  Object,
 });
 
 const showInviteModal = ref(false);
+const showJoinModal   = ref(false);
 
 const inviteUrl = computed(() =>
     props.affiliate?.code
         ? `${window.location.origin}/ref/${props.affiliate.code}`
         : `${window.location.origin}/communities/${props.community.slug}`
 );
+
+const joinForm = useForm({
+    first_name: '',
+    last_name:  '',
+    email:      '',
+    phone:      '',
+});
+
+function submitJoin() {
+    joinForm.post(`/ref-checkout/${props.invitedBy.code}`);
+}
 
 function formatDate(str) {
     if (!str) return '—';

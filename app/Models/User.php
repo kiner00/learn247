@@ -14,7 +14,7 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, HasRoles, Notifiable;
 
     protected $fillable = [
-        'name', 'username', 'bio', 'email', 'password', 'needs_password_setup', 'is_super_admin',
+        'name', 'username', 'bio', 'email', 'password', 'needs_password_setup', 'phone', 'is_super_admin',
         'timezone', 'theme', 'notification_prefs', 'chat_prefs',
         'avatar', 'location', 'social_links', 'hide_from_search',
         'payout_method', 'payout_details',
