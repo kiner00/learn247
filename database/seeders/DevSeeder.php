@@ -15,54 +15,54 @@ class DevSeeder extends Seeder
     // ── Real-looking community data ────────────────────────────────────────────
     private array $communities = [
         // Entrepreneurship & Business
-        ['name' => 'Startup Founders PH',        'category' => 'Entrepreneurship', 'price' => 999,  'private' => true,  'img' => 'startup'],
+        ['name' => 'Startup Founders PH',        'category' => 'Business', 'price' => 999,  'private' => true,  'img' => 'startup'],
         ['name' => 'E-Commerce Mastery',          'category' => 'Business',         'price' => 799,  'private' => true,  'img' => 'business'],
         ['name' => 'Dropshipping Academy PH',     'category' => 'Business',         'price' => 499,  'private' => true,  'img' => 'shipping'],
-        ['name' => 'Digital Entrepreneurs Hub',   'category' => 'Entrepreneurship', 'price' => 0,    'private' => false, 'img' => 'technology'],
+        ['name' => 'Digital Entrepreneurs Hub',   'category' => 'Business', 'price' => 0,    'private' => false, 'img' => 'technology'],
         ['name' => 'SME Growth Circle',           'category' => 'Business',         'price' => 599,  'private' => true,  'img' => 'office'],
-        ['name' => 'Amazon FBA Philippines',      'category' => 'E-Commerce',       'price' => 699,  'private' => true,  'img' => 'warehouse'],
+        ['name' => 'Amazon FBA Philippines',      'category' => 'Business',       'price' => 699,  'private' => true,  'img' => 'warehouse'],
         ['name' => 'Franchise Network PH',        'category' => 'Business',         'price' => 999,  'private' => true,  'img' => 'restaurant'],
-        ['name' => 'Business Scaling Secrets',    'category' => 'Entrepreneurship', 'price' => 1499, 'private' => true,  'img' => 'growth'],
+        ['name' => 'Business Scaling Secrets',    'category' => 'Business', 'price' => 1499, 'private' => true,  'img' => 'growth'],
 
         // Finance & Investing
         ['name' => 'Stock Market Pinoys',         'category' => 'Finance',          'price' => 599,  'private' => true,  'img' => 'finance'],
-        ['name' => 'Crypto Traders PH',           'category' => 'Crypto',           'price' => 799,  'private' => true,  'img' => 'crypto'],
-        ['name' => 'Real Estate Investors Club',  'category' => 'Real Estate',      'price' => 1299, 'private' => true,  'img' => 'realestate'],
+        ['name' => 'Crypto Traders PH',           'category' => 'Finance',           'price' => 799,  'private' => true,  'img' => 'crypto'],
+        ['name' => 'Real Estate Investors Club',  'category' => 'Finance',      'price' => 1299, 'private' => true,  'img' => 'realestate'],
         ['name' => 'Personal Finance Pilipinas',  'category' => 'Finance',          'price' => 0,    'private' => false, 'img' => 'money'],
         ['name' => 'Forex Trading Academy',       'category' => 'Finance',          'price' => 999,  'private' => true,  'img' => 'trading'],
         ['name' => 'Passive Income Builders',     'category' => 'Finance',          'price' => 499,  'private' => true,  'img' => 'income'],
-        ['name' => 'BDO Wealth Hackers',          'category' => 'Investing',        'price' => 299,  'private' => false, 'img' => 'investment'],
-        ['name' => 'UITF & ETF Philippines',      'category' => 'Investing',        'price' => 0,    'private' => false, 'img' => 'chart'],
+        ['name' => 'BDO Wealth Hackers',          'category' => 'Finance',        'price' => 299,  'private' => false, 'img' => 'investment'],
+        ['name' => 'UITF & ETF Philippines',      'category' => 'Finance',        'price' => 0,    'private' => false, 'img' => 'chart'],
 
         // Digital Marketing
-        ['name' => 'Facebook Ads Mastery PH',     'category' => 'Marketing',        'price' => 799,  'private' => true,  'img' => 'social'],
-        ['name' => 'SEO Philippines Community',   'category' => 'Marketing',        'price' => 499,  'private' => true,  'img' => 'seo'],
-        ['name' => 'Content Creator Academy',     'category' => 'Content',          'price' => 599,  'private' => true,  'img' => 'content'],
-        ['name' => 'TikTok Marketing PH',         'category' => 'Marketing',        'price' => 399,  'private' => false, 'img' => 'video'],
-        ['name' => 'Email Marketing Pros',        'category' => 'Marketing',        'price' => 499,  'private' => true,  'img' => 'email'],
-        ['name' => 'Influencer Growth Lab',       'category' => 'Social Media',     'price' => 699,  'private' => true,  'img' => 'influencer'],
-        ['name' => 'Copywriting Collective PH',   'category' => 'Marketing',        'price' => 599,  'private' => true,  'img' => 'writing'],
-        ['name' => 'Brand Building Bootcamp',     'category' => 'Marketing',        'price' => 999,  'private' => true,  'img' => 'branding'],
+        ['name' => 'Facebook Ads Mastery PH',     'category' => 'Business',        'price' => 799,  'private' => true,  'img' => 'social'],
+        ['name' => 'SEO Philippines Community',   'category' => 'Business',        'price' => 499,  'private' => true,  'img' => 'seo'],
+        ['name' => 'Content Creator Academy',     'category' => 'Business',          'price' => 599,  'private' => true,  'img' => 'content'],
+        ['name' => 'TikTok Marketing PH',         'category' => 'Business',        'price' => 399,  'private' => false, 'img' => 'video'],
+        ['name' => 'Email Marketing Pros',        'category' => 'Business',        'price' => 499,  'private' => true,  'img' => 'email'],
+        ['name' => 'Influencer Growth Lab',       'category' => 'Business',     'price' => 699,  'private' => true,  'img' => 'influencer'],
+        ['name' => 'Copywriting Collective PH',   'category' => 'Business',        'price' => 599,  'private' => true,  'img' => 'writing'],
+        ['name' => 'Brand Building Bootcamp',     'category' => 'Business',        'price' => 999,  'private' => true,  'img' => 'branding'],
 
         // Technology & Coding
-        ['name' => 'Pinoy Developers Network',    'category' => 'Technology',       'price' => 0,    'private' => false, 'img' => 'coding'],
-        ['name' => 'Laravel Philippines',         'category' => 'Web Dev',          'price' => 499,  'private' => true,  'img' => 'php'],
-        ['name' => 'AI & Machine Learning PH',    'category' => 'Technology',       'price' => 799,  'private' => true,  'img' => 'ai'],
-        ['name' => 'Mobile Dev Circle',           'category' => 'Technology',       'price' => 599,  'private' => true,  'img' => 'mobile'],
-        ['name' => 'No-Code Builders PH',         'category' => 'Technology',       'price' => 399,  'private' => false, 'img' => 'nocode'],
-        ['name' => 'Cybersecurity Philippines',   'category' => 'Technology',       'price' => 699,  'private' => true,  'img' => 'security'],
-        ['name' => 'Data Science PH',             'category' => 'Technology',       'price' => 799,  'private' => true,  'img' => 'data'],
-        ['name' => 'Cloud Computing Circle',      'category' => 'Technology',       'price' => 599,  'private' => true,  'img' => 'cloud'],
+        ['name' => 'Pinoy Developers Network',    'category' => 'Tech',       'price' => 0,    'private' => false, 'img' => 'coding'],
+        ['name' => 'Laravel Philippines',         'category' => 'Tech',          'price' => 499,  'private' => true,  'img' => 'php'],
+        ['name' => 'AI & Machine Learning PH',    'category' => 'Tech',       'price' => 799,  'private' => true,  'img' => 'ai'],
+        ['name' => 'Mobile Dev Circle',           'category' => 'Tech',       'price' => 599,  'private' => true,  'img' => 'mobile'],
+        ['name' => 'No-Code Builders PH',         'category' => 'Tech',       'price' => 399,  'private' => false, 'img' => 'nocode'],
+        ['name' => 'Cybersecurity Philippines',   'category' => 'Tech',       'price' => 699,  'private' => true,  'img' => 'security'],
+        ['name' => 'Data Science PH',             'category' => 'Tech',       'price' => 799,  'private' => true,  'img' => 'data'],
+        ['name' => 'Cloud Computing Circle',      'category' => 'Tech',       'price' => 599,  'private' => true,  'img' => 'cloud'],
 
         // Health & Fitness
-        ['name' => 'Pinoy Fitness Nation',        'category' => 'Fitness',          'price' => 0,    'private' => false, 'img' => 'fitness'],
-        ['name' => 'Home Workout Heroes',         'category' => 'Fitness',          'price' => 299,  'private' => false, 'img' => 'workout'],
-        ['name' => 'Keto Diet Philippines',       'category' => 'Nutrition',        'price' => 399,  'private' => true,  'img' => 'food'],
-        ['name' => 'Mental Health Warriors PH',   'category' => 'Wellness',         'price' => 0,    'private' => false, 'img' => 'wellness'],
-        ['name' => 'Yoga & Mindfulness PH',       'category' => 'Wellness',         'price' => 299,  'private' => false, 'img' => 'yoga'],
-        ['name' => 'Bodybuilding Philippines',    'category' => 'Fitness',          'price' => 499,  'private' => true,  'img' => 'gym'],
-        ['name' => 'Running Community PH',        'category' => 'Fitness',          'price' => 0,    'private' => false, 'img' => 'running'],
-        ['name' => 'Intermittent Fasting PH',     'category' => 'Nutrition',        'price' => 299,  'private' => false, 'img' => 'health'],
+        ['name' => 'Pinoy Fitness Nation',        'category' => 'Health',          'price' => 0,    'private' => false, 'img' => 'fitness'],
+        ['name' => 'Home Workout Heroes',         'category' => 'Health',          'price' => 299,  'private' => false, 'img' => 'workout'],
+        ['name' => 'Keto Diet Philippines',       'category' => 'Health',        'price' => 399,  'private' => true,  'img' => 'food'],
+        ['name' => 'Mental Health Warriors PH',   'category' => 'Health',         'price' => 0,    'private' => false, 'img' => 'wellness'],
+        ['name' => 'Yoga & Mindfulness PH',       'category' => 'Health',         'price' => 299,  'private' => false, 'img' => 'yoga'],
+        ['name' => 'Bodybuilding Philippines',    'category' => 'Health',          'price' => 499,  'private' => true,  'img' => 'gym'],
+        ['name' => 'Running Community PH',        'category' => 'Health',          'price' => 0,    'private' => false, 'img' => 'running'],
+        ['name' => 'Intermittent Fasting PH',     'category' => 'Health',        'price' => 299,  'private' => false, 'img' => 'health'],
 
         // Education & Learning
         ['name' => 'Online Teaching Philippines', 'category' => 'Education',        'price' => 499,  'private' => true,  'img' => 'teaching'],
@@ -73,76 +73,76 @@ class DevSeeder extends Seeder
         ['name' => 'Language Learning PH',        'category' => 'Education',        'price' => 299,  'private' => false, 'img' => 'language'],
 
         // Freelancing & Remote Work
-        ['name' => 'Filipino Freelancers Hub',    'category' => 'Freelancing',      'price' => 0,    'private' => false, 'img' => 'freelance'],
-        ['name' => 'Virtual Assistants PH',       'category' => 'Freelancing',      'price' => 399,  'private' => true,  'img' => 'remote'],
-        ['name' => 'Upwork Success Academy',      'category' => 'Freelancing',      'price' => 499,  'private' => true,  'img' => 'laptop'],
+        ['name' => 'Filipino Freelancers Hub',    'category' => 'Other',      'price' => 0,    'private' => false, 'img' => 'freelance'],
+        ['name' => 'Virtual Assistants PH',       'category' => 'Other',      'price' => 399,  'private' => true,  'img' => 'remote'],
+        ['name' => 'Upwork Success Academy',      'category' => 'Other',      'price' => 499,  'private' => true,  'img' => 'laptop'],
         ['name' => 'Graphic Design Philippines',  'category' => 'Design',           'price' => 399,  'private' => false, 'img' => 'design'],
-        ['name' => 'Video Editing Pros PH',       'category' => 'Creative',         'price' => 499,  'private' => true,  'img' => 'video-edit'],
+        ['name' => 'Video Editing Pros PH',       'category' => 'Design',         'price' => 499,  'private' => true,  'img' => 'video-edit'],
         ['name' => 'Web Design Collective',       'category' => 'Design',           'price' => 599,  'private' => true,  'img' => 'webdesign'],
 
         // Personal Development
-        ['name' => 'High-Performance Habits',     'category' => 'Self Improvement', 'price' => 799,  'private' => true,  'img' => 'habits'],
-        ['name' => 'Public Speaking PH',          'category' => 'Self Improvement', 'price' => 499,  'private' => true,  'img' => 'speaking'],
-        ['name' => 'Leadership Mastery Circle',   'category' => 'Leadership',       'price' => 999,  'private' => true,  'img' => 'leadership'],
-        ['name' => 'Morning Routine Warriors',    'category' => 'Self Improvement', 'price' => 0,    'private' => false, 'img' => 'morning'],
-        ['name' => 'Book Readers Philippines',    'category' => 'Self Improvement', 'price' => 0,    'private' => false, 'img' => 'books'],
-        ['name' => 'Life Coaching Network PH',    'category' => 'Coaching',         'price' => 1299, 'private' => true,  'img' => 'coaching'],
+        ['name' => 'High-Performance Habits',     'category' => 'Other', 'price' => 799,  'private' => true,  'img' => 'habits'],
+        ['name' => 'Public Speaking PH',          'category' => 'Other', 'price' => 499,  'private' => true,  'img' => 'speaking'],
+        ['name' => 'Leadership Mastery Circle',   'category' => 'Other',       'price' => 999,  'private' => true,  'img' => 'leadership'],
+        ['name' => 'Morning Routine Warriors',    'category' => 'Other', 'price' => 0,    'private' => false, 'img' => 'morning'],
+        ['name' => 'Book Readers Philippines',    'category' => 'Other', 'price' => 0,    'private' => false, 'img' => 'books'],
+        ['name' => 'Life Coaching Network PH',    'category' => 'Other',         'price' => 1299, 'private' => true,  'img' => 'coaching'],
 
         // Photography & Creative
-        ['name' => 'Photography Philippines',     'category' => 'Photography',      'price' => 399,  'private' => false, 'img' => 'photography'],
-        ['name' => 'Travel Vloggers PH',          'category' => 'Travel',           'price' => 299,  'private' => false, 'img' => 'travel'],
-        ['name' => 'Food Photography Circle',     'category' => 'Photography',      'price' => 399,  'private' => true,  'img' => 'food-photo'],
-        ['name' => 'Pinoy Musicians Network',     'category' => 'Music',            'price' => 0,    'private' => false, 'img' => 'music'],
-        ['name' => 'Indie Film Makers PH',        'category' => 'Film',             'price' => 499,  'private' => true,  'img' => 'film'],
-        ['name' => 'Digital Art Community',       'category' => 'Art',              'price' => 299,  'private' => false, 'img' => 'art'],
+        ['name' => 'Photography Philippines',     'category' => 'Design',      'price' => 399,  'private' => false, 'img' => 'photography'],
+        ['name' => 'Travel Vloggers PH',          'category' => 'Other',           'price' => 299,  'private' => false, 'img' => 'travel'],
+        ['name' => 'Food Photography Circle',     'category' => 'Design',      'price' => 399,  'private' => true,  'img' => 'food-photo'],
+        ['name' => 'Pinoy Musicians Network',     'category' => 'Other',            'price' => 0,    'private' => false, 'img' => 'music'],
+        ['name' => 'Indie Film Makers PH',        'category' => 'Design',             'price' => 499,  'private' => true,  'img' => 'film'],
+        ['name' => 'Digital Art Community',       'category' => 'Design',              'price' => 299,  'private' => false, 'img' => 'art'],
 
         // Parenting & Lifestyle
-        ['name' => 'Filipino Parents Network',    'category' => 'Parenting',        'price' => 0,    'private' => false, 'img' => 'family'],
-        ['name' => 'OFW Support Community',       'category' => 'Community',        'price' => 0,    'private' => false, 'img' => 'community'],
-        ['name' => 'Minimalist Living PH',        'category' => 'Lifestyle',        'price' => 0,    'private' => false, 'img' => 'minimal'],
-        ['name' => 'Home Cooking Philippines',    'category' => 'Food',             'price' => 299,  'private' => false, 'img' => 'cooking'],
-        ['name' => 'Pet Lovers Philippines',      'category' => 'Lifestyle',        'price' => 0,    'private' => false, 'img' => 'pets'],
-        ['name' => 'Sustainable Living PH',       'category' => 'Lifestyle',        'price' => 0,    'private' => false, 'img' => 'nature'],
+        ['name' => 'Filipino Parents Network',    'category' => 'Other',        'price' => 0,    'private' => false, 'img' => 'family'],
+        ['name' => 'OFW Support Community',       'category' => 'Other',        'price' => 0,    'private' => false, 'img' => 'community'],
+        ['name' => 'Minimalist Living PH',        'category' => 'Other',        'price' => 0,    'private' => false, 'img' => 'minimal'],
+        ['name' => 'Home Cooking Philippines',    'category' => 'Other',             'price' => 299,  'private' => false, 'img' => 'cooking'],
+        ['name' => 'Pet Lovers Philippines',      'category' => 'Other',        'price' => 0,    'private' => false, 'img' => 'pets'],
+        ['name' => 'Sustainable Living PH',       'category' => 'Other',        'price' => 0,    'private' => false, 'img' => 'nature'],
 
         // Gaming & Sports
-        ['name' => 'Mobile Legends PH Elite',     'category' => 'Gaming',           'price' => 299,  'private' => true,  'img' => 'gaming'],
-        ['name' => 'Esports Philippines',         'category' => 'Gaming',           'price' => 399,  'private' => true,  'img' => 'esports'],
-        ['name' => 'Basketball Players PH',       'category' => 'Sports',           'price' => 0,    'private' => false, 'img' => 'basketball'],
-        ['name' => 'Fantasy Sports PH',           'category' => 'Sports',           'price' => 299,  'private' => false, 'img' => 'sports'],
+        ['name' => 'Mobile Legends PH Elite',     'category' => 'Other',           'price' => 299,  'private' => true,  'img' => 'gaming'],
+        ['name' => 'Esports Philippines',         'category' => 'Other',           'price' => 399,  'private' => true,  'img' => 'esports'],
+        ['name' => 'Basketball Players PH',       'category' => 'Other',           'price' => 0,    'private' => false, 'img' => 'basketball'],
+        ['name' => 'Fantasy Sports PH',           'category' => 'Other',           'price' => 299,  'private' => false, 'img' => 'sports'],
 
         // Real Estate & Architecture
-        ['name' => 'Condo Investing PH',          'category' => 'Real Estate',      'price' => 999,  'private' => true,  'img' => 'condo'],
-        ['name' => 'Airbnb Hosts Philippines',    'category' => 'Real Estate',      'price' => 599,  'private' => true,  'img' => 'airbnb'],
+        ['name' => 'Condo Investing PH',          'category' => 'Finance',      'price' => 999,  'private' => true,  'img' => 'condo'],
+        ['name' => 'Airbnb Hosts Philippines',    'category' => 'Finance',      'price' => 599,  'private' => true,  'img' => 'airbnb'],
         ['name' => 'Interior Design PH',          'category' => 'Design',           'price' => 399,  'private' => false, 'img' => 'interior'],
 
         // Food & Restaurant
-        ['name' => 'Food Business PH',            'category' => 'Food Business',    'price' => 599,  'private' => true,  'img' => 'restaurant2'],
-        ['name' => 'Bakers & Pastry Chefs PH',   'category' => 'Food',             'price' => 299,  'private' => false, 'img' => 'baking'],
-        ['name' => 'Coffee Lovers Philippines',   'category' => 'Food',             'price' => 0,    'private' => false, 'img' => 'coffee'],
+        ['name' => 'Food Business PH',            'category' => 'Business',    'price' => 599,  'private' => true,  'img' => 'restaurant2'],
+        ['name' => 'Bakers & Pastry Chefs PH',   'category' => 'Other',             'price' => 299,  'private' => false, 'img' => 'baking'],
+        ['name' => 'Coffee Lovers Philippines',   'category' => 'Other',             'price' => 0,    'private' => false, 'img' => 'coffee'],
 
         // HR & Careers
-        ['name' => 'HR Professionals PH',         'category' => 'Career',           'price' => 499,  'private' => true,  'img' => 'hr'],
-        ['name' => 'Career Growth Circle',        'category' => 'Career',           'price' => 399,  'private' => true,  'img' => 'career'],
-        ['name' => 'Resume & Interview Mastery',  'category' => 'Career',           'price' => 299,  'private' => false, 'img' => 'interview'],
-        ['name' => 'BPO Leaders Network',         'category' => 'Career',           'price' => 399,  'private' => true,  'img' => 'bpo'],
+        ['name' => 'HR Professionals PH',         'category' => 'Other',           'price' => 499,  'private' => true,  'img' => 'hr'],
+        ['name' => 'Career Growth Circle',        'category' => 'Other',           'price' => 399,  'private' => true,  'img' => 'career'],
+        ['name' => 'Resume & Interview Mastery',  'category' => 'Other',           'price' => 299,  'private' => false, 'img' => 'interview'],
+        ['name' => 'BPO Leaders Network',         'category' => 'Other',           'price' => 399,  'private' => true,  'img' => 'bpo'],
 
         // Agriculture & Environment
-        ['name' => 'Urban Farming Philippines',   'category' => 'Agriculture',      'price' => 0,    'private' => false, 'img' => 'farming'],
-        ['name' => 'Aquaponics PH Community',     'category' => 'Agriculture',      'price' => 299,  'private' => false, 'img' => 'aquaponics'],
+        ['name' => 'Urban Farming Philippines',   'category' => 'Other',      'price' => 0,    'private' => false, 'img' => 'farming'],
+        ['name' => 'Aquaponics PH Community',     'category' => 'Other',      'price' => 299,  'private' => false, 'img' => 'aquaponics'],
 
         // Additional
-        ['name' => 'NLP & Hypnotherapy PH',       'category' => 'Coaching',         'price' => 999,  'private' => true,  'img' => 'nlp'],
-        ['name' => 'Skincare & Beauty PH',        'category' => 'Beauty',           'price' => 299,  'private' => false, 'img' => 'beauty'],
+        ['name' => 'NLP & Hypnotherapy PH',       'category' => 'Other',         'price' => 999,  'private' => true,  'img' => 'nlp'],
+        ['name' => 'Skincare & Beauty PH',        'category' => 'Health',           'price' => 299,  'private' => false, 'img' => 'beauty'],
         ['name' => 'Nursing Board Reviewers',     'category' => 'Education',        'price' => 499,  'private' => true,  'img' => 'nursing'],
         ['name' => 'Architecture Board Prep',     'category' => 'Education',        'price' => 499,  'private' => true,  'img' => 'architecture'],
         ['name' => 'Law Students Philippines',    'category' => 'Education',        'price' => 599,  'private' => true,  'img' => 'law'],
-        ['name' => 'Medical Professionals PH',    'category' => 'Healthcare',       'price' => 699,  'private' => true,  'img' => 'medical'],
+        ['name' => 'Medical Professionals PH',    'category' => 'Health',       'price' => 699,  'private' => true,  'img' => 'medical'],
         ['name' => 'Teachers Connect PH',         'category' => 'Education',        'price' => 0,    'private' => false, 'img' => 'teachers'],
-        ['name' => 'Social Workers Network PH',   'category' => 'Community',        'price' => 0,    'private' => false, 'img' => 'social-work'],
-        ['name' => 'Engineers Guild PH',          'category' => 'Engineering',      'price' => 399,  'private' => true,  'img' => 'engineering'],
+        ['name' => 'Social Workers Network PH',   'category' => 'Other',        'price' => 0,    'private' => false, 'img' => 'social-work'],
+        ['name' => 'Engineers Guild PH',          'category' => 'Tech',      'price' => 399,  'private' => true,  'img' => 'engineering'],
         ['name' => 'Accountants Circle PH',       'category' => 'Finance',          'price' => 499,  'private' => true,  'img' => 'accounting'],
-        ['name' => 'Podcast Creators PH',         'category' => 'Content',          'price' => 299,  'private' => false, 'img' => 'podcast'],
-        ['name' => 'Newsletter Writers PH',       'category' => 'Content',          'price' => 299,  'private' => false, 'img' => 'newsletter'],
+        ['name' => 'Podcast Creators PH',         'category' => 'Business',          'price' => 299,  'private' => false, 'img' => 'podcast'],
+        ['name' => 'Newsletter Writers PH',       'category' => 'Business',          'price' => 299,  'private' => false, 'img' => 'newsletter'],
     ];
 
     // Picsum seeds that produce beautiful, varied photos
@@ -195,58 +195,69 @@ class DevSeeder extends Seeder
             ]
         );
 
-        // ── 2. 200 random users to fill communities ─────────────────────────────
-        $users = User::factory(200)->create();
+        // ── 2. 200 fixed random users (idempotent via deterministic emails) ────────
+        $this->command->info('Upserting 200 dev users...');
+        $users = collect();
+        for ($i = 1; $i <= 200; $i++) {
+            $users->push(User::firstOrCreate(
+                ['email' => "devuser{$i}@test.com"],
+                [
+                    'name'     => fake()->name(),
+                    'username' => "devuser-{$i}",
+                    'password' => Hash::make('password'),
+                ]
+            ));
+        }
 
-        // ── 3. Create 100 communities ───────────────────────────────────────────
-        $this->command->info('Creating 100 communities...');
+        // ── 3. Create 100 communities (idempotent via deterministic slug) ────────
+        $this->command->info('Upserting 100 communities...');
         $bar = $this->command->getOutput()->createProgressBar(count($this->communities));
         $bar->start();
 
         foreach ($this->communities as $data) {
             $seed       = $this->imgSeeds[$data['img']] ?? '42';
             $coverImage = "https://picsum.photos/seed/{$seed}/1200/400";
+            $slug       = Str::slug($data['name']);
 
-            $community = Community::create([
-                'name'        => $data['name'],
-                'slug'        => Str::slug($data['name']) . '-' . Str::lower(Str::random(4)),
-                'owner_id'    => $owner->id,
-                'description' => $this->description($data['category']),
-                'category'    => $data['category'],
-                'cover_image' => $coverImage,
-                'is_private'  => $data['private'],
-                'price'       => $data['price'],
-                'currency'    => 'PHP',
-            ]);
+            $community = Community::updateOrCreate(
+                ['slug' => $slug],
+                [
+                    'name'        => $data['name'],
+                    'owner_id'    => $owner->id,
+                    'description' => $this->description($data['category']),
+                    'category'    => $data['category'],
+                    'cover_image' => $coverImage,
+                    'is_private'  => false, // all public for demo
+                    'price'       => $data['price'],
+                    'currency'    => 'PHP',
+                ]
+            );
 
             // Owner as admin member
-            CommunityMember::create([
-                'community_id' => $community->id,
-                'user_id'      => $owner->id,
-                'role'         => CommunityMember::ROLE_ADMIN,
-                'joined_at'    => now()->subMonths(rand(3, 12)),
-            ]);
+            CommunityMember::firstOrCreate(
+                ['community_id' => $community->id, 'user_id' => $owner->id],
+                ['role' => CommunityMember::ROLE_ADMIN, 'joined_at' => now()->subMonths(rand(3, 12))]
+            );
 
-            // 20–120 random members with subscriptions
+            // 20–120 random members with subscriptions (skip existing)
             $count   = rand(20, min(120, $users->count()));
             $members = $users->random($count);
 
             foreach ($members as $user) {
-                Subscription::create([
-                    'community_id'       => $community->id,
-                    'user_id'            => $user->id,
-                    'status'             => Subscription::STATUS_ACTIVE,
-                    'xendit_id'          => 'dev_' . Str::uuid(),
-                    'xendit_invoice_url' => 'https://checkout.xendit.co/dev',
-                    'expires_at'         => now()->addDays(rand(5, 60)),
-                ]);
+                Subscription::firstOrCreate(
+                    ['community_id' => $community->id, 'user_id' => $user->id],
+                    [
+                        'status'             => Subscription::STATUS_ACTIVE,
+                        'xendit_id'          => 'dev_' . Str::uuid(),
+                        'xendit_invoice_url' => 'https://checkout.xendit.co/dev',
+                        'expires_at'         => now()->addDays(rand(5, 60)),
+                    ]
+                );
 
-                CommunityMember::create([
-                    'community_id' => $community->id,
-                    'user_id'      => $user->id,
-                    'role'         => CommunityMember::ROLE_MEMBER,
-                    'joined_at'    => now()->subDays(rand(1, 180)),
-                ]);
+                CommunityMember::firstOrCreate(
+                    ['community_id' => $community->id, 'user_id' => $user->id],
+                    ['role' => CommunityMember::ROLE_MEMBER, 'joined_at' => now()->subDays(rand(1, 180))]
+                );
             }
 
             $bar->advance();
