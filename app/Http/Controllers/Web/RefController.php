@@ -22,11 +22,6 @@ class RefController extends Controller
 
         Cookie::queue('ref_code', $code, 60 * 24 * 30); // 30 days
 
-        // Store the community URL as the "intended" destination so that after
-        // login or registration, the user is sent back to this specific community.
-        $communityUrl = route('communities.show', $affiliate->community->slug);
-        session()->put('url.intended', $communityUrl);
-
-        return redirect($communityUrl);
+        return redirect()->route('ref.checkout', $code);
     }
 }

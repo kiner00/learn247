@@ -3,12 +3,15 @@
 namespace App\Actions\Billing;
 
 use App\Actions\Affiliate\RecordAffiliateConversion;
+use App\Mail\SetPasswordMail;
 use App\Models\Payment;
 use App\Models\Subscription;
 use App\Services\XenditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Password;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class HandleXenditWebhook
@@ -93,6 +96,17 @@ class HandleXenditWebhook
             // Record affiliate commission if this subscription came via a referral
             if ($payment && $paymentStatus === Payment::STATUS_PAID && $subscription->affiliate_id) {
                 $this->recordConversion->execute($subscription->load('affiliate.community'), $payment);
+            }
+
+            // Send set-password email for guest checkouts
+            if ($payment && $paymentStatus === Payment::STATUS_PAID) {
+                $user = $subscription->user;
+                if ($user->needs_password_setup) {
+                    $token = Password::broker()->createToken($user);
+                    Mail::to($user->email)->send(
+                        new SetPasswordMail($user, $token, $subscription->community)
+                    );
+                }
             }
 
             $this->syncMembership->execute($subscription->fresh());

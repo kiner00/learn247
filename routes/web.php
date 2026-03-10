@@ -21,7 +21,9 @@ use App\Http\Controllers\Web\LikeController;
 use App\Http\Controllers\Web\PostController;
 use App\Http\Controllers\Web\AIAssistantController;
 use App\Http\Controllers\Web\QuizController;
+use App\Http\Controllers\Web\GuestCheckoutController;
 use App\Http\Controllers\Web\RefController;
+use App\Http\Controllers\Web\SetPasswordController;
 use App\Http\Controllers\Web\SubscriptionController;
 use App\Http\Middleware\EnsureActiveMembership;
 use App\Http\Controllers\XenditWebhookController;
@@ -35,6 +37,17 @@ Route::get('/certificates/{uuid}', [CertificateController::class, 'show'])->name
 
 // ─── Affiliate referral link (public) ─────────────────────────────────────────
 Route::get('/ref/{code}', [RefController::class, 'redirect'])->name('ref.redirect');
+
+// ─── Guest checkout via affiliate link (public) ───────────────────────────────
+Route::get('/ref-checkout/{code}', [GuestCheckoutController::class, 'show'])->name('ref.checkout');
+Route::post('/ref-checkout/{code}', [GuestCheckoutController::class, 'process'])->name('ref.checkout.process');
+
+// ─── Checkout success (public) ────────────────────────────────────────────────
+Route::get('/checkout-success', fn () => inertia('CheckoutSuccess'))->name('checkout.success');
+
+// ─── Set password after guest checkout (public) ───────────────────────────────
+Route::get('/set-password', [SetPasswordController::class, 'show'])->name('password.setup');
+Route::post('/set-password', [SetPasswordController::class, 'store'])->name('password.setup.store');
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 

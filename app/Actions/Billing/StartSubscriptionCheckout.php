@@ -17,7 +17,7 @@ class StartSubscriptionCheckout
      * @return array{subscription: Subscription, checkout_url: string}
      * @throws ValidationException|\RuntimeException
      */
-    public function execute(User $user, Community $community, ?string $affiliateCode = null): array
+    public function execute(User $user, Community $community, ?string $affiliateCode = null, ?string $successRedirectUrl = null): array
     {
         if ($community->isFree()) {
             throw ValidationException::withMessages([
@@ -48,7 +48,7 @@ class StartSubscriptionCheckout
                 'invoice_created' => ['email'],
                 'invoice_paid'    => ['email'],
             ],
-            'success_redirect_url' => config('app.url') . "/communities/{$community->slug}",
+            'success_redirect_url' => $successRedirectUrl ?? config('app.url') . "/communities/{$community->slug}",
             'failure_redirect_url' => config('app.url') . "/communities/{$community->slug}",
             'items' => [[
                 'name'     => "Community: {$community->name}",
