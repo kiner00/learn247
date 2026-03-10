@@ -2,15 +2,17 @@
     <AppLayout :title="`${community.name} · About`" :community="community">
         <CommunityTabs :community="community" active-tab="about" />
 
-        <!-- Invited by banner -->
-        <div v-if="invitedBy" class="mb-4 flex items-center gap-3 bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3">
-            <div class="w-9 h-9 rounded-full bg-indigo-200 flex items-center justify-center text-sm font-bold text-indigo-700 shrink-0 overflow-hidden">
-                <img v-if="invitedBy.avatar" :src="invitedBy.avatar" class="w-full h-full object-cover" />
-                <span v-else>{{ invitedBy.name.charAt(0).toUpperCase() }}</span>
+        <!-- Invited by pill (Skool-style floating bubble) -->
+        <div v-if="invitedBy" class="flex justify-center mb-6">
+            <div class="flex items-center gap-2.5 bg-white border border-gray-200 shadow-md rounded-full pl-1.5 pr-5 py-1.5">
+                <div class="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-sm font-bold text-indigo-600 shrink-0 overflow-hidden ring-2 ring-white">
+                    <img v-if="invitedBy.avatar" :src="invitedBy.avatar" class="w-full h-full object-cover" />
+                    <span v-else>{{ invitedBy.name.charAt(0).toUpperCase() }}</span>
+                </div>
+                <p class="text-sm text-gray-700">
+                    <span class="font-semibold text-gray-900">{{ invitedBy.name }}</span> invited you
+                </p>
             </div>
-            <p class="text-sm text-indigo-700">
-                <strong>{{ invitedBy.name }}</strong> invited you to join this community.
-            </p>
         </div>
 
         <div class="flex gap-6 items-start">
@@ -51,34 +53,30 @@
                         </p>
                         <p v-else class="text-sm text-gray-400 italic mb-6">No description provided.</p>
 
-                        <!-- Stats row -->
-                        <div class="grid grid-cols-3 gap-4 pt-4 border-t border-gray-100">
-                            <div class="text-center">
-                                <p class="text-xl font-black text-gray-900">{{ formatCount(community.members_count) }}</p>
-                                <p class="text-xs text-gray-500 mt-0.5">Members</p>
-                            </div>
-                            <div class="text-center">
-                                <p class="text-xl font-black text-gray-900">{{ community.is_private ? '🔒' : '🌐' }}</p>
-                                <p class="text-xs text-gray-500 mt-0.5">{{ community.is_private ? 'Private' : 'Public' }}</p>
-                            </div>
-                            <div class="text-center">
-                                <p class="text-sm font-black text-gray-900">{{ formatDate(community.created_at) }}</p>
-                                <p class="text-xs text-gray-500 mt-0.5">Founded</p>
-                            </div>
+                        <!-- Stats row (Skool-style inline) -->
+                        <div class="flex flex-wrap items-center gap-x-5 gap-y-2 pt-4 border-t border-gray-100 text-sm text-gray-500">
+                            <span class="flex items-center gap-1.5">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                {{ community.is_private ? 'Private' : 'Public' }}
+                            </span>
+                            <span class="flex items-center gap-1.5">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                {{ formatCount(community.members_count) }} members
+                            </span>
+                            <span class="flex items-center gap-1.5">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/></svg>
+                                {{ community.price > 0 ? `₱${Number(community.price).toLocaleString()}/mo` : 'Free' }}
+                            </span>
+                            <span v-if="community.owner" class="flex items-center gap-1.5">
+                                <div class="w-4 h-4 rounded-full bg-indigo-400 flex items-center justify-center text-white text-[9px] font-bold shrink-0">
+                                    {{ community.owner.name.charAt(0).toUpperCase() }}
+                                </div>
+                                By {{ community.owner.name }}
+                            </span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Owner card -->
-                <div v-if="community.owner" class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm flex items-center gap-4">
-                    <div class="w-11 h-11 rounded-full bg-linear-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-base font-bold text-white shrink-0">
-                        {{ community.owner.name.charAt(0).toUpperCase() }}
-                    </div>
-                    <div>
-                        <p class="text-xs text-gray-400">Community Owner</p>
-                        <p class="text-sm font-semibold text-gray-900">{{ community.owner.name }}</p>
-                    </div>
-                </div>
             </div>
 
             <!-- Right sidebar -->
@@ -98,7 +96,8 @@
 
                     <div class="p-4">
                         <h2 class="font-bold text-gray-900 text-sm">{{ community.name }}</h2>
-                        <p class="text-xs text-gray-400 mt-0.5 mb-3">curzzo.com/communities/{{ community.slug }}</p>
+                        <p class="text-xs text-gray-400 mt-0.5">curzzo.com/communities/{{ community.slug }}</p>
+                        <p v-if="community.description" class="text-xs text-gray-500 mt-2 mb-1 line-clamp-2">{{ community.description }}</p>
 
                         <div class="flex justify-around text-center border-t border-gray-100 pt-3 mb-4">
                             <div>
@@ -115,7 +114,7 @@
                         <button
                             v-if="invitedBy && !$page.props.auth?.user"
                             @click="showJoinModal = true"
-                            class="w-full py-2.5 bg-amber-500 text-white text-sm font-bold rounded-xl hover:bg-amber-600 transition-colors mb-2"
+                            class="w-full py-3 bg-amber-400 hover:bg-amber-500 text-gray-900 text-sm font-black rounded-xl tracking-wide uppercase transition-colors shadow-sm mb-2"
                         >
                             {{ community.price ? `Join · ₱${Number(community.price).toLocaleString()}/mo` : 'Join Group' }}
                         </button>
@@ -129,6 +128,11 @@
                         </button>
                     </div>
                 </div>
+
+                <!-- Powered by Curzzo -->
+                <p class="text-center text-xs text-gray-400 mt-3">
+                    Powered by <span class="font-semibold"><span class="text-indigo-500">C</span><span class="text-purple-500">u</span><span class="text-amber-500">r</span><span class="text-green-500">z</span><span class="text-red-500">z</span><span class="text-blue-500">o</span></span>
+                </p>
             </div>
         </div>
 
