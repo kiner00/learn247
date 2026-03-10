@@ -52,8 +52,8 @@
         <!-- Community count + New button -->
         <div class="flex items-center justify-between mb-4">
             <p class="text-sm text-gray-500">
-                {{ filteredCommunities.length }}
-                {{ filteredCommunities.length === 1 ? 'community' : 'communities' }}
+                {{ communities.total }}
+                {{ communities.total === 1 ? 'community' : 'communities' }}
             </p>
             <button
                 v-if="$page.props.auth?.user"
@@ -168,19 +168,20 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { Link } from '@inertiajs/vue3';
+import { ref, watch } from 'vue';
+import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { useCreateModal } from '@/composables/useCreateModal';
 
 const props = defineProps({
     communities: Object,
+    filters: Object,
 });
 
 const { openCreateModal } = useCreateModal();
 
-const search         = ref('');
-const activeCategory = ref('All');
+const search         = ref(props.filters?.search ?? '');
+const activeCategory = ref(props.filters?.category ?? 'All');
 
 const categories = ['All', 'Tech', 'Business', 'Design', 'Health', 'Education', 'Finance', 'Other'];
 
@@ -205,19 +206,24 @@ function formatCount(n) {
     return n.toString();
 }
 
-const filteredCommunities = computed(() => {
-    let list = props.communities.data;
-    if (activeCategory.value !== 'All') {
-        list = list.filter((c) => c.category === activeCategory.value);
-    }
-    if (search.value.trim()) {
-        const q = search.value.toLowerCase();
-        list = list.filter((c) =>
-            c.name.toLowerCase().includes(q) ||
-            c.description?.toLowerCase().includes(q)
-        );
-    }
-    return list;
+let searchTimer = null;
+
+function applyFilters() {
+    router.get('/communities', {
+        search:   search.value || undefined,
+        category: activeCategory.value !== 'All' ? activeCategory.value : undefined,
+    }, { preserveState: true, replace: true });
+}
+
+watch(search, () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(applyFilters, 350);
 });
 
+watch(activeCategory, () => {
+    clearTimeout(searchTimer);
+    applyFilters();
+});
+
+const filteredCommunities = props.communities.data;
 </script>

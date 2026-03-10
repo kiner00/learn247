@@ -22,14 +22,26 @@ use Inertia\Response;
 
 class CommunityController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $search   = $request->string('search')->trim()->toString();
+        $category = $request->string('category')->trim()->toString();
+
         $communities = Community::with('owner')
             ->withCount('members')
+            ->when($search, fn ($q) => $q->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            }))
+            ->when($category && $category !== 'All', fn ($q) => $q->where('category', $category))
             ->latest()
-            ->paginate(15);
+            ->paginate(15)
+            ->withQueryString();
 
-        return Inertia::render('Communities/Index', compact('communities'));
+        return Inertia::render('Communities/Index', [
+            'communities' => $communities,
+            'filters'     => ['search' => $search, 'category' => $category ?: 'All'],
+        ]);
     }
 
     public function store(CreateCommunityRequest $request, CreateCommunity $action): RedirectResponse
