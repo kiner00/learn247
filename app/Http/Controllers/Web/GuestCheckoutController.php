@@ -9,6 +9,7 @@ use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
@@ -56,11 +57,17 @@ class GuestCheckoutController extends Controller
             return back()->withErrors(['email' => 'This email already has an active subscription to this community.']);
         }
 
+        $callbackUrl = URL::temporarySignedRoute(
+            'checkout.callback',
+            now()->addHours(2),
+            ['user' => $user->id, 'community' => $community->slug],
+        );
+
         $result = $action->execute(
             $user,
             $community,
             $code,
-            successRedirectUrl: config('app.url') . '/checkout-success',
+            successRedirectUrl: $callbackUrl,
         );
 
         return Inertia::location($result['checkout_url']);

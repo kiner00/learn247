@@ -21,6 +21,7 @@ use App\Http\Controllers\Web\LikeController;
 use App\Http\Controllers\Web\PostController;
 use App\Http\Controllers\Web\AIAssistantController;
 use App\Http\Controllers\Web\QuizController;
+use App\Http\Controllers\Web\CheckoutCallbackController;
 use App\Http\Controllers\Web\GuestCheckoutController;
 use App\Http\Controllers\Web\RefController;
 use App\Http\Controllers\Web\SetPasswordController;
@@ -41,8 +42,11 @@ Route::get('/ref/{code}', [RefController::class, 'redirect'])->name('ref.redirec
 // ─── Guest checkout via affiliate link (public, POST only) ───────────────────
 Route::post('/ref-checkout/{code}', [GuestCheckoutController::class, 'process'])->name('ref.checkout.process');
 
-// ─── Checkout success (public) ────────────────────────────────────────────────
-Route::get('/checkout-success', fn () => inertia('CheckoutSuccess'))->name('checkout.success');
+// ─── Checkout callback: auto-login + processing screen (signed URL) ──────────
+Route::get('/checkout-callback/{user}/{community}', CheckoutCallbackController::class)->name('checkout.callback');
+
+// ─── Checkout status poll (auth required) ────────────────────────────────────
+Route::get('/checkout-status/{community:slug}', [CheckoutCallbackController::class, 'status'])->middleware('auth')->name('checkout.status');
 
 // ─── Set permanent password (auth required) ───────────────────────────────────
 Route::middleware('auth')->group(function () {
