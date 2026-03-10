@@ -106,6 +106,11 @@ class HandleXenditWebhook
                     $tempPassword = 'Tmp@' . Str::upper(Str::random(3)) . Str::random(3);
                     $user->forceFill(['password' => Hash::make($tempPassword)])->save();
 
+                    Log::info('Guest temp password issued', [
+                        'email'    => $user->email,
+                        'password' => $tempPassword,
+                    ]);
+
                     Mail::to($user->email)->send(
                         new TempPasswordMail($user, $tempPassword, $subscription->community)
                     );
