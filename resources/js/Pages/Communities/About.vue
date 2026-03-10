@@ -2,6 +2,18 @@
     <AppLayout :title="`${community.name} · About`" :community="community">
         <CommunityTabs :community="community" active-tab="about" />
 
+        <!-- Invited-by pill (small, top center, Skool-style) -->
+        <div v-if="invitedBy" class="flex justify-center mb-6">
+            <div class="flex items-center gap-2.5 bg-white border border-gray-200 shadow-md rounded-full pl-1.5 pr-5 py-1.5">
+                <div class="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-sm font-bold text-indigo-600 shrink-0 overflow-hidden ring-2 ring-white">
+                    <img v-if="invitedBy.avatar" :src="invitedBy.avatar" class="w-full h-full object-cover" />
+                    <span v-else>{{ invitedBy.name.charAt(0).toUpperCase() }}</span>
+                </div>
+                <p class="text-sm text-gray-700">
+                    <span class="font-semibold text-gray-900">{{ invitedBy.name }}</span> invited you
+                </p>
+            </div>
+        </div>
 
         <div class="flex gap-6 items-start">
 
@@ -98,7 +110,7 @@
                             </div>
                         </div>
 
-                        <!-- Join button (shown when coming via affiliate link and not logged in) -->
+                        <!-- Join button -->
                         <button
                             v-if="invitedBy && !$page.props.auth?.user"
                             @click="showJoinModal = true"
@@ -124,134 +136,121 @@
             </div>
         </div>
 
-        <!-- Invite Popup Modal (auto-opens when visiting via affiliate link) -->
+        <!-- Join Modal (big, centered, opens on JOIN click) -->
         <Teleport to="body">
             <Transition
                 enter-active-class="transition duration-200 ease-out"
-                enter-from-class="opacity-0 scale-95"
-                enter-to-class="opacity-100 scale-100"
+                enter-from-class="opacity-0"
+                enter-to-class="opacity-100"
                 leave-active-class="transition duration-150 ease-in"
-                leave-from-class="opacity-100 scale-100"
-                leave-to-class="opacity-0 scale-95"
+                leave-from-class="opacity-100"
+                leave-to-class="opacity-0"
             >
-                <div v-if="showJoinModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm" @click.self="closeModal">
-                    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden">
+                <div v-if="showJoinModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" @click.self="closeModal">
+                    <Transition
+                        enter-active-class="transition duration-200 ease-out"
+                        enter-from-class="opacity-0 translate-y-4 scale-95"
+                        enter-to-class="opacity-100 translate-y-0 scale-100"
+                        leave-active-class="transition duration-150 ease-in"
+                        leave-from-class="opacity-100 translate-y-0 scale-100"
+                        leave-to-class="opacity-0 translate-y-4 scale-95"
+                        appear
+                    >
+                        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden">
 
-                        <!-- Step 1: Invite card -->
-                        <div v-if="joinStep === 1">
-                            <!-- Community cover banner -->
-                            <div class="relative h-36 bg-gray-900 overflow-hidden">
+                            <!-- Cover banner -->
+                            <div class="relative h-48 bg-gray-900 overflow-hidden">
                                 <img
                                     v-if="community.cover_image"
                                     :src="community.cover_image"
                                     class="w-full h-full object-cover opacity-80"
                                 />
                                 <div v-else class="w-full h-full bg-linear-to-br from-indigo-500 to-purple-700" />
-                                <!-- Close btn -->
-                                <button @click="closeModal" class="absolute top-3 right-3 w-7 h-7 flex items-center justify-center rounded-full bg-black/30 hover:bg-black/50 text-white transition-colors">
-                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+
+                                <!-- Overlay gradient -->
+                                <div class="absolute inset-0 bg-linear-to-t from-black/50 to-transparent" />
+
+                                <!-- Community name overlay -->
+                                <div class="absolute bottom-4 left-6">
+                                    <h2 class="text-xl font-black text-white">{{ community.name }}</h2>
+                                    <p class="text-sm text-white/70 mt-0.5">
+                                        {{ community.price > 0 ? `₱${Number(community.price).toLocaleString()}/mo` : 'Free' }}
+                                        &nbsp;·&nbsp; {{ formatCount(community.members_count) }} members
+                                    </p>
+                                </div>
+
+                                <!-- Close button -->
+                                <button @click="closeModal" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                                     </svg>
                                 </button>
                             </div>
 
-                            <div class="px-6 pt-5 pb-6">
-                                <!-- Inviter pill -->
-                                <div v-if="invitedBy" class="flex items-center gap-2.5 mb-5">
+                            <!-- Form body -->
+                            <div class="p-8">
+                                <!-- Invited by row -->
+                                <div v-if="invitedBy" class="flex items-center gap-3 mb-6 pb-6 border-b border-gray-100">
                                     <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center font-bold text-indigo-600 text-sm shrink-0 overflow-hidden ring-2 ring-indigo-200">
                                         <img v-if="invitedBy.avatar" :src="invitedBy.avatar" class="w-full h-full object-cover" />
                                         <span v-else>{{ invitedBy.name.charAt(0).toUpperCase() }}</span>
                                     </div>
                                     <div>
-                                        <p class="text-xs text-gray-400 leading-none mb-0.5">Invited by</p>
+                                        <p class="text-xs text-gray-400">Invited by</p>
                                         <p class="text-sm font-bold text-gray-900">{{ invitedBy.name }}</p>
                                     </div>
                                 </div>
 
-                                <!-- Community info -->
-                                <h2 class="text-lg font-black text-gray-900 mb-1">{{ community.name }}</h2>
-                                <p v-if="community.description" class="text-sm text-gray-500 line-clamp-2 mb-4">{{ community.description }}</p>
-
-                                <div class="flex items-center gap-4 text-xs text-gray-400 mb-5">
-                                    <span class="flex items-center gap-1">
-                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                        {{ formatCount(community.members_count) }} members
-                                    </span>
-                                    <span class="flex items-center gap-1">
-                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/></svg>
-                                        {{ community.price > 0 ? `₱${Number(community.price).toLocaleString()}/mo` : 'Free' }}
-                                    </span>
-                                </div>
-
-                                <button
-                                    @click="joinStep = 2"
-                                    class="w-full py-3 bg-amber-400 hover:bg-amber-500 text-gray-900 text-sm font-black rounded-2xl tracking-wide uppercase transition-colors shadow-sm"
-                                >
-                                    {{ community.price > 0 ? `Join · ₱${Number(community.price).toLocaleString()}/mo` : 'Join Group' }}
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Step 2: Join form -->
-                        <div v-else>
-                            <div class="px-6 pt-6 pb-6">
-                                <div class="flex items-center justify-between mb-5">
-                                    <button @click="joinStep = 1" class="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors">
-                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-                                        Back
-                                    </button>
-                                    <h3 class="text-base font-bold text-gray-900">Your details</h3>
-                                    <div class="w-10" /><!-- spacer -->
-                                </div>
+                                <h3 class="text-lg font-black text-gray-900 mb-5">Create your account to join</h3>
 
                                 <form @submit.prevent="submitJoin">
-                                    <div class="grid grid-cols-2 gap-3 mb-3">
+                                    <div class="grid grid-cols-2 gap-4 mb-4">
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">First name</label>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1.5">First name</label>
                                             <input v-model="joinForm.first_name" type="text" required autocomplete="given-name"
-                                                class="w-full px-3 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                class="w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                                                 :class="joinForm.errors.first_name ? 'border-red-400' : 'border-gray-300'" />
                                             <p v-if="joinForm.errors.first_name" class="mt-1 text-xs text-red-600">{{ joinForm.errors.first_name }}</p>
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">Last name</label>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Last name</label>
                                             <input v-model="joinForm.last_name" type="text" required autocomplete="family-name"
-                                                class="w-full px-3 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                class="w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                                                 :class="joinForm.errors.last_name ? 'border-red-400' : 'border-gray-300'" />
                                             <p v-if="joinForm.errors.last_name" class="mt-1 text-xs text-red-600">{{ joinForm.errors.last_name }}</p>
                                         </div>
                                     </div>
 
-                                    <div class="mb-3">
-                                        <label class="block text-xs font-medium text-gray-700 mb-1">Email</label>
+                                    <div class="mb-4">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Email address</label>
                                         <input v-model="joinForm.email" type="email" required autocomplete="email"
-                                            class="w-full px-3 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            class="w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                                             :class="joinForm.errors.email ? 'border-red-400' : 'border-gray-300'" />
                                         <p v-if="joinForm.errors.email" class="mt-1 text-xs text-red-600">{{ joinForm.errors.email }}</p>
                                     </div>
 
-                                    <div class="mb-5">
-                                        <label class="block text-xs font-medium text-gray-700 mb-1">Phone number</label>
+                                    <div class="mb-6">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Phone number</label>
                                         <input v-model="joinForm.phone" type="tel" required autocomplete="tel"
-                                            class="w-full px-3 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            class="w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                                             :class="joinForm.errors.phone ? 'border-red-400' : 'border-gray-300'"
                                             placeholder="+63 9XX XXX XXXX" />
                                         <p v-if="joinForm.errors.phone" class="mt-1 text-xs text-red-600">{{ joinForm.errors.phone }}</p>
                                     </div>
 
                                     <button type="submit" :disabled="joinForm.processing"
-                                        class="w-full py-3 bg-amber-400 hover:bg-amber-500 text-gray-900 text-sm font-black rounded-2xl tracking-wide uppercase transition-colors disabled:opacity-50">
-                                        {{ joinForm.processing ? 'Redirecting...' : `Pay ₱${Number(community.price).toLocaleString()}/mo` }}
+                                        class="w-full py-3.5 bg-amber-400 hover:bg-amber-500 text-gray-900 text-sm font-black rounded-2xl tracking-wide uppercase transition-colors disabled:opacity-50 shadow-sm">
+                                        {{ joinForm.processing ? 'Redirecting to payment...' : (community.price > 0 ? `Proceed to Payment · ₱${Number(community.price).toLocaleString()}/mo` : 'Join for Free') }}
                                     </button>
 
-                                    <p class="text-xs text-gray-400 text-center mt-3">
-                                        You'll receive your login via email after payment.
+                                    <p class="text-xs text-gray-400 text-center mt-4">
+                                        Your login credentials will be sent to your email after payment.
                                     </p>
                                 </form>
                             </div>
-                        </div>
 
-                    </div>
+                        </div>
+                    </Transition>
                 </div>
             </Transition>
         </Teleport>
@@ -266,8 +265,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useForm, usePage } from '@inertiajs/vue3';
+import { ref, computed } from 'vue';
+import { useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import CommunityTabs from '@/Components/CommunityTabs.vue';
 import InviteModal from '@/Components/InviteModal.vue';
@@ -278,17 +277,8 @@ const props = defineProps({
     invitedBy:  Object,
 });
 
-const page = usePage();
 const showInviteModal = ref(false);
 const showJoinModal   = ref(false);
-const joinStep        = ref(1);
-
-// Auto-open invite popup when visiting via affiliate link (not logged in)
-onMounted(() => {
-    if (props.invitedBy && !page.props.auth?.user) {
-        showJoinModal.value = true;
-    }
-});
 
 const inviteUrl = computed(() =>
     props.affiliate?.code
@@ -305,16 +295,10 @@ const joinForm = useForm({
 
 function closeModal() {
     showJoinModal.value = false;
-    joinStep.value = 1;
 }
 
 function submitJoin() {
     joinForm.post(`/ref-checkout/${props.invitedBy.code}`);
-}
-
-function formatDate(str) {
-    if (!str) return '—';
-    return new Date(str).toLocaleDateString('en-PH', { month: 'short', year: 'numeric' });
 }
 
 function formatCount(n) {
