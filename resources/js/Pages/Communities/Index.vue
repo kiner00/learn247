@@ -168,7 +168,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { useCreateModal } from '@/composables/useCreateModal';
@@ -212,7 +212,7 @@ function applyFilters() {
     router.get('/communities', {
         search:   search.value || undefined,
         category: activeCategory.value !== 'All' ? activeCategory.value : undefined,
-    }, { preserveState: true, replace: true });
+    }, { preserveState: 'errors', replace: true });
 }
 
 watch(search, () => {
@@ -225,5 +225,5 @@ watch(activeCategory, () => {
     applyFilters();
 });
 
-const filteredCommunities = props.communities.data;
+const filteredCommunities = computed(() => props.communities.data);
 </script>
