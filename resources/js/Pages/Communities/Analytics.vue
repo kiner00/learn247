@@ -167,39 +167,7 @@
                     </tbody>
                 </table>
             </div>
-        <!-- Pending Onboarding -->
-        <div v-if="pending_onboarding?.length" class="bg-white border border-orange-200 rounded-2xl overflow-hidden mb-6">
-            <div class="px-5 py-4 border-b border-orange-100 flex items-center gap-2">
-                <span class="text-base">⚠️</span>
-                <h2 class="text-sm font-bold text-gray-900">Pending Password Setup ({{ pending_onboarding.length }})</h2>
-                <p class="text-xs text-gray-400 ml-1">Members who paid but haven't logged in yet</p>
-            </div>
-            <table class="w-full text-left">
-                <thead class="border-b border-gray-100">
-                    <tr class="text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                        <th class="px-5 py-3">Name</th>
-                        <th class="px-5 py-3">Email</th>
-                        <th class="px-5 py-3">Joined</th>
-                        <th class="px-5 py-3">Days waiting</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-50">
-                    <tr v-for="m in pending_onboarding" :key="m.id" class="hover:bg-orange-50 transition-colors">
-                        <td class="px-5 py-3 text-sm font-medium text-gray-800">{{ m.name }}</td>
-                        <td class="px-5 py-3 text-xs text-gray-500">{{ m.email }}</td>
-                        <td class="px-5 py-3 text-xs text-gray-500">{{ m.joined_at }}</td>
-                        <td class="px-5 py-3">
-                            <span class="text-xs font-semibold px-2 py-0.5 rounded-full"
-                                :class="m.days_since >= 5 ? 'bg-red-100 text-red-700' : m.days_since >= 3 ? 'bg-orange-100 text-orange-700' : 'bg-yellow-100 text-yellow-700'">
-                                {{ m.days_since }}d
-                            </span>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        </div>
+</div>
     </AppLayout>
 </template>
 
@@ -212,9 +180,8 @@ const props = defineProps({
     community:    Object,
     stats:        Object,
     revenue:      Object,
-    subscribers:         Array,
-    course_stats:        Array,
-    pending_onboarding:  { type: Array, default: () => [] },
+    subscribers:  Array,
+    course_stats: Array,
 });
 
 const curr = props.community.currency === 'USD' ? '$' : '₱';

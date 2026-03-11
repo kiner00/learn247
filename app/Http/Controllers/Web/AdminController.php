@@ -89,6 +89,21 @@ class AdminController extends Controller
                 'created_at' => $u->created_at?->toDateString(),
             ]);
 
+        // Users who paid via affiliate flow but haven't set their password yet
+        $pendingOnboarding = User::where('needs_password_setup', true)
+            ->with(['communityMemberships.community:id,name,slug'])
+            ->latest()
+            ->get()
+            ->map(fn ($u) => [
+                'id'         => $u->id,
+                'name'       => $u->name,
+                'email'      => $u->email,
+                'joined_at'  => $u->created_at?->toDateString(),
+                'days_since' => $u->created_at?->diffInDays(now()),
+                'community'  => $u->communityMemberships->first()?->community?->name,
+                'community_slug' => $u->communityMemberships->first()?->community?->slug,
+            ]);
+
         return Inertia::render('Admin/Dashboard', [
             'xenditBalance' => $xenditBalance,
             'stats' => [
@@ -106,9 +121,10 @@ class AdminController extends Controller
                 'affiliate_commission_paid'    => $paidAffiliateCommission,
                 'affiliate_commission_pending' => $pendingAffiliateCommission,
             ],
-            'byCategory'        => $byCategory,
-            'recentCommunities' => $recentCommunities,
-            'recentUsers'       => $recentUsers,
+            'byCategory'         => $byCategory,
+            'recentCommunities'  => $recentCommunities,
+            'recentUsers'        => $recentUsers,
+            'pendingOnboarding'  => $pendingOnboarding,
         ]);
     }
 

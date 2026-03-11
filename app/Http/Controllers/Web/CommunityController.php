@@ -353,21 +353,6 @@ class CommunityController extends Controller
             ];
         });
 
-        // Members who haven't set their password yet (joined via affiliate flow)
-        $pendingOnboarding = \App\Models\User::whereHas(
-            'communityMemberships',
-            fn ($q) => $q->where('community_id', $community->id)
-        )
-        ->where('needs_password_setup', true)
-        ->get(['id', 'name', 'email', 'created_at'])
-        ->map(fn ($u) => [
-            'id'         => $u->id,
-            'name'       => $u->name,
-            'email'      => $u->email,
-            'joined_at'  => $u->created_at?->toDateString(),
-            'days_since' => $u->created_at?->diffInDays(now()),
-        ]);
-
         return Inertia::render('Communities/Analytics', [
             'community' => $community,
             'stats' => [
@@ -385,9 +370,8 @@ class CommunityController extends Controller
                 'creator_net'                 => $totalCreatorNet,
                 'has_affiliate_data'          => $affiliateGross > 0,
             ],
-            'subscribers'        => $subscribers,
-            'course_stats'       => $courseStats->values(),
-            'pending_onboarding' => $pendingOnboarding,
+            'subscribers'  => $subscribers,
+            'course_stats' => $courseStats->values(),
         ]);
     }
 
