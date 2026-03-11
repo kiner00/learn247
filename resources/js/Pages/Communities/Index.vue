@@ -49,22 +49,37 @@
             </div>
         </div>
 
-        <!-- Community count + New button -->
+        <!-- Community count + Sort + New button -->
         <div class="flex items-center justify-between mb-4">
             <p class="text-sm text-gray-500">
                 {{ communities.total }}
                 {{ communities.total === 1 ? 'community' : 'communities' }}
             </p>
-            <button
-                v-if="$page.props.auth?.user"
-                @click="openCreateModal()"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
-            >
-                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
-                </svg>
-                New
-            </button>
+            <div class="flex items-center gap-2">
+                <!-- Sort toggle -->
+                <div class="flex items-center gap-1 p-0.5 bg-gray-100 rounded-lg">
+                    <button
+                        @click="activeSort = 'latest'"
+                        class="px-3 py-1 text-xs font-medium rounded-md transition-colors"
+                        :class="activeSort === 'latest' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
+                    >Latest</button>
+                    <button
+                        @click="activeSort = 'popular'"
+                        class="px-3 py-1 text-xs font-medium rounded-md transition-colors"
+                        :class="activeSort === 'popular' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
+                    >Popular</button>
+                </div>
+                <button
+                    v-if="$page.props.auth?.user"
+                    @click="openCreateModal()"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+                >
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    New
+                </button>
+            </div>
         </div>
 
         <!-- Grid -->
@@ -112,9 +127,14 @@
                         </h2>
                     </div>
 
-                    <p v-if="community.description" class="text-xs text-gray-500 line-clamp-2 leading-relaxed mb-3">
+                    <p v-if="community.description" class="text-xs text-gray-500 line-clamp-2 leading-relaxed mb-2">
                         {{ community.description }}
                     </p>
+
+                    <!-- Category badge -->
+                    <span v-if="community.category" class="inline-block mb-2 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-50 text-indigo-600">
+                        {{ community.category }}
+                    </span>
 
                     <!-- Skool-style footer: "1.3k Members · $49/month" -->
                     <p class="text-xs text-gray-500 mt-auto">
@@ -182,6 +202,7 @@ const { openCreateModal } = useCreateModal();
 
 const search         = ref(props.filters?.search ?? '');
 const activeCategory = ref(props.filters?.category ?? 'All');
+const activeSort     = ref(props.filters?.sort ?? 'latest');
 
 const categories = ['All', 'Tech', 'Business', 'Design', 'Health', 'Education', 'Finance', 'Other'];
 
@@ -212,6 +233,7 @@ function applyFilters() {
     router.get('/communities', {
         search:   search.value || undefined,
         category: activeCategory.value !== 'All' ? activeCategory.value : undefined,
+        sort:     activeSort.value !== 'latest' ? activeSort.value : undefined,
     }, { preserveState: 'errors', replace: true });
 }
 
@@ -220,10 +242,8 @@ watch(search, () => {
     searchTimer = setTimeout(applyFilters, 350);
 });
 
-watch(activeCategory, () => {
-    clearTimeout(searchTimer);
-    applyFilters();
-});
+watch(activeCategory, () => { clearTimeout(searchTimer); applyFilters(); });
+watch(activeSort,     () => { clearTimeout(searchTimer); applyFilters(); });
 
 const filteredCommunities = computed(() => props.communities.data);
 </script>

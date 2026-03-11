@@ -49,14 +49,25 @@
                             <div class="flex items-center gap-2.5">
                                 <UserAvatar :name="post.author?.name" :avatar="post.author?.avatar" size="9" />
                                 <div>
-                                    <p class="text-sm font-semibold text-gray-900 dark:text-gray-100 leading-tight">{{ post.author?.name }}</p>
+                                    <div class="flex items-center gap-1.5">
+                                        <p class="text-sm font-semibold text-gray-900 dark:text-gray-100 leading-tight">{{ post.author?.name }}</p>
+                                        <span v-if="post.is_pinned" class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 leading-none">📌 Pinned</span>
+                                    </div>
                                     <p class="text-xs text-gray-400">{{ formatDate(post.created_at) }}</p>
                                 </div>
                             </div>
-                            <button v-if="canDeletePost(post)" @click.stop="deletePost(post)"
-                                class="text-xs text-gray-400 hover:text-red-500 transition-colors px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20">
-                                Delete
-                            </button>
+                            <div class="flex items-center gap-1">
+                                <button v-if="isAdmin" @click.stop="togglePin(post)"
+                                    class="text-xs px-2 py-1 rounded transition-colors"
+                                    :class="post.is_pinned ? 'text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20' : 'text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20'"
+                                    :title="post.is_pinned ? 'Unpin post' : 'Pin post'">
+                                    📌
+                                </button>
+                                <button v-if="canDeletePost(post)" @click.stop="deletePost(post)"
+                                    class="text-xs text-gray-400 hover:text-red-500 transition-colors px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20">
+                                    Delete
+                                </button>
+                            </div>
                         </div>
 
                         <!-- Content -->
@@ -510,6 +521,10 @@ function deletePost(post) {
     if (confirm('Delete this post?')) {
         router.delete(`/posts/${post.id}`, { preserveScroll: true });
     }
+}
+
+function togglePin(post) {
+    router.post(`/posts/${post.id}/pin`, {}, { preserveScroll: true });
 }
 
 function canDeletePost(post) {

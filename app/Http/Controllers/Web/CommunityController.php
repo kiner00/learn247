@@ -27,6 +27,8 @@ class CommunityController extends Controller
         $search   = $request->string('search')->trim()->toString();
         $category = $request->string('category')->trim()->toString();
 
+        $sort = in_array($request->input('sort'), ['popular', 'latest']) ? $request->input('sort') : 'latest';
+
         $communities = Community::with('owner')
             ->withCount('members')
             ->when($search, fn ($q) => $q->where(function ($q) use ($search) {
@@ -34,13 +36,14 @@ class CommunityController extends Controller
                   ->orWhere('description', 'like', "%{$search}%");
             }))
             ->when($category && $category !== 'All', fn ($q) => $q->where('category', $category))
-            ->latest()
+            ->when($sort === 'popular', fn ($q) => $q->orderByDesc('members_count'))
+            ->when($sort === 'latest',  fn ($q) => $q->latest())
             ->paginate(15)
             ->withQueryString();
 
         return Inertia::render('Communities/Index', [
             'communities' => $communities,
-            'filters'     => ['search' => $search, 'category' => $category ?: 'All'],
+            'filters'     => ['search' => $search, 'category' => $category ?: 'All', 'sort' => $sort],
         ]);
     }
 
@@ -74,6 +77,7 @@ class CommunityController extends Controller
                         ->latest(),
                 ])
                 ->withCount('likes', 'comments')
+                ->orderByDesc('is_pinned')
                 ->latest()
                 ->take(20),
         ]);
@@ -349,6 +353,21 @@ class CommunityController extends Controller
             ];
         });
 
+        // Members who haven't set their password yet (joined via affiliate flow)
+        $pendingOnboarding = \App\Models\User::whereHas(
+            'communityMemberships',
+            fn ($q) => $q->where('community_id', $community->id)
+        )
+        ->where('needs_password_setup', true)
+        ->get(['id', 'name', 'email', 'created_at'])
+        ->map(fn ($u) => [
+            'id'         => $u->id,
+            'name'       => $u->name,
+            'email'      => $u->email,
+            'joined_at'  => $u->created_at?->toDateString(),
+            'days_since' => $u->created_at?->diffInDays(now()),
+        ]);
+
         return Inertia::render('Communities/Analytics', [
             'community' => $community,
             'stats' => [
@@ -366,8 +385,9 @@ class CommunityController extends Controller
                 'creator_net'                 => $totalCreatorNet,
                 'has_affiliate_data'          => $affiliateGross > 0,
             ],
-            'subscribers'  => $subscribers,
-            'course_stats' => $courseStats->values(),
+            'subscribers'        => $subscribers,
+            'course_stats'       => $courseStats->values(),
+            'pending_onboarding' => $pendingOnboarding,
         ]);
     }
 

@@ -30,4 +30,20 @@ class PostController extends Controller
 
         return back();
     }
+
+    public function togglePin(Request $request, Post $post): RedirectResponse
+    {
+        $user = $request->user();
+        $community = $post->community;
+
+        // Only admins and the community owner can pin
+        $membership = $community->members()->where('user_id', $user->id)->first();
+        $isAdmin    = $community->owner_id === $user->id || $membership?->role === 'admin';
+
+        abort_unless($isAdmin, 403);
+
+        $post->update(['is_pinned' => ! $post->is_pinned]);
+
+        return back();
+    }
 }

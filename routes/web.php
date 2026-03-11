@@ -172,6 +172,7 @@ Route::middleware('auth')->group(function () {
 
     // Posts & comments (not community-scoped — community check done in Action)
     Route::delete('/posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
+    Route::post('/posts/{post}/pin', [PostController::class, 'togglePin'])->name('posts.pin');
     Route::post('/posts/{post}/like', [LikeController::class, 'togglePost'])->name('posts.like');
     Route::post('/posts/{post}/comments', [CommentController::class, 'store'])->name('comments.store');
     Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
