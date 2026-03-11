@@ -121,7 +121,7 @@
                             @click="showJoinModal = true"
                             class="w-full py-3 bg-amber-400 hover:bg-amber-500 text-gray-900 text-sm font-black rounded-xl tracking-wide uppercase transition-colors shadow-sm mb-2"
                         >
-                            {{ community.price ? `Join · ₱${Number(community.price).toLocaleString()}/mo` : 'Join Group' }}
+                            {{ community.price > 0 ? `Join · ₱${Number(community.price).toLocaleString()}/mo` : 'Join Group' }}
                         </button>
 
                         <button

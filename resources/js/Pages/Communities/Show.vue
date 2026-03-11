@@ -181,7 +181,7 @@
 
                         <!-- Join / member buttons -->
                         <div v-if="!isMember" class="space-y-2">
-                            <button v-if="!community.price" @click="join" :disabled="joinForm.processing"
+                            <button v-if="!(community.price > 0)" @click="join" :disabled="joinForm.processing"
                                 class="w-full py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50">
                                 {{ joinForm.processing ? 'Joining...' : 'Join for free' }}
                             </button>
