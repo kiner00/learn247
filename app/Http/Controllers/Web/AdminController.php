@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Actions\Affiliate\DisbursePayout;
 use App\Actions\Affiliate\MarkAffiliateConversionPaid;
 use App\Http\Controllers\Controller;
+use App\Mail\TempPasswordMail;
 use App\Models\Affiliate;
 use App\Models\AffiliateConversion;
 use App\Models\Community;
@@ -18,6 +19,9 @@ use App\Models\User;
 use App\Services\XenditService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -93,14 +97,14 @@ class AdminController extends Controller
         $pendingOnboarding = User::where('needs_password_setup', true)
             ->with(['communityMemberships.community:id,name,slug'])
             ->latest()
-            ->get()
-            ->map(fn ($u) => [
-                'id'         => $u->id,
-                'name'       => $u->name,
-                'email'      => $u->email,
-                'joined_at'  => $u->created_at?->toDateString(),
-                'days_since' => $u->created_at?->diffInDays(now()),
-                'community'  => $u->communityMemberships->first()?->community?->name,
+            ->paginate(15, ['*'], 'pending_page')
+            ->through(fn ($u) => [
+                'id'             => $u->id,
+                'name'           => $u->name,
+                'email'          => $u->email,
+                'joined_at'      => $u->created_at?->toDateString(),
+                'days_since'     => (int) $u->created_at?->diffInDays(now()),
+                'community'      => $u->communityMemberships->first()?->community?->name,
                 'community_slug' => $u->communityMemberships->first()?->community?->slug,
             ]);
 
@@ -511,6 +515,21 @@ class AdminController extends Controller
         } catch (\RuntimeException $e) {
             return back()->with('error', 'Xendit payout failed: ' . $e->getMessage());
         }
+    }
+
+    public function resendOnboardingEmail(User $user): RedirectResponse
+    {
+        abort_unless($user->needs_password_setup, 422, 'User has already set their password.');
+
+        $community = $user->communityMemberships()->with('community')->first()?->community;
+        abort_unless($community, 422, 'No community found for this user.');
+
+        $tempPassword = 'Tmp@' . Str::upper(Str::random(3)) . Str::random(3);
+        $user->forceFill(['password' => Hash::make($tempPassword)])->save();
+
+        Mail::to($user->email)->send(new TempPasswordMail($user, $tempPassword, $community));
+
+        return back()->with('success', "Resent login email to {$user->email}.");
     }
 
     public function rejectPayoutRequest(PayoutRequest $payoutRequest, Request $request): RedirectResponse

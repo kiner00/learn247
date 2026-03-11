@@ -192,11 +192,11 @@
         </div>
 
         <!-- Pending Password Setup -->
-        <div v-if="pendingOnboarding?.length" class="mt-6 bg-white border border-orange-200 rounded-2xl overflow-hidden shadow-sm">
+        <div v-if="pendingOnboarding?.data?.length" class="mt-6 bg-white border border-orange-200 rounded-2xl overflow-hidden shadow-sm">
             <div class="px-5 py-4 border-b border-orange-100 flex items-center gap-3">
                 <span class="text-base">⚠️</span>
                 <div>
-                    <h2 class="text-sm font-bold text-gray-900">Pending Password Setup <span class="ml-1 text-orange-600">({{ pendingOnboarding.length }})</span></h2>
+                    <h2 class="text-sm font-bold text-gray-900">Pending Password Setup <span class="ml-1 text-orange-600">({{ pendingOnboarding.total }})</span></h2>
                     <p class="text-xs text-gray-400">Users who paid via affiliate link but haven't logged in yet</p>
                 </div>
             </div>
@@ -208,10 +208,11 @@
                         <th class="px-5 py-3">Community</th>
                         <th class="px-5 py-3">Joined</th>
                         <th class="px-5 py-3">Waiting</th>
+                        <th class="px-5 py-3"></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50">
-                    <tr v-for="u in pendingOnboarding" :key="u.id" class="hover:bg-orange-50 transition-colors">
+                    <tr v-for="u in pendingOnboarding.data" :key="u.id" class="hover:bg-orange-50 transition-colors">
                         <td class="px-5 py-3 text-sm font-medium text-gray-800">{{ u.name }}</td>
                         <td class="px-5 py-3 text-xs text-gray-500">{{ u.email }}</td>
                         <td class="px-5 py-3 text-xs">
@@ -225,17 +226,39 @@
                                 {{ u.days_since }}d
                             </span>
                         </td>
+                        <td class="px-5 py-3 text-right">
+                            <button @click="resend(u.id)"
+                                :disabled="resending === u.id"
+                                class="text-xs font-medium text-indigo-600 hover:text-indigo-800 disabled:opacity-40 transition-colors">
+                                {{ resending === u.id ? 'Sending...' : 'Resend Email' }}
+                            </button>
+                        </td>
                     </tr>
                 </tbody>
             </table>
+            <!-- Pagination -->
+            <div v-if="pendingOnboarding.last_page > 1" class="px-5 py-3 border-t border-gray-100 flex justify-center gap-1">
+                <Link
+                    v-for="link in pendingOnboarding.links"
+                    :key="link.label"
+                    :href="link.url ?? ''"
+                    v-html="link.label"
+                    class="px-2.5 py-1 text-xs rounded-lg border transition-colors"
+                    :class="link.active
+                        ? 'bg-indigo-600 text-white border-indigo-600'
+                        : link.url
+                            ? 'border-gray-200 text-gray-600 hover:border-indigo-300'
+                            : 'border-gray-100 text-gray-300 cursor-default'"
+                />
+            </div>
         </div>
 
     </AppLayout>
 </template>
 
 <script setup>
-import { computed } from 'vue';
-import { Link, useForm, usePage } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
+import { Link, useForm, usePage, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
 const props = defineProps({
@@ -245,8 +268,17 @@ const props = defineProps({
     recentCommunities:  Array,
     recentUsers:        Array,
     xenditBalance:      Number,
-    pendingOnboarding:  { type: Array, default: () => [] },
+    pendingOnboarding:  { type: Object, default: () => ({ data: [], total: 0, last_page: 1, links: [] }) },
 });
+
+const resending = ref(null);
+function resend(userId) {
+    resending.value = userId;
+    router.post(`/admin/onboarding/${userId}/resend`, {}, {
+        preserveScroll: true,
+        onFinish: () => { resending.value = null; },
+    });
+}
 
 const statCards = computed(() => [
     {
