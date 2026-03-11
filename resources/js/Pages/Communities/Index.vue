@@ -113,6 +113,13 @@
                         </span>
                     </div>
 
+                    <!-- Milestone plaque badge -->
+                    <div v-if="getMilestone(community.members_count)" class="absolute top-2 right-2">
+                        <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-black/50 text-white backdrop-blur-sm flex items-center gap-1">
+                            {{ getMilestone(community.members_count).icon }} {{ getMilestone(community.members_count).label }}
+                        </span>
+                    </div>
+
                 </div>
 
                 <!-- Card body -->
@@ -225,6 +232,16 @@ function formatCount(n) {
     if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
     if (n >= 1_000)     return (n / 1_000).toFixed(1).replace(/\.0$/, '') + 'k';
     return n.toString();
+}
+
+function getMilestone(count) {
+    if (count >= 1_000_000) return { icon: '🌟', label: '1M Plaque' };
+    if (count >= 100_000)   return { icon: '🏆', label: 'Platinum' };
+    if (count >= 10_000)    return { icon: '💎', label: 'Diamond' };
+    if (count >= 1_000)     return { icon: '🥇', label: 'Gold' };
+    if (count >= 500)       return { icon: '🥈', label: 'Silver' };
+    if (count >= 100)       return { icon: '🥉', label: 'Bronze' };
+    return null;
 }
 
 let searchTimer = null;

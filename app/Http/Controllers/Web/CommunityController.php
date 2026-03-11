@@ -395,10 +395,14 @@ class CommunityController extends Controller
 
     public function join(Request $request, Community $community, JoinCommunity $action): RedirectResponse
     {
-        $user = $request->user();
+        $user        = $request->user();
+        $beforeCount = $community->members()->count();
+
         $action->execute($user, $community);
 
-        // Notify community owner
+        $afterCount = $beforeCount + 1;
+
+        // Notify community owner about new member
         if ($community->owner_id !== $user->id) {
             Notification::create([
                 'user_id'      => $community->owner_id,
@@ -407,6 +411,25 @@ class CommunityController extends Controller
                 'type'         => 'new_member',
                 'data'         => ['message' => "{$user->name} joined {$community->name}"],
             ]);
+        }
+
+        // Notify owner if a milestone threshold was crossed
+        $milestones = [100, 500, 1_000, 10_000, 100_000, 1_000_000];
+        $labels     = [100 => '100 🥉', 500 => '500 🥈', 1_000 => '1k 🥇', 10_000 => '10k 💎', 100_000 => '100k 🏆', 1_000_000 => '1M 🌟'];
+        foreach ($milestones as $milestone) {
+            if ($beforeCount < $milestone && $afterCount >= $milestone) {
+                Notification::create([
+                    'user_id'      => $community->owner_id,
+                    'actor_id'     => null,
+                    'community_id' => $community->id,
+                    'type'         => 'milestone',
+                    'data'         => [
+                        'milestone' => $milestone,
+                        'message'   => "🎉 {$community->name} just hit {$labels[$milestone]} members!",
+                    ],
+                ]);
+                break;
+            }
         }
 
         return back()->with('success', 'You have joined the community!');

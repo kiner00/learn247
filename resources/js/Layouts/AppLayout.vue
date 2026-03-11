@@ -314,8 +314,8 @@
                                                 >
                                                     <!-- Icon -->
                                                     <div class="w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-sm"
-                                                        :class="n.type === 'new_post' ? 'bg-indigo-100 dark:bg-indigo-900/40' : 'bg-green-100 dark:bg-green-900/40'">
-                                                        {{ n.type === 'new_post' ? '✍️' : '👋' }}
+                                                        :class="n.type === 'new_post' ? 'bg-indigo-100 dark:bg-indigo-900/40' : n.type === 'milestone' ? 'bg-yellow-100 dark:bg-yellow-900/40' : 'bg-green-100 dark:bg-green-900/40'">
+                                                        {{ n.type === 'new_post' ? '✍️' : n.type === 'milestone' ? '🏆' : '👋' }}
                                                     </div>
                                                     <div class="flex-1 min-w-0">
                                                         <p class="text-xs text-gray-700 dark:text-gray-300 leading-snug">{{ n.data?.message }}</p>
