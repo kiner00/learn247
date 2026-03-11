@@ -338,7 +338,7 @@
         </Teleport>
 
         <!-- ─── Invite Modal ─────────────────────────────────────────────────── -->
-        <InviteModal :show="showInviteModal" :community-name="community.name" :invite-url="inviteUrl" @close="showInviteModal = false" />
+        <InviteModal :show="showInviteModal" :community-name="community.name" :community-slug="community.slug" :invite-url="inviteUrl" :is-owner="isOwner" @close="showInviteModal = false" />
 
         <!-- ─── Post Modal ───────────────────────────────────────────────────── -->
         <Teleport to="body">

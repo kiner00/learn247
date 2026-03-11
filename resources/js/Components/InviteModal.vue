@@ -23,7 +23,9 @@
                         </button>
                     </div>
                     <p class="text-sm text-gray-500 mb-4">Invite your friends to {{ communityName }}</p>
-                    <div class="flex items-center gap-2">
+
+                    <!-- Share link -->
+                    <div class="flex items-center gap-2 mb-5">
                         <input
                             :value="inviteUrl"
                             readonly
@@ -36,6 +38,56 @@
                             {{ copied ? 'Copied!' : 'Copy' }}
                         </button>
                     </div>
+
+                    <!-- Owner-only: invite by email -->
+                    <template v-if="isOwner">
+                        <div class="border-t border-gray-100 pt-4">
+                            <p class="text-sm font-semibold text-gray-700 mb-3">Or send a personal invite</p>
+
+                            <!-- Tab toggle -->
+                            <div class="flex gap-2 mb-3">
+                                <button type="button" @click="inviteTab = 'single'"
+                                    class="px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors"
+                                    :class="inviteTab === 'single' ? 'bg-indigo-600 text-white border-indigo-600' : 'text-gray-600 border-gray-300 hover:bg-gray-50'"
+                                >Single email</button>
+                                <button type="button" @click="inviteTab = 'csv'"
+                                    class="px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors"
+                                    :class="inviteTab === 'csv' ? 'bg-indigo-600 text-white border-indigo-600' : 'text-gray-600 border-gray-300 hover:bg-gray-50'"
+                                >Batch CSV</button>
+                            </div>
+
+                            <!-- Single email -->
+                            <form v-if="inviteTab === 'single'" @submit.prevent="sendSingleInvite" class="flex gap-2">
+                                <input
+                                    v-model="emailInput"
+                                    type="email"
+                                    required
+                                    placeholder="member@example.com"
+                                    class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                />
+                                <button type="submit" :disabled="sending"
+                                    class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                                >{{ sending ? '...' : 'Send' }}</button>
+                            </form>
+
+                            <!-- CSV batch -->
+                            <form v-else @submit.prevent="sendCsvInvite" class="space-y-2">
+                                <label class="flex items-center gap-2 w-fit cursor-pointer px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
+                                    <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                                    </svg>
+                                    {{ csvFile ? csvFile.name : 'Choose CSV file' }}
+                                    <input type="file" accept=".csv,.txt" class="hidden" @change="onCsvChange" />
+                                </label>
+                                <p class="text-xs text-gray-400">One email per row · max 2 MB</p>
+                                <button type="submit" :disabled="!csvFile || sending"
+                                    class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                >{{ sending ? 'Sending...' : 'Upload & send invites' }}</button>
+                            </form>
+
+                            <p v-if="inviteResult" class="mt-2 text-sm" :class="inviteError ? 'text-red-600' : 'text-green-600'">{{ inviteResult }}</p>
+                        </div>
+                    </template>
                 </div>
             </div>
         </Transition>
@@ -48,17 +100,81 @@ import { ref } from 'vue';
 const props = defineProps({
     show:          Boolean,
     communityName: String,
+    communitySlug: String,
     inviteUrl:     String,
+    isOwner:       Boolean,
 });
 
 defineEmits(['close']);
 
-const copied = ref(false);
+const copied       = ref(false);
+const inviteTab    = ref('single');
+const emailInput   = ref('');
+const csvFile      = ref(null);
+const sending      = ref(false);
+const inviteResult = ref('');
+const inviteError  = ref(false);
 
 function copy() {
     navigator.clipboard.writeText(props.inviteUrl).then(() => {
         copied.value = true;
         setTimeout(() => (copied.value = false), 2000);
     });
+}
+
+function sendSingleInvite() {
+    if (!emailInput.value) return;
+    sending.value = true;
+    inviteResult.value = '';
+
+    const formData = new FormData();
+    formData.append('email', emailInput.value);
+
+    fetch(`/communities/${props.communitySlug}/invite`, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+            'Accept': 'application/json',
+        },
+        body: formData,
+    })
+        .then(r => r.json().then(data => ({ ok: r.ok, data })))
+        .then(({ ok, data }) => {
+            inviteError.value  = !ok;
+            inviteResult.value = data.message ?? (ok ? 'Invite sent!' : 'Something went wrong.');
+            if (ok) emailInput.value = '';
+        })
+        .catch(() => { inviteError.value = true; inviteResult.value = 'Network error. Please try again.'; })
+        .finally(() => { sending.value = false; });
+}
+
+function onCsvChange(e) {
+    csvFile.value = e.target.files[0] ?? null;
+}
+
+function sendCsvInvite() {
+    if (!csvFile.value) return;
+    sending.value = true;
+    inviteResult.value = '';
+
+    const formData = new FormData();
+    formData.append('csv', csvFile.value);
+
+    fetch(`/communities/${props.communitySlug}/invite`, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+            'Accept': 'application/json',
+        },
+        body: formData,
+    })
+        .then(r => r.json().then(data => ({ ok: r.ok, data })))
+        .then(({ ok, data }) => {
+            inviteError.value  = !ok;
+            inviteResult.value = data.message ?? (ok ? 'Invites sent!' : 'Something went wrong.');
+            if (ok) csvFile.value = null;
+        })
+        .catch(() => { inviteError.value = true; inviteResult.value = 'Network error. Please try again.'; })
+        .finally(() => { sending.value = false; });
 }
 </script>

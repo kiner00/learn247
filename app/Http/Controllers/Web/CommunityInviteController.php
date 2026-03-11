@@ -44,6 +44,9 @@ class CommunityInviteController extends Controller
         $emails = array_unique($emails);
 
         if (empty($emails)) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'No valid email addresses found.'], 422);
+            }
             return back()->with('error', 'No valid email addresses found.');
         }
 
@@ -77,6 +80,10 @@ class CommunityInviteController extends Controller
         $message = "Invite" . ($sent !== 1 ? 's' : '') . " sent to {$sent} email" . ($sent !== 1 ? 's' : '') . ".";
         if ($skipped > 0) {
             $message .= " {$skipped} skipped (already members).";
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => $message]);
         }
 
         return back()->with('success', $message);
