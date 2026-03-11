@@ -129,8 +129,8 @@
                         <p class="text-xs text-gray-400 mb-2">curzzo.com/communities/{{ community.slug }}</p>
                         <p v-if="community.description" class="text-sm text-gray-500 dark:text-gray-400 mb-4 leading-relaxed">{{ community.description }}</p>
 
-                        <!-- Stats -->
-                        <div class="flex items-center justify-around text-center border-y border-gray-100 dark:border-gray-700 py-3 mb-4">
+                        <!-- Stats (members only) -->
+                        <div v-if="isMember" class="flex items-center justify-around text-center border-y border-gray-100 dark:border-gray-700 py-3 mb-4">
                             <div>
                                 <p class="text-base font-black text-gray-900 dark:text-gray-100">{{ formatCount(community.members_count) }}</p>
                                 <p class="text-xs text-gray-400">Members</p>
@@ -143,6 +143,9 @@
                                 <p class="text-base font-black text-gray-900 dark:text-gray-100">{{ adminCount }}</p>
                                 <p class="text-xs text-gray-400">{{ adminCount === 1 ? 'Admin' : 'Admins' }}</p>
                             </div>
+                        </div>
+                        <div v-else class="border-y border-gray-100 dark:border-gray-700 py-3 mb-4 text-center">
+                            <p class="text-xs text-gray-400">Join to see member stats</p>
                         </div>
 
                         <!-- Join / member buttons -->
@@ -205,7 +208,7 @@
                 </div>
 
                 <!-- Leaderboard widget -->
-                <div v-if="topMembers?.length" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden shadow-sm">
+                <div v-if="isMember && topMembers?.length" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden shadow-sm">
                     <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
                         <h4 class="text-sm font-bold text-gray-900 dark:text-gray-100">Leaderboard</h4>
                         <Link :href="`/communities/${community.slug}/leaderboard`"
