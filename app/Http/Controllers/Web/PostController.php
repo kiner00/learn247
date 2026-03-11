@@ -6,6 +6,7 @@ use App\Actions\Feed\CreatePost;
 use App\Actions\Feed\DeletePost;
 use App\Http\Controllers\Controller;
 use App\Models\Community;
+use App\Models\Notification;
 use App\Models\Post;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,7 +20,21 @@ class PostController extends Controller
             'content' => ['required', 'string'],
         ]);
 
-        $action->execute($request->user(), $community, $data);
+        $post = $action->execute($request->user(), $community, $data);
+
+        // Notify community owner about new post (if not self)
+        if ($community->owner_id !== $request->user()->id) {
+            Notification::create([
+                'user_id'      => $community->owner_id,
+                'actor_id'     => $request->user()->id,
+                'community_id' => $community->id,
+                'type'         => 'new_post',
+                'data'         => [
+                    'post_title' => $post->title ?? 'New post',
+                    'message'    => "{$request->user()->name} posted in {$community->name}",
+                ],
+            ]);
+        }
 
         return back();
     }

@@ -13,6 +13,7 @@ use App\Models\CommunityMember;
 use App\Models\OwnerPayout;
 use App\Models\Payment;
 use App\Models\PayoutRequest;
+use App\Models\Post;
 use App\Models\Setting;
 use App\Models\Subscription;
 use App\Models\User;
@@ -547,5 +548,94 @@ class AdminController extends Controller
         ]);
 
         return back()->with('success', "Payout request #{$payoutRequest->id} rejected.");
+    }
+
+    // ── User Management ──────────────────────────────────────────────────────
+
+    public function users(Request $request): Response
+    {
+        $search = $request->string('search')->trim()->toString();
+
+        $users = User::withCount('communityMemberships')
+            ->when($search, fn ($q) => $q->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('username', 'like', "%{$search}%");
+            }))
+            ->latest()
+            ->paginate(25)
+            ->withQueryString()
+            ->through(fn ($u) => [
+                'id'             => $u->id,
+                'name'           => $u->name,
+                'email'          => $u->email,
+                'username'       => $u->username,
+                'is_active'      => (bool) $u->is_active,
+                'is_super_admin' => (bool) $u->is_super_admin,
+                'memberships'    => $u->community_memberships_count,
+                'created_at'     => $u->created_at?->toDateString(),
+            ]);
+
+        return Inertia::render('Admin/Users', [
+            'users'   => $users,
+            'filters' => ['search' => $search],
+        ]);
+    }
+
+    public function toggleUserStatus(User $user): RedirectResponse
+    {
+        abort_if($user->is_super_admin, 422, 'Cannot disable a super admin.');
+
+        $user->update(['is_active' => ! $user->is_active]);
+
+        $status = $user->is_active ? 'enabled' : 'disabled';
+        return back()->with('success', "User {$user->name} has been {$status}.");
+    }
+
+    // ── Soft Delete Recovery ─────────────────────────────────────────────────
+
+    public function trashedPosts(Request $request): Response
+    {
+        $search = $request->string('search')->trim()->toString();
+
+        $posts = Post::onlyTrashed()
+            ->with(['author:id,name', 'community:id,name,slug'])
+            ->when($search, fn ($q) => $q->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('content', 'like', "%{$search}%");
+            }))
+            ->latest('deleted_at')
+            ->paginate(25)
+            ->withQueryString()
+            ->through(fn ($p) => [
+                'id'             => $p->id,
+                'title'          => $p->title,
+                'content'        => substr($p->content, 0, 120),
+                'author'         => $p->author?->name,
+                'community'      => $p->community?->name,
+                'community_slug' => $p->community?->slug,
+                'deleted_at'     => $p->deleted_at?->toDateString(),
+            ]);
+
+        return Inertia::render('Admin/TrashedPosts', [
+            'posts'   => $posts,
+            'filters' => ['search' => $search],
+        ]);
+    }
+
+    public function restorePost(int $postId): RedirectResponse
+    {
+        $post = Post::onlyTrashed()->findOrFail($postId);
+        $post->restore();
+
+        return back()->with('success', 'Post restored.');
+    }
+
+    public function forceDeletePost(int $postId): RedirectResponse
+    {
+        $post = Post::onlyTrashed()->findOrFail($postId);
+        $post->forceDelete();
+
+        return back()->with('success', 'Post permanently deleted.');
     }
 }

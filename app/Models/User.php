@@ -14,7 +14,7 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, HasRoles, Notifiable;
 
     protected $fillable = [
-        'name', 'username', 'bio', 'email', 'password', 'needs_password_setup', 'phone', 'is_super_admin',
+        'name', 'username', 'bio', 'email', 'password', 'needs_password_setup', 'phone', 'is_super_admin', 'is_active',
         'timezone', 'theme', 'notification_prefs', 'chat_prefs',
         'avatar', 'location', 'social_links', 'hide_from_search',
         'payout_method', 'payout_details',
@@ -29,6 +29,7 @@ class User extends Authenticatable
             'password'               => 'hashed',
             'needs_password_setup'   => 'boolean',
             'is_super_admin'         => 'boolean',
+            'is_active'              => 'boolean',
             'notification_prefs'     => 'array',
             'chat_prefs'             => 'array',
             'social_links'           => 'array',

@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\DirectMessage;
+use App\Models\Notification;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -81,9 +82,12 @@ class HandleInertiaRequests extends Middleware
                 'error'       => $request->session()->get('error'),
                 'quiz_result' => $request->session()->get('quiz_result'),
             ],
-            'unread_messages' => $request->user() ? $this->unreadMessageCount($request->user()->id) : 0,
-            'unread_dms'      => $request->user()
+            'unread_messages'       => $request->user() ? $this->unreadMessageCount($request->user()->id) : 0,
+            'unread_dms'            => $request->user()
                 ? DirectMessage::where('receiver_id', $request->user()->id)->whereNull('read_at')->count()
+                : 0,
+            'unread_notifications'  => $request->user()
+                ? Notification::where('user_id', $request->user()->id)->whereNull('read_at')->count()
                 : 0,
             'app_theme' => Setting::get('app_theme', 'green'),
         ];

@@ -36,6 +36,11 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
 
+        if (! Auth::user()->is_active) {
+            Auth::logout();
+            return back()->withErrors(['email' => 'Your account has been disabled. Please contact support.']);
+        }
+
         if (Auth::user()->needs_password_setup) {
             return redirect()->route('password.setup');
         }

@@ -22,8 +22,20 @@
                             <div class="flex-1 space-y-2">
                                 <input v-model="postForm.title" type="text" placeholder="Title (optional)" autofocus
                                     class="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                                <textarea v-model="postForm.content" rows="3" placeholder="Share something with the community..." required
-                                    class="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                                <!-- Formatting toolbar -->
+                                <div class="flex items-center gap-1 px-1">
+                                    <button type="button" @click="applyBold"
+                                        class="px-2 py-0.5 text-xs font-bold border border-gray-200 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
+                                        title="Bold (**text**)">B</button>
+                                    <button type="button" @click="applyItalic"
+                                        class="px-2 py-0.5 text-xs italic border border-gray-200 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
+                                        title="Italic (_text_)">I</button>
+                                    <button type="button" @click="applyBullet"
+                                        class="px-2 py-0.5 text-xs border border-gray-200 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
+                                        title="Bullet list (- item)">• List</button>
+                                </div>
+                                <textarea id="post-content-editor" v-model="postForm.content" rows="4" placeholder="Share something with the community..." required
+                                    class="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none font-mono"
                                     :class="postForm.errors.content ? 'border-red-400' : ''" />
                             </div>
                         </div>
@@ -72,7 +84,7 @@
 
                         <!-- Content -->
                         <h3 v-if="post.title" class="font-bold text-gray-900 dark:text-gray-100 mb-1.5">{{ post.title }}</h3>
-                        <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line leading-relaxed line-clamp-4">{{ post.content }}</p>
+                        <div class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed line-clamp-4 prose prose-sm max-w-none" v-html="mdToHtml(post.content)" />
 
                         <!-- Reaction bar -->
                         <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center gap-4">
@@ -252,6 +264,40 @@
                     </div>
                 </div>
 
+                <!-- Owner onboarding checklist -->
+                <div v-if="checklist && !checklistDismissed && checklistDone < checklist.length"
+                    class="bg-white dark:bg-gray-800 border border-indigo-200 dark:border-indigo-700 rounded-2xl overflow-hidden shadow-sm">
+                    <div class="px-4 py-3 border-b border-indigo-100 dark:border-indigo-800 flex items-center justify-between">
+                        <div>
+                            <h4 class="text-sm font-bold text-gray-900 dark:text-gray-100">Setup checklist</h4>
+                            <p class="text-xs text-gray-400">{{ checklistDone }}/{{ checklist.length }} complete</p>
+                        </div>
+                        <button @click="checklistDismissed = true" class="text-gray-300 hover:text-gray-500 text-lg leading-none">×</button>
+                    </div>
+                    <!-- Progress bar -->
+                    <div class="h-1 bg-gray-100 dark:bg-gray-700">
+                        <div class="h-full bg-indigo-500 transition-all duration-500"
+                            :style="{ width: `${Math.round(checklistDone / checklist.length * 100)}%` }" />
+                    </div>
+                    <ul class="divide-y divide-gray-50 dark:divide-gray-700/50">
+                        <li v-for="item in checklist" :key="item.key"
+                            class="flex items-center gap-3 px-4 py-2.5">
+                            <span class="w-4 h-4 shrink-0 flex items-center justify-center rounded-full text-xs"
+                                :class="item.done ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'">
+                                <svg v-if="item.done" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                <svg v-else class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <circle cx="12" cy="12" r="9" stroke-width="2"/>
+                                </svg>
+                            </span>
+                            <span class="text-xs" :class="item.done ? 'text-gray-400 line-through' : 'text-gray-700 dark:text-gray-300'">
+                                {{ item.label }}
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+
             </div>
         </div>
 
@@ -314,7 +360,7 @@
                         <!-- Body -->
                         <div class="p-5">
                             <h2 v-if="activePost.title" class="text-xl font-black text-gray-900 dark:text-gray-100 mb-3">{{ activePost.title }}</h2>
-                            <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line leading-relaxed">{{ activePost.content }}</p>
+                            <div class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed prose prose-sm max-w-none" v-html="mdToHtml(activePost.content)" />
                         </div>
 
                         <!-- Reaction bar -->
@@ -450,6 +496,7 @@ const props = defineProps({
     affiliate:  Object,
     adminCount: { type: Number, default: 0 },
     topMembers: { type: Array, default: () => [] },
+    checklist:  { type: Array, default: null },
 });
 
 const page = usePage();
@@ -592,6 +639,63 @@ async function copyAffiliateUrl() {
     await navigator.clipboard.writeText(affiliateUrl.value);
     affiliateCopied.value = true;
     setTimeout(() => { affiliateCopied.value = false; }, 2000);
+}
+
+// ─── Checklist ────────────────────────────────────────────────────────────────
+const checklistDismissed = ref(false);
+const checklistDone = computed(() =>
+    props.checklist?.filter(c => c.done).length ?? 0
+);
+
+// ─── Markdown renderer ────────────────────────────────────────────────────────
+function mdToHtml(text) {
+    if (!text) return '';
+    return text
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/_(.*?)_/g, '<em>$1</em>')
+        .replace(/^- (.+)$/gm, '<li>$1</li>')
+        .replace(/(<li>.*<\/li>)/s, '<ul class="list-disc pl-4 space-y-0.5">$1</ul>')
+        .replace(/\n/g, '<br>');
+}
+
+// ─── Rich text formatting helpers ─────────────────────────────────────────────
+function wrapSelection(textarea, before, after) {
+    const start = textarea.selectionStart;
+    const end   = textarea.selectionEnd;
+    const sel   = textarea.value.substring(start, end);
+    const replacement = before + (sel || 'text') + after;
+    const newVal = textarea.value.substring(0, start) + replacement + textarea.value.substring(end);
+    return { newVal, cursor: start + replacement.length };
+}
+
+function applyBold() {
+    const el = document.getElementById('post-content-editor');
+    if (!el) return;
+    const { newVal, cursor } = wrapSelection(el, '**', '**');
+    postForm.content = newVal;
+    el.focus();
+    el.setSelectionRange(cursor, cursor);
+}
+
+function applyItalic() {
+    const el = document.getElementById('post-content-editor');
+    if (!el) return;
+    const { newVal, cursor } = wrapSelection(el, '_', '_');
+    postForm.content = newVal;
+    el.focus();
+    el.setSelectionRange(cursor, cursor);
+}
+
+function applyBullet() {
+    const el = document.getElementById('post-content-editor');
+    if (!el) return;
+    const start = el.selectionStart;
+    const lineStart = postForm.content.lastIndexOf('\n', start - 1) + 1;
+    const newVal = postForm.content.substring(0, lineStart) + '- ' + postForm.content.substring(lineStart);
+    postForm.content = newVal;
+    el.focus();
+    el.setSelectionRange(start + 2, start + 2);
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

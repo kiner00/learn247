@@ -6,16 +6,20 @@ use App\Actions\Community\CreateCommunity;
 use App\Actions\Community\JoinCommunity;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CreateCommunityRequest;
+use App\Mail\AnnouncementMail;
 use App\Models\Affiliate;
 use App\Models\AffiliateConversion;
 use App\Models\Community;
 use App\Models\CommunityMember;
 use App\Models\LessonCompletion;
+use App\Models\Notification;
 use App\Models\Payment;
+use App\Models\Post;
 use App\Models\QuizAttempt;
 use App\Models\Subscription;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -133,8 +137,22 @@ class CommunityController extends Controller
                 'level'    => CommunityMember::computeLevel($m->points),
             ]);
 
+        // Owner onboarding checklist
+        $checklist = null;
+        if ($userId && $community->owner_id === $userId) {
+            $hasPost    = Post::where('community_id', $community->id)->exists();
+            $courseCount = $community->courses()->count();
+            $checklist = [
+                ['key' => 'cover',       'label' => 'Upload a banner image',    'done' => (bool) $community->cover_image],
+                ['key' => 'description', 'label' => 'Add a community description', 'done' => (bool) trim($community->description ?? '')],
+                ['key' => 'post',        'label' => 'Write your first post',    'done' => $hasPost],
+                ['key' => 'course',      'label' => 'Create a course',          'done' => $courseCount > 0],
+                ['key' => 'affiliate',   'label' => 'Set affiliate commission', 'done' => (bool) $community->affiliate_commission_rate],
+            ];
+        }
+
         return Inertia::render('Communities/Show', compact(
-            'community', 'membership', 'affiliate', 'adminCount', 'topMembers'
+            'community', 'membership', 'affiliate', 'adminCount', 'topMembers', 'checklist'
         ));
     }
 
@@ -377,9 +395,43 @@ class CommunityController extends Controller
 
     public function join(Request $request, Community $community, JoinCommunity $action): RedirectResponse
     {
-        $action->execute($request->user(), $community);
+        $user = $request->user();
+        $action->execute($user, $community);
+
+        // Notify community owner
+        if ($community->owner_id !== $user->id) {
+            Notification::create([
+                'user_id'      => $community->owner_id,
+                'actor_id'     => $user->id,
+                'community_id' => $community->id,
+                'type'         => 'new_member',
+                'data'         => ['message' => "{$user->name} joined {$community->name}"],
+            ]);
+        }
 
         return back()->with('success', 'You have joined the community!');
+    }
+
+    public function announce(Request $request, Community $community): RedirectResponse
+    {
+        $this->authorize('update', $community);
+
+        $data = $request->validate([
+            'subject' => ['required', 'string', 'max:200'],
+            'message' => ['required', 'string', 'max:5000'],
+        ]);
+
+        $members = $community->members()->with('user:id,name,email')->get();
+        $sender  = $request->user();
+
+        foreach ($members as $membership) {
+            if ($membership->user && $membership->user->email) {
+                Mail::to($membership->user->email)
+                    ->queue(new AnnouncementMail($community, $sender, $data['subject'], $data['message']));
+            }
+        }
+
+        return back()->with('success', "Announcement sent to {$members->count()} members.");
     }
 
     public function about(Request $request, Community $community): Response

@@ -4,6 +4,7 @@ use App\Http\Controllers\Web\AdminController;
 use App\Http\Controllers\Web\AffiliateController;
 use App\Http\Controllers\Web\BadgeController;
 use App\Http\Controllers\Web\CreatorController;
+use App\Http\Controllers\Web\NotificationController;
 use App\Http\Controllers\Web\PayoutRequestController;
 use App\Http\Controllers\Web\AuthController;
 use App\Http\Controllers\Web\CertificateController;
@@ -79,6 +80,22 @@ Route::middleware(['auth', EnsureSuperAdmin::class])->prefix('admin')->group(fun
     Route::post('/payout-requests/{payoutRequest}/approve', [AdminController::class, 'approvePayoutRequest'])->name('admin.payout-requests.approve');
     Route::post('/payout-requests/{payoutRequest}/reject', [AdminController::class, 'rejectPayoutRequest'])->name('admin.payout-requests.reject');
     Route::post('/onboarding/{user}/resend', [AdminController::class, 'resendOnboardingEmail'])->name('admin.onboarding.resend');
+    // User management
+    Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
+    Route::patch('/users/{user}/toggle-status', [AdminController::class, 'toggleUserStatus'])->name('admin.users.toggle');
+    // Soft delete recovery
+    Route::get('/posts/trashed', [AdminController::class, 'trashedPosts'])->name('admin.posts.trashed');
+    Route::post('/posts/{postId}/restore', [AdminController::class, 'restorePost'])->name('admin.posts.restore');
+    Route::delete('/posts/{postId}/force-delete', [AdminController::class, 'forceDeletePost'])->name('admin.posts.force-delete');
+});
+
+// ─── User Profile shortlink ─────────────────────────────────────────────────
+Route::get('/u/{username}', fn ($username) => redirect("/profile/{$username}"))->name('u.show');
+
+// ─── Notifications ─────────────────────────────────────────────────────────
+Route::middleware('auth')->group(function () {
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
+    Route::get('/notifications/recent', [NotificationController::class, 'recent'])->name('notifications.recent');
 });
 
 // ─── Profile ───────────────────────────────────────────────────────────────────
@@ -126,6 +143,7 @@ Route::middleware('auth')->group(function () {
     Route::match(['patch', 'post'], '/communities/{community}', [CommunityController::class, 'update'])->name('communities.update');
     Route::patch('/communities/{community}/level-perks', [CommunityController::class, 'updateLevelPerks'])->name('communities.level-perks');
     Route::delete('/communities/{community}', [CommunityController::class, 'destroy'])->name('communities.destroy');
+    Route::post('/communities/{community}/announce', [CommunityController::class, 'announce'])->name('communities.announce');
 
     // Member management (admin only — enforced by Action)
     Route::delete('/communities/{community}/members/{user}', [CommunityMemberController::class, 'destroy'])->name('communities.members.destroy');

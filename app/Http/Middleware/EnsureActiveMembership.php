@@ -75,6 +75,6 @@ class EnsureActiveMembership
             return response()->json(['message' => $message], 403);
         }
 
-        return redirect()->route('communities.show', $community->slug)->with('error', $message);
+        return redirect()->route('communities.about', $community->slug)->with('error', $message);
     }
 }

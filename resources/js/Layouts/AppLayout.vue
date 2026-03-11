@@ -264,7 +264,7 @@
                             <!-- Notification bell -->
                             <div class="relative" ref="notifRef">
                                 <button
-                                    @click="notifOpen = !notifOpen"
+                                    @click="toggleNotifications"
                                     class="relative flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-500 dark:text-gray-400"
                                     title="Notifications"
                                 >
@@ -272,10 +272,10 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                                     </svg>
                                     <span
-                                        v-if="$page.props.unread_messages > 0"
+                                        v-if="$page.props.unread_notifications > 0"
                                         class="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none"
                                     >
-                                        {{ $page.props.unread_messages > 99 ? '99+' : $page.props.unread_messages }}
+                                        {{ $page.props.unread_notifications > 99 ? '99+' : $page.props.unread_notifications }}
                                     </span>
                                 </button>
 
@@ -290,38 +290,48 @@
                                 >
                                     <div
                                         v-if="notifOpen"
-                                        class="absolute right-0 mt-1.5 w-72 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl overflow-hidden origin-top-right z-50"
+                                        class="absolute right-0 mt-1.5 w-80 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl overflow-hidden origin-top-right z-50"
+                                        style="max-height: 440px;"
                                     >
-                                        <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                                        <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between shrink-0">
                                             <p class="text-sm font-bold text-gray-900 dark:text-gray-100">Notifications</p>
-                                            <span v-if="$page.props.unread_messages > 0" class="text-xs text-indigo-600 font-semibold">
-                                                {{ $page.props.unread_messages }} unread
-                                            </span>
+                                            <button v-if="$page.props.unread_notifications > 0"
+                                                @click="markAllRead"
+                                                class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+                                                Mark all read
+                                            </button>
                                         </div>
-                                        <div class="max-h-80 overflow-y-auto">
-                                            <template v-if="($page.props.auth?.communities ?? []).length">
-                                                <Link
-                                                    v-for="c in $page.props.auth.communities"
-                                                    :key="c.id"
-                                                    :href="`/communities/${c.slug}/chat`"
-                                                    @click="notifOpen = false"
-                                                    class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                        <div class="overflow-y-auto" style="max-height: 380px;">
+                                            <div v-if="notifLoading" class="px-4 py-8 text-center">
+                                                <p class="text-sm text-gray-400">Loading...</p>
+                                            </div>
+                                            <template v-else-if="notifications.length">
+                                                <div
+                                                    v-for="n in notifications"
+                                                    :key="n.id"
+                                                    class="flex items-start gap-3 px-4 py-3 border-b border-gray-50 dark:border-gray-700/50 transition-colors"
+                                                    :class="!n.read_at ? 'bg-indigo-50/50 dark:bg-indigo-900/10' : 'hover:bg-gray-50 dark:hover:bg-gray-700/30'"
                                                 >
-                                                    <div class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600 shrink-0 overflow-hidden">
-                                                        <img v-if="c.avatar" :src="c.avatar" :alt="c.name" class="w-full h-full object-cover"/>
-                                                        <span v-else>{{ c.name.charAt(0).toUpperCase() }}</span>
+                                                    <!-- Icon -->
+                                                    <div class="w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-sm"
+                                                        :class="n.type === 'new_post' ? 'bg-indigo-100 dark:bg-indigo-900/40' : 'bg-green-100 dark:bg-green-900/40'">
+                                                        {{ n.type === 'new_post' ? '✍️' : '👋' }}
                                                     </div>
                                                     <div class="flex-1 min-w-0">
-                                                        <p class="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{{ c.name }}</p>
-                                                        <p class="text-xs text-gray-400">Go to chat</p>
+                                                        <p class="text-xs text-gray-700 dark:text-gray-300 leading-snug">{{ n.data?.message }}</p>
+                                                        <p class="text-xs text-gray-400 mt-0.5">
+                                                            <span v-if="n.community_slug">
+                                                                <a :href="`/communities/${n.community_slug}`" class="text-indigo-500 hover:underline">{{ n.community_name }}</a>
+                                                                ·
+                                                            </span>
+                                                            {{ relativeTime(n.created_at) }}
+                                                        </p>
                                                     </div>
-                                                    <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                                                    </svg>
-                                                </Link>
+                                                    <span v-if="!n.read_at" class="w-2 h-2 rounded-full bg-indigo-500 shrink-0 mt-1.5" />
+                                                </div>
                                             </template>
-                                            <div v-else class="px-4 py-8 text-center">
-                                                <p class="text-sm text-gray-400">No communities yet</p>
+                                            <div v-else class="px-4 py-10 text-center">
+                                                <p class="text-sm text-gray-400">All caught up!</p>
                                             </div>
                                         </div>
                                     </div>
@@ -755,8 +765,48 @@ const switcherRef    = ref(null);
 const menuOpen  = ref(false);
 const menuRef   = ref(null);
 
-const notifOpen = ref(false);
-const notifRef  = ref(null);
+const notifOpen    = ref(false);
+const notifRef     = ref(null);
+const notifLoading = ref(false);
+const notifications = ref([]);
+
+async function toggleNotifications() {
+    notifOpen.value = !notifOpen.value;
+    if (notifOpen.value) {
+        notifLoading.value = true;
+        try {
+            const axios = (await import('axios')).default;
+            const res = await axios.get('/notifications/recent');
+            notifications.value = res.data;
+        } catch (e) {
+            // ignore
+        } finally {
+            notifLoading.value = false;
+        }
+    }
+}
+
+function markAllRead() {
+    import('@inertiajs/vue3').then(({ router: r }) => {
+        r.post('/notifications/read-all', {}, {
+            preserveScroll: true,
+            onSuccess: () => {
+                notifications.value = notifications.value.map(n => ({ ...n, read_at: new Date().toISOString() }));
+            },
+        });
+    });
+}
+
+function relativeTime(dateStr) {
+    if (!dateStr) return '';
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1)  return 'just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24)  return `${hrs}h ago`;
+    return `${Math.floor(hrs / 24)}d ago`;
+}
 
 // ─── DM panel ──────────────────────────────────────────────────────────────────
 const dmOpen            = ref(false);

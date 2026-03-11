@@ -1,8 +1,20 @@
 <template>
     <AppLayout title="Admin Dashboard">
-        <div class="mb-6">
-            <h1 class="text-2xl font-black text-gray-900">Admin Dashboard</h1>
-            <p class="text-sm text-gray-500 mt-0.5">Platform overview</p>
+        <div class="mb-6 flex items-start justify-between">
+            <div>
+                <h1 class="text-2xl font-black text-gray-900">Admin Dashboard</h1>
+                <p class="text-sm text-gray-500 mt-0.5">Platform overview</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <Link href="/admin/users"
+                    class="px-3.5 py-2 text-sm font-medium text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+                    👤 Users
+                </Link>
+                <Link href="/admin/posts/trashed"
+                    class="px-3.5 py-2 text-sm font-medium text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+                    🗑️ Trashed Posts
+                </Link>
+            </div>
         </div>
 
         <!-- Stat cards -->
