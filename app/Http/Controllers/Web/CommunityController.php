@@ -401,7 +401,11 @@ class CommunityController extends Controller
             }
         }
 
-        return Inertia::render('Communities/About', compact('community', 'affiliate', 'invitedBy'));
+        $membership = auth()->id()
+            ? $community->members()->where('user_id', auth()->id())->first()
+            : null;
+
+        return Inertia::render('Communities/About', compact('community', 'affiliate', 'invitedBy', 'membership'));
     }
 
     private function reactionCounts(\Illuminate\Support\Collection $likes): array

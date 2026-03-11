@@ -120,7 +120,7 @@
                         </button>
 
                         <button
-                            v-else-if="$page.props.auth?.user"
+                            v-else-if="membership"
                             @click="showInviteModal = true"
                             class="w-full py-2 text-sm font-semibold border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors"
                         >
@@ -272,9 +272,10 @@ import CommunityTabs from '@/Components/CommunityTabs.vue';
 import InviteModal from '@/Components/InviteModal.vue';
 
 const props = defineProps({
-    community: Object,
+    community:  Object,
     affiliate:  Object,
     invitedBy:  Object,
+    membership: Object,
 });
 
 const showInviteModal = ref(false);
