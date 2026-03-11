@@ -13,6 +13,7 @@ use App\Http\Controllers\Web\ClassroomController;
 use App\Http\Controllers\Web\DirectMessageController;
 use App\Http\Controllers\Web\CommentController;
 use App\Http\Controllers\Web\CommunityController;
+use App\Http\Controllers\Web\CommunityInviteController;
 use App\Http\Controllers\Web\CommunityMemberController;
 use App\Http\Controllers\Web\AccountSettingsController;
 use App\Http\Controllers\Web\LeaderboardController;
@@ -36,6 +37,9 @@ Route::get('/', fn () => redirect('/communities'))->name('home');
 
 // ─── Certificates (public shareable link) ─────────────────────────────────────
 Route::get('/certificates/{uuid}', [CertificateController::class, 'show'])->name('certificates.show');
+
+// ─── Community invite accept (public — redirects to login if not authed) ──────
+Route::get('/invite/{token}', [CommunityInviteController::class, 'accept'])->name('community.invite.accept');
 
 // ─── Affiliate referral link (public) ─────────────────────────────────────────
 Route::get('/ref/{code}', [RefController::class, 'redirect'])->name('ref.redirect');
@@ -138,6 +142,9 @@ Route::middleware('auth')->group(function () {
 
     // Paid community checkout → redirects to Xendit invoice URL
     Route::post('/communities/{community}/checkout', [SubscriptionController::class, 'checkout'])->name('communities.checkout');
+
+    // Owner-only: invite members by email / CSV
+    Route::post('/communities/{community}/invite', [CommunityInviteController::class, 'store'])->name('communities.invite');
 
     // Owner-only mutations
     Route::match(['patch', 'post'], '/communities/{community}', [CommunityController::class, 'update'])->name('communities.update');

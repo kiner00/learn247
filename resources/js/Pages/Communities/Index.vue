@@ -235,8 +235,8 @@ function formatCount(n) {
 }
 
 function getMilestone(count) {
-    if (count >= 1_000_000) return { icon: '🌟', label: '1M Plaque' };
-    if (count >= 100_000)   return { icon: '🏆', label: 'Platinum' };
+    if (count >= 100_000)   return { icon: '🌟', label: '100K Plaque' };
+    if (count >= 50_000)    return { icon: '🏆', label: 'Platinum' };
     if (count >= 10_000)    return { icon: '💎', label: 'Diamond' };
     if (count >= 1_000)     return { icon: '🥇', label: 'Gold' };
     if (count >= 500)       return { icon: '🥈', label: 'Silver' };

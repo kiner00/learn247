@@ -314,12 +314,12 @@ function formatCount(n) {
 }
 
 function getMilestone(count) {
-    if (count >= 1_000_000) return { icon: '🌟', label: '1M Plaque',  classes: 'bg-yellow-50 border-yellow-300 text-yellow-700' };
-    if (count >= 100_000)   return { icon: '🏆', label: 'Platinum',   classes: 'bg-slate-100 border-slate-400 text-slate-700' };
-    if (count >= 10_000)    return { icon: '💎', label: 'Diamond',    classes: 'bg-cyan-50 border-cyan-300 text-cyan-700' };
-    if (count >= 1_000)     return { icon: '🥇', label: 'Gold',       classes: 'bg-amber-50 border-amber-300 text-amber-700' };
-    if (count >= 500)       return { icon: '🥈', label: 'Silver',     classes: 'bg-gray-100 border-gray-400 text-gray-600' };
-    if (count >= 100)       return { icon: '🥉', label: 'Bronze',     classes: 'bg-orange-50 border-orange-300 text-orange-700' };
+    if (count >= 100_000)   return { icon: '🌟', label: '100K Plaque', classes: 'bg-yellow-50 border-yellow-300 text-yellow-700' };
+    if (count >= 50_000)    return { icon: '🏆', label: 'Platinum',    classes: 'bg-slate-100 border-slate-400 text-slate-700' };
+    if (count >= 10_000)    return { icon: '💎', label: 'Diamond',     classes: 'bg-cyan-50 border-cyan-300 text-cyan-700' };
+    if (count >= 1_000)     return { icon: '🥇', label: 'Gold',        classes: 'bg-amber-50 border-amber-300 text-amber-700' };
+    if (count >= 500)       return { icon: '🥈', label: 'Silver',      classes: 'bg-gray-100 border-gray-400 text-gray-600' };
+    if (count >= 100)       return { icon: '🥉', label: 'Bronze',      classes: 'bg-orange-50 border-orange-300 text-orange-700' };
     return null;
 }
 </script>
