@@ -30,21 +30,22 @@
                     <!-- Banner image (flush, no side padding) -->
                     <div class="h-64 bg-gray-900 overflow-hidden">
                         <img
-                            v-if="community.cover_image"
-                            :src="community.cover_image"
+                            v-if="activeBannerImg"
+                            :src="activeBannerImg"
                             :alt="community.name"
-                            class="w-full h-full object-cover"
+                            class="w-full h-full object-cover transition-all duration-300"
                         />
                         <div v-else class="w-full h-full bg-linear-to-br from-indigo-500 to-purple-700" />
                     </div>
 
-                    <!-- Gallery strip (directly under banner) -->
+                    <!-- Gallery strip (directly under banner) — clicking swaps the banner -->
                     <div v-if="community.gallery_images?.length" class="flex gap-2 px-4 pt-3 overflow-x-auto pb-1">
                         <div
                             v-for="(img, i) in community.gallery_images"
                             :key="i"
-                            class="w-24 h-16 rounded-lg overflow-hidden shrink-0 cursor-pointer border border-gray-200 hover:opacity-90 transition-opacity"
-                            @click="lightboxImg = img"
+                            class="w-24 h-16 rounded-lg overflow-hidden shrink-0 cursor-pointer border-2 hover:opacity-90 transition-opacity"
+                            :class="activeBannerImg === img ? 'border-indigo-500' : 'border-gray-200'"
+                            @click="activeBannerImg = img"
                         >
                             <img :src="img" class="w-full h-full object-cover" />
                         </div>
@@ -331,6 +332,7 @@ const props = defineProps({
 const showInviteModal = ref(false);
 const showJoinModal   = ref(false);
 const lightboxImg     = ref(null);
+const activeBannerImg = ref(props.community.cover_image || null);
 
 const inviteUrl = computed(() =>
     props.affiliate?.code
