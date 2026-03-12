@@ -114,11 +114,10 @@
                                     required
                                     class="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 />
-                                <textarea
+                                <LessonEditor
                                     v-model="lessonForm.content"
-                                    rows="2"
                                     placeholder="Description (optional)"
-                                    class="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                                    min-height="80px"
                                 />
                                 <input
                                     v-model="lessonForm.video_url"
@@ -199,19 +198,18 @@
                     </div>
 
                     <div class="px-6 py-5">
-                        <p v-if="selectedLesson.content && !editingLesson"
-                            class="text-sm text-gray-700 whitespace-pre-line leading-relaxed mb-6">
-                            {{ selectedLesson.content }}
-                        </p>
+                        <div v-if="selectedLesson.content && !editingLesson"
+                            class="lesson-display text-sm text-gray-700 leading-relaxed mb-6"
+                            v-html="selectedLesson.content"
+                        />
 
                         <!-- Edit form (owner only) -->
                         <div v-if="isOwner && editingLesson" class="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-3">
                             <p class="text-xs font-semibold text-gray-700">Edit Lesson</p>
-                            <textarea
+                            <LessonEditor
                                 v-model="contentForm.content"
-                                rows="4"
                                 placeholder="Lesson description / notes..."
-                                class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                                min-height="140px"
                             />
                             <div>
                                 <p class="text-xs text-gray-500 mb-1.5 font-medium">Video URL</p>
@@ -478,6 +476,7 @@ import { ref, computed, watch } from 'vue';
 import { Link, useForm, usePage, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import CommunityTabs from '@/Components/CommunityTabs.vue';
+import LessonEditor from '@/Components/LessonEditor.vue';
 
 const props = defineProps({
     community:      Object,
