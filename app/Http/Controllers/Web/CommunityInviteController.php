@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendBatchInvites;
 use App\Mail\CommunityInviteMail;
 use App\Models\Community;
 use App\Models\CommunityInvite;
 use App\Models\CommunityMember;
 use App\Models\Subscription;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -19,74 +21,70 @@ class CommunityInviteController extends Controller
      * Send invite(s) — single email or CSV batch.
      * Only community owner can call this.
      */
-    public function store(Request $request, Community $community): RedirectResponse
+    public function store(Request $request, Community $community): JsonResponse|RedirectResponse
     {
         abort_if(auth()->id() !== $community->owner_id, 403);
 
-        $emails = [];
+        $isBatch = $request->hasFile('csv');
 
-        if ($request->hasFile('csv')) {
+        if ($isBatch) {
             $request->validate(['csv' => 'file|mimes:csv,txt|max:2048']);
 
-            $lines = file($request->file('csv')->getPathname(), FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            $emails = [];
+            $lines  = file($request->file('csv')->getPathname(), FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
             foreach ($lines as $line) {
-                // Support single-column or multi-column CSV — grab first column
                 $col = trim(str_getcsv($line)[0] ?? '');
                 if (filter_var($col, FILTER_VALIDATE_EMAIL)) {
                     $emails[] = strtolower($col);
                 }
             }
-        } else {
-            $request->validate(['email' => 'required|email']);
-            $emails[] = strtolower(trim($request->email));
-        }
+            $emails = array_unique($emails);
 
-        $emails = array_unique($emails);
-
-        if (empty($emails)) {
-            if ($request->expectsJson()) {
-                return response()->json(['message' => 'No valid email addresses found.'], 422);
-            }
-            return back()->with('error', 'No valid email addresses found.');
-        }
-
-        $sent    = 0;
-        $skipped = 0;
-
-        foreach ($emails as $email) {
-            // Skip if already an active member
-            $alreadyMember = CommunityMember::where('community_id', $community->id)
-                ->whereHas('user', fn ($q) => $q->where('email', $email))
-                ->exists();
-
-            if ($alreadyMember) {
-                $skipped++;
-                continue;
+            if (empty($emails)) {
+                $msg = 'No valid email addresses found in the CSV.';
+                return $request->expectsJson()
+                    ? response()->json(['message' => $msg], 422)
+                    : back()->with('error', $msg);
             }
 
-            $invite = CommunityInvite::updateOrCreate(
-                ['community_id' => $community->id, 'email' => $email],
-                [
-                    'token'       => Str::random(64),
-                    'accepted_at' => null,
-                    'expires_at'  => now()->addDays(7),
-                ]
-            );
+            SendBatchInvites::dispatch($community, $emails);
 
-            Mail::to($email)->send(new CommunityInviteMail($invite));
-            $sent++;
+            $msg = count($emails) . ' invite' . (count($emails) !== 1 ? 's' : '') . ' queued — emails will arrive shortly.';
+            return $request->expectsJson()
+                ? response()->json(['message' => $msg])
+                : back()->with('success', $msg);
         }
 
-        $message = "Invite" . ($sent !== 1 ? 's' : '') . " sent to {$sent} email" . ($sent !== 1 ? 's' : '') . ".";
-        if ($skipped > 0) {
-            $message .= " {$skipped} skipped (already members).";
+        // Single email — send immediately
+        $request->validate(['email' => 'required|email']);
+        $email = strtolower(trim($request->email));
+
+        $alreadyMember = CommunityMember::where('community_id', $community->id)
+            ->whereHas('user', fn ($q) => $q->where('email', $email))
+            ->exists();
+
+        if ($alreadyMember) {
+            $msg = "{$email} is already a member.";
+            return $request->expectsJson()
+                ? response()->json(['message' => $msg], 422)
+                : back()->with('error', $msg);
         }
 
-        if ($request->expectsJson()) {
-            return response()->json(['message' => $message]);
-        }
+        $invite = CommunityInvite::updateOrCreate(
+            ['community_id' => $community->id, 'email' => $email],
+            [
+                'token'       => Str::random(64),
+                'accepted_at' => null,
+                'expires_at'  => now()->addDays(7),
+            ]
+        );
 
-        return back()->with('success', $message);
+        Mail::to($email)->send(new CommunityInviteMail($invite));
+
+        $msg = "Invite sent to {$email}.";
+        return $request->expectsJson()
+            ? response()->json(['message' => $msg])
+            : back()->with('success', $msg);
     }
 
     /**
