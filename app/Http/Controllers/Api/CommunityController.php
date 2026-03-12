@@ -38,6 +38,18 @@ class CommunityController extends Controller
             ->paginate(15)
             ->withQueryString();
 
+        // Inject is_member flag for the authenticated user
+        if ($userId = $request->user()?->id) {
+            $memberIds = CommunityMember::where('user_id', $userId)
+                ->pluck('community_id')
+                ->flip();
+
+            $communities->each(function (Community $c) use ($memberIds, $userId) {
+                $c->is_member = $memberIds->has($c->id);
+                $c->is_admin  = false;
+            });
+        }
+
         return CommunityResource::collection($communities);
     }
 
