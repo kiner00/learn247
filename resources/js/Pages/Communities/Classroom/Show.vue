@@ -546,6 +546,16 @@ function toggleModule(id) {
 
 const selectedLesson = ref(props.course.modules[0]?.lessons[0] ?? null);
 
+// Keep selectedLesson in sync when Inertia refreshes props (e.g. after quiz save)
+watch(() => props.course, (updatedCourse) => {
+    if (!selectedLesson.value) return;
+    const id = selectedLesson.value.id;
+    for (const mod of updatedCourse.modules) {
+        const fresh = mod.lessons.find((l) => l.id === id);
+        if (fresh) { selectedLesson.value = fresh; return; }
+    }
+}, { deep: true });
+
 function selectLesson(lesson) {
     selectedLesson.value = lesson;
     editingLesson.value  = false;
