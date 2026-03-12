@@ -160,7 +160,7 @@
                                 {{ coverPreview || community.cover_image ? 'Change banner' : 'Upload banner' }}
                                 <input ref="coverInput" type="file" accept="image/*" class="hidden" @change="onCoverChange" />
                             </label>
-                            <p class="mt-1 text-xs text-gray-400">JPG, PNG, WebP — max 5 MB</p>
+                            <p class="mt-1 text-xs text-gray-400">JPG, PNG, WebP — max 5 MB &nbsp;·&nbsp; <span class="font-medium text-gray-500">Recommended: 1920 × 480 px</span></p>
                         </div>
 
                         <!-- Avatar -->
