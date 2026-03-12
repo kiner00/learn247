@@ -4,6 +4,7 @@ namespace App\Actions\Billing;
 
 use App\Actions\Affiliate\RecordAffiliateConversion;
 use App\Mail\TempPasswordMail;
+use App\Models\Affiliate;
 use App\Models\Payment;
 use App\Models\Subscription;
 use App\Services\XenditService;
@@ -53,7 +54,7 @@ class HandleXenditWebhook
         }
 
         // ── 3. Resolve subscription ────────────────────────────────────────────
-        $subscription = Subscription::where('xendit_id', $xenditId)->first();
+        $subscription = Subscription::with('community')->where('xendit_id', $xenditId)->first();
 
         if (! $subscription) {
             Log::warning('Xendit webhook: no matching subscription', compact('xenditId'));
@@ -97,6 +98,29 @@ class HandleXenditWebhook
             // Record affiliate commission if this subscription came via a referral
             if ($payment && $paymentStatus === Payment::STATUS_PAID && $subscription->affiliate_id) {
                 $this->recordConversion->execute($subscription->load('affiliate.community'), $payment);
+            }
+
+            // Auto-create affiliate for paid subscriber (if community has affiliate program)
+            if ($payment && $paymentStatus === Payment::STATUS_PAID) {
+                $community = $subscription->community;
+                if ($community && $community->hasAffiliateProgram()) {
+                    $alreadyAffiliate = Affiliate::where('community_id', $community->id)
+                        ->where('user_id', $subscription->user_id)
+                        ->exists();
+
+                    if (! $alreadyAffiliate) {
+                        do {
+                            $code = Str::random(12);
+                        } while (Affiliate::where('code', $code)->exists());
+
+                        Affiliate::create([
+                            'community_id' => $community->id,
+                            'user_id'      => $subscription->user_id,
+                            'code'         => $code,
+                            'status'       => Affiliate::STATUS_ACTIVE,
+                        ]);
+                    }
+                }
             }
 
             // Send temporary password email for guest checkouts
