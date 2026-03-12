@@ -16,9 +16,16 @@ class PostController extends Controller
     public function store(Request $request, Community $community, CreatePost $action): RedirectResponse
     {
         $data = $request->validate([
-            'title'   => ['nullable', 'string', 'max:255'],
-            'content' => ['required', 'string'],
+            'title'     => ['nullable', 'string', 'max:255'],
+            'content'   => ['required', 'string'],
+            'image'     => ['nullable', 'image', 'max:5120'],
+            'video_url' => ['nullable', 'url', 'max:500'],
         ]);
+
+        if ($request->hasFile('image')) {
+            $data['image'] = $request->file('image')->store('post-images', 'public');
+            $data['image'] = asset('storage/' . $data['image']);
+        }
 
         $post = $action->execute($request->user(), $community, $data);
 

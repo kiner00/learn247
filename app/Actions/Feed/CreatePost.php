@@ -22,6 +22,8 @@ class CreatePost
             'user_id'      => $user->id,
             'title'        => $data['title'] ?? null,
             'content'      => $data['content'],
+            'image'        => $data['image'] ?? null,
+            'video_url'    => $data['video_url'] ?? null,
             'is_pinned'    => false,
         ]);
     }

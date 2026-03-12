@@ -37,15 +37,48 @@
                                 <textarea id="post-content-editor" v-model="postForm.content" rows="4" placeholder="Share something with the community..." required
                                     class="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none font-mono"
                                     :class="postForm.errors.content ? 'border-red-400' : ''" />
+
+                                <!-- Image preview -->
+                                <div v-if="postImagePreview" class="relative inline-block">
+                                    <img :src="postImagePreview" class="h-32 rounded-xl object-cover border border-gray-200" />
+                                    <button type="button" @click="removePostImage"
+                                        class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center leading-none">✕</button>
+                                </div>
+
+                                <!-- Video URL input -->
+                                <div v-if="showVideoInput" class="flex items-center gap-2">
+                                    <input v-model="postForm.video_url" type="url" placeholder="Paste YouTube or Vimeo link..."
+                                        class="flex-1 px-3 py-2 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                    <button type="button" @click="showVideoInput = false; postForm.video_url = ''"
+                                        class="text-gray-400 hover:text-red-500 text-sm">✕</button>
+                                </div>
                             </div>
                         </div>
-                        <div class="flex justify-end gap-2">
-                            <button type="button" @click="composing = false; postForm.reset()"
-                                class="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 rounded-xl">Cancel</button>
-                            <button type="submit" :disabled="postForm.processing || !postForm.content.trim()"
-                                class="px-5 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 disabled:opacity-40 transition-colors">
-                                {{ postForm.processing ? 'Posting...' : 'Post' }}
-                            </button>
+                        <div class="flex items-center justify-between">
+                            <!-- Media buttons -->
+                            <div class="flex items-center gap-1 pl-12">
+                                <input ref="postImageInput" type="file" accept="image/*" class="hidden" @change="onPostImageChange" />
+                                <button type="button" @click="postImageInput.click()"
+                                    class="flex items-center gap-1 px-3 py-1.5 text-xs text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+                                    title="Attach image">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 15l-5-5L5 21"/></svg>
+                                    Photo
+                                </button>
+                                <button type="button" @click="showVideoInput = !showVideoInput"
+                                    class="flex items-center gap-1 px-3 py-1.5 text-xs text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+                                    title="Add video link">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.069A1 1 0 0121 8.882v6.236a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg>
+                                    Video
+                                </button>
+                            </div>
+                            <div class="flex gap-2">
+                                <button type="button" @click="composing = false; postForm.reset(); removePostImage(); showVideoInput = false"
+                                    class="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 rounded-xl">Cancel</button>
+                                <button type="submit" :disabled="postForm.processing || !postForm.content.trim()"
+                                    class="px-5 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 disabled:opacity-40 transition-colors">
+                                    {{ postForm.processing ? 'Posting...' : 'Post' }}
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -85,6 +118,15 @@
                         <!-- Content -->
                         <h3 v-if="post.title" class="font-bold text-gray-900 dark:text-gray-100 mb-1.5">{{ post.title }}</h3>
                         <div class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed line-clamp-4 prose prose-sm max-w-none" v-html="mdToHtml(post.content)" />
+
+                        <!-- Post image -->
+                        <img v-if="post.image" :src="post.image" @click.stop="lightboxImg = post.image"
+                            class="mt-3 rounded-xl max-h-72 w-full object-cover cursor-pointer hover:opacity-95 transition-opacity" />
+
+                        <!-- Post video embed -->
+                        <div v-if="post.video_url && getVideoEmbed(post.video_url)" class="mt-3 rounded-xl overflow-hidden aspect-video" @click.stop>
+                            <iframe :src="getVideoEmbed(post.video_url)" class="w-full h-full" frameborder="0" allowfullscreen />
+                        </div>
 
                         <!-- Reaction bar -->
                         <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center gap-4">
@@ -369,6 +411,13 @@
                         <div class="p-5">
                             <h2 v-if="activePost.title" class="text-xl font-black text-gray-900 dark:text-gray-100 mb-3">{{ activePost.title }}</h2>
                             <div class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed prose prose-sm max-w-none" v-html="mdToHtml(activePost.content)" />
+                            <!-- Image -->
+                            <img v-if="activePost.image" :src="activePost.image" @click="lightboxImg = activePost.image"
+                                class="mt-4 rounded-xl w-full object-cover max-h-96 cursor-pointer hover:opacity-95 transition-opacity" />
+                            <!-- Video embed -->
+                            <div v-if="activePost.video_url && getVideoEmbed(activePost.video_url)" class="mt-4 rounded-xl overflow-hidden aspect-video">
+                                <iframe :src="getVideoEmbed(activePost.video_url)" class="w-full h-full" frameborder="0" allowfullscreen />
+                            </div>
                         </div>
 
                         <!-- Reaction bar -->
@@ -487,6 +536,13 @@
             </Transition>
         </Teleport>
 
+        <!-- Image lightbox -->
+        <Teleport to="body">
+            <div v-if="lightboxImg" class="fixed inset-0 z-[60] bg-black/85 flex items-center justify-center p-4" @click="lightboxImg = null">
+                <img :src="lightboxImg" class="max-w-full max-h-full rounded-xl shadow-2xl" @click.stop />
+            </div>
+        </Teleport>
+
     </AppLayout>
 </template>
 
@@ -563,12 +619,50 @@ function checkout() {
 }
 
 // ─── Posts ────────────────────────────────────────────────────────────────────
-const postForm = useForm({ title: '', content: '' });
+const postForm         = useForm({ title: '', content: '', image: null, video_url: '' });
+const postImagePreview = ref(null);
+const postImageInput   = ref(null);
+const showVideoInput   = ref(false);
+const lightboxImg      = ref(null);
+
+function onPostImageChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    postForm.image = file;
+    postImagePreview.value = URL.createObjectURL(file);
+}
+
+function removePostImage() {
+    postForm.image = null;
+    postImagePreview.value = null;
+    if (postImageInput.value) postImageInput.value.value = '';
+}
+
+function getVideoEmbed(url) {
+    try {
+        const u = new URL(url);
+        if (u.hostname.includes('youtube.com') || u.hostname.includes('youtu.be')) {
+            const id = u.searchParams.get('v') || u.pathname.split('/').pop();
+            return id ? `https://www.youtube.com/embed/${id}` : null;
+        }
+        if (u.hostname.includes('vimeo.com')) {
+            const id = u.pathname.split('/').pop();
+            return id ? `https://player.vimeo.com/video/${id}` : null;
+        }
+    } catch {}
+    return null;
+}
 
 function createPost() {
     postForm.post(`/communities/${props.community.slug}/posts`, {
-        onSuccess: () => { postForm.reset(); composing.value = false; },
+        onSuccess: () => {
+            postForm.reset();
+            removePostImage();
+            showVideoInput.value = false;
+            composing.value = false;
+        },
         preserveScroll: true,
+        forceFormData: true,
     });
 }
 
