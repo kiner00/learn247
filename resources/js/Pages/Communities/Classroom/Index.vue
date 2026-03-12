@@ -105,11 +105,11 @@
                     </div>
                 </Link>
 
-                <!-- Edit button (owner only, top-left of image) -->
+                <!-- Edit button (owner only) -->
                 <button
                     v-if="isOwner"
                     @click.prevent="openEdit(course)"
-                    class="absolute top-2.5 left-2.5 w-7 h-7 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                    class="absolute top-2.5 left-2.5 w-7 h-7 bg-black/50 hover:bg-black/80 text-white rounded-full flex items-center justify-center z-10 transition-colors"
                     title="Edit course"
                 >
                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
