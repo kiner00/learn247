@@ -16,6 +16,7 @@ use App\Models\Notification;
 use App\Models\Payment;
 use App\Models\Post;
 use App\Models\QuizAttempt;
+use App\Models\PayoutRequest;
 use App\Models\Subscription;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -410,6 +411,14 @@ class CommunityController extends Controller
             ];
         });
 
+        [$eligibleNow, $lockedAmount, $nextEligibleDate] = PayoutRequestController::ownerEligibility($community);
+
+        $pendingPayoutRequest = PayoutRequest::where('community_id', $community->id)
+            ->where('type', PayoutRequest::TYPE_OWNER)
+            ->where('status', PayoutRequest::STATUS_PENDING)
+            ->latest()
+            ->first();
+
         return Inertia::render('Communities/Analytics', [
             'community' => $community,
             'stats' => [
@@ -419,13 +428,22 @@ class CommunityController extends Controller
                 'free_members'         => $totalMembers - $activeCount,
             ],
             'revenue' => [
-                'gross'                       => $grossRevenue,
-                'platform_fee'                => $totalPlatformFee,
-                'affiliate_commission_earned' => $affiliateCommission,
-                'affiliate_commission_paid'   => $affiliatePaid,
+                'gross'                        => $grossRevenue,
+                'platform_fee'                 => $totalPlatformFee,
+                'affiliate_commission_earned'  => $affiliateCommission,
+                'affiliate_commission_paid'    => $affiliatePaid,
                 'affiliate_commission_pending' => $affiliatePending,
-                'creator_net'                 => $totalCreatorNet,
-                'has_affiliate_data'          => $affiliateGross > 0,
+                'creator_net'                  => $totalCreatorNet,
+                'has_affiliate_data'           => $affiliateGross > 0,
+            ],
+            'payout' => [
+                'eligible_now'      => $eligibleNow,
+                'locked_amount'     => $lockedAmount,
+                'next_eligible_date'=> $nextEligibleDate,
+                'pending_request'   => $pendingPayoutRequest ? [
+                    'amount'     => $pendingPayoutRequest->amount,
+                    'created_at' => $pendingPayoutRequest->created_at->toDateString(),
+                ] : null,
             ],
             'subscribers'  => $subscribers,
             'course_stats' => $courseStats->values(),

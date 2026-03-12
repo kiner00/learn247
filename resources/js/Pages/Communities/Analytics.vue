@@ -30,6 +30,49 @@
                 </div>
             </div>
 
+            <!-- Request Payout -->
+            <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden mb-6">
+                <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <div>
+                        <h2 class="text-sm font-bold text-gray-900">Payout</h2>
+                        <p class="text-xs text-gray-400 mt-0.5">Request your earnings. Processed within 15 days.</p>
+                    </div>
+                    <!-- Pending request badge -->
+                    <div v-if="payout.pending_request" class="flex flex-col items-end gap-1">
+                        <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-amber-100 text-amber-700">
+                            ⏳ Pending · {{ curr }}{{ fmt(payout.pending_request.amount) }}
+                        </span>
+                        <p class="text-xs text-gray-400">Requested {{ payout.pending_request.created_at }}</p>
+                    </div>
+                    <!-- Request button -->
+                    <div v-else class="flex flex-col items-end gap-1">
+                        <div v-if="payout.eligible_now > 0">
+                            <form @submit.prevent="submitPayoutRequest">
+                                <div class="flex items-center gap-2">
+                                    <div class="flex items-center border border-gray-200 rounded-xl overflow-hidden">
+                                        <span class="px-3 py-2 text-sm text-gray-500 bg-gray-50 border-r border-gray-200">{{ curr }}</span>
+                                        <input v-model="payoutAmount" type="number" step="0.01" :min="1" :max="payout.eligible_now"
+                                            class="w-28 px-3 py-2 text-sm focus:outline-none" />
+                                    </div>
+                                    <button type="submit" :disabled="payoutForm.processing"
+                                        class="px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-xl hover:bg-green-700 disabled:opacity-50 transition-colors">
+                                        Request Payout
+                                    </button>
+                                </div>
+                            </form>
+                            <p class="text-xs text-gray-400 mt-1 text-right">Available: {{ curr }}{{ fmt(payout.eligible_now) }}</p>
+                        </div>
+                        <div v-else class="text-right">
+                            <p class="text-xs text-gray-500 font-medium">No eligible earnings yet</p>
+                            <p v-if="payout.next_eligible_date" class="text-xs text-gray-400 mt-0.5">
+                                Next eligible: {{ payout.next_eligible_date }}
+                                <span class="text-gray-300">({{ curr }}{{ fmt(payout.locked_amount) }} locked)</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Revenue Breakdown -->
             <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden mb-6">
                 <div class="px-5 py-4 border-b border-gray-100">
@@ -172,19 +215,31 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
-import { Link } from '@inertiajs/vue3';
+import { ref, computed } from 'vue';
+import { Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
 const props = defineProps({
     community:    Object,
     stats:        Object,
     revenue:      Object,
+    payout:       Object,
     subscribers:  Array,
     course_stats: Array,
 });
 
 const curr = props.community.currency === 'USD' ? '$' : '₱';
+
+const payoutAmount = ref(props.payout?.eligible_now ?? 0);
+const payoutForm   = useForm({ amount: null });
+
+function submitPayoutRequest() {
+    payoutForm.amount = payoutAmount.value;
+    payoutForm.post(`/creator/payout-request/${props.community.id}`, {
+        preserveScroll: true,
+        onError: (errors) => alert(Object.values(errors)[0]),
+    });
+}
 
 function fmt(val) {
     return Number(val ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
