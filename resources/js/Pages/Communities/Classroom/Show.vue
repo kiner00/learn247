@@ -114,6 +114,12 @@
                                     required
                                     class="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 />
+                                <textarea
+                                    v-model="lessonForm.content"
+                                    rows="2"
+                                    placeholder="Description (optional)"
+                                    class="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                                />
                                 <input
                                     v-model="lessonForm.video_url"
                                     type="url"
