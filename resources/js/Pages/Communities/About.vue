@@ -28,7 +28,7 @@
                     </div>
 
                     <!-- Banner image (flush, no side padding) -->
-                    <div class="h-64 bg-gray-900 overflow-hidden">
+                    <div class="h-80 bg-gray-900 overflow-hidden">
                         <img
                             v-if="activeBannerImg"
                             :src="activeBannerImg"
@@ -43,7 +43,7 @@
                         <div
                             v-for="(img, i) in community.gallery_images"
                             :key="i"
-                            class="w-24 h-16 rounded-lg overflow-hidden shrink-0 cursor-pointer border-2 hover:opacity-90 transition-opacity"
+                            class="w-20 h-20 rounded-lg overflow-hidden shrink-0 cursor-pointer border-2 hover:opacity-90 transition-opacity"
                             :class="activeBannerImg === img ? 'border-indigo-500' : 'border-gray-200'"
                             @click="activeBannerImg = img"
                         >
