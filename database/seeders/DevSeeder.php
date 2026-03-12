@@ -176,6 +176,8 @@ class DevSeeder extends Seeder
 
     public function run(): void
     {
+        abort_unless(app()->isLocal(), 403, 'DevSeeder must only run in local environment.');
+
         // ── 1. Fixed test accounts ──────────────────────────────────────────────
         $owner = User::firstOrCreate(
             ['email' => 'owner@test.com'],
