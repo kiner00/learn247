@@ -57,72 +57,6 @@
                             </select>
                         </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Banner Image</label>
-                            <!-- Preview: new file selection or existing -->
-                            <div
-                                v-if="coverPreview || community.cover_image"
-                                class="relative mb-2 h-32 rounded-xl overflow-hidden border border-gray-200 group"
-                            >
-                                <img
-                                    :src="coverPreview || community.cover_image"
-                                    class="w-full h-full object-cover"
-                                    alt="Banner preview"
-                                />
-                                <button
-                                    type="button"
-                                    @click="removeCover"
-                                    class="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
-                                >
-                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
-                                    </svg>
-                                </button>
-                            </div>
-                            <!-- Upload button -->
-                            <label class="flex items-center gap-2 w-fit cursor-pointer px-3.5 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
-                                <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-                                </svg>
-                                {{ coverPreview || community.cover_image ? 'Change banner' : 'Upload banner' }}
-                                <input ref="coverInput" type="file" accept="image/*" class="hidden" @change="onCoverChange" />
-                            </label>
-                            <p class="mt-1 text-xs text-gray-400">JPG, PNG, WebP — max 5 MB</p>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Avatar</label>
-                            <!-- Preview -->
-                            <div
-                                v-if="avatarPreview || community.avatar"
-                                class="relative mb-2 w-20 h-20 rounded-full overflow-hidden border border-gray-200 group"
-                            >
-                                <img
-                                    :src="avatarPreview || community.avatar"
-                                    class="w-full h-full object-cover"
-                                    alt="Avatar preview"
-                                />
-                                <button
-                                    type="button"
-                                    @click="removeAvatar"
-                                    class="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                                >
-                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
-                                    </svg>
-                                </button>
-                            </div>
-                            <!-- Upload button -->
-                            <label class="flex items-center gap-2 w-fit cursor-pointer px-3.5 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
-                                <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-                                </svg>
-                                {{ avatarPreview || community.avatar ? 'Change avatar' : 'Upload avatar' }}
-                                <input ref="avatarInput" type="file" accept="image/*" class="hidden" @change="onAvatarChange" />
-                            </label>
-                            <p class="mt-1 text-xs text-gray-400">JPG, PNG, WebP — max 5 MB</p>
-                        </div>
-
                         <!-- Pricing requirements checklist -->
                         <div v-if="pricingGate && !pricingGate.can_enable_pricing" class="rounded-xl border border-amber-200 bg-amber-50 p-4">
                             <p class="text-sm font-semibold text-amber-800 mb-3">Complete these requirements to enable paid pricing:</p>
@@ -196,6 +130,73 @@
                             {{ form.processing ? 'Saving...' : 'Save changes' }}
                         </button>
                         <p v-if="saved" class="text-sm text-green-600">Changes saved!</p>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Banner & Avatar -->
+            <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
+                <h2 class="text-base font-semibold text-gray-900 mb-5">Images</h2>
+                <form @submit.prevent="saveImages">
+                    <div class="space-y-5">
+                        <!-- Banner -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Banner Image</label>
+                            <div
+                                v-if="coverPreview || community.cover_image"
+                                class="relative mb-2 h-32 rounded-xl overflow-hidden border border-gray-200 group"
+                            >
+                                <img :src="coverPreview || community.cover_image" class="w-full h-full object-cover" alt="Banner preview" />
+                                <button
+                                    type="button"
+                                    @click="removeCover"
+                                    class="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
+                                >
+                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                                </button>
+                            </div>
+                            <label class="flex items-center gap-2 w-fit cursor-pointer px-3.5 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
+                                <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                {{ coverPreview || community.cover_image ? 'Change banner' : 'Upload banner' }}
+                                <input ref="coverInput" type="file" accept="image/*" class="hidden" @change="onCoverChange" />
+                            </label>
+                            <p class="mt-1 text-xs text-gray-400">JPG, PNG, WebP — max 5 MB</p>
+                        </div>
+
+                        <!-- Avatar -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Community Avatar</label>
+                            <div
+                                v-if="avatarPreview || community.avatar"
+                                class="relative mb-2 w-20 h-20 rounded-full overflow-hidden border border-gray-200 group"
+                            >
+                                <img :src="avatarPreview || community.avatar" class="w-full h-full object-cover" alt="Avatar preview" />
+                                <button
+                                    type="button"
+                                    @click="removeAvatar"
+                                    class="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                                </button>
+                            </div>
+                            <label class="flex items-center gap-2 w-fit cursor-pointer px-3.5 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
+                                <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                {{ avatarPreview || community.avatar ? 'Change avatar' : 'Upload avatar' }}
+                                <input ref="avatarInput" type="file" accept="image/*" class="hidden" @change="onAvatarChange" />
+                            </label>
+                            <p class="mt-1 text-xs text-gray-400">Shown as your community icon. JPG, PNG, WebP — max 5 MB</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3 mt-6">
+                        <button
+                            type="submit"
+                            :disabled="imageForm.processing"
+                            class="px-5 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                        >
+                            {{ imageForm.processing ? 'Saving...' : 'Save images' }}
+                        </button>
+                        <p v-if="imagesSaved" class="text-sm text-green-600">Images saved!</p>
                     </div>
                 </form>
             </div>
@@ -414,6 +415,7 @@ const props = defineProps({
 });
 
 const saved          = ref(false);
+const imagesSaved    = ref(false);
 const affiliateSaved = ref(false);
 const perksSaved     = ref(false);
 const perksSaving    = ref(false);
@@ -438,22 +440,26 @@ const form = useForm({
     name:        props.community.name,
     description: props.community.description ?? '',
     category:    props.community.category ?? '',
-    avatar:      null,   // File object — null means "no change"
-    cover_image: null,   // File object — null means "no change"
     price:       props.community.price ?? 0,
     currency:    props.community.currency ?? 'PHP',
     is_private:  props.community.is_private ?? false,
 });
 
+const imageForm = useForm({
+    name:        props.community.name,  // required by validator
+    cover_image: null,
+    avatar:      null,
+});
+
 function onCoverChange(e) {
     const file = e.target.files[0];
     if (!file) return;
-    form.cover_image = file;
+    imageForm.cover_image = file;
     coverPreview.value = URL.createObjectURL(file);
 }
 
 function removeCover() {
-    form.cover_image = null;
+    imageForm.cover_image = null;
     coverPreview.value = null;
     if (coverInput.value) coverInput.value.value = '';
 }
@@ -461,23 +467,32 @@ function removeCover() {
 function onAvatarChange(e) {
     const file = e.target.files[0];
     if (!file) return;
-    form.avatar = file;
+    imageForm.avatar = file;
     avatarPreview.value = URL.createObjectURL(file);
 }
 
 function removeAvatar() {
-    form.avatar = null;
+    imageForm.avatar = null;
     avatarPreview.value = null;
     if (avatarInput.value) avatarInput.value.value = '';
 }
 
-function save() {
-    // Use POST + _method spoofing so Laravel accepts multipart/form-data with files
-    form.transform(data => ({ ...data, _method: 'PATCH' }))
+function saveImages() {
+    imageForm.transform(data => ({ ...data, _method: 'PATCH' }))
         .post(`/communities/${props.community.slug}`, {
             onSuccess: () => {
                 coverPreview.value = null;
                 avatarPreview.value = null;
+                imagesSaved.value = true;
+                setTimeout(() => (imagesSaved.value = false), 3000);
+            },
+        });
+}
+
+function save() {
+    form.transform(data => ({ ...data, _method: 'PATCH' }))
+        .post(`/communities/${props.community.slug}`, {
+            onSuccess: () => {
                 saved.value = true;
                 setTimeout(() => (saved.value = false), 3000);
             },

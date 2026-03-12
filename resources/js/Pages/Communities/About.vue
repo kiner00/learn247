@@ -98,6 +98,10 @@
                             {{ community.name.charAt(0).toUpperCase() }}
                         </span>
                     </div>
+                    <!-- Community avatar overlapping the banner -->
+                    <div v-if="community.avatar" class="-mt-8 ml-4 mb-1 w-16 h-16 rounded-full border-4 border-white overflow-hidden shadow-md shrink-0">
+                        <img :src="community.avatar" :alt="community.name" class="w-full h-full object-cover" />
+                    </div>
 
                     <div class="p-4">
                         <h2 class="font-bold text-gray-900 text-sm">{{ community.name }}</h2>
