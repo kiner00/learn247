@@ -69,6 +69,27 @@ class ClassroomController extends Controller
         return back()->with('success', 'Course created!');
     }
 
+    public function updateCourse(Request $request, Community $community, Course $course): RedirectResponse
+    {
+        abort_unless($request->user()->id === $community->owner_id, 403);
+
+        $data = $request->validate([
+            'title'       => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:2000'],
+            'cover_image' => ['nullable', 'image', 'max:5120'],
+        ]);
+
+        if ($request->hasFile('cover_image')) {
+            $data['cover_image'] = asset('storage/' . $request->file('cover_image')->store('course-covers', 'public'));
+        } else {
+            unset($data['cover_image']);
+        }
+
+        $course->update($data);
+
+        return back()->with('success', 'Course updated!');
+    }
+
     public function showCourse(Community $community, Course $course): Response
     {
         $userId = auth()->id();
