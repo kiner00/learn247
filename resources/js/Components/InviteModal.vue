@@ -96,6 +96,7 @@
 
 <script setup>
 import { ref } from 'vue';
+import axios from 'axios';
 
 const props = defineProps({
     show:          Boolean,
@@ -130,21 +131,16 @@ function sendSingleInvite() {
     const formData = new FormData();
     formData.append('email', emailInput.value);
 
-    fetch(`/communities/${props.communitySlug}/invite`, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
-            'Accept': 'application/json',
-        },
-        body: formData,
-    })
-        .then(r => r.json().then(data => ({ ok: r.ok, data })))
-        .then(({ ok, data }) => {
-            inviteError.value  = !ok;
-            inviteResult.value = data.message ?? (ok ? 'Invite sent!' : 'Something went wrong.');
-            if (ok) emailInput.value = '';
+    axios.post(`/communities/${props.communitySlug}/invite`, formData)
+        .then(({ data }) => {
+            inviteError.value  = false;
+            inviteResult.value = data.message ?? 'Invite sent!';
+            emailInput.value   = '';
         })
-        .catch(() => { inviteError.value = true; inviteResult.value = 'Network error. Please try again.'; })
+        .catch(err => {
+            inviteError.value  = true;
+            inviteResult.value = err.response?.data?.message ?? 'Something went wrong.';
+        })
         .finally(() => { sending.value = false; });
 }
 
@@ -160,21 +156,16 @@ function sendCsvInvite() {
     const formData = new FormData();
     formData.append('csv', csvFile.value);
 
-    fetch(`/communities/${props.communitySlug}/invite`, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
-            'Accept': 'application/json',
-        },
-        body: formData,
-    })
-        .then(r => r.json().then(data => ({ ok: r.ok, data })))
-        .then(({ ok, data }) => {
-            inviteError.value  = !ok;
-            inviteResult.value = data.message ?? (ok ? 'Invites sent!' : 'Something went wrong.');
-            if (ok) csvFile.value = null;
+    axios.post(`/communities/${props.communitySlug}/invite`, formData)
+        .then(({ data }) => {
+            inviteError.value  = false;
+            inviteResult.value = data.message ?? 'Invites sent!';
+            csvFile.value      = null;
         })
-        .catch(() => { inviteError.value = true; inviteResult.value = 'Network error. Please try again.'; })
+        .catch(err => {
+            inviteError.value  = true;
+            inviteResult.value = err.response?.data?.message ?? 'Something went wrong.';
+        })
         .finally(() => { sending.value = false; });
 }
 </script>
