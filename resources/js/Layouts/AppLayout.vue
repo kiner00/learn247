@@ -344,8 +344,9 @@
                                     @click="menuOpen = !menuOpen"
                                     class="flex items-center gap-2 pl-1 pr-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                                 >
-                                    <span class="w-7 h-7 rounded-full bg-linear-to-br from-indigo-400 to-purple-500 flex items-center justify-center font-semibold text-white text-xs shrink-0">
-                                        {{ initials }}
+                                    <span class="w-7 h-7 rounded-full bg-linear-to-br from-indigo-400 to-purple-500 flex items-center justify-center font-semibold text-white text-xs shrink-0 overflow-hidden">
+                                        <img v-if="$page.props.auth.user.avatar" :src="$page.props.auth.user.avatar" :alt="$page.props.auth.user.name" class="w-full h-full object-cover" />
+                                        <template v-else>{{ initials }}</template>
                                     </span>
                                     <span class="hidden sm:block text-sm font-medium text-gray-700 dark:text-gray-300 max-w-28 truncate">
                                         {{ $page.props.auth.user.name }}

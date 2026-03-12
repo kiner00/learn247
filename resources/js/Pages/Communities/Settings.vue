@@ -91,13 +91,36 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Avatar URL</label>
-                            <input
-                                v-model="form.avatar"
-                                type="url"
-                                placeholder="https://example.com/avatar.png"
-                                class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                            />
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Avatar</label>
+                            <!-- Preview -->
+                            <div
+                                v-if="avatarPreview || community.avatar"
+                                class="relative mb-2 w-20 h-20 rounded-full overflow-hidden border border-gray-200 group"
+                            >
+                                <img
+                                    :src="avatarPreview || community.avatar"
+                                    class="w-full h-full object-cover"
+                                    alt="Avatar preview"
+                                />
+                                <button
+                                    type="button"
+                                    @click="removeAvatar"
+                                    class="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <!-- Upload button -->
+                            <label class="flex items-center gap-2 w-fit cursor-pointer px-3.5 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
+                                <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                                </svg>
+                                {{ avatarPreview || community.avatar ? 'Change avatar' : 'Upload avatar' }}
+                                <input ref="avatarInput" type="file" accept="image/*" class="hidden" @change="onAvatarChange" />
+                            </label>
+                            <p class="mt-1 text-xs text-gray-400">JPG, PNG, WebP — max 5 MB</p>
                         </div>
 
                         <!-- Pricing requirements checklist -->
@@ -397,6 +420,8 @@ const perksSaving    = ref(false);
 const announceSent   = ref(false);
 const coverPreview   = ref(null);
 const coverInput     = ref(null);
+const avatarPreview  = ref(null);
+const avatarInput    = ref(null);
 
 // Invite members
 const inviteTab        = ref('single');
@@ -413,7 +438,7 @@ const form = useForm({
     name:        props.community.name,
     description: props.community.description ?? '',
     category:    props.community.category ?? '',
-    avatar:      props.community.avatar ?? '',
+    avatar:      null,   // File object — null means "no change"
     cover_image: null,   // File object — null means "no change"
     price:       props.community.price ?? 0,
     currency:    props.community.currency ?? 'PHP',
@@ -433,12 +458,26 @@ function removeCover() {
     if (coverInput.value) coverInput.value.value = '';
 }
 
+function onAvatarChange(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    form.avatar = file;
+    avatarPreview.value = URL.createObjectURL(file);
+}
+
+function removeAvatar() {
+    form.avatar = null;
+    avatarPreview.value = null;
+    if (avatarInput.value) avatarInput.value.value = '';
+}
+
 function save() {
     // Use POST + _method spoofing so Laravel accepts multipart/form-data with files
     form.transform(data => ({ ...data, _method: 'PATCH' }))
         .post(`/communities/${props.community.slug}`, {
             onSuccess: () => {
                 coverPreview.value = null;
+                avatarPreview.value = null;
                 saved.value = true;
                 setTimeout(() => (saved.value = false), 3000);
             },

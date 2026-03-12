@@ -211,7 +211,7 @@ class CommunityController extends Controller
             'name'                     => ['required', 'string', 'max:255'],
             'description'              => ['nullable', 'string', 'max:2000'],
             'category'                 => ['nullable', 'string', 'in:Tech,Business,Design,Health,Education,Finance,Other'],
-            'avatar'                   => ['nullable', 'url', 'max:500'],
+            'avatar'                   => ['nullable', 'image', 'max:5120'],
             'cover_image'              => ['nullable', 'image', 'max:5120'],
             'price'                    => ['nullable', 'numeric', 'min:0'],
             'currency'                 => ['nullable', 'string', 'in:PHP,USD'],
@@ -249,6 +249,16 @@ class CommunityController extends Controller
             $data['cover_image'] = Storage::url($path);
         } else {
             unset($data['cover_image']);
+        }
+
+        if ($request->hasFile('avatar')) {
+            if ($community->avatar && str_starts_with($community->avatar, '/storage/')) {
+                Storage::disk('public')->delete(ltrim(str_replace('/storage/', '', $community->avatar), '/'));
+            }
+            $path = $request->file('avatar')->store('community-avatars', 'public');
+            $data['avatar'] = Storage::url($path);
+        } else {
+            unset($data['avatar']);
         }
 
         $community->update($data);
