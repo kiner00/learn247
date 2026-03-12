@@ -19,7 +19,7 @@
 
             <!-- Main content: one unified white card like Skool -->
             <div class="flex-1 min-w-0">
-                <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm mb-4">
+                <div class="bg-white rounded-2xl overflow-hidden mb-4">
 
                     <!-- Community name (above banner) -->
                     <div class="px-6 pt-5 pb-3">
