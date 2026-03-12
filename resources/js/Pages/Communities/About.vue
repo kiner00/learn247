@@ -17,56 +17,42 @@
 
         <div class="flex gap-6 items-start">
 
-            <!-- Main content -->
+            <!-- Main content: one unified white card like Skool -->
             <div class="flex-1 min-w-0">
-                <!-- Cover image -->
-                <div class="rounded-2xl overflow-hidden mb-6 h-48 shadow-sm">
-                    <img
-                        v-if="community.cover_image"
-                        :src="community.cover_image"
-                        :alt="community.name"
-                        class="w-full h-full object-cover"
-                    />
-                    <div v-else class="w-full h-full bg-linear-to-br from-indigo-500 to-purple-700" />
-                </div>
-
-                <!-- Gallery strip -->
-                <div v-if="community.gallery_images?.length" class="flex gap-2 mb-6 overflow-x-auto pb-1">
-                    <div
-                        v-for="(img, i) in community.gallery_images"
-                        :key="i"
-                        class="w-24 h-16 rounded-xl overflow-hidden shrink-0 cursor-pointer border border-gray-200 hover:opacity-90 transition-opacity"
-                        @click="lightboxImg = img"
-                    >
-                        <img :src="img" class="w-full h-full object-cover" />
-                    </div>
-                </div>
-
-                <!-- Main card -->
                 <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm mb-4">
-                    <div class="p-6">
-                        <div class="flex items-start justify-between gap-4 mb-4">
-                            <div>
-                                <h1 class="text-xl font-black text-gray-900">{{ community.name }}</h1>
-                                <span v-if="community.category" class="inline-block mt-1 text-xs font-medium px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
-                                    {{ community.category }}
-                                </span>
-                            </div>
-                            <div class="shrink-0 text-right">
-                                <p class="text-lg font-black text-gray-900">
-                                    {{ community.price > 0 ? `₱${Number(community.price).toLocaleString()}` : 'Free' }}
-                                </p>
-                                <p v-if="community.price > 0" class="text-xs text-gray-400">/month</p>
-                            </div>
+
+                    <!-- Community name (above banner) -->
+                    <div class="px-6 pt-5 pb-3">
+                        <h1 class="text-xl font-black text-gray-900">{{ community.name }}</h1>
+                        <span v-if="community.category" class="inline-block mt-1 text-xs font-medium px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700">{{ community.category }}</span>
+                    </div>
+
+                    <!-- Banner image (flush, no side padding) -->
+                    <div class="h-64 bg-gray-900 overflow-hidden">
+                        <img
+                            v-if="community.cover_image"
+                            :src="community.cover_image"
+                            :alt="community.name"
+                            class="w-full h-full object-cover"
+                        />
+                        <div v-else class="w-full h-full bg-linear-to-br from-indigo-500 to-purple-700" />
+                    </div>
+
+                    <!-- Gallery strip (directly under banner) -->
+                    <div v-if="community.gallery_images?.length" class="flex gap-2 px-4 pt-3 overflow-x-auto pb-1">
+                        <div
+                            v-for="(img, i) in community.gallery_images"
+                            :key="i"
+                            class="w-24 h-16 rounded-lg overflow-hidden shrink-0 cursor-pointer border border-gray-200 hover:opacity-90 transition-opacity"
+                            @click="lightboxImg = img"
+                        >
+                            <img :src="img" class="w-full h-full object-cover" />
                         </div>
+                    </div>
 
-                        <p v-if="community.description" class="text-sm text-gray-600 leading-relaxed mb-6">
-                            {{ community.description }}
-                        </p>
-                        <p v-else class="text-sm text-gray-400 italic mb-6">No description provided.</p>
-
-                        <!-- Stats row (Skool-style inline) -->
-                        <div class="flex flex-wrap items-center gap-x-5 gap-y-2 pt-4 border-t border-gray-100 text-sm text-gray-500">
+                    <div class="px-6 py-4">
+                        <!-- Stats row -->
+                        <div class="flex flex-wrap items-center gap-x-5 gap-y-2 mb-4 text-sm text-gray-500">
                             <span class="flex items-center gap-1.5">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
                                 {{ community.is_private ? 'Private' : 'Public' }}
@@ -80,8 +66,9 @@
                                 {{ community.price > 0 ? `₱${Number(community.price).toLocaleString()}/mo` : 'Free' }}
                             </span>
                             <span v-if="community.owner" class="flex items-center gap-1.5">
-                                <div class="w-4 h-4 rounded-full bg-indigo-400 flex items-center justify-center text-white text-[9px] font-bold shrink-0">
-                                    {{ community.owner.name.charAt(0).toUpperCase() }}
+                                <div class="w-4 h-4 rounded-full bg-indigo-400 flex items-center justify-center text-white text-[9px] font-bold shrink-0 overflow-hidden">
+                                    <img v-if="community.owner.avatar" :src="community.owner.avatar" class="w-full h-full object-cover" />
+                                    <span v-else>{{ community.owner.name.charAt(0).toUpperCase() }}</span>
                                 </div>
                                 By {{ community.owner.name }}
                             </span>
@@ -91,6 +78,10 @@
                                 {{ getMilestone(community.members_count).icon }} {{ getMilestone(community.members_count).label }}
                             </span>
                         </div>
+
+                        <!-- Description -->
+                        <p v-if="community.description" class="text-sm text-gray-600 leading-relaxed">{{ community.description }}</p>
+                        <p v-else class="text-sm text-gray-400 italic">No description provided.</p>
                     </div>
                 </div>
 
