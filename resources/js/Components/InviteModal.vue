@@ -72,13 +72,22 @@
 
                             <!-- CSV batch -->
                             <form v-else @submit.prevent="sendCsvInvite" class="space-y-2">
-                                <label class="flex items-center gap-2 w-fit cursor-pointer px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
-                                    <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-                                    </svg>
-                                    {{ csvFile ? csvFile.name : 'Choose CSV file' }}
-                                    <input type="file" accept=".csv,.txt" class="hidden" @change="onCsvChange" />
-                                </label>
+                                <div class="flex items-center justify-between gap-2">
+                                    <label class="flex items-center gap-2 w-fit cursor-pointer px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
+                                        <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                                        </svg>
+                                        {{ csvFile ? csvFile.name : 'Choose CSV file' }}
+                                        <input type="file" accept=".csv,.txt" class="hidden" @change="onCsvChange" />
+                                    </label>
+                                    <button type="button" @click="downloadTemplate"
+                                        class="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 font-medium transition-colors shrink-0">
+                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                        </svg>
+                                        Download template
+                                    </button>
+                                </div>
                                 <p class="text-xs text-gray-400">One email per row · max 2 MB</p>
                                 <button type="submit" :disabled="!csvFile || sending"
                                     class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -142,6 +151,17 @@ function sendSingleInvite() {
             inviteResult.value = err.response?.data?.message ?? 'Something went wrong.';
         })
         .finally(() => { sending.value = false; });
+}
+
+function downloadTemplate() {
+    const content = 'email\njohn@example.com\njane@example.com\n';
+    const blob = new Blob([content], { type: 'text/csv' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = 'invite-template.csv';
+    a.click();
+    URL.revokeObjectURL(url);
 }
 
 function onCsvChange(e) {
