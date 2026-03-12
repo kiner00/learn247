@@ -2,136 +2,124 @@
     <AppLayout :title="`${community.name} · Classroom`" :community="community">
         <CommunityTabs :community="community" active-tab="classroom" />
 
-        <div class="flex gap-6 items-start">
+        <!-- Header row -->
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-xl font-black text-gray-900">
+                Classroom
+                <span class="text-sm font-normal text-gray-400 ml-2">{{ courses.length }} course{{ courses.length !== 1 ? 's' : '' }}</span>
+            </h1>
+            <button
+                v-if="isOwner"
+                @click="showForm = !showForm"
+                class="px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition-colors"
+            >
+                + New Course
+            </button>
+        </div>
 
-            <!-- Main content -->
-            <div class="flex-1 min-w-0">
-                <div class="flex items-center justify-between mb-6">
-                    <div>
-                        <h1 class="text-xl font-black text-gray-900">Classroom</h1>
-                        <p class="text-sm text-gray-500 mt-0.5">{{ courses.length }} course{{ courses.length !== 1 ? 's' : '' }}</p>
+        <!-- New course form -->
+        <div v-if="showForm" class="bg-white border border-indigo-200 rounded-2xl p-5 shadow-sm mb-6">
+            <h2 class="text-sm font-bold text-gray-900 mb-3">New Course</h2>
+            <form @submit.prevent="createCourse">
+                <input
+                    v-model="courseForm.title"
+                    type="text"
+                    placeholder="Course title"
+                    required
+                    class="w-full px-3.5 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-2"
+                />
+                <textarea
+                    v-model="courseForm.description"
+                    rows="2"
+                    placeholder="Description (optional)"
+                    class="w-full px-3.5 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none mb-2"
+                />
+                <!-- Cover image -->
+                <div class="mb-3">
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Cover image <span class="text-gray-400 font-normal">(optional)</span></label>
+                    <div v-if="coverPreview" class="relative mb-2 h-28 rounded-lg overflow-hidden border border-gray-200">
+                        <img :src="coverPreview" class="w-full h-full object-cover" />
+                        <button type="button" @click="removeCover"
+                            class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center text-xs hover:bg-black/70">x</button>
                     </div>
-                    <button
-                        v-if="isOwner"
-                        @click="showForm = !showForm"
-                        class="px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition-colors"
-                    >
-                        + New Course
+                    <label class="flex items-center gap-2 w-fit cursor-pointer px-3 py-1.5 border border-gray-300 rounded-lg text-xs text-gray-600 hover:bg-gray-50 transition-colors">
+                        <svg class="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                        {{ coverPreview ? 'Change image' : 'Upload cover' }}
+                        <input ref="coverInput" type="file" accept="image/*" class="hidden" @change="onCoverChange" />
+                    </label>
+                    <p class="text-xs text-gray-400 mt-1">Recommended: 1280 x 720 px</p>
+                </div>
+                <div class="flex gap-2 justify-end">
+                    <button type="button" @click="showForm = false; removeCover()" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">Cancel</button>
+                    <button type="submit" :disabled="courseForm.processing"
+                        class="px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-50">
+                        {{ courseForm.processing ? 'Creating...' : 'Create Course' }}
                     </button>
                 </div>
+            </form>
+        </div>
 
-                <!-- New course form -->
-                <div v-if="showForm" class="bg-white border border-indigo-200 rounded-2xl p-5 shadow-sm mb-6">
-                    <h2 class="text-sm font-bold text-gray-900 mb-3">New Course</h2>
-                    <form @submit.prevent="createCourse">
-                        <input
-                            v-model="courseForm.title"
-                            type="text"
-                            placeholder="Course title"
-                            required
-                            class="w-full px-3.5 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-2"
-                        />
-                        <textarea
-                            v-model="courseForm.description"
-                            rows="2"
-                            placeholder="Description (optional)"
-                            class="w-full px-3.5 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none mb-3"
-                        />
-                        <div class="flex gap-2 justify-end">
-                            <button type="button" @click="showForm = false" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">Cancel</button>
-                            <button
-                                type="submit"
-                                :disabled="courseForm.processing"
-                                class="px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-50"
-                            >
-                                {{ courseForm.processing ? 'Creating...' : 'Create Course' }}
-                            </button>
-                        </div>
-                    </form>
+        <!-- Course grid (Skool-style, full-width 3-col) -->
+        <div v-if="courses.length" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <Link
+                v-for="course in courses"
+                :key="course.id"
+                :href="`/communities/${community.slug}/classroom/courses/${course.id}`"
+                class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all group border border-gray-100"
+            >
+                <!-- Cover image -->
+                <div class="relative aspect-video bg-gray-900 overflow-hidden">
+                    <img
+                        v-if="course.cover_image"
+                        :src="course.cover_image"
+                        :alt="course.title"
+                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div v-else class="w-full h-full bg-gradient-to-br from-indigo-600 to-purple-700 flex items-center justify-center">
+                        <span class="text-4xl font-black text-white/20 select-none">{{ course.title.charAt(0).toUpperCase() }}</span>
+                    </div>
+                    <!-- Progress badge -->
+                    <div v-if="course.total > 0 && course.completed > 0"
+                        class="absolute top-2.5 right-2.5 px-2 py-0.5 bg-black/60 text-white text-xs font-semibold rounded-full backdrop-blur-sm">
+                        {{ Math.round(course.completed / course.total * 100) }}%
+                    </div>
                 </div>
 
-                <!-- Course grid -->
-                <div v-if="courses.length" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Link
-                        v-for="course in courses"
-                        :key="course.id"
-                        :href="`/communities/${community.slug}/classroom/courses/${course.id}`"
-                        class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:border-indigo-200 hover:shadow-md transition-all group"
-                    >
-                        <h3 class="font-bold text-gray-900 mb-1 group-hover:text-indigo-700 transition-colors">{{ course.title }}</h3>
-                        <p v-if="course.description" class="text-sm text-gray-500 mb-4 line-clamp-2">{{ course.description }}</p>
-                        <div v-else class="mb-4" />
+                <!-- Info -->
+                <div class="p-4">
+                    <h3 class="font-bold text-gray-900 mb-1 group-hover:text-indigo-700 transition-colors line-clamp-1">{{ course.title }}</h3>
+                    <p v-if="course.description" class="text-sm text-gray-500 mb-3 line-clamp-2 leading-relaxed">{{ course.description }}</p>
+                    <div v-else class="mb-3" />
 
-                        <div class="flex items-center justify-between text-xs text-gray-400 mb-2">
-                            <span>{{ course.total }} lesson{{ course.total !== 1 ? 's' : '' }}</span>
-                            <span v-if="course.total > 0">{{ course.completed }}/{{ course.total }} done</span>
-                        </div>
-
-                        <!-- Progress bar -->
-                        <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <!-- Progress bar -->
+                    <div class="flex items-center gap-2">
+                        <div class="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                             <div
                                 class="h-full bg-indigo-500 rounded-full transition-all"
                                 :style="{ width: course.total > 0 ? `${Math.round(course.completed / course.total * 100)}%` : '0%' }"
                             />
                         </div>
-                    </Link>
-                </div>
-
-                <!-- Empty state -->
-                <div v-else class="bg-white border border-gray-200 rounded-2xl p-16 text-center shadow-sm">
-                    <div class="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-4">
-                        <span class="text-3xl">🎓</span>
-                    </div>
-                    <p class="text-sm font-medium text-gray-700 mb-1">No courses yet</p>
-                    <p class="text-xs text-gray-400">{{ isOwner ? 'Create your first course to get started.' : "The owner hasn't added any courses yet." }}</p>
-                </div>
-            </div>
-
-            <!-- Right sidebar -->
-            <div class="w-72 shrink-0">
-                <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
-                    <div class="h-32 bg-gray-900 flex items-center justify-center overflow-hidden">
-                        <img
-                            v-if="community.cover_image"
-                            :src="community.cover_image"
-                            :alt="community.name"
-                            class="w-full h-full object-cover"
-                        />
-                        <span v-else class="text-3xl font-black text-white opacity-20">
-                            {{ community.name.charAt(0).toUpperCase() }}
+                        <span class="text-xs text-gray-400 shrink-0">
+                            {{ course.total > 0 ? `${Math.round(course.completed / course.total * 100)}%` : '0%' }}
                         </span>
                     </div>
-
-                    <div class="p-4">
-                        <h2 class="font-bold text-gray-900 text-sm">{{ community.name }}</h2>
-                        <p class="text-xs text-gray-400 mt-0.5 mb-3">curzzo.com/communities/{{ community.slug }}</p>
-
-                        <div class="flex justify-around text-center border-t border-gray-100 pt-3 mb-4">
-                            <div>
-                                <p class="text-sm font-bold text-gray-900">{{ community.members_count ?? 0 }}</p>
-                                <p class="text-xs text-gray-400">Members</p>
-                            </div>
-                            <div>
-                                <p class="text-sm font-bold text-gray-900">0</p>
-                                <p class="text-xs text-gray-400">Online</p>
-                            </div>
-                        </div>
-
-                        <button
-                            v-if="$page.props.auth?.user"
-                            @click="showInviteModal = true"
-                            class="w-full py-2 text-sm font-semibold border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                            Invite People
-                        </button>
-                    </div>
                 </div>
+            </Link>
+        </div>
+
+        <!-- Empty state -->
+        <div v-else class="bg-white border border-gray-200 rounded-2xl p-16 text-center shadow-sm">
+            <div class="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-4">
+                <span class="text-3xl">🎓</span>
             </div>
+            <p class="text-sm font-medium text-gray-700 mb-1">No courses yet</p>
+            <p class="text-xs text-gray-400">{{ isOwner ? 'Create your first course to get started.' : "The owner hasn't added any courses yet." }}</p>
         </div>
 
         <InviteModal
             :show="showInviteModal"
             :community-name="community.name"
+            :community-slug="community.slug"
             :invite-url="inviteUrl"
             @close="showInviteModal = false"
         />
@@ -155,6 +143,8 @@ const page     = usePage();
 const isOwner  = props.community.owner_id === page.props.auth?.user?.id;
 const showForm = ref(false);
 const showInviteModal = ref(false);
+const coverPreview = ref(null);
+const coverInput   = ref(null);
 
 const inviteUrl = computed(() =>
     props.affiliate?.code
@@ -162,12 +152,27 @@ const inviteUrl = computed(() =>
         : `${window.location.origin}/communities/${props.community.slug}`
 );
 
-const courseForm = useForm({ title: '', description: '' });
+const courseForm = useForm({ title: '', description: '', cover_image: null });
+
+function onCoverChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    courseForm.cover_image = file;
+    coverPreview.value = URL.createObjectURL(file);
+}
+
+function removeCover() {
+    courseForm.cover_image = null;
+    coverPreview.value = null;
+    if (coverInput.value) coverInput.value.value = '';
+}
 
 function createCourse() {
     courseForm.post(`/communities/${props.community.slug}/classroom/courses`, {
+        forceFormData: true,
         onSuccess: () => {
             courseForm.reset();
+            removeCover();
             showForm.value = false;
         },
     });

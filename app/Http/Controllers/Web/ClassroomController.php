@@ -37,6 +37,7 @@ class ClassroomController extends Controller
                 'id'          => $course->id,
                 'title'       => $course->title,
                 'description' => $course->description,
+                'cover_image' => $course->cover_image,
                 'position'    => $course->position,
                 'total'       => $total,
                 'completed'   => $completed,
@@ -53,9 +54,14 @@ class ClassroomController extends Controller
         abort_unless($request->user()->id === $community->owner_id, 403);
 
         $data = $request->validate([
-            'title'       => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:2000'],
+            'title'        => ['required', 'string', 'max:255'],
+            'description'  => ['nullable', 'string', 'max:2000'],
+            'cover_image'  => ['nullable', 'image', 'max:5120'],
         ]);
+
+        if ($request->hasFile('cover_image')) {
+            $data['cover_image'] = asset('storage/' . $request->file('cover_image')->store('course-covers', 'public'));
+        }
 
         $position = $community->courses()->max('position') + 1;
         $community->courses()->create(array_merge($data, ['position' => $position]));

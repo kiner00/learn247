@@ -12,7 +12,7 @@ class Course extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['community_id', 'title', 'description', 'position'];
+    protected $fillable = ['community_id', 'title', 'description', 'cover_image', 'position'];
 
     public function community(): BelongsTo
     {
