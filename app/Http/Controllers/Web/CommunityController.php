@@ -21,6 +21,7 @@ use App\Models\Subscription;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -121,6 +122,25 @@ class CommunityController extends Controller
 
         $membership  = $userId ? $community->members()->where('user_id', $userId)->first() : null;
         $affiliate   = $userId ? $community->affiliates()->where('user_id', $userId)->first() : null;
+
+        // Auto-create affiliate for existing paid subscribers who don't have one yet
+        if (! $affiliate && $userId && $community->hasAffiliateProgram()) {
+            $isActiveSubscriber = Subscription::where('user_id', $userId)
+                ->where('community_id', $community->id)
+                ->where('status', Subscription::STATUS_ACTIVE)
+                ->where('expires_at', '>', now())
+                ->exists();
+
+            if ($isActiveSubscriber) {
+                do { $code = Str::random(12); } while (Affiliate::where('code', $code)->exists());
+                $affiliate = Affiliate::create([
+                    'community_id' => $community->id,
+                    'user_id'      => $userId,
+                    'code'         => $code,
+                    'status'       => Affiliate::STATUS_ACTIVE,
+                ]);
+            }
+        }
         $adminCount  = $community->members()->where('role', CommunityMember::ROLE_ADMIN)->count();
 
         // Top 5 members for leaderboard sidebar widget
