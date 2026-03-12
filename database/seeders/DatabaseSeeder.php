@@ -12,5 +12,12 @@ class DatabaseSeeder extends Seeder
             BadgeSeeder::class,
             SuperAdminSeeder::class,
         ]);
+
+        if (app()->isLocal()) {
+            $this->call([
+                DevSeeder::class,
+                PayoutTestSeeder::class,
+            ]);
+        }
     }
 }
