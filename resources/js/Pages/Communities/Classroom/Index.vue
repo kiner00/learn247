@@ -164,7 +164,7 @@
         </Teleport>
 
         <!-- Empty state -->
-        <div v-else class="bg-white border border-gray-200 rounded-2xl p-16 text-center shadow-sm">
+        <div v-if="!courses.length" class="bg-white border border-gray-200 rounded-2xl p-16 text-center shadow-sm">
             <div class="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-4">
                 <span class="text-3xl">🎓</span>
             </div>
