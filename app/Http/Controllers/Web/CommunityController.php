@@ -472,6 +472,15 @@ class CommunityController extends Controller
         $community->load('owner')->loadCount('members');
         $affiliate = auth()->id() ? $community->affiliates()->where('user_id', auth()->id())->first() : null;
 
+        $recentMembers = $community->members()
+            ->with('user:id,name,avatar')
+            ->latest()
+            ->take(8)
+            ->get()
+            ->map(fn ($m) => ['name' => $m->user?->name, 'avatar' => $m->user?->avatar])
+            ->filter(fn ($m) => $m['name'])
+            ->values();
+
         // Resolve who invited this visitor (from ref_code cookie)
         $invitedBy = null;
         $refCode = $request->cookie('ref_code');
@@ -494,7 +503,7 @@ class CommunityController extends Controller
             ? $community->members()->where('user_id', auth()->id())->first()
             : null;
 
-        return Inertia::render('Communities/About', compact('community', 'affiliate', 'invitedBy', 'membership'));
+        return Inertia::render('Communities/About', compact('community', 'affiliate', 'invitedBy', 'membership', 'recentMembers'));
     }
 
     private function reactionCounts(\Illuminate\Support\Collection $likes): array

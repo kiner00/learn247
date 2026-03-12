@@ -84,56 +84,86 @@
 
             </div>
 
-            <!-- Right sidebar -->
+            <!-- Right sidebar (Skool-style) -->
             <div class="w-72 shrink-0">
-                <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
-                    <div class="h-32 bg-gray-900 flex items-center justify-center overflow-hidden">
+                <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+
+                    <!-- Community image: avatar if set, else banner -->
+                    <div class="relative overflow-hidden bg-gray-900" style="aspect-ratio: 4/3;">
                         <img
-                            v-if="community.cover_image"
-                            :src="community.cover_image"
+                            v-if="community.avatar || community.cover_image"
+                            :src="community.avatar || community.cover_image"
                             :alt="community.name"
                             class="w-full h-full object-cover"
                         />
-                        <span v-else class="text-3xl font-black text-white opacity-20">
-                            {{ community.name.charAt(0).toUpperCase() }}
-                        </span>
-                    </div>
-                    <!-- Community avatar overlapping the banner -->
-                    <div v-if="community.avatar" class="-mt-8 ml-4 mb-1 w-16 h-16 rounded-full border-4 border-white overflow-hidden shadow-md shrink-0">
-                        <img :src="community.avatar" :alt="community.name" class="w-full h-full object-cover" />
+                        <div v-else class="w-full h-full bg-linear-to-br from-indigo-500 to-purple-700 flex items-center justify-center">
+                            <span class="text-4xl font-black text-white opacity-40">{{ community.name.charAt(0).toUpperCase() }}</span>
+                        </div>
                     </div>
 
                     <div class="p-4">
-                        <h2 class="font-bold text-gray-900 text-sm">{{ community.name }}</h2>
-                        <p class="text-xs text-gray-400 mt-0.5">curzzo.com/communities/{{ community.slug }}</p>
-                        <p v-if="community.description" class="text-xs text-gray-500 mt-2 mb-1 line-clamp-2">{{ community.description }}</p>
+                        <h2 class="font-bold text-gray-900 text-sm leading-tight">{{ community.name }}</h2>
+                        <p class="text-xs text-gray-400 mt-0.5 mb-3">curzzo.com/communities/{{ community.slug }}</p>
 
-                        <div class="flex justify-around text-center border-t border-gray-100 pt-3 mb-4">
-                            <div>
+                        <p v-if="community.description" class="text-xs text-gray-500 leading-relaxed mb-3 line-clamp-3">{{ community.description }}</p>
+
+                        <!-- Stats -->
+                        <div class="flex gap-4 text-center py-3 border-t border-b border-gray-100 mb-3">
+                            <div class="flex-1">
                                 <p class="text-sm font-bold text-gray-900">{{ formatCount(community.members_count) }}</p>
                                 <p class="text-xs text-gray-400">Members</p>
                             </div>
-                            <div>
+                            <div class="flex-1">
                                 <p class="text-sm font-bold text-gray-900">0</p>
                                 <p class="text-xs text-gray-400">Online</p>
                             </div>
+                            <div v-if="community.owner" class="flex-1">
+                                <div class="flex justify-center mb-0.5">
+                                    <div class="w-5 h-5 rounded-full bg-indigo-100 overflow-hidden flex items-center justify-center">
+                                        <img v-if="community.owner.avatar" :src="community.owner.avatar" class="w-full h-full object-cover" />
+                                        <span v-else class="text-[9px] font-bold text-indigo-600">{{ community.owner.name.charAt(0) }}</span>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-gray-400">Admin</p>
+                            </div>
                         </div>
 
-                        <!-- Join button -->
+                        <!-- Recent member avatars -->
+                        <div v-if="recentMembers.length" class="flex flex-wrap gap-1 mb-3">
+                            <div
+                                v-for="(member, i) in recentMembers.slice(0, 8)"
+                                :key="i"
+                                class="w-7 h-7 rounded-full bg-indigo-100 overflow-hidden border-2 border-white shadow-sm shrink-0"
+                                :title="member.name"
+                            >
+                                <img v-if="member.avatar" :src="member.avatar" class="w-full h-full object-cover" />
+                                <div v-else class="w-full h-full flex items-center justify-center text-[9px] font-bold text-indigo-600">
+                                    {{ member.name.charAt(0).toUpperCase() }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Join / Invite button -->
                         <button
                             v-if="invitedBy && !$page.props.auth?.user"
                             @click="showJoinModal = true"
-                            class="w-full py-3 bg-amber-400 hover:bg-amber-500 text-gray-900 text-sm font-black rounded-xl tracking-wide uppercase transition-colors shadow-sm mb-2"
+                            class="w-full py-3 bg-amber-400 hover:bg-amber-500 text-gray-900 text-sm font-black rounded-xl tracking-wide uppercase transition-colors shadow-sm"
                         >
                             {{ community.price > 0 ? `Join · ₱${Number(community.price).toLocaleString()}/mo` : 'Join Group' }}
                         </button>
-
                         <button
                             v-else-if="membership"
                             @click="showInviteModal = true"
-                            class="w-full py-2 text-sm font-semibold border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors"
+                            class="w-full py-2.5 bg-amber-400 hover:bg-amber-500 text-gray-900 text-sm font-bold rounded-xl transition-colors"
                         >
                             Invite People
+                        </button>
+                        <button
+                            v-else-if="!$page.props.auth?.user"
+                            @click="showJoinModal = true"
+                            class="w-full py-3 bg-amber-400 hover:bg-amber-500 text-gray-900 text-sm font-black rounded-xl tracking-wide uppercase transition-colors shadow-sm"
+                        >
+                            {{ community.price > 0 ? `Join · ₱${Number(community.price).toLocaleString()}/mo` : 'Join Group' }}
                         </button>
                     </div>
                 </div>
@@ -281,10 +311,11 @@ import CommunityTabs from '@/Components/CommunityTabs.vue';
 import InviteModal from '@/Components/InviteModal.vue';
 
 const props = defineProps({
-    community:  Object,
-    affiliate:  Object,
-    invitedBy:  Object,
-    membership: Object,
+    community:     Object,
+    affiliate:     Object,
+    invitedBy:     Object,
+    membership:    Object,
+    recentMembers: { type: Array, default: () => [] },
 });
 
 const showInviteModal = ref(false);
