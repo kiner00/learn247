@@ -170,6 +170,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/communities/{community}/classroom/courses', [ClassroomController::class, 'storeCourse'])->name('communities.classroom.courses.store');
         Route::get('/communities/{community}/classroom/courses/{course}', [ClassroomController::class, 'showCourse'])->name('communities.classroom.courses.show');
         Route::post('/communities/{community}/classroom/courses/{course}/modules', [ClassroomController::class, 'storeModule'])->name('communities.classroom.modules.store');
+        Route::match(['patch', 'post'], '/communities/{community}/classroom/courses/{course}/modules/{module}', [ClassroomController::class, 'updateModule'])->name('communities.classroom.modules.update');
         Route::post('/communities/{community}/classroom/courses/{course}/modules/{module}/lessons', [ClassroomController::class, 'storeLesson'])->name('communities.classroom.lessons.store');
         Route::post('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/complete', [ClassroomController::class, 'completeLesson'])->name('communities.classroom.lessons.complete');
         Route::match(['patch', 'post'], '/communities/{community}/classroom/courses/{course}/modules/{module}/lessons/{lesson}', [ClassroomController::class, 'updateLesson'])->name('communities.classroom.lessons.update');

@@ -64,16 +64,42 @@
                     :key="mod.id"
                     class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm"
                 >
-                    <button
-                        @click="toggleModule(mod.id)"
-                        class="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 transition-colors"
-                    >
-                        <span class="text-sm font-semibold text-gray-800">{{ mod.title }}</span>
-                        <span class="text-xs text-gray-400">
-                            {{ completedInModule(mod) }}/{{ mod.lessons.length }}
-                            <span class="ml-1">{{ openModules.has(mod.id) ? '▲' : '▼' }}</span>
-                        </span>
-                    </button>
+                    <!-- Module header: editable for owner -->
+                    <div class="flex items-center justify-between px-4 py-3">
+                        <div v-if="isOwner && editingModuleId === mod.id" class="flex-1 flex items-center gap-1.5 mr-2">
+                            <input
+                                v-model="moduleEditTitle"
+                                type="text"
+                                @keydown.enter.prevent="saveModuleTitle(mod)"
+                                @keydown.escape="editingModuleId = null"
+                                class="flex-1 px-2 py-1 border border-indigo-400 rounded-lg text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                autofocus
+                            />
+                            <button @click="saveModuleTitle(mod)" class="text-indigo-600 hover:text-indigo-800 text-xs font-bold px-1.5">✓</button>
+                            <button @click="editingModuleId = null" class="text-gray-400 hover:text-gray-600 text-xs px-1">✕</button>
+                        </div>
+                        <button
+                            v-else
+                            @click="toggleModule(mod.id)"
+                            class="flex-1 text-left text-sm font-semibold text-gray-800 hover:text-indigo-700 transition-colors"
+                        >{{ mod.title }}</button>
+                        <div class="flex items-center gap-1.5 shrink-0 ml-2">
+                            <button
+                                v-if="isOwner && editingModuleId !== mod.id"
+                                @click.stop="startEditModule(mod)"
+                                class="text-gray-300 hover:text-indigo-500 transition-colors"
+                                title="Edit module title"
+                            >
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6.293-6.293a1 1 0 011.414 0l2.586 2.586a1 1 0 010 1.414L13 17H9v-4z"/>
+                                </svg>
+                            </button>
+                            <span class="text-xs text-gray-400" @click="toggleModule(mod.id)">
+                                {{ completedInModule(mod) }}/{{ mod.lessons.length }}
+                                <span class="ml-1">{{ openModules.has(mod.id) ? '▲' : '▼' }}</span>
+                            </span>
+                        </div>
+                    </div>
 
                     <div v-if="openModules.has(mod.id)" class="border-t border-gray-100">
                         <button
@@ -545,6 +571,30 @@ function markComplete() {
             },
         }
     );
+}
+
+// ─── Edit module title ─────────────────────────────────────────────────────────
+const editingModuleId  = ref(null);
+const moduleEditTitle  = ref('');
+const moduleEditForm   = useForm({ title: '' });
+
+function startEditModule(mod) {
+    editingModuleId.value = mod.id;
+    moduleEditTitle.value = mod.title;
+}
+
+function saveModuleTitle(mod) {
+    if (!moduleEditTitle.value.trim()) return;
+    moduleEditForm.title = moduleEditTitle.value.trim();
+    moduleEditForm
+        .transform((data) => ({ ...data, _method: 'PATCH' }))
+        .post(
+            `/communities/${props.community.slug}/classroom/courses/${props.course.id}/modules/${mod.id}`,
+            {
+                preserveScroll: true,
+                onSuccess: () => { editingModuleId.value = null; },
+            }
+        );
 }
 
 // ─── Add module ────────────────────────────────────────────────────────────────

@@ -120,6 +120,16 @@ class ClassroomController extends Controller
         return back()->with('success', 'Module added!');
     }
 
+    public function updateModule(Request $request, Community $community, Course $course, CourseModule $module): RedirectResponse
+    {
+        abort_unless($request->user()->id === $community->owner_id, 403);
+
+        $data = $request->validate(['title' => ['required', 'string', 'max:255']]);
+        $module->update($data);
+
+        return back()->with('success', 'Module updated!');
+    }
+
     public function storeLesson(Request $request, Community $community, Course $course, CourseModule $module): RedirectResponse
     {
         abort_unless($request->user()->id === $community->owner_id, 403);
