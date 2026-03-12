@@ -62,7 +62,9 @@ class HandleXenditWebhook
         }
 
         // ── 4. Persist + sync inside a transaction ─────────────────────────────
-        DB::transaction(function () use ($subscription, $payload, $eventId, $status) {
+        $guestMailData = null;
+
+        DB::transaction(function () use ($subscription, $payload, $eventId, $status, &$guestMailData) {
             $newSubStatus = $this->mapSubscriptionStatus($status);
 
             // Extend from existing expires_at so early renewals don't lose remaining days
@@ -123,7 +125,7 @@ class HandleXenditWebhook
                 }
             }
 
-            // Send temporary password email for guest checkouts
+            // Prepare guest password email data (sent after transaction to avoid mail failures rolling back payment)
             if ($payment && $paymentStatus === Payment::STATUS_PAID) {
                 $user = $subscription->user;
                 if ($user->needs_password_setup) {
@@ -135,14 +137,30 @@ class HandleXenditWebhook
                         'password' => $tempPassword,
                     ]);
 
-                    Mail::to($user->email)->send(
-                        new TempPasswordMail($user, $tempPassword, $subscription->community)
-                    );
+                    $guestMailData = [
+                        'user'      => $user,
+                        'password'  => $tempPassword,
+                        'community' => $subscription->community,
+                    ];
                 }
             }
 
             $this->syncMembership->execute($subscription->fresh());
         });
+
+        // ── 5. Send email outside transaction so mail errors never roll back payment ──
+        if ($guestMailData) {
+            try {
+                Mail::to($guestMailData['user']->email)->send(
+                    new TempPasswordMail($guestMailData['user'], $guestMailData['password'], $guestMailData['community'])
+                );
+            } catch (\Throwable $e) {
+                Log::error('Failed to send guest temp password email', [
+                    'email' => $guestMailData['user']->email,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
     }
 
     private function mapSubscriptionStatus(string $status): string
