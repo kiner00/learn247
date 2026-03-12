@@ -266,6 +266,35 @@ class CommunityController extends Controller
         return back()->with('success', 'Community updated.');
     }
 
+    public function addGalleryImage(Request $request, Community $community): RedirectResponse
+    {
+        $this->authorize('update', $community);
+        $request->validate(['image' => ['required', 'image', 'max:5120']]);
+
+        $path    = $request->file('image')->store('community-gallery', 'public');
+        $url     = Storage::url($path);
+        $gallery = $community->gallery_images ?? [];
+        $gallery[] = $url;
+        $community->update(['gallery_images' => $gallery]);
+
+        return back()->with('success', 'Image added!');
+    }
+
+    public function removeGalleryImage(Request $request, Community $community, int $index): RedirectResponse
+    {
+        $this->authorize('update', $community);
+
+        $gallery = $community->gallery_images ?? [];
+        if (isset($gallery[$index])) {
+            $path = ltrim(str_replace('/storage/', '', $gallery[$index]), '/');
+            Storage::disk('public')->delete($path);
+            array_splice($gallery, $index, 1);
+            $community->update(['gallery_images' => array_values($gallery)]);
+        }
+
+        return back()->with('success', 'Image removed!');
+    }
+
     public function updateLevelPerks(Request $request, Community $community): RedirectResponse
     {
         $this->authorize('update', $community);

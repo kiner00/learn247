@@ -30,6 +30,18 @@
                     <div v-else class="w-full h-full bg-linear-to-br from-indigo-500 to-purple-700" />
                 </div>
 
+                <!-- Gallery strip -->
+                <div v-if="community.gallery_images?.length" class="flex gap-2 mb-6 overflow-x-auto pb-1">
+                    <div
+                        v-for="(img, i) in community.gallery_images"
+                        :key="i"
+                        class="w-24 h-16 rounded-xl overflow-hidden shrink-0 cursor-pointer border border-gray-200 hover:opacity-90 transition-opacity"
+                        @click="lightboxImg = img"
+                    >
+                        <img :src="img" class="w-full h-full object-cover" />
+                    </div>
+                </div>
+
                 <!-- Main card -->
                 <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm mb-4">
                     <div class="p-6">
@@ -294,6 +306,13 @@
             </Transition>
         </Teleport>
 
+        <!-- Lightbox -->
+        <Teleport to="body">
+            <div v-if="lightboxImg" class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" @click="lightboxImg = null">
+                <img :src="lightboxImg" class="max-w-full max-h-full rounded-xl shadow-2xl" @click.stop />
+            </div>
+        </Teleport>
+
         <InviteModal
             :show="showInviteModal"
             :community-name="community.name"
@@ -320,6 +339,7 @@ const props = defineProps({
 
 const showInviteModal = ref(false);
 const showJoinModal   = ref(false);
+const lightboxImg     = ref(null);
 
 const inviteUrl = computed(() =>
     props.affiliate?.code

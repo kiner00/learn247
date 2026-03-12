@@ -14,7 +14,7 @@ class Community extends Model
 
     protected $fillable = [
         'name', 'slug', 'owner_id', 'description', 'category',
-        'avatar', 'cover_image', 'is_private', 'price', 'currency',
+        'avatar', 'cover_image', 'gallery_images', 'is_private', 'price', 'currency',
         'affiliate_commission_rate',
     ];
 
@@ -24,6 +24,7 @@ class Community extends Model
             'is_private'                => 'boolean',
             'price'                     => 'decimal:2',
             'affiliate_commission_rate' => 'integer',
+            'gallery_images'            => 'array',
         ];
     }
 

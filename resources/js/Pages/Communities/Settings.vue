@@ -201,6 +201,48 @@
                 </form>
             </div>
 
+            <!-- Gallery Images -->
+            <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
+                <h2 class="text-base font-semibold text-gray-900 mb-1">Gallery</h2>
+                <p class="text-sm text-gray-500 mb-4">Add up to 8 images shown as a thumbnail strip on your About page.</p>
+
+                <!-- Existing gallery -->
+                <div v-if="community.gallery_images?.length" class="flex flex-wrap gap-2 mb-4">
+                    <div
+                        v-for="(img, i) in community.gallery_images"
+                        :key="i"
+                        class="relative w-24 h-16 rounded-lg overflow-hidden border border-gray-200 group"
+                    >
+                        <img :src="img" class="w-full h-full object-cover" />
+                        <button
+                            type="button"
+                            @click="removeGalleryImage(i)"
+                            class="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs"
+                        >✕</button>
+                    </div>
+                </div>
+
+                <!-- Upload new -->
+                <form v-if="!community.gallery_images || community.gallery_images.length < 8" @submit.prevent="uploadGalleryImage">
+                    <div class="flex items-center gap-3">
+                        <label class="flex items-center gap-2 cursor-pointer px-3.5 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                            {{ galleryFile ? galleryFile.name : 'Choose image' }}
+                            <input type="file" accept="image/*" class="hidden" @change="onGalleryFileChange" />
+                        </label>
+                        <button
+                            type="submit"
+                            :disabled="!galleryFile || galleryUploading"
+                            class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                        >
+                            {{ galleryUploading ? 'Uploading...' : 'Add image' }}
+                        </button>
+                    </div>
+                    <p class="mt-1 text-xs text-gray-400">JPG, PNG, WebP — max 5 MB · {{ community.gallery_images?.length ?? 0 }}/8 images</p>
+                </form>
+                <p v-else class="text-xs text-amber-600">Maximum 8 images reached. Remove one to add more.</p>
+            </div>
+
             <!-- Affiliate Program -->
             <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
                 <div class="flex items-center justify-between mb-1">
@@ -568,6 +610,33 @@ function sendCsvInvite() {
             setTimeout(() => (inviteSent.value = false), 4000);
         },
     });
+}
+
+// ─── Gallery ──────────────────────────────────────────────────────────────────
+const galleryFile      = ref(null);
+const galleryUploading = ref(false);
+const galleryForm      = useForm({ image: null });
+
+function onGalleryFileChange(e) {
+    galleryFile.value = e.target.files[0] ?? null;
+    galleryForm.image = galleryFile.value;
+}
+
+function uploadGalleryImage() {
+    if (!galleryFile.value) return;
+    galleryUploading.value = true;
+    galleryForm.post(`/communities/${props.community.slug}/gallery`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            galleryFile.value = null;
+            galleryForm.reset();
+        },
+        onFinish: () => { galleryUploading.value = false; },
+    });
+}
+
+function removeGalleryImage(index) {
+    router.delete(`/communities/${props.community.slug}/gallery/${index}`, { preserveScroll: true });
 }
 
 function deleteCommunity() {

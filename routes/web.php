@@ -149,6 +149,8 @@ Route::middleware('auth')->group(function () {
     // Owner-only mutations
     Route::match(['patch', 'post'], '/communities/{community}', [CommunityController::class, 'update'])->name('communities.update');
     Route::patch('/communities/{community}/level-perks', [CommunityController::class, 'updateLevelPerks'])->name('communities.level-perks');
+    Route::post('/communities/{community}/gallery', [CommunityController::class, 'addGalleryImage'])->name('communities.gallery.add');
+    Route::delete('/communities/{community}/gallery/{index}', [CommunityController::class, 'removeGalleryImage'])->name('communities.gallery.remove');
     Route::delete('/communities/{community}', [CommunityController::class, 'destroy'])->name('communities.destroy');
     Route::post('/communities/{community}/announce', [CommunityController::class, 'announce'])->name('communities.announce');
 
