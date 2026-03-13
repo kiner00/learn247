@@ -88,7 +88,8 @@
                                     </button>
                                 </td>
                                 <td class="px-5 py-4 text-right">
-                                    <span v-if="a.has_pending_request" class="text-xs text-amber-600 font-medium">Pending review</span>
+                                    <span v-if="a.payout_request_status === 'approved'" class="text-xs text-green-600 font-medium">Approved</span>
+                                    <span v-else-if="a.payout_request_status === 'pending'" class="text-xs text-amber-600 font-medium">Pending review</span>
                                     <button
                                         v-else-if="a.eligible_amount > 0"
                                         @click="openRequestModal(a)"
@@ -366,7 +367,7 @@ const payoutForm = reactive({
 });
 
 const totalEligible = computed(() =>
-    props.affiliates.reduce((sum, a) => sum + (a.has_pending_request ? 0 : a.eligible_amount), 0)
+    props.affiliates.reduce((sum, a) => sum + (a.payout_request_status ? 0 : a.eligible_amount), 0)
 );
 
 const filteredConversions = computed(() =>

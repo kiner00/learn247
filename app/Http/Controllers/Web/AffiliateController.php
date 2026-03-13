@@ -27,11 +27,11 @@ class AffiliateController extends Controller
         $communityId = $request->get('community');
         $tab         = $request->get('tab', 'links');
 
-        $pendingRequestAffiliateIds = PayoutRequest::where('user_id', $user->id)
+        $activeRequestsByAffiliate = PayoutRequest::where('user_id', $user->id)
             ->where('type', PayoutRequest::TYPE_AFFILIATE)
             ->whereIn('status', [PayoutRequest::STATUS_PENDING, PayoutRequest::STATUS_APPROVED])
-            ->pluck('affiliate_id')
-            ->flip();
+            ->get()
+            ->keyBy('affiliate_id');
 
         $affiliates = Affiliate::where('user_id', $user->id)
             ->with('community')
@@ -45,8 +45,10 @@ class AffiliateController extends Controller
                 'total_earned'        => $a->total_earned,
                 'total_paid'          => $a->total_paid,
                 'pending_amount'      => $a->pendingAmount(),
-                'eligible_amount'     => PayoutRequestController::affiliateEligibility($a),
-                'has_pending_request' => $pendingRequestAffiliateIds->has($a->id),
+                'eligible_amount'        => PayoutRequestController::affiliateEligibility($a),
+                'payout_request_status' => $activeRequestsByAffiliate->has($a->id)
+                    ? $activeRequestsByAffiliate->get($a->id)->status
+                    : null,
                 'referral_url'        => url("/ref/{$a->code}"),
                 'community'           => [
                     'name' => $a->community->name,
