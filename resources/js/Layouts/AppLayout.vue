@@ -759,7 +759,7 @@ import { ref, computed, watch, watchEffect, onMounted, onBeforeUnmount, nextTick
 import { Link, usePage, useForm } from '@inertiajs/vue3';
 import { useCreateModal } from '@/composables/useCreateModal';
 
-const curzzoIcon = '/brand/ICON/CURZZO ICON MAIN.png';
+const curzzoIcon = '/brand/ICON/CURZZO LOGO WHIT BG ROUND.png';
 
 const props = defineProps({
     title:     String,
