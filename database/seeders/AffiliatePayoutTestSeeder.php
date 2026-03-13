@@ -69,9 +69,10 @@ class AffiliatePayoutTestSeeder extends Seeder
             $affiliateUser = User::firstOrCreate(
                 ['email' => $account['email']],
                 [
-                    'name'     => $account['name'],
-                    'username' => $account['username'],
-                    'password' => Hash::make('password'),
+                    'name'              => $account['name'],
+                    'username'          => $account['username'],
+                    'password'          => Hash::make('password'),
+                    'email_verified_at' => now(),
                 ]
             );
 
