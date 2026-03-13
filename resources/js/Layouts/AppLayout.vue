@@ -135,9 +135,9 @@
                                 : 'text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 border border-transparent'"
                             title="AI Assistant"
                         >
-                            <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
-                            </svg>
+                            <div class="w-5 h-5 rounded-full overflow-hidden shrink-0 bg-gray-100 ring-1 ring-indigo-200">
+                                <img src="/brand/ICON/CURZZO ICON MAIN.png" alt="Curzzo" class="w-full h-full object-cover" />
+                            </div>
                             <span class="hidden sm:inline">Curzzo</span>
                         </button>
                     </div><!-- end logo+switcher flex -->
@@ -651,27 +651,8 @@
                 <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between shrink-0">
                     <div class="flex items-center gap-2.5">
                         <!-- Curzzo avatar -->
-                        <div class="w-8 h-8 rounded-full bg-linear-to-br from-indigo-500 to-violet-600 flex items-center justify-center shrink-0 shadow-sm overflow-hidden">
-                            <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
-                                <!-- Hair -->
-                                <path d="M7 15 Q7 5 16 5 Q25 5 25 15 Q23 8 16 8 Q9 8 7 15Z" fill="rgba(255,255,255,0.92)"/>
-                                <!-- Face -->
-                                <ellipse cx="16" cy="19" rx="8.5" ry="9" fill="rgba(255,218,168,0.97)"/>
-                                <!-- Left ear -->
-                                <ellipse cx="7.5" cy="18" rx="1.8" ry="2.2" fill="rgba(245,200,145,0.95)"/>
-                                <!-- Right ear -->
-                                <ellipse cx="24.5" cy="18" rx="1.8" ry="2.2" fill="rgba(245,200,145,0.95)"/>
-                                <!-- Left eye -->
-                                <ellipse cx="13" cy="17" rx="1.4" ry="1.5" fill="#1e1b4b"/>
-                                <circle cx="13.5" cy="16.4" r="0.45" fill="white"/>
-                                <!-- Right eye -->
-                                <ellipse cx="19" cy="17" rx="1.4" ry="1.5" fill="#1e1b4b"/>
-                                <circle cx="19.5" cy="16.4" r="0.45" fill="white"/>
-                                <!-- Nose -->
-                                <path d="M15.2 19.5 Q16 20.8 16.8 19.5" stroke="rgba(160,100,50,0.4)" stroke-width="0.9" fill="none" stroke-linecap="round"/>
-                                <!-- Smile -->
-                                <path d="M12.5 22 Q16 25.5 19.5 22" stroke="#b45309" stroke-width="1.3" fill="none" stroke-linecap="round"/>
-                            </svg>
+                        <div class="w-8 h-8 rounded-full shrink-0 shadow-sm overflow-hidden bg-gray-100">
+                            <img src="/brand/ICON/CURZZO ICON MAIN.png" alt="Curzzo" class="w-full h-full object-cover" />
                         </div>
                         <div>
                             <p class="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight">Curzzo</p>
@@ -698,19 +679,8 @@
                 <!-- Messages -->
                 <div ref="aiScrollRef" class="flex-1 overflow-y-auto p-4 space-y-3">
                     <div v-if="!aiMessages.length && !aiLoading" class="flex flex-col items-center justify-center h-full text-center text-gray-400 gap-2">
-                        <div class="w-14 h-14 rounded-full bg-linear-to-br from-indigo-500 to-violet-600 shadow-md overflow-hidden">
-                            <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
-                                <path d="M7 15 Q7 5 16 5 Q25 5 25 15 Q23 8 16 8 Q9 8 7 15Z" fill="rgba(255,255,255,0.92)"/>
-                                <ellipse cx="16" cy="19" rx="8.5" ry="9" fill="rgba(255,218,168,0.97)"/>
-                                <ellipse cx="7.5" cy="18" rx="1.8" ry="2.2" fill="rgba(245,200,145,0.95)"/>
-                                <ellipse cx="24.5" cy="18" rx="1.8" ry="2.2" fill="rgba(245,200,145,0.95)"/>
-                                <ellipse cx="13" cy="17" rx="1.4" ry="1.5" fill="#1e1b4b"/>
-                                <circle cx="13.5" cy="16.4" r="0.45" fill="white"/>
-                                <ellipse cx="19" cy="17" rx="1.4" ry="1.5" fill="#1e1b4b"/>
-                                <circle cx="19.5" cy="16.4" r="0.45" fill="white"/>
-                                <path d="M15.2 19.5 Q16 20.8 16.8 19.5" stroke="rgba(160,100,50,0.4)" stroke-width="0.9" fill="none" stroke-linecap="round"/>
-                                <path d="M12.5 22 Q16 25.5 19.5 22" stroke="#b45309" stroke-width="1.3" fill="none" stroke-linecap="round"/>
-                            </svg>
+                        <div class="w-14 h-14 rounded-full shadow-md overflow-hidden bg-gray-100">
+                            <img src="/brand/ICON/CURZZO ICON MAIN.png" alt="Curzzo" class="w-full h-full object-cover" />
                         </div>
                         <div>
                             <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">Hi, I'm Curzzo!</p>
@@ -731,18 +701,8 @@
                         </div>
                         <!-- Curzzo message -->
                         <div v-else class="flex justify-start items-end gap-2">
-                            <div class="w-6 h-6 rounded-full bg-linear-to-br from-indigo-500 to-violet-600 shrink-0 mb-0.5 overflow-hidden">
-                                <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
-                                    <path d="M7 15 Q7 5 16 5 Q25 5 25 15 Q23 8 16 8 Q9 8 7 15Z" fill="rgba(255,255,255,0.92)"/>
-                                    <ellipse cx="16" cy="19" rx="8.5" ry="9" fill="rgba(255,218,168,0.97)"/>
-                                    <ellipse cx="7.5" cy="18" rx="1.8" ry="2.2" fill="rgba(245,200,145,0.95)"/>
-                                    <ellipse cx="24.5" cy="18" rx="1.8" ry="2.2" fill="rgba(245,200,145,0.95)"/>
-                                    <ellipse cx="13" cy="17" rx="1.4" ry="1.5" fill="#1e1b4b"/>
-                                    <circle cx="13.5" cy="16.4" r="0.45" fill="white"/>
-                                    <ellipse cx="19" cy="17" rx="1.4" ry="1.5" fill="#1e1b4b"/>
-                                    <circle cx="19.5" cy="16.4" r="0.45" fill="white"/>
-                                    <path d="M12.5 22 Q16 25.5 19.5 22" stroke="#b45309" stroke-width="1.3" fill="none" stroke-linecap="round"/>
-                                </svg>
+                            <div class="w-6 h-6 rounded-full shrink-0 mb-0.5 overflow-hidden bg-gray-100">
+                                <img src="/brand/ICON/CURZZO ICON MAIN.png" alt="Curzzo" class="w-full h-full object-cover" />
                             </div>
                             <div class="max-w-[75%] px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm rounded-2xl rounded-tl-sm whitespace-pre-wrap">
                                 {{ msg.content }}
@@ -752,10 +712,8 @@
 
                     <!-- Loading dots -->
                     <div v-if="aiLoading" class="flex justify-start items-end gap-2">
-                        <div class="w-6 h-6 rounded-full bg-linear-to-br from-indigo-500 to-violet-600 flex items-center justify-center shrink-0 mb-0.5">
-                            <svg class="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
-                            </svg>
+                        <div class="w-6 h-6 rounded-full shrink-0 mb-0.5 overflow-hidden bg-gray-100">
+                            <img src="/brand/ICON/CURZZO ICON MAIN.png" alt="Curzzo" class="w-full h-full object-cover" />
                         </div>
                         <div class="px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-2xl rounded-tl-sm">
                             <span class="flex gap-1">
