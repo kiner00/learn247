@@ -22,6 +22,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'active.member' => \App\Http\Middleware\EnsureActiveMembership::class,
         ]);
+
+        // Disable rate limiting in local environment (for k6 / stress testing)
+        if (app()->isLocal()) {
+            $middleware->api(remove: [
+                \Illuminate\Routing\Middleware\ThrottleRequests::class,
+                \Illuminate\Routing\Middleware\ThrottleRequestsWithRedis::class,
+            ]);
+        }
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
