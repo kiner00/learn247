@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Affiliate;
 use App\Models\AffiliateConversion;
 use App\Models\Community;
+use App\Models\PayoutRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -26,20 +27,28 @@ class AffiliateController extends Controller
         $communityId = $request->get('community');
         $tab         = $request->get('tab', 'links');
 
+        $pendingRequestAffiliateIds = PayoutRequest::where('user_id', $user->id)
+            ->where('type', PayoutRequest::TYPE_AFFILIATE)
+            ->where('status', PayoutRequest::STATUS_PENDING)
+            ->pluck('affiliate_id')
+            ->flip();
+
         $affiliates = Affiliate::where('user_id', $user->id)
             ->with('community')
             ->latest()
             ->get()
             ->map(fn ($a) => [
-                'id'             => $a->id,
-                'code'           => $a->code,
-                'status'         => $a->status,
-                'is_active'      => $a->isActive(),
-                'total_earned'   => $a->total_earned,
-                'total_paid'     => $a->total_paid,
-                'pending_amount' => $a->pendingAmount(),
-                'referral_url'   => url("/ref/{$a->code}"),
-                'community'      => [
+                'id'                  => $a->id,
+                'code'                => $a->code,
+                'status'              => $a->status,
+                'is_active'           => $a->isActive(),
+                'total_earned'        => $a->total_earned,
+                'total_paid'          => $a->total_paid,
+                'pending_amount'      => $a->pendingAmount(),
+                'eligible_amount'     => PayoutRequestController::affiliateEligibility($a),
+                'has_pending_request' => $pendingRequestAffiliateIds->has($a->id),
+                'referral_url'        => url("/ref/{$a->code}"),
+                'community'           => [
                     'name' => $a->community->name,
                     'slug' => $a->community->slug,
                 ],

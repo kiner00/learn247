@@ -42,6 +42,7 @@
                                 <th class="text-right px-5 py-3 font-semibold text-gray-600">Paid Out</th>
                                 <th class="text-right px-5 py-3 font-semibold text-gray-600">Pending</th>
                                 <th class="text-right px-5 py-3 font-semibold text-gray-600">Payout</th>
+                                <th class="text-right px-5 py-3 font-semibold text-gray-600"></th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
@@ -76,6 +77,17 @@
                                     <button @click="showPayoutModal = true" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
                                         {{ payoutMethod ? '✓ ' + payoutMethod.toUpperCase() : 'Set payout' }}
                                     </button>
+                                </td>
+                                <td class="px-5 py-4 text-right">
+                                    <span v-if="a.has_pending_request" class="text-xs text-amber-600 font-medium">Pending review</span>
+                                    <button
+                                        v-else-if="a.eligible_amount > 0"
+                                        @click="openRequestModal(a)"
+                                        class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                                    >
+                                        Request Payout
+                                    </button>
+                                    <span v-else class="text-xs text-gray-300">—</span>
                                 </td>
                             </tr>
                         </tbody>
@@ -225,7 +237,45 @@
             </div>
         </div>
 
-        <!-- Payout modal -->
+        <!-- Request Payout modal -->
+        <Teleport to="body">
+            <div v-if="showRequestModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" @click.self="showRequestModal = false">
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+                    <h3 class="text-base font-bold text-gray-900 mb-1">Request Payout</h3>
+                    <p class="text-xs text-gray-400 mb-4">
+                        {{ requestingAffiliate?.community.name }} · Eligible: ₱{{ fmt(requestingAffiliate?.eligible_amount) }}
+                    </p>
+
+                    <div v-if="!payoutMethod" class="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-4 text-sm text-amber-700">
+                        Please set your payout method first.
+                        <button @click="showRequestModal = false; showPayoutModal = true" class="underline ml-1 font-semibold">Set it now</button>
+                    </div>
+
+                    <form v-else @submit.prevent="submitRequest" class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Amount (₱)</label>
+                            <input
+                                v-model.number="requestForm.amount"
+                                type="number"
+                                step="0.01"
+                                :min="1"
+                                :max="requestingAffiliate?.eligible_amount"
+                                class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                            <p class="text-xs text-gray-400 mt-1">Max: ₱{{ fmt(requestingAffiliate?.eligible_amount) }}</p>
+                        </div>
+                        <div class="flex gap-3 pt-1">
+                            <button type="button" @click="showRequestModal = false" class="flex-1 py-2 border border-gray-200 text-gray-600 text-sm rounded-xl hover:bg-gray-50">Cancel</button>
+                            <button type="submit" :disabled="requestForm.processing" class="flex-1 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 disabled:opacity-50">
+                                Submit Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </Teleport>
+
+        <!-- Payout method modal -->
         <Teleport to="body">
             <div v-if="showPayoutModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" @click.self="showPayoutModal = false">
                 <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
@@ -293,10 +343,14 @@ const STATUS_FILTERS = [
     { value: 'paid',    label: 'Paid'    },
 ];
 
-const activeTab       = ref(props.tab ?? 'links');
-const statusFilter    = ref('all');
-const copied          = ref(null);
-const showPayoutModal = ref(false);
+const activeTab           = ref(props.tab ?? 'links');
+const statusFilter        = ref('all');
+const copied              = ref(null);
+const showPayoutModal     = ref(false);
+const showRequestModal    = ref(false);
+const requestingAffiliate = ref(null);
+const requestForm         = reactive({ amount: 0, processing: false });
+
 const payoutForm = reactive({
     payout_method:  props.payoutMethod  ?? 'gcash',
     payout_details: props.payoutDetails ?? '',
@@ -320,6 +374,21 @@ async function copy(url) {
     await navigator.clipboard.writeText(url);
     copied.value = url;
     setTimeout(() => { copied.value = null; }, 2000);
+}
+
+function openRequestModal(affiliate) {
+    requestingAffiliate.value = affiliate;
+    requestForm.amount = affiliate.eligible_amount;
+    showRequestModal.value = true;
+}
+
+function submitRequest() {
+    requestForm.processing = true;
+    router.post(`/affiliates/${requestingAffiliate.value.id}/payout-request`, { amount: requestForm.amount }, {
+        onSuccess: () => { showRequestModal.value = false; },
+        onFinish:  () => { requestForm.processing = false; },
+        preserveScroll: true,
+    });
 }
 
 function savePayout() {
