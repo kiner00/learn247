@@ -136,7 +136,7 @@
                             title="AI Assistant"
                         >
                             <div class="w-5 h-5 rounded-full overflow-hidden shrink-0 bg-gray-100 ring-1 ring-indigo-200">
-                                <img src="/brand/ICON/CURZZO ICON MAIN.png" alt="Curzzo" class="w-full h-full object-cover" />
+                                <img :src="curzzoIcon" alt="Curzzo" class="w-full h-full object-cover" />
                             </div>
                             <span class="hidden sm:inline">Curzzo</span>
                         </button>
@@ -652,7 +652,7 @@
                     <div class="flex items-center gap-2.5">
                         <!-- Curzzo avatar -->
                         <div class="w-8 h-8 rounded-full shrink-0 shadow-sm overflow-hidden bg-gray-100">
-                            <img src="/brand/ICON/CURZZO ICON MAIN.png" alt="Curzzo" class="w-full h-full object-cover" />
+                            <img :src="curzzoIcon" alt="Curzzo" class="w-full h-full object-cover" />
                         </div>
                         <div>
                             <p class="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight">Curzzo</p>
@@ -680,7 +680,7 @@
                 <div ref="aiScrollRef" class="flex-1 overflow-y-auto p-4 space-y-3">
                     <div v-if="!aiMessages.length && !aiLoading" class="flex flex-col items-center justify-center h-full text-center text-gray-400 gap-2">
                         <div class="w-14 h-14 rounded-full shadow-md overflow-hidden bg-gray-100">
-                            <img src="/brand/ICON/CURZZO ICON MAIN.png" alt="Curzzo" class="w-full h-full object-cover" />
+                            <img :src="curzzoIcon" alt="Curzzo" class="w-full h-full object-cover" />
                         </div>
                         <div>
                             <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">Hi, I'm Curzzo!</p>
@@ -702,7 +702,7 @@
                         <!-- Curzzo message -->
                         <div v-else class="flex justify-start items-end gap-2">
                             <div class="w-6 h-6 rounded-full shrink-0 mb-0.5 overflow-hidden bg-gray-100">
-                                <img src="/brand/ICON/CURZZO ICON MAIN.png" alt="Curzzo" class="w-full h-full object-cover" />
+                                <img :src="curzzoIcon" alt="Curzzo" class="w-full h-full object-cover" />
                             </div>
                             <div class="max-w-[75%] px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm rounded-2xl rounded-tl-sm whitespace-pre-wrap">
                                 {{ msg.content }}
@@ -713,7 +713,7 @@
                     <!-- Loading dots -->
                     <div v-if="aiLoading" class="flex justify-start items-end gap-2">
                         <div class="w-6 h-6 rounded-full shrink-0 mb-0.5 overflow-hidden bg-gray-100">
-                            <img src="/brand/ICON/CURZZO ICON MAIN.png" alt="Curzzo" class="w-full h-full object-cover" />
+                            <img :src="curzzoIcon" alt="Curzzo" class="w-full h-full object-cover" />
                         </div>
                         <div class="px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-2xl rounded-tl-sm">
                             <span class="flex gap-1">
@@ -758,6 +758,8 @@
 import { ref, computed, watch, watchEffect, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { Link, usePage, useForm } from '@inertiajs/vue3';
 import { useCreateModal } from '@/composables/useCreateModal';
+
+const curzzoIcon = '/brand/ICON/CURZZO ICON MAIN.png';
 
 const props = defineProps({
     title:     String,
