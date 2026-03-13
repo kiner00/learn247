@@ -24,7 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         // Disable rate limiting in local environment (for k6 / stress testing)
-        if (app()->isLocal()) {
+        if (env('APP_ENV') === 'local') {
             $middleware->api(remove: [
                 \Illuminate\Routing\Middleware\ThrottleRequests::class,
                 \Illuminate\Routing\Middleware\ThrottleRequestsWithRedis::class,
