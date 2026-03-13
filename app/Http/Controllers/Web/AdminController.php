@@ -490,7 +490,7 @@ class AdminController extends Controller
                     'account_holder_name' => $holderName,
                     'account_number'      => $payoutDetails,
                 ],
-                'amount'      => $payoutRequest->amount,
+                'amount'      => (float) $payoutRequest->amount,
                 'description' => "Payout request #{$payoutRequest->id}",
             ]);
 
