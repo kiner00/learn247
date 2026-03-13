@@ -29,7 +29,7 @@ class AffiliateController extends Controller
 
         $pendingRequestAffiliateIds = PayoutRequest::where('user_id', $user->id)
             ->where('type', PayoutRequest::TYPE_AFFILIATE)
-            ->where('status', PayoutRequest::STATUS_PENDING)
+            ->whereIn('status', [PayoutRequest::STATUS_PENDING, PayoutRequest::STATUS_APPROVED])
             ->pluck('affiliate_id')
             ->flip();
 

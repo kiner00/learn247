@@ -80,11 +80,11 @@ class PayoutRequestController extends Controller
 
         $hasPending = PayoutRequest::where('affiliate_id', $affiliate->id)
             ->where('type', PayoutRequest::TYPE_AFFILIATE)
-            ->where('status', PayoutRequest::STATUS_PENDING)
+            ->whereIn('status', [PayoutRequest::STATUS_PENDING, PayoutRequest::STATUS_APPROVED])
             ->exists();
 
         if ($hasPending) {
-            return back()->with('error', 'You already have a pending payout request for this affiliate program.');
+            return back()->with('error', 'You already have an active payout request for this affiliate program.');
         }
 
         $eligibleNow = $this->affiliateEligibility($affiliate);
@@ -131,7 +131,7 @@ class PayoutRequestController extends Controller
         foreach ($affiliates as $affiliate) {
             $hasPending = PayoutRequest::where('affiliate_id', $affiliate->id)
                 ->where('type', PayoutRequest::TYPE_AFFILIATE)
-                ->where('status', PayoutRequest::STATUS_PENDING)
+                ->whereIn('status', [PayoutRequest::STATUS_PENDING, PayoutRequest::STATUS_APPROVED])
                 ->exists();
 
             if ($hasPending) continue;
@@ -221,11 +221,12 @@ class PayoutRequestController extends Controller
             ->where('created_at', '<=', now()->subDays(15))
             ->sum('commission_amount');
 
-        $pendingRequested = (float) PayoutRequest::where('affiliate_id', $affiliate->id)
+        // Subtract both pending AND approved requests (not yet paid out / rejected)
+        $inFlight = (float) PayoutRequest::where('affiliate_id', $affiliate->id)
             ->where('type', PayoutRequest::TYPE_AFFILIATE)
-            ->where('status', PayoutRequest::STATUS_PENDING)
+            ->whereIn('status', [PayoutRequest::STATUS_PENDING, PayoutRequest::STATUS_APPROVED])
             ->sum('amount');
 
-        return max(0, round($eligible - $pendingRequested, 2));
+        return max(0, round($eligible - $inFlight, 2));
     }
 }
