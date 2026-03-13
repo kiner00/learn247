@@ -957,6 +957,32 @@ function aiNewChat() {
     aiConversationId.value = null;
 }
 
+async function fetchAiGreeting() {
+    aiOpen.value    = true;
+    aiLoading.value = true;
+    await nextTick();
+    if (aiScrollRef.value) aiScrollRef.value.scrollTop = aiScrollRef.value.scrollHeight;
+
+    try {
+        const axios = (await import('axios')).default;
+        const res   = await axios.post('/ai/greet');
+        aiConversationId.value = res.data.conversation_id;
+        aiMessages.value.push({ role: 'assistant', content: res.data.message });
+    } catch (e) {
+        aiMessages.value.push({ role: 'assistant', content: 'Hey! How can I help you today?' });
+    } finally {
+        aiLoading.value = false;
+        await nextTick();
+        if (aiScrollRef.value) aiScrollRef.value.scrollTop = aiScrollRef.value.scrollHeight;
+    }
+}
+
+watch(() => page.props.flash?.show_ai_greeting, (val) => {
+    if (val && (page.props.auth?.communities ?? []).length > 0) {
+        fetchAiGreeting();
+    }
+}, { immediate: true });
+
 async function sendAiMessage() {
     const text = aiInput.value.trim();
     if (!text || aiLoading.value) return;

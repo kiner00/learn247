@@ -231,6 +231,7 @@ Route::middleware('auth')->group(function () {
 
     // ─── AI Assistant ─────────────────────────────────────────────────────────
     Route::post('/ai/chat', [AIAssistantController::class, 'chat'])->name('ai.chat');
+    Route::post('/ai/greet', [AIAssistantController::class, 'greet'])->name('ai.greet');
 });
 
 // ─── Xendit Webhooks (no auth, no CSRF) ────────────────────────────────────

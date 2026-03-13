@@ -45,7 +45,7 @@ class AuthController extends Controller
             return redirect()->route('password.setup');
         }
 
-        return redirect()->intended('/communities');
+        return redirect()->intended('/communities')->with('show_ai_greeting', true);
     }
 
     public function showRegister(Request $request): Response
