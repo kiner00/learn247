@@ -138,7 +138,7 @@
                             <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
                             </svg>
-                            <span class="hidden sm:inline">AI</span>
+                            <span class="hidden sm:inline">Curzzo</span>
                         </button>
                     </div><!-- end logo+switcher flex -->
 
@@ -649,11 +649,17 @@
             >
                 <!-- Header -->
                 <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between shrink-0">
-                    <div class="flex items-center gap-2">
-                        <svg class="w-4 h-4 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
-                        </svg>
-                        <p class="text-sm font-bold text-gray-900 dark:text-gray-100">AI Assistant</p>
+                    <div class="flex items-center gap-2.5">
+                        <!-- Curzzo avatar -->
+                        <div class="w-8 h-8 rounded-full bg-linear-to-br from-indigo-500 to-violet-600 flex items-center justify-center shrink-0 shadow-sm">
+                            <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight">Curzzo</p>
+                            <p class="text-[10px] text-indigo-400 leading-tight">AI Learning Assistant</p>
+                        </div>
                     </div>
                     <div class="flex items-center gap-1">
                         <button
@@ -674,31 +680,49 @@
 
                 <!-- Messages -->
                 <div ref="aiScrollRef" class="flex-1 overflow-y-auto p-4 space-y-3">
-                    <div v-if="!aiMessages.length" class="flex flex-col items-center justify-center h-full text-center text-gray-400">
-                        <svg class="w-8 h-8 mb-2 text-indigo-200" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
-                        </svg>
-                        <p class="text-xs font-medium">Ask me anything!</p>
-                        <p class="text-xs mt-1 text-gray-300">I know your lessons, quizzes &amp; progress.</p>
+                    <div v-if="!aiMessages.length && !aiLoading" class="flex flex-col items-center justify-center h-full text-center text-gray-400 gap-2">
+                        <div class="w-14 h-14 rounded-full bg-linear-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-md">
+                            <svg class="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">Hi, I'm Curzzo!</p>
+                            <p class="text-xs mt-0.5 text-gray-400">Ask me about your lessons, quizzes &amp; progress.</p>
+                        </div>
                     </div>
 
                     <template v-for="(msg, i) in aiMessages" :key="i">
                         <!-- User message -->
-                        <div v-if="msg.role === 'user'" class="flex justify-end">
-                            <div class="max-w-[85%] px-3 py-2 bg-indigo-600 text-white text-sm rounded-2xl rounded-tr-sm">
+                        <div v-if="msg.role === 'user'" class="flex justify-end items-end gap-2">
+                            <div class="max-w-[75%] px-3 py-2 bg-indigo-600 text-white text-sm rounded-2xl rounded-tr-sm">
                                 {{ msg.content }}
                             </div>
+                            <div class="w-6 h-6 rounded-full shrink-0 mb-0.5 overflow-hidden bg-indigo-200 flex items-center justify-center text-[10px] font-bold text-indigo-700">
+                                <img v-if="$page.props.auth?.user?.avatar" :src="$page.props.auth.user.avatar" class="w-full h-full object-cover" />
+                                <span v-else>{{ initials }}</span>
+                            </div>
                         </div>
-                        <!-- AI message -->
-                        <div v-else class="flex justify-start">
-                            <div class="max-w-[85%] px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm rounded-2xl rounded-tl-sm whitespace-pre-wrap">
+                        <!-- Curzzo message -->
+                        <div v-else class="flex justify-start items-end gap-2">
+                            <div class="w-6 h-6 rounded-full bg-linear-to-br from-indigo-500 to-violet-600 flex items-center justify-center shrink-0 mb-0.5">
+                                <svg class="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
+                                </svg>
+                            </div>
+                            <div class="max-w-[75%] px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm rounded-2xl rounded-tl-sm whitespace-pre-wrap">
                                 {{ msg.content }}
                             </div>
                         </div>
                     </template>
 
                     <!-- Loading dots -->
-                    <div v-if="aiLoading" class="flex justify-start">
+                    <div v-if="aiLoading" class="flex justify-start items-end gap-2">
+                        <div class="w-6 h-6 rounded-full bg-linear-to-br from-indigo-500 to-violet-600 flex items-center justify-center shrink-0 mb-0.5">
+                            <svg class="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
+                            </svg>
+                        </div>
                         <div class="px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-2xl rounded-tl-sm">
                             <span class="flex gap-1">
                                 <span class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay:0ms"></span>

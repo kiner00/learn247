@@ -51,7 +51,7 @@ class AIAssistantController extends Controller
 
         $context  = ['name' => $user->name, 'email' => $user->email, 'communities' => $communities];
         $agent    = new CommunityAssistant($context);
-        $prompt   = "The user just logged in. Greet them warmly by first name, then give ONE specific, actionable recommendation based on their current progress (e.g. a pending lesson to complete, a quiz to retake, or a badge to earn). Keep it short — 2-3 sentences max. Do not use bullet points.";
+        $prompt   = "The user just logged in. Introduce yourself as Curzzo, greet the user warmly by first name, then give ONE specific actionable recommendation based on their current progress (e.g. a pending lesson, a failed quiz to retake, or a badge to earn). Keep it to 2-3 sentences. No bullet points.";
         $response = $agent->forUser($user)->prompt($prompt);
 
         return response()->json([
