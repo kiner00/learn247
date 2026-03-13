@@ -111,6 +111,55 @@ class PayoutRequestController extends Controller
     }
 
     /**
+     * Affiliate requests payout for ALL eligible affiliates at once.
+     */
+    public function storeAffiliateAll(Request $request): RedirectResponse
+    {
+        $user = Auth::user();
+
+        $affiliates = Affiliate::where('user_id', $user->id)
+            ->where('status', Affiliate::STATUS_ACTIVE)
+            ->whereIn('payout_method', ['gcash', 'maya'])
+            ->whereNotNull('payout_details')
+            ->get();
+
+        if ($affiliates->isEmpty()) {
+            return back()->with('error', 'No affiliates with a valid payout method set.');
+        }
+
+        $submitted = 0;
+        foreach ($affiliates as $affiliate) {
+            $hasPending = PayoutRequest::where('affiliate_id', $affiliate->id)
+                ->where('type', PayoutRequest::TYPE_AFFILIATE)
+                ->where('status', PayoutRequest::STATUS_PENDING)
+                ->exists();
+
+            if ($hasPending) continue;
+
+            $eligibleNow = self::affiliateEligibility($affiliate);
+            if ($eligibleNow <= 0) continue;
+
+            PayoutRequest::create([
+                'user_id'         => $affiliate->user_id,
+                'type'            => PayoutRequest::TYPE_AFFILIATE,
+                'community_id'    => $affiliate->community_id,
+                'affiliate_id'    => $affiliate->id,
+                'amount'          => $eligibleNow,
+                'eligible_amount' => $eligibleNow,
+                'status'          => PayoutRequest::STATUS_PENDING,
+            ]);
+
+            $submitted++;
+        }
+
+        if ($submitted === 0) {
+            return back()->with('error', 'No eligible affiliate earnings to request payout for.');
+        }
+
+        return back()->with('success', "Payout request submitted for {$submitted} affiliate program(s). The admin will review shortly.");
+    }
+
+    /**
      * Returns [eligibleNow, lockedAmount, nextEligibleDate] for an owner community.
      */
     public static function ownerEligibility(Community $community): array

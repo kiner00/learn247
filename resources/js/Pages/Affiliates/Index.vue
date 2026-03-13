@@ -32,7 +32,16 @@
                     <p class="text-sm text-gray-500 mt-1">Visit a paid community and click "Become an Affiliate" to get started.</p>
                 </div>
 
-                <div v-else class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                <div v-if="totalEligible > 0" class="flex items-center justify-between mb-3">
+                    <p class="text-sm text-gray-500">
+                        Total eligible: <span class="font-semibold text-gray-900">₱{{ fmt(totalEligible) }}</span>
+                    </p>
+                    <button @click="requestAll" class="text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2 rounded-xl transition-colors">
+                        Request All Payouts
+                    </button>
+                </div>
+
+                <div v-if="affiliates.length > 0" class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
                     <table class="w-full text-sm">
                         <thead class="bg-gray-50 border-b border-gray-200">
                             <tr>
@@ -356,6 +365,10 @@ const payoutForm = reactive({
     payout_details: props.payoutDetails ?? '',
 });
 
+const totalEligible = computed(() =>
+    props.affiliates.reduce((sum, a) => sum + (a.has_pending_request ? 0 : a.eligible_amount), 0)
+);
+
 const filteredConversions = computed(() =>
     statusFilter.value === 'all'
         ? props.analytics.conversions
@@ -374,6 +387,10 @@ async function copy(url) {
     await navigator.clipboard.writeText(url);
     copied.value = url;
     setTimeout(() => { copied.value = null; }, 2000);
+}
+
+function requestAll() {
+    router.post('/affiliates/payout-request/all', {}, { preserveScroll: true });
 }
 
 function openRequestModal(affiliate) {

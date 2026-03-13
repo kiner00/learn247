@@ -228,6 +228,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/affiliate-conversions/{conversion}/disburse', [AffiliateController::class, 'disburse'])->name('affiliate-conversions.disburse');
     Route::patch('/affiliates/{affiliate}/payout', [AffiliateController::class, 'updatePayout'])->name('affiliates.payout');
     Route::post('/affiliates/{affiliate}/payout-request', [PayoutRequestController::class, 'storeAffiliate'])->name('affiliates.payout-request.store');
+    Route::post('/affiliates/payout-request/all', [PayoutRequestController::class, 'storeAffiliateAll'])->name('affiliates.payout-request.all');
 
     // ─── AI Assistant ─────────────────────────────────────────────────────────
     Route::post('/ai/chat', [AIAssistantController::class, 'chat'])->name('ai.chat');
