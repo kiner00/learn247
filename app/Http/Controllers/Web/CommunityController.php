@@ -439,6 +439,16 @@ class CommunityController extends Controller
             ->latest()
             ->first();
 
+        $payoutHistory = \App\Models\OwnerPayout::where('community_id', $community->id)
+            ->latest('paid_at')
+            ->get()
+            ->map(fn ($p) => [
+                'amount'     => $p->amount,
+                'status'     => $p->status,
+                'paid_at'    => $p->paid_at?->toDateString(),
+                'reference'  => $p->xendit_reference,
+            ]);
+
         return Inertia::render('Communities/Analytics', [
             'community' => $community,
             'stats' => [
@@ -465,6 +475,7 @@ class CommunityController extends Controller
                     'created_at' => $pendingPayoutRequest->created_at->toDateString(),
                 ] : null,
             ],
+            'payout_history' => $payoutHistory,
             'subscribers'  => $subscribers,
             'course_stats' => $courseStats->values(),
         ]);

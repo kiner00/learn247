@@ -73,6 +73,42 @@
                 </div>
             </div>
 
+            <!-- Payout History -->
+            <div v-if="payout_history?.length" class="bg-white border border-gray-200 rounded-2xl overflow-hidden mb-6">
+                <div class="px-5 py-4 border-b border-gray-100">
+                    <h2 class="text-sm font-bold text-gray-900">Payout History</h2>
+                    <p class="text-xs text-gray-400 mt-0.5">Past disbursements for this community</p>
+                </div>
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-gray-100 bg-gray-50">
+                            <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Date</th>
+                            <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Reference</th>
+                            <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                            <th class="text-right px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        <tr v-for="p in payout_history" :key="p.reference" class="hover:bg-gray-50 transition-colors">
+                            <td class="px-5 py-3 text-xs text-gray-500">{{ p.paid_at ?? '—' }}</td>
+                            <td class="px-5 py-3 text-xs text-gray-400 font-mono">{{ p.reference ?? '—' }}</td>
+                            <td class="px-5 py-3">
+                                <span class="text-xs font-semibold px-2 py-0.5 rounded-full"
+                                    :class="{
+                                        'bg-green-100 text-green-700': p.status === 'succeeded',
+                                        'bg-amber-100 text-amber-700': p.status === 'accepted',
+                                        'bg-red-100 text-red-500': p.status === 'failed',
+                                        'bg-gray-100 text-gray-500': !['succeeded','accepted','failed'].includes(p.status),
+                                    }">
+                                    {{ p.status }}
+                                </span>
+                            </td>
+                            <td class="px-5 py-3 text-right text-sm font-bold text-gray-800">{{ curr }}{{ fmt(p.amount) }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
             <!-- Revenue Breakdown -->
             <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden mb-6">
                 <div class="px-5 py-4 border-b border-gray-100">
@@ -223,9 +259,10 @@ const props = defineProps({
     community:    Object,
     stats:        Object,
     revenue:      Object,
-    payout:       Object,
-    subscribers:  Array,
-    course_stats: Array,
+    payout:         Object,
+    payout_history: Array,
+    subscribers:    Array,
+    course_stats:   Array,
 });
 
 const curr = props.community.currency === 'USD' ? '$' : '₱';
