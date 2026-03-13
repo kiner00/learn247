@@ -40,12 +40,24 @@ class HandleXenditWebhook
             throw new HttpException(401, 'Invalid Xendit callback token.');
         }
 
-        $payload  = $request->all();
+        $raw = $request->all();
+
+        // Xendit v2 event-based format: { event: "invoice.paid", data: { id, status, ... } }
+        // Fall back to v1 flat format: { id, status, ... }
+        $event   = $raw['event'] ?? null;
+        $payload = isset($raw['data']) && is_array($raw['data']) ? $raw['data'] : $raw;
+
+        // Skip non-invoice events (e.g. disbursement.completed, balance.updated)
+        if ($event && ! str_starts_with($event, 'invoice.') && ! str_starts_with($event, 'payment.')) {
+            Log::info('Xendit webhook: skipping non-invoice event', ['event' => $event]);
+            return;
+        }
+
         $status   = $payload['status']  ?? 'UNKNOWN';
         $xenditId = $payload['id']      ?? null;
         $eventId  = $xenditId ? "{$xenditId}_{$status}" : null;
 
-        Log::info('Xendit webhook received', compact('xenditId', 'status', 'eventId'));
+        Log::info('Xendit webhook received', compact('xenditId', 'status', 'eventId', 'event'));
 
         // ── 2. Idempotency guard ───────────────────────────────────────────────
         if ($eventId && Payment::where('xendit_event_id', $eventId)->exists()) {
