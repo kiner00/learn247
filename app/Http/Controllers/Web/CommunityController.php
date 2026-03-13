@@ -123,8 +123,8 @@ class CommunityController extends Controller
         $membership  = $userId ? $community->members()->where('user_id', $userId)->first() : null;
         $affiliate   = $userId ? $community->affiliates()->where('user_id', $userId)->first() : null;
 
-        // Auto-create affiliate for existing paid subscribers who don't have one yet
-        if (! $affiliate && $userId && $community->hasAffiliateProgram()) {
+        // Auto-create affiliate/invite code for any active paid subscriber who doesn't have one yet
+        if (! $affiliate && $userId) {
             $isActiveSubscriber = Subscription::where('user_id', $userId)
                 ->where('community_id', $community->id)
                 ->where('status', Subscription::STATUS_ACTIVE)

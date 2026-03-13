@@ -102,10 +102,10 @@ class HandleXenditWebhook
                 $this->recordConversion->execute($subscription->load('affiliate.community'), $payment);
             }
 
-            // Auto-create affiliate for paid subscriber (if community has affiliate program)
+            // Auto-create affiliate/invite code for every paid subscriber
             if ($payment && $paymentStatus === Payment::STATUS_PAID) {
                 $community = $subscription->community;
-                if ($community && $community->hasAffiliateProgram()) {
+                if ($community) {
                     $alreadyAffiliate = Affiliate::where('community_id', $community->id)
                         ->where('user_id', $subscription->user_id)
                         ->exists();
