@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             $this->call([
                 DevSeeder::class,
                 PayoutTestSeeder::class,
+                AffiliatePayoutTestSeeder::class,
             ]);
         }
     }
