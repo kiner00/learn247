@@ -88,8 +88,14 @@
                                     </button>
                                 </td>
                                 <td class="px-5 py-4 text-right">
-                                    <span v-if="a.payout_request_status === 'approved'" class="text-xs text-green-600 font-medium">Approved</span>
-                                    <span v-else-if="a.payout_request_status === 'pending'" class="text-xs text-amber-600 font-medium">Pending review</span>
+                                    <span v-if="a.payout_request_status === 'approved'" class="inline-flex flex-col items-end gap-0.5">
+                                        <span class="text-xs text-green-600 font-medium">Approved</span>
+                                        <span class="text-[10px] text-gray-400 leading-tight">Being processed — payout will be sent to your {{ a.payout_method?.toUpperCase() ?? 'account' }} shortly</span>
+                                    </span>
+                                    <span v-else-if="a.payout_request_status === 'pending'" class="inline-flex flex-col items-end gap-0.5">
+                                        <span class="text-xs text-amber-600 font-medium">Pending review</span>
+                                        <span class="text-[10px] text-gray-400 leading-tight">Admin is reviewing your request</span>
+                                    </span>
                                     <button
                                         v-else-if="a.eligible_amount > 0"
                                         @click="openRequestModal(a)"
