@@ -3,7 +3,7 @@
         <div class="w-full max-w-md">
             <div class="text-center mb-8">
                 <Link href="/" class="inline-block">
-                    <img :src="`/brand/logo-${page.props.app_theme ?? 'green'}.png`" alt="Curzzo" class="h-10 w-auto mx-auto" />
+                    <img :src="'/brand/logo-transparent.png'" alt="Curzzo" class="h-10 w-auto mx-auto" />
                 </Link>
                 <p class="mt-2 text-gray-500 text-sm">Set a permanent password to secure your account</p>
             </div>
