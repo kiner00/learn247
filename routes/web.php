@@ -91,6 +91,11 @@ Route::middleware(['auth', EnsureSuperAdmin::class])->prefix('admin')->group(fun
     Route::get('/posts/trashed', [AdminController::class, 'trashedPosts'])->name('admin.posts.trashed');
     Route::post('/posts/{postId}/restore', [AdminController::class, 'restorePost'])->name('admin.posts.restore');
     Route::delete('/posts/{postId}/force-delete', [AdminController::class, 'forceDeletePost'])->name('admin.posts.force-delete');
+    // Email templates
+    Route::get('/email-templates', [AdminController::class, 'emailTemplates'])->name('admin.email-templates');
+    Route::get('/email-templates/{key}/edit', [AdminController::class, 'editEmailTemplate'])->name('admin.email-templates.edit');
+    Route::put('/email-templates/{key}', [AdminController::class, 'updateEmailTemplate'])->name('admin.email-templates.update');
+    Route::post('/email-templates/{key}/preview', [AdminController::class, 'previewEmailTemplate'])->name('admin.email-templates.preview');
 });
 
 // ─── User Profile shortlink ─────────────────────────────────────────────────

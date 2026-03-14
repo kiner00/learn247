@@ -10,6 +10,7 @@ use App\Models\Affiliate;
 use App\Models\AffiliateConversion;
 use App\Models\Community;
 use App\Models\CommunityMember;
+use App\Models\EmailTemplate;
 use App\Models\OwnerPayout;
 use App\Models\Payment;
 use App\Models\PayoutRequest;
@@ -638,5 +639,58 @@ class AdminController extends Controller
         $post->forceDelete();
 
         return back()->with('success', 'Post permanently deleted.');
+    }
+
+    public function emailTemplates(): Response
+    {
+        return Inertia::render('Admin/EmailTemplates', [
+            'templates' => EmailTemplate::orderBy('name')->get(['id', 'key', 'name', 'subject', 'updated_at']),
+        ]);
+    }
+
+    public function editEmailTemplate(string $key): Response
+    {
+        $template = EmailTemplate::where('key', $key)->firstOrFail();
+
+        return Inertia::render('Admin/EmailTemplateEdit', [
+            'template' => $template,
+        ]);
+    }
+
+    public function updateEmailTemplate(Request $request, string $key): RedirectResponse
+    {
+        $request->validate([
+            'subject'   => 'required|string|max:255',
+            'html_body' => 'required|string',
+        ]);
+
+        EmailTemplate::where('key', $key)->firstOrFail()->update([
+            'subject'   => $request->subject,
+            'html_body' => $request->html_body,
+        ]);
+
+        return back()->with('success', 'Email template saved.');
+    }
+
+    public function previewEmailTemplate(Request $request, string $key): \Illuminate\Http\Response
+    {
+        $request->validate([
+            'subject'   => 'required|string|max:255',
+            'html_body' => 'required|string',
+        ]);
+
+        $template = EmailTemplate::where('key', $key)->firstOrFail();
+
+        // Replace variables with sample values for preview
+        $samples = collect($template->variables ?? [])->mapWithKeys(function ($desc, $var) {
+            return [$var => "[{$var}]"];
+        })->toArray();
+
+        $html = $request->html_body;
+        foreach ($samples as $var => $value) {
+            $html = str_replace('{{' . $var . '}}', $value, $html);
+        }
+
+        return response($html);
     }
 }
