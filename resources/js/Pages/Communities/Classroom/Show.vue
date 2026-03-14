@@ -87,12 +87,13 @@
                             <button
                                 v-if="isOwner && editingModuleId !== mod.id"
                                 @click.stop="startEditModule(mod)"
-                                class="text-gray-300 hover:text-indigo-500 transition-colors"
+                                class="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors"
                                 title="Edit module title"
                             >
                                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6.293-6.293a1 1 0 011.414 0l2.586 2.586a1 1 0 010 1.414L13 17H9v-4z"/>
                                 </svg>
+                                Edit
                             </button>
                             <span class="text-xs text-gray-400" @click="toggleModule(mod.id)">
                                 {{ completedInModule(mod) }}/{{ mod.lessons.length }}
