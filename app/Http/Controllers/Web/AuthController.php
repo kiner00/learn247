@@ -64,12 +64,14 @@ class AuthController extends Controller
             'first_name' => ['required', 'string', 'max:100'],
             'last_name'  => ['required', 'string', 'max:100'],
             'email'      => ['required', 'email', 'unique:users,email'],
+            'phone'      => ['nullable', 'string', 'max:20'],
             'password'   => ['required', 'confirmed', Password::defaults()],
         ]);
 
         $user = User::create([
             'name'     => trim($data['first_name'] . ' ' . $data['last_name']),
             'email'    => $data['email'],
+            'phone'    => $data['phone'] ?? null,
             'password' => Hash::make($data['password']),
         ]);
 

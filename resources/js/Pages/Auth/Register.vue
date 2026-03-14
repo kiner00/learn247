@@ -4,7 +4,7 @@
             <!-- Logo -->
             <div class="text-center mb-8">
                 <Link href="/" class="inline-block">
-                    <img :src="'/brand/logo-transparent.png'" alt="Curzzo" class="h-10 w-auto mx-auto" />
+                    <img :src="'/brand/logo-transparent.png'" alt="Curzzo" class="h-30 w-auto mx-auto" />
                 </Link>
                 <p class="mt-2 text-gray-500 text-sm">Create your Curzzo account</p>
             </div>
@@ -54,6 +54,21 @@
                             :class="form.errors.email ? 'border-red-400' : 'border-gray-300'"
                         />
                         <p v-if="form.errors.email" class="mt-1 text-xs text-red-600">{{ form.errors.email }}</p>
+                    </div>
+
+                    <!-- Mobile number -->
+                    <div class="mb-4">
+                        <label for="phone" class="block text-sm font-medium text-gray-700 mb-1.5">Mobile number</label>
+                        <input
+                            id="phone"
+                            v-model="form.phone"
+                            type="tel"
+                            autocomplete="tel"
+                            placeholder="e.g. 09xxxxxxxxx"
+                            class="w-full px-3.5 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            :class="form.errors.phone ? 'border-red-400' : 'border-gray-300'"
+                        />
+                        <p v-if="form.errors.phone" class="mt-1 text-xs text-red-600">{{ form.errors.phone }}</p>
                     </div>
 
                     <!-- Password -->
@@ -110,6 +125,7 @@ const form = useForm({
     first_name:            '',
     last_name:             '',
     email:                 '',
+    phone:                 '',
     password:              '',
     password_confirmation: '',
 });
