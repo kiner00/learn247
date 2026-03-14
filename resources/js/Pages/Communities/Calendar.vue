@@ -99,7 +99,7 @@
                     >
                         <img :src="selectedEvent.cover_image" class="w-full h-full object-cover" />
                     </div>
-                    <div v-else class="w-full h-24 bg-gradient-to-br from-indigo-600 to-purple-600" />
+                    <div v-else class="w-full h-24 bg-linear-to-br from-indigo-600 to-purple-600" />
 
                     <!-- Content -->
                     <div class="p-6">
@@ -179,13 +179,27 @@
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Start *</label>
-                                <input v-model="form.start_at" type="datetime-local" required
-                                    class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                <input
+                                    v-model="form.start_at"
+                                    type="datetime-local"
+                                    required
+                                    :min="nowLocal"
+                                    @change="onStartChange"
+                                    class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                />
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">End</label>
-                                <input v-model="form.end_at" type="datetime-local"
-                                    class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    End
+                                    <span v-if="!form.start_at" class="text-gray-400 font-normal text-xs">(set start first)</span>
+                                </label>
+                                <input
+                                    v-model="form.end_at"
+                                    type="datetime-local"
+                                    :min="form.start_at || nowLocal"
+                                    :disabled="!form.start_at"
+                                    class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed"
+                                />
                             </div>
                         </div>
 
@@ -399,6 +413,20 @@ const editingEvent = ref(null)
 const submitting  = ref(false)
 const formError   = ref('')
 const coverFile   = ref(null)
+
+// Returns current datetime in datetime-local format (YYYY-MM-DDTHH:MM)
+const nowLocal = computed(() => {
+    const now = new Date()
+    now.setSeconds(0, 0)
+    return now.toISOString().slice(0, 16)
+})
+
+// Clear end if it's now before the new start
+function onStartChange() {
+    if (form.value.end_at && form.value.end_at <= form.value.start_at) {
+        form.value.end_at = ''
+    }
+}
 
 const defaultForm = () => ({
     title:          '',
