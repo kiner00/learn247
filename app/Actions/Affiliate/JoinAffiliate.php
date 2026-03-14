@@ -25,7 +25,7 @@ class JoinAffiliate
         $isSubscribed = Subscription::where('user_id', $user->id)
             ->where('community_id', $community->id)
             ->where('status', Subscription::STATUS_ACTIVE)
-            ->where('expires_at', '>', now())
+            ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
             ->exists();
 
         if (! $isSubscribed) {

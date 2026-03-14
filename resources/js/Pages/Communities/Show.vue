@@ -275,6 +275,9 @@
                                     class="w-full py-2 border border-indigo-200 text-indigo-600 text-xs font-semibold rounded-xl hover:bg-indigo-50 transition-colors disabled:opacity-50">
                                     {{ affiliateForm.processing ? 'Joining...' : 'Become an Affiliate' }}
                                 </button>
+                                <p v-if="affiliateForm.errors.affiliate" class="mt-1.5 text-xs text-red-500">
+                                    {{ affiliateForm.errors.affiliate }}
+                                </p>
                             </div>
                         </template>
                     </div>
