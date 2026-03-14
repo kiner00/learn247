@@ -91,6 +91,7 @@ class AdminController extends Controller
                 'id'         => $u->id,
                 'name'       => $u->name,
                 'email'      => $u->email,
+                'avatar'     => $u->avatar,
                 'created_at' => $u->created_at?->toDateString(),
             ]);
 

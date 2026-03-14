@@ -170,8 +170,9 @@
                     </div>
                     <div class="divide-y divide-gray-100">
                         <div v-for="u in recentUsers" :key="u.id" class="px-5 py-3 flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full bg-linear-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-xs font-bold text-white shrink-0">
-                                {{ u.name.charAt(0).toUpperCase() }}
+                            <div class="w-8 h-8 rounded-full shrink-0 overflow-hidden bg-linear-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-xs font-bold text-white">
+                                <img v-if="u.avatar" :src="u.avatar" :alt="u.name" class="w-full h-full object-cover" />
+                                <span v-else>{{ u.name.charAt(0).toUpperCase() }}</span>
                             </div>
                             <div class="min-w-0 flex-1">
                                 <p class="text-sm font-medium text-gray-900 truncate">{{ u.name }}</p>
