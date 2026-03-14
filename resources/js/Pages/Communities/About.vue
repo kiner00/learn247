@@ -28,12 +28,12 @@
                     </div>
 
                     <!-- Banner image (flush, no side padding) -->
-                    <div class="h-72 bg-gray-900 overflow-hidden">
+                    <div class="w-full bg-gray-900 overflow-hidden" style="aspect-ratio: 16/9;">
                         <img
                             v-if="activeBannerImg"
                             :src="activeBannerImg"
                             :alt="community.name"
-                            class="w-full h-full object-cover transition-all duration-300"
+                            class="w-full h-full object-contain transition-all duration-300"
                         />
                         <div v-else class="w-full h-full bg-linear-to-br from-indigo-500 to-purple-700" />
                     </div>
@@ -93,7 +93,7 @@
                 <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
 
                     <!-- Community image: avatar if set, else banner -->
-                    <div class="relative overflow-hidden bg-gray-900" style="aspect-ratio: 16/9;">
+                    <div class="relative overflow-hidden bg-gray-900" style="aspect-ratio: 1/1;">
                         <img
                             v-if="community.avatar || community.cover_image"
                             :src="community.avatar || community.cover_image"
