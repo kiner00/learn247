@@ -173,9 +173,10 @@
                 </div>
 
                 <!-- Powered by Curzzo -->
-                <p class="text-center text-xs text-gray-400 mt-3">
-                    Powered by <span class="font-semibold"><span class="text-indigo-500">C</span><span class="text-purple-500">u</span><span class="text-amber-500">r</span><span class="text-green-500">z</span><span class="text-red-500">z</span><span class="text-blue-500">o</span></span>
-                </p>
+                <div class="flex items-center justify-center gap-1.5 mt-3">
+                    <span class="text-xs text-gray-400">Powered by</span>
+                    <img src="/brand/logo-transparent.png" alt="Curzzo" class="h-5 w-auto" />
+                </div>
             </div>
         </div>
 
