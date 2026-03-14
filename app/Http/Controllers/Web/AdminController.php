@@ -237,10 +237,16 @@ class AdminController extends Controller
             ]);
 
         // ── Summary stats ────────────────────────────────────────────────────
+        $totalPlatformFee = round(
+            (float) Payment::where('status', Payment::STATUS_PAID)->sum('amount') * 0.15,
+            2
+        );
+
         $stats = [
             'owners_pending'           => $owners->sum('total_pending'),
             'affiliates_pending'       => $affiliates->sum('pending'),
             'payout_requests_pending'  => PayoutRequest::where('status', PayoutRequest::STATUS_PENDING)->count(),
+            'platform_fee_collected'   => $totalPlatformFee,
         ];
 
         return Inertia::render('Admin/Payouts', compact('owners', 'affiliates', 'stats', 'xenditBalance', 'payoutRequests'));
