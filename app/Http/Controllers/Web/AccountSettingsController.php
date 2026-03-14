@@ -79,6 +79,8 @@ class AccountSettingsController extends Controller
             'chatPrefs'       => array_merge($this->defaultChatPrefs, $user->chat_prefs ?? []),
             'payoutMethod'    => $user->payout_method,
             'payoutDetails'   => $user->payout_details,
+            'cryptoWallet'    => $user->crypto_wallet,
+            'crzBalance'      => (float) $user->crz_token_balance,
         ]);
     }
 
@@ -262,5 +264,16 @@ class AccountSettingsController extends Controller
         $request->user()->update($data);
 
         return back()->with('success', 'Payout details saved!');
+    }
+
+    public function updateCrypto(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'crypto_wallet' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $request->user()->update($data);
+
+        return back()->with('success', 'Crypto wallet saved!');
     }
 }

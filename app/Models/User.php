@@ -18,6 +18,7 @@ class User extends Authenticatable
         'timezone', 'theme', 'notification_prefs', 'chat_prefs',
         'avatar', 'location', 'social_links', 'hide_from_search',
         'payout_method', 'payout_details',
+        'crypto_wallet', 'crz_token_balance',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -34,6 +35,7 @@ class User extends Authenticatable
             'chat_prefs'             => 'array',
             'social_links'           => 'array',
             'hide_from_search'       => 'boolean',
+            'crz_token_balance'      => 'decimal:8',
         ];
     }
 

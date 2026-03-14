@@ -136,13 +136,14 @@ class ProfileController extends Controller
 
         return Inertia::render('Profile/Show', [
             'profileUser'         => [
-                'id'         => $user->id,
-                'name'       => $user->name,
-                'username'   => $user->username,
-                'bio'        => $user->bio,
-                'avatar'     => $user->avatar,
-                'location'   => $user->location,
-                'created_at' => $user->created_at,
+                'id'                => $user->id,
+                'name'              => $user->name,
+                'username'          => $user->username,
+                'bio'               => $user->bio,
+                'avatar'            => $user->avatar,
+                'location'          => $user->location,
+                'created_at'        => $user->created_at,
+                'crz_token_balance' => $isOwn ? (float) $user->crz_token_balance : null,
             ],
             'isOwn'               => $isOwn,
             'totalPoints'         => (int) $totalPoints,

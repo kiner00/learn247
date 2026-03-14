@@ -389,30 +389,6 @@
                         </div>
                         <p class="text-xs text-gray-400 mb-6">₱0 available soon</p>
 
-                        <!-- Affiliate link -->
-                        <div>
-                            <p class="text-sm font-bold text-gray-900 mb-3">Your affiliate links</p>
-                            <div class="flex gap-2 mb-3">
-                                <span class="px-3 py-1.5 bg-gray-700 text-white text-xs font-medium rounded-full">Platform</span>
-                            </div>
-                            <p class="text-sm text-gray-600 mb-3">
-                                Earn <strong>20% commission</strong> when you invite somebody to create a community.
-                            </p>
-                            <div class="flex gap-2">
-                                <input
-                                    :value="affiliateLink"
-                                    readonly
-                                    class="flex-1 px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm text-indigo-600 bg-white"
-                                />
-                                <button
-                                    @click="copyLink"
-                                    class="px-5 py-2.5 bg-amber-400 hover:bg-amber-500 text-white text-sm font-bold rounded-lg transition-colors tracking-wide"
-                                >
-                                    {{ copied ? 'COPIED!' : 'COPY' }}
-                                </button>
-                            </div>
-                        </div>
-
                         <!-- Referrals empty state -->
                         <div class="border border-gray-100 rounded-xl p-12 text-center mt-6">
                             <div class="text-4xl mb-3">💰</div>
@@ -626,6 +602,65 @@
                     </div>
                 </div>
 
+                <!-- Crypto -->
+                <div v-else-if="activeTab === 'crypto'">
+                    <div class="bg-white border border-gray-200 rounded-2xl p-6 space-y-6">
+                        <div>
+                            <h2 class="text-base font-bold text-gray-900 mb-1">Crypto</h2>
+                            <p class="text-sm text-gray-400">Your CRZ token balance and wallet address for future airdrops.</p>
+                        </div>
+
+                        <!-- CRZ balance card -->
+                        <div class="bg-linear-to-br from-amber-50 to-yellow-100 border border-amber-200 rounded-2xl p-5 flex items-center gap-4">
+                            <div class="text-4xl">🪙</div>
+                            <div>
+                                <p class="text-xs font-semibold text-amber-700 uppercase tracking-wider mb-0.5">CRZ Token Balance</p>
+                                <p class="text-3xl font-bold text-amber-900">{{ crzBalance ?? 0 }}</p>
+                                <p class="text-xs text-amber-600 mt-0.5">Tokens earned from badges &amp; milestones</p>
+                            </div>
+                        </div>
+
+                        <!-- Wallet address -->
+                        <form @submit.prevent="saveCrypto" class="max-w-sm space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Crypto Wallet Address</label>
+                                <input
+                                    v-model="cryptoForm.crypto_wallet"
+                                    type="text"
+                                    placeholder="e.g. 0x1234... or your wallet address"
+                                    class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 font-mono"
+                                />
+                                <p class="text-xs text-gray-400 mt-1">This is where your CRZ tokens will be sent during airdrops.</p>
+                                <p v-if="cryptoForm.errors.crypto_wallet" class="text-xs text-red-500 mt-1">{{ cryptoForm.errors.crypto_wallet }}</p>
+                            </div>
+                            <button type="submit" :disabled="cryptoForm.processing"
+                                    class="w-full py-2.5 bg-amber-400 hover:bg-amber-500 text-white text-sm font-bold rounded-lg transition-colors disabled:opacity-50">
+                                {{ cryptoForm.processing ? 'Saving...' : 'SAVE WALLET ADDRESS' }}
+                            </button>
+                            <p v-if="cryptoForm.recentlySuccessful" class="text-xs text-green-600 font-medium text-center">Saved!</p>
+                        </form>
+
+                        <!-- How to earn info -->
+                        <div class="border border-gray-100 rounded-xl p-4 space-y-3">
+                            <p class="text-xs font-bold text-gray-700 uppercase tracking-wider">How to earn CRZ tokens</p>
+                            <div class="flex items-start gap-3">
+                                <span class="text-xl">🐦</span>
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-800">Early Bird Badge — 1 CRZ</p>
+                                    <p class="text-xs text-gray-500">Be among the first 100,000 members to achieve 1 affiliate sale.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <span class="text-xl">🏗️</span>
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-800">Early Builder Badge — 10 CRZ</p>
+                                    <p class="text-xs text-gray-500">Be among the first 1,000 community creators to reach 10 paying members.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Placeholder tabs -->
                 <div v-else>
                     <div class="bg-white border border-gray-200 rounded-2xl p-16 text-center">
@@ -654,6 +689,8 @@ const props = defineProps({
     chatPrefs:     Object,
     payoutMethod:  String,
     payoutDetails: String,
+    cryptoWallet:  String,
+    crzBalance:    Number,
 });
 
 // Mutable copy of memberships for local toggle state
@@ -672,6 +709,7 @@ const navItems = [
     { key: 'payment_methods',  label: 'Payment methods' },
     { key: 'payment_history',  label: 'Payment history' },
     { key: 'theme',            label: 'Theme' },
+    { key: 'crypto',           label: 'Crypto' },
 ];
 
 // ── Affiliate ──────────────────────────────────────────────────────────────────
@@ -822,5 +860,11 @@ function toggleCommunityChat(m) {
 const themeForm = useForm({ theme: props.theme ?? 'light' });
 function saveTheme() {
     themeForm.patch('/account/settings/theme', { preserveScroll: true });
+}
+
+// ── Crypto ────────────────────────────────────────────────────────────────────
+const cryptoForm = useForm({ crypto_wallet: props.cryptoWallet ?? '' });
+function saveCrypto() {
+    cryptoForm.patch('/account/settings/crypto', { preserveScroll: true });
 }
 </script>

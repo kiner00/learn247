@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /Users/kiner/Desktop/learn247/resources/js/Pages -name *rofile* -o -name *ettings*)",
+      "Bash(find /Users/kiner/Desktop/learn247 -type f -name *[Bb]adge*)"
+    ]
+  }
+}

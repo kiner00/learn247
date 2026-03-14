@@ -127,6 +127,7 @@ Route::middleware('auth')->prefix('account')->group(function () {
     Route::patch('/settings/chat/{communityId}', [AccountSettingsController::class, 'updateCommunityChat'])->name('account.settings.chat.community');
     Route::patch('/settings/theme', [AccountSettingsController::class, 'updateTheme'])->name('account.settings.theme');
     Route::patch('/settings/payout', [AccountSettingsController::class, 'updatePayout'])->name('account.settings.payout');
+    Route::patch('/settings/crypto', [AccountSettingsController::class, 'updateCrypto'])->name('account.settings.crypto');
 });
 
 // ─── Communities ───────────────────────────────────────────────────────────────

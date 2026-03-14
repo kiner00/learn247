@@ -6,6 +6,7 @@ use App\Models\AffiliateConversion;
 use App\Models\Badge;
 use App\Models\Certificate;
 use App\Models\CommunityMember;
+use App\Models\CrzTokenTransaction;
 use App\Models\LessonCompletion;
 use App\Models\OwnerPayout;
 use App\Models\Post;
@@ -41,6 +42,8 @@ class BadgeService
                     'community_id' => $communityId,
                     'earned_at'    => now(),
                 ]);
+
+                $this->awardTokensForBadge($user, $badge);
             }
         }
     }
@@ -65,6 +68,8 @@ class BadgeService
             'quiz_passed'       => $this->countQuizzesPassed($user->id, $communityId) >= $badge->condition_value,
 
             // ── Platform badges ────────────────────────────────────────────────
+            'early_bird'            => $this->isEarlyBird($user),
+            'early_builder'         => $this->isEarlyBuilder($user),
             'pioneer_member'        => $this->isPioneerMember($user),
             'course_crusader'       => $this->hasCompletedCourseIn30Days($user->id),
             'affiliate_referrals'   => $this->countPaidReferrals($user->id) >= $badge->condition_value,
@@ -81,6 +86,32 @@ class BadgeService
 
             default => false,
         };
+    }
+
+    // ── Token awarding ──────────────────────────────────────────────────────────
+
+    /** CRZ token rewards per badge key */
+    private const TOKEN_REWARDS = [
+        'early_bird'    => 1,
+        'early_builder' => 10,
+    ];
+
+    private function awardTokensForBadge(User $user, Badge $badge): void
+    {
+        $amount = self::TOKEN_REWARDS[$badge->key] ?? 0;
+        if ($amount <= 0) return;
+
+        DB::transaction(function () use ($user, $badge, $amount) {
+            CrzTokenTransaction::create([
+                'user_id'   => $user->id,
+                'amount'    => $amount,
+                'type'      => 'award',
+                'reason'    => $badge->key . '_badge',
+                'reference' => $badge->key,
+            ]);
+
+            $user->increment('crz_token_balance', $amount);
+        });
     }
 
     // ── Condition helpers ──────────────────────────────────────────────────────
@@ -116,6 +147,41 @@ class BadgeService
             })
             ->distinct('quiz_id')
             ->count('quiz_id');
+    }
+
+    private function isEarlyBird(User $user): bool
+    {
+        // Must have at least 1 paid affiliate referral
+        if ($this->countPaidReferrals($user->id) < 1) return false;
+
+        // Must be among the first 100,000 users to achieve this
+        $earlyBirdBadgeId = Badge::where('key', 'early_bird')->value('id');
+        if (! $earlyBirdBadgeId) return false;
+
+        $awardedCount = UserBadge::where('badge_id', $earlyBirdBadgeId)->count();
+
+        return $awardedCount < 100000;
+    }
+
+    private function isEarlyBuilder(User $user): bool
+    {
+        // Must own at least one community with 10+ paying members
+        $ownedCommunityIds = \App\Models\Community::where('owner_id', $user->id)->pluck('id');
+        if ($ownedCommunityIds->isEmpty()) return false;
+
+        $hasEnoughPayingMembers = Subscription::whereIn('community_id', $ownedCommunityIds)
+            ->where('status', 'active')
+            ->count() >= 10;
+
+        if (! $hasEnoughPayingMembers) return false;
+
+        // Must be among the first 1,000 creators to achieve this
+        $earlyBuilderBadgeId = Badge::where('key', 'early_builder')->value('id');
+        if (! $earlyBuilderBadgeId) return false;
+
+        $awardedCount = UserBadge::where('badge_id', $earlyBuilderBadgeId)->count();
+
+        return $awardedCount < 1000;
     }
 
     private function isPioneerMember(User $user): bool
@@ -220,6 +286,30 @@ class BadgeService
     public static function seedDefaults(): void
     {
         $badges = [
+            // ── CRZ Token Badges ───────────────────────────────────────────────
+            [
+                'key'             => 'early_bird',
+                'type'            => 'member',
+                'name'            => 'Early Bird',
+                'icon'            => '🐦',
+                'description'     => 'Among the first 100,000 members to achieve an affiliate sale',
+                'how_to_earn'     => 'Achieve 1 affiliate sale while being among the first 100,000 members to do so. Rewards 1 CRZ token.',
+                'condition_type'  => 'early_bird',
+                'condition_value' => 1,
+                'sort_order'      => 5,
+            ],
+            [
+                'key'             => 'early_builder',
+                'type'            => 'creator',
+                'name'            => 'Early Builder',
+                'icon'            => '🏗️',
+                'description'     => 'Among the first 1,000 community creators with 10 paying members',
+                'how_to_earn'     => 'Be one of the first 1,000 community creators to reach 10 paying members. Rewards 10 CRZ tokens.',
+                'condition_type'  => 'early_builder',
+                'condition_value' => 1,
+                'sort_order'      => 195,
+            ],
+
             // ── Member Badges ──────────────────────────────────────────────────
             [
                 'key'             => 'pioneer_member',
