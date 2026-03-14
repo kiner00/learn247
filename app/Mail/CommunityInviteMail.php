@@ -24,7 +24,10 @@ class CommunityInviteMail extends Mailable
             : "You're invited to join {$this->invite->community->name}";
 
         return new Envelope(
-            from: config('mail.from.address'),
+            from: new \Illuminate\Mail\Mailables\Address(
+                config('mail.from.address'),
+                config('mail.from.name'),
+            ),
             subject: $subject,
         );
     }

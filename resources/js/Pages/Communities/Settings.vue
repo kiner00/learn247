@@ -290,9 +290,9 @@
                     </div>
                     <div v-if="community.affiliate_commission_rate" class="mt-3 p-3 bg-gray-50 rounded-lg text-xs text-gray-500">
                         Example split on ₱{{ community.price }} sale:
-                        <strong class="text-red-500">Platform ₱{{ (community.price * 0.03).toFixed(2) }}</strong>
+                        <strong class="text-red-500">Platform ₱{{ (community.price * 0.15).toFixed(2) }}</strong>
                         · <strong class="text-orange-600">Affiliate ₱{{ (community.price * community.affiliate_commission_rate / 100).toFixed(2) }}</strong>
-                        · <strong class="text-green-700">You ₱{{ (community.price - community.price * 0.03 - community.price * community.affiliate_commission_rate / 100).toFixed(2) }}</strong>
+                        · <strong class="text-green-700">You ₱{{ (community.price - community.price * 0.15 - community.price * community.affiliate_commission_rate / 100).toFixed(2) }}</strong>
                     </div>
                 </form>
             </div>
