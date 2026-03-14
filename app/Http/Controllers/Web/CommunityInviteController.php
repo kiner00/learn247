@@ -109,12 +109,12 @@ class CommunityInviteController extends Controller
 
         if ($invite->isAccepted()) {
             return redirect()->route('communities.show', $community->slug)
-                ->with('info', 'This invite has already been accepted.');
+                ->with('success', 'You already have access to this community.');
         }
 
         if (strtolower($user->email) !== strtolower($invite->email)) {
-            return redirect()->route('communities.index')
-                ->with('error', "This invite was sent to {$invite->email}. Please log in with that account.");
+            return redirect()->route('communities.about', $community->slug)
+                ->with('error', "This invite was sent to {$invite->email}. Please log in with that email address to accept it.");
         }
 
         // Add as community member (idempotent)
