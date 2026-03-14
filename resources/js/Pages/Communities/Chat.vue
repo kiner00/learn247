@@ -2,10 +2,10 @@
     <AppLayout :title="`${community.name} · Chat`" :community="community">
         <CommunityTabs :community="community" active-tab="chat" />
 
-        <div class="flex gap-6 items-start">
+        <div class="flex flex-col lg:flex-row gap-6 items-start">
 
             <!-- ── Chat column ─────────────────────────────────────────────── -->
-            <div class="flex-1 min-w-0 flex flex-col" style="height: calc(100vh - 220px);">
+            <div class="flex-1 min-w-0 w-full flex flex-col" style="height: calc(100vh - 220px);">
                 <div class="bg-white border border-gray-200 rounded-2xl flex flex-col overflow-hidden h-full shadow-sm">
 
                     <!-- Header -->
@@ -63,7 +63,7 @@
                                 </div>
 
                                 <div class="flex items-start gap-2">
-                                    <p class="flex-1 text-sm text-gray-700 leading-relaxed break-words">{{ msg.content }}</p>
+                                    <p class="flex-1 text-sm text-gray-700 leading-relaxed wrap-break-word">{{ msg.content }}</p>
                                     <button
                                         v-if="canDelete(msg)"
                                         @click="deleteMessage(msg)"
@@ -119,7 +119,7 @@
             </div>
 
             <!-- ── Right sidebar ────────────────────────────────────────────── -->
-            <div class="w-72 shrink-0">
+            <div class="w-full lg:w-72 shrink-0">
                 <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
                     <div class="h-32 bg-gray-900 flex items-center justify-center overflow-hidden">
                         <img

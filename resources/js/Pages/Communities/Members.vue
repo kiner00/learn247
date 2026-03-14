@@ -2,10 +2,10 @@
     <AppLayout :title="`${community.name} · Members`" :community="community">
         <CommunityTabs :community="community" active-tab="members" />
 
-        <div class="flex gap-6 items-start">
+        <div class="flex flex-col lg:flex-row gap-6 items-start">
 
             <!-- ── Main column ─────────────────────────────────────────── -->
-            <div class="flex-1 min-w-0">
+            <div class="flex-1 min-w-0 w-full">
 
                 <!-- Filter tabs + Invite -->
                 <div class="flex items-center justify-between mb-5">
@@ -145,7 +145,7 @@
             </div>
 
             <!-- ── Right sidebar ────────────────────────────────────────── -->
-            <div class="w-72 shrink-0 space-y-4">
+            <div class="w-full lg:w-72 shrink-0 space-y-4">
                 <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
                     <!-- Cover image -->
                     <div class="h-32 bg-gray-900 flex items-center justify-center overflow-hidden">

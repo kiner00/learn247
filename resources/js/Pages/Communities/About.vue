@@ -15,10 +15,10 @@
             </div>
         </div>
 
-        <div class="flex gap-6 items-start">
+        <div class="flex flex-col-reverse lg:flex-row gap-6 items-start">
 
             <!-- Main content: one unified white card like Skool -->
-            <div class="flex-1 min-w-0">
+            <div class="flex-1 min-w-0 w-full">
                 <div class="bg-white rounded-2xl overflow-hidden mb-4">
 
                     <!-- Community name (above banner) -->
@@ -89,7 +89,7 @@
             </div>
 
             <!-- Right sidebar (Skool-style) -->
-            <div class="w-72 shrink-0">
+            <div class="w-full lg:w-72 shrink-0">
                 <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
 
                     <!-- Community image: avatar if set, else banner -->
