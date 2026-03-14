@@ -240,7 +240,8 @@
                             <td class="px-5 py-3 text-xs text-gray-500">{{ s.expires_at ?? '—' }}</td>
                             <td class="px-5 py-3 text-xs text-gray-400">{{ s.created_at }}</td>
                             <td class="px-5 py-3 text-right text-xs font-semibold text-gray-700">
-                                {{ community.currency === 'USD' ? '$' : '₱' }}{{ Number(community.price).toLocaleString() }}
+                                <span v-if="s.amount_paid !== null">{{ curr }}{{ Number(s.amount_paid).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span>
+                                <span v-else class="text-gray-400 font-normal">Free</span>
                             </td>
                         </tr>
                     </tbody>

@@ -361,7 +361,7 @@ class CommunityController extends Controller
         $totalMembers = $community->members()->count();
 
         $subscribers = Subscription::where('community_id', $community->id)
-            ->with('user')
+            ->with(['user', 'payments' => fn ($q) => $q->where('status', Payment::STATUS_PAID)->orderByDesc('paid_at')->limit(1)])
             ->latest()
             ->get()
             ->map(fn ($s) => [
@@ -370,6 +370,9 @@ class CommunityController extends Controller
                 'status'     => $s->status,
                 'expires_at' => $s->expires_at?->toDateString(),
                 'created_at' => $s->created_at?->toDateString(),
+                'amount_paid' => $s->payments->first()?->amount !== null
+                    ? (float) $s->payments->first()->amount
+                    : null,
             ]);
 
         // Revenue breakdown from actual payments and affiliate conversions
