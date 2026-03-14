@@ -14,6 +14,7 @@ use App\Http\Controllers\Web\DirectMessageController;
 use App\Http\Controllers\Web\CommentController;
 use App\Http\Controllers\Web\CommunityController;
 use App\Http\Controllers\Web\CommunityInviteController;
+use App\Http\Controllers\Web\EventController;
 use App\Http\Controllers\Web\CommunityMemberController;
 use App\Http\Controllers\Web\AccountSettingsController;
 use App\Http\Controllers\Web\LeaderboardController;
@@ -141,6 +142,7 @@ Route::middleware('auth')->prefix('account')->group(function () {
 Route::get('/communities', [CommunityController::class, 'index'])->name('communities.index');
 Route::get('/communities/{community}', [CommunityController::class, 'show'])->name('communities.show');
 Route::get('/communities/{community}/about', [CommunityController::class, 'about'])->name('communities.about');
+Route::get('/communities/{community}/calendar', [EventController::class, 'index'])->name('communities.calendar');
 
 Route::middleware('auth')->group(function () {
     Route::post('/communities', [CommunityController::class, 'store'])->name('communities.store');
@@ -151,6 +153,11 @@ Route::middleware('auth')->group(function () {
 
     // Owner-only: invite members by email / CSV
     Route::post('/communities/{community}/invite', [CommunityInviteController::class, 'store'])->name('communities.invite');
+
+    // Events (owner-only mutations; calendar view is public above)
+    Route::post('/communities/{community}/events', [EventController::class, 'store'])->name('communities.events.store');
+    Route::post('/communities/{community}/events/{event}', [EventController::class, 'update'])->name('communities.events.update');
+    Route::delete('/communities/{community}/events/{event}', [EventController::class, 'destroy'])->name('communities.events.destroy');
 
     // Owner-only mutations
     Route::match(['patch', 'post'], '/communities/{community}', [CommunityController::class, 'update'])->name('communities.update');

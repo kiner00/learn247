@@ -80,6 +80,11 @@ class Community extends Model
         return $this->hasMany(Message::class);
     }
 
+    public function events(): HasMany
+    {
+        return $this->hasMany(Event::class)->orderBy('start_at');
+    }
+
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     public function isFree(): bool

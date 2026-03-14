@@ -28,6 +28,7 @@ const slug = computed(() => props.community.slug);
 const tabs = computed(() => [
     { name: 'community',   label: 'Community',    href: `/communities/${slug.value}` },
     { name: 'classroom',   label: 'Classroom',    href: `/communities/${slug.value}/classroom` },
+    { name: 'calendar',    label: 'Calendar',     href: `/communities/${slug.value}/calendar` },
     { name: 'members',     label: 'Members',      href: `/communities/${slug.value}/members` },
     { name: 'chat',        label: 'Chat',         href: `/communities/${slug.value}/chat` },
     { name: 'leaderboard', label: 'Leaderboards', href: `/communities/${slug.value}/leaderboard` },
