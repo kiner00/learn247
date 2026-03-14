@@ -89,7 +89,7 @@
                             @click="insertVariable(varName)"
                             class="w-full text-left px-3 py-2 rounded-lg border border-gray-100 hover:border-indigo-300 hover:bg-indigo-50 transition-colors"
                         >
-                            <span class="text-xs font-mono text-indigo-600 block">{{ '{{' + varName + '}}' }}</span>
+                            <span class="text-xs font-mono text-indigo-600 block">{{ wrap(varName) }}</span>
                             <span class="text-xs text-gray-400">{{ desc }}</span>
                         </button>
                     </div>
@@ -99,7 +99,7 @@
                 <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4">
                     <p class="text-xs text-amber-800 font-semibold mb-1">Tips</p>
                     <ul class="text-xs text-amber-700 space-y-1 list-disc list-inside">
-                        <li>Use <code class="bg-amber-100 px-1 rounded">{{'{{'}}variable{{'}}'}}</code> syntax for dynamic values</li>
+                        <li>Use <code class="bg-amber-100 px-1 rounded">&#123;&#123;variable&#125;&#125;</code> syntax for dynamic values</li>
                         <li>Write full HTML including <code class="bg-amber-100 px-1 rounded">&lt;style&gt;</code> tags</li>
                         <li>Use inline CSS for best email client compatibility</li>
                         <li>Preview shows variables replaced with placeholder labels</li>
@@ -163,6 +163,10 @@ async function togglePreview() {
         }
     }
     showPreview.value = !showPreview.value
+}
+
+function wrap(varName) {
+    return '{{' + varName + '}}'
 }
 
 function insertVariable(varName) {
