@@ -28,7 +28,7 @@
                     </div>
 
                     <!-- Banner image (flush, no side padding) -->
-                    <div class="h-80 bg-gray-900 overflow-hidden">
+                    <div class="h-56 bg-gray-900 overflow-hidden">
                         <img
                             v-if="activeBannerImg"
                             :src="activeBannerImg"
@@ -93,7 +93,7 @@
                 <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
 
                     <!-- Community image: avatar if set, else banner -->
-                    <div class="relative overflow-hidden bg-gray-900" style="aspect-ratio: 4/3;">
+                    <div class="relative overflow-hidden bg-gray-900" style="aspect-ratio: 16/9;">
                         <img
                             v-if="community.avatar || community.cover_image"
                             :src="community.avatar || community.cover_image"
