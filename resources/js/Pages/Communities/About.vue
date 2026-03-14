@@ -28,7 +28,7 @@
                     </div>
 
                     <!-- Banner image (flush, no side padding) -->
-                    <div class="h-56 bg-gray-900 overflow-hidden">
+                    <div class="h-72 bg-gray-900 overflow-hidden">
                         <img
                             v-if="activeBannerImg"
                             :src="activeBannerImg"
