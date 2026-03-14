@@ -175,7 +175,7 @@
                 <!-- Powered by Curzzo -->
                 <div class="flex items-center justify-center gap-1.5 mt-3">
                     <span class="text-xs text-gray-400">Powered by</span>
-                    <img src="/brand/logo-transparent.png" alt="Curzzo" class="h-5 w-auto" />
+                    <img :src="'/brand/logo-transparent.png'" alt="Curzzo" class="h-5 w-auto" />
                 </div>
             </div>
         </div>
