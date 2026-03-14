@@ -35,10 +35,14 @@ class AdminController extends Controller
         $totalUsers          = User::count();
         $totalCommunities    = Community::count();
         $totalMembers        = CommunityMember::count();
-        $activeSubscriptions = Subscription::where('status', Subscription::STATUS_ACTIVE)->count();
+        // Only count subscriptions backed by an actual paid payment (excludes invited/complimentary members)
+        $activeSubscriptions = Subscription::where('status', Subscription::STATUS_ACTIVE)
+            ->whereHas('payments', fn ($q) => $q->where('status', Payment::STATUS_PAID))
+            ->count();
 
-        // Monthly revenue: sum community.price for each active subscription
+        // Monthly revenue: sum community.price for each paying active subscription only
         $monthlyRevenue = Subscription::where('subscriptions.status', Subscription::STATUS_ACTIVE)
+            ->whereHas('payments', fn ($q) => $q->where('status', Payment::STATUS_PAID))
             ->join('communities', 'subscriptions.community_id', '=', 'communities.id')
             ->sum('communities.price');
 
