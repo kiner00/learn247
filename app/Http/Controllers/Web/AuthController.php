@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\BadgeService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -76,6 +77,8 @@ class AuthController extends Controller
 
         Auth::login($user);
         $request->session()->regenerate();
+
+        app(BadgeService::class)->evaluate($user);
 
         return redirect()->intended('/communities')->with('success', 'Welcome to Curzzo!');
     }
