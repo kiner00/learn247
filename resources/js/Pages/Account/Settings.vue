@@ -89,7 +89,7 @@
                                         <span class="text-sm font-medium text-indigo-600 hover:text-indigo-700 transition-colors">Change profile photo</span>
                                         <input type="file" accept="image/*" class="hidden" @change="onAvatarChange" />
                                     </label>
-                                    <p class="text-xs text-gray-400 mt-0.5">JPG, PNG or GIF. Max 5 MB.</p>
+                                    <p class="text-xs text-gray-400 mt-0.5">JPG, PNG or GIF — max 5 MB &nbsp;·&nbsp; <span class="font-medium text-gray-500">Recommended: 400 × 400 px</span></p>
                                 </div>
                             </div>
 

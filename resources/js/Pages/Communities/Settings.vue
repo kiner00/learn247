@@ -184,7 +184,7 @@
                                 {{ avatarPreview || community.avatar ? 'Change avatar' : 'Upload avatar' }}
                                 <input ref="avatarInput" type="file" accept="image/*" class="hidden" @change="onAvatarChange" />
                             </label>
-                            <p class="mt-1 text-xs text-gray-400">Shown as your community icon. JPG, PNG, WebP — max 5 MB</p>
+                            <p class="mt-1 text-xs text-gray-400">Shown as your community icon. JPG, PNG, WebP — max 5 MB &nbsp;·&nbsp; <span class="font-medium text-gray-500">Recommended: 200 × 200 px</span></p>
                         </div>
                     </div>
 
@@ -238,7 +238,7 @@
                             {{ galleryUploading ? 'Uploading...' : 'Add image' }}
                         </button>
                     </div>
-                    <p class="mt-1 text-xs text-gray-400">JPG, PNG, WebP — max 5 MB · {{ community.gallery_images?.length ?? 0 }}/8 images</p>
+                    <p class="mt-1 text-xs text-gray-400">JPG, PNG, WebP — max 5 MB · {{ community.gallery_images?.length ?? 0 }}/8 images &nbsp;·&nbsp; <span class="font-medium text-gray-500">Recommended: 1200 × 800 px</span></p>
                 </form>
                 <p v-else class="text-xs text-amber-600">Maximum 8 images reached. Remove one to add more.</p>
             </div>
