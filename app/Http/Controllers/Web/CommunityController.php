@@ -352,8 +352,10 @@ class CommunityController extends Controller
     {
         $this->authorize('viewAnalytics', $community);
 
+        // Only count subscriptions backed by an actual paid payment (excludes invited/complimentary members)
         $activeCount = Subscription::where('community_id', $community->id)
             ->where('status', Subscription::STATUS_ACTIVE)
+            ->whereHas('payments', fn ($q) => $q->where('status', Payment::STATUS_PAID))
             ->count();
 
         $monthlyRevenue = $activeCount * (float) $community->price;
