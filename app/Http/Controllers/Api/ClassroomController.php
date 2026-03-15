@@ -2,98 +2,56 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Classroom\CompleteLesson;
+use App\Actions\Classroom\SubmitQuiz;
 use App\Http\Controllers\Controller;
-use App\Http\Resources\CourseResource;
-use App\Models\Certificate;
 use App\Models\Community;
+use App\Models\CommunityMember;
 use App\Models\Course;
 use App\Models\CourseLesson;
-use App\Models\CommunityMember;
-use App\Models\LessonCompletion;
 use App\Models\Quiz;
-use App\Models\QuizAttempt;
 use App\Models\Subscription;
-use App\Services\BadgeService;
+use App\Queries\Classroom\GetCourseDetail;
+use App\Queries\Classroom\GetCourseList;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class ClassroomController extends Controller
 {
-    public function courses(Request $request, Community $community): JsonResponse
+    public function courses(Request $request, Community $community, GetCourseList $query): JsonResponse
     {
         $this->requireMembership($request, $community);
 
-        $userId  = $request->user()->id;
-        $courses = $community->courses()->with('modules.lessons')->get();
-
-        $data = $courses->map(function ($course) use ($userId) {
-            $lessonIds = $course->modules->flatMap(fn ($m) => $m->lessons->pluck('id'));
-            $total     = $lessonIds->count();
-            $completed = $total > 0
-                ? LessonCompletion::where('user_id', $userId)->whereIn('lesson_id', $lessonIds)->count()
-                : 0;
-
-            return [
-                'id'          => $course->id,
-                'title'       => $course->title,
-                'description' => $course->description,
-                'position'    => $course->position,
-                'total'       => $total,
-                'completed'   => $completed,
-                'progress'    => $total > 0 ? round($completed / $total * 100) : 0,
-            ];
-        });
-
-        return response()->json(['courses' => $data]);
+        return response()->json(['courses' => $query->execute($community, $request->user()->id)]);
     }
 
-    public function course(Request $request, Community $community, Course $course): JsonResponse
+    public function course(Request $request, Community $community, Course $course, GetCourseDetail $query): JsonResponse
     {
         $this->requireMembership($request, $community);
 
-        $userId = $request->user()->id;
-        $course->load('modules.lessons.quiz.questions.options');
-
-        $lessonIds    = $course->modules->flatMap(fn ($m) => $m->lessons->pluck('id'));
-        $completedIds = LessonCompletion::where('user_id', $userId)
-            ->whereIn('lesson_id', $lessonIds)
-            ->pluck('lesson_id')
-            ->all();
-
-        $total    = $lessonIds->count();
-        $progress = $total > 0 ? round(count($completedIds) / $total * 100) : 0;
-
-        $quizAttempts = QuizAttempt::where('user_id', $userId)
-            ->whereHas('quiz', fn ($q) => $q->whereIn('lesson_id', $lessonIds))
-            ->get()
-            ->groupBy('quiz_id')
-            ->map(fn ($attempts) => $attempts->sortByDesc('score')->first())
-            ->map(fn ($a) => [
-                'score'  => $a->score,
-                'passed' => $a->passed,
-            ]);
-
-        $certificate = Certificate::where('user_id', $userId)
-            ->where('course_id', $course->id)
-            ->first();
+        $detail       = $query->execute($course, $request->user()->id);
+        $completedIds = $detail['completed_ids'];
+        $quizAttempts = $detail['quiz_attempts']->map(fn ($a) => [
+            'score'  => $a->score,
+            'passed' => $a->passed,
+        ]);
 
         $modules = $course->modules->map(fn ($module) => [
             'id'       => $module->id,
             'title'    => $module->title,
             'position' => $module->position,
             'lessons'  => $module->lessons->map(fn ($lesson) => [
-                'id'           => $lesson->id,
-                'title'        => $lesson->title,
-                'position'     => $lesson->position,
-                'video_url'    => $lesson->video_url,
-                'content'      => $lesson->content,
-                'completed'    => in_array($lesson->id, $completedIds),
-                'quiz'         => $lesson->quiz ? [
-                    'id'         => $lesson->quiz->id,
-                    'title'      => $lesson->quiz->title,
-                    'pass_score' => $lesson->quiz->pass_score,
-                    'questions'  => $lesson->quiz->questions->map(fn ($q) => [
+                'id'        => $lesson->id,
+                'title'     => $lesson->title,
+                'position'  => $lesson->position,
+                'video_url' => $lesson->video_url,
+                'content'   => $lesson->content,
+                'completed' => in_array($lesson->id, $completedIds),
+                'quiz'      => $lesson->quiz ? [
+                    'id'           => $lesson->quiz->id,
+                    'title'        => $lesson->quiz->title,
+                    'pass_score'   => $lesson->quiz->pass_score,
+                    'questions'    => $lesson->quiz->questions->map(fn ($q) => [
                         'id'       => $q->id,
                         'question' => $q->question,
                         'type'     => $q->type,
@@ -114,67 +72,32 @@ class ClassroomController extends Controller
                 'description' => $course->description,
             ],
             'modules'     => $modules,
-            'progress'    => $progress,
-            'certificate' => $certificate ? ['uuid' => $certificate->uuid] : null,
+            'progress'    => $detail['progress'],
+            'certificate' => $detail['certificate'] ? ['uuid' => $detail['certificate']->uuid] : null,
         ]);
     }
 
-    public function completeLesson(Request $request, Community $community, Course $course, CourseLesson $lesson): JsonResponse
+    public function completeLesson(Request $request, Community $community, Course $course, CourseLesson $lesson, CompleteLesson $action): JsonResponse
     {
-        $user = $request->user();
-
-        LessonCompletion::firstOrCreate([
-            'user_id'   => $user->id,
-            'lesson_id' => $lesson->id,
-        ]);
-
-        app(BadgeService::class)->evaluate($user, $community->id);
+        $action->execute($request->user(), $lesson, $community->id);
 
         return response()->json(['message' => 'Lesson marked as complete!']);
     }
 
-    public function submitQuiz(Request $request, Community $community, Course $course, CourseLesson $lesson, Quiz $quiz): JsonResponse
+    public function submitQuiz(Request $request, Community $community, Course $course, CourseLesson $lesson, Quiz $quiz, SubmitQuiz $action): JsonResponse
     {
         $request->validate([
             'answers'   => ['required', 'array'],
             'answers.*' => ['required', 'integer'],
         ]);
 
-        $quiz->load('questions.options');
-
-        $total   = $quiz->questions->count();
-        $correct = 0;
-
-        foreach ($quiz->questions as $question) {
-            $selectedId = $request->answers[$question->id] ?? null;
-            $correctOpt = $question->options->firstWhere('is_correct', true);
-
-            if ($selectedId && $correctOpt && (int) $selectedId === $correctOpt->id) {
-                $correct++;
-            }
-        }
-
-        $score  = $total > 0 ? (int) round($correct / $total * 100) : 0;
-        $passed = $score >= $quiz->pass_score;
-
-        QuizAttempt::create([
-            'quiz_id'      => $quiz->id,
-            'user_id'      => $request->user()->id,
-            'answers'      => $request->answers,
-            'score'        => $score,
-            'passed'       => $passed,
-            'completed_at' => now(),
-        ]);
-
-        if ($passed) {
-            app(BadgeService::class)->evaluate($request->user(), $community->id);
-        }
+        $result = $action->execute($request->user(), $quiz, $request->answers, $community->id);
 
         return response()->json([
-            'score'   => $score,
-            'passed'  => $passed,
-            'total'   => $total,
-            'correct' => $correct,
+            'score'   => $result['score'],
+            'passed'  => $result['passed'],
+            'total'   => $result['total'],
+            'correct' => $result['correct'],
         ]);
     }
 
