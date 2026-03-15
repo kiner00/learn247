@@ -3,12 +3,16 @@
 namespace App\Http\Controllers\Api;
 
 use App\Actions\Classroom\CompleteLesson;
+use App\Actions\Classroom\ManageCourse;
+use App\Actions\Classroom\ManageLesson;
+use App\Actions\Classroom\ManageModule;
 use App\Actions\Classroom\SubmitQuiz;
 use App\Http\Controllers\Controller;
 use App\Models\Community;
 use App\Models\CommunityMember;
 use App\Models\Course;
 use App\Models\CourseLesson;
+use App\Models\CourseModule;
 use App\Models\Quiz;
 use App\Models\Subscription;
 use App\Queries\Classroom\GetCourseDetail;
@@ -99,6 +103,85 @@ class ClassroomController extends Controller
             'total'   => $result['total'],
             'correct' => $result['correct'],
         ]);
+    }
+
+    public function storeCourse(Request $request, Community $community, ManageCourse $action): JsonResponse
+    {
+        abort_unless($request->user()->id === $community->owner_id, 403);
+
+        $data = $request->validate([
+            'title'       => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:2000'],
+            'cover_image' => ['nullable', 'image', 'max:5120'],
+        ]);
+
+        $course = $action->store($community, $data, $request->file('cover_image'));
+
+        return response()->json(['message' => 'Course created.', 'course_id' => $course->id], 201);
+    }
+
+    public function updateCourse(Request $request, Community $community, Course $course, ManageCourse $action): JsonResponse
+    {
+        abort_unless($request->user()->id === $community->owner_id, 403);
+
+        $data = $request->validate([
+            'title'       => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:2000'],
+            'cover_image' => ['nullable', 'image', 'max:5120'],
+        ]);
+
+        $action->update($course, $data, $request->file('cover_image'));
+
+        return response()->json(['message' => 'Course updated.']);
+    }
+
+    public function storeModule(Request $request, Community $community, Course $course, ManageModule $action): JsonResponse
+    {
+        abort_unless($request->user()->id === $community->owner_id, 403);
+
+        $data = $request->validate(['title' => ['required', 'string', 'max:255']]);
+        $module = $action->store($course, $data);
+
+        return response()->json(['message' => 'Module added.', 'module_id' => $module->id], 201);
+    }
+
+    public function updateModule(Request $request, Community $community, Course $course, CourseModule $module, ManageModule $action): JsonResponse
+    {
+        abort_unless($request->user()->id === $community->owner_id, 403);
+
+        $data = $request->validate(['title' => ['required', 'string', 'max:255']]);
+        $action->update($module, $data);
+
+        return response()->json(['message' => 'Module updated.']);
+    }
+
+    public function storeLesson(Request $request, Community $community, Course $course, CourseModule $module, ManageLesson $action): JsonResponse
+    {
+        abort_unless($request->user()->id === $community->owner_id, 403);
+
+        $data = $request->validate([
+            'title'     => ['required', 'string', 'max:255'],
+            'content'   => ['nullable', 'string'],
+            'video_url' => ['nullable', 'url', 'max:500'],
+        ]);
+
+        $lesson = $action->store($module, $data);
+
+        return response()->json(['message' => 'Lesson added.', 'lesson_id' => $lesson->id], 201);
+    }
+
+    public function updateLesson(Request $request, Community $community, Course $course, CourseModule $module, CourseLesson $lesson, ManageLesson $action): JsonResponse
+    {
+        abort_unless($request->user()->id === $community->owner_id, 403);
+
+        $data = $request->validate([
+            'content'   => ['nullable', 'string'],
+            'video_url' => ['nullable', 'url', 'max:500'],
+        ]);
+
+        $action->update($lesson, $data);
+
+        return response()->json(['message' => 'Lesson updated.']);
     }
 
     private function requireMembership(Request $request, Community $community): void

@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\DirectMessage\DeleteDirectMessage;
 use App\Actions\DirectMessage\SendDirectMessage;
 use App\Http\Controllers\Controller;
+use App\Models\DirectMessage;
 use App\Models\User;
 use App\Queries\DirectMessage\GetConversations;
 use App\Queries\DirectMessage\GetConversationThread;
@@ -48,5 +50,40 @@ class DirectMessageController extends Controller
         $users = $query->execute($request->user()->id, trim($request->query('q', '')));
 
         return response()->json(['users' => $users]);
+    }
+
+    public function poll(Request $request, User $user): JsonResponse
+    {
+        $myId  = $request->user()->id;
+        $after = (int) $request->query('after', 0);
+
+        $messages = DirectMessage::where('sender_id', $user->id)
+            ->where('receiver_id', $myId)
+            ->where('id', '>', $after)
+            ->oldest()
+            ->take(50)
+            ->get()
+            ->map(fn ($m) => [
+                'id'         => $m->id,
+                'content'    => $m->content,
+                'is_mine'    => false,
+                'created_at' => $m->created_at,
+            ]);
+
+        if ($messages->isNotEmpty()) {
+            DirectMessage::where('sender_id', $user->id)
+                ->where('receiver_id', $myId)
+                ->whereNull('read_at')
+                ->update(['read_at' => now()]);
+        }
+
+        return response()->json(['messages' => $messages]);
+    }
+
+    public function destroy(Request $request, DirectMessage $directMessage, DeleteDirectMessage $action): JsonResponse
+    {
+        $action->execute($request->user(), $directMessage);
+
+        return response()->json(['deleted' => $directMessage->id]);
     }
 }

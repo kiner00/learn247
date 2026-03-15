@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Chat\DeleteChatMessage;
 use App\Actions\Chat\SendChatMessage;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SendMessageRequest;
 use App\Http\Resources\ChatMessageResource;
 use App\Models\Community;
 use App\Models\CommunityMember;
+use App\Models\Message;
 use App\Models\Subscription;
 use App\Queries\Chat\GetChatMessages;
 use Illuminate\Http\JsonResponse;
@@ -42,6 +44,36 @@ class ChatController extends Controller
         return response()->json([
             'message' => new ChatMessageResource($message),
         ], 201);
+    }
+
+    public function poll(Request $request, Community $community, GetChatMessages $query): JsonResponse
+    {
+        $this->requireMembership($request, $community);
+
+        $after    = (int) $request->query('after', 0);
+        $messages = $query->after($community, $after)->map(fn ($m) => [
+            'id'         => $m->id,
+            'content'    => $m->content,
+            'created_at' => $m->created_at,
+            'user'       => [
+                'id'       => $m->user->id,
+                'name'     => $m->user->name,
+                'username' => $m->user->username,
+            ],
+        ]);
+
+        $query->markAsRead($community, $request->user()->id);
+
+        return response()->json(['messages' => $messages]);
+    }
+
+    public function destroy(Request $request, Community $community, Message $message, DeleteChatMessage $action): JsonResponse
+    {
+        $this->requireMembership($request, $community);
+
+        $action->execute($request->user(), $community, $message);
+
+        return response()->json(['deleted' => $message->id]);
     }
 
     private function requireMembership(Request $request, Community $community): void
