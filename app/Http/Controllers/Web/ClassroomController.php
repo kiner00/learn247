@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Web;
 
 use App\Actions\Classroom\CompleteLesson;
+use App\Actions\Classroom\ManageCourse;
+use App\Actions\Classroom\ManageLesson;
+use App\Actions\Classroom\ManageModule;
 use App\Http\Controllers\Controller;
 use App\Models\Comment;
 use App\Models\Community;
@@ -13,7 +16,6 @@ use App\Queries\Classroom\GetCourseDetail;
 use App\Queries\Classroom\GetCourseList;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -29,7 +31,7 @@ class ClassroomController extends Controller
         return Inertia::render('Communities/Classroom/Index', compact('community', 'courses', 'affiliate'));
     }
 
-    public function storeCourse(Request $request, Community $community): RedirectResponse
+    public function storeCourse(Request $request, Community $community, ManageCourse $action): RedirectResponse
     {
         abort_unless($request->user()->id === $community->owner_id, 403);
 
@@ -39,17 +41,12 @@ class ClassroomController extends Controller
             'cover_image' => ['nullable', 'image', 'max:5120'],
         ]);
 
-        if ($request->hasFile('cover_image')) {
-            $data['cover_image'] = asset('storage/' . $request->file('cover_image')->store('course-covers', 'public'));
-        }
-
-        $position = $community->courses()->max('position') + 1;
-        $community->courses()->create(array_merge($data, ['position' => $position]));
+        $action->store($community, $data, $request->file('cover_image'));
 
         return back()->with('success', 'Course created!');
     }
 
-    public function updateCourse(Request $request, Community $community, Course $course): RedirectResponse
+    public function updateCourse(Request $request, Community $community, Course $course, ManageCourse $action): RedirectResponse
     {
         abort_unless($request->user()->id === $community->owner_id, 403);
 
@@ -59,13 +56,7 @@ class ClassroomController extends Controller
             'cover_image' => ['nullable', 'image', 'max:5120'],
         ]);
 
-        if ($request->hasFile('cover_image')) {
-            $data['cover_image'] = asset('storage/' . $request->file('cover_image')->store('course-covers', 'public'));
-        } else {
-            unset($data['cover_image']);
-        }
-
-        $course->update($data);
+        $action->update($course, $data, $request->file('cover_image'));
 
         return back()->with('success', 'Course updated!');
     }
@@ -76,14 +67,10 @@ class ClassroomController extends Controller
         $detail = $query->execute($course, $userId);
 
         $lessonIds = $course->modules->flatMap(fn ($m) => $m->lessons->pluck('id'));
-
         $lessonComments = Comment::whereIn('lesson_id', $lessonIds)
             ->whereNull('parent_id')
             ->with(['author:id,name,username,avatar', 'replies.author:id,name,username,avatar'])
-            ->latest()
-            ->get()
-            ->groupBy('lesson_id')
-            ->map(fn ($comments) => $comments->values());
+            ->latest()->get()->groupBy('lesson_id')->map(fn ($comments) => $comments->values());
 
         return Inertia::render('Communities/Classroom/Show', [
             'community'      => $community,
@@ -96,28 +83,25 @@ class ClassroomController extends Controller
         ]);
     }
 
-    public function storeModule(Request $request, Community $community, Course $course): RedirectResponse
+    public function storeModule(Request $request, Community $community, Course $course, ManageModule $action): RedirectResponse
     {
         abort_unless($request->user()->id === $community->owner_id, 403);
-
-        $data     = $request->validate(['title' => ['required', 'string', 'max:255']]);
-        $position = $course->modules()->max('position') + 1;
-        $course->modules()->create(array_merge($data, ['position' => $position]));
+        $data = $request->validate(['title' => ['required', 'string', 'max:255']]);
+        $action->store($course, $data);
 
         return back()->with('success', 'Module added!');
     }
 
-    public function updateModule(Request $request, Community $community, Course $course, CourseModule $module): RedirectResponse
+    public function updateModule(Request $request, Community $community, Course $course, CourseModule $module, ManageModule $action): RedirectResponse
     {
         abort_unless($request->user()->id === $community->owner_id, 403);
-
         $data = $request->validate(['title' => ['required', 'string', 'max:255']]);
-        $module->update($data);
+        $action->update($module, $data);
 
         return back()->with('success', 'Module updated!');
     }
 
-    public function storeLesson(Request $request, Community $community, Course $course, CourseModule $module): RedirectResponse
+    public function storeLesson(Request $request, Community $community, Course $course, CourseModule $module, ManageLesson $action): RedirectResponse
     {
         abort_unless($request->user()->id === $community->owner_id, 403);
 
@@ -127,8 +111,7 @@ class ClassroomController extends Controller
             'video_url' => ['nullable', 'url', 'max:500'],
         ]);
 
-        $position = $module->lessons()->max('position') + 1;
-        $module->lessons()->create(array_merge($data, ['position' => $position]));
+        $action->store($module, $data);
 
         return back()->with('success', 'Lesson added!');
     }
@@ -140,7 +123,7 @@ class ClassroomController extends Controller
         return back()->with('success', 'Lesson marked as complete!');
     }
 
-    public function updateLesson(Request $request, Community $community, Course $course, CourseModule $module, CourseLesson $lesson): RedirectResponse
+    public function updateLesson(Request $request, Community $community, Course $course, CourseModule $module, CourseLesson $lesson, ManageLesson $action): RedirectResponse
     {
         abort_unless($request->user()->id === $community->owner_id, 403);
 
@@ -149,12 +132,7 @@ class ClassroomController extends Controller
             'video_url' => ['nullable', 'url', 'max:500'],
         ]);
 
-        if (!empty($data['video_url']) && $lesson->video_path) {
-            Storage::disk('public')->delete($lesson->video_path);
-            $data['video_path'] = null;
-        }
-
-        $lesson->update($data);
+        $action->update($lesson, $data);
 
         return back()->with('success', 'Lesson updated!');
     }

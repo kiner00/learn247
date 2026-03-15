@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Account\UpdateApiProfile;
 use App\Http\Controllers\Controller;
 use App\Models\CommunityMember;
 use App\Models\User;
@@ -24,7 +25,7 @@ class ProfileController extends Controller
         return $this->profileResponse($user, isOwn: $isOwn, query: $query);
     }
 
-    public function update(Request $request): JsonResponse
+    public function update(Request $request, UpdateApiProfile $action): JsonResponse
     {
         $data = $request->validate([
             'name'     => ['sometimes', 'string', 'max:255'],
@@ -33,17 +34,17 @@ class ProfileController extends Controller
             'avatar'   => ['sometimes', 'nullable', 'url', 'max:500'],
         ]);
 
-        $request->user()->update($data);
+        $user = $action->execute($request->user(), $data);
 
         return response()->json([
             'message' => 'Profile updated.',
             'user'    => [
-                'id'       => $request->user()->id,
-                'name'     => $request->user()->name,
-                'username' => $request->user()->username,
-                'bio'      => $request->user()->bio,
-                'location' => $request->user()->location,
-                'avatar'   => $request->user()->avatar,
+                'id'       => $user->id,
+                'name'     => $user->name,
+                'username' => $user->username,
+                'bio'      => $user->bio,
+                'location' => $user->location,
+                'avatar'   => $user->avatar,
             ],
         ]);
     }
@@ -66,12 +67,8 @@ class ProfileController extends Controller
 
         return response()->json([
             'user'           => [
-                'id'         => $user->id,
-                'name'       => $user->name,
-                'username'   => $user->username,
-                'bio'        => $user->bio,
-                'avatar'     => $user->avatar,
-                'location'   => $user->location,
+                'id' => $user->id, 'name' => $user->name, 'username' => $user->username,
+                'bio' => $user->bio, 'avatar' => $user->avatar, 'location' => $user->location,
                 'created_at' => $user->created_at,
             ],
             'is_own'         => $isOwn,

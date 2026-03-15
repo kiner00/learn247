@@ -3,123 +3,59 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
-use App\Models\Comment;
+use App\Models\Community;
 use App\Models\CommunityLevelPerk;
 use App\Models\CommunityMember;
-use App\Models\Community;
-use App\Models\Post;
-use App\Models\User;
-use Illuminate\Support\Carbon;
+use App\Queries\Community\GetLeaderboard;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class LeaderboardController extends Controller
 {
-    public function show(Community $community): Response
+    public function show(Community $community, GetLeaderboard $query): Response
     {
         $userId = auth()->id();
 
-        // ── Current user's stats ─────────────────────────────────────────────
+        $data = $query->execute($community, $userId);
+
         $myMembership = CommunityMember::where('community_id', $community->id)
             ->where('user_id', $userId)
-            ->with('user:id,name,username')
+            ->with('user:id,name,username,avatar')
             ->first();
 
-        $myPoints    = $myMembership?->points ?? 0;
-        $myLevel     = CommunityMember::computeLevel($myPoints);
-        $thresholds  = CommunityMember::LEVEL_THRESHOLDS;
-        $nextThresh  = $thresholds[$myLevel] ?? null; // null = max level
-        $ptsToNext   = $nextThresh !== null ? $nextThresh - $myPoints : null;
-
-        // ── Level distribution ───────────────────────────────────────────────
         $totalMembers = $community->members()->count();
+        $thresholds   = CommunityMember::LEVEL_THRESHOLDS;
         $levelCounts  = array_fill(1, count($thresholds), 0);
 
         CommunityMember::where('community_id', $community->id)
             ->pluck('points')
-            ->each(function ($pts) use (&$levelCounts, $thresholds) {
+            ->each(function ($pts) use (&$levelCounts) {
                 $level = CommunityMember::computeLevel($pts);
                 $levelCounts[$level] = ($levelCounts[$level] ?? 0) + 1;
             });
 
-        // ── Level perks ──────────────────────────────────────────────────────
-        $perks = CommunityLevelPerk::where('community_id', $community->id)
-            ->pluck('description', 'level');
+        $perks = CommunityLevelPerk::where('community_id', $community->id)->pluck('description', 'level');
 
         $levelDistribution = collect(range(1, count($thresholds)))->map(fn ($l) => [
-            'level'       => $l,
-            'count'       => $levelCounts[$l] ?? 0,
-            'percent'     => $totalMembers > 0 ? round(($levelCounts[$l] ?? 0) / $totalMembers * 100) : 0,
-            'perk'        => $perks[$l] ?? null,
-            'threshold'   => $thresholds[$l - 1],
+            'level'     => $l,
+            'count'     => $levelCounts[$l] ?? 0,
+            'percent'   => $totalMembers > 0 ? round(($levelCounts[$l] ?? 0) / $totalMembers * 100) : 0,
+            'perk'      => $perks[$l] ?? null,
+            'threshold' => $thresholds[$l - 1],
         ])->all();
-
-        // ── All-time leaderboard (stored points) ─────────────────────────────
-        $allTime = CommunityMember::where('community_id', $community->id)
-            ->with('user:id,name,username,avatar')
-            ->orderByDesc('points')
-            ->take(10)
-            ->get()
-            ->map(fn ($m) => [
-                'user_id'  => $m->user_id,
-                'name'     => $m->user?->name ?? 'Unknown',
-                'username' => $m->user?->username,
-                'avatar'   => $m->user?->avatar,
-                'points'   => $m->points,
-                'level'    => CommunityMember::computeLevel($m->points),
-            ])->values()->all();
-
-        // ── Period leaderboards ───────────────────────────────────────────────
-        $leaderboard30 = $this->periodLeaderboard($community, 30);
-        $leaderboard7  = $this->periodLeaderboard($community, 7);
 
         return Inertia::render('Communities/Leaderboard', [
             'community'         => $community,
             'myName'            => $myMembership?->user?->name,
             'myAvatar'          => $myMembership?->user?->avatar,
-            'myPoints'          => $myPoints,
-            'myLevel'           => $myLevel,
-            'pointsToNextLevel' => $ptsToNext,
+            'myPoints'          => $data['my_points'],
+            'myLevel'           => $data['my_level'],
+            'pointsToNextLevel' => $data['points_to_next'],
             'levelDistribution' => $levelDistribution,
-            'leaderboard'       => $allTime,
-            'leaderboard30'     => $leaderboard30,
-            'leaderboard7'      => $leaderboard7,
+            'leaderboard'       => $data['leaderboard'],
+            'leaderboard30'     => $data['leaderboard_30_days'],
+            'leaderboard7'      => $data['leaderboard_7_days'],
             'updatedAt'         => now()->format('M j, Y g:ia'),
         ]);
-    }
-
-    private function periodLeaderboard(Community $community, int $days): array
-    {
-        $since = Carbon::now()->subDays($days);
-
-        $postPts = Post::where('community_id', $community->id)
-            ->where('created_at', '>=', $since)
-            ->whereNull('deleted_at')
-            ->selectRaw('user_id, COUNT(*) * ' . CommunityMember::POINTS_POST . ' as pts')
-            ->groupBy('user_id')
-            ->pluck('pts', 'user_id');
-
-        $commentPts = Comment::where('community_id', $community->id)
-            ->where('created_at', '>=', $since)
-            ->whereNull('deleted_at')
-            ->selectRaw('user_id, COUNT(*) * ' . CommunityMember::POINTS_COMMENT . ' as pts')
-            ->groupBy('user_id')
-            ->pluck('pts', 'user_id');
-
-        $userIds = $postPts->keys()->merge($commentPts->keys())->unique();
-
-        if ($userIds->isEmpty()) return [];
-
-        $users = User::whereIn('id', $userIds)->select('id', 'name', 'username', 'avatar')->get()->keyBy('id');
-
-        return $userIds->map(function ($uid) use ($postPts, $commentPts, $users) {
-            return [
-                'user_id'  => $uid,
-                'name'     => $users[$uid]?->name ?? 'Unknown',
-                'username' => $users[$uid]?->username,
-                'avatar'   => $users[$uid]?->avatar,
-                'points'   => (int) ($postPts[$uid] ?? 0) + (int) ($commentPts[$uid] ?? 0),
-            ];
-        })->sortByDesc('points')->values()->take(10)->all();
     }
 }

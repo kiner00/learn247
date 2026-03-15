@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Actions\Community\ManageEvent;
 use App\Http\Controllers\Controller;
 use App\Models\Community;
 use App\Models\CommunityMember;
@@ -16,22 +17,16 @@ class EventController extends Controller
 {
     public function index(Request $request, Community $community): Response
     {
-        $user       = $request->user();
-        $isMember   = $user && CommunityMember::where('community_id', $community->id)
-                        ->where('user_id', $user->id)->exists();
-        $isOwner    = $user && $user->id === $community->owner_id;
+        $user    = $request->user();
+        $isMember = $user && CommunityMember::where('community_id', $community->id)->where('user_id', $user->id)->exists();
+        $isOwner  = $user && $user->id === $community->owner_id;
 
-        // Month to display (default current)
-        $year  = (int) $request->get('year',  now()->year);
+        $year  = (int) $request->get('year', now()->year);
         $month = (int) $request->get('month', now()->month);
+        $from  = now()->setDate($year, $month, 1)->startOfDay();
+        $to    = $from->copy()->endOfMonth()->endOfDay();
 
-        $from = now()->setDate($year, $month, 1)->startOfDay();
-        $to   = $from->copy()->endOfMonth()->endOfDay();
-
-        $eventsQuery = $community->events()
-            ->whereBetween('start_at', [$from, $to]);
-
-        // Non-members see public events only
+        $eventsQuery = $community->events()->whereBetween('start_at', [$from, $to]);
         if (! $isMember && ! $isOwner) {
             $eventsQuery->where('is_members_only', false);
         }
@@ -49,19 +44,17 @@ class EventController extends Controller
         ]);
 
         return Inertia::render('Communities/Calendar', [
-            'community'  => $community->only('id', 'name', 'slug', 'avatar', 'cover_image'),
-            'membership' => $isMember || $isOwner
-                ? ['role' => $isOwner ? 'owner' : 'member']
-                : null,
-            'events'     => $events,
-            'year'       => $year,
-            'month'      => $month,
-            'isOwner'    => $isOwner,
+            'community'    => $community->only('id', 'name', 'slug', 'avatar', 'cover_image'),
+            'membership'   => $isMember || $isOwner ? ['role' => $isOwner ? 'owner' : 'member'] : null,
+            'events'       => $events,
+            'year'         => $year,
+            'month'        => $month,
+            'isOwner'      => $isOwner,
             'userTimezone' => $user?->timezone ?? 'UTC',
         ]);
     }
 
-    public function store(Request $request, Community $community): RedirectResponse
+    public function store(Request $request, Community $community, ManageEvent $action): RedirectResponse
     {
         $this->authorizeOwner($request, $community);
 
@@ -76,27 +69,12 @@ class EventController extends Controller
             'is_members_only' => 'boolean',
         ]);
 
-        $path = null;
-        if ($request->hasFile('cover_image')) {
-            $path = $request->file('cover_image')->store("events/{$community->id}", 'public');
-        }
-
-        $community->events()->create([
-            'created_by'      => $request->user()->id,
-            'title'           => $data['title'],
-            'description'     => $data['description'] ?? null,
-            'start_at'        => $data['start_at'],
-            'end_at'          => $data['end_at'] ?? null,
-            'timezone'        => $data['timezone'],
-            'url'             => $data['url'] ?? null,
-            'cover_image'     => $path,
-            'is_members_only' => $data['is_members_only'] ?? false,
-        ]);
+        $action->store($community, $request->user(), $data, $request->file('cover_image'));
 
         return back()->with('success', 'Event created.');
     }
 
-    public function update(Request $request, Community $community, Event $event): RedirectResponse
+    public function update(Request $request, Community $community, Event $event, ManageEvent $action): RedirectResponse
     {
         $this->authorizeOwner($request, $community);
         abort_if($event->community_id !== $community->id, 404);
@@ -112,27 +90,17 @@ class EventController extends Controller
             'is_members_only' => 'boolean',
         ]);
 
-        if ($request->hasFile('cover_image')) {
-            if ($event->cover_image) {
-                Storage::disk('public')->delete($event->cover_image);
-            }
-            $data['cover_image'] = $request->file('cover_image')->store("events/{$community->id}", 'public');
-        }
-
-        $event->update($data);
+        $action->update($event, $data, $request->file('cover_image'));
 
         return back()->with('success', 'Event updated.');
     }
 
-    public function destroy(Request $request, Community $community, Event $event): RedirectResponse
+    public function destroy(Request $request, Community $community, Event $event, ManageEvent $action): RedirectResponse
     {
         $this->authorizeOwner($request, $community);
         abort_if($event->community_id !== $community->id, 404);
 
-        if ($event->cover_image) {
-            Storage::disk('public')->delete($event->cover_image);
-        }
-        $event->delete();
+        $action->destroy($event);
 
         return back()->with('success', 'Event deleted.');
     }
