@@ -2,13 +2,12 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Actions\Auth\AuthenticateUser;
+use App\Actions\Auth\RegisterUser;
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use App\Services\BadgeService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -24,25 +23,19 @@ class AuthController extends Controller
         return Inertia::render('Auth/Login');
     }
 
-    public function login(Request $request): RedirectResponse
+    public function login(Request $request, AuthenticateUser $action): RedirectResponse
     {
         $credentials = $request->validate([
             'email'    => ['required', 'email'],
             'password' => ['required'],
         ]);
 
-        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
-            return back()->withErrors(['email' => 'These credentials do not match our records.']);
-        }
+        $user = $action->execute($credentials['email'], $credentials['password']);
 
+        Auth::login($user, $request->boolean('remember'));
         $request->session()->regenerate();
 
-        if (! Auth::user()->is_active) {
-            Auth::logout();
-            return back()->withErrors(['email' => 'Your account has been disabled. Please contact support.']);
-        }
-
-        if (Auth::user()->needs_password_setup) {
+        if ($user->needs_password_setup) {
             return redirect()->route('password.setup');
         }
 
@@ -58,7 +51,7 @@ class AuthController extends Controller
         return Inertia::render('Auth/Register');
     }
 
-    public function register(Request $request): RedirectResponse
+    public function register(Request $request, RegisterUser $action): RedirectResponse
     {
         $data = $request->validate([
             'first_name' => ['required', 'string', 'max:100'],
@@ -68,35 +61,12 @@ class AuthController extends Controller
             'password'   => ['required', 'confirmed', Password::defaults()],
         ]);
 
-        $user = User::create([
-            'name'     => trim($data['first_name'] . ' ' . $data['last_name']),
-            'email'    => $data['email'],
-            'phone'    => $data['phone'] ?? null,
-            'password' => Hash::make($data['password']),
-        ]);
-
-        $user->update(['username' => $this->generateUsername($data['first_name'], $data['last_name'], $user->id)]);
+        $user = $action->execute($data);
 
         Auth::login($user);
         $request->session()->regenerate();
 
-        app(BadgeService::class)->evaluate($user);
-
         return redirect()->intended('/communities')->with('success', 'Welcome to Curzzo!');
-    }
-
-    private function generateUsername(string $firstName, string $lastName, int $userId): string
-    {
-        $slug = function (string $s): string {
-            return trim(preg_replace('/-+/', '-', preg_replace('/[^a-z0-9-]/', '', str_replace(' ', '-', strtolower($s)))), '-');
-        };
-
-        $first = $slug($firstName) ?: 'user';
-        $last  = $slug($lastName);
-
-        $base = $last ? "{$first}-{$last}" : $first;
-
-        return "{$base}-{$userId}";
     }
 
     public function logout(Request $request): RedirectResponse

@@ -2,62 +2,42 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Chat\SendChatMessage;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ChatMessageResource;
 use App\Models\Community;
 use App\Models\CommunityMember;
-use App\Models\Message;
 use App\Models\Subscription;
+use App\Queries\Chat\GetChatMessages;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class ChatController extends Controller
 {
-    public function index(Request $request, Community $community): JsonResponse
+    public function index(Request $request, Community $community, GetChatMessages $query): JsonResponse
     {
         $this->requireMembership($request, $community);
 
         $userId = $request->user()->id;
         $after  = (int) $request->query('after', 0);
 
-        $query = Message::where('community_id', $community->id)
-            ->with('user:id,name,username,avatar');
+        $messages = $after > 0
+            ? $query->after($community, $after)
+            : $query->latest($community);
 
-        if ($after > 0) {
-            $messages = $query->where('id', '>', $after)->oldest()->take(50)->get();
-        } else {
-            $messages = $query->latest()->take(50)->get()->reverse()->values();
-        }
-
-        $community->members()->where('user_id', $userId)->update([
-            'messages_last_read_at' => now(),
-        ]);
+        $query->markAsRead($community, $userId);
 
         return response()->json([
             'messages' => ChatMessageResource::collection($messages),
         ]);
     }
 
-    public function store(Request $request, Community $community): JsonResponse
+    public function store(Request $request, Community $community, SendChatMessage $action): JsonResponse
     {
         $this->requireMembership($request, $community);
 
-        $data = $request->validate([
-            'content' => ['required', 'string', 'max:2000'],
-        ]);
-
-        $message = Message::create([
-            'community_id' => $community->id,
-            'user_id'      => $request->user()->id,
-            'content'      => $data['content'],
-        ]);
-
-        $community->members()->where('user_id', $request->user()->id)->update([
-            'messages_last_read_at' => now(),
-        ]);
-
-        $message->load('user:id,name,username,avatar');
+        $data    = $request->validate(['content' => ['required', 'string', 'max:2000']]);
+        $message = $action->execute($request->user(), $community, $data['content']);
 
         return response()->json([
             'message' => new ChatMessageResource($message),
