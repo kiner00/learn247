@@ -1,0 +1,77 @@
+<?php
+
+namespace Tests\Feature\Api;
+
+use App\Models\Comment;
+use App\Models\Community;
+use App\Models\CommunityMember;
+use App\Models\Post;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class FeedControllerTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_member_can_see_community_feed(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->create();
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+        Post::factory()->create(['community_id' => $community->id]);
+
+        $response = $this->actingAs($user, 'sanctum')
+            ->getJson("/api/communities/{$community->slug}/posts");
+
+        $response->assertOk()
+            ->assertJsonStructure(['data']);
+    }
+
+    public function test_non_member_gets_403_for_community_feed(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->create();
+
+        $response = $this->actingAs($user, 'sanctum')
+            ->getJson("/api/communities/{$community->slug}/posts");
+
+        $response->assertForbidden();
+    }
+
+    public function test_owner_can_see_community_feed(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        Post::factory()->create(['community_id' => $community->id]);
+
+        $response = $this->actingAs($owner, 'sanctum')
+            ->getJson("/api/communities/{$community->slug}/posts");
+
+        $response->assertOk()
+            ->assertJsonStructure(['data']);
+    }
+
+    public function test_member_can_see_single_post_with_comments(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->create();
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+        $post = Post::factory()->create(['community_id' => $community->id]);
+        Comment::factory()->create(['post_id' => $post->id, 'community_id' => $community->id]);
+
+        $response = $this->actingAs($user, 'sanctum')
+            ->getJson("/api/posts/{$post->id}");
+
+        $response->assertOk()
+            ->assertJsonStructure(['data']);
+    }
+
+    public function test_single_post_unauthenticated_returns_401(): void
+    {
+        $post = Post::factory()->create();
+
+        $this->getJson("/api/posts/{$post->id}")
+            ->assertUnauthorized();
+    }
+}

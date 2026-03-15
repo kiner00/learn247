@@ -45,7 +45,7 @@ class AccountSettingsController extends Controller
 
     public function updateEmail(UpdateEmailRequest $request, UpdateEmail $action): JsonResponse
     {
-        $action->execute($request->user(), $request->validated());
+        $action->execute($request->user(), $request->validated()['email']);
         return response()->json(['message' => 'Email updated.']);
     }
 

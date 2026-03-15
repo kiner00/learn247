@@ -36,6 +36,10 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
 RUN pecl install redis \
  && docker-php-ext-enable redis
 
+# PCOV for code coverage
+RUN pecl install pcov \
+ && docker-php-ext-enable pcov
+
 # ─── Composer ─────────────────────────────────────────────────────────────────
 COPY --from=composer:2.7 /usr/bin/composer /usr/local/bin/composer
 
