@@ -4,8 +4,12 @@ namespace Tests\Feature\Web;
 
 use App\Models\Community;
 use App\Models\CommunityMember;
+use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class CommunityControllerTest extends TestCase
@@ -220,5 +224,108 @@ class CommunityControllerTest extends TestCase
         $response = $this->actingAs($owner)->get("/communities/{$community->slug}/analytics");
 
         $response->assertOk();
+    }
+
+    // ─── announce ───────────────────────────────────────────────────────────
+
+    public function test_owner_can_announce_to_community(): void
+    {
+        Mail::fake();
+
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/announce", [
+                'subject' => 'Test Subject',
+                'message' => 'Test body message',
+            ])
+            ->assertRedirect();
+    }
+
+    // ─── level-perks ────────────────────────────────────────────────────────
+
+    public function test_owner_can_update_level_perks(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $this->actingAs($owner)
+            ->patch("/communities/{$community->slug}/level-perks", [
+                'perks' => ['1' => 'Perk 1', '2' => 'Perk 2'],
+            ])
+            ->assertRedirect();
+    }
+
+    public function test_owner_can_add_gallery_image(): void
+    {
+        Storage::fake('public');
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/gallery", [
+                'image' => UploadedFile::fake()->image('gallery.jpg'),
+            ])
+            ->assertRedirect();
+    }
+
+    public function test_owner_can_remove_gallery_image(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create([
+            'owner_id'       => $owner->id,
+            'gallery_images' => ['/storage/img1.jpg', '/storage/img2.jpg'],
+        ]);
+
+        $this->actingAs($owner)
+            ->delete("/communities/{$community->slug}/gallery/0")
+            ->assertRedirect();
+    }
+
+    public function test_about_page_with_authenticated_user(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->create();
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+
+        $this->actingAs($user)
+            ->get("/communities/{$community->slug}/about")
+            ->assertOk();
+    }
+
+    public function test_members_page_with_admin_filter(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $this->actingAs($owner)
+            ->get("/communities/{$community->slug}/members?filter=admin")
+            ->assertOk();
+    }
+
+    public function test_show_auto_creates_affiliate_for_active_subscriber(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->create(['price' => 500]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+        Subscription::create([
+            'community_id' => $community->id,
+            'user_id'      => $user->id,
+            'xendit_id'    => 'inv_auto_aff',
+            'status'       => Subscription::STATUS_ACTIVE,
+            'expires_at'   => now()->addMonth(),
+        ]);
+
+        $this->actingAs($user)
+            ->get("/communities/{$community->slug}")
+            ->assertOk();
+
+        $this->assertDatabaseHas('affiliates', [
+            'community_id' => $community->id,
+            'user_id'      => $user->id,
+        ]);
     }
 }

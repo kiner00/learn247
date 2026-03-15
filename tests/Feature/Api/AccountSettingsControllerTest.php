@@ -25,6 +25,37 @@ class AccountSettingsControllerTest extends TestCase
             ]);
     }
 
+    public function test_show_with_tab_parameter_returns_tab_in_response(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->getJson('/api/account/settings?tab=notifications');
+
+        $response->assertOk()->assertJsonPath('tab', 'notifications');
+    }
+
+    public function test_update_theme_validation_rejects_invalid_theme(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->patchJson('/api/account/settings/theme', [
+            'theme' => 'invalid-theme',
+        ]);
+
+        $response->assertUnprocessable()->assertJsonValidationErrors(['theme']);
+    }
+
+    public function test_update_timezone_validation_rejects_invalid_timezone(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->patchJson('/api/account/settings/timezone', [
+            'timezone' => 'Invalid/Timezone',
+        ]);
+
+        $response->assertUnprocessable()->assertJsonValidationErrors(['timezone']);
+    }
+
     public function test_patch_email_updates_email(): void
     {
         $user = User::factory()->create(['email' => 'old@example.com']);

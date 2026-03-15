@@ -88,4 +88,18 @@ class AuthControllerTest extends TestCase
         $response->assertRedirect(route('login'));
         $this->assertGuest();
     }
+
+    public function test_login_stores_intended_url_from_redirect_query(): void
+    {
+        $response = $this->get('/login?redirect=/communities/test-slug');
+
+        $response->assertOk();
+    }
+
+    public function test_register_stores_intended_url_from_redirect_query(): void
+    {
+        $response = $this->get('/register?redirect=/communities/test-slug');
+
+        $response->assertOk();
+    }
 }

@@ -110,6 +110,22 @@ class LikeControllerTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_owner_can_toggle_pin_on_post(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $post      = Post::factory()->create([
+            'community_id' => $community->id,
+            'user_id'      => $owner->id,
+            'is_pinned'    => false,
+        ]);
+
+        $this->actingAs($owner)
+            ->postJson("/api/posts/{$post->id}/pin")
+            ->assertOk()
+            ->assertJsonPath('is_pinned', true);
+    }
+
     // ─── Unauthenticated ──────────────────────────────────────────────────────
 
     public function test_unauthenticated_returns_401_for_like_post(): void

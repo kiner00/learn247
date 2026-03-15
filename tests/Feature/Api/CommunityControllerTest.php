@@ -8,7 +8,9 @@ use App\Models\CommunityMember;
 use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class CommunityControllerTest extends TestCase
@@ -350,5 +352,41 @@ class CommunityControllerTest extends TestCase
 
         $this->postJson("/api/communities/{$community->slug}/join")
             ->assertUnauthorized();
+    }
+
+    public function test_owner_can_add_gallery_image(): void
+    {
+        Storage::fake('public');
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $this->actingAs($owner, 'sanctum')
+            ->post("/api/communities/{$community->slug}/gallery", [
+                'image' => UploadedFile::fake()->image('gallery.jpg'),
+            ], ['Accept' => 'application/json'])
+            ->assertCreated();
+    }
+
+    public function test_owner_can_remove_gallery_image(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create([
+            'owner_id'       => $owner->id,
+            'gallery_images' => ['/storage/img1.jpg'],
+        ]);
+
+        $this->actingAs($owner, 'sanctum')
+            ->deleteJson("/api/communities/{$community->slug}/gallery/0")
+            ->assertOk();
+    }
+
+    public function test_paid_community_join_returns_error(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->create(['price' => 500]);
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson("/api/communities/{$community->slug}/join")
+            ->assertUnprocessable();
     }
 }

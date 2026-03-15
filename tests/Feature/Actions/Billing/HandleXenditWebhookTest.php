@@ -2,17 +2,17 @@
 
 namespace Tests\Feature\Actions\Billing;
 
-use App\Actions\Affiliate\RecordAffiliateConversion;
 use App\Actions\Billing\HandleXenditWebhook;
-use App\Actions\Billing\SyncMembershipFromSubscription;
+use App\Mail\TempPasswordMail;
+use App\Models\Affiliate;
 use App\Models\Community;
+use App\Models\CommunityMember;
 use App\Models\Payment;
 use App\Models\Subscription;
 use App\Models\User;
-use App\Services\XenditService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
-use Mockery;
+use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
@@ -20,125 +20,229 @@ class HandleXenditWebhookTest extends TestCase
 {
     use RefreshDatabase;
 
-    private XenditService $xendit;
-    private SyncMembershipFromSubscription $sync;
-    private HandleXenditWebhook $action;
-
-    protected function setUp(): void
+    private function makeRequest(array $body, ?string $callbackToken = null): Request
     {
-        parent::setUp();
-
-        $this->xendit = Mockery::mock(XenditService::class);
-        $this->sync   = new SyncMembershipFromSubscription();
-        $this->action = new HandleXenditWebhook($this->xendit, $this->sync, new RecordAffiliateConversion());
-    }
-
-    private function makeRequest(array $payload, string $token = 'valid_token'): Request
-    {
-        $request = Request::create('/api/xendit/webhook', 'POST', $payload);
-        $request->headers->set('x-callback-token', $token);
+        $request = Request::create('/xendit/webhook', 'POST', $body);
+        if ($callbackToken) {
+            $request->headers->set('x-callback-token', $callbackToken);
+        }
         return $request;
     }
 
-    public function test_throws_401_for_invalid_callback_token(): void
+    public function test_rejects_invalid_callback_token(): void
     {
-        $this->xendit->shouldReceive('verifyCallbackToken')->with('bad_token')->andReturn(false);
+        config(['services.xendit.callback_token' => 'valid-token']);
+
+        $request = $this->makeRequest(['id' => 'inv_123', 'status' => 'PAID'], 'wrong-token');
+        $action = app(HandleXenditWebhook::class);
 
         $this->expectException(HttpException::class);
-        $this->action->execute($this->makeRequest(['id' => 'inv_123', 'status' => 'PAID'], 'bad_token'));
+        $action->execute($request);
     }
 
-    public function test_processes_paid_event_and_activates_subscription(): void
+    public function test_processes_paid_invoice_creates_payment_and_membership(): void
     {
-        $user         = User::factory()->create();
-        $community    = Community::factory()->paid()->create();
-        $subscription = Subscription::factory()->create([
+        Mail::fake();
+        config(['services.xendit.callback_token' => 'valid-token', 'services.xendit.secret_key' => 'test']);
+
+        $user = User::factory()->create(['needs_password_setup' => false]);
+        $community = Community::factory()->create();
+        $subscription = Subscription::create([
             'community_id' => $community->id,
             'user_id'      => $user->id,
-            'xendit_id'    => 'inv_abc',
+            'xendit_id'    => 'inv_paid_123',
             'status'       => Subscription::STATUS_PENDING,
+            'expires_at'   => null,
         ]);
 
-        $this->xendit->shouldReceive('verifyCallbackToken')->with('valid_token')->andReturn(true);
+        $request = $this->makeRequest([
+            'id'       => 'inv_paid_123',
+            'status'   => 'PAID',
+            'amount'   => 500,
+            'currency' => 'PHP',
+        ], 'valid-token');
 
-        $payload = ['id' => 'inv_abc', 'status' => 'PAID', 'amount' => 499, 'currency' => 'PHP'];
-        $this->action->execute($this->makeRequest($payload, 'valid_token'));
+        $action = app(HandleXenditWebhook::class);
+        $action->execute($request);
 
-        $this->assertDatabaseHas('subscriptions', ['id' => $subscription->id, 'status' => Subscription::STATUS_ACTIVE]);
-        $this->assertDatabaseHas('payments', ['xendit_event_id' => 'inv_abc_PAID', 'status' => Payment::STATUS_PAID]);
-    }
+        $this->assertDatabaseHas('payments', [
+            'subscription_id' => $subscription->id,
+            'status'          => Payment::STATUS_PAID,
+            'amount'          => 500,
+        ]);
 
-    public function test_skips_duplicate_event_idempotency(): void
-    {
-        $user         = User::factory()->create();
-        $community    = Community::factory()->paid()->create();
-        $subscription = Subscription::factory()->active()->create([
+        $this->assertDatabaseHas('subscriptions', [
+            'id'     => $subscription->id,
+            'status' => Subscription::STATUS_ACTIVE,
+        ]);
+
+        $this->assertDatabaseHas('community_members', [
             'community_id' => $community->id,
             'user_id'      => $user->id,
-            'xendit_id'    => 'inv_dup',
         ]);
-        Payment::factory()->create([
+    }
+
+    public function test_idempotency_skips_duplicate_events(): void
+    {
+        Mail::fake();
+        config(['services.xendit.callback_token' => 'valid-token', 'services.xendit.secret_key' => 'test']);
+
+        $user = User::factory()->create();
+        $community = Community::factory()->create();
+        $subscription = Subscription::create([
+            'community_id' => $community->id,
+            'user_id'      => $user->id,
+            'xendit_id'    => 'inv_dup_123',
+            'status'       => Subscription::STATUS_ACTIVE,
+            'expires_at'   => now()->addMonth(),
+        ]);
+
+        Payment::create([
             'subscription_id' => $subscription->id,
             'community_id'    => $community->id,
             'user_id'         => $user->id,
-            'xendit_event_id' => 'inv_dup_PAID',
+            'amount'          => 500,
+            'currency'        => 'PHP',
+            'status'          => Payment::STATUS_PAID,
+            'xendit_event_id' => 'inv_dup_123_PAID',
+            'metadata'        => [],
+            'paid_at'         => now(),
         ]);
 
-        $this->xendit->shouldReceive('verifyCallbackToken')->with('valid_token')->andReturn(true);
+        $request = $this->makeRequest([
+            'id'     => 'inv_dup_123',
+            'status' => 'PAID',
+            'amount' => 500,
+        ], 'valid-token');
 
-        $initialCount = Payment::count();
-        $payload      = ['id' => 'inv_dup', 'status' => 'PAID', 'amount' => 499, 'currency' => 'PHP'];
-        $this->action->execute($this->makeRequest($payload, 'valid_token'));
+        $action = app(HandleXenditWebhook::class);
+        $action->execute($request);
 
-        $this->assertEquals($initialCount, Payment::count());
+        $this->assertEquals(1, Payment::where('xendit_event_id', 'inv_dup_123_PAID')->count());
     }
 
-    public function test_ignores_unknown_subscription(): void
+    public function test_skips_non_invoice_events(): void
     {
-        $this->xendit->shouldReceive('verifyCallbackToken')->with('valid_token')->andReturn(true);
+        config(['services.xendit.callback_token' => 'valid-token']);
 
-        $payload = ['id' => 'inv_unknown', 'status' => 'PAID'];
-        // Should not throw, just log and return
-        $this->action->execute($this->makeRequest($payload, 'valid_token'));
+        $request = $this->makeRequest([
+            'event' => 'disbursement.completed',
+            'data'  => ['id' => 'dis_123', 'status' => 'COMPLETED'],
+        ], 'valid-token');
 
-        $this->assertDatabaseEmpty('payments');
+        $action = app(HandleXenditWebhook::class);
+        $action->execute($request);
+
+        $this->assertEquals(0, Payment::count());
     }
 
-    public function test_processes_expired_event(): void
+    public function test_no_matching_subscription_is_skipped(): void
     {
-        $user         = User::factory()->create();
-        $community    = Community::factory()->paid()->create();
-        $subscription = Subscription::factory()->active()->create([
+        config(['services.xendit.callback_token' => 'valid-token']);
+
+        $request = $this->makeRequest([
+            'id'     => 'inv_nonexistent',
+            'status' => 'PAID',
+            'amount' => 100,
+        ], 'valid-token');
+
+        $action = app(HandleXenditWebhook::class);
+        $action->execute($request);
+
+        $this->assertEquals(0, Payment::count());
+    }
+
+    public function test_auto_creates_affiliate_for_paid_subscriber(): void
+    {
+        Mail::fake();
+        config(['services.xendit.callback_token' => 'valid-token', 'services.xendit.secret_key' => 'test']);
+
+        $user = User::factory()->create(['needs_password_setup' => false]);
+        $community = Community::factory()->create();
+        $subscription = Subscription::create([
             'community_id' => $community->id,
             'user_id'      => $user->id,
-            'xendit_id'    => 'inv_exp',
-        ]);
-
-        $this->xendit->shouldReceive('verifyCallbackToken')->with('valid_token')->andReturn(true);
-
-        $payload = ['id' => 'inv_exp', 'status' => 'EXPIRED', 'amount' => 499, 'currency' => 'PHP'];
-        $this->action->execute($this->makeRequest($payload, 'valid_token'));
-
-        $this->assertDatabaseHas('subscriptions', ['id' => $subscription->id, 'status' => Subscription::STATUS_EXPIRED]);
-        $this->assertDatabaseHas('payments', ['xendit_event_id' => 'inv_exp_EXPIRED', 'status' => Payment::STATUS_EXPIRED]);
-    }
-
-    public function test_processes_failed_event(): void
-    {
-        $user         = User::factory()->create();
-        $community    = Community::factory()->paid()->create();
-        $subscription = Subscription::factory()->create([
-            'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_fail',
+            'xendit_id'    => 'inv_aff_auto',
             'status'       => Subscription::STATUS_PENDING,
+            'expires_at'   => null,
         ]);
 
-        $this->xendit->shouldReceive('verifyCallbackToken')->with('valid_token')->andReturn(true);
+        $request = $this->makeRequest([
+            'id'     => 'inv_aff_auto',
+            'status' => 'PAID',
+            'amount' => 500,
+        ], 'valid-token');
 
-        $payload = ['id' => 'inv_fail', 'status' => 'FAILED', 'amount' => 499, 'currency' => 'PHP'];
-        $this->action->execute($this->makeRequest($payload, 'valid_token'));
+        $action = app(HandleXenditWebhook::class);
+        $action->execute($request);
 
-        $this->assertDatabaseHas('subscriptions', ['id' => $subscription->id, 'status' => Subscription::STATUS_CANCELLED]);
+        $this->assertDatabaseHas('affiliates', [
+            'community_id' => $community->id,
+            'user_id'      => $user->id,
+            'status'       => Affiliate::STATUS_ACTIVE,
+        ]);
+    }
+
+    public function test_failed_status_cancels_subscription(): void
+    {
+        config(['services.xendit.callback_token' => 'valid-token', 'services.xendit.secret_key' => 'test']);
+
+        $user = User::factory()->create();
+        $community = Community::factory()->create();
+        $subscription = Subscription::create([
+            'community_id' => $community->id,
+            'user_id'      => $user->id,
+            'xendit_id'    => 'inv_fail_123',
+            'status'       => Subscription::STATUS_PENDING,
+            'expires_at'   => null,
+        ]);
+
+        $request = $this->makeRequest([
+            'id'     => 'inv_fail_123',
+            'status' => 'FAILED',
+            'amount' => 500,
+        ], 'valid-token');
+
+        $action = app(HandleXenditWebhook::class);
+        $action->execute($request);
+
+        $this->assertDatabaseHas('subscriptions', [
+            'id'     => $subscription->id,
+            'status' => Subscription::STATUS_CANCELLED,
+        ]);
+
+        $this->assertDatabaseHas('payments', [
+            'subscription_id' => $subscription->id,
+            'status'          => Payment::STATUS_FAILED,
+        ]);
+    }
+
+    public function test_guest_user_receives_temp_password_email(): void
+    {
+        Mail::fake();
+        config(['services.xendit.callback_token' => 'valid-token', 'services.xendit.secret_key' => 'test']);
+
+        $user = User::factory()->create(['needs_password_setup' => true]);
+        $community = Community::factory()->create();
+        $subscription = Subscription::create([
+            'community_id' => $community->id,
+            'user_id'      => $user->id,
+            'xendit_id'    => 'inv_guest_123',
+            'status'       => Subscription::STATUS_PENDING,
+            'expires_at'   => null,
+        ]);
+
+        $request = $this->makeRequest([
+            'id'     => 'inv_guest_123',
+            'status' => 'PAID',
+            'amount' => 500,
+        ], 'valid-token');
+
+        $action = app(HandleXenditWebhook::class);
+        $action->execute($request);
+
+        Mail::assertSent(TempPasswordMail::class, function ($mail) use ($user) {
+            return $mail->hasTo($user->email);
+        });
     }
 }

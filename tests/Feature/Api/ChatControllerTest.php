@@ -156,4 +156,41 @@ class ChatControllerTest extends TestCase
             ->assertOk()
             ->assertJsonStructure(['messages']);
     }
+
+    public function test_owner_can_access_chat_without_membership(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+
+        Message::create([
+            'community_id' => $community->id,
+            'user_id'      => $owner->id,
+            'content'      => 'Owner message',
+        ]);
+
+        $this->actingAs($owner)
+            ->getJson("/api/communities/{$community->slug}/chat")
+            ->assertOk();
+    }
+
+    public function test_non_author_cannot_delete_message(): void
+    {
+        $author    = User::factory()->create();
+        $other     = User::factory()->create();
+        $community = Community::factory()->create(['price' => 0]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $author->id]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $other->id]);
+
+        $message = Message::create([
+            'community_id' => $community->id,
+            'user_id'      => $author->id,
+            'content'      => 'Author message',
+        ]);
+
+        $this->actingAs($other)
+            ->deleteJson("/api/communities/{$community->slug}/chat/{$message->id}")
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('messages', ['id' => $message->id]);
+    }
 }

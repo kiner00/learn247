@@ -99,4 +99,23 @@ class EnsureActiveMembershipTest extends TestCase
             ->get("/communities/{$community->slug}/members")
             ->assertRedirect("/communities/{$community->slug}/about");
     }
+
+    public function test_unauthenticated_json_request_returns_401(): void
+    {
+        $community = Community::factory()->create();
+
+        $this->getJson("/communities/{$community->slug}/members")
+            ->assertStatus(401);
+    }
+
+    public function test_non_subscriber_paid_community_json_returns_403(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->paid()->create();
+
+        $this->actingAs($user)
+            ->getJson("/communities/{$community->slug}/members")
+            ->assertForbidden()
+            ->assertJsonPath('message', 'An active membership is required.');
+    }
 }

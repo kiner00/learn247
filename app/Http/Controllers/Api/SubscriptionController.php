@@ -12,7 +12,9 @@ class SubscriptionController extends Controller
 {
     public function checkout(Request $request, Community $community, StartSubscriptionCheckout $action): JsonResponse
     {
-        $result = $action->execute($request->user(), $community);
+        $affiliateCode = $request->cookie('ref_code');
+
+        $result = $action->execute($request->user(), $community, $affiliateCode);
 
         return response()->json([
             'checkout_url'    => $result['checkout_url'],

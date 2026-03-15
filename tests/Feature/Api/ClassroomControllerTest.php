@@ -5,6 +5,7 @@ namespace Tests\Feature\Api;
 use App\Models\Community;
 use App\Models\CommunityMember;
 use App\Models\Course;
+use App\Models\Subscription;
 use App\Models\CourseLesson;
 use App\Models\CourseModule;
 use App\Models\Quiz;
@@ -328,5 +329,105 @@ class ClassroomControllerTest extends TestCase
             ->assertJsonPath('message', 'Course updated.');
 
         $this->assertDatabaseHas('courses', ['id' => $course->id, 'title' => 'New Title']);
+    }
+
+    public function test_paid_subscriber_can_list_courses(): void
+    {
+        $owner     = User::factory()->create();
+        $member    = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 500]);
+
+        Subscription::create([
+            'community_id' => $community->id,
+            'user_id'      => $member->id,
+            'xendit_id'    => 'inv_class_paid',
+            'status'       => Subscription::STATUS_ACTIVE,
+            'expires_at'   => now()->addMonth(),
+        ]);
+
+        Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Paid Course',
+            'description'  => 'Desc',
+        ]);
+
+        $this->actingAs($member)
+            ->getJson("/api/communities/{$community->slug}/courses")
+            ->assertOk()
+            ->assertJsonStructure(['courses']);
+    }
+
+    public function test_non_subscriber_gets_403_on_paid_community_courses(): void
+    {
+        $owner     = User::factory()->create();
+        $member    = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 500]);
+
+        $this->actingAs($member)
+            ->getJson("/api/communities/{$community->slug}/courses")
+            ->assertForbidden();
+    }
+
+    public function test_owner_can_access_paid_community_courses(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 500]);
+
+        Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Owner Course',
+            'description'  => 'Desc',
+        ]);
+
+        $this->actingAs($owner)
+            ->getJson("/api/communities/{$community->slug}/courses")
+            ->assertOk();
+    }
+
+    public function test_non_owner_cannot_store_lesson(): void
+    {
+        $owner     = User::factory()->create();
+        $other     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $course = Course::create(['community_id' => $community->id, 'title' => 'T', 'description' => 'D']);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'M', 'position' => 1]);
+
+        $this->actingAs($other)
+            ->postJson("/api/communities/{$community->slug}/courses/{$course->id}/modules/{$module->id}/lessons", [
+                'title' => 'New Lesson',
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_non_owner_cannot_update_lesson(): void
+    {
+        $owner     = User::factory()->create();
+        $other     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $course = Course::create(['community_id' => $community->id, 'title' => 'T', 'description' => 'D']);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'M', 'position' => 1]);
+        $lesson = CourseLesson::create(['module_id' => $module->id, 'title' => 'L', 'position' => 1]);
+
+        $this->actingAs($other)
+            ->patchJson("/api/communities/{$community->slug}/courses/{$course->id}/modules/{$module->id}/lessons/{$lesson->id}", [
+                'content' => 'Hacked',
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_non_owner_cannot_update_course(): void
+    {
+        $owner     = User::factory()->create();
+        $other     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $course    = Course::create(['community_id' => $community->id, 'title' => 'T', 'description' => 'D']);
+
+        $this->actingAs($other)
+            ->postJson("/api/communities/{$community->slug}/courses/{$course->id}/update", [
+                'title' => 'Hacked',
+            ])
+            ->assertForbidden();
     }
 }

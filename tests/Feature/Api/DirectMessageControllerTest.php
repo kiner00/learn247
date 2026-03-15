@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Api;
 
+use App\Models\Community;
+use App\Models\CommunityMember;
 use App\Models\DirectMessage;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -139,5 +141,69 @@ class DirectMessageControllerTest extends TestCase
             ->assertJsonCount(1, 'messages')
             ->assertJsonPath('messages.0.content', 'New message from partner')
             ->assertJsonPath('messages.0.is_mine', false);
+    }
+
+    public function test_search_with_empty_query_returns_users_from_same_community(): void
+    {
+        $user    = User::factory()->create(['name' => 'Alice']);
+        $other   = User::factory()->create(['name' => 'Bob']);
+        $community = Community::factory()->create();
+        CommunityMember::factory()->create([
+            'community_id' => $community->id,
+            'user_id'     => $user->id,
+        ]);
+        CommunityMember::factory()->create([
+            'community_id' => $community->id,
+            'user_id'     => $other->id,
+        ]);
+
+        $response = $this->actingAs($user)->getJson('/api/messages/search');
+
+        $response->assertOk()
+            ->assertJsonStructure(['users'])
+            ->assertJsonCount(1, 'users');
+    }
+
+    public function test_show_with_empty_conversation_returns_empty_messages(): void
+    {
+        $user  = User::factory()->create();
+        $other = User::factory()->create();
+
+        $response = $this->actingAs($user)->getJson("/api/messages/{$other->id}");
+
+        $response->assertOk()
+            ->assertJsonStructure(['partner', 'messages'])
+            ->assertJsonPath('partner.id', $other->id)
+            ->assertJsonCount(0, 'messages');
+    }
+
+    public function test_poll_with_no_new_messages_returns_empty(): void
+    {
+        $user    = User::factory()->create();
+        $partner = User::factory()->create();
+
+        $response = $this->actingAs($user)->getJson("/api/messages/{$partner->id}/poll?after=99999");
+
+        $response->assertOk()
+            ->assertJsonStructure(['messages'])
+            ->assertJsonCount(0, 'messages');
+    }
+
+    public function test_search_filters_by_username(): void
+    {
+        $user = User::factory()->create(['username' => 'alice123']);
+        $match = User::factory()->create(['username' => 'alice_other']);
+        $nomatch = User::factory()->create(['username' => 'bob456']);
+        $community = Community::factory()->create();
+        foreach ([$user, $match, $nomatch] as $u) {
+            CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $u->id]);
+        }
+
+        $response = $this->actingAs($user)->getJson('/api/messages/search?q=alice');
+
+        $response->assertOk()->assertJsonStructure(['users']);
+        $usernames = array_column($response->json('users'), 'username');
+        $this->assertContains('alice_other', $usernames);
+        $this->assertNotContains('bob456', $usernames);
     }
 }

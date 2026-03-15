@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Api;
 
+use App\Models\Affiliate;
 use App\Models\Community;
 use App\Models\Subscription;
 use App\Models\User;
@@ -76,5 +77,32 @@ class SubscriptionControllerTest extends TestCase
 
         $this->postJson("/api/communities/{$community->slug}/checkout")
             ->assertUnauthorized();
+    }
+
+    public function test_checkout_with_affiliate_code(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->paid(499)->create();
+        $affiliate = Affiliate::create([
+            'community_id' => $community->id,
+            'user_id'      => User::factory()->create()->id,
+            'code'         => 'REF123ABC',
+            'status'       => Affiliate::STATUS_ACTIVE,
+        ]);
+
+        $this->mock(XenditService::class, function ($mock): void {
+            $mock->shouldReceive('createInvoice')
+                ->once()
+                ->andReturn([
+                    'id'          => 'xendit_inv_aff',
+                    'invoice_url' => 'https://checkout.xendit.co/aff',
+                ]);
+        });
+
+        $response = $this->actingAs($user, 'sanctum')
+            ->withCookie('ref_code', 'REF123ABC')
+            ->postJson("/api/communities/{$community->slug}/checkout");
+
+        $response->assertOk();
     }
 }
