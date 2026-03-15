@@ -21,7 +21,8 @@ class CreatePostRequest extends FormRequest
         ];
 
         if (! $this->route('community')) {
-            $rules['community_id'] = ['required', 'exists:communities,id'];
+            $rules['community_id']   = ['required_without:community_slug', 'nullable', 'exists:communities,id'];
+            $rules['community_slug'] = ['required_without:community_id', 'nullable', 'exists:communities,slug'];
         }
 
         return $rules;

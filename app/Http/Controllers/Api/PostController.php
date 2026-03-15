@@ -16,7 +16,9 @@ class PostController extends Controller
 {
     public function store(CreatePostRequest $request, CreatePost $action): PostResource
     {
-        $community = Community::findOrFail($request->validated('community_id'));
+        $community = $request->validated('community_slug')
+            ? Community::where('slug', $request->validated('community_slug'))->firstOrFail()
+            : Community::findOrFail($request->validated('community_id'));
         $post      = $action->execute($request->user(), $community, $request->validated());
 
         return new PostResource($post->load('author'));
