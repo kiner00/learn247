@@ -4,9 +4,12 @@ namespace App\Actions\Feed;
 
 use App\Models\Community;
 use App\Models\CommunityMember;
+use App\Models\Notification;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 class CreatePost
 {
@@ -17,7 +20,12 @@ class CreatePost
             throw new AuthorizationException('You must be a member to post in this community.');
         }
 
-        return Post::create([
+        if (isset($data['image']) && $data['image'] instanceof UploadedFile) {
+            $path = $data['image']->store('post-images', 'public');
+            $data['image'] = Storage::url($path);
+        }
+
+        $post = Post::create([
             'community_id' => $community->id,
             'user_id'      => $user->id,
             'title'        => $data['title'] ?? null,
@@ -26,5 +34,20 @@ class CreatePost
             'video_url'    => $data['video_url'] ?? null,
             'is_pinned'    => false,
         ]);
+
+        if ($community->owner_id !== $user->id) {
+            Notification::create([
+                'user_id'      => $community->owner_id,
+                'actor_id'     => $user->id,
+                'community_id' => $community->id,
+                'type'         => 'new_post',
+                'data'         => [
+                    'post_title' => $post->title ?? 'New post',
+                    'message'    => "{$user->name} posted in {$community->name}",
+                ],
+            ]);
+        }
+
+        return $post;
     }
 }
