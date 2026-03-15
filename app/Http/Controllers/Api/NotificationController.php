@@ -2,30 +2,24 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Notification\MarkAllAsRead;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\NotificationResource;
-use App\Models\Notification;
+use App\Queries\Notification\GetNotifications;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class NotificationController extends Controller
 {
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(Request $request, GetNotifications $query): AnonymousResourceCollection
     {
-        $notifications = Notification::where('user_id', $request->user()->id)
-            ->with(['actor:id,name,avatar', 'community:id,name,slug'])
-            ->latest()
-            ->paginate(20);
-
-        return NotificationResource::collection($notifications);
+        return NotificationResource::collection($query->paginated($request->user()));
     }
 
-    public function readAll(Request $request): JsonResponse
+    public function readAll(Request $request, MarkAllAsRead $action): JsonResponse
     {
-        Notification::where('user_id', $request->user()->id)
-            ->whereNull('read_at')
-            ->update(['read_at' => now()]);
+        $action->execute($request->user());
 
         return response()->json(['message' => 'All notifications marked as read.']);
     }
