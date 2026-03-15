@@ -102,4 +102,17 @@ class AuthControllerTest extends TestCase
 
         $response->assertOk();
     }
+
+    public function test_login_redirects_to_password_setup_when_needed(): void
+    {
+        $user = User::factory()->create(['needs_password_setup' => true]);
+
+        $response = $this->post('/login', [
+            'email'    => $user->email,
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect(route('password.setup'));
+        $this->assertAuthenticatedAs($user);
+    }
 }

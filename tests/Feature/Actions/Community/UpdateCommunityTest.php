@@ -134,4 +134,19 @@ class UpdateCommunityTest extends TestCase
 
         $this->assertEquals('Free Update', $result->name);
     }
+
+    public function test_update_with_new_avatar_deletes_old_storage_file(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('community-avatars/old-avatar.jpg', 'dummy');
+
+        $community = Community::factory()->create(['avatar' => '/storage/community-avatars/old-avatar.jpg']);
+        $action = new UpdateCommunity();
+        $newAvatar = UploadedFile::fake()->image('new-avatar.jpg');
+
+        $result = $action->execute($community, ['name' => $community->name], $newAvatar);
+
+        $this->assertNotNull($result->avatar);
+        Storage::disk('public')->assertMissing('community-avatars/old-avatar.jpg');
+    }
 }

@@ -2,10 +2,13 @@
 
 namespace Tests\Feature\Api;
 
+use App\Actions\Feed\TogglePin;
+use App\Http\Controllers\Api\PostController;
 use App\Models\Community;
 use App\Models\CommunityMember;
 use App\Models\Post;
 use App\Models\User;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -120,5 +123,78 @@ class PostControllerTest extends TestCase
             'content'      => 'Some content',
         ])
             ->assertUnauthorized();
+    }
+
+    public function test_admin_can_pin_post(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        CommunityMember::factory()->create([
+            'community_id' => $community->id,
+            'user_id'      => $owner->id,
+            'role'         => 'admin',
+        ]);
+
+        $post = Post::factory()->create([
+            'community_id' => $community->id,
+            'user_id'      => $owner->id,
+            'is_pinned'    => false,
+        ]);
+
+        $this->actingAs($owner, 'sanctum');
+
+        $controller = app(PostController::class);
+        $response   = $controller->togglePin($post, app(TogglePin::class));
+        $data       = json_decode($response->getContent(), true);
+
+        $this->assertEquals('Post pinned.', $data['message']);
+        $this->assertTrue($data['is_pinned']);
+        $this->assertTrue($post->refresh()->is_pinned);
+    }
+
+    public function test_admin_can_unpin_post(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        CommunityMember::factory()->create([
+            'community_id' => $community->id,
+            'user_id'      => $owner->id,
+            'role'         => 'admin',
+        ]);
+
+        $post = Post::factory()->create([
+            'community_id' => $community->id,
+            'user_id'      => $owner->id,
+            'is_pinned'    => true,
+        ]);
+
+        $this->actingAs($owner, 'sanctum');
+
+        $controller = app(PostController::class);
+        $response   = $controller->togglePin($post, app(TogglePin::class));
+        $data       = json_decode($response->getContent(), true);
+
+        $this->assertEquals('Post unpinned.', $data['message']);
+        $this->assertFalse($data['is_pinned']);
+        $this->assertFalse($post->refresh()->is_pinned);
+    }
+
+    public function test_non_admin_cannot_toggle_pin(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->create();
+
+        $post = Post::factory()->create([
+            'community_id' => $community->id,
+            'user_id'      => $user->id,
+            'is_pinned'    => false,
+        ]);
+
+        $this->actingAs($user, 'sanctum');
+
+        $this->expectException(AuthorizationException::class);
+
+        $controller = app(PostController::class);
+        $controller->togglePin($post, app(TogglePin::class));
     }
 }

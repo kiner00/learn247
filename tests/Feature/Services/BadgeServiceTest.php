@@ -766,6 +766,33 @@ class BadgeServiceTest extends TestCase
 
     // ─── evaluate: pioneer_creator ────────────────────────────────────────────
 
+    public function test_evaluate_awards_pioneer_creator_with_100_subs(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->paid()->create(['owner_id' => $owner->id]);
+
+        for ($i = 0; $i < 100; $i++) {
+            Subscription::factory()->create([
+                'community_id' => $community->id,
+                'status'       => 'active',
+            ]);
+        }
+
+        $this->createBadge([
+            'key'             => 'pioneer_creator',
+            'type'            => 'creator',
+            'name'            => 'The Pioneer Creator',
+            'condition_type'  => 'pioneer_creator',
+            'condition_value' => 1,
+            'community_id'    => null,
+            'sort_order'      => 200,
+        ]);
+
+        $this->service->evaluate($owner);
+
+        $this->assertDatabaseHas('user_badges', ['user_id' => $owner->id]);
+    }
+
     public function test_pioneer_creator_not_awarded_without_community(): void
     {
         $user = User::factory()->create();

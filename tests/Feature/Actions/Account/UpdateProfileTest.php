@@ -47,4 +47,21 @@ class UpdateProfileTest extends TestCase
         $this->assertNotNull($result->avatar);
         $this->assertStringContainsString('/storage/', $result->avatar);
     }
+
+    public function test_update_with_new_avatar_deletes_old_storage_file(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('user-avatars/old-avatar.jpg', 'dummy');
+
+        $user = User::factory()->create(['avatar' => '/storage/user-avatars/old-avatar.jpg']);
+
+        $newAvatar = UploadedFile::fake()->image('new-avatar.jpg');
+        $result = $this->action->execute($user, [
+            'first_name' => 'Jane',
+            'last_name'  => 'Doe',
+        ], $newAvatar);
+
+        $this->assertNotNull($result->avatar);
+        Storage::disk('public')->assertMissing('user-avatars/old-avatar.jpg');
+    }
 }

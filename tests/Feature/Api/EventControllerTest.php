@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Models\Community;
+use App\Models\CommunityMember;
 use App\Models\Event;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -126,5 +127,87 @@ class EventControllerTest extends TestCase
             'start_at' => now()->addDay()->toIso8601String(),
             'timezone' => 'UTC',
         ])->assertUnauthorized();
+    }
+
+    public function test_non_member_only_sees_public_events(): void
+    {
+        $community = Community::factory()->create();
+        $outsider  = User::factory()->create();
+
+        Event::create([
+            'community_id'    => $community->id,
+            'created_by'      => $community->owner_id,
+            'title'           => 'Public Event',
+            'start_at'        => now()->addDay(),
+            'end_at'          => now()->addDay()->addHour(),
+            'is_members_only' => false,
+        ]);
+
+        Event::create([
+            'community_id'    => $community->id,
+            'created_by'      => $community->owner_id,
+            'title'           => 'Members Only Event',
+            'start_at'        => now()->addDay(),
+            'end_at'          => now()->addDay()->addHour(),
+            'is_members_only' => true,
+        ]);
+
+        $this->actingAs($outsider)
+            ->getJson("/api/communities/{$community->slug}/events")
+            ->assertOk()
+            ->assertJsonCount(1, 'events')
+            ->assertJsonPath('events.0.title', 'Public Event');
+    }
+
+    public function test_member_sees_all_events_including_members_only(): void
+    {
+        $community = Community::factory()->create();
+        $member    = User::factory()->create();
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+
+        Event::create([
+            'community_id'    => $community->id,
+            'created_by'      => $community->owner_id,
+            'title'           => 'Public Event',
+            'start_at'        => now()->addDay(),
+            'end_at'          => now()->addDay()->addHour(),
+            'is_members_only' => false,
+        ]);
+
+        Event::create([
+            'community_id'    => $community->id,
+            'created_by'      => $community->owner_id,
+            'title'           => 'Members Only Event',
+            'start_at'        => now()->addDay(),
+            'end_at'          => now()->addDay()->addHour(),
+            'is_members_only' => true,
+        ]);
+
+        $this->actingAs($member)
+            ->getJson("/api/communities/{$community->slug}/events")
+            ->assertOk()
+            ->assertJsonCount(2, 'events');
+    }
+
+    public function test_update_event_not_belonging_to_community_returns_404(): void
+    {
+        $communityA = Community::factory()->create();
+        $communityB = Community::factory()->create(['owner_id' => $communityA->owner_id]);
+
+        $event = Event::create([
+            'community_id' => $communityB->id,
+            'created_by'   => $communityA->owner_id,
+            'title'        => 'Wrong Community Event',
+            'start_at'     => now()->addDay(),
+            'end_at'       => now()->addDay()->addHour(),
+        ]);
+
+        $this->actingAs($communityA->owner)
+            ->postJson("/api/communities/{$communityA->slug}/events/{$event->id}", [
+                'title'    => 'Hacked',
+                'start_at' => now()->addDays(2)->toIso8601String(),
+                'timezone' => 'UTC',
+            ])
+            ->assertNotFound();
     }
 }

@@ -6,6 +6,7 @@ use App\Models\Affiliate;
 use App\Models\AffiliateConversion;
 use App\Models\Community;
 use App\Models\Payment;
+use App\Models\PayoutRequest;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Services\XenditService;
@@ -597,6 +598,103 @@ class AffiliateControllerTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_affiliate_index_with_year_period(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
+        $affiliate = Affiliate::create([
+            'user_id' => $user->id,
+            'community_id' => $community->id,
+            'code' => 'AFFYR1',
+            'status' => Affiliate::STATUS_ACTIVE,
+        ]);
+
+        // Create a conversion so buildChart has data to render
+        $sub = Subscription::create(['community_id' => $community->id, 'user_id' => User::factory()->create()->id, 'status' => Subscription::STATUS_ACTIVE, 'expires_at' => now()->addMonth()]);
+        $payment = Payment::create(['subscription_id' => $sub->id, 'community_id' => $community->id, 'user_id' => $sub->user_id, 'amount' => 500, 'currency' => 'PHP', 'status' => Payment::STATUS_PAID, 'metadata' => [], 'paid_at' => now()]);
+        AffiliateConversion::create([
+            'affiliate_id' => $affiliate->id, 'subscription_id' => $sub->id, 'payment_id' => $payment->id,
+            'referred_user_id' => $sub->user_id, 'sale_amount' => 500, 'platform_fee' => 75,
+            'commission_amount' => 50, 'creator_amount' => 375, 'status' => AffiliateConversion::STATUS_PENDING,
+        ]);
+
+        $this->actingAs($user)->get('/my-affiliates?period=year')->assertOk();
+    }
+
+    public function test_affiliate_index_with_all_period(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
+        Affiliate::create([
+            'user_id' => $user->id,
+            'community_id' => $community->id,
+            'code' => 'AFFAL1',
+            'status' => Affiliate::STATUS_ACTIVE,
+        ]);
+
+        $this->actingAs($user)->get('/my-affiliates?period=all')->assertOk();
+    }
+
+    public function test_affiliate_index_with_tab_parameter(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
+        Affiliate::create([
+            'user_id' => $user->id,
+            'community_id' => $community->id,
+            'code' => 'AFFTAB',
+            'status' => Affiliate::STATUS_ACTIVE,
+        ]);
+
+        $this->actingAs($user)->get('/my-affiliates?tab=analytics')->assertOk();
+    }
+
+    public function test_affiliate_index_with_conversions_and_best_month(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create(['affiliate_commission_rate' => 20]);
+        $affiliate = Affiliate::create([
+            'user_id' => $user->id,
+            'community_id' => $community->id,
+            'code' => 'AFFBM1',
+            'status' => Affiliate::STATUS_ACTIVE,
+            'total_earned' => 100,
+        ]);
+
+        $sub = Subscription::create(['community_id' => $community->id, 'user_id' => User::factory()->create()->id, 'status' => Subscription::STATUS_ACTIVE, 'expires_at' => now()->addMonth()]);
+        $payment = Payment::create(['subscription_id' => $sub->id, 'community_id' => $community->id, 'user_id' => $sub->user_id, 'amount' => 500, 'currency' => 'PHP', 'status' => Payment::STATUS_PAID, 'metadata' => [], 'paid_at' => now()]);
+        AffiliateConversion::create([
+            'affiliate_id' => $affiliate->id, 'subscription_id' => $sub->id, 'payment_id' => $payment->id,
+            'referred_user_id' => $sub->user_id, 'sale_amount' => 500, 'platform_fee' => 75,
+            'commission_amount' => 100, 'creator_amount' => 325, 'status' => AffiliateConversion::STATUS_PENDING,
+        ]);
+
+        $this->actingAs($user)->get('/my-affiliates?period=month')->assertOk();
+    }
+
+    public function test_affiliate_index_with_payout_request(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
+        $affiliate = Affiliate::create([
+            'user_id' => $user->id,
+            'community_id' => $community->id,
+            'code' => 'AFFPR1',
+            'status' => Affiliate::STATUS_ACTIVE,
+        ]);
+
+        PayoutRequest::create([
+            'user_id' => $user->id,
+            'affiliate_id' => $affiliate->id,
+            'type' => PayoutRequest::TYPE_AFFILIATE,
+            'status' => PayoutRequest::STATUS_PENDING,
+            'amount' => 50,
+            'eligible_amount' => 50,
+        ]);
+
+        $this->actingAs($user)->get('/my-affiliates')->assertOk();
+    }
+
     public function test_disburse_handles_xendit_failure(): void
     {
         $this->mock(XenditService::class, function ($mock) {
@@ -652,5 +750,166 @@ class AffiliateControllerTest extends TestCase
             'id' => $conversion->id,
             'status' => AffiliateConversion::STATUS_PENDING,
         ]);
+    }
+
+    // ─── analytics (separate page) ───────────────────────────────────────
+
+    public function test_analytics_page_returns_ok(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
+        Affiliate::create([
+            'user_id' => $user->id,
+            'community_id' => $community->id,
+            'code' => 'AFFAN1',
+            'status' => Affiliate::STATUS_ACTIVE,
+        ]);
+
+        $this->actingAs($user)
+            ->get('/my-affiliates/analytics')
+            ->assertOk();
+    }
+
+    public function test_analytics_page_with_period_year(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
+        $affiliate = Affiliate::create([
+            'user_id' => $user->id,
+            'community_id' => $community->id,
+            'code' => 'AFFAN2',
+            'status' => Affiliate::STATUS_ACTIVE,
+        ]);
+
+        $sub = Subscription::create([
+            'community_id' => $community->id,
+            'user_id' => User::factory()->create()->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addMonth(),
+        ]);
+        $payment = Payment::create([
+            'subscription_id' => $sub->id,
+            'community_id' => $community->id,
+            'user_id' => $sub->user_id,
+            'amount' => 500,
+            'currency' => 'PHP',
+            'status' => Payment::STATUS_PAID,
+            'metadata' => [],
+            'paid_at' => now(),
+        ]);
+        AffiliateConversion::create([
+            'affiliate_id' => $affiliate->id,
+            'subscription_id' => $sub->id,
+            'payment_id' => $payment->id,
+            'referred_user_id' => $sub->user_id,
+            'sale_amount' => 500,
+            'platform_fee' => 75,
+            'commission_amount' => 50,
+            'creator_amount' => 375,
+            'status' => AffiliateConversion::STATUS_PENDING,
+        ]);
+
+        $this->actingAs($user)
+            ->get('/my-affiliates/analytics?period=year')
+            ->assertOk();
+    }
+
+    public function test_analytics_page_with_community_filter(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
+        Affiliate::create([
+            'user_id' => $user->id,
+            'community_id' => $community->id,
+            'code' => 'AFFAN3',
+            'status' => Affiliate::STATUS_ACTIVE,
+        ]);
+
+        $this->actingAs($user)
+            ->get("/my-affiliates/analytics?community={$community->id}")
+            ->assertOk();
+    }
+
+    public function test_analytics_page_with_period_all(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
+        Affiliate::create([
+            'user_id' => $user->id,
+            'community_id' => $community->id,
+            'code' => 'AFFAN4',
+            'status' => Affiliate::STATUS_ACTIVE,
+        ]);
+
+        $this->actingAs($user)
+            ->get('/my-affiliates/analytics?period=all')
+            ->assertOk();
+    }
+
+    public function test_analytics_page_with_period_week(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
+        Affiliate::create([
+            'user_id' => $user->id,
+            'community_id' => $community->id,
+            'code' => 'AFFAN5',
+            'status' => Affiliate::STATUS_ACTIVE,
+        ]);
+
+        $this->actingAs($user)
+            ->get('/my-affiliates/analytics?period=week')
+            ->assertOk();
+    }
+
+    public function test_analytics_page_with_conversions_and_best_month(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create(['affiliate_commission_rate' => 20]);
+        $affiliate = Affiliate::create([
+            'user_id' => $user->id,
+            'community_id' => $community->id,
+            'code' => 'AFFAN6',
+            'status' => Affiliate::STATUS_ACTIVE,
+            'total_earned' => 100,
+        ]);
+
+        $sub = Subscription::create([
+            'community_id' => $community->id,
+            'user_id' => User::factory()->create()->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addMonth(),
+        ]);
+        $payment = Payment::create([
+            'subscription_id' => $sub->id,
+            'community_id' => $community->id,
+            'user_id' => $sub->user_id,
+            'amount' => 500,
+            'currency' => 'PHP',
+            'status' => Payment::STATUS_PAID,
+            'metadata' => [],
+            'paid_at' => now(),
+        ]);
+        AffiliateConversion::create([
+            'affiliate_id' => $affiliate->id,
+            'subscription_id' => $sub->id,
+            'payment_id' => $payment->id,
+            'referred_user_id' => $sub->user_id,
+            'sale_amount' => 500,
+            'platform_fee' => 75,
+            'commission_amount' => 100,
+            'creator_amount' => 325,
+            'status' => AffiliateConversion::STATUS_PENDING,
+        ]);
+
+        $this->actingAs($user)
+            ->get('/my-affiliates/analytics?period=month')
+            ->assertOk();
+    }
+
+    public function test_unauthenticated_cannot_access_analytics(): void
+    {
+        $this->get('/my-affiliates/analytics')
+            ->assertRedirect('/login');
     }
 }

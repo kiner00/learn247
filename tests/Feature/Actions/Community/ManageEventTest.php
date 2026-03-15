@@ -112,4 +112,27 @@ class ManageEventTest extends TestCase
 
         $this->assertDatabaseMissing('events', ['id' => $event->id]);
     }
+
+    public function test_destroy_deletes_cover_image_from_storage(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('events/cover.jpg', 'dummy');
+
+        $community = Community::factory()->create();
+        $user      = User::factory()->create();
+        $event     = Event::create([
+            'community_id' => $community->id,
+            'created_by'   => $user->id,
+            'title'        => 'Event With Image',
+            'start_at'     => now()->addWeek(),
+            'timezone'     => 'UTC',
+            'cover_image'  => 'events/cover.jpg',
+        ]);
+
+        $action = new ManageEvent();
+        $action->destroy($event);
+
+        $this->assertDatabaseMissing('events', ['id' => $event->id]);
+        Storage::disk('public')->assertMissing('events/cover.jpg');
+    }
 }

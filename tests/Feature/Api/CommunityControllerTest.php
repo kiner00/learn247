@@ -2,9 +2,16 @@
 
 namespace Tests\Feature\Api;
 
+use App\Models\Affiliate;
+use App\Models\AffiliateConversion;
 use App\Models\Community;
 use App\Models\CommunityLevelPerk;
 use App\Models\CommunityMember;
+use App\Models\Course;
+use App\Models\CourseLesson;
+use App\Models\CourseModule;
+use App\Models\Payment;
+use App\Models\PayoutRequest;
 use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -254,6 +261,151 @@ class CommunityControllerTest extends TestCase
         $response->assertForbidden();
     }
 
+    public function test_analytics_with_revenue_and_course_data(): void
+    {
+        $owner = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 500]);
+
+        $subscriber = User::factory()->create();
+        $sub = Subscription::create([
+            'community_id' => $community->id,
+            'user_id' => $subscriber->id,
+            'xendit_id' => 'inv_analytics',
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addMonth(),
+        ]);
+        Payment::create([
+            'subscription_id' => $sub->id,
+            'community_id' => $community->id,
+            'user_id' => $subscriber->id,
+            'amount' => 500,
+            'currency' => 'PHP',
+            'status' => Payment::STATUS_PAID,
+            'metadata' => [],
+            'paid_at' => now()->subDays(20),
+        ]);
+
+        $course = Course::create(['community_id' => $community->id, 'title' => 'Course 1']);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'M1', 'position' => 1]);
+        CourseLesson::create(['module_id' => $module->id, 'title' => 'L1', 'position' => 1]);
+
+        $this->actingAs($owner, 'sanctum')
+            ->getJson("/api/communities/{$community->slug}/analytics")
+            ->assertOk()
+            ->assertJsonStructure(['stats', 'revenue', 'payout', 'course_stats']);
+    }
+
+    public function test_analytics_with_affiliate_conversions(): void
+    {
+        $owner = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 500, 'affiliate_commission_rate' => 20]);
+
+        $affUser = User::factory()->create();
+        $affiliate = Affiliate::create([
+            'community_id' => $community->id,
+            'user_id' => $affUser->id,
+            'code' => 'ANALYT01',
+            'status' => Affiliate::STATUS_ACTIVE,
+        ]);
+
+        $subscriber = User::factory()->create();
+        $sub = Subscription::create([
+            'community_id' => $community->id,
+            'user_id' => $subscriber->id,
+            'affiliate_id' => $affiliate->id,
+            'xendit_id' => 'inv_aff_analytics',
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addMonth(),
+        ]);
+        $payment = Payment::create([
+            'subscription_id' => $sub->id,
+            'community_id' => $community->id,
+            'user_id' => $subscriber->id,
+            'amount' => 500,
+            'currency' => 'PHP',
+            'status' => Payment::STATUS_PAID,
+            'metadata' => [],
+            'paid_at' => now()->subDays(20),
+        ]);
+        AffiliateConversion::create([
+            'affiliate_id' => $affiliate->id,
+            'subscription_id' => $sub->id,
+            'payment_id' => $payment->id,
+            'referred_user_id' => $subscriber->id,
+            'sale_amount' => 500,
+            'platform_fee' => 75,
+            'commission_amount' => 100,
+            'creator_amount' => 325,
+            'status' => AffiliateConversion::STATUS_PENDING,
+        ]);
+
+        $this->actingAs($owner, 'sanctum')
+            ->getJson("/api/communities/{$community->slug}/analytics")
+            ->assertOk()
+            ->assertJsonPath('revenue.affiliate_commission', 100);
+    }
+
+    public function test_index_with_authenticated_user_flags_membership(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create();
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson('/api/communities')
+            ->assertOk()
+            ->assertJsonStructure(['data']);
+    }
+
+    public function test_show_paid_community_access_check(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create(['price' => 500]);
+        Subscription::create([
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_access_check',
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addMonth(),
+        ]);
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson("/api/communities/{$community->slug}")
+            ->assertOk()
+            ->assertJsonPath('has_access', true);
+    }
+
+    public function test_show_paid_community_no_subscription_has_no_access(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create(['price' => 500]);
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson("/api/communities/{$community->slug}")
+            ->assertOk()
+            ->assertJsonPath('has_access', false);
+    }
+
+    public function test_analytics_with_pending_payout_request(): void
+    {
+        $owner = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 500]);
+
+        PayoutRequest::create([
+            'user_id' => $owner->id,
+            'community_id' => $community->id,
+            'type' => PayoutRequest::TYPE_OWNER,
+            'status' => PayoutRequest::STATUS_PENDING,
+            'amount' => 300,
+            'eligible_amount' => 300,
+        ]);
+
+        $this->actingAs($owner, 'sanctum')
+            ->getJson("/api/communities/{$community->slug}/analytics")
+            ->assertOk()
+            ->assertJsonPath('payout.pending_request.amount', '300.00');
+    }
+
     // ─── announce (owner only) ─────────────────────────────────────────────────
 
     public function test_announce_by_owner_sends_announcement(): void
@@ -388,5 +540,111 @@ class CommunityControllerTest extends TestCase
         $this->actingAs($user, 'sanctum')
             ->postJson("/api/communities/{$community->slug}/join")
             ->assertUnprocessable();
+    }
+
+    public function test_show_owner_has_access(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 500]);
+
+        $this->actingAs($owner, 'sanctum')
+            ->getJson("/api/communities/{$community->slug}")
+            ->assertOk()
+            ->assertJsonPath('has_access', true);
+    }
+
+    public function test_show_paid_community_with_null_expires_at_subscription(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->create(['price' => 500]);
+        Subscription::create([
+            'community_id' => $community->id,
+            'user_id'      => $user->id,
+            'xendit_id'    => 'inv_null_exp',
+            'status'       => Subscription::STATUS_ACTIVE,
+            'expires_at'   => null,
+        ]);
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson("/api/communities/{$community->slug}")
+            ->assertOk()
+            ->assertJsonPath('has_access', true);
+    }
+
+    public function test_show_free_community_member_has_access(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->create(['price' => 0]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson("/api/communities/{$community->slug}")
+            ->assertOk()
+            ->assertJsonPath('has_access', true)
+            ->assertJsonPath('membership.role', 'member');
+    }
+
+    public function test_analytics_course_with_empty_module_returns_zero_completions(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $course = Course::create(['community_id' => $community->id, 'title' => 'Empty Course']);
+        CourseModule::create(['course_id' => $course->id, 'title' => 'Empty Module', 'position' => 1]);
+
+        $this->actingAs($owner, 'sanctum')
+            ->getJson("/api/communities/{$community->slug}/analytics")
+            ->assertOk()
+            ->assertJsonPath('course_stats.0.completed_members', 0);
+    }
+
+    public function test_show_free_community_non_member_no_access(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->create(['price' => 0]);
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson("/api/communities/{$community->slug}")
+            ->assertOk()
+            ->assertJsonPath('has_access', false)
+            ->assertJsonPath('membership', null);
+    }
+
+    public function test_members_admin_filter_returns_only_admins(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $admin  = User::factory()->create();
+        $member = User::factory()->create();
+
+        CommunityMember::factory()->create([
+            'community_id' => $community->id,
+            'user_id'      => $admin->id,
+            'role'         => 'admin',
+        ]);
+        CommunityMember::factory()->create([
+            'community_id' => $community->id,
+            'user_id'      => $member->id,
+            'role'         => 'member',
+        ]);
+
+        $this->actingAs($owner, 'sanctum')
+            ->getJson("/api/communities/{$community->slug}/members?filter=admin")
+            ->assertOk()
+            ->assertJsonPath('admin_count', 1);
+    }
+
+    public function test_about_with_gallery_images_returns_urls(): void
+    {
+        Storage::fake('public');
+
+        $community = Community::factory()->create([
+            'gallery_images' => ['gallery/img1.jpg', 'gallery/img2.jpg'],
+        ]);
+
+        $this->getJson("/api/communities/{$community->slug}/about")
+            ->assertOk()
+            ->assertJsonCount(2, 'gallery');
     }
 }

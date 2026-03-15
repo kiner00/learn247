@@ -134,4 +134,85 @@ class XenditServiceTest extends TestCase
         $this->assertFalse($service->verifyCallbackToken(null));
         $this->assertFalse($service->verifyCallbackToken(''));
     }
+
+    public function test_get_invoice_throws_on_failure(): void
+    {
+        Http::fake([
+            'https://api.xendit.co/v2/invoices/inv_bad' => Http::response(['error' => 'NOT_FOUND'], 404),
+        ]);
+
+        config(['services.xendit.secret_key' => 'test_key', 'services.xendit.callback_token' => 'cb_token']);
+        $service = new XenditService();
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Failed to fetch Xendit invoice');
+        $service->getInvoice('inv_bad');
+    }
+
+    public function test_create_payout_throws_on_failure(): void
+    {
+        Http::fake([
+            'https://api.xendit.co/v2/payouts' => Http::response(
+                ['message' => 'INSUFFICIENT_BALANCE'],
+                400
+            ),
+        ]);
+
+        config(['services.xendit.secret_key' => 'test_key', 'services.xendit.callback_token' => 'cb_token']);
+        $service = new XenditService();
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Xendit payout failed');
+        $service->createPayout([
+            'reference_id' => 'payout-fail',
+            'amount'       => 999999,
+        ]);
+    }
+
+    public function test_create_payout_uses_generated_idempotency_key_without_reference_id(): void
+    {
+        Http::fake([
+            'https://api.xendit.co/v2/payouts' => Http::response(
+                ['id' => 'po_auto', 'status' => 'ACCEPTED'],
+                200
+            ),
+        ]);
+
+        config(['services.xendit.secret_key' => 'test_key', 'services.xendit.callback_token' => 'cb_token']);
+        $service = new XenditService();
+
+        $result = $service->createPayout(['amount' => 500]);
+
+        $this->assertEquals('po_auto', $result['id']);
+
+        Http::assertSent(function ($request) {
+            return str_starts_with($request->header('Idempotency-key')[0], 'payout-');
+        });
+    }
+
+    public function test_verify_callback_token_returns_false_when_config_empty(): void
+    {
+        config(['services.xendit.secret_key' => 'test_key', 'services.xendit.callback_token' => '']);
+        $service = new XenditService();
+
+        $this->assertFalse($service->verifyCallbackToken('some-token'));
+    }
+
+    public function test_get_balance_with_custom_account_type(): void
+    {
+        Http::fake([
+            'https://api.xendit.co/balance*' => Http::response(['balance' => 25000], 200),
+        ]);
+
+        config(['services.xendit.secret_key' => 'test_key', 'services.xendit.callback_token' => 'cb_token']);
+        $service = new XenditService();
+
+        $result = $service->getBalance('HOLDING');
+
+        $this->assertEquals(25000.0, $result);
+
+        Http::assertSent(function ($request) {
+            return str_contains($request->url(), 'account_type=HOLDING');
+        });
+    }
 }

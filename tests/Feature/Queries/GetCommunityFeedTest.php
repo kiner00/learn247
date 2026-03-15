@@ -2,7 +2,9 @@
 
 namespace Tests\Feature\Queries;
 
+use App\Models\Comment;
 use App\Models\Community;
+use App\Models\Like;
 use App\Models\Post;
 use App\Models\User;
 use App\Queries\Feed\GetCommunityFeed;
@@ -65,4 +67,79 @@ class GetCommunityFeedTest extends TestCase
         $this->assertTrue($community->relationLoaded('owner'));
     }
 
+    public function test_for_show_populates_commenter_avatars(): void
+    {
+        $community = Community::factory()->create();
+        $user      = User::factory()->create();
+        $post      = Post::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+
+        Comment::factory()->create([
+            'post_id'      => $post->id,
+            'community_id' => $community->id,
+            'user_id'      => $user->id,
+        ]);
+
+        $query = new GetCommunityFeed();
+        $query->forShow($community, $user->id);
+
+        $enrichedPost = $community->posts->first();
+        $this->assertNotNull($enrichedPost->commenter_avatars);
+        $this->assertCount(1, $enrichedPost->commenter_avatars);
+        $this->assertNotNull($enrichedPost->last_comment_at);
+    }
+
+    public function test_enrich_post_processes_comment_and_reply_reactions(): void
+    {
+        $community = Community::factory()->create();
+        $user      = User::factory()->create();
+        $post      = Post::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+
+        $comment = Comment::factory()->create([
+            'post_id'      => $post->id,
+            'community_id' => $community->id,
+            'user_id'      => $user->id,
+        ]);
+
+        $reply = Comment::create([
+            'post_id'      => $post->id,
+            'community_id' => $community->id,
+            'user_id'      => $user->id,
+            'parent_id'    => $comment->id,
+            'content'      => 'A reply',
+        ]);
+
+        Like::create([
+            'user_id'       => $user->id,
+            'likeable_type' => Comment::class,
+            'likeable_id'   => $comment->id,
+            'type'          => 'like',
+        ]);
+
+        $post->load([
+            'author:id,name,username,avatar',
+            'likes',
+            'comments' => fn ($q) => $q
+                ->whereNull('parent_id')
+                ->with([
+                    'author:id,name,username,avatar',
+                    'likes',
+                    'replies' => fn ($r) => $r->with(['author:id,name,username,avatar', 'likes']),
+                ])
+                ->latest(),
+        ])->loadCount('likes', 'comments');
+
+        $query = new GetCommunityFeed();
+        $query->enrichPost($post, $user->id);
+
+        $enrichedComment = $post->comments->first();
+        $this->assertIsArray($enrichedComment->reactions);
+        $this->assertSame(1, $enrichedComment->reactions['like']);
+        $this->assertSame('like', $enrichedComment->user_reaction);
+        $this->assertTrue($enrichedComment->user_has_liked);
+        $this->assertSame(1, $enrichedComment->likes_count);
+
+        $enrichedReply = $enrichedComment->replies->first();
+        $this->assertIsArray($enrichedReply->reactions);
+        $this->assertFalse($enrichedReply->user_has_liked);
+    }
 }
