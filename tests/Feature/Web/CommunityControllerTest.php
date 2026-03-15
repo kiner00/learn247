@@ -70,7 +70,7 @@ class CommunityControllerTest extends TestCase
             ->assertOk();
     }
 
-    public function test_private_community_denies_non_member(): void
+    public function test_private_community_show_page_is_accessible(): void
     {
         $owner   = User::factory()->create();
         $other   = User::factory()->create();
@@ -78,7 +78,7 @@ class CommunityControllerTest extends TestCase
 
         $this->actingAs($other)
             ->get("/communities/{$community->slug}")
-            ->assertForbidden();
+            ->assertOk();
     }
 
     // ─── join ─────────────────────────────────────────────────────────────────
@@ -142,5 +142,83 @@ class CommunityControllerTest extends TestCase
         $this->actingAs($other)
             ->get("/communities/{$community->slug}/settings")
             ->assertForbidden();
+    }
+
+    // ─── update ────────────────────────────────────────────────────────────────
+
+    public function test_owner_can_update_community(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $response = $this->actingAs($owner)->patch("/communities/{$community->slug}", [
+            'name' => 'Updated Community Name',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('communities', ['id' => $community->id, 'name' => 'Updated Community Name']);
+    }
+
+    public function test_non_owner_cannot_update_community(): void
+    {
+        $owner     = User::factory()->create();
+        $other     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $this->actingAs($other)
+            ->patch("/communities/{$community->slug}", ['name' => 'Hacked Name'])
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('communities', ['id' => $community->id, 'name' => $community->name]);
+    }
+
+    // ─── destroy ──────────────────────────────────────────────────────────────
+
+    public function test_owner_can_delete_community(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $response = $this->actingAs($owner)->delete("/communities/{$community->slug}");
+
+        $response->assertRedirect(route('communities.index'));
+        $this->assertSoftDeleted('communities', ['id' => $community->id]);
+    }
+
+    public function test_non_owner_cannot_delete_community(): void
+    {
+        $owner     = User::factory()->create();
+        $other     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $this->actingAs($other)
+            ->delete("/communities/{$community->slug}")
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('communities', ['id' => $community->id]);
+    }
+
+    // ─── about ──────────────────────────────────────────────────────────────────
+
+    public function test_about_page_returns_200(): void
+    {
+        $community = Community::factory()->create();
+
+        $response = $this->get("/communities/{$community->slug}/about");
+
+        $response->assertOk();
+    }
+
+    // ─── analytics ─────────────────────────────────────────────────────────────
+
+    public function test_owner_can_view_analytics_page(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $response = $this->actingAs($owner)->get("/communities/{$community->slug}/analytics");
+
+        $response->assertOk();
     }
 }

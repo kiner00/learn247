@@ -15,7 +15,7 @@
 <body>
     <div class="card">
         <div class="badge">ANNOUNCEMENT · {{ strtoupper($community->name) }}</div>
-        <h2 style="margin-top:0; margin-bottom: 8px;">{{ $subject }}</h2>
+        <h2 style="margin-top:0; margin-bottom: 8px;">{{ $announcementSubject }}</h2>
         <div class="sender">From <strong>{{ $sender->name }}</strong></div>
 
         <div class="body" style="margin-top: 24px;">{{ $message }}</div>

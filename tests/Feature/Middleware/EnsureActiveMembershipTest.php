@@ -33,7 +33,7 @@ class EnsureActiveMembershipTest extends TestCase
 
         $this->actingAs($user)
             ->get("/communities/{$community->slug}/members")
-            ->assertRedirect("/communities/{$community->slug}");
+            ->assertRedirect("/communities/{$community->slug}/about");
     }
 
     public function test_owner_can_always_access(): void
@@ -68,7 +68,7 @@ class EnsureActiveMembershipTest extends TestCase
 
         $this->actingAs($user)
             ->get("/communities/{$community->slug}/members")
-            ->assertRedirect("/communities/{$community->slug}");
+            ->assertRedirect("/communities/{$community->slug}/about");
     }
 
     public function test_unauthenticated_user_is_redirected_to_login(): void
@@ -97,6 +97,6 @@ class EnsureActiveMembershipTest extends TestCase
 
         $this->actingAs($user)
             ->get("/communities/{$community->slug}/members")
-            ->assertRedirect("/communities/{$community->slug}");
+            ->assertRedirect("/communities/{$community->slug}/about");
     }
 }

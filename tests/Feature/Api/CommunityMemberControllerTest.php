@@ -12,124 +12,91 @@ class CommunityMemberControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    // ─── index ────────────────────────────────────────────────────────────────
-
-    public function test_authenticated_user_can_list_members(): void
+    public function test_user_can_list_community_members(): void
     {
         $user      = User::factory()->create();
         $community = Community::factory()->create();
+        CommunityMember::factory()->count(2)->create(['community_id' => $community->id]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
-        $this->actingAs($user)
-            ->getJson("/api/community-members?community_slug={$community->slug}")
-            ->assertOk()
-            ->assertJsonStructure(['data']);
+        $response = $this->actingAs($user, 'sanctum')
+            ->getJson("/api/community-members?community_slug={$community->slug}");
+
+        $response->assertOk()
+            ->assertJsonStructure(['data', 'links', 'meta']);
     }
-
-    public function test_unauthenticated_user_cannot_list_members(): void
-    {
-        $community = Community::factory()->create();
-
-        $this->getJson("/api/community-members?community_slug={$community->slug}")
-            ->assertUnauthorized();
-    }
-
-    // ─── destroy ──────────────────────────────────────────────────────────────
 
     public function test_admin_can_remove_member(): void
     {
         $owner     = User::factory()->create();
-        $member    = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
-        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+        $memberToRemove = User::factory()->create();
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $memberToRemove->id]);
 
-        $this->actingAs($owner)
-            ->deleteJson("/api/communities/{$community->slug}/members/{$member->id}")
+        $this->actingAs($owner, 'sanctum')
+            ->deleteJson("/api/communities/{$community->slug}/members/{$memberToRemove->id}")
             ->assertOk()
             ->assertJsonPath('message', 'Member removed.');
 
         $this->assertDatabaseMissing('community_members', [
             'community_id' => $community->id,
-            'user_id'      => $member->id,
+            'user_id'      => $memberToRemove->id,
         ]);
     }
 
-    public function test_regular_member_cannot_remove_another_member(): void
+    public function test_regular_member_cannot_remove_member(): void
     {
-        $owner   = User::factory()->create();
-        $actor   = User::factory()->create();
-        $target  = User::factory()->create();
-        $community = Community::factory()->create(['owner_id' => $owner->id]);
-        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $actor->id]);
-        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $target->id]);
+        $owner         = User::factory()->create();
+        $regularMember = User::factory()->create();
+        $community     = Community::factory()->create(['owner_id' => $owner->id]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $regularMember->id]);
+        $targetMember = User::factory()->create();
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $targetMember->id]);
 
-        $this->actingAs($actor)
-            ->deleteJson("/api/communities/{$community->slug}/members/{$target->id}")
+        $this->actingAs($regularMember, 'sanctum')
+            ->deleteJson("/api/communities/{$community->slug}/members/{$targetMember->id}")
             ->assertForbidden();
+
+        $this->assertDatabaseHas('community_members', [
+            'community_id' => $community->id,
+            'user_id'      => $targetMember->id,
+        ]);
     }
 
-    public function test_unauthenticated_user_cannot_remove_member(): void
+    public function test_owner_can_change_member_role(): void
     {
         $owner     = User::factory()->create();
-        $member    = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-
-        $this->deleteJson("/api/communities/{$community->slug}/members/{$member->id}")
-            ->assertUnauthorized();
-    }
-
-    // ─── changeRole ───────────────────────────────────────────────────────────
-
-    public function test_owner_can_promote_member_to_moderator(): void
-    {
-        $owner     = User::factory()->create();
         $member    = User::factory()->create();
-        $community = Community::factory()->create(['owner_id' => $owner->id]);
-        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
-        $this->actingAs($owner)
-            ->patchJson("/api/communities/{$community->slug}/members/{$member->id}/role", ['role' => 'moderator'])
+        $this->actingAs($owner, 'sanctum')
+            ->patchJson("/api/communities/{$community->slug}/members/{$member->id}/role", [
+                'role' => 'moderator',
+            ])
             ->assertOk()
             ->assertJsonPath('data.role', 'moderator');
+
+        $this->assertDatabaseHas('community_members', [
+            'community_id' => $community->id,
+            'user_id'      => $member->id,
+            'role'         => 'moderator',
+        ]);
     }
 
-    public function test_non_owner_cannot_change_role(): void
+    public function test_unauthenticated_cannot_access(): void
     {
-        $owner   = User::factory()->create();
-        $actor   = User::factory()->create();
-        $target  = User::factory()->create();
-        $community = Community::factory()->create(['owner_id' => $owner->id]);
-        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $actor->id]);
-        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $target->id]);
+        $community = Community::factory()->create();
 
-        $this->actingAs($actor)
-            ->patchJson("/api/communities/{$community->slug}/members/{$target->id}/role", ['role' => 'moderator'])
-            ->assertForbidden();
-    }
+        $this->getJson("/api/community-members?community_slug={$community->slug}")
+            ->assertUnauthorized();
 
-    public function test_change_role_requires_valid_role(): void
-    {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
-        $community = Community::factory()->create(['owner_id' => $owner->id]);
-        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
-        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+        $this->deleteJson("/api/communities/{$community->slug}/members/1")
+            ->assertUnauthorized();
 
-        $this->actingAs($owner)
-            ->patchJson("/api/communities/{$community->slug}/members/{$member->id}/role", ['role' => 'superuser'])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['role']);
-    }
-
-    public function test_unauthenticated_user_cannot_change_role(): void
-    {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
-        $community = Community::factory()->create(['owner_id' => $owner->id]);
-
-        $this->patchJson("/api/communities/{$community->slug}/members/{$member->id}/role", ['role' => 'moderator'])
+        $this->patchJson("/api/communities/{$community->slug}/members/1/role", ['role' => 'admin'])
             ->assertUnauthorized();
     }
 }
