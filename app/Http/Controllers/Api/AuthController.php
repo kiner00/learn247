@@ -5,21 +5,18 @@ namespace App\Http\Controllers\Api;
 use App\Actions\Auth\AuthenticateUser;
 use App\Actions\Auth\RegisterUser;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\LoginRequest;
+use App\Http\Requests\RegisterRequest;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
 {
-    public function login(Request $request, AuthenticateUser $action): JsonResponse
+    public function login(LoginRequest $request, AuthenticateUser $action): JsonResponse
     {
-        $credentials = $request->validate([
-            'email'    => ['required', 'email'],
-            'password' => ['required'],
-        ]);
-
-        $user  = $action->execute($credentials['email'], $credentials['password']);
+        $validated = $request->validated();
+        $user  = $action->execute($validated['email'], $validated['password']);
         $token = $user->createToken('mobile')->plainTextToken;
 
         return response()->json([
@@ -28,16 +25,9 @@ class AuthController extends Controller
         ]);
     }
 
-    public function register(Request $request, RegisterUser $action): JsonResponse
+    public function register(RegisterRequest $request, RegisterUser $action): JsonResponse
     {
-        $data = $request->validate([
-            'first_name' => ['required', 'string', 'max:100'],
-            'last_name'  => ['required', 'string', 'max:100'],
-            'email'      => ['required', 'email', 'unique:users,email'],
-            'password'   => ['required', 'confirmed', Password::defaults()],
-        ]);
-
-        $user  = $action->execute($data);
+        $user  = $action->execute($request->validated());
         $token = $user->createToken('mobile')->plainTextToken;
 
         return response()->json([

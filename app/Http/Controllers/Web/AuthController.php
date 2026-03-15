@@ -5,10 +5,11 @@ namespace App\Http\Controllers\Web;
 use App\Actions\Auth\AuthenticateUser;
 use App\Actions\Auth\RegisterUser;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\LoginRequest;
+use App\Http\Requests\RegisterRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -23,14 +24,10 @@ class AuthController extends Controller
         return Inertia::render('Auth/Login');
     }
 
-    public function login(Request $request, AuthenticateUser $action): RedirectResponse
+    public function login(LoginRequest $request, AuthenticateUser $action): RedirectResponse
     {
-        $credentials = $request->validate([
-            'email'    => ['required', 'email'],
-            'password' => ['required'],
-        ]);
-
-        $user = $action->execute($credentials['email'], $credentials['password']);
+        $validated = $request->validated();
+        $user = $action->execute($validated['email'], $validated['password']);
 
         Auth::login($user, $request->boolean('remember'));
         $request->session()->regenerate();
@@ -51,17 +48,9 @@ class AuthController extends Controller
         return Inertia::render('Auth/Register');
     }
 
-    public function register(Request $request, RegisterUser $action): RedirectResponse
+    public function register(RegisterRequest $request, RegisterUser $action): RedirectResponse
     {
-        $data = $request->validate([
-            'first_name' => ['required', 'string', 'max:100'],
-            'last_name'  => ['required', 'string', 'max:100'],
-            'email'      => ['required', 'email', 'unique:users,email'],
-            'phone'      => ['nullable', 'string', 'max:20'],
-            'password'   => ['required', 'confirmed', Password::defaults()],
-        ]);
-
-        $user = $action->execute($data);
+        $user = $action->execute($request->validated());
 
         Auth::login($user);
         $request->session()->regenerate();

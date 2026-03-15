@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Actions\Chat\DeleteChatMessage;
 use App\Actions\Chat\SendChatMessage;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SendMessageRequest;
 use App\Models\Community;
 use App\Models\Message;
 use App\Queries\Chat\GetChatMessages;
@@ -30,10 +31,9 @@ class ChatController extends Controller
         return Inertia::render('Communities/Chat', compact('community', 'messages', 'affiliate'));
     }
 
-    public function store(Request $request, Community $community, SendChatMessage $action): JsonResponse
+    public function store(SendMessageRequest $request, Community $community, SendChatMessage $action): JsonResponse
     {
-        $data    = $request->validate(['content' => ['required', 'string', 'max:2000']]);
-        $message = $action->execute($request->user(), $community, $data['content']);
+        $message = $action->execute($request->user(), $community, $request->validated()['content']);
 
         return response()->json([
             'message' => [

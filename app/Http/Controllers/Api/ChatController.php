@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Actions\Chat\SendChatMessage;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SendMessageRequest;
 use App\Http\Resources\ChatMessageResource;
 use App\Models\Community;
 use App\Models\CommunityMember;
@@ -32,12 +33,11 @@ class ChatController extends Controller
         ]);
     }
 
-    public function store(Request $request, Community $community, SendChatMessage $action): JsonResponse
+    public function store(SendMessageRequest $request, Community $community, SendChatMessage $action): JsonResponse
     {
         $this->requireMembership($request, $community);
 
-        $data    = $request->validate(['content' => ['required', 'string', 'max:2000']]);
-        $message = $action->execute($request->user(), $community, $data['content']);
+        $message = $action->execute($request->user(), $community, $request->validated()['content']);
 
         return response()->json([
             'message' => new ChatMessageResource($message),
