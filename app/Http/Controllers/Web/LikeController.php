@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Actions\Feed\ToggleLike;
 use App\Http\Controllers\Controller;
 use App\Models\Comment;
 use App\Models\Post;
@@ -10,38 +11,16 @@ use Illuminate\Http\Request;
 
 class LikeController extends Controller
 {
-    public function togglePost(Request $request, Post $post): RedirectResponse
+    public function togglePost(Request $request, Post $post, ToggleLike $action): RedirectResponse
     {
-        $type     = in_array($request->input('type'), ['like', 'handshake', 'trophy'])
-                        ? $request->input('type')
-                        : 'like';
-        $existing = $post->likes()->where('user_id', $request->user()->id)->first();
-
-        if ($existing && $existing->type === $type) {
-            $existing->delete();
-        } elseif ($existing) {
-            $existing->update(['type' => $type]);
-        } else {
-            $post->likes()->create(['user_id' => $request->user()->id, 'type' => $type]);
-        }
+        $action->execute($request->user(), $post, $request->input('type', 'like'));
 
         return back(fallback: route('communities.show', $post->community->slug));
     }
 
-    public function toggleComment(Request $request, Comment $comment): RedirectResponse
+    public function toggleComment(Request $request, Comment $comment, ToggleLike $action): RedirectResponse
     {
-        $type     = in_array($request->input('type'), ['like', 'handshake', 'trophy'])
-                        ? $request->input('type')
-                        : 'like';
-        $existing = $comment->likes()->where('user_id', $request->user()->id)->first();
-
-        if ($existing && $existing->type === $type) {
-            $existing->delete();
-        } elseif ($existing) {
-            $existing->update(['type' => $type]);
-        } else {
-            $comment->likes()->create(['user_id' => $request->user()->id, 'type' => $type]);
-        }
+        $action->execute($request->user(), $comment, $request->input('type', 'like'));
 
         return back();
     }
