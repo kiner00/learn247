@@ -95,4 +95,65 @@ class ChatControllerTest extends TestCase
 
         $this->assertDatabaseMissing('messages', ['id' => $message->id]);
     }
+
+    public function test_member_can_poll_for_new_messages(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->create(['price' => 0]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+
+        $msg = Message::create([
+            'community_id' => $community->id,
+            'user_id'      => $user->id,
+            'content'      => 'Poll message',
+        ]);
+
+        $this->actingAs($user)
+            ->getJson("/api/communities/{$community->slug}/chat/poll?after=0")
+            ->assertOk()
+            ->assertJsonStructure(['messages'])
+            ->assertJsonCount(1, 'messages');
+    }
+
+    public function test_poll_with_after_returns_only_newer_messages(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->create(['price' => 0]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+
+        $old = Message::create([
+            'community_id' => $community->id,
+            'user_id'      => $user->id,
+            'content'      => 'Old message',
+        ]);
+
+        $new = Message::create([
+            'community_id' => $community->id,
+            'user_id'      => $user->id,
+            'content'      => 'New message',
+        ]);
+
+        $this->actingAs($user)
+            ->getJson("/api/communities/{$community->slug}/chat/poll?after={$old->id}")
+            ->assertOk()
+            ->assertJsonCount(1, 'messages');
+    }
+
+    public function test_index_with_after_parameter(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->create(['price' => 0]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+
+        $msg = Message::create([
+            'community_id' => $community->id,
+            'user_id'      => $user->id,
+            'content'      => 'Hello',
+        ]);
+
+        $this->actingAs($user)
+            ->getJson("/api/communities/{$community->slug}/chat?after=0")
+            ->assertOk()
+            ->assertJsonStructure(['messages']);
+    }
 }

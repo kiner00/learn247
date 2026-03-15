@@ -28,6 +28,20 @@ class FeedControllerTest extends TestCase
             ->assertJsonStructure(['data']);
     }
 
+    public function test_index_returns_paginated_posts(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->create(['price' => 0]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+
+        Post::factory()->count(3)->create(['community_id' => $community->id]);
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson("/api/communities/{$community->slug}/posts")
+            ->assertOk()
+            ->assertJsonStructure(['data']);
+    }
+
     public function test_non_member_gets_403_for_community_feed(): void
     {
         $user      = User::factory()->create();

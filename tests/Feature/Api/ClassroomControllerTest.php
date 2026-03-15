@@ -7,6 +7,9 @@ use App\Models\CommunityMember;
 use App\Models\Course;
 use App\Models\CourseLesson;
 use App\Models\CourseModule;
+use App\Models\Quiz;
+use App\Models\QuizQuestion;
+use App\Models\QuizQuestionOption;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -264,5 +267,66 @@ class ClassroomControllerTest extends TestCase
                 'title' => 'New Module',
             ])
             ->assertForbidden();
+    }
+
+    public function test_member_can_view_course_detail(): void
+    {
+        $owner     = User::factory()->create();
+        $member    = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+
+        $course = Course::create(['community_id' => $community->id, 'title' => 'Test Course', 'description' => 'Desc']);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module 1', 'position' => 1]);
+        CourseLesson::create(['module_id' => $module->id, 'title' => 'Lesson 1', 'position' => 1]);
+
+        $this->actingAs($member)
+            ->getJson("/api/communities/{$community->slug}/courses/{$course->id}")
+            ->assertOk()
+            ->assertJsonStructure(['course', 'modules', 'progress', 'certificate'])
+            ->assertJsonPath('course.title', 'Test Course')
+            ->assertJsonPath('progress', 0);
+    }
+
+    public function test_member_can_submit_quiz(): void
+    {
+        $owner     = User::factory()->create();
+        $member    = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+
+        $course   = Course::create(['community_id' => $community->id, 'title' => 'C1', 'description' => 'D']);
+        $module   = CourseModule::create(['course_id' => $course->id, 'title' => 'M1', 'position' => 1]);
+        $lesson   = CourseLesson::create(['module_id' => $module->id, 'title' => 'L1', 'position' => 1]);
+        $quiz     = Quiz::create(['lesson_id' => $lesson->id, 'title' => 'Q1', 'pass_score' => 50]);
+        $question = QuizQuestion::create(['quiz_id' => $quiz->id, 'question' => 'What is 1+1?', 'type' => 'multiple_choice']);
+        $correct  = QuizQuestionOption::create(['question_id' => $question->id, 'label' => '2', 'is_correct' => true]);
+        QuizQuestionOption::create(['question_id' => $question->id, 'label' => '3', 'is_correct' => false]);
+
+        $this->actingAs($member)
+            ->postJson("/api/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/quizzes/{$quiz->id}/submit", [
+                'answers' => [$question->id => $correct->id],
+            ])
+            ->assertOk()
+            ->assertJsonStructure(['score', 'passed', 'total', 'correct'])
+            ->assertJsonPath('passed', true)
+            ->assertJsonPath('score', 100);
+    }
+
+    public function test_owner_can_update_course(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $course    = Course::create(['community_id' => $community->id, 'title' => 'Old Title', 'description' => 'D']);
+
+        $this->actingAs($owner)
+            ->postJson("/api/communities/{$community->slug}/courses/{$course->id}/update", [
+                'title'       => 'New Title',
+                'description' => 'New Desc',
+            ])
+            ->assertOk()
+            ->assertJsonPath('message', 'Course updated.');
+
+        $this->assertDatabaseHas('courses', ['id' => $course->id, 'title' => 'New Title']);
     }
 }

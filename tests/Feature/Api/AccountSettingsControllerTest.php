@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Api;
 
+use App\Models\Community;
+use App\Models\CommunityMember;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -85,5 +87,104 @@ class AccountSettingsControllerTest extends TestCase
     {
         $this->getJson('/api/account/settings')->assertUnauthorized();
         $this->patchJson('/api/account/settings/email', ['email' => 'test@example.com'])->assertUnauthorized();
+    }
+
+    public function test_patch_notifications_updates_preferences(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->patchJson('/api/account/settings/notifications', [
+            'email_notifications' => false,
+        ])
+            ->assertOk()
+            ->assertJson(['message' => 'Notification preferences updated.']);
+    }
+
+    public function test_patch_community_notifications_updates_preferences(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->create();
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+
+        $this->actingAs($user)->patchJson("/api/account/settings/notifications/{$community->id}", [
+            'muted' => true,
+        ])
+            ->assertOk()
+            ->assertJson(['message' => 'Community notification preferences updated.']);
+    }
+
+    public function test_patch_chat_updates_preferences(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->patchJson('/api/account/settings/chat', [
+            'chat_enabled' => true,
+        ])
+            ->assertOk()
+            ->assertJson(['message' => 'Chat preferences updated.']);
+    }
+
+    public function test_patch_community_chat_updates_preferences(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->create();
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+
+        $this->actingAs($user)->patchJson("/api/account/settings/chat/{$community->id}", [
+            'chat_enabled' => false,
+        ])
+            ->assertOk()
+            ->assertJson(['message' => 'Community chat preferences updated.']);
+    }
+
+    public function test_patch_payout_updates_payout_details(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->patchJson('/api/account/settings/payout', [
+            'payout_method'   => 'gcash',
+            'payout_account' => '09123456789',
+        ])
+            ->assertOk()
+            ->assertJson(['message' => 'Payout details updated.']);
+    }
+
+    public function test_patch_crypto_updates_wallet(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->patchJson('/api/account/settings/crypto', [
+            'crypto_wallet' => '0x1234567890abcdef',
+        ])
+            ->assertOk()
+            ->assertJson(['message' => 'Crypto wallet updated.']);
+
+        $this->assertDatabaseHas('users', ['id' => $user->id, 'crypto_wallet' => '0x1234567890abcdef']);
+    }
+
+    public function test_patch_profile_updates_profile(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->postJson('/api/account/settings/profile', [
+            'first_name' => 'Updated',
+            'last_name'  => 'Name',
+            'bio'        => 'Updated bio',
+        ])
+            ->assertOk()
+            ->assertJson(['message' => 'Profile updated.']);
+    }
+
+    public function test_patch_membership_visibility(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->create();
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+
+        $this->actingAs($user)->patchJson("/api/account/settings/profile/visibility/{$community->id}", [
+            'is_public' => false,
+        ])
+            ->assertOk()
+            ->assertJson(['message' => 'Visibility updated.']);
     }
 }

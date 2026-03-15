@@ -120,4 +120,24 @@ class DirectMessageControllerTest extends TestCase
         $this->getJson('/api/messages')->assertUnauthorized();
         $this->postJson('/api/messages/1', ['content' => 'Hi'])->assertUnauthorized();
     }
+
+    public function test_poll_returns_new_messages_from_partner(): void
+    {
+        $user    = User::factory()->create();
+        $partner = User::factory()->create();
+
+        $dm = DirectMessage::create([
+            'sender_id'   => $partner->id,
+            'receiver_id' => $user->id,
+            'content'     => 'New message from partner',
+        ]);
+
+        $response = $this->actingAs($user)->getJson("/api/messages/{$partner->id}/poll?after=0");
+
+        $response->assertOk()
+            ->assertJsonStructure(['messages'])
+            ->assertJsonCount(1, 'messages')
+            ->assertJsonPath('messages.0.content', 'New message from partner')
+            ->assertJsonPath('messages.0.is_mine', false);
+    }
 }
