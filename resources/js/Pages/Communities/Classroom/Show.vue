@@ -103,33 +103,76 @@
                     </div>
 
                     <div v-if="openModules.has(mod.id)" class="border-t border-gray-100">
-                        <button
-                            v-for="lesson in mod.lessons"
-                            :key="lesson.id"
-                            @click="selectLesson(lesson)"
-                            class="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-indigo-50 transition-colors border-b border-gray-50 last:border-0"
-                            :class="selectedLesson?.id === lesson.id ? 'bg-amber-50' : ''"
+                        <draggable
+                            v-if="isOwner"
+                            :list="mod.lessons"
+                            item-key="id"
+                            handle=".drag-handle"
+                            ghost-class="opacity-30"
+                            @end="onLessonDragEnd(mod)"
                         >
-                            <span
-                                class="w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 text-xs"
-                                :class="isCompleted(lesson.id)
-                                    ? 'bg-indigo-500 border-indigo-500 text-white'
-                                    : 'border-gray-300'"
+                            <template #item="{ element: lesson }">
+                                <div
+                                    class="w-full flex items-center gap-2 px-4 py-2.5 text-left hover:bg-indigo-50 transition-colors border-b border-gray-50 last:border-0 cursor-pointer"
+                                    :class="selectedLesson?.id === lesson.id ? 'bg-amber-50' : ''"
+                                    @click="selectLesson(lesson)"
+                                >
+                                    <span class="drag-handle cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 shrink-0" @click.stop>
+                                        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                                            <circle cx="9" cy="5" r="1.5"/><circle cx="15" cy="5" r="1.5"/>
+                                            <circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/>
+                                            <circle cx="9" cy="19" r="1.5"/><circle cx="15" cy="19" r="1.5"/>
+                                        </svg>
+                                    </span>
+                                    <span
+                                        class="w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 text-xs"
+                                        :class="isCompleted(lesson.id)
+                                            ? 'bg-indigo-500 border-indigo-500 text-white'
+                                            : 'border-gray-300'"
+                                    >
+                                        <span v-if="isCompleted(lesson.id)">✓</span>
+                                    </span>
+                                    <span
+                                        class="text-sm text-gray-700 truncate"
+                                        :class="selectedLesson?.id === lesson.id ? 'font-semibold text-indigo-700' : ''"
+                                    >
+                                        {{ lesson.title }}
+                                    </span>
+                                    <span v-if="lesson.quiz" class="ml-auto shrink-0 text-xs px-1.5 py-0.5 rounded-full"
+                                        :class="bestAttempt(lesson.quiz?.id)?.passed ? 'bg-green-100 text-green-700' : 'bg-indigo-50 text-indigo-500'">
+                                        {{ bestAttempt(lesson.quiz?.id)?.passed ? '✓ Quiz' : '📝' }}
+                                    </span>
+                                </div>
+                            </template>
+                        </draggable>
+                        <template v-else>
+                            <button
+                                v-for="lesson in mod.lessons"
+                                :key="lesson.id"
+                                @click="selectLesson(lesson)"
+                                class="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-indigo-50 transition-colors border-b border-gray-50 last:border-0"
+                                :class="selectedLesson?.id === lesson.id ? 'bg-amber-50' : ''"
                             >
-                                <span v-if="isCompleted(lesson.id)">✓</span>
-                            </span>
-                            <span
-                                class="text-sm text-gray-700 truncate"
-                                :class="selectedLesson?.id === lesson.id ? 'font-semibold text-indigo-700' : ''"
-                            >
-                                {{ lesson.title }}
-                            </span>
-                            <!-- Quiz indicator -->
-                            <span v-if="lesson.quiz" class="ml-auto shrink-0 text-xs px-1.5 py-0.5 rounded-full"
-                                :class="bestAttempt(lesson.quiz?.id)?.passed ? 'bg-green-100 text-green-700' : 'bg-indigo-50 text-indigo-500'">
-                                {{ bestAttempt(lesson.quiz?.id)?.passed ? '✓ Quiz' : '📝' }}
-                            </span>
-                        </button>
+                                <span
+                                    class="w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 text-xs"
+                                    :class="isCompleted(lesson.id)
+                                        ? 'bg-indigo-500 border-indigo-500 text-white'
+                                        : 'border-gray-300'"
+                                >
+                                    <span v-if="isCompleted(lesson.id)">✓</span>
+                                </span>
+                                <span
+                                    class="text-sm text-gray-700 truncate"
+                                    :class="selectedLesson?.id === lesson.id ? 'font-semibold text-indigo-700' : ''"
+                                >
+                                    {{ lesson.title }}
+                                </span>
+                                <span v-if="lesson.quiz" class="ml-auto shrink-0 text-xs px-1.5 py-0.5 rounded-full"
+                                    :class="bestAttempt(lesson.quiz?.id)?.passed ? 'bg-green-100 text-green-700' : 'bg-indigo-50 text-indigo-500'">
+                                    {{ bestAttempt(lesson.quiz?.id)?.passed ? '✓ Quiz' : '📝' }}
+                                </span>
+                            </button>
+                        </template>
 
                         <!-- Add lesson (owner only) -->
                         <div v-if="isOwner" class="px-4 py-2 border-t border-gray-100">
@@ -503,6 +546,8 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { Link, useForm, usePage, router } from '@inertiajs/vue3';
+import draggable from 'vuedraggable';
+import axios from 'axios';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import CommunityTabs from '@/Components/CommunityTabs.vue';
 import LessonEditor from '@/Components/LessonEditor.vue';
@@ -630,6 +675,15 @@ function createLesson(mod) {
     lessonForm.post(
         `/communities/${props.community.slug}/classroom/courses/${props.course.id}/modules/${mod.id}/lessons`,
         { onSuccess: () => { lessonForm.reset(); addingLessonToModule.value = null; } }
+    );
+}
+
+// ─── Reorder lessons ──────────────────────────────────────────────────────────
+function onLessonDragEnd(mod) {
+    const lessonIds = mod.lessons.map((l) => l.id);
+    axios.post(
+        `/communities/${props.community.slug}/classroom/courses/${props.course.id}/modules/${mod.id}/lessons/reorder`,
+        { lesson_ids: lessonIds }
     );
 }
 
