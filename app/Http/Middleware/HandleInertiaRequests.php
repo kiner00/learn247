@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Community;
 use App\Models\DirectMessage;
 use App\Models\Notification;
 use App\Models\Setting;
@@ -63,6 +64,7 @@ class HandleInertiaRequests extends Middleware
                     'email'          => $request->user()->email,
                     'avatar'         => $request->user()->avatar,
                     'is_super_admin' => $request->user()->is_super_admin,
+                    'is_creator'     => Community::where('owner_id', $request->user()->id)->where('price', '>', 0)->exists(),
                     'theme'          => $request->user()->theme ?? 'light',
                 ] : null,
                 'communities' => $request->user()
