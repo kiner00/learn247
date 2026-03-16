@@ -3,6 +3,8 @@
 namespace App\Actions\Billing;
 
 use App\Actions\Affiliate\RecordAffiliateConversion;
+use App\Mail\AffiliateChaChing;
+use App\Mail\CreatorChaChing;
 use App\Mail\TempPasswordMail;
 use App\Models\Affiliate;
 use App\Models\Payment;
@@ -74,9 +76,10 @@ class HandleXenditWebhook
         }
 
         // ── 4. Persist + sync inside a transaction ─────────────────────────────
-        $guestMailData = null;
+        $guestMailData     = null;
+        $chaChing          = null;
 
-        DB::transaction(function () use ($subscription, $payload, $eventId, $status, &$guestMailData) {
+        DB::transaction(function () use ($subscription, $payload, $eventId, $status, &$guestMailData, &$chaChing) {
             $newSubStatus = $this->mapSubscriptionStatus($status);
 
             // Extend from existing expires_at so early renewals don't lose remaining days
@@ -112,6 +115,36 @@ class HandleXenditWebhook
             // Record affiliate commission if this subscription came via a referral
             if ($payment && $paymentStatus === Payment::STATUS_PAID && $subscription->affiliate_id) {
                 $this->recordConversion->execute($subscription->load('affiliate.community'), $payment);
+
+                // Prepare cha-ching emails for affiliate and creator
+                $affiliate     = $subscription->affiliate;
+                $community     = $subscription->community;
+                $affiliateUser = $affiliate->user;
+                $creator       = $community->owner;
+                $saleAmount    = (float) ($payload['amount'] ?? 0);
+                $rate          = $community->affiliate_commission_rate / 100;
+                $commission    = round($saleAmount * $rate, 2);
+
+                $chaChing = [
+                    'affiliate_user' => $affiliateUser,
+                    'creator'        => $creator,
+                    'community'      => $community,
+                    'sale_amount'    => $saleAmount,
+                    'commission'     => $commission,
+                    'referred_by'    => $affiliateUser->name,
+                ];
+            } elseif ($payment && $paymentStatus === Payment::STATUS_PAID) {
+                // No affiliate — still notify creator
+                $community = $subscription->community;
+                $creator   = $community->owner;
+                $chaChing  = [
+                    'affiliate_user' => null,
+                    'creator'        => $creator,
+                    'community'      => $community,
+                    'sale_amount'    => (float) ($payload['amount'] ?? 0),
+                    'commission'     => null,
+                    'referred_by'    => null,
+                ];
             }
 
             // Auto-create affiliate/invite code for every paid subscriber
@@ -161,6 +194,27 @@ class HandleXenditWebhook
         });
 
         // ── 5. Send email outside transaction so mail errors never roll back payment ──
+
+        // Cha-ching emails
+        if ($chaChing) {
+            try {
+                // Affiliate cha-ching
+                if ($chaChing['affiliate_user']) {
+                    Mail::to($chaChing['affiliate_user']->email)->send(
+                        new AffiliateChaChing($chaChing['affiliate_user'], $chaChing['community'], $chaChing['sale_amount'], $chaChing['commission'])
+                    );
+                }
+                // Creator cha-ching
+                if ($chaChing['creator']) {
+                    Mail::to($chaChing['creator']->email)->send(
+                        new CreatorChaChing($chaChing['creator'], $chaChing['community'], $chaChing['sale_amount'], $chaChing['referred_by'])
+                    );
+                }
+            } catch (\Throwable $e) {
+                Log::error('Failed to send cha-ching email', ['error' => $e->getMessage()]);
+            }
+        }
+
         if ($guestMailData) {
             try {
                 Mail::to($guestMailData['user']->email)->send(
