@@ -148,7 +148,10 @@ class ClassroomController extends Controller
     {
         abort_unless($request->user()->id === $community->owner_id, 403);
 
-        $data = $request->validate(['title' => ['required', 'string', 'max:255']]);
+        $data = $request->validate([
+            'title'   => ['required', 'string', 'max:255'],
+            'is_free' => ['sometimes', 'boolean'],
+        ]);
         $module = $action->store($course, $data);
 
         return response()->json(['message' => 'Module added.', 'module_id' => $module->id], 201);
@@ -158,7 +161,10 @@ class ClassroomController extends Controller
     {
         abort_unless($request->user()->id === $community->owner_id, 403);
 
-        $data = $request->validate(['title' => ['required', 'string', 'max:255']]);
+        $data = $request->validate([
+            'title'   => ['required', 'string', 'max:255'],
+            'is_free' => ['sometimes', 'boolean'],
+        ]);
         $action->update($module, $data);
 
         return response()->json(['message' => 'Module updated.']);

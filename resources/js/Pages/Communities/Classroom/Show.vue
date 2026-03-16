@@ -84,6 +84,16 @@
                             class="flex-1 text-left text-sm font-semibold text-gray-800 hover:text-indigo-700 transition-colors"
                         >{{ mod.title }}</button>
                         <div class="flex items-center gap-1.5 shrink-0 ml-2">
+                            <span v-if="mod.is_free" class="px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-green-700 bg-green-100 rounded-full">Free</span>
+                            <button
+                                v-if="isOwner && editingModuleId !== mod.id"
+                                @click.stop="toggleModuleFree(mod)"
+                                class="px-1.5 py-0.5 rounded-lg text-[10px] font-medium transition-colors"
+                                :class="mod.is_free ? 'text-green-600 bg-green-50 hover:bg-green-100' : 'text-gray-400 bg-gray-50 hover:bg-gray-100'"
+                                :title="mod.is_free ? 'Mark as paid' : 'Mark as free'"
+                            >
+                                {{ mod.is_free ? '🔓' : '🔒' }}
+                            </button>
                             <button
                                 v-if="isOwner && editingModuleId !== mod.id"
                                 @click.stop="startEditModule(mod)"
@@ -654,6 +664,16 @@ function saveModuleTitle(mod) {
                 onSuccess: () => { editingModuleId.value = null; },
             }
         );
+}
+
+// ─── Toggle module free ────────────────────────────────────────────────────────
+function toggleModuleFree(mod) {
+    axios.patch(
+        `/communities/${props.community.slug}/classroom/courses/${props.course.id}/modules/${mod.id}`,
+        { title: mod.title, is_free: !mod.is_free }
+    ).then(() => {
+        mod.is_free = !mod.is_free;
+    });
 }
 
 // ─── Add module ────────────────────────────────────────────────────────────────

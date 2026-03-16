@@ -11,7 +11,11 @@ class CourseModule extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['course_id', 'title', 'position'];
+    protected $fillable = ['course_id', 'title', 'position', 'is_free'];
+
+    protected $casts = [
+        'is_free' => 'boolean',
+    ];
 
     public function course(): BelongsTo
     {

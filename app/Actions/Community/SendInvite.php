@@ -36,7 +36,7 @@ class SendInvite
             ]
         );
 
-        Mail::to($email)->send(new CommunityInviteMail($invite));
+        Mail::to($email)->queue(new CommunityInviteMail($invite));
 
         return ['type' => 'success', 'message' => "Invite sent to {$email}."];
     }

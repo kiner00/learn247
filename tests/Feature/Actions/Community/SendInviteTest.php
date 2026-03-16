@@ -49,7 +49,7 @@ class SendInviteTest extends TestCase
 
         $this->assertSame('success', $result['type']);
         $this->assertStringContainsString('new@example.com', $result['message']);
-        Mail::assertSent(CommunityInviteMail::class, function (CommunityInviteMail $mail) {
+        Mail::assertQueued(CommunityInviteMail::class, function (CommunityInviteMail $mail) {
             return $mail->hasTo('new@example.com');
         });
         $this->assertDatabaseHas('community_invites', [

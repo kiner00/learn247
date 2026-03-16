@@ -129,7 +129,7 @@ class CommunityInviteControllerTest extends TestCase
             ->post(route('communities.invite', $community), ['email' => 'new@example.com'])
             ->assertRedirect();
 
-        Mail::assertSent(CommunityInviteMail::class, function ($mail) {
+        Mail::assertQueued(CommunityInviteMail::class, function ($mail) {
             return $mail->hasTo('new@example.com');
         });
 

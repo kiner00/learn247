@@ -16,6 +16,8 @@ use App\Models\QuizQuestionOption;
 use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class ClassroomControllerTest extends TestCase
@@ -506,5 +508,126 @@ class ClassroomControllerTest extends TestCase
             ->assertOk()
             ->assertJsonPath('certificate.uuid', $cert->uuid)
             ->assertJsonPath('progress', 100);
+    }
+
+    // ─── destroyCourse ──────────────────────────────────────────────────────────
+
+    public function test_owner_can_destroy_course(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $course    = Course::create(['community_id' => $community->id, 'title' => 'To Delete', 'description' => 'D']);
+        $module    = CourseModule::create(['course_id' => $course->id, 'title' => 'M1', 'position' => 1]);
+        CourseLesson::create(['module_id' => $module->id, 'title' => 'L1', 'position' => 1]);
+
+        $this->actingAs($owner)
+            ->deleteJson("/api/communities/{$community->slug}/courses/{$course->id}")
+            ->assertOk()
+            ->assertJsonPath('message', 'Course deleted.');
+
+        $this->assertDatabaseMissing('courses', ['id' => $course->id]);
+        $this->assertDatabaseMissing('course_modules', ['course_id' => $course->id]);
+    }
+
+    public function test_non_owner_cannot_destroy_course(): void
+    {
+        $owner     = User::factory()->create();
+        $other     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $course    = Course::create(['community_id' => $community->id, 'title' => 'T', 'description' => 'D']);
+
+        $this->actingAs($other)
+            ->deleteJson("/api/communities/{$community->slug}/courses/{$course->id}")
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('courses', ['id' => $course->id]);
+    }
+
+    // ─── uploadLessonImage ──────────────────────────────────────────────────────
+
+    public function test_owner_can_upload_lesson_image(): void
+    {
+        Storage::fake('public');
+
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $file = UploadedFile::fake()->image('lesson-photo.jpg', 800, 600);
+
+        $this->actingAs($owner)
+            ->postJson("/api/communities/{$community->slug}/lesson-images", [
+                'image' => $file,
+            ])
+            ->assertOk()
+            ->assertJsonStructure(['url']);
+
+        Storage::disk('public')->assertExists('lesson-images/' . $file->hashName());
+    }
+
+    public function test_non_owner_cannot_upload_lesson_image(): void
+    {
+        $owner     = User::factory()->create();
+        $other     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $file = UploadedFile::fake()->image('hack.jpg');
+
+        $this->actingAs($other)
+            ->postJson("/api/communities/{$community->slug}/lesson-images", [
+                'image' => $file,
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_upload_lesson_image_requires_image_file(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $this->actingAs($owner)
+            ->postJson("/api/communities/{$community->slug}/lesson-images", [])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['image']);
+    }
+
+    // ─── reorderLessons ─────────────────────────────────────────────────────────
+
+    public function test_owner_can_reorder_lessons(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $course    = Course::create(['community_id' => $community->id, 'title' => 'T', 'description' => 'D']);
+        $module    = CourseModule::create(['course_id' => $course->id, 'title' => 'M', 'position' => 1]);
+        $lesson1   = CourseLesson::create(['module_id' => $module->id, 'title' => 'L1', 'position' => 0]);
+        $lesson2   = CourseLesson::create(['module_id' => $module->id, 'title' => 'L2', 'position' => 1]);
+        $lesson3   = CourseLesson::create(['module_id' => $module->id, 'title' => 'L3', 'position' => 2]);
+
+        $this->actingAs($owner)
+            ->postJson("/api/communities/{$community->slug}/courses/{$course->id}/modules/{$module->id}/lessons/reorder", [
+                'lesson_ids' => [$lesson3->id, $lesson1->id, $lesson2->id],
+            ])
+            ->assertOk()
+            ->assertJsonPath('message', 'Lessons reordered.');
+
+        $this->assertDatabaseHas('course_lessons', ['id' => $lesson3->id, 'position' => 0]);
+        $this->assertDatabaseHas('course_lessons', ['id' => $lesson1->id, 'position' => 1]);
+        $this->assertDatabaseHas('course_lessons', ['id' => $lesson2->id, 'position' => 2]);
+    }
+
+    public function test_non_owner_cannot_reorder_lessons(): void
+    {
+        $owner     = User::factory()->create();
+        $other     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $course    = Course::create(['community_id' => $community->id, 'title' => 'T', 'description' => 'D']);
+        $module    = CourseModule::create(['course_id' => $course->id, 'title' => 'M', 'position' => 1]);
+        $lesson1   = CourseLesson::create(['module_id' => $module->id, 'title' => 'L1', 'position' => 0]);
+        $lesson2   = CourseLesson::create(['module_id' => $module->id, 'title' => 'L2', 'position' => 1]);
+
+        $this->actingAs($other)
+            ->postJson("/api/communities/{$community->slug}/courses/{$course->id}/modules/{$module->id}/lessons/reorder", [
+                'lesson_ids' => [$lesson2->id, $lesson1->id],
+            ])
+            ->assertForbidden();
     }
 }

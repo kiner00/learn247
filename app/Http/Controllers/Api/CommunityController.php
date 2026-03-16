@@ -167,7 +167,9 @@ class CommunityController extends Controller
     {
         abort_unless($request->user()->id === $community->owner_id, 403);
 
-        $moduleCount = $community->courses()->withCount('modules')->get()->sum('modules_count');
+        $moduleCount = $community->courses()
+            ->withCount(['modules' => fn ($q) => $q->where('is_free', false)])
+            ->get()->sum('modules_count');
         $owner       = $community->owner;
 
         $pricingGate = [
@@ -213,7 +215,8 @@ class CommunityController extends Controller
 
         $courses = $community->courses()->with('modules.lessons')->get();
         $courseStats = $courses->map(function ($course) {
-            $lessonIds    = $course->modules->flatMap(fn ($m) => $m->lessons->pluck('id'));
+            $paidModules  = $course->modules->where('is_free', false);
+            $lessonIds    = $paidModules->flatMap(fn ($m) => $m->lessons->pluck('id'));
             $totalLessons = $lessonIds->count();
             $completedMembers = $totalLessons > 0
                 ? LessonCompletion::whereIn('lesson_id', $lessonIds)->selectRaw('user_id, count(*) as cnt')->groupBy('user_id')->havingRaw('cnt >= ?', [$totalLessons])->count()

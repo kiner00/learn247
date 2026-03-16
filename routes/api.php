@@ -94,8 +94,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/communities/{community}/courses/{course}/modules',                                     [ClassroomController::class, 'storeModule']);
     Route::match(['patch', 'post'], '/communities/{community}/courses/{course}/modules/{module}',        [ClassroomController::class, 'updateModule']);
     Route::post('/communities/{community}/courses/{course}/modules/{module}/lessons',                    [ClassroomController::class, 'storeLesson']);
-    Route::match(['patch', 'post'], '/communities/{community}/courses/{course}/modules/{module}/lessons/{lesson}', [ClassroomController::class, 'updateLesson']);
     Route::post('/communities/{community}/courses/{course}/modules/{module}/lessons/reorder',            [ClassroomController::class, 'reorderLessons']);
+    Route::match(['patch', 'post'], '/communities/{community}/courses/{course}/modules/{module}/lessons/{lesson}', [ClassroomController::class, 'updateLesson']);
     Route::post('/communities/{community}/lesson-images',                                                [ClassroomController::class, 'uploadLessonImage']);
     Route::post('/communities/{community}/courses/{course}/lessons/{lesson}/complete',                   [ClassroomController::class, 'completeLesson']);
     Route::post('/communities/{community}/courses/{course}/lessons/{lesson}/quizzes/{quiz}/submit',      [ClassroomController::class, 'submitQuiz']);

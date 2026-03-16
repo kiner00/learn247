@@ -96,7 +96,10 @@ class ClassroomController extends Controller
     public function storeModule(Request $request, Community $community, Course $course, ManageModule $action): RedirectResponse
     {
         abort_unless($request->user()->id === $community->owner_id, 403);
-        $data = $request->validate(['title' => ['required', 'string', 'max:255']]);
+        $data = $request->validate([
+            'title'   => ['required', 'string', 'max:255'],
+            'is_free' => ['sometimes', 'boolean'],
+        ]);
         $action->store($course, $data);
 
         return back()->with('success', 'Module added!');
@@ -105,7 +108,10 @@ class ClassroomController extends Controller
     public function updateModule(Request $request, Community $community, Course $course, CourseModule $module, ManageModule $action): RedirectResponse
     {
         abort_unless($request->user()->id === $community->owner_id, 403);
-        $data = $request->validate(['title' => ['required', 'string', 'max:255']]);
+        $data = $request->validate([
+            'title'   => ['required', 'string', 'max:255'],
+            'is_free' => ['sometimes', 'boolean'],
+        ]);
         $action->update($module, $data);
 
         return back()->with('success', 'Module updated!');

@@ -800,4 +800,135 @@ class ClassroomControllerTest extends TestCase
         $response->assertForbidden();
         $this->assertDatabaseHas('course_lessons', ['id' => $lesson->id, 'content' => 'Original content']);
     }
+
+    // ─── destroyCourse ──────────────────────────────────────────────────────────
+
+    public function test_owner_can_destroy_course(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'       => 'To Delete',
+            'description' => 'Desc',
+            'position'    => 1,
+        ]);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'M1', 'position' => 1]);
+        CourseLesson::create(['module_id' => $module->id, 'title' => 'L1', 'position' => 1]);
+
+        $response = $this->actingAs($owner)
+            ->delete("/communities/{$community->slug}/classroom/courses/{$course->id}");
+
+        $response->assertRedirect("/communities/{$community->slug}/classroom");
+        $response->assertSessionHas('success', 'Course deleted!');
+        $this->assertDatabaseMissing('courses', ['id' => $course->id]);
+    }
+
+    public function test_regular_member_cannot_destroy_course(): void
+    {
+        $owner     = User::factory()->create();
+        $member    = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'       => 'Course',
+            'description' => 'Desc',
+            'position'    => 1,
+        ]);
+
+        $response = $this->actingAs($member)
+            ->delete("/communities/{$community->slug}/classroom/courses/{$course->id}");
+
+        $response->assertForbidden();
+        $this->assertDatabaseHas('courses', ['id' => $course->id]);
+    }
+
+    // ─── uploadLessonImage ──────────────────────────────────────────────────────
+
+    public function test_owner_can_upload_lesson_image(): void
+    {
+        Storage::fake('public');
+
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $file = UploadedFile::fake()->image('lesson-photo.jpg', 800, 600);
+
+        $response = $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/classroom/lesson-images", [
+                'image' => $file,
+            ]);
+
+        $response->assertOk();
+        $response->assertJsonStructure(['url']);
+        Storage::disk('public')->assertExists('lesson-images/' . $file->hashName());
+    }
+
+    public function test_regular_member_cannot_upload_lesson_image(): void
+    {
+        $owner     = User::factory()->create();
+        $member    = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+
+        $file = UploadedFile::fake()->image('hack.jpg');
+
+        $response = $this->actingAs($member)
+            ->postJson("/communities/{$community->slug}/classroom/lesson-images", [
+                'image' => $file,
+            ]);
+
+        $response->assertForbidden();
+    }
+
+    // ─── reorderLessons ─────────────────────────────────────────────────────────
+
+    public function test_owner_can_reorder_lessons(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $course  = Course::create(['community_id' => $community->id, 'title' => 'C', 'description' => 'D', 'position' => 1]);
+        $module  = CourseModule::create(['course_id' => $course->id, 'title' => 'M', 'position' => 1]);
+        $lesson1 = CourseLesson::create(['module_id' => $module->id, 'title' => 'L1', 'position' => 0]);
+        $lesson2 = CourseLesson::create(['module_id' => $module->id, 'title' => 'L2', 'position' => 1]);
+        $lesson3 = CourseLesson::create(['module_id' => $module->id, 'title' => 'L3', 'position' => 2]);
+
+        $response = $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/classroom/courses/{$course->id}/modules/{$module->id}/lessons/reorder", [
+                'lesson_ids' => [$lesson3->id, $lesson1->id, $lesson2->id],
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', 'Lessons reordered!');
+        $this->assertDatabaseHas('course_lessons', ['id' => $lesson3->id, 'position' => 0]);
+        $this->assertDatabaseHas('course_lessons', ['id' => $lesson1->id, 'position' => 1]);
+        $this->assertDatabaseHas('course_lessons', ['id' => $lesson2->id, 'position' => 2]);
+    }
+
+    public function test_regular_member_cannot_reorder_lessons(): void
+    {
+        $owner     = User::factory()->create();
+        $member    = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+
+        $course  = Course::create(['community_id' => $community->id, 'title' => 'C', 'description' => 'D', 'position' => 1]);
+        $module  = CourseModule::create(['course_id' => $course->id, 'title' => 'M', 'position' => 1]);
+        $lesson1 = CourseLesson::create(['module_id' => $module->id, 'title' => 'L1', 'position' => 0]);
+        $lesson2 = CourseLesson::create(['module_id' => $module->id, 'title' => 'L2', 'position' => 1]);
+
+        $response = $this->actingAs($member)
+            ->post("/communities/{$community->slug}/classroom/courses/{$course->id}/modules/{$module->id}/lessons/reorder", [
+                'lesson_ids' => [$lesson2->id, $lesson1->id],
+            ]);
+
+        $response->assertForbidden();
+    }
 }

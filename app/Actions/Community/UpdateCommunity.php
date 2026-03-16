@@ -41,7 +41,9 @@ class UpdateCommunity
 
     private function validatePricingGate(Community $community, array $data, ?UploadedFile $coverImage): void
     {
-        $moduleCount = $community->courses()->withCount('modules')->get()->sum('modules_count');
+        $moduleCount = $community->courses()
+            ->withCount(['modules' => fn ($q) => $q->where('is_free', false)])
+            ->get()->sum('modules_count');
         $owner       = $community->owner;
 
         if ($moduleCount < 5) {
