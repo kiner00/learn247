@@ -22,6 +22,6 @@ class RefController extends Controller
 
         Cookie::queue('ref_code', $code, 60 * 24 * 30); // 30 days
 
-        return redirect()->route('communities.about', $affiliate->community->slug);
+        return redirect(route('communities.about', $affiliate->community->slug) . '?modal=true');
     }
 }

@@ -316,7 +316,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import CommunityTabs from '@/Components/CommunityTabs.vue';
@@ -332,6 +332,13 @@ const props = defineProps({
 
 const showInviteModal = ref(false);
 const showJoinModal   = ref(false);
+
+onMounted(() => {
+    const params = new URLSearchParams(window.location.search);
+    if ((params.get('popup') === 'true' || params.get('modal') === 'true') && !props.membership) {
+        showJoinModal.value = true;
+    }
+});
 const lightboxImg     = ref(null);
 const activeBannerImg = ref(props.community.cover_image || null);
 
