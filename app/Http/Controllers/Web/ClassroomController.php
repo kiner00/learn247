@@ -14,6 +14,7 @@ use App\Models\CourseLesson;
 use App\Models\CourseModule;
 use App\Queries\Classroom\GetCourseDetail;
 use App\Queries\Classroom\GetCourseList;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -59,6 +60,15 @@ class ClassroomController extends Controller
         $action->update($course, $data, $request->file('cover_image'));
 
         return back()->with('success', 'Course updated!');
+    }
+
+    public function destroyCourse(Request $request, Community $community, Course $course, ManageCourse $action): RedirectResponse
+    {
+        abort_unless($request->user()->id === $community->owner_id, 403);
+
+        $action->destroy($course);
+
+        return redirect()->route('communities.classroom', $community)->with('success', 'Course deleted!');
     }
 
     public function showCourse(Community $community, Course $course, GetCourseDetail $query): Response
@@ -135,5 +145,32 @@ class ClassroomController extends Controller
         $action->update($lesson, $data);
 
         return back()->with('success', 'Lesson updated!');
+    }
+
+    public function uploadLessonImage(Request $request, Community $community, ManageLesson $action): JsonResponse
+    {
+        abort_unless($request->user()->id === $community->owner_id, 403);
+
+        $request->validate([
+            'image' => ['required', 'image', 'max:10240'],
+        ]);
+
+        $url = $action->uploadImage($request->file('image'));
+
+        return response()->json(['url' => $url]);
+    }
+
+    public function reorderLessons(Request $request, Community $community, Course $course, CourseModule $module, ManageLesson $action): RedirectResponse
+    {
+        abort_unless($request->user()->id === $community->owner_id, 403);
+
+        $request->validate([
+            'lesson_ids'   => ['required', 'array'],
+            'lesson_ids.*' => ['required', 'integer', 'exists:course_lessons,id'],
+        ]);
+
+        $action->reorder($module, $request->lesson_ids);
+
+        return back()->with('success', 'Lessons reordered!');
     }
 }

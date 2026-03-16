@@ -184,12 +184,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/communities/{community}/classroom', [ClassroomController::class, 'index'])->name('communities.classroom');
         Route::post('/communities/{community}/classroom/courses', [ClassroomController::class, 'storeCourse'])->name('communities.classroom.courses.store');
         Route::post('/communities/{community}/classroom/courses/{course}/update', [ClassroomController::class, 'updateCourse'])->name('communities.classroom.courses.update');
+        Route::delete('/communities/{community}/classroom/courses/{course}', [ClassroomController::class, 'destroyCourse'])->name('communities.classroom.courses.destroy');
         Route::get('/communities/{community}/classroom/courses/{course}', [ClassroomController::class, 'showCourse'])->name('communities.classroom.courses.show');
         Route::post('/communities/{community}/classroom/courses/{course}/modules', [ClassroomController::class, 'storeModule'])->name('communities.classroom.modules.store');
         Route::match(['patch', 'post'], '/communities/{community}/classroom/courses/{course}/modules/{module}', [ClassroomController::class, 'updateModule'])->name('communities.classroom.modules.update');
         Route::post('/communities/{community}/classroom/courses/{course}/modules/{module}/lessons', [ClassroomController::class, 'storeLesson'])->name('communities.classroom.lessons.store');
         Route::post('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/complete', [ClassroomController::class, 'completeLesson'])->name('communities.classroom.lessons.complete');
         Route::match(['patch', 'post'], '/communities/{community}/classroom/courses/{course}/modules/{module}/lessons/{lesson}', [ClassroomController::class, 'updateLesson'])->name('communities.classroom.lessons.update');
+        Route::post('/communities/{community}/classroom/courses/{course}/modules/{module}/lessons/reorder', [ClassroomController::class, 'reorderLessons'])->name('communities.classroom.lessons.reorder');
+        Route::post('/communities/{community}/classroom/lesson-images', [ClassroomController::class, 'uploadLessonImage'])->name('communities.classroom.lesson-images');
 
         // Lesson comments
         Route::post('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/comments', [LessonCommentController::class, 'store'])->name('lesson.comments.store');

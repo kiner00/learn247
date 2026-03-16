@@ -27,3 +27,4 @@
 .lesson-display pre code { background: none; padding: 0; color: inherit; font-size: 0.85rem; }
 .lesson-display a { color: #4f46e5; text-decoration: underline; }
 .lesson-display a:hover { color: #3730a3; }
+.lesson-display img { max-width: 100%; height: auto; border-radius: 8px; margin: 0.5rem 0; }

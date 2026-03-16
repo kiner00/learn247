@@ -73,6 +73,19 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
                 </svg>
             </button>
+            <button
+                v-if="uploadUrl"
+                type="button"
+                @click="triggerImageUpload"
+                :disabled="uploading"
+                class="px-2 py-1 rounded text-xs transition-colors"
+                :class="uploading ? 'text-indigo-400 bg-indigo-50' : 'text-gray-500 hover:bg-gray-100'"
+                title="Upload image"
+            >
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+            </button>
             <div class="w-px h-4 bg-gray-200 mx-1" />
             <button
                 type="button"
@@ -92,29 +105,44 @@
 
         <!-- Editor content -->
         <EditorContent :editor="editor" class="lesson-editor-content" />
+
+        <input
+            ref="imageInput"
+            type="file"
+            accept="image/*"
+            class="hidden"
+            @change="handleImageUpload"
+        />
     </div>
 </template>
 
 <script setup>
-import { watch, onBeforeUnmount } from 'vue';
+import { ref, watch, onBeforeUnmount } from 'vue';
 import { useEditor, EditorContent } from '@tiptap/vue-3';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
+import Image from '@tiptap/extension-image';
 import Placeholder from '@tiptap/extension-placeholder';
+import axios from 'axios';
 
 const props = defineProps({
     modelValue: { type: String, default: '' },
     placeholder: { type: String, default: 'Write lesson description...' },
     minHeight: { type: String, default: '120px' },
+    uploadUrl: { type: String, default: '' },
 });
 
 const emit = defineEmits(['update:modelValue']);
+
+const imageInput = ref(null);
+const uploading = ref(false);
 
 const editor = useEditor({
     content: props.modelValue,
     extensions: [
         StarterKit,
         Link.configure({ openOnClick: false }),
+        Image.configure({ inline: false, allowBase64: false }),
         Placeholder.configure({ placeholder: props.placeholder }),
     ],
     editorProps: {
@@ -145,6 +173,34 @@ function setLink() {
     }
 }
 
+function triggerImageUpload() {
+    imageInput.value?.click();
+}
+
+async function handleImageUpload(event) {
+    const file = event.target.files?.[0];
+    if (!file || !props.uploadUrl) return;
+
+    uploading.value = true;
+    try {
+        const formData = new FormData();
+        formData.append('image', file);
+
+        const { data } = await axios.post(props.uploadUrl, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+
+        if (data.url) {
+            editor.value.chain().focus().setImage({ src: data.url }).run();
+        }
+    } catch (error) {
+        console.error('Image upload failed:', error);
+    } finally {
+        uploading.value = false;
+        imageInput.value.value = '';
+    }
+}
+
 onBeforeUnmount(() => editor.value?.destroy());
 </script>
 
@@ -168,4 +224,5 @@ onBeforeUnmount(() => editor.value?.destroy());
 .lesson-editor-content .tiptap strong { font-weight: 700; }
 .lesson-editor-content .tiptap em { font-style: italic; }
 .lesson-editor-content .tiptap p { margin: 0.25rem 0; line-height: 1.6; }
+.lesson-editor-content .tiptap img { max-width: 100%; height: auto; border-radius: 8px; margin: 0.5rem 0; }
 </style>

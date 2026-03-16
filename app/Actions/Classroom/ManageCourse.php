@@ -5,6 +5,7 @@ namespace App\Actions\Classroom;
 use App\Models\Community;
 use App\Models\Course;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 class ManageCourse
 {
@@ -30,5 +31,15 @@ class ManageCourse
         $course->update($data);
 
         return $course;
+    }
+
+    public function destroy(Course $course): void
+    {
+        if ($course->cover_image) {
+            $path = str_replace(asset('storage/'), '', $course->cover_image);
+            Storage::disk('public')->delete($path);
+        }
+
+        $course->delete();
     }
 }

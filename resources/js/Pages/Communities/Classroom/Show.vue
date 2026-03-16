@@ -145,6 +145,7 @@
                                     v-model="lessonForm.content"
                                     placeholder="Description (optional)"
                                     min-height="80px"
+                                    :upload-url="lessonImageUploadUrl"
                                 />
                                 <input
                                     v-model="lessonForm.video_url"
@@ -237,6 +238,7 @@
                                 v-model="contentForm.content"
                                 placeholder="Lesson description / notes..."
                                 min-height="140px"
+                                :upload-url="lessonImageUploadUrl"
                             />
                             <div>
                                 <p class="text-xs text-gray-500 mb-1.5 font-medium">Video URL</p>
@@ -518,6 +520,7 @@ const props = defineProps({
 const page      = usePage();
 const isOwner   = props.community.owner_id === page.props.auth?.user?.id;
 const authUserId = page.props.auth?.user?.id;
+const lessonImageUploadUrl = `/communities/${props.community.slug}/classroom/lesson-images`;
 
 // ─── Completion ───────────────────────────────────────────────────────────────
 const doneIds = ref(new Set(props.completedIds));

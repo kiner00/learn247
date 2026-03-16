@@ -135,6 +135,15 @@ class ClassroomController extends Controller
         return response()->json(['message' => 'Course updated.']);
     }
 
+    public function destroyCourse(Request $request, Community $community, Course $course, ManageCourse $action): JsonResponse
+    {
+        abort_unless($request->user()->id === $community->owner_id, 403);
+
+        $action->destroy($course);
+
+        return response()->json(['message' => 'Course deleted.']);
+    }
+
     public function storeModule(Request $request, Community $community, Course $course, ManageModule $action): JsonResponse
     {
         abort_unless($request->user()->id === $community->owner_id, 403);
@@ -182,6 +191,33 @@ class ClassroomController extends Controller
         $action->update($lesson, $data);
 
         return response()->json(['message' => 'Lesson updated.']);
+    }
+
+    public function uploadLessonImage(Request $request, Community $community, ManageLesson $action): JsonResponse
+    {
+        abort_unless($request->user()->id === $community->owner_id, 403);
+
+        $request->validate([
+            'image' => ['required', 'image', 'max:10240'],
+        ]);
+
+        $url = $action->uploadImage($request->file('image'));
+
+        return response()->json(['url' => $url]);
+    }
+
+    public function reorderLessons(Request $request, Community $community, Course $course, CourseModule $module, ManageLesson $action): JsonResponse
+    {
+        abort_unless($request->user()->id === $community->owner_id, 403);
+
+        $request->validate([
+            'lesson_ids'   => ['required', 'array'],
+            'lesson_ids.*' => ['required', 'integer', 'exists:course_lessons,id'],
+        ]);
+
+        $action->reorder($module, $request->lesson_ids);
+
+        return response()->json(['message' => 'Lessons reordered.']);
     }
 
     private function requireMembership(Request $request, Community $community): void
