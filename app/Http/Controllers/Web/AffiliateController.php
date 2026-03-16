@@ -10,6 +10,7 @@ use App\Models\Affiliate;
 use App\Models\AffiliateConversion;
 use App\Models\Community;
 use App\Models\PayoutRequest;
+use App\Models\Subscription;
 use App\Queries\Affiliate\GetAffiliateStats;
 use App\Queries\Payout\CalculateEligibility;
 use Illuminate\Http\RedirectResponse;
@@ -152,7 +153,10 @@ class AffiliateController extends Controller
             ->with(['affiliate.user', 'referredUser'])->latest()->get()
             ->map(fn ($c) => [
                 'id' => $c->id, 'date' => $c->created_at->format('M j, Y'),
-                'referred_user' => $c->referredUser->name, 'affiliate_name' => $c->affiliate->user->name,
+                'referred_user' => $c->referredUser->name,
+                'referred_email' => $c->referredUser->email,
+                'referred_phone' => $c->referredUser->phone,
+                'affiliate_name' => $c->affiliate->user->name,
                 'sale_amount' => $c->sale_amount, 'platform_fee' => $c->platform_fee,
                 'commission_amount' => $c->commission_amount, 'creator_amount' => $c->creator_amount,
                 'status' => $c->status, 'paid_at' => $c->paid_at?->format('M j, Y'),
@@ -160,9 +164,23 @@ class AffiliateController extends Controller
                 'can_disburse' => DisbursePayout::supports($c->affiliate->user->payout_method ?? ''),
             ]);
 
+        $affiliateIds = Affiliate::where('community_id', $community->id)->pluck('id');
+        $abandonedLeads = Subscription::whereIn('affiliate_id', $affiliateIds)
+            ->whereIn('status', [Subscription::STATUS_PENDING, Subscription::STATUS_EXPIRED])
+            ->with('user:id,name,email,phone', 'affiliate.user:id,name')
+            ->latest()->take(50)->get()
+            ->map(fn ($s) => [
+                'date'           => $s->created_at->format('M j, Y'),
+                'name'           => $s->user?->name,
+                'email'          => $s->user?->email,
+                'phone'          => $s->user?->phone,
+                'affiliate_name' => $s->affiliate?->user?->name,
+                'status'         => $s->status,
+            ]);
+
         $stats = ['total_affiliates' => $affiliates->count(), 'total_commissions' => $affiliates->sum('total_earned'), 'total_paid_out' => $affiliates->sum('total_paid')];
 
-        return Inertia::render('Communities/Affiliates', compact('community', 'affiliates', 'conversions', 'stats'));
+        return Inertia::render('Communities/Affiliates', compact('community', 'affiliates', 'conversions', 'stats', 'abandonedLeads'));
     }
 
     public function updatePayout(Request $request, Affiliate $affiliate): RedirectResponse

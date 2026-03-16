@@ -70,6 +70,40 @@
                 </table>
             </div>
 
+            <!-- Abandoned Leads -->
+            <div v-if="abandonedLeads.length > 0" class="bg-white rounded-xl border border-gray-200 overflow-hidden mb-8">
+                <div class="px-5 py-4 border-b border-gray-200">
+                    <h2 class="font-semibold text-gray-800">Abandoned Leads</h2>
+                    <p class="text-xs text-gray-400 mt-0.5">Referred users who started checkout but did not complete payment</p>
+                </div>
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th class="text-left px-5 py-3 font-semibold text-gray-600">Date</th>
+                            <th class="text-left px-5 py-3 font-semibold text-gray-600">Name</th>
+                            <th class="text-left px-5 py-3 font-semibold text-gray-600">Email</th>
+                            <th class="text-left px-5 py-3 font-semibold text-gray-600">Phone</th>
+                            <th class="text-left px-5 py-3 font-semibold text-gray-600">Affiliate</th>
+                            <th class="text-center px-5 py-3 font-semibold text-gray-600">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        <tr v-for="(l, i) in abandonedLeads" :key="i" class="hover:bg-gray-50">
+                            <td class="px-5 py-3 text-gray-500 whitespace-nowrap">{{ l.date }}</td>
+                            <td class="px-5 py-3 font-medium text-gray-900">{{ l.name }}</td>
+                            <td class="px-5 py-3 text-gray-600">{{ l.email }}</td>
+                            <td class="px-5 py-3 text-gray-600">{{ l.phone ?? '—' }}</td>
+                            <td class="px-5 py-3 text-gray-500">{{ l.affiliate_name }}</td>
+                            <td class="px-5 py-3 text-center">
+                                <span class="text-xs font-medium px-2 py-0.5 rounded-full capitalize bg-red-100 text-red-700">
+                                    {{ l.status }}
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
             <!-- Conversions -->
             <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
                 <div class="px-5 py-4 border-b border-gray-200">
@@ -95,7 +129,11 @@
                     <tbody class="divide-y divide-gray-100">
                         <tr v-for="c in conversions" :key="c.id" class="hover:bg-gray-50">
                             <td class="px-5 py-3 text-gray-500 whitespace-nowrap">{{ c.date }}</td>
-                            <td class="px-5 py-3 text-gray-900">{{ c.referred_user }}</td>
+                            <td class="px-5 py-3 text-gray-900">
+                                <p class="font-medium">{{ c.referred_user }}</p>
+                                <p class="text-xs text-gray-400">{{ c.referred_email }}</p>
+                                <p v-if="c.referred_phone" class="text-xs text-gray-400">{{ c.referred_phone }}</p>
+                            </td>
                             <td class="px-5 py-3 text-gray-500">{{ c.affiliate_name }}</td>
                             <td class="px-5 py-3 text-right font-medium">₱{{ Number(c.sale_amount).toFixed(2) }}</td>
                             <td class="px-5 py-3 text-right text-red-500">−₱{{ Number(c.platform_fee).toFixed(2) }}</td>
@@ -135,10 +173,11 @@ import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
 const props = defineProps({
-    community:   Object,
-    affiliates:  Array,
-    conversions: Array,
-    stats:       Object,
+    community:      Object,
+    affiliates:     Array,
+    conversions:    Array,
+    stats:          Object,
+    abandonedLeads: Array,
 })
 
 function markPaid(conversionId) {

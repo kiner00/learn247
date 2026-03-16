@@ -8,6 +8,7 @@ use App\Models\Community;
 use App\Models\OwnerPayout;
 use App\Models\Payment;
 use App\Models\PayoutRequest;
+use App\Models\Subscription;
 use App\Queries\Payout\CalculateEligibility;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -36,8 +37,14 @@ class CreatorController extends Controller
                     ->where('type', PayoutRequest::TYPE_OWNER)->where('status', PayoutRequest::STATUS_PENDING)->first();
 
                 $recentPayments = Payment::where('community_id', $community->id)->where('status', Payment::STATUS_PAID)
-                    ->with('user:id,name,email')->latest('paid_at')->take(10)->get()
-                    ->map(fn ($p) => ['member_name' => $p->user?->name, 'member_email' => $p->user?->email, 'amount' => (float) $p->amount, 'paid_at' => $p->paid_at?->toDateString()]);
+                    ->with('user:id,name,email,phone')->latest('paid_at')->take(10)->get()
+                    ->map(fn ($p) => ['member_name' => $p->user?->name, 'member_email' => $p->user?->email, 'member_phone' => $p->user?->phone, 'amount' => (float) $p->amount, 'paid_at' => $p->paid_at?->toDateString()]);
+
+                $abandonedPayments = Subscription::where('community_id', $community->id)
+                    ->whereIn('status', [Subscription::STATUS_PENDING, Subscription::STATUS_EXPIRED])
+                    ->with('user:id,name,email,phone')
+                    ->latest()->take(20)->get()
+                    ->map(fn ($s) => ['name' => $s->user?->name, 'email' => $s->user?->email, 'phone' => $s->user?->phone, 'status' => $s->status, 'date' => $s->created_at->toDateString()]);
 
                 return [
                     'community_id'       => $community->id,
@@ -54,6 +61,7 @@ class CreatorController extends Controller
                     'next_eligible_date' => $nextEligibleDate,
                     'pending_request'    => $pendingRequest ? ['id' => $pendingRequest->id, 'amount' => (float) $pendingRequest->amount] : null,
                     'recent_payments'    => $recentPayments,
+                    'abandoned_payments' => $abandonedPayments,
                 ];
             });
 

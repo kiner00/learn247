@@ -124,6 +124,38 @@
                 <p v-else class="text-xs text-gray-400 italic">No eligible earnings yet.</p>
             </div>
 
+            <!-- Abandoned checkouts -->
+            <div v-if="c.abandoned_payments.length > 0" class="border-t border-gray-100">
+                <div class="px-5 py-3 bg-red-50 border-b border-red-100 flex items-center justify-between">
+                    <p class="text-xs font-semibold text-red-700 uppercase tracking-wide">Abandoned Checkouts</p>
+                    <span class="text-xs text-red-500">Started checkout but did not pay</span>
+                </div>
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-gray-100">
+                            <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500">Name</th>
+                            <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500">Email</th>
+                            <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500">Phone</th>
+                            <th class="text-center px-5 py-2.5 text-xs font-semibold text-gray-500">Status</th>
+                            <th class="text-right px-5 py-2.5 text-xs font-semibold text-gray-500">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        <tr v-for="(a, i) in c.abandoned_payments" :key="i" class="hover:bg-gray-50">
+                            <td class="px-5 py-2.5 font-medium text-gray-900">{{ a.name }}</td>
+                            <td class="px-5 py-2.5 text-gray-600">{{ a.email }}</td>
+                            <td class="px-5 py-2.5 text-gray-600">{{ a.phone ?? '—' }}</td>
+                            <td class="px-5 py-2.5 text-center">
+                                <span class="text-xs font-medium px-2 py-0.5 rounded-full capitalize bg-red-100 text-red-700">
+                                    {{ a.status }}
+                                </span>
+                            </td>
+                            <td class="px-5 py-2.5 text-right text-gray-400 text-xs">{{ a.date }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
             <!-- Recent member payments -->
             <div v-if="c.recent_payments.length > 0" class="border-t border-gray-100">
                 <div class="px-5 py-3 bg-gray-50 border-b border-gray-100">
@@ -133,6 +165,7 @@
                     <thead>
                         <tr class="border-b border-gray-100">
                             <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500">Member</th>
+                            <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500">Phone</th>
                             <th class="text-right px-5 py-2.5 text-xs font-semibold text-gray-500">Amount</th>
                             <th class="text-right px-5 py-2.5 text-xs font-semibold text-gray-500">Date</th>
                         </tr>
@@ -143,6 +176,7 @@
                                 <p class="font-medium text-gray-900">{{ p.member_name }}</p>
                                 <p class="text-xs text-gray-400">{{ p.member_email }}</p>
                             </td>
+                            <td class="px-5 py-2.5 text-sm text-gray-600">{{ p.member_phone ?? '—' }}</td>
                             <td class="px-5 py-2.5 text-right font-semibold text-gray-800">₱{{ fmt(p.amount) }}</td>
                             <td class="px-5 py-2.5 text-right text-gray-400 text-xs">{{ p.paid_at }}</td>
                         </tr>
