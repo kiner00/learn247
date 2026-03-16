@@ -19,11 +19,16 @@ class Subscription extends Model
     protected $fillable = [
         'community_id', 'user_id', 'affiliate_id', 'status',
         'xendit_id', 'xendit_invoice_url', 'expires_at',
+        'reminder_5d_sent_at', 'reminder_1d_sent_at',
     ];
 
     protected function casts(): array
     {
-        return ['expires_at' => 'datetime'];
+        return [
+            'expires_at'          => 'datetime',
+            'reminder_5d_sent_at' => 'datetime',
+            'reminder_1d_sent_at' => 'datetime',
+        ];
     }
 
     public function community(): BelongsTo

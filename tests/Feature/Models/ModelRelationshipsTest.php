@@ -3,7 +3,10 @@
 namespace Tests\Feature\Models;
 
 use App\Models\AffiliateConversion;
+use App\Models\Badge;
 use App\Models\Community;
+use App\Models\CommunityInvite;
+use App\Models\CommunityLevelPerk;
 use App\Models\CommunityMember;
 use App\Models\Course;
 use App\Models\CourseLesson;
@@ -19,8 +22,10 @@ use App\Models\PayoutRequest;
 use App\Models\Quiz;
 use App\Models\QuizAttempt;
 use App\Models\QuizQuestion;
+use App\Models\QuizQuestionOption;
 use App\Models\Setting;
 use App\Models\User;
+use App\Models\UserBadge;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
@@ -514,5 +519,142 @@ class ModelRelationshipsTest extends TestCase
     public function test_community_member_compute_level_with_max_points(): void
     {
         $this->assertSame(9, CommunityMember::computeLevel(99999));
+    }
+
+    // ── Badge ────────────────────────────────────────────
+
+    public function test_badge_community_relationship(): void
+    {
+        $model = new Badge();
+        $this->assertInstanceOf(BelongsTo::class, $model->community());
+    }
+
+    public function test_badge_user_badges_relationship(): void
+    {
+        $model = new Badge();
+        $this->assertInstanceOf(HasMany::class, $model->userBadges());
+    }
+
+    public function test_badge_fillable(): void
+    {
+        $model = new Badge();
+        $expected = [
+            'key', 'type', 'community_id',
+            'name', 'description', 'how_to_earn', 'icon',
+            'condition_type', 'condition_value', 'sort_order',
+        ];
+        $this->assertSame($expected, $model->getFillable());
+    }
+
+    // ── CommunityInvite ──────────────────────────────────
+
+    public function test_community_invite_community_relationship(): void
+    {
+        $model = new CommunityInvite();
+        $this->assertInstanceOf(BelongsTo::class, $model->community());
+    }
+
+    public function test_community_invite_fillable(): void
+    {
+        $model = new CommunityInvite();
+        $expected = ['community_id', 'email', 'token', 'accepted_at', 'expires_at'];
+        $this->assertSame($expected, $model->getFillable());
+    }
+
+    public function test_community_invite_casts_dates(): void
+    {
+        $model = new CommunityInvite();
+        $casts = $model->getCasts();
+        $this->assertSame('datetime', $casts['accepted_at']);
+        $this->assertSame('datetime', $casts['expires_at']);
+    }
+
+    public function test_community_invite_is_expired(): void
+    {
+        $expired = new CommunityInvite(['expires_at' => now()->subDay()]);
+        $this->assertTrue($expired->isExpired());
+
+        $valid = new CommunityInvite(['expires_at' => now()->addDay()]);
+        $this->assertFalse($valid->isExpired());
+    }
+
+    public function test_community_invite_is_accepted(): void
+    {
+        $accepted = new CommunityInvite(['accepted_at' => now()]);
+        $this->assertTrue($accepted->isAccepted());
+
+        $pending = new CommunityInvite(['accepted_at' => null]);
+        $this->assertFalse($pending->isAccepted());
+    }
+
+    // ── CommunityLevelPerk ───────────────────────────────
+
+    public function test_community_level_perk_community_relationship(): void
+    {
+        $model = new CommunityLevelPerk();
+        $this->assertInstanceOf(BelongsTo::class, $model->community());
+    }
+
+    public function test_community_level_perk_fillable(): void
+    {
+        $model = new CommunityLevelPerk();
+        $expected = ['community_id', 'level', 'description'];
+        $this->assertSame($expected, $model->getFillable());
+    }
+
+    // ── QuizQuestionOption ───────────────────────────────
+
+    public function test_quiz_question_option_question_relationship(): void
+    {
+        $model = new QuizQuestionOption();
+        $this->assertInstanceOf(BelongsTo::class, $model->question());
+    }
+
+    public function test_quiz_question_option_fillable(): void
+    {
+        $model = new QuizQuestionOption();
+        $expected = ['question_id', 'label', 'is_correct'];
+        $this->assertSame($expected, $model->getFillable());
+    }
+
+    public function test_quiz_question_option_casts_is_correct_to_boolean(): void
+    {
+        $model = new QuizQuestionOption();
+        $casts = $model->getCasts();
+        $this->assertSame('boolean', $casts['is_correct']);
+    }
+
+    // ── UserBadge ────────────────────────────────────────
+
+    public function test_user_badge_user_relationship(): void
+    {
+        $model = new UserBadge();
+        $this->assertInstanceOf(BelongsTo::class, $model->user());
+    }
+
+    public function test_user_badge_badge_relationship(): void
+    {
+        $model = new UserBadge();
+        $this->assertInstanceOf(BelongsTo::class, $model->badge());
+    }
+
+    public function test_user_badge_community_relationship(): void
+    {
+        $model = new UserBadge();
+        $this->assertInstanceOf(BelongsTo::class, $model->community());
+    }
+
+    public function test_user_badge_fillable(): void
+    {
+        $model = new UserBadge();
+        $expected = ['user_id', 'badge_id', 'community_id', 'earned_at'];
+        $this->assertSame($expected, $model->getFillable());
+    }
+
+    public function test_user_badge_casts_earned_at_to_datetime(): void
+    {
+        $model = new UserBadge();
+        $casts = $model->getCasts();
+        $this->assertSame('datetime', $casts['earned_at']);
     }
 }

@@ -12,12 +12,14 @@ use Carbon\Carbon;
 
 class CalculateEligibility
 {
+    const HOLD_DAYS = 7;
+
     /**
      * @return array{0: float, 1: float, 2: string|null} [eligibleNow, lockedAmount, nextEligibleDate]
      */
     public function forOwner(Community $community): array
     {
-        $cutoff = now()->subDays(15);
+        $cutoff = now()->subDays(self::HOLD_DAYS);
 
         $eligibleGross = (float) Payment::where('community_id', $community->id)
             ->where('status', Payment::STATUS_PAID)
@@ -57,7 +59,7 @@ class CalculateEligibility
             ->value('paid_at');
 
         $nextEligibleDate = $oldestLocked
-            ? Carbon::parse($oldestLocked)->addDays(15)->toDateString()
+            ? Carbon::parse($oldestLocked)->addDays(self::HOLD_DAYS)->toDateString()
             : null;
 
         return [$eligibleNow, max(0, $lockedEarned), $nextEligibleDate];
@@ -67,7 +69,7 @@ class CalculateEligibility
     {
         $eligible = (float) AffiliateConversion::where('affiliate_id', $affiliate->id)
             ->where('status', AffiliateConversion::STATUS_PENDING)
-            ->where('created_at', '<=', now()->subDays(15))
+            ->where('created_at', '<=', now()->subDays(self::HOLD_DAYS))
             ->sum('commission_amount');
 
         $inFlight = (float) PayoutRequest::where('affiliate_id', $affiliate->id)

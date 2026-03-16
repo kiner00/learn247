@@ -1,0 +1,129 @@
+<?php
+
+namespace Tests\Feature\Web;
+
+use App\Models\Community;
+use App\Models\Subscription;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\URL;
+use Tests\TestCase;
+
+class CheckoutCallbackControllerTest extends TestCase
+{
+    use RefreshDatabase;
+
+    // ── __invoke (signed URL callback) ────────────────────────────────────────
+
+    public function test_valid_signed_url_logs_in_user_and_renders_processing(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create();
+
+        $url = URL::signedRoute('checkout.callback', [
+            'user'      => $user->id,
+            'community' => $community->slug,
+        ]);
+
+        $this->get($url)
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('CheckoutProcessing')
+                ->where('communitySlug', $community->slug)
+                ->where('communityName', $community->name)
+            );
+
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_invalid_signature_returns_403(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create();
+
+        $url = route('checkout.callback', [
+            'user'      => $user->id,
+            'community' => $community->slug,
+        ]);
+
+        $this->get($url)->assertForbidden();
+    }
+
+    public function test_callback_with_nonexistent_user_returns_404(): void
+    {
+        $community = Community::factory()->create();
+
+        $url = URL::signedRoute('checkout.callback', [
+            'user'      => 99999,
+            'community' => $community->slug,
+        ]);
+
+        $this->get($url)->assertNotFound();
+    }
+
+    public function test_callback_with_nonexistent_community_returns_404(): void
+    {
+        $user = User::factory()->create();
+
+        $url = URL::signedRoute('checkout.callback', [
+            'user'      => $user->id,
+            'community' => 'nonexistent-slug',
+        ]);
+
+        $this->get($url)->assertNotFound();
+    }
+
+    // ── status ────────────────────────────────────────────────────────────────
+
+    public function test_status_returns_active_true_when_subscription_active(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create();
+
+        Subscription::factory()->active()->create([
+            'community_id' => $community->id,
+            'user_id'      => $user->id,
+        ]);
+
+        $this->actingAs($user)
+            ->getJson(route('checkout.status', $community->slug))
+            ->assertOk()
+            ->assertJson(['active' => true]);
+    }
+
+    public function test_status_returns_active_false_when_no_active_subscription(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create();
+
+        Subscription::factory()->create([
+            'community_id' => $community->id,
+            'user_id'      => $user->id,
+            'status'       => Subscription::STATUS_PENDING,
+        ]);
+
+        $this->actingAs($user)
+            ->getJson(route('checkout.status', $community->slug))
+            ->assertOk()
+            ->assertJson(['active' => false]);
+    }
+
+    public function test_status_returns_false_when_no_subscription_exists(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create();
+
+        $this->actingAs($user)
+            ->getJson(route('checkout.status', $community->slug))
+            ->assertOk()
+            ->assertJson(['active' => false]);
+    }
+
+    public function test_status_requires_auth(): void
+    {
+        $community = Community::factory()->create();
+
+        $this->getJson(route('checkout.status', $community->slug))
+            ->assertUnauthorized();
+    }
+}
