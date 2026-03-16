@@ -48,13 +48,20 @@ async function poll() {
     try {
         const res = await fetch(`/checkout-status/${props.communitySlug}`, {
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin',
         });
+
+        if (res.redirected || !res.ok) {
+            clearInterval(timer);
+            window.location.href = `/communities/${props.communitySlug}`;
+            return;
+        }
+
         const data = await res.json();
 
         if (data.active) {
             confirmed.value = true;
             clearInterval(timer);
-            // Small delay so user can read the "You're in!" message
             setTimeout(() => {
                 router.visit(`/communities/${props.communitySlug}`);
             }, 1200);
@@ -66,8 +73,7 @@ async function poll() {
 
     if (attempts >= MAX_ATTEMPTS) {
         clearInterval(timer);
-        // Fallback: just go to the community anyway
-        router.visit(`/communities/${props.communitySlug}`);
+        window.location.href = `/communities/${props.communitySlug}`;
     }
 }
 

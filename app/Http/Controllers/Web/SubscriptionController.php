@@ -14,12 +14,12 @@ class SubscriptionController extends Controller
     {
         $affiliateCode = $request->cookie('ref_code');
 
-        $result = $action->execute($request->user(), $community, $affiliateCode);
+        $callbackUrl = GuestCheckoutController::buildCallbackUrl($request->user()->id, $community->slug);
 
-        // Clear the ref cookie after checkout starts (one-use attribution)
+        $result = $action->execute($request->user(), $community, $affiliateCode, successRedirectUrl: $callbackUrl);
+
         cookie()->forget('ref_code');
 
-        // Inertia::location triggers a full-page browser redirect (works for external URLs)
         return Inertia::location($result['checkout_url']);
     }
 }

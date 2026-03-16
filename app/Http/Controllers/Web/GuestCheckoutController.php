@@ -7,7 +7,6 @@ use App\Actions\Billing\StartSubscriptionCheckout;
 use App\Http\Controllers\Controller;
 use App\Models\Affiliate;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\URL;
 use Inertia\Inertia;
 
 class GuestCheckoutController extends Controller
@@ -37,14 +36,27 @@ class GuestCheckoutController extends Controller
             return back()->withErrors(['email' => 'This email already has an active subscription to this community.']);
         }
 
-        $callbackUrl = URL::temporarySignedRoute(
-            'checkout.callback',
-            now()->addHours(2),
-            ['user' => $user->id, 'community' => $community->slug],
-        );
+        $callbackUrl = self::buildCallbackUrl($user->id, $community->slug);
 
         $result = $action->execute($user, $community, $code, successRedirectUrl: $callbackUrl);
 
         return Inertia::location($result['checkout_url']);
+    }
+
+    /**
+     * Build an HMAC-verified callback URL that won't break when Xendit
+     * appends extra query parameters after payment.
+     */
+    public static function buildCallbackUrl(int $userId, string $communitySlug): string
+    {
+        $expires = now()->addHours(2)->getTimestamp();
+        $token   = hash_hmac('sha256', "{$userId}|{$communitySlug}|{$expires}", config('app.key'));
+
+        return route('checkout.callback', [
+            'user'      => $userId,
+            'community' => $communitySlug,
+            'expires'   => $expires,
+            'token'     => $token,
+        ]);
     }
 }

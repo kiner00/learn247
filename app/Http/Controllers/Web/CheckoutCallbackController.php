@@ -15,21 +15,30 @@ class CheckoutCallbackController extends Controller
     /**
      * Xendit success redirect handler.
      *
-     * The URL is signed (temp, 2h) and contains the user + community slug.
-     * We log the user in immediately so they land authenticated, then render
-     * a processing screen that polls until the webhook activates their subscription.
+     * Uses an HMAC token (instead of a signed URL) so that extra query params
+     * appended by Xendit after payment do not invalidate the link.
+     * We log the user in with remember=true for better persistence in
+     * mobile in-app browsers (Messenger, Instagram, etc.).
      */
     public function __invoke(Request $request, int $user, string $community): mixed
     {
-        if (! $request->hasValidSignature()) {
-            abort(403, 'Invalid or expired checkout link.');
+        $expires = (int) $request->query('expires', 0);
+        $token   = $request->query('token', '');
+
+        if ($expires < now()->getTimestamp()) {
+            abort(403, 'Checkout link has expired.');
         }
 
-        $userModel = User::findOrFail($user);
+        $expected = hash_hmac('sha256', "{$user}|{$community}|{$expires}", config('app.key'));
+
+        if (! hash_equals($expected, $token)) {
+            abort(403, 'Invalid checkout link.');
+        }
+
+        $userModel      = User::findOrFail($user);
         $communityModel = Community::where('slug', $community)->firstOrFail();
 
-        // Log in without touching the session guard's "intended" URL
-        Auth::login($userModel, false);
+        Auth::login($userModel, true);
 
         return Inertia::render('CheckoutProcessing', [
             'communitySlug' => $communityModel->slug,
