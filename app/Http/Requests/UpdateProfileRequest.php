@@ -21,7 +21,7 @@ class UpdateProfileRequest extends FormRequest
             'social_links'     => ['nullable', 'array'],
             'social_links.*'   => ['nullable', 'string', 'max:500'],
             'hide_from_search' => ['nullable', 'boolean'],
-            'avatar'           => ['nullable', 'image', 'max:5120'],
+            'avatar'           => ['nullable', 'image', 'max:10240'],
         ];
     }
 }

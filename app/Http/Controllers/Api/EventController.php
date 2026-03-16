@@ -55,7 +55,7 @@ class EventController extends Controller
             'end_at'          => 'nullable|date|after:start_at',
             'timezone'        => 'required|string|timezone',
             'url'             => 'nullable|url|max:500',
-            'cover_image'     => 'nullable|image|max:4096',
+            'cover_image'     => 'nullable|image|max:10240',
             'is_members_only' => 'boolean',
         ]);
 
@@ -76,7 +76,7 @@ class EventController extends Controller
             'end_at'          => 'nullable|date|after:start_at',
             'timezone'        => 'required|string|timezone',
             'url'             => 'nullable|url|max:500',
-            'cover_image'     => 'nullable|image|max:4096',
+            'cover_image'     => 'nullable|image|max:10240',
             'is_members_only' => 'boolean',
         ]);
 

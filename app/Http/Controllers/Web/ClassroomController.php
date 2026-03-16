@@ -38,7 +38,7 @@ class ClassroomController extends Controller
         $data = $request->validate([
             'title'       => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
-            'cover_image' => ['nullable', 'image', 'max:5120'],
+            'cover_image' => ['nullable', 'image', 'max:10240'],
         ]);
 
         $action->store($community, $data, $request->file('cover_image'));
@@ -53,7 +53,7 @@ class ClassroomController extends Controller
         $data = $request->validate([
             'title'       => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
-            'cover_image' => ['nullable', 'image', 'max:5120'],
+            'cover_image' => ['nullable', 'image', 'max:10240'],
         ]);
 
         $action->update($course, $data, $request->file('cover_image'));
