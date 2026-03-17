@@ -96,6 +96,23 @@
                         class="w-48 px-3.5 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                 </div>
 
+                <!-- Affiliate commission rate (paid types) -->
+                <div v-if="isPaidType(courseForm.access_type)" class="mb-3">
+                    <label class="block text-xs font-medium text-gray-600 mb-1">
+                        Affiliate commission
+                        <span class="text-gray-400 font-normal">· % of sale price paid to referring affiliate</span>
+                    </label>
+                    <div class="flex items-center gap-2">
+                        <input v-model="courseForm.affiliate_commission_rate" type="number" min="0" max="100" step="1" placeholder="e.g. 30"
+                            class="w-24 px-3.5 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                        <span class="text-sm text-gray-500">%</span>
+                        <span v-if="courseForm.affiliate_commission_rate && courseForm.price" class="text-xs text-gray-400">
+                            = ₱{{ (courseForm.price * courseForm.affiliate_commission_rate / 100).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) }} per sale
+                        </span>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-1">Leave blank or 0 to disable affiliate commission for this course.</p>
+                </div>
+
                 <!-- Cover image -->
                 <div class="mb-3">
                     <label class="block text-xs font-medium text-gray-600 mb-1">Cover image <span class="text-gray-400 font-normal">(optional)</span></label>
@@ -326,6 +343,23 @@
                                 class="w-48 px-3.5 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                         </div>
 
+                        <!-- Affiliate commission rate -->
+                        <div v-if="isPaidType(editForm.access_type)" class="mb-3">
+                            <label class="block text-xs font-medium text-gray-600 mb-1">
+                                Affiliate commission
+                                <span class="text-gray-400 font-normal">· % of sale price paid to referring affiliate</span>
+                            </label>
+                            <div class="flex items-center gap-2">
+                                <input v-model="editForm.affiliate_commission_rate" type="number" min="0" max="100" step="1" placeholder="e.g. 30"
+                                    class="w-24 px-3.5 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                <span class="text-sm text-gray-500">%</span>
+                                <span v-if="editForm.affiliate_commission_rate && editForm.price" class="text-xs text-gray-400">
+                                    = ₱{{ (editForm.price * editForm.affiliate_commission_rate / 100).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) }} per sale
+                                </span>
+                            </div>
+                            <p class="text-xs text-gray-400 mt-1">Leave blank or 0 to disable affiliate commission for this course.</p>
+                        </div>
+
                         <!-- Cover image -->
                         <div class="mb-4">
                             <label class="block text-xs font-medium text-gray-600 mb-1">Cover image</label>
@@ -424,7 +458,7 @@ const inviteUrl = computed(() =>
         : `${window.location.origin}/communities/${props.community.slug}`
 );
 
-const courseForm = useForm({ title: '', description: '', cover_image: null, access_type: 'inclusive', price: '' });
+const courseForm = useForm({ title: '', description: '', cover_image: null, access_type: 'inclusive', price: '', affiliate_commission_rate: '' });
 
 function onCoverChange(e) {
     const file = e.target.files?.[0];
@@ -445,6 +479,7 @@ function createCourse() {
         onSuccess: () => {
             courseForm.reset();
             courseForm.access_type = 'inclusive';
+            courseForm.affiliate_commission_rate = '';
             removeCover();
             showForm.value = false;
         },
@@ -455,7 +490,7 @@ function createCourse() {
 const editingCourse    = ref(null);
 const editCoverPreview = ref(null);
 const editCoverInput   = ref(null);
-const editForm         = useForm({ title: '', description: '', cover_image: null, access_type: 'inclusive', price: '' });
+const editForm         = useForm({ title: '', description: '', cover_image: null, access_type: 'inclusive', price: '', affiliate_commission_rate: '' });
 
 function openEdit(course) {
     editingCourse.value    = course;
@@ -463,8 +498,9 @@ function openEdit(course) {
     editForm.title         = course.title;
     editForm.description   = course.description ?? '';
     editForm.cover_image   = null;
-    editForm.access_type   = course.access_type ?? 'inclusive';
-    editForm.price         = course.price ?? '';
+    editForm.access_type              = course.access_type ?? 'inclusive';
+    editForm.price                    = course.price ?? '';
+    editForm.affiliate_commission_rate = course.affiliate_commission_rate ?? '';
 }
 
 function onEditCoverChange(e) {

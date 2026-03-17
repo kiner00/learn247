@@ -69,7 +69,7 @@ class HandleXenditWebhook
         }
 
         // ── 3a. Check if this is a course enrollment invoice ──────────────────
-        $enrollment = CourseEnrollment::with('course')->where('xendit_id', $xenditId)->first();
+        $enrollment = CourseEnrollment::with(['course.community', 'affiliate.user'])->where('xendit_id', $xenditId)->first();
         if ($enrollment) {
             $paymentStatus = $this->mapPaymentStatus($status);
             if ($paymentStatus === Payment::STATUS_PAID) {
@@ -83,6 +83,46 @@ class HandleXenditWebhook
                     'expires_at' => $expiresAt,
                 ]);
                 Log::info('Xendit webhook: course enrollment paid', ['enrollment_id' => $enrollment->id, 'monthly' => $isMonthly]);
+
+                // Record affiliate commission for course purchase
+                $courseChaChing = null;
+                $conversion = $this->recordConversion->executeForCourse($enrollment);
+                if ($conversion) {
+                    $courseChaChing = [
+                        'affiliate_user' => $enrollment->affiliate->user,
+                        'creator'        => $enrollment->course->community->owner,
+                        'community'      => $enrollment->course->community,
+                        'sale_amount'    => $conversion['sale_amount'],
+                        'commission'     => $conversion['commission'],
+                        'referred_by'    => $enrollment->affiliate->user->name,
+                        'course_title'   => $enrollment->course->title,
+                    ];
+                }
+
+                if ($courseChaChing) {
+                    try {
+                        Mail::to($courseChaChing['affiliate_user']->email)->queue(
+                            new AffiliateChaChing(
+                                $courseChaChing['affiliate_user'],
+                                $courseChaChing['community'],
+                                $courseChaChing['sale_amount'],
+                                $courseChaChing['commission'],
+                            )
+                        );
+                        if ($courseChaChing['creator']) {
+                            Mail::to($courseChaChing['creator']->email)->queue(
+                                new CreatorChaChing(
+                                    $courseChaChing['creator'],
+                                    $courseChaChing['community'],
+                                    $courseChaChing['sale_amount'],
+                                    $courseChaChing['referred_by'],
+                                )
+                            );
+                        }
+                    } catch (\Throwable $e) {
+                        Log::error('Failed to send course cha-ching email', ['error' => $e->getMessage()]);
+                    }
+                }
             }
             return;
         }

@@ -7,6 +7,8 @@ use App\Mail\TempPasswordMail;
 use App\Models\Affiliate;
 use App\Models\Community;
 use App\Models\CommunityMember;
+use App\Models\Course;
+use App\Models\CourseEnrollment;
 use App\Models\Payment;
 use App\Models\Subscription;
 use App\Models\User;
@@ -241,7 +243,7 @@ class HandleXenditWebhookTest extends TestCase
         $action = app(HandleXenditWebhook::class);
         $action->execute($request);
 
-        Mail::assertSent(TempPasswordMail::class, function ($mail) use ($user) {
+        Mail::assertQueued(TempPasswordMail::class, function ($mail) use ($user) {
             return $mail->hasTo($user->email);
         });
     }
@@ -552,5 +554,157 @@ class HandleXenditWebhookTest extends TestCase
             Affiliate::where('community_id', $community->id)->where('user_id', $user->id)->count(),
             'Should not create a duplicate affiliate'
         );
+    }
+
+    // ─── course enrollment webhook ──────────────────────────────────────────────
+
+    public function test_paid_invoice_for_course_enrollment_marks_enrollment_paid(): void
+    {
+        config(['services.xendit.callback_token' => 'valid-token']);
+
+        $user      = User::factory()->create();
+        $community = Community::factory()->create();
+        $course    = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Paid Course',
+            'access_type'  => Course::ACCESS_PAID_ONCE,
+            'price'        => 500,
+            'position'     => 1,
+        ]);
+
+        $enrollment = CourseEnrollment::create([
+            'user_id'   => $user->id,
+            'course_id' => $course->id,
+            'xendit_id' => 'inv_course_paid_1',
+            'status'    => CourseEnrollment::STATUS_PENDING,
+        ]);
+
+        $request = $this->makeRequest([
+            'id'     => 'inv_course_paid_1',
+            'status' => 'PAID',
+            'amount' => 500,
+        ], 'valid-token');
+
+        $action = app(HandleXenditWebhook::class);
+        $action->execute($request);
+
+        $this->assertDatabaseHas('course_enrollments', [
+            'id'     => $enrollment->id,
+            'status' => CourseEnrollment::STATUS_PAID,
+        ]);
+
+        $enrollment->refresh();
+        $this->assertNotNull($enrollment->paid_at);
+        $this->assertNull($enrollment->expires_at); // paid_once has no expiry
+    }
+
+    public function test_paid_invoice_for_monthly_course_sets_expires_at(): void
+    {
+        config(['services.xendit.callback_token' => 'valid-token']);
+
+        $user      = User::factory()->create();
+        $community = Community::factory()->create();
+        $course    = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Monthly Course',
+            'access_type'  => Course::ACCESS_PAID_MONTHLY,
+            'price'        => 200,
+            'position'     => 1,
+        ]);
+
+        $enrollment = CourseEnrollment::create([
+            'user_id'   => $user->id,
+            'course_id' => $course->id,
+            'xendit_id' => 'inv_course_monthly_1',
+            'status'    => CourseEnrollment::STATUS_PENDING,
+        ]);
+
+        $request = $this->makeRequest([
+            'id'     => 'inv_course_monthly_1',
+            'status' => 'PAID',
+            'amount' => 200,
+        ], 'valid-token');
+
+        $action = app(HandleXenditWebhook::class);
+        $action->execute($request);
+
+        $enrollment->refresh();
+        $this->assertEquals(CourseEnrollment::STATUS_PAID, $enrollment->status);
+        $this->assertNotNull($enrollment->expires_at);
+        $this->assertTrue($enrollment->expires_at->isFuture());
+    }
+
+    public function test_non_paid_status_for_course_enrollment_does_not_mark_paid(): void
+    {
+        config(['services.xendit.callback_token' => 'valid-token']);
+
+        $user      = User::factory()->create();
+        $community = Community::factory()->create();
+        $course    = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Paid Course',
+            'access_type'  => Course::ACCESS_PAID_ONCE,
+            'price'        => 500,
+            'position'     => 1,
+        ]);
+
+        $enrollment = CourseEnrollment::create([
+            'user_id'   => $user->id,
+            'course_id' => $course->id,
+            'xendit_id' => 'inv_course_failed_1',
+            'status'    => CourseEnrollment::STATUS_PENDING,
+        ]);
+
+        $request = $this->makeRequest([
+            'id'     => 'inv_course_failed_1',
+            'status' => 'FAILED',
+            'amount' => 500,
+        ], 'valid-token');
+
+        $action = app(HandleXenditWebhook::class);
+        $action->execute($request);
+
+        // Status should remain pending (not paid)
+        $this->assertDatabaseHas('course_enrollments', [
+            'id'     => $enrollment->id,
+            'status' => CourseEnrollment::STATUS_PENDING,
+        ]);
+
+        // No subscription payment record created for course enrollments
+        $this->assertEquals(0, Payment::count());
+    }
+
+    public function test_course_enrollment_webhook_does_not_process_as_subscription(): void
+    {
+        config(['services.xendit.callback_token' => 'valid-token']);
+
+        $user      = User::factory()->create();
+        $community = Community::factory()->create();
+        $course    = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Paid Course',
+            'access_type'  => Course::ACCESS_PAID_ONCE,
+            'price'        => 500,
+            'position'     => 1,
+        ]);
+
+        CourseEnrollment::create([
+            'user_id'   => $user->id,
+            'course_id' => $course->id,
+            'xendit_id' => 'inv_course_no_sub',
+            'status'    => CourseEnrollment::STATUS_PENDING,
+        ]);
+
+        $request = $this->makeRequest([
+            'id'     => 'inv_course_no_sub',
+            'status' => 'PAID',
+            'amount' => 500,
+        ], 'valid-token');
+
+        $action = app(HandleXenditWebhook::class);
+        $action->execute($request);
+
+        // No payment record should be created (course enrollments skip subscription logic)
+        $this->assertEquals(0, Payment::count());
     }
 }

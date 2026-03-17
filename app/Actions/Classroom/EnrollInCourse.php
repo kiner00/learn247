@@ -5,6 +5,7 @@ namespace App\Actions\Classroom;
 use App\Models\Community;
 use App\Models\Course;
 use App\Models\CourseEnrollment;
+use App\Models\Subscription;
 use App\Models\User;
 use App\Services\XenditService;
 use Illuminate\Validation\ValidationException;
@@ -58,10 +59,16 @@ class EnrollInCourse
             ]],
         ]);
 
+        // Resolve affiliate from the user's active subscription in this community (if any)
+        $affiliateId = Subscription::where('user_id', $user->id)
+            ->where('community_id', $community->id)
+            ->whereNotNull('affiliate_id')
+            ->value('affiliate_id');
+
         // Upsert pending enrollment
         $enrollment = CourseEnrollment::updateOrCreate(
             ['user_id' => $user->id, 'course_id' => $course->id],
-            ['xendit_id' => $invoice['id'], 'status' => CourseEnrollment::STATUS_PENDING, 'paid_at' => null, 'expires_at' => null],
+            ['affiliate_id' => $affiliateId, 'xendit_id' => $invoice['id'], 'status' => CourseEnrollment::STATUS_PENDING, 'paid_at' => null, 'expires_at' => null],
         );
 
         return ['enrollment' => $enrollment, 'checkout_url' => $invoice['invoice_url']];

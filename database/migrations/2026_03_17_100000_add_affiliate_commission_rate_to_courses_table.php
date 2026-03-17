@@ -9,15 +9,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('courses', function (Blueprint $table) {
-            $table->enum('access_type', ['free', 'inclusive', 'paid_once', 'paid_monthly'])->default('inclusive')->after('position');
-            $table->decimal('price', 10, 2)->nullable()->after('access_type');
+            $table->unsignedTinyInteger('affiliate_commission_rate')->nullable()->after('price');
         });
     }
 
     public function down(): void
     {
         Schema::table('courses', function (Blueprint $table) {
-            $table->dropColumn(['access_type', 'price']);
+            $table->dropColumn('affiliate_commission_rate');
         });
     }
 };

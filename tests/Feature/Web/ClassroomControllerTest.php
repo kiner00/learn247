@@ -62,7 +62,7 @@ class ClassroomControllerTest extends TestCase
         $response->assertOk();
     }
 
-    public function test_non_member_cannot_view_classroom_index_on_free_community(): void
+    public function test_non_member_can_view_classroom_index_on_free_community(): void
     {
         $owner     = User::factory()->create();
         $user      = User::factory()->create();
@@ -71,10 +71,10 @@ class ClassroomControllerTest extends TestCase
         $response = $this->actingAs($user)
             ->get("/communities/{$community->slug}/classroom");
 
-        $response->assertRedirect("/communities/{$community->slug}/about");
+        $response->assertOk();
     }
 
-    public function test_non_subscriber_cannot_view_classroom_index_on_paid_community(): void
+    public function test_non_subscriber_can_view_classroom_index_on_paid_community(): void
     {
         $owner     = User::factory()->create();
         $user      = User::factory()->create();
@@ -83,16 +83,16 @@ class ClassroomControllerTest extends TestCase
         $response = $this->actingAs($user)
             ->get("/communities/{$community->slug}/classroom");
 
-        $response->assertRedirect("/communities/{$community->slug}/about");
+        $response->assertOk();
     }
 
-    public function test_unauthenticated_user_is_redirected_to_login(): void
+    public function test_unauthenticated_user_can_view_classroom_index(): void
     {
         $community = Community::factory()->create(['price' => 0]);
 
         $response = $this->get("/communities/{$community->slug}/classroom");
 
-        $response->assertRedirect('/login');
+        $response->assertOk();
     }
 
     // ─── storeCourse ─────────────────────────────────────────────────────────────
@@ -107,6 +107,7 @@ class ClassroomControllerTest extends TestCase
             ->post("/communities/{$community->slug}/classroom/courses", [
                 'title'       => 'New Course Title',
                 'description' => 'Course description here',
+                'access_type' => 'inclusive',
             ]);
 
         $response->assertRedirect();
@@ -132,6 +133,7 @@ class ClassroomControllerTest extends TestCase
             ->post("/communities/{$community->slug}/classroom/courses", [
                 'title'       => 'Course With Cover',
                 'description' => 'Desc',
+                'access_type' => 'inclusive',
                 'cover_image' => $file,
             ]);
 
@@ -196,6 +198,7 @@ class ClassroomControllerTest extends TestCase
             ->post("/communities/{$community->slug}/classroom/courses/{$course->id}/update", [
                 'title'       => 'Updated Title',
                 'description' => 'Updated Desc',
+                'access_type' => 'inclusive',
             ]);
 
         $response->assertRedirect();
@@ -228,6 +231,7 @@ class ClassroomControllerTest extends TestCase
             ->post("/communities/{$community->slug}/classroom/courses/{$course->id}/update", [
                 'title'       => 'Updated Title',
                 'description' => 'Desc',
+                'access_type' => 'inclusive',
                 'cover_image' => $file,
             ]);
 
@@ -930,5 +934,133 @@ class ClassroomControllerTest extends TestCase
             ]);
 
         $response->assertForbidden();
+    }
+
+    // ─── showCourse: access_type checks ─────────────────────────────────────────
+
+    public function test_guest_can_view_free_course_detail(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Free Course',
+            'access_type'  => Course::ACCESS_FREE,
+            'position'     => 1,
+        ]);
+
+        $response = $this->get("/communities/{$community->slug}/classroom/courses/{$course->id}");
+
+        $response->assertOk();
+    }
+
+    public function test_active_subscriber_has_access_to_inclusive_course(): void
+    {
+        $owner  = User::factory()->create();
+        $member = User::factory()->create();
+        $community = Community::factory()->paid()->create(['owner_id' => $owner->id]);
+
+        Subscription::factory()->active()->create([
+            'community_id' => $community->id,
+            'user_id'      => $member->id,
+        ]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Inclusive Course',
+            'access_type'  => Course::ACCESS_INCLUSIVE,
+            'position'     => 1,
+        ]);
+
+        $response = $this->actingAs($member)
+            ->get("/communities/{$community->slug}/classroom/courses/{$course->id}");
+
+        $response->assertOk();
+    }
+
+    public function test_user_without_subscription_does_not_have_access_to_inclusive_course(): void
+    {
+        $owner  = User::factory()->create();
+        $user   = User::factory()->create();
+        $community = Community::factory()->paid()->create(['owner_id' => $owner->id]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Inclusive Course',
+            'access_type'  => Course::ACCESS_INCLUSIVE,
+            'position'     => 1,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->get("/communities/{$community->slug}/classroom/courses/{$course->id}");
+
+        // Page still renders (public route) but hasAccess is false
+        $response->assertOk();
+    }
+
+    public function test_enrolled_user_has_access_to_paid_once_course(): void
+    {
+        $owner  = User::factory()->create();
+        $user   = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Paid Once Course',
+            'access_type'  => Course::ACCESS_PAID_ONCE,
+            'price'        => 500,
+            'position'     => 1,
+        ]);
+
+        \App\Models\CourseEnrollment::create([
+            'user_id'    => $user->id,
+            'course_id'  => $course->id,
+            'status'     => \App\Models\CourseEnrollment::STATUS_PAID,
+            'expires_at' => null,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->get("/communities/{$community->slug}/classroom/courses/{$course->id}");
+
+        $response->assertOk();
+    }
+
+    public function test_store_course_with_paid_once_access_type_and_price(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $response = $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/classroom/courses", [
+                'title'       => 'Paid Once Course',
+                'description' => 'Pay once to access',
+                'access_type' => 'paid_once',
+                'price'       => 499.00,
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', 'Course created!');
+        $this->assertDatabaseHas('courses', [
+            'community_id' => $community->id,
+            'title'        => 'Paid Once Course',
+            'access_type'  => 'paid_once',
+        ]);
+    }
+
+    public function test_store_course_requires_price_for_paid_once(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $response = $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/classroom/courses", [
+                'title'       => 'Paid Without Price',
+                'access_type' => 'paid_once',
+            ]);
+
+        $response->assertSessionHasErrors(['price']);
     }
 }

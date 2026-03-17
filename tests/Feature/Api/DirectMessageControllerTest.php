@@ -191,9 +191,9 @@ class DirectMessageControllerTest extends TestCase
 
     public function test_search_filters_by_username(): void
     {
-        $user = User::factory()->create(['username' => 'alice123']);
-        $match = User::factory()->create(['username' => 'alice_other']);
-        $nomatch = User::factory()->create(['username' => 'bob456']);
+        $user    = User::factory()->create(['username' => 'alice123',   'name' => 'Alice Test']);
+        $match   = User::factory()->create(['username' => 'alice_other', 'name' => 'Alice Match']);
+        $nomatch = User::factory()->create(['username' => 'bob456',      'name' => 'Bob Smith']);
         $community = Community::factory()->create();
         foreach ([$user, $match, $nomatch] as $u) {
             CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $u->id]);

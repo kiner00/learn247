@@ -948,7 +948,7 @@ class AdminControllerTest extends TestCase
 
         $response->assertRedirect();
         $response->assertSessionHas('success');
-        Mail::assertSent(TempPasswordMail::class, function (TempPasswordMail $mail) use ($user) {
+        Mail::assertQueued(TempPasswordMail::class, function (TempPasswordMail $mail) use ($user) {
             return $mail->hasTo($user->email);
         });
     }

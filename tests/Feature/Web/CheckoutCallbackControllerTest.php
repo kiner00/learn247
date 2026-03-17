@@ -5,8 +5,8 @@ namespace Tests\Feature\Web;
 use App\Models\Community;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Http\Controllers\Web\GuestCheckoutController;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
 class CheckoutCallbackControllerTest extends TestCase
@@ -20,10 +20,7 @@ class CheckoutCallbackControllerTest extends TestCase
         $user = User::factory()->create();
         $community = Community::factory()->create();
 
-        $url = URL::signedRoute('checkout.callback', [
-            'user'      => $user->id,
-            'community' => $community->slug,
-        ]);
+        $url = GuestCheckoutController::buildCallbackUrl($user->id, $community->slug);
 
         $this->get($url)
             ->assertOk()
@@ -41,9 +38,13 @@ class CheckoutCallbackControllerTest extends TestCase
         $user = User::factory()->create();
         $community = Community::factory()->create();
 
+        // Build a URL with a bad token
+        $expires = now()->addHours(2)->getTimestamp();
         $url = route('checkout.callback', [
             'user'      => $user->id,
             'community' => $community->slug,
+            'expires'   => $expires,
+            'token'     => 'invalid-token',
         ]);
 
         $this->get($url)->assertForbidden();
@@ -53,10 +54,7 @@ class CheckoutCallbackControllerTest extends TestCase
     {
         $community = Community::factory()->create();
 
-        $url = URL::signedRoute('checkout.callback', [
-            'user'      => 99999,
-            'community' => $community->slug,
-        ]);
+        $url = GuestCheckoutController::buildCallbackUrl(99999, $community->slug);
 
         $this->get($url)->assertNotFound();
     }
@@ -65,10 +63,7 @@ class CheckoutCallbackControllerTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $url = URL::signedRoute('checkout.callback', [
-            'user'      => $user->id,
-            'community' => 'nonexistent-slug',
-        ]);
+        $url = GuestCheckoutController::buildCallbackUrl($user->id, 'nonexistent-slug');
 
         $this->get($url)->assertNotFound();
     }

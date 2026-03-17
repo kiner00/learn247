@@ -97,4 +97,49 @@ class ManageCourseTest extends TestCase
         $this->assertEquals('Updated', $updated->title);
         $this->assertEquals('old-image.jpg', $updated->cover_image);
     }
+
+    public function test_reorder_updates_course_positions(): void
+    {
+        $community = Community::factory()->create();
+        $courseA   = Course::create(['community_id' => $community->id, 'title' => 'A', 'position' => 1]);
+        $courseB   = Course::create(['community_id' => $community->id, 'title' => 'B', 'position' => 2]);
+        $courseC   = Course::create(['community_id' => $community->id, 'title' => 'C', 'position' => 3]);
+
+        $this->action->reorder($community, [$courseC->id, $courseA->id, $courseB->id]);
+
+        $this->assertEquals(0, $courseC->fresh()->position);
+        $this->assertEquals(1, $courseA->fresh()->position);
+        $this->assertEquals(2, $courseB->fresh()->position);
+    }
+
+    public function test_destroy_deletes_course_without_cover_image(): void
+    {
+        $community = Community::factory()->create();
+        $course    = Course::create(['community_id' => $community->id, 'title' => 'To Delete', 'position' => 1]);
+
+        $this->action->destroy($course);
+
+        $this->assertDatabaseMissing('courses', ['id' => $course->id]);
+    }
+
+    public function test_destroy_deletes_cover_image_from_storage(): void
+    {
+        Storage::fake('public');
+        $community = Community::factory()->create();
+
+        $file = UploadedFile::fake()->image('cover.jpg');
+        $path = $file->store('course-covers', 'public');
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'With Cover',
+            'position'     => 1,
+            'cover_image'  => asset('storage/' . $path),
+        ]);
+
+        $this->action->destroy($course);
+
+        Storage::disk('public')->assertMissing($path);
+        $this->assertDatabaseMissing('courses', ['id' => $course->id]);
+    }
 }

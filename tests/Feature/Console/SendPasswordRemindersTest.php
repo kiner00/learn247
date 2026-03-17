@@ -35,7 +35,7 @@ class SendPasswordRemindersTest extends TestCase
         $this->artisan('passwords:send-reminders')
             ->assertExitCode(0);
 
-        Mail::assertSent(PasswordReminderMail::class, function ($mail) use ($user) {
+        Mail::assertQueued(PasswordReminderMail::class, function ($mail) use ($user) {
             return $mail->hasTo($user->email);
         });
     }
@@ -52,7 +52,7 @@ class SendPasswordRemindersTest extends TestCase
         $this->artisan('passwords:send-reminders')
             ->assertExitCode(0);
 
-        Mail::assertNotSent(PasswordReminderMail::class);
+        Mail::assertNotQueued(PasswordReminderMail::class);
     }
 
     public function test_command_sends_day_5_temp_password_email(): void
@@ -75,7 +75,7 @@ class SendPasswordRemindersTest extends TestCase
         $this->artisan('passwords:send-reminders')
             ->assertExitCode(0);
 
-        Mail::assertSent(TempPasswordMail::class, function ($mail) use ($user) {
+        Mail::assertQueued(TempPasswordMail::class, function ($mail) use ($user) {
             return $mail->hasTo($user->email);
         });
     }
@@ -92,7 +92,7 @@ class SendPasswordRemindersTest extends TestCase
         $this->artisan('passwords:send-reminders')
             ->assertExitCode(0);
 
-        Mail::assertNotSent(TempPasswordMail::class);
+        Mail::assertNotQueued(TempPasswordMail::class);
     }
 
     public function test_command_resets_password_for_day_5_users(): void
@@ -152,7 +152,7 @@ class SendPasswordRemindersTest extends TestCase
         $this->artisan('passwords:send-reminders')
             ->assertExitCode(0);
 
-        Mail::assertNotSent(PasswordReminderMail::class);
-        Mail::assertNotSent(TempPasswordMail::class);
+        Mail::assertNotQueued(PasswordReminderMail::class);
+        Mail::assertNotQueued(TempPasswordMail::class);
     }
 }

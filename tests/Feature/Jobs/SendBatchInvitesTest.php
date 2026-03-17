@@ -35,7 +35,7 @@ class SendBatchInvitesTest extends TestCase
             'email'        => 'bob@example.com',
         ]);
 
-        Mail::assertSent(CommunityInviteMail::class, 2);
+        Mail::assertQueued(CommunityInviteMail::class, 2);
     }
 
     public function test_invite_record_has_token_and_expiry(): void
@@ -78,8 +78,8 @@ class SendBatchInvitesTest extends TestCase
             'email'        => 'newperson@example.com',
         ]);
 
-        Mail::assertSent(CommunityInviteMail::class, 1);
-        Mail::assertSent(CommunityInviteMail::class, function (CommunityInviteMail $mail) {
+        Mail::assertQueued(CommunityInviteMail::class, 1);
+        Mail::assertQueued(CommunityInviteMail::class, function (CommunityInviteMail $mail) {
             return $mail->invite->email === 'newperson@example.com';
         });
     }
@@ -104,7 +104,7 @@ class SendBatchInvitesTest extends TestCase
         $this->assertNotEquals('old-token-value', $updatedInvite->token);
         $this->assertTrue($updatedInvite->expires_at->isFuture());
 
-        Mail::assertSent(CommunityInviteMail::class, 1);
+        Mail::assertQueued(CommunityInviteMail::class, 1);
     }
 
     public function test_handles_empty_email_list(): void
@@ -117,6 +117,6 @@ class SendBatchInvitesTest extends TestCase
         $job->handle();
 
         $this->assertCount(0, CommunityInvite::all());
-        Mail::assertNothingSent();
+        Mail::assertNothingQueued();
     }
 }

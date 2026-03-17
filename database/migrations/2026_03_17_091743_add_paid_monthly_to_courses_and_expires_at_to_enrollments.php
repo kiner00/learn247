@@ -9,8 +9,10 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Modify access_type column to support paid_monthly
-        DB::statement("ALTER TABLE courses MODIFY access_type ENUM('free','inclusive','paid_once','paid_monthly') NOT NULL DEFAULT 'inclusive'");
+        // Modify access_type column to support paid_monthly (MySQL only — SQLite uses TEXT and supports any value)
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE courses MODIFY access_type ENUM('free','inclusive','paid_once','paid_monthly') NOT NULL DEFAULT 'inclusive'");
+        }
 
         // Add expires_at to enrollments so monthly course subs can expire
         Schema::table('course_enrollments', function (Blueprint $table) {
@@ -20,7 +22,9 @@ return new class extends Migration
 
     public function down(): void
     {
-        DB::statement("ALTER TABLE courses MODIFY access_type ENUM('free','inclusive','paid_once') NOT NULL DEFAULT 'inclusive'");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE courses MODIFY access_type ENUM('free','inclusive','paid_once') NOT NULL DEFAULT 'inclusive'");
+        }
 
         Schema::table('course_enrollments', function (Blueprint $table) {
             $table->dropColumn('expires_at');

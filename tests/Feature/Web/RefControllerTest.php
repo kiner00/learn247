@@ -27,7 +27,7 @@ class RefControllerTest extends TestCase
 
         $response = $this->get('/ref/TESTREF123');
 
-        $response->assertRedirect(route('communities.about', $community->slug));
+        $response->assertRedirect(route('communities.about', $community->slug) . '?modal=true');
         $response->assertCookie('ref_code', 'TESTREF123');
     }
 
@@ -67,6 +67,6 @@ class RefControllerTest extends TestCase
 
         $response = $this->get('/ref/PUBLIC01');
 
-        $response->assertRedirect(route('communities.about', $community->slug));
+        $response->assertRedirect(route('communities.about', $community->slug) . '?modal=true');
     }
 }

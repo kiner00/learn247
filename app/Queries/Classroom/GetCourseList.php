@@ -30,7 +30,7 @@ class GetCourseList
             : collect();
 
         return $community->courses()->with('modules.lessons')
-            ->orderByRaw("FIELD(access_type, 'free', 'inclusive', 'paid_once', 'paid_monthly')")
+            ->orderByRaw("CASE access_type WHEN 'free' THEN 0 WHEN 'inclusive' THEN 1 WHEN 'paid_once' THEN 2 WHEN 'paid_monthly' THEN 3 ELSE 4 END")
             ->orderBy('position')
             ->get()->map(function ($course) use ($userId, $isOwner, $isMember, $paidEnrollmentIds) {
             $hasAccess = $this->resolveAccess($course, $isOwner, $isMember, $paidEnrollmentIds);
@@ -47,8 +47,9 @@ class GetCourseList
                 'description' => $course->description,
                 'cover_image' => $course->cover_image,
                 'position'    => $course->position,
-                'access_type' => $course->access_type,
-                'price'       => $course->price,
+                'access_type'              => $course->access_type,
+                'price'                    => $course->price,
+                'affiliate_commission_rate'=> $course->affiliate_commission_rate,
                 'total'       => $total,
                 'completed'   => $completed,
                 'progress'    => $total > 0 && $hasAccess ? round($completed / $total * 100) : 0,

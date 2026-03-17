@@ -33,7 +33,7 @@ class ClassroomController extends Controller
     {
         $this->requireMembership($request, $community);
 
-        $detail       = $query->execute($course, $request->user()->id);
+        $detail       = $query->execute($course, $request->user()->id, true);
         $completedIds = $detail['completed_ids'];
         $quizAttempts = $detail['quiz_attempts']->map(fn ($a) => [
             'score'  => $a->score,
@@ -110,9 +110,12 @@ class ClassroomController extends Controller
         abort_unless($request->user()->id === $community->owner_id, 403);
 
         $data = $request->validate([
-            'title'       => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:2000'],
-            'cover_image' => ['nullable', 'image', 'max:10240'],
+            'title'                    => ['required', 'string', 'max:255'],
+            'description'              => ['nullable', 'string', 'max:2000'],
+            'cover_image'              => ['nullable', 'image', 'max:10240'],
+            'access_type'              => ['nullable', 'in:free,inclusive,paid_once,paid_monthly'],
+            'price'                    => ['nullable', 'numeric', 'min:1'],
+            'affiliate_commission_rate'=> ['nullable', 'integer', 'min:0', 'max:100'],
         ]);
 
         $course = $action->store($community, $data, $request->file('cover_image'));
@@ -125,9 +128,12 @@ class ClassroomController extends Controller
         abort_unless($request->user()->id === $community->owner_id, 403);
 
         $data = $request->validate([
-            'title'       => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:2000'],
-            'cover_image' => ['nullable', 'image', 'max:10240'],
+            'title'                    => ['required', 'string', 'max:255'],
+            'description'              => ['nullable', 'string', 'max:2000'],
+            'cover_image'              => ['nullable', 'image', 'max:10240'],
+            'access_type'              => ['nullable', 'in:free,inclusive,paid_once,paid_monthly'],
+            'price'                    => ['nullable', 'numeric', 'min:1'],
+            'affiliate_commission_rate'=> ['nullable', 'integer', 'min:0', 'max:100'],
         ]);
 
         $action->update($course, $data, $request->file('cover_image'));

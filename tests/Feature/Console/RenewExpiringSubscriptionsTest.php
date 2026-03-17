@@ -45,7 +45,7 @@ class RenewExpiringSubscriptionsTest extends TestCase
         $this->artisan('subscriptions:renew')
             ->assertExitCode(0);
 
-        Mail::assertSent(SubscriptionRenewalReminder::class, function ($mail) use ($user) {
+        Mail::assertQueued(SubscriptionRenewalReminder::class, function ($mail) use ($user) {
             return $mail->hasTo($user->email);
         });
     }
@@ -72,7 +72,7 @@ class RenewExpiringSubscriptionsTest extends TestCase
         $this->artisan('subscriptions:renew')
             ->assertExitCode(0);
 
-        Mail::assertSent(SubscriptionRenewalReminder::class, function ($mail) use ($user) {
+        Mail::assertQueued(SubscriptionRenewalReminder::class, function ($mail) use ($user) {
             return $mail->hasTo($user->email);
         });
     }
@@ -99,7 +99,7 @@ class RenewExpiringSubscriptionsTest extends TestCase
         $this->artisan('subscriptions:renew')
             ->assertExitCode(0);
 
-        Mail::assertNotSent(SubscriptionRenewalReminder::class);
+        Mail::assertNotQueued(SubscriptionRenewalReminder::class);
     }
 
     public function test_command_ignores_expired_subscriptions(): void
@@ -121,7 +121,7 @@ class RenewExpiringSubscriptionsTest extends TestCase
         $this->artisan('subscriptions:renew')
             ->assertExitCode(0);
 
-        Mail::assertNotSent(SubscriptionRenewalReminder::class);
+        Mail::assertNotQueued(SubscriptionRenewalReminder::class);
     }
 
     public function test_command_updates_reminder_sent_at_column(): void
@@ -171,7 +171,7 @@ class RenewExpiringSubscriptionsTest extends TestCase
             ->expectsOutputToContain("Failed for subscription #{$subscription->id}: Xendit unavailable")
             ->assertExitCode(0);
 
-        Mail::assertNotSent(SubscriptionRenewalReminder::class);
+        Mail::assertNotQueued(SubscriptionRenewalReminder::class);
 
         $subscription->refresh();
         $this->assertNull($subscription->reminder_5d_sent_at);

@@ -20,7 +20,7 @@ class GetCourseListTest extends TestCase
     {
         $community = Community::factory()->create();
         $user      = User::factory()->create();
-        $course    = Course::create(['community_id' => $community->id, 'title' => 'Test Course', 'position' => 0]);
+        $course    = Course::create(['community_id' => $community->id, 'title' => 'Test Course', 'position' => 0, 'access_type' => 'free']);
         $module    = CourseModule::create(['course_id' => $course->id, 'title' => 'Module 1', 'position' => 0]);
         $lesson    = CourseLesson::create(['module_id' => $module->id, 'title' => 'Lesson 1', 'position' => 0]);
 

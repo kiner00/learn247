@@ -3,6 +3,7 @@
 namespace App\Actions\Affiliate;
 
 use App\Models\AffiliateConversion;
+use App\Models\CourseEnrollment;
 use App\Models\Payment;
 use App\Models\Subscription;
 use App\Models\User;
@@ -21,11 +22,11 @@ class RecordAffiliateConversion
             return;
         }
 
-        // Affiliate must be subscribed to earn commission this month
+        // Affiliate must be subscribed to earn commission (null expires_at = lifetime/one-time billing)
         $affiliateSubscribed = Subscription::where('user_id', $affiliate->user_id)
             ->where('community_id', $affiliate->community_id)
             ->where('status', Subscription::STATUS_ACTIVE)
-            ->where('expires_at', '>', now())
+            ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
             ->exists();
 
         if (! $affiliateSubscribed) {
@@ -58,5 +59,65 @@ class RecordAffiliateConversion
         if ($affiliateUser) {
             app(BadgeService::class)->evaluate($affiliateUser);
         }
+    }
+
+    /**
+     * Record commission for a paid course enrollment.
+     * Uses the course's own affiliate_commission_rate (set by the creator).
+     *
+     * @return array{commission: float, sale_amount: float}|null  null if skipped
+     */
+    public function executeForCourse(CourseEnrollment $enrollment): ?array
+    {
+        $affiliate = $enrollment->affiliate;
+
+        if (! $affiliate) {
+            return null;
+        }
+
+        $course = $enrollment->course;
+        $rate   = ($course->affiliate_commission_rate ?? 0) / 100;
+
+        if ($rate <= 0) {
+            Log::info('Course affiliate commission skipped — no commission rate set', ['course_id' => $course->id]);
+            return null;
+        }
+
+        // Affiliate must be subscribed to earn commission (null expires_at = lifetime/one-time billing)
+        $affiliateSubscribed = \App\Models\Subscription::where('user_id', $affiliate->user_id)
+            ->where('community_id', $affiliate->community_id)
+            ->where('status', \App\Models\Subscription::STATUS_ACTIVE)
+            ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+            ->exists();
+
+        if (! $affiliateSubscribed) {
+            Log::info('Course affiliate commission skipped — affiliate not subscribed', ['affiliate_id' => $affiliate->id]);
+            return null;
+        }
+
+        $saleAmount    = (float) $course->price;
+        $platformFee   = round($saleAmount * self::PLATFORM_FEE_RATE, 2);
+        $commission    = round($saleAmount * $rate, 2);
+        $creatorAmount = round($saleAmount - $platformFee - $commission, 2);
+
+        AffiliateConversion::create([
+            'affiliate_id'          => $affiliate->id,
+            'course_enrollment_id'  => $enrollment->id,
+            'referred_user_id'      => $enrollment->user_id,
+            'sale_amount'           => $saleAmount,
+            'platform_fee'          => $platformFee,
+            'commission_amount'     => $commission,
+            'creator_amount'        => $creatorAmount,
+            'status'                => AffiliateConversion::STATUS_PENDING,
+        ]);
+
+        $affiliate->increment('total_earned', $commission);
+
+        $affiliateUser = User::find($affiliate->user_id);
+        if ($affiliateUser) {
+            app(BadgeService::class)->evaluate($affiliateUser);
+        }
+
+        return ['commission' => $commission, 'sale_amount' => $saleAmount];
     }
 }
