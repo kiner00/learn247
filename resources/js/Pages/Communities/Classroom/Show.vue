@@ -28,6 +28,54 @@
             <span class="text-sm font-black text-indigo-600 shrink-0">{{ currentProgress }}%</span>
         </div>
 
+        <!-- Access gate banner (locked course) -->
+        <div v-if="!hasAccess" class="bg-white border border-gray-200 rounded-2xl p-5 mb-6 shadow-sm flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                    <svg class="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
+                </div>
+                <div>
+                    <p v-if="course.access_type === 'paid_once'" class="text-sm font-bold text-gray-900">
+                        One-time purchase · ₱{{ Number(course.price).toLocaleString() }}
+                    </p>
+                    <p v-else class="text-sm font-bold text-gray-900">Members only</p>
+                    <p class="text-xs text-gray-400 mt-0.5">
+                        <span v-if="course.access_type === 'paid_once'">Pay once to get lifetime access to this course.</span>
+                        <span v-else>Subscribe to the community to unlock all included courses.</span>
+                    </p>
+                </div>
+            </div>
+            <!-- Enroll button (paid_once) -->
+            <div v-if="course.access_type === 'paid_once'" class="shrink-0">
+                <div v-if="!authUserId">
+                    <Link :href="`/login`"
+                        class="px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors">
+                        Sign in to enroll
+                    </Link>
+                </div>
+                <div v-else-if="enrollment?.status === 'pending'" class="flex items-center gap-2">
+                    <span class="text-xs text-amber-600 font-medium">Payment pending…</span>
+                    <button @click="enrollInCourse" :disabled="enrollForm.processing"
+                        class="px-4 py-2 border border-amber-400 text-amber-700 text-xs font-semibold rounded-xl hover:bg-amber-50 transition-colors">
+                        Retry payment
+                    </button>
+                </div>
+                <button v-else @click="enrollInCourse" :disabled="enrollForm.processing"
+                    class="px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+                    {{ enrollForm.processing ? 'Redirecting...' : `Enroll for ₱${Number(course.price).toLocaleString()}` }}
+                </button>
+            </div>
+            <!-- Join community (inclusive) -->
+            <div v-else class="shrink-0">
+                <Link :href="`/communities/${community.slug}/about`"
+                    class="px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors">
+                    Join Community
+                </Link>
+            </div>
+        </div>
+
         <!-- Certificate banner (100% complete) -->
         <div v-if="currentProgress === 100" class="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6 flex items-center justify-between shadow-sm">
             <div class="flex items-center gap-3">
@@ -55,10 +103,10 @@
             </button>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div :class="['grid grid-cols-1 lg:grid-cols-3 gap-6', !hasAccess && 'pointer-events-none select-none']">
 
             <!-- Sidebar: module + lesson tree -->
-            <div class="space-y-3">
+            <div :class="['space-y-3', !hasAccess && 'opacity-50 blur-[1px]']">
                 <div
                     v-for="mod in course.modules"
                     :key="mod.id"
@@ -249,7 +297,31 @@
 
             <!-- Main content area -->
             <div class="lg:col-span-2 space-y-4">
-                <div v-if="selectedLesson" class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+                <!-- Locked overlay (covers main content) -->
+                <div v-if="!hasAccess" class="relative bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+                    <!-- Blurred preview of first lesson content -->
+                    <div class="blur-sm opacity-40 pointer-events-none select-none px-6 py-5 space-y-4">
+                        <div class="h-5 bg-gray-200 rounded w-3/4" />
+                        <div class="h-48 bg-gray-100 rounded-xl" />
+                        <div class="h-4 bg-gray-200 rounded w-full" />
+                        <div class="h-4 bg-gray-200 rounded w-5/6" />
+                        <div class="h-4 bg-gray-200 rounded w-2/3" />
+                    </div>
+                    <!-- Lock icon centred -->
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                        <div class="w-14 h-14 rounded-full bg-white shadow-lg flex items-center justify-center mb-3">
+                            <svg class="w-7 h-7 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                            </svg>
+                        </div>
+                        <p class="text-sm font-bold text-gray-700">Content locked</p>
+                        <p class="text-xs text-gray-400 mt-1">
+                            {{ course.access_type === 'paid_once' ? 'Purchase this course to unlock' : 'Join the community to unlock' }}
+                        </p>
+                    </div>
+                </div>
+
+                <div v-if="selectedLesson && hasAccess" class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
                     <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                         <h2 class="text-lg font-black text-gray-900">{{ selectedLesson.title }}</h2>
                         <span v-if="isCompleted(selectedLesson.id)"
@@ -335,7 +407,7 @@
                 </div>
 
                 <!-- ─── Quiz section ─────────────────────────────────────────────── -->
-                <div v-if="selectedLesson?.quiz" class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+                <div v-if="selectedLesson?.quiz && hasAccess" class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
                     <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                         <div>
                             <h3 class="font-bold text-gray-900 text-base">📝 {{ selectedLesson.quiz.title }}</h3>
@@ -416,7 +488,7 @@
                 </div>
 
                 <!-- Owner: Add quiz (when no quiz exists) -->
-                <div v-if="isOwner && selectedLesson && !selectedLesson.quiz" class="bg-white border border-dashed border-gray-300 rounded-2xl p-5">
+                <div v-if="isOwner && hasAccess && selectedLesson && !selectedLesson.quiz" class="bg-white border border-dashed border-gray-300 rounded-2xl p-5">
                     <div v-if="!showQuizBuilder">
                         <button @click="showQuizBuilder = true"
                             class="w-full text-sm text-gray-400 hover:text-indigo-600 text-center font-medium">
@@ -472,7 +544,7 @@
                 </div>
 
                 <!-- ─── Lesson comments ──────────────────────────────────────────── -->
-                <div v-if="selectedLesson" class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+                <div v-if="selectedLesson && hasAccess" class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
                     <div class="px-6 py-4 border-b border-gray-100">
                         <h3 class="font-bold text-gray-900 text-base">
                             💬 Discussion
@@ -543,7 +615,7 @@
                 </div>
 
                 <!-- No lesson selected -->
-                <div v-if="!selectedLesson" class="bg-white border border-gray-200 rounded-2xl p-14 text-center shadow-sm">
+                <div v-if="!selectedLesson && hasAccess" class="bg-white border border-gray-200 rounded-2xl p-14 text-center shadow-sm">
                     <span class="text-4xl block mb-3">🎓</span>
                     <p class="text-sm font-medium text-gray-700 mb-1">{{ course.description || course.title }}</p>
                     <p class="text-xs text-gray-400">Select a lesson from the sidebar to get started</p>
@@ -565,6 +637,8 @@ import LessonEditor from '@/Components/LessonEditor.vue';
 const props = defineProps({
     community:      Object,
     course:         Object,
+    hasAccess:      Boolean,
+    enrollment:     Object,   // { status } or null
     completedIds:   Array,
     progress:       Number,
     lessonComments: Object,   // { [lesson_id]: Comment[] }
@@ -858,6 +932,13 @@ function postComment() {
 
 function deleteComment(commentId) {
     router.delete(`/lesson-comments/${commentId}`, { preserveScroll: true });
+}
+
+// ─── Course enrollment (paid_once) ────────────────────────────────────────────
+const enrollForm = useForm({});
+
+function enrollInCourse() {
+    enrollForm.post(`/communities/${props.community.slug}/classroom/courses/${props.course.id}/enroll`);
 }
 
 // ─── Certificate ──────────────────────────────────────────────────────────────

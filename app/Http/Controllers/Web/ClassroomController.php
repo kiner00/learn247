@@ -10,8 +10,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Comment;
 use App\Models\Community;
 use App\Models\Course;
+use App\Models\CourseEnrollment;
 use App\Models\CourseLesson;
 use App\Models\CourseModule;
+use App\Models\Subscription;
 use App\Queries\Classroom\GetCourseDetail;
 use App\Queries\Classroom\GetCourseList;
 use Illuminate\Http\JsonResponse;
@@ -40,6 +42,8 @@ class ClassroomController extends Controller
             'title'       => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
             'cover_image' => ['nullable', 'image', 'max:10240'],
+            'access_type' => ['required', 'in:free,inclusive,paid_once'],
+            'price'       => ['nullable', 'numeric', 'min:0', 'required_if:access_type,paid_once'],
         ]);
 
         $action->store($community, $data, $request->file('cover_image'));
@@ -55,6 +59,8 @@ class ClassroomController extends Controller
             'title'       => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
             'cover_image' => ['nullable', 'image', 'max:10240'],
+            'access_type' => ['required', 'in:free,inclusive,paid_once'],
+            'price'       => ['nullable', 'numeric', 'min:0', 'required_if:access_type,paid_once'],
         ]);
 
         $action->update($course, $data, $request->file('cover_image'));
@@ -73,8 +79,9 @@ class ClassroomController extends Controller
 
     public function showCourse(Community $community, Course $course, GetCourseDetail $query): Response
     {
-        $userId = auth()->id();
-        $detail = $query->execute($course, $userId);
+        $userId    = auth()->id();
+        $hasAccess = $this->userHasAccessToCourse(auth()->user(), $community, $course);
+        $detail    = $query->execute($course, $userId, $hasAccess);
 
         $lessonIds = $course->modules->flatMap(fn ($m) => $m->lessons->pluck('id'));
         $lessonComments = Comment::whereIn('lesson_id', $lessonIds)
@@ -82,15 +89,53 @@ class ClassroomController extends Controller
             ->with(['author:id,name,username,avatar', 'replies.author:id,name,username,avatar'])
             ->latest()->get()->groupBy('lesson_id')->map(fn ($comments) => $comments->values());
 
+        $enrollment = $userId
+            ? CourseEnrollment::where('user_id', $userId)->where('course_id', $course->id)->first()
+            : null;
+
         return Inertia::render('Communities/Classroom/Show', [
             'community'      => $community,
-            'course'         => $course,
+            'course'         => $course->append([]),
+            'hasAccess'      => $hasAccess,
+            'enrollment'     => $enrollment ? ['status' => $enrollment->status] : null,
             'completedIds'   => $detail['completed_ids'],
             'progress'       => $detail['progress'],
             'lessonComments' => $lessonComments,
             'quizAttempts'   => $detail['quiz_attempts'],
             'certificate'    => $detail['certificate'] ? ['uuid' => $detail['certificate']->uuid] : null,
         ]);
+    }
+
+    private function userHasAccessToCourse(?\App\Models\User $user, Community $community, Course $course): bool
+    {
+        if ($course->access_type === Course::ACCESS_FREE) {
+            return true;
+        }
+
+        if (! $user) {
+            return false;
+        }
+
+        if ($user->id === $community->owner_id) {
+            return true;
+        }
+
+        if ($course->access_type === Course::ACCESS_INCLUSIVE) {
+            return Subscription::where('community_id', $community->id)
+                ->where('user_id', $user->id)
+                ->where('status', Subscription::STATUS_ACTIVE)
+                ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+                ->exists();
+        }
+
+        if ($course->access_type === Course::ACCESS_PAID_ONCE) {
+            return CourseEnrollment::where('user_id', $user->id)
+                ->where('course_id', $course->id)
+                ->where('status', CourseEnrollment::STATUS_PAID)
+                ->exists();
+        }
+
+        return false;
     }
 
     public function storeModule(Request $request, Community $community, Course $course, ManageModule $action): RedirectResponse

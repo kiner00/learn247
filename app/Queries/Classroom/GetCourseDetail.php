@@ -13,11 +13,21 @@ class GetCourseDetail
     /**
      * @return array{completed_ids: array, progress: int, quiz_attempts: Collection, certificate: Certificate|null}
      */
-    public function execute(Course $course, int $userId): array
+    public function execute(Course $course, ?int $userId, bool $hasAccess = false): array
     {
         $course->load('modules.lessons.quiz.questions.options');
 
-        $lessonIds    = $course->modules->flatMap(fn ($m) => $m->lessons->pluck('id'));
+        $lessonIds = $course->modules->flatMap(fn ($m) => $m->lessons->pluck('id'));
+
+        if (! $userId || ! $hasAccess) {
+            return [
+                'completed_ids' => [],
+                'progress'      => 0,
+                'quiz_attempts' => collect(),
+                'certificate'   => null,
+            ];
+        }
+
         $completedIds = LessonCompletion::where('user_id', $userId)
             ->whereIn('lesson_id', $lessonIds)
             ->pluck('lesson_id')
@@ -37,10 +47,10 @@ class GetCourseDetail
             ->first();
 
         return [
-            'completed_ids'  => $completedIds,
-            'progress'       => $progress,
-            'quiz_attempts'  => $quizAttempts,
-            'certificate'    => $certificate,
+            'completed_ids' => $completedIds,
+            'progress'      => $progress,
+            'quiz_attempts' => $quizAttempts,
+            'certificate'   => $certificate,
         ];
     }
 }

@@ -12,7 +12,16 @@ class Course extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['community_id', 'title', 'description', 'cover_image', 'position'];
+    public const ACCESS_FREE      = 'free';
+    public const ACCESS_INCLUSIVE  = 'inclusive';
+    public const ACCESS_PAID_ONCE  = 'paid_once';
+
+    protected $fillable = ['community_id', 'title', 'description', 'cover_image', 'position', 'access_type', 'price'];
+
+    protected function casts(): array
+    {
+        return ['price' => 'decimal:2'];
+    }
 
     public function community(): BelongsTo
     {
@@ -27,5 +36,10 @@ class Course extends Model
     public function lessons(): HasManyThrough
     {
         return $this->hasManyThrough(CourseLesson::class, CourseModule::class, 'course_id', 'module_id');
+    }
+
+    public function enrollments(): HasMany
+    {
+        return $this->hasMany(CourseEnrollment::class);
     }
 }

@@ -7,6 +7,7 @@ use App\Mail\AffiliateChaChing;
 use App\Mail\CreatorChaChing;
 use App\Mail\TempPasswordMail;
 use App\Models\Affiliate;
+use App\Models\CourseEnrollment;
 use App\Models\Payment;
 use App\Models\Subscription;
 use App\Services\XenditService;
@@ -67,6 +68,17 @@ class HandleXenditWebhook
             return;
         }
 
+        // ── 3a. Check if this is a course enrollment invoice ──────────────────
+        $enrollment = CourseEnrollment::where('xendit_id', $xenditId)->first();
+        if ($enrollment) {
+            $paymentStatus = $this->mapPaymentStatus($status);
+            if ($paymentStatus === Payment::STATUS_PAID) {
+                $enrollment->update(['status' => CourseEnrollment::STATUS_PAID, 'paid_at' => now()]);
+                Log::info('Xendit webhook: course enrollment paid', ['enrollment_id' => $enrollment->id]);
+            }
+            return;
+        }
+
         // ── 3. Resolve subscription ────────────────────────────────────────────
         $subscription = Subscription::with('community')->where('xendit_id', $xenditId)->first();
 
@@ -80,12 +92,17 @@ class HandleXenditWebhook
         $chaChing          = null;
 
         DB::transaction(function () use ($subscription, $payload, $eventId, $status, &$guestMailData, &$chaChing) {
-            $newSubStatus = $this->mapSubscriptionStatus($status);
+            $newSubStatus  = $this->mapSubscriptionStatus($status);
+            $isOneTime     = $subscription->community?->billing_type === \App\Models\Community::BILLING_ONE_TIME;
 
-            // Extend from existing expires_at so early renewals don't lose remaining days
-            $newExpiresAt = $subscription->expires_at && $subscription->expires_at->isFuture()
-                ? $subscription->expires_at->addMonth()
-                : now()->addMonth();
+            // One-time billing → no expiry. Monthly → extend by 1 month.
+            if ($isOneTime) {
+                $newExpiresAt = null;
+            } else {
+                $newExpiresAt = $subscription->expires_at && $subscription->expires_at->isFuture()
+                    ? $subscription->expires_at->addMonth()
+                    : now()->addMonth();
+            }
 
             $subscription->update([
                 'status'     => $newSubStatus,

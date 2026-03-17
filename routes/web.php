@@ -25,6 +25,7 @@ use App\Http\Controllers\Web\PostController;
 use App\Http\Controllers\Web\AIAssistantController;
 use App\Http\Controllers\Web\QuizController;
 use App\Http\Controllers\Web\CheckoutCallbackController;
+use App\Http\Controllers\Web\CourseEnrollmentController;
 use App\Http\Controllers\Web\GuestCheckoutController;
 use App\Http\Controllers\Web\RefController;
 use App\Http\Controllers\Web\SetPasswordController;
@@ -144,12 +145,19 @@ Route::get('/communities/{community}', [CommunityController::class, 'show'])->na
 Route::get('/communities/{community}/about', [CommunityController::class, 'about'])->name('communities.about');
 Route::get('/communities/{community}/calendar', [EventController::class, 'index'])->name('communities.calendar');
 
+// ─── Classroom (public read) ───────────────────────────────────────────────
+Route::get('/communities/{community}/classroom', [ClassroomController::class, 'index'])->name('communities.classroom');
+Route::get('/communities/{community}/classroom/courses/{course}', [ClassroomController::class, 'showCourse'])->name('communities.classroom.courses.show');
+
 Route::middleware('auth')->group(function () {
     Route::post('/communities', [CommunityController::class, 'store'])->name('communities.store');
     Route::post('/communities/{community}/join', [CommunityController::class, 'join'])->name('communities.join');
 
     // Paid community checkout → redirects to Xendit invoice URL
     Route::post('/communities/{community}/checkout', [SubscriptionController::class, 'checkout'])->name('communities.checkout');
+
+    // Course one-time purchase (no membership required)
+    Route::post('/communities/{community}/classroom/courses/{course}/enroll', [CourseEnrollmentController::class, 'checkout'])->name('communities.classroom.courses.enroll');
 
     // Owner-only: invite members by email / CSV
     Route::post('/communities/{community}/invite', [CommunityInviteController::class, 'store'])->name('communities.invite');
@@ -180,12 +188,10 @@ Route::middleware('auth')->group(function () {
         // Posts (community-scoped)
         Route::post('/communities/{community}/posts', [PostController::class, 'store'])->name('posts.store');
 
-        // ─── Classroom ────────────────────────────────────────────────────────
-        Route::get('/communities/{community}/classroom', [ClassroomController::class, 'index'])->name('communities.classroom');
+        // ─── Classroom (mutations — membership required) ───────────────────────
         Route::post('/communities/{community}/classroom/courses', [ClassroomController::class, 'storeCourse'])->name('communities.classroom.courses.store');
         Route::post('/communities/{community}/classroom/courses/{course}/update', [ClassroomController::class, 'updateCourse'])->name('communities.classroom.courses.update');
         Route::delete('/communities/{community}/classroom/courses/{course}', [ClassroomController::class, 'destroyCourse'])->name('communities.classroom.courses.destroy');
-        Route::get('/communities/{community}/classroom/courses/{course}', [ClassroomController::class, 'showCourse'])->name('communities.classroom.courses.show');
         Route::post('/communities/{community}/classroom/courses/{course}/modules', [ClassroomController::class, 'storeModule'])->name('communities.classroom.modules.store');
         Route::match(['patch', 'post'], '/communities/{community}/classroom/courses/{course}/modules/{module}', [ClassroomController::class, 'updateModule'])->name('communities.classroom.modules.update');
         Route::post('/communities/{community}/classroom/courses/{course}/modules/{module}/lessons', [ClassroomController::class, 'storeLesson'])->name('communities.classroom.lessons.store');

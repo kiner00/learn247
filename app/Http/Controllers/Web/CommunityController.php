@@ -156,6 +156,7 @@ class CommunityController extends Controller
             'cover_image'              => ['nullable', 'image', 'max:10240'],
             'price'                    => ['nullable', 'numeric', 'min:0'],
             'currency'                 => ['nullable', 'string', 'in:PHP,USD'],
+            'billing_type'             => ['nullable', 'string', 'in:monthly,one_time'],
             'is_private'               => ['boolean'],
             'affiliate_commission_rate' => ['nullable', 'integer', 'min:0', 'max:85'],
         ]);

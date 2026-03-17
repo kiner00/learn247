@@ -64,7 +64,7 @@
                             </span>
                             <span class="flex items-center gap-1.5">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/></svg>
-                                {{ community.price > 0 ? `₱${Number(community.price).toLocaleString()}/mo` : 'Free' }}
+                                {{ community.price > 0 ? `₱${Number(community.price).toLocaleString()}${community.billing_type === 'one_time' ? '' : '/mo'}` : 'Free' }}
                             </span>
                             <span v-if="community.owner" class="flex items-center gap-1.5">
                                 <div class="w-4 h-4 rounded-full bg-indigo-400 flex items-center justify-center text-white text-[9px] font-bold shrink-0 overflow-hidden">
@@ -153,7 +153,7 @@
                             @click="showJoinModal = true"
                             class="w-full py-3 bg-amber-400 hover:bg-amber-500 text-gray-900 text-sm font-black rounded-xl tracking-wide uppercase transition-colors shadow-sm"
                         >
-                            {{ community.price > 0 ? `Join · ₱${Number(community.price).toLocaleString()}/mo` : 'Join Group' }}
+                            {{ community.price > 0 ? `Join · ₱${Number(community.price).toLocaleString()}${community.billing_type === 'one_time' ? '' : '/mo'}` : 'Join Group' }}
                         </button>
                         <button
                             v-else-if="membership"
@@ -167,7 +167,7 @@
                             @click="showJoinModal = true"
                             class="w-full py-3 bg-amber-400 hover:bg-amber-500 text-gray-900 text-sm font-black rounded-xl tracking-wide uppercase transition-colors shadow-sm"
                         >
-                            {{ community.price > 0 ? `Join · ₱${Number(community.price).toLocaleString()}/mo` : 'Join Group' }}
+                            {{ community.price > 0 ? `Join · ₱${Number(community.price).toLocaleString()}${community.billing_type === 'one_time' ? '' : '/mo'}` : 'Join Group' }}
                         </button>
                     </div>
                 </div>
@@ -218,7 +218,7 @@
                                 <div class="absolute bottom-4 left-6">
                                     <h2 class="text-xl font-black text-white">{{ community.name }}</h2>
                                     <p class="text-sm text-white/70 mt-0.5">
-                                        {{ community.price > 0 ? `₱${Number(community.price).toLocaleString()}/mo` : 'Free' }}
+                                        {{ community.price > 0 ? `₱${Number(community.price).toLocaleString()}${community.billing_type === 'one_time' ? '' : '/mo'}` : 'Free' }}
                                         &nbsp;·&nbsp; {{ formatCount(community.members_count) }} members
                                     </p>
                                 </div>
@@ -284,7 +284,7 @@
 
                                     <button type="submit" :disabled="joinForm.processing"
                                         class="w-full py-3.5 bg-amber-400 hover:bg-amber-500 text-gray-900 text-sm font-black rounded-2xl tracking-wide uppercase transition-colors disabled:opacity-50 shadow-sm">
-                                        {{ joinForm.processing ? 'Redirecting to payment...' : (community.price > 0 ? `Proceed to Payment · ₱${Number(community.price).toLocaleString()}/mo` : 'Join for Free') }}
+                                        {{ joinForm.processing ? 'Redirecting to payment...' : (community.price > 0 ? `Proceed to Payment · ₱${Number(community.price).toLocaleString()}${community.billing_type === 'one_time' ? '' : '/mo'}` : 'Join for Free') }}
                                     </button>
 
                                     <p class="text-xs text-gray-400 text-center mt-4">

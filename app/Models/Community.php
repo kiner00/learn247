@@ -12,10 +12,13 @@ class Community extends Model
 {
     use HasFactory, SoftDeletes;
 
+    public const BILLING_MONTHLY  = 'monthly';
+    public const BILLING_ONE_TIME = 'one_time';
+
     protected $fillable = [
         'name', 'slug', 'owner_id', 'description', 'category',
         'avatar', 'cover_image', 'gallery_images', 'is_private', 'price', 'currency',
-        'affiliate_commission_rate',
+        'billing_type', 'affiliate_commission_rate',
     ];
 
     protected function casts(): array

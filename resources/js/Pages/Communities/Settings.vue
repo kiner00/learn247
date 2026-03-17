@@ -80,9 +80,33 @@
                             </ul>
                         </div>
 
+                        <!-- Billing type (only shown when price > 0) -->
+                        <div v-if="Number(form.price) > 0" class="mb-1">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Billing type</label>
+                            <div class="flex gap-3">
+                                <label :class="['flex-1 cursor-pointer rounded-xl border-2 p-3 transition-all',
+                                    form.billing_type === 'monthly' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300']">
+                                    <input type="radio" value="monthly" v-model="form.billing_type" class="sr-only" />
+                                    <div class="text-sm font-bold text-gray-800">🔄 Monthly</div>
+                                    <div class="text-xs text-gray-400 mt-0.5">Members pay every month to stay active</div>
+                                </label>
+                                <label :class="['flex-1 cursor-pointer rounded-xl border-2 p-3 transition-all',
+                                    form.billing_type === 'one_time' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300']">
+                                    <input type="radio" value="one_time" v-model="form.billing_type" class="sr-only" />
+                                    <div class="text-sm font-bold text-gray-800">💳 One-time</div>
+                                    <div class="text-xs text-gray-400 mt-0.5">Members pay once for lifetime access</div>
+                                </label>
+                            </div>
+                        </div>
+
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Price (₱ per month)</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                    Price
+                                    <span class="text-gray-400 font-normal">
+                                        ({{ form.billing_type === 'one_time' ? 'one-time' : 'per month' }})
+                                    </span>
+                                </label>
                                 <input
                                     v-model="form.price"
                                     type="number"
@@ -482,9 +506,10 @@ const form = useForm({
     name:        props.community.name,
     description: props.community.description ?? '',
     category:    props.community.category ?? '',
-    price:       props.community.price ?? 0,
-    currency:    props.community.currency ?? 'PHP',
-    is_private:  props.community.is_private ?? false,
+    price:        props.community.price ?? 0,
+    currency:     props.community.currency ?? 'PHP',
+    billing_type: props.community.billing_type ?? 'monthly',
+    is_private:   props.community.is_private ?? false,
 });
 
 const imageForm = useForm({
