@@ -19,11 +19,13 @@ class CreateCommunityRequest extends FormRequest
             'slug'        => 'nullable|string|max:100|unique:communities,slug|regex:/^[a-z0-9-]+$/',
             'description' => 'nullable|string|max:2000',
             'category'    => 'nullable|string|in:Tech,Business,Design,Health,Education,Finance,Other',
-            'avatar'       => 'nullable|url',
-            'cover_image'  => 'nullable|url',
-            'is_private'  => 'boolean',
-            'price'       => 'nullable|numeric|min:0',
-            'currency'    => 'nullable|string|in:PHP,USD',
+            'avatar'                   => 'nullable|image|max:10240',
+            'cover_image'              => 'nullable|image|max:10240',
+            'is_private'               => 'boolean',
+            'price'                    => 'nullable|numeric|min:0',
+            'currency'                 => 'nullable|string|in:PHP,USD',
+            'billing_type'             => 'nullable|string|in:monthly,one_time',
+            'affiliate_commission_rate' => 'nullable|integer|min:0|max:100',
         ];
     }
 

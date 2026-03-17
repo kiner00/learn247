@@ -6,21 +6,37 @@ use App\Models\Affiliate;
 use App\Models\Community;
 use App\Models\CommunityMember;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class CreateCommunity
 {
-    public function execute(User $user, array $data): Community
+    public function execute(User $user, array $data, ?UploadedFile $avatar = null, ?UploadedFile $coverImage = null): Community
     {
+        if ($coverImage) {
+            $path = $coverImage->store('community-covers', 'public');
+            $data['cover_image'] = Storage::url($path);
+        }
+
+        if ($avatar) {
+            $path = $avatar->store('community-avatars', 'public');
+            $data['avatar'] = Storage::url($path);
+        }
+
         $community = Community::create([
-            'name'        => $data['name'],
-            'slug'        => $data['slug'] ?? Str::slug($data['name']),
-            'owner_id'    => $user->id,
-            'description' => $data['description'] ?? null,
-            'avatar'      => $data['avatar'] ?? null,
-            'is_private'  => $data['is_private'] ?? false,
-            'price'       => $data['price'] ?? 0,
-            'currency'    => $data['currency'] ?? 'PHP',
+            'name'                     => $data['name'],
+            'slug'                     => $data['slug'] ?? Str::slug($data['name']),
+            'owner_id'                 => $user->id,
+            'description'              => $data['description'] ?? null,
+            'category'                 => $data['category'] ?? null,
+            'avatar'                   => $data['avatar'] ?? null,
+            'cover_image'              => $data['cover_image'] ?? null,
+            'is_private'               => $data['is_private'] ?? false,
+            'price'                    => $data['price'] ?? 0,
+            'currency'                 => $data['currency'] ?? 'PHP',
+            'billing_type'             => $data['billing_type'] ?? 'monthly',
+            'affiliate_commission_rate' => $data['affiliate_commission_rate'] ?? null,
         ]);
 
         // Owner is automatically an admin member

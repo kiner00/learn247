@@ -48,7 +48,12 @@ class CommunityController extends Controller
 
     public function store(CreateCommunityRequest $request, CreateCommunity $action): RedirectResponse
     {
-        $community = $action->execute($request->user(), $request->validated());
+        $community = $action->execute(
+            $request->user(),
+            $request->validated(),
+            $request->file('avatar'),
+            $request->file('cover_image'),
+        );
 
         return redirect()->route('communities.show', $community->slug)
             ->with('success', 'Community created!');
