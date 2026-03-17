@@ -288,7 +288,7 @@
                                     </button>
 
                                     <p class="text-xs text-gray-400 text-center mt-4">
-                                        Your login credentials will be sent to your email after payment.
+                                        You'll be redirected to our secure payment page under <strong>learn247</strong>. Your login credentials will be sent to your email after payment.
                                     </p>
                                 </form>
                             </div>

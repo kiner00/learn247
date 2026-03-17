@@ -66,10 +66,13 @@
                         Retry payment
                     </button>
                 </div>
-                <button v-else @click="enrollInCourse" :disabled="enrollForm.processing"
-                    class="px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-colors">
-                    {{ enrollForm.processing ? 'Redirecting...' : `Enroll · ₱${Number(course.price).toLocaleString()}${course.access_type === 'paid_monthly' ? '/mo' : ''}` }}
-                </button>
+                <div v-else class="text-right">
+                    <button @click="enrollInCourse" :disabled="enrollForm.processing"
+                        class="px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+                        {{ enrollForm.processing ? 'Redirecting...' : `Enroll · ₱${Number(course.price).toLocaleString()}${course.access_type === 'paid_monthly' ? '/mo' : ''}` }}
+                    </button>
+                    <p class="text-[10px] text-gray-400 mt-1">Payment is processed under <strong>learn247</strong></p>
+                </div>
             </div>
             <!-- Join community (inclusive) -->
             <div v-else class="shrink-0">
