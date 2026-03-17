@@ -68,6 +68,20 @@ class ClassroomController extends Controller
         return back()->with('success', 'Course updated!');
     }
 
+    public function reorderCourses(Request $request, Community $community, ManageCourse $action): RedirectResponse
+    {
+        abort_unless($request->user()->id === $community->owner_id, 403);
+
+        $request->validate([
+            'course_ids'   => ['required', 'array'],
+            'course_ids.*' => ['required', 'integer', 'exists:courses,id'],
+        ]);
+
+        $action->reorder($community, $request->course_ids);
+
+        return back()->with('success', 'Courses reordered!');
+    }
+
     public function destroyCourse(Request $request, Community $community, Course $course, ManageCourse $action): RedirectResponse
     {
         abort_unless($request->user()->id === $community->owner_id, 403);

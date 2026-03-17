@@ -33,6 +33,13 @@ class ManageCourse
         return $course;
     }
 
+    public function reorder(Community $community, array $courseIds): void
+    {
+        foreach ($courseIds as $position => $courseId) {
+            $community->courses()->where('id', $courseId)->update(['position' => $position]);
+        }
+    }
+
     public function destroy(Course $course): void
     {
         if ($course->cover_image) {

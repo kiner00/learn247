@@ -29,7 +29,10 @@ class GetCourseList
                 ->flip()
             : collect();
 
-        return $community->courses()->with('modules.lessons')->get()->map(function ($course) use ($userId, $isOwner, $isMember, $paidEnrollmentIds) {
+        return $community->courses()->with('modules.lessons')
+            ->orderByRaw("FIELD(access_type, 'free', 'inclusive', 'paid_once', 'paid_monthly')")
+            ->orderBy('position')
+            ->get()->map(function ($course) use ($userId, $isOwner, $isMember, $paidEnrollmentIds) {
             $hasAccess = $this->resolveAccess($course, $isOwner, $isMember, $paidEnrollmentIds);
 
             $lessonIds = $course->modules->flatMap(fn ($m) => $m->lessons->pluck('id'));

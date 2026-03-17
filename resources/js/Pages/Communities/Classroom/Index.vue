@@ -123,120 +123,139 @@
         </div>
 
         <!-- Course grid -->
-        <div v-if="courses.length" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            <div v-for="course in courses" :key="course.id" class="relative group">
-                <!-- Clickable wrapper (always navigates; access enforced on Show page) -->
-                <Link
-                    :href="`/communities/${community.slug}/classroom/courses/${course.id}`"
-                    class="block bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100"
+        <div v-if="courses.length">
+
+            <!-- Owner: draggable grid (manual order) -->
+            <template v-if="isOwner">
+                <p class="text-xs text-gray-400 mb-3">Drag to reorder. Visitors see: Free → Included → Paid.</p>
+                <draggable
+                    v-model="localCourses"
+                    item-key="id"
+                    class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
+                    handle=".drag-handle"
+                    @end="onCourseReorder"
                 >
-                    <!-- Cover image -->
-                    <div class="relative aspect-video bg-gray-900 overflow-hidden">
-                        <img
-                            v-if="course.cover_image"
-                            :src="course.cover_image"
-                            :alt="course.title"
-                            :class="['w-full h-full object-cover transition-transform duration-300',
-                                course.has_access ? 'group-hover:scale-105' : 'blur-sm scale-105']"
-                        />
-                        <div v-else
-                            :class="['w-full h-full bg-gradient-to-br from-indigo-600 to-purple-700 flex items-center justify-center',
-                                !course.has_access && 'opacity-50']">
-                            <span class="text-4xl font-black text-white/20 select-none">{{ course.title.charAt(0).toUpperCase() }}</span>
-                        </div>
-
-                        <!-- Lock overlay for inaccessible courses -->
-                        <div v-if="!course.has_access"
-                            class="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[1px]">
-                            <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center mb-2">
-                                <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                                </svg>
+                    <template #item="{ element: course }">
+                        <div class="relative group h-full">
+                            <Link
+                                :href="`/communities/${community.slug}/classroom/courses/${course.id}`"
+                                class="flex flex-col h-full bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100"
+                            >
+                                <div class="relative aspect-video bg-gray-900 overflow-hidden shrink-0">
+                                    <img v-if="course.cover_image" :src="course.cover_image" :alt="course.title"
+                                        class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                                    <div v-else class="w-full h-full bg-gradient-to-br from-indigo-600 to-purple-700 flex items-center justify-center">
+                                        <span class="text-4xl font-black text-white/20 select-none">{{ course.title.charAt(0).toUpperCase() }}</span>
+                                    </div>
+                                    <div v-if="course.total > 0 && course.completed > 0"
+                                        class="absolute top-2.5 right-2.5 px-2 py-0.5 bg-black/60 text-white text-xs font-semibold rounded-full backdrop-blur-sm">
+                                        {{ course.progress }}%
+                                    </div>
+                                </div>
+                                <div class="p-4 flex flex-col flex-1">
+                                    <div class="flex items-start justify-between gap-2 mb-1">
+                                        <h3 class="font-bold text-gray-900 group-hover:text-indigo-700 transition-colors line-clamp-1">{{ course.title }}</h3>
+                                        <span v-if="course.access_type === 'free'" class="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-green-100 text-green-700">FREE</span>
+                                        <span v-else-if="course.access_type === 'inclusive'" class="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">INCLUDED</span>
+                                        <span v-else class="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                                            ₱{{ Number(course.price).toLocaleString() }}{{ course.access_type === 'paid_monthly' ? '/mo' : '' }}
+                                        </span>
+                                    </div>
+                                    <p class="text-sm text-gray-500 line-clamp-2 leading-relaxed flex-1">{{ course.description ?? '' }}</p>
+                                </div>
+                            </Link>
+                            <!-- Owner actions -->
+                            <div class="absolute top-2.5 left-2.5 flex gap-1.5 z-10">
+                                <div class="drag-handle w-7 h-7 bg-black/50 hover:bg-black/80 text-white rounded-full flex items-center justify-center cursor-grab active:cursor-grabbing" title="Drag to reorder">
+                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 8h16M4 16h16"/>
+                                    </svg>
+                                </div>
+                                <button @click.prevent="openEdit(course)"
+                                    class="w-7 h-7 bg-black/50 hover:bg-black/80 text-white rounded-full flex items-center justify-center transition-colors" title="Edit course">
+                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536M9 11l6-6 3 3-6 6H9v-3z"/>
+                                    </svg>
+                                </button>
+                                <button @click.prevent="deleteCourse(course)"
+                                    class="w-7 h-7 bg-black/50 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-colors" title="Delete course">
+                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                </button>
                             </div>
-                            <!-- CTA label -->
-                            <span v-if="course.access_type === 'paid_once'"
-                                class="text-white text-xs font-bold bg-indigo-600 px-3 py-1 rounded-full">
-                                ₱{{ Number(course.price).toLocaleString() }}
-                            </span>
-                            <span v-else-if="course.access_type === 'paid_monthly'"
-                                class="text-white text-xs font-bold bg-indigo-600 px-3 py-1 rounded-full">
-                                ₱{{ Number(course.price).toLocaleString() }}/mo
-                            </span>
-                            <span v-else class="text-white text-xs font-semibold bg-black/40 px-3 py-1 rounded-full">
-                                Members only
-                            </span>
                         </div>
+                    </template>
+                </draggable>
+            </template>
 
-                        <!-- Access type badge (top-right when accessible) -->
-                        <div v-if="course.has_access && course.total > 0 && course.completed > 0"
-                            class="absolute top-2.5 right-2.5 px-2 py-0.5 bg-black/60 text-white text-xs font-semibold rounded-full backdrop-blur-sm">
-                            {{ course.progress }}%
-                        </div>
-
-                        <!-- Access badge (top-right when locked) -->
-                        <div v-if="!course.has_access"
-                            class="absolute top-2.5 right-2.5">
-                            <span v-if="course.access_type === 'free'"
-                                class="px-2 py-0.5 bg-green-500 text-white text-xs font-bold rounded-full">Free</span>
-                            <span v-else-if="course.access_type === 'inclusive'"
-                                class="px-2 py-0.5 bg-indigo-500 text-white text-xs font-bold rounded-full">Included</span>
-                            <span v-else
-                                class="px-2 py-0.5 bg-amber-500 text-white text-xs font-bold rounded-full">
-                                ₱{{ Number(course.price).toLocaleString() }}
-                            </span>
+            <!-- Non-owner: grouped sections (Free → Included → Paid) -->
+            <template v-else>
+                <template v-for="(group, label) in groupedCourses" :key="label">
+                    <div v-if="group.length" class="mb-8">
+                        <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                            <span>{{ label }}</span><span class="flex-1 h-px bg-gray-100"></span>
+                        </h2>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                            <div v-for="course in group" :key="course.id" class="relative group h-full">
+                                <Link
+                                    :href="`/communities/${community.slug}/classroom/courses/${course.id}`"
+                                    class="flex flex-col h-full bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100"
+                                >
+                                    <div class="relative aspect-video bg-gray-900 overflow-hidden">
+                                        <img v-if="course.cover_image" :src="course.cover_image" :alt="course.title"
+                                            :class="['w-full h-full object-cover transition-transform duration-300',
+                                                course.has_access ? 'group-hover:scale-105' : 'blur-sm scale-105']" />
+                                        <div v-else
+                                            :class="['w-full h-full bg-gradient-to-br from-indigo-600 to-purple-700 flex items-center justify-center', !course.has_access && 'opacity-50']">
+                                            <span class="text-4xl font-black text-white/20 select-none">{{ course.title.charAt(0).toUpperCase() }}</span>
+                                        </div>
+                                        <!-- Lock overlay -->
+                                        <div v-if="!course.has_access"
+                                            class="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[1px]">
+                                            <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center mb-2">
+                                                <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                                </svg>
+                                            </div>
+                                            <span v-if="course.access_type === 'paid_once'" class="text-white text-xs font-bold bg-indigo-600 px-3 py-1 rounded-full">₱{{ Number(course.price).toLocaleString() }}</span>
+                                            <span v-else-if="course.access_type === 'paid_monthly'" class="text-white text-xs font-bold bg-indigo-600 px-3 py-1 rounded-full">₱{{ Number(course.price).toLocaleString() }}/mo</span>
+                                            <span v-else class="text-white text-xs font-semibold bg-black/40 px-3 py-1 rounded-full">Members only</span>
+                                        </div>
+                                        <!-- Progress badge -->
+                                        <div v-if="course.has_access && course.total > 0 && course.completed > 0"
+                                            class="absolute top-2.5 right-2.5 px-2 py-0.5 bg-black/60 text-white text-xs font-semibold rounded-full backdrop-blur-sm">
+                                            {{ course.progress }}%
+                                        </div>
+                                    </div>
+                                    <div class="p-4 flex flex-col flex-1">
+                                        <div class="flex items-start justify-between gap-2 mb-1">
+                                            <h3 class="font-bold text-gray-900 group-hover:text-indigo-700 transition-colors line-clamp-1">{{ course.title }}</h3>
+                                            <span v-if="course.access_type === 'free'" class="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-green-100 text-green-700">FREE</span>
+                                            <span v-else-if="course.access_type === 'inclusive'" class="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">INCLUDED</span>
+                                            <span v-else class="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                                                ₱{{ Number(course.price).toLocaleString() }}{{ course.access_type === 'paid_monthly' ? '/mo' : '' }}
+                                            </span>
+                                        </div>
+                                        <p class="text-sm text-gray-500 mb-3 line-clamp-2 leading-relaxed flex-1">{{ course.description ?? '' }}</p>
+                                        <div v-if="course.has_access" class="flex items-center gap-2">
+                                            <div class="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                                <div class="h-full bg-indigo-500 rounded-full transition-all" :style="{ width: `${course.progress}%` }" />
+                                            </div>
+                                            <span class="text-xs text-gray-400 shrink-0">{{ course.progress }}%</span>
+                                        </div>
+                                        <div v-else class="text-xs text-gray-400">
+                                            <span v-if="course.access_type === 'paid_once'">One-time purchase to unlock</span>
+                                            <span v-else-if="course.access_type === 'paid_monthly'">Monthly subscription to unlock</span>
+                                            <span v-else-if="course.access_type === 'inclusive'">Join the community to unlock</span>
+                                        </div>
+                                    </div>
+                                </Link>
+                            </div>
                         </div>
                     </div>
-
-                    <!-- Info -->
-                    <div class="p-4">
-                        <div class="flex items-start justify-between gap-2 mb-1">
-                            <h3 class="font-bold text-gray-900 group-hover:text-indigo-700 transition-colors line-clamp-1">{{ course.title }}</h3>
-                            <!-- Access badge (card body) -->
-                            <span v-if="course.access_type === 'free'"
-                                class="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-green-100 text-green-700">FREE</span>
-                            <span v-else-if="course.access_type === 'inclusive'"
-                                class="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">INCLUDED</span>
-                            <span v-else
-                                class="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
-                                ₱{{ Number(course.price).toLocaleString() }}{{ course.access_type === 'paid_monthly' ? '/mo' : '' }}
-                            </span>
-                        </div>
-                        <p v-if="course.description" class="text-sm text-gray-500 mb-3 line-clamp-2 leading-relaxed">{{ course.description }}</p>
-                        <div v-else class="mb-3" />
-
-                        <!-- Progress bar (only if accessible) -->
-                        <div v-if="course.has_access" class="flex items-center gap-2">
-                            <div class="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                                <div class="h-full bg-indigo-500 rounded-full transition-all" :style="{ width: `${course.progress}%` }" />
-                            </div>
-                            <span class="text-xs text-gray-400 shrink-0">{{ course.progress }}%</span>
-                        </div>
-
-                        <!-- Locked: show enroll or join CTA -->
-                        <div v-else class="text-xs text-gray-400">
-                            <span v-if="course.access_type === 'paid_once'">One-time purchase to unlock</span>
-                            <span v-else-if="course.access_type === 'paid_monthly'">Monthly subscription to unlock</span>
-                            <span v-else-if="course.access_type === 'inclusive'">Join the community to unlock</span>
-                        </div>
-                    </div>
-                </Link>
-
-                <!-- Owner actions -->
-                <div v-if="isOwner" class="absolute top-2.5 left-2.5 flex gap-1.5 z-10">
-                    <button @click.prevent="openEdit(course)"
-                        class="w-7 h-7 bg-black/50 hover:bg-black/80 text-white rounded-full flex items-center justify-center transition-colors" title="Edit course">
-                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536M9 11l6-6 3 3-6 6H9v-3z"/>
-                        </svg>
-                    </button>
-                    <button @click.prevent="deleteCourse(course)"
-                        class="w-7 h-7 bg-black/50 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-colors" title="Delete course">
-                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
+                </template>
+            </template>
         </div>
 
         <!-- Edit course modal -->
@@ -362,6 +381,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { Link, useForm, usePage, router } from '@inertiajs/vue3';
+import draggable from 'vuedraggable';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import CommunityTabs from '@/Components/CommunityTabs.vue';
 import InviteModal from '@/Components/InviteModal.vue';
@@ -374,6 +394,21 @@ const props = defineProps({
 
 const page    = usePage();
 const isOwner = props.community.owner_id === page.props.auth?.user?.id;
+
+// Local copy for draggable (owner only)
+const localCourses = ref([...props.courses]);
+
+const groupedCourses = computed(() => ({
+    'Free':     props.courses.filter(c => c.access_type === 'free'),
+    'Included': props.courses.filter(c => c.access_type === 'inclusive'),
+    'Paid':     props.courses.filter(c => c.access_type === 'paid_once' || c.access_type === 'paid_monthly'),
+}));
+
+function onCourseReorder() {
+    router.post(`/communities/${props.community.slug}/classroom/courses/reorder`, {
+        course_ids: localCourses.value.map(c => c.id),
+    }, { preserveScroll: true });
+}
 
 const showForm        = ref(false);
 const showInviteModal = ref(false);

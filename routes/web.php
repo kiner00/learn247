@@ -189,6 +189,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/communities/{community}/posts', [PostController::class, 'store'])->name('posts.store');
 
         // ─── Classroom (mutations — membership required) ───────────────────────
+        Route::post('/communities/{community}/classroom/courses/reorder', [ClassroomController::class, 'reorderCourses'])->name('communities.classroom.courses.reorder');
         Route::post('/communities/{community}/classroom/courses', [ClassroomController::class, 'storeCourse'])->name('communities.classroom.courses.store');
         Route::post('/communities/{community}/classroom/courses/{course}/update', [ClassroomController::class, 'updateCourse'])->name('communities.classroom.courses.update');
         Route::delete('/communities/{community}/classroom/courses/{course}', [ClassroomController::class, 'destroyCourse'])->name('communities.classroom.courses.destroy');
