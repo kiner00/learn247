@@ -58,7 +58,7 @@
                         <!-- Paid (covers both paid_once + paid_monthly) -->
                         <label :class="['flex-1 cursor-pointer rounded-lg border-2 p-2.5 text-center transition-all',
                             isPaidType(courseForm.access_type) ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300']"
-                            @click="if (!isPaidType(courseForm.access_type)) courseForm.access_type = 'paid_once'">
+                            @click="selectPaidIfNeeded(courseForm)">
                             <div class="text-base mb-0.5">💳</div>
                             <div class="text-xs font-semibold text-gray-800">Paid</div>
                             <div class="text-[10px] text-gray-400 leading-tight mt-0.5">Separate payment</div>
@@ -270,7 +270,7 @@
                                 </label>
                                 <label :class="['flex-1 cursor-pointer rounded-lg border-2 p-2.5 text-center transition-all',
                                     isPaidType(editForm.access_type) ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300']"
-                                    @click="if (!isPaidType(editForm.access_type)) editForm.access_type = 'paid_once'">
+                                    @click="selectPaidIfNeeded(editForm)">
                                     <div class="text-base mb-0.5">💳</div>
                                     <div class="text-xs font-semibold text-gray-800">Paid</div>
                                     <div class="text-[10px] text-gray-400 leading-tight mt-0.5">Separate payment</div>
@@ -381,6 +381,7 @@ const coverPreview    = ref(null);
 const coverInput      = ref(null);
 
 const isPaidType = (type) => type === 'paid_once' || type === 'paid_monthly';
+const selectPaidIfNeeded = (form) => { if (!isPaidType(form.access_type)) form.access_type = 'paid_once'; };
 
 const inviteUrl = computed(() =>
     props.affiliate?.code
