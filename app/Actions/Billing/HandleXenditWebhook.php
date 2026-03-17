@@ -200,13 +200,13 @@ class HandleXenditWebhook
             try {
                 // Affiliate cha-ching
                 if ($chaChing['affiliate_user']) {
-                    Mail::to($chaChing['affiliate_user']->email)->send(
+                    Mail::to($chaChing['affiliate_user']->email)->queue(
                         new AffiliateChaChing($chaChing['affiliate_user'], $chaChing['community'], $chaChing['sale_amount'], $chaChing['commission'])
                     );
                 }
                 // Creator cha-ching
                 if ($chaChing['creator']) {
-                    Mail::to($chaChing['creator']->email)->send(
+                    Mail::to($chaChing['creator']->email)->queue(
                         new CreatorChaChing($chaChing['creator'], $chaChing['community'], $chaChing['sale_amount'], $chaChing['referred_by'])
                     );
                 }
@@ -217,7 +217,7 @@ class HandleXenditWebhook
 
         if ($guestMailData) {
             try {
-                Mail::to($guestMailData['user']->email)->send(
+                Mail::to($guestMailData['user']->email)->queue(
                     new TempPasswordMail($guestMailData['user'], $guestMailData['password'], $guestMailData['community'])
                 );
             } catch (\Throwable $e) {

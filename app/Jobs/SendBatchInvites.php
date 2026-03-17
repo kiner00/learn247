@@ -46,7 +46,7 @@ class SendBatchInvites implements ShouldQueue
                 ]
             );
 
-            Mail::to($email)->send(new CommunityInviteMail($invite));
+            Mail::to($email)->queue(new CommunityInviteMail($invite));
         }
     }
 }

@@ -42,7 +42,7 @@ class RenewExpiringSubscriptions extends Command
                     : $action->execute($subscription);
 
                 Mail::to($subscription->user->email)
-                    ->send(new SubscriptionRenewalReminder($subscription, $renewalUrl, $urgent));
+                    ->queue(new SubscriptionRenewalReminder($subscription, $renewalUrl, $urgent));
 
                 $subscription->update([$column => now()]);
 

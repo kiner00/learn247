@@ -25,7 +25,7 @@ class SendPasswordReminders extends Command
             ->get();
 
         foreach ($day3Users as $user) {
-            Mail::to($user->email)->send(new PasswordReminderMail($user));
+            Mail::to($user->email)->queue(new PasswordReminderMail($user));
             $this->line("Reminder sent: {$user->email}");
         }
 
@@ -46,7 +46,7 @@ class SendPasswordReminders extends Command
                 ?->community;
 
             if ($community) {
-                Mail::to($user->email)->send(new TempPasswordMail($user, $tempPassword, $community));
+                Mail::to($user->email)->queue(new TempPasswordMail($user, $tempPassword, $community));
                 $this->line("New temp password sent: {$user->email}");
             }
         }

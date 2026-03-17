@@ -540,7 +540,7 @@ class AdminController extends Controller
         $tempPassword = 'Tmp@' . Str::upper(Str::random(3)) . Str::random(3);
         $user->forceFill(['password' => Hash::make($tempPassword)])->save();
 
-        Mail::to($user->email)->send(new TempPasswordMail($user, $tempPassword, $community));
+        Mail::to($user->email)->queue(new TempPasswordMail($user, $tempPassword, $community));
 
         return back()->with('success', "Resent login email to {$user->email}.");
     }
