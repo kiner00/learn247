@@ -42,8 +42,8 @@ class ClassroomController extends Controller
             'title'       => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
             'cover_image' => ['nullable', 'image', 'max:10240'],
-            'access_type' => ['required', 'in:free,inclusive,paid_once'],
-            'price'       => ['nullable', 'numeric', 'min:0', 'required_if:access_type,paid_once'],
+            'access_type' => ['required', 'in:free,inclusive,paid_once,paid_monthly'],
+            'price'       => ['nullable', 'numeric', 'min:0', 'required_if:access_type,paid_once', 'required_if:access_type,paid_monthly'],
         ]);
 
         $action->store($community, $data, $request->file('cover_image'));
@@ -59,8 +59,8 @@ class ClassroomController extends Controller
             'title'       => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
             'cover_image' => ['nullable', 'image', 'max:10240'],
-            'access_type' => ['required', 'in:free,inclusive,paid_once'],
-            'price'       => ['nullable', 'numeric', 'min:0', 'required_if:access_type,paid_once'],
+            'access_type' => ['required', 'in:free,inclusive,paid_once,paid_monthly'],
+            'price'       => ['nullable', 'numeric', 'min:0', 'required_if:access_type,paid_once', 'required_if:access_type,paid_monthly'],
         ]);
 
         $action->update($course, $data, $request->file('cover_image'));
@@ -90,7 +90,7 @@ class ClassroomController extends Controller
             ->latest()->get()->groupBy('lesson_id')->map(fn ($comments) => $comments->values());
 
         $enrollment = $userId
-            ? CourseEnrollment::where('user_id', $userId)->where('course_id', $course->id)->first()
+            ? CourseEnrollment::where('user_id', $userId)->where('course_id', $course->id)->orderByDesc('id')->first()
             : null;
 
         return Inertia::render('Communities/Classroom/Show', [
@@ -128,10 +128,11 @@ class ClassroomController extends Controller
                 ->exists();
         }
 
-        if ($course->access_type === Course::ACCESS_PAID_ONCE) {
+        if (in_array($course->access_type, [Course::ACCESS_PAID_ONCE, Course::ACCESS_PAID_MONTHLY])) {
             return CourseEnrollment::where('user_id', $user->id)
                 ->where('course_id', $course->id)
                 ->where('status', CourseEnrollment::STATUS_PAID)
+                ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
                 ->exists();
         }
 

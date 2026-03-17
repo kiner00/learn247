@@ -69,12 +69,20 @@ class HandleXenditWebhook
         }
 
         // ── 3a. Check if this is a course enrollment invoice ──────────────────
-        $enrollment = CourseEnrollment::where('xendit_id', $xenditId)->first();
+        $enrollment = CourseEnrollment::with('course')->where('xendit_id', $xenditId)->first();
         if ($enrollment) {
             $paymentStatus = $this->mapPaymentStatus($status);
             if ($paymentStatus === Payment::STATUS_PAID) {
-                $enrollment->update(['status' => CourseEnrollment::STATUS_PAID, 'paid_at' => now()]);
-                Log::info('Xendit webhook: course enrollment paid', ['enrollment_id' => $enrollment->id]);
+                $isMonthly  = $enrollment->course?->access_type === \App\Models\Course::ACCESS_PAID_MONTHLY;
+                $expiresAt  = $isMonthly
+                    ? ($enrollment->expires_at?->isFuture() ? $enrollment->expires_at->addMonth() : now()->addMonth())
+                    : null;
+                $enrollment->update([
+                    'status'     => CourseEnrollment::STATUS_PAID,
+                    'paid_at'    => now(),
+                    'expires_at' => $expiresAt,
+                ]);
+                Log::info('Xendit webhook: course enrollment paid', ['enrollment_id' => $enrollment->id, 'monthly' => $isMonthly]);
             }
             return;
         }

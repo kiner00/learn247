@@ -12,9 +12,10 @@ class Course extends Model
 {
     use HasFactory;
 
-    public const ACCESS_FREE      = 'free';
-    public const ACCESS_INCLUSIVE  = 'inclusive';
-    public const ACCESS_PAID_ONCE  = 'paid_once';
+    public const ACCESS_FREE         = 'free';
+    public const ACCESS_INCLUSIVE    = 'inclusive';
+    public const ACCESS_PAID_ONCE    = 'paid_once';
+    public const ACCESS_PAID_MONTHLY = 'paid_monthly';
 
     protected $fillable = ['community_id', 'title', 'description', 'cover_image', 'position', 'access_type', 'price'];
 

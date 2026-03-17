@@ -18,26 +18,31 @@ class EnrollInCourse
      */
     public function execute(User $user, Community $community, Course $course, string $successRedirectUrl): array
     {
-        if ($course->access_type !== Course::ACCESS_PAID_ONCE) {
+        $isPaid = in_array($course->access_type, [Course::ACCESS_PAID_ONCE, Course::ACCESS_PAID_MONTHLY]);
+        if (! $isPaid) {
             throw ValidationException::withMessages(['course' => 'This course does not require a separate purchase.']);
         }
 
+        // Check for active paid enrollment
         $existing = CourseEnrollment::where('user_id', $user->id)
             ->where('course_id', $course->id)
             ->where('status', CourseEnrollment::STATUS_PAID)
+            ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
             ->first();
 
         if ($existing) {
             throw ValidationException::withMessages(['course' => 'You already have access to this course.']);
         }
 
+        $isMonthly  = $course->access_type === Course::ACCESS_PAID_MONTHLY;
         $externalId = "course_{$course->id}_{$user->id}_" . time();
+        $label      = $isMonthly ? "{$course->title} (Monthly)" : $course->title;
 
         $invoice = $this->xendit->createInvoice([
             'external_id' => $externalId,
             'amount'      => (float) $course->price,
             'currency'    => $community->currency ?? 'PHP',
-            'description' => "Course: {$course->title}",
+            'description' => "Course: {$label}",
             'customer'    => ['given_names' => $user->name, 'email' => $user->email],
             'customer_notification_preference' => [
                 'invoice_created' => ['email'],
@@ -46,17 +51,17 @@ class EnrollInCourse
             'success_redirect_url' => $successRedirectUrl,
             'failure_redirect_url' => route('communities.classroom.courses.show', [$community->slug, $course->id]),
             'items' => [[
-                'name'     => $course->title,
+                'name'     => $label,
                 'quantity' => 1,
                 'price'    => (float) $course->price,
                 'category' => 'Course',
             ]],
         ]);
 
-        // Upsert pending enrollment (replace any previous pending one)
+        // Upsert pending enrollment
         $enrollment = CourseEnrollment::updateOrCreate(
             ['user_id' => $user->id, 'course_id' => $course->id],
-            ['xendit_id' => $invoice['id'], 'status' => CourseEnrollment::STATUS_PENDING, 'paid_at' => null],
+            ['xendit_id' => $invoice['id'], 'status' => CourseEnrollment::STATUS_PENDING, 'paid_at' => null, 'expires_at' => null],
         );
 
         return ['enrollment' => $enrollment, 'checkout_url' => $invoice['invoice_url']];

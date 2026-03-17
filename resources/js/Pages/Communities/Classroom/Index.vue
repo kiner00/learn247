@@ -39,22 +39,59 @@
                 <div class="mb-3">
                     <label class="block text-xs font-medium text-gray-600 mb-1.5">Access</label>
                     <div class="flex gap-2">
-                        <label v-for="opt in accessOptions" :key="opt.value"
-                            :class="['flex-1 cursor-pointer rounded-lg border-2 p-2.5 text-center transition-all',
-                                courseForm.access_type === opt.value
-                                    ? 'border-indigo-500 bg-indigo-50'
-                                    : 'border-gray-200 hover:border-gray-300']">
-                            <input type="radio" :value="opt.value" v-model="courseForm.access_type" class="sr-only" />
-                            <div class="text-base mb-0.5">{{ opt.icon }}</div>
-                            <div class="text-xs font-semibold text-gray-800">{{ opt.label }}</div>
-                            <div class="text-[10px] text-gray-400 leading-tight mt-0.5">{{ opt.desc }}</div>
+                        <!-- Free -->
+                        <label :class="['flex-1 cursor-pointer rounded-lg border-2 p-2.5 text-center transition-all',
+                            courseForm.access_type === 'free' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300']">
+                            <input type="radio" value="free" v-model="courseForm.access_type" class="sr-only" />
+                            <div class="text-base mb-0.5">🌐</div>
+                            <div class="text-xs font-semibold text-gray-800">Free</div>
+                            <div class="text-[10px] text-gray-400 leading-tight mt-0.5">Anyone can access</div>
+                        </label>
+                        <!-- Included -->
+                        <label :class="['flex-1 cursor-pointer rounded-lg border-2 p-2.5 text-center transition-all',
+                            courseForm.access_type === 'inclusive' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300']">
+                            <input type="radio" value="inclusive" v-model="courseForm.access_type" class="sr-only" />
+                            <div class="text-base mb-0.5">⭐</div>
+                            <div class="text-xs font-semibold text-gray-800">Included</div>
+                            <div class="text-[10px] text-gray-400 leading-tight mt-0.5">Members only</div>
+                        </label>
+                        <!-- Paid (covers both paid_once + paid_monthly) -->
+                        <label :class="['flex-1 cursor-pointer rounded-lg border-2 p-2.5 text-center transition-all',
+                            isPaidType(courseForm.access_type) ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300']"
+                            @click="if (!isPaidType(courseForm.access_type)) courseForm.access_type = 'paid_once'">
+                            <div class="text-base mb-0.5">💳</div>
+                            <div class="text-xs font-semibold text-gray-800">Paid</div>
+                            <div class="text-[10px] text-gray-400 leading-tight mt-0.5">Separate payment</div>
+                        </label>
+                    </div>
+
+                    <!-- Paid sub-choice: monthly vs one-time -->
+                    <div v-if="isPaidType(courseForm.access_type)" class="mt-2 flex gap-2 pl-0.5">
+                        <label :class="['flex-1 cursor-pointer rounded-lg border px-3 py-2 flex items-center gap-2 transition-all',
+                            courseForm.access_type === 'paid_once' ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 hover:border-gray-300']">
+                            <input type="radio" value="paid_once" v-model="courseForm.access_type" class="accent-indigo-600" />
+                            <div>
+                                <div class="text-xs font-semibold text-gray-800">One-time</div>
+                                <div class="text-[10px] text-gray-400">Pay once, access forever</div>
+                            </div>
+                        </label>
+                        <label :class="['flex-1 cursor-pointer rounded-lg border px-3 py-2 flex items-center gap-2 transition-all',
+                            courseForm.access_type === 'paid_monthly' ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 hover:border-gray-300']">
+                            <input type="radio" value="paid_monthly" v-model="courseForm.access_type" class="accent-indigo-600" />
+                            <div>
+                                <div class="text-xs font-semibold text-gray-800">Monthly</div>
+                                <div class="text-[10px] text-gray-400">Recurring monthly payment</div>
+                            </div>
                         </label>
                     </div>
                 </div>
 
-                <!-- Price (paid_once only) -->
-                <div v-if="courseForm.access_type === 'paid_once'" class="mb-3">
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Price (PHP)</label>
+                <!-- Price (paid types) -->
+                <div v-if="isPaidType(courseForm.access_type)" class="mb-3">
+                    <label class="block text-xs font-medium text-gray-600 mb-1">
+                        Price (PHP)
+                        <span class="text-gray-400 font-normal">{{ courseForm.access_type === 'paid_monthly' ? '/ month' : '· one-time' }}</span>
+                    </label>
                     <input v-model="courseForm.price" type="number" min="1" step="0.01" required placeholder="e.g. 1500"
                         class="w-48 px-3.5 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                 </div>
@@ -121,6 +158,10 @@
                                 class="text-white text-xs font-bold bg-indigo-600 px-3 py-1 rounded-full">
                                 ₱{{ Number(course.price).toLocaleString() }}
                             </span>
+                            <span v-else-if="course.access_type === 'paid_monthly'"
+                                class="text-white text-xs font-bold bg-indigo-600 px-3 py-1 rounded-full">
+                                ₱{{ Number(course.price).toLocaleString() }}/mo
+                            </span>
                             <span v-else class="text-white text-xs font-semibold bg-black/40 px-3 py-1 rounded-full">
                                 Members only
                             </span>
@@ -157,7 +198,7 @@
                                 class="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">INCLUDED</span>
                             <span v-else
                                 class="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
-                                ₱{{ Number(course.price).toLocaleString() }}
+                                ₱{{ Number(course.price).toLocaleString() }}{{ course.access_type === 'paid_monthly' ? '/mo' : '' }}
                             </span>
                         </div>
                         <p v-if="course.description" class="text-sm text-gray-500 mb-3 line-clamp-2 leading-relaxed">{{ course.description }}</p>
@@ -174,6 +215,7 @@
                         <!-- Locked: show enroll or join CTA -->
                         <div v-else class="text-xs text-gray-400">
                             <span v-if="course.access_type === 'paid_once'">One-time purchase to unlock</span>
+                            <span v-else-if="course.access_type === 'paid_monthly'">Monthly subscription to unlock</span>
                             <span v-else-if="course.access_type === 'inclusive'">Join the community to unlock</span>
                         </div>
                     </div>
@@ -212,22 +254,55 @@
                         <div class="mb-3">
                             <label class="block text-xs font-medium text-gray-600 mb-1.5">Access</label>
                             <div class="flex gap-2">
-                                <label v-for="opt in accessOptions" :key="opt.value"
-                                    :class="['flex-1 cursor-pointer rounded-lg border-2 p-2.5 text-center transition-all',
-                                        editForm.access_type === opt.value
-                                            ? 'border-indigo-500 bg-indigo-50'
-                                            : 'border-gray-200 hover:border-gray-300']">
-                                    <input type="radio" :value="opt.value" v-model="editForm.access_type" class="sr-only" />
-                                    <div class="text-base mb-0.5">{{ opt.icon }}</div>
-                                    <div class="text-xs font-semibold text-gray-800">{{ opt.label }}</div>
-                                    <div class="text-[10px] text-gray-400 leading-tight mt-0.5">{{ opt.desc }}</div>
+                                <label :class="['flex-1 cursor-pointer rounded-lg border-2 p-2.5 text-center transition-all',
+                                    editForm.access_type === 'free' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300']">
+                                    <input type="radio" value="free" v-model="editForm.access_type" class="sr-only" />
+                                    <div class="text-base mb-0.5">🌐</div>
+                                    <div class="text-xs font-semibold text-gray-800">Free</div>
+                                    <div class="text-[10px] text-gray-400 leading-tight mt-0.5">Anyone can access</div>
+                                </label>
+                                <label :class="['flex-1 cursor-pointer rounded-lg border-2 p-2.5 text-center transition-all',
+                                    editForm.access_type === 'inclusive' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300']">
+                                    <input type="radio" value="inclusive" v-model="editForm.access_type" class="sr-only" />
+                                    <div class="text-base mb-0.5">⭐</div>
+                                    <div class="text-xs font-semibold text-gray-800">Included</div>
+                                    <div class="text-[10px] text-gray-400 leading-tight mt-0.5">Members only</div>
+                                </label>
+                                <label :class="['flex-1 cursor-pointer rounded-lg border-2 p-2.5 text-center transition-all',
+                                    isPaidType(editForm.access_type) ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300']"
+                                    @click="if (!isPaidType(editForm.access_type)) editForm.access_type = 'paid_once'">
+                                    <div class="text-base mb-0.5">💳</div>
+                                    <div class="text-xs font-semibold text-gray-800">Paid</div>
+                                    <div class="text-[10px] text-gray-400 leading-tight mt-0.5">Separate payment</div>
+                                </label>
+                            </div>
+                            <!-- Paid sub-choice -->
+                            <div v-if="isPaidType(editForm.access_type)" class="mt-2 flex gap-2">
+                                <label :class="['flex-1 cursor-pointer rounded-lg border px-3 py-2 flex items-center gap-2 transition-all',
+                                    editForm.access_type === 'paid_once' ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 hover:border-gray-300']">
+                                    <input type="radio" value="paid_once" v-model="editForm.access_type" class="accent-indigo-600" />
+                                    <div>
+                                        <div class="text-xs font-semibold text-gray-800">One-time</div>
+                                        <div class="text-[10px] text-gray-400">Pay once, access forever</div>
+                                    </div>
+                                </label>
+                                <label :class="['flex-1 cursor-pointer rounded-lg border px-3 py-2 flex items-center gap-2 transition-all',
+                                    editForm.access_type === 'paid_monthly' ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 hover:border-gray-300']">
+                                    <input type="radio" value="paid_monthly" v-model="editForm.access_type" class="accent-indigo-600" />
+                                    <div>
+                                        <div class="text-xs font-semibold text-gray-800">Monthly</div>
+                                        <div class="text-[10px] text-gray-400">Recurring monthly payment</div>
+                                    </div>
                                 </label>
                             </div>
                         </div>
 
                         <!-- Price -->
-                        <div v-if="editForm.access_type === 'paid_once'" class="mb-3">
-                            <label class="block text-xs font-medium text-gray-600 mb-1">Price (PHP)</label>
+                        <div v-if="isPaidType(editForm.access_type)" class="mb-3">
+                            <label class="block text-xs font-medium text-gray-600 mb-1">
+                                Price (PHP)
+                                <span class="text-gray-400 font-normal">{{ editForm.access_type === 'paid_monthly' ? '/ month' : '· one-time' }}</span>
+                            </label>
                             <input v-model="editForm.price" type="number" min="1" step="0.01" required placeholder="e.g. 1500"
                                 class="w-48 px-3.5 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                         </div>
@@ -305,11 +380,7 @@ const showInviteModal = ref(false);
 const coverPreview    = ref(null);
 const coverInput      = ref(null);
 
-const accessOptions = [
-    { value: 'free',      icon: '🌐', label: 'Free',     desc: 'Anyone can access' },
-    { value: 'inclusive', icon: '⭐', label: 'Included',  desc: 'Members only' },
-    { value: 'paid_once', icon: '💳', label: 'Paid',      desc: 'One-time purchase' },
-];
+const isPaidType = (type) => type === 'paid_once' || type === 'paid_monthly';
 
 const inviteUrl = computed(() =>
     props.affiliate?.code

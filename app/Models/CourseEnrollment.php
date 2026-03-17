@@ -10,11 +10,11 @@ class CourseEnrollment extends Model
     public const STATUS_PENDING = 'pending';
     public const STATUS_PAID    = 'paid';
 
-    protected $fillable = ['user_id', 'course_id', 'xendit_id', 'status', 'paid_at'];
+    protected $fillable = ['user_id', 'course_id', 'xendit_id', 'status', 'paid_at', 'expires_at'];
 
     protected function casts(): array
     {
-        return ['paid_at' => 'datetime'];
+        return ['paid_at' => 'datetime', 'expires_at' => 'datetime'];
     }
 
     public function user(): BelongsTo

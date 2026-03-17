@@ -24,6 +24,7 @@ class GetCourseList
         $paidEnrollmentIds = $userId
             ? CourseEnrollment::where('user_id', $userId)
                 ->where('status', CourseEnrollment::STATUS_PAID)
+                ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
                 ->pluck('course_id')
                 ->flip()
             : collect();
@@ -67,7 +68,7 @@ class GetCourseList
             return $isMember;
         }
 
-        if ($course->access_type === Course::ACCESS_PAID_ONCE) {
+        if (in_array($course->access_type, [Course::ACCESS_PAID_ONCE, Course::ACCESS_PAID_MONTHLY])) {
             return $paidEnrollmentIds->has($course->id);
         }
 

@@ -37,18 +37,22 @@
                     </svg>
                 </div>
                 <div>
-                    <p v-if="course.access_type === 'paid_once'" class="text-sm font-bold text-gray-900">
-                        One-time purchase · ₱{{ Number(course.price).toLocaleString() }}
-                    </p>
-                    <p v-else class="text-sm font-bold text-gray-900">Members only</p>
-                    <p class="text-xs text-gray-400 mt-0.5">
-                        <span v-if="course.access_type === 'paid_once'">Pay once to get lifetime access to this course.</span>
-                        <span v-else>Subscribe to the community to unlock all included courses.</span>
-                    </p>
+                    <template v-if="course.access_type === 'paid_once'">
+                        <p class="text-sm font-bold text-gray-900">One-time purchase · ₱{{ Number(course.price).toLocaleString() }}</p>
+                        <p class="text-xs text-gray-400 mt-0.5">Pay once to get lifetime access to this course.</p>
+                    </template>
+                    <template v-else-if="course.access_type === 'paid_monthly'">
+                        <p class="text-sm font-bold text-gray-900">Monthly subscription · ₱{{ Number(course.price).toLocaleString() }}/mo</p>
+                        <p class="text-xs text-gray-400 mt-0.5">Subscribe monthly to access this course.</p>
+                    </template>
+                    <template v-else>
+                        <p class="text-sm font-bold text-gray-900">Members only</p>
+                        <p class="text-xs text-gray-400 mt-0.5">Subscribe to the community to unlock all included courses.</p>
+                    </template>
                 </div>
             </div>
-            <!-- Enroll button (paid_once) -->
-            <div v-if="course.access_type === 'paid_once'" class="shrink-0">
+            <!-- Enroll button (paid courses) -->
+            <div v-if="course.access_type === 'paid_once' || course.access_type === 'paid_monthly'" class="shrink-0">
                 <div v-if="!authUserId">
                     <Link :href="`/login`"
                         class="px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors">
@@ -64,7 +68,7 @@
                 </div>
                 <button v-else @click="enrollInCourse" :disabled="enrollForm.processing"
                     class="px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-colors">
-                    {{ enrollForm.processing ? 'Redirecting...' : `Enroll for ₱${Number(course.price).toLocaleString()}` }}
+                    {{ enrollForm.processing ? 'Redirecting...' : `Enroll · ₱${Number(course.price).toLocaleString()}${course.access_type === 'paid_monthly' ? '/mo' : ''}` }}
                 </button>
             </div>
             <!-- Join community (inclusive) -->
@@ -316,7 +320,9 @@
                         </div>
                         <p class="text-sm font-bold text-gray-700">Content locked</p>
                         <p class="text-xs text-gray-400 mt-1">
-                            {{ course.access_type === 'paid_once' ? 'Purchase this course to unlock' : 'Join the community to unlock' }}
+                            {{ course.access_type === 'paid_once' ? 'Purchase this course to unlock'
+                             : course.access_type === 'paid_monthly' ? 'Subscribe to unlock this course'
+                             : 'Join the community to unlock' }}
                         </p>
                     </div>
                 </div>
