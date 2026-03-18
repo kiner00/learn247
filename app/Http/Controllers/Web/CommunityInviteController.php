@@ -5,14 +5,36 @@ namespace App\Http\Controllers\Web;
 use App\Actions\Community\AcceptInvite;
 use App\Actions\Community\SendInvite;
 use App\Http\Controllers\Controller;
+use App\Mail\TempPasswordMail;
 use App\Models\Community;
 use App\Models\CommunityInvite;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 class CommunityInviteController extends Controller
 {
+    public function index(Community $community): JsonResponse
+    {
+        abort_if(auth()->id() !== $community->owner_id, 403);
+
+        $invites = $community->invites()
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(fn ($invite) => [
+                'email'      => $invite->email,
+                'status'     => $invite->isAccepted() ? 'accepted' : ($invite->isExpired() ? 'expired' : 'pending'),
+                'sent_at'    => $invite->created_at->format('M j, Y'),
+                'expires_at' => $invite->expires_at?->format('M j, Y'),
+            ]);
+
+        return response()->json($invites);
+    }
+
     public function store(Request $request, Community $community, SendInvite $action): JsonResponse|RedirectResponse
     {
         abort_if(auth()->id() !== $community->owner_id, 403);
@@ -41,7 +63,22 @@ class CommunityInviteController extends Controller
         $invite = CommunityInvite::with('community')->where('token', $token)->firstOrFail();
 
         if (! auth()->check()) {
-            return redirect()->route('login', ['redirect' => "/invite/{$token}"]);
+            $user = User::where('email', $invite->email)->first();
+
+            if (! $user) {
+                // New user — create account and send temp password
+                $tempPassword = Str::random(12);
+                $user = User::create([
+                    'name'                 => explode('@', $invite->email)[0],
+                    'email'                => $invite->email,
+                    'password'             => bcrypt($tempPassword),
+                    'needs_password_setup' => true,
+                ]);
+                Mail::to($user)->send(new TempPasswordMail($user, $tempPassword, $invite->community));
+            }
+
+            Auth::login($user);
+            request()->session()->regenerate();
         }
 
         $result    = $action->execute(auth()->user(), $invite);

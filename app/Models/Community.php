@@ -89,6 +89,11 @@ class Community extends Model
         return $this->hasMany(Event::class)->orderBy('start_at');
     }
 
+    public function invites(): HasMany
+    {
+        return $this->hasMany(CommunityInvite::class);
+    }
+
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     public function isFree(): bool

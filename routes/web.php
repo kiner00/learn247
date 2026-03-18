@@ -28,6 +28,7 @@ use App\Http\Controllers\Web\CheckoutCallbackController;
 use App\Http\Controllers\Web\CourseEnrollmentController;
 use App\Http\Controllers\Web\GuestCheckoutController;
 use App\Http\Controllers\Web\RefController;
+use App\Http\Controllers\Web\ForgotPasswordController;
 use App\Http\Controllers\Web\SetPasswordController;
 use App\Http\Controllers\Web\SubscriptionController;
 use App\Http\Middleware\EnsureActiveMembership;
@@ -68,6 +69,10 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
     Route::post('/register', [AuthController::class, 'register']);
+    Route::get('/forgot-password', [ForgotPasswordController::class, 'show'])->name('password.request');
+    Route::post('/forgot-password', [ForgotPasswordController::class, 'send'])->name('password.email');
+    Route::get('/reset-password/{token}', [ForgotPasswordController::class, 'showReset'])->name('password.reset');
+    Route::post('/reset-password', [ForgotPasswordController::class, 'reset'])->name('password.update');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
@@ -160,6 +165,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/communities/{community}/classroom/courses/{course}/enroll', [CourseEnrollmentController::class, 'checkout'])->name('communities.classroom.courses.enroll');
 
     // Owner-only: invite members by email / CSV
+    Route::get('/communities/{community}/invites', [CommunityInviteController::class, 'index'])->name('communities.invites.index');
     Route::post('/communities/{community}/invite', [CommunityInviteController::class, 'store'])->name('communities.invite');
 
     // Events (owner-only mutations; calendar view is public above)

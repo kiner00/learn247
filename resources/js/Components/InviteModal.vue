@@ -54,6 +54,10 @@
                                     class="px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors"
                                     :class="inviteTab === 'csv' ? 'bg-indigo-600 text-white border-indigo-600' : 'text-gray-600 border-gray-300 hover:bg-gray-50'"
                                 >Batch CSV</button>
+                                <button type="button" @click="openStatusTab"
+                                    class="px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors"
+                                    :class="inviteTab === 'status' ? 'bg-indigo-600 text-white border-indigo-600' : 'text-gray-600 border-gray-300 hover:bg-gray-50'"
+                                >Sent invites</button>
                             </div>
 
                             <!-- Single email -->
@@ -71,7 +75,7 @@
                             </form>
 
                             <!-- CSV batch -->
-                            <form v-else @submit.prevent="sendCsvInvite" class="space-y-2">
+                            <form v-else-if="inviteTab === 'csv'" @submit.prevent="sendCsvInvite" class="space-y-2">
                                 <div class="flex items-center justify-between gap-2">
                                     <label class="flex items-center gap-2 w-fit cursor-pointer px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
                                         <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -95,6 +99,37 @@
                             </form>
 
                             <p v-if="inviteResult" class="mt-2 text-sm" :class="inviteError ? 'text-red-600' : 'text-green-600'">{{ inviteResult }}</p>
+
+                            <!-- Sent invites status list -->
+                            <div v-if="inviteTab === 'status'">
+                                <div v-if="statusLoading" class="py-6 text-center text-sm text-gray-400">Loading...</div>
+                                <div v-else-if="statusList.length === 0" class="py-6 text-center text-sm text-gray-400">No invites sent yet.</div>
+                                <div v-else class="divide-y divide-gray-100 max-h-64 overflow-y-auto -mx-1 px-1">
+                                    <div
+                                        v-for="invite in statusList"
+                                        :key="invite.email"
+                                        class="flex items-center justify-between py-2.5 gap-3"
+                                    >
+                                        <span class="text-sm text-gray-700 truncate flex-1">{{ invite.email }}</span>
+                                        <span
+                                            class="shrink-0 text-xs font-medium px-2 py-0.5 rounded-full"
+                                            :class="{
+                                                'bg-green-100 text-green-700': invite.status === 'accepted',
+                                                'bg-yellow-100 text-yellow-700': invite.status === 'pending',
+                                                'bg-red-100 text-red-700': invite.status === 'expired',
+                                            }"
+                                        >
+                                            {{ invite.status }}
+                                        </span>
+                                        <button
+                                            v-if="invite.status !== 'accepted'"
+                                            type="button"
+                                            class="shrink-0 text-xs text-indigo-600 hover:underline"
+                                            @click="resendInvite(invite.email)"
+                                        >Resend</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </template>
                 </div>
@@ -117,19 +152,37 @@ const props = defineProps({
 
 defineEmits(['close']);
 
-const copied       = ref(false);
-const inviteTab    = ref('single');
-const emailInput   = ref('');
-const csvFile      = ref(null);
-const sending      = ref(false);
-const inviteResult = ref('');
-const inviteError  = ref(false);
+const copied        = ref(false);
+const inviteTab     = ref('single');
+const emailInput    = ref('');
+const csvFile       = ref(null);
+const sending       = ref(false);
+const inviteResult  = ref('');
+const inviteError   = ref(false);
+const statusList    = ref([]);
+const statusLoading = ref(false);
 
 function copy() {
     navigator.clipboard.writeText(props.inviteUrl).then(() => {
         copied.value = true;
         setTimeout(() => (copied.value = false), 2000);
     });
+}
+
+function openStatusTab() {
+    inviteTab.value = 'status';
+    statusLoading.value = true;
+    axios.get(`/communities/${props.communitySlug}/invites`)
+        .then(({ data }) => { statusList.value = data; })
+        .finally(() => { statusLoading.value = false; });
+}
+
+function resendInvite(email) {
+    const formData = new FormData();
+    formData.append('email', email);
+    axios.post(`/communities/${props.communitySlug}/invite`, formData)
+        .then(() => openStatusTab())
+        .catch(() => {});
 }
 
 function sendSingleInvite() {
