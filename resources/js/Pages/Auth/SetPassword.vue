@@ -39,8 +39,10 @@
                             type="password"
                             autocomplete="new-password"
                             required
-                            class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            class="w-full px-3.5 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            :class="form.errors.password_confirmation ? 'border-red-400' : 'border-gray-300'"
                         />
+                        <p v-if="form.errors.password_confirmation" class="mt-1 text-xs text-red-600">{{ form.errors.password_confirmation }}</p>
                     </div>
 
                     <button

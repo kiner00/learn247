@@ -25,9 +25,11 @@ class CreatorChaChing extends Mailable
     public function envelope(): Envelope
     {
         $rendered = EmailTemplate::render('creator-cha-ching', $this->vars());
-        $subject  = $rendered
-            ? $rendered['subject']
-            : "💰 Cha-ching! New sale in {$this->community->name}";
+        if ($rendered) {
+            $subject = $rendered['subject'];
+        } else {
+            $subject = "💰 Cha-ching! New sale in {$this->community->name}";
+        }
 
         return new Envelope(subject: $subject);
     }

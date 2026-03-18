@@ -25,9 +25,11 @@ class AffiliateChaChing extends Mailable
     public function envelope(): Envelope
     {
         $rendered = EmailTemplate::render('affiliate-cha-ching', $this->vars());
-        $subject  = $rendered
-            ? $rendered['subject']
-            : "💰 Cha-ching! You made a sale from {$this->community->name}";
+        if ($rendered) {
+            $subject = $rendered['subject'];
+        } else {
+            $subject = "💰 Cha-ching! You made a sale from {$this->community->name}";
+        }
 
         return new Envelope(subject: $subject);
     }

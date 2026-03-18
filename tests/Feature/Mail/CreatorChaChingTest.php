@@ -15,6 +15,8 @@ class CreatorChaChingTest extends TestCase
 
     public function test_default_subject_contains_community_name(): void
     {
+        EmailTemplate::where('key', 'creator-cha-ching')->delete();
+
         $creator   = User::factory()->create();
         $community = Community::factory()->create(['name' => 'Awesome Community']);
 

@@ -123,4 +123,49 @@ class CourseEnrollmentControllerTest extends TestCase
 
         $response->assertSessionHasErrors('course');
     }
+
+    public function test_enrolling_in_inclusive_course_returns_validation_error(): void
+    {
+        $user      = User::factory()->create();
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $course    = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Inclusive Course',
+            'access_type'  => Course::ACCESS_INCLUSIVE,
+            'position'     => 1,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->post("/communities/{$community->slug}/classroom/courses/{$course->id}/enroll");
+
+        $response->assertSessionHasErrors('course');
+    }
+
+    public function test_expired_monthly_enrollment_allows_re_enrollment(): void
+    {
+        Http::fake([
+            '*' => Http::response([
+                'id'          => 'inv_renew_123',
+                'invoice_url' => 'https://checkout.xendit.co/inv_renew_123',
+            ]),
+        ]);
+
+        $user      = User::factory()->create();
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $course    = $this->paidCourse($community, Course::ACCESS_PAID_MONTHLY);
+
+        CourseEnrollment::create([
+            'user_id'    => $user->id,
+            'course_id'  => $course->id,
+            'status'     => CourseEnrollment::STATUS_PAID,
+            'expires_at' => now()->subDay(),
+        ]);
+
+        $response = $this->actingAs($user)
+            ->post("/communities/{$community->slug}/classroom/courses/{$course->id}/enroll");
+
+        $response->assertRedirect('https://checkout.xendit.co/inv_renew_123');
+    }
 }

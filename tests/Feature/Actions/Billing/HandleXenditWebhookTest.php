@@ -674,6 +674,157 @@ class HandleXenditWebhookTest extends TestCase
         $this->assertEquals(0, Payment::count());
     }
 
+    // ─── one-time billing ───────────────────────────────────────────────────────
+
+    public function test_one_time_billing_community_sets_null_expires_at(): void
+    {
+        Mail::fake();
+        config(['services.xendit.callback_token' => 'valid-token', 'services.xendit.secret_key' => 'test']);
+
+        $user      = User::factory()->create(['needs_password_setup' => false]);
+        $community = Community::factory()->create(['billing_type' => 'one_time']);
+        $subscription = Subscription::create([
+            'community_id' => $community->id,
+            'user_id'      => $user->id,
+            'xendit_id'    => 'inv_onetime_1',
+            'status'       => Subscription::STATUS_PENDING,
+            'expires_at'   => null,
+        ]);
+
+        $request = $this->makeRequest([
+            'id'       => 'inv_onetime_1',
+            'status'   => 'PAID',
+            'amount'   => 500,
+            'currency' => 'PHP',
+        ], 'valid-token');
+
+        $action = app(HandleXenditWebhook::class);
+        $action->execute($request);
+
+        $subscription->refresh();
+        $this->assertEquals(Subscription::STATUS_ACTIVE, $subscription->status);
+        $this->assertNull($subscription->expires_at);
+    }
+
+    // ─── catch block coverage ───────────────────────────────────────────────────
+
+    public function test_cha_ching_email_failure_is_caught_and_does_not_throw(): void
+    {
+        Mail::shouldReceive('to')
+            ->withAnyArgs()
+            ->zeroOrMoreTimes()
+            ->andThrow(new \RuntimeException('Mail server down'));
+
+        config(['services.xendit.callback_token' => 'valid-token', 'services.xendit.secret_key' => 'test']);
+
+        $owner         = User::factory()->create();
+        $affiliateUser = User::factory()->create(['needs_password_setup' => true]);
+        $community     = Community::factory()->create(['owner_id' => $owner->id, 'affiliate_commission_rate' => 10]);
+
+        $affiliate = \App\Models\Affiliate::create([
+            'community_id' => $community->id,
+            'user_id'      => $affiliateUser->id,
+            'code'         => 'AFF-CATCH-1',
+            'status'       => \App\Models\Affiliate::STATUS_ACTIVE,
+        ]);
+
+        // Affiliate must be subscribed to earn commission
+        Subscription::create([
+            'community_id' => $community->id,
+            'user_id'      => $affiliateUser->id,
+            'xendit_id'    => 'inv_aff_active',
+            'status'       => Subscription::STATUS_ACTIVE,
+            'expires_at'   => null,
+        ]);
+
+        $referredUser = User::factory()->create(['needs_password_setup' => true]);
+        $subscription = Subscription::create([
+            'community_id' => $community->id,
+            'user_id'      => $referredUser->id,
+            'affiliate_id' => $affiliate->id,
+            'xendit_id'    => 'inv_cha_catch_1',
+            'status'       => Subscription::STATUS_PENDING,
+            'expires_at'   => null,
+        ]);
+
+        $request = $this->makeRequest([
+            'id'     => 'inv_cha_catch_1',
+            'status' => 'PAID',
+            'amount' => 500,
+        ], 'valid-token');
+
+        // Should not throw even though Mail fails — covers catch Log::error blocks
+        $action = app(HandleXenditWebhook::class);
+        $action->execute($request);
+
+        $this->assertDatabaseHas('payments', [
+            'subscription_id' => $subscription->id,
+            'status'          => Payment::STATUS_PAID,
+        ]);
+    }
+
+    public function test_course_enrollment_cha_ching_email_failure_is_caught_and_does_not_throw(): void
+    {
+        Mail::shouldReceive('to')
+            ->withAnyArgs()
+            ->zeroOrMoreTimes()
+            ->andThrow(new \RuntimeException('Mail server down'));
+
+        config(['services.xendit.callback_token' => 'valid-token', 'services.xendit.secret_key' => 'test']);
+
+        $owner         = User::factory()->create();
+        $affiliateUser = User::factory()->create(['needs_password_setup' => false]);
+        $community     = Community::factory()->create(['owner_id' => $owner->id, 'affiliate_commission_rate' => 10]);
+
+        $affiliate = \App\Models\Affiliate::create([
+            'community_id' => $community->id,
+            'user_id'      => $affiliateUser->id,
+            'code'         => 'AFF-COURSE-CATCH',
+            'status'       => \App\Models\Affiliate::STATUS_ACTIVE,
+        ]);
+
+        // Affiliate must be subscribed to earn commission
+        Subscription::create([
+            'community_id' => $community->id,
+            'user_id'      => $affiliateUser->id,
+            'status'       => Subscription::STATUS_ACTIVE,
+            'expires_at'   => null,
+        ]);
+
+        $course = Course::create([
+            'community_id'              => $community->id,
+            'title'                     => 'Course With Commission',
+            'access_type'               => Course::ACCESS_PAID_ONCE,
+            'price'                     => 500,
+            'affiliate_commission_rate' => 10,
+            'position'                  => 1,
+        ]);
+
+        $buyer      = User::factory()->create(['needs_password_setup' => false]);
+        $enrollment = CourseEnrollment::create([
+            'user_id'      => $buyer->id,
+            'course_id'    => $course->id,
+            'affiliate_id' => $affiliate->id,
+            'xendit_id'    => 'inv_course_catch_1',
+            'status'       => CourseEnrollment::STATUS_PENDING,
+        ]);
+
+        $request = $this->makeRequest([
+            'id'     => 'inv_course_catch_1',
+            'status' => 'PAID',
+            'amount' => 500,
+        ], 'valid-token');
+
+        // Should not throw even though Mail fails — covers course catch Log::error block
+        $action = app(HandleXenditWebhook::class);
+        $action->execute($request);
+
+        $this->assertDatabaseHas('course_enrollments', [
+            'id'     => $enrollment->id,
+            'status' => CourseEnrollment::STATUS_PAID,
+        ]);
+    }
+
     public function test_course_enrollment_webhook_does_not_process_as_subscription(): void
     {
         config(['services.xendit.callback_token' => 'valid-token']);

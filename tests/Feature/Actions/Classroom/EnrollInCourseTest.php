@@ -228,4 +228,124 @@ class EnrollInCourseTest extends TestCase
             'xendit_id' => 'inv_course_test_123',
         ]);
     }
+
+    // ─── affiliate tracking ──────────────────────────────────────────────────────
+
+    public function test_affiliate_id_is_set_from_active_subscription(): void
+    {
+        $this->mockXendit();
+
+        $user      = User::factory()->create();
+        $community = Community::factory()->create();
+        $course    = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Paid Course',
+            'access_type'  => Course::ACCESS_PAID_ONCE,
+            'price'        => 500,
+            'position'     => 1,
+        ]);
+
+        $affiliate = \App\Models\Affiliate::create([
+            'community_id' => $community->id,
+            'user_id'      => $community->owner_id,
+            'code'         => 'REF-TRACK',
+            'status'       => \App\Models\Affiliate::STATUS_ACTIVE,
+        ]);
+
+        \App\Models\Subscription::factory()->active()->create([
+            'user_id'      => $user->id,
+            'community_id' => $community->id,
+            'affiliate_id' => $affiliate->id,
+        ]);
+
+        $action = app(EnrollInCourse::class);
+        $action->execute($user, $community, $course, 'https://example.com/success');
+
+        $this->assertDatabaseHas('course_enrollments', [
+            'user_id'      => $user->id,
+            'course_id'    => $course->id,
+            'affiliate_id' => $affiliate->id,
+        ]);
+    }
+
+    public function test_affiliate_id_is_null_when_user_has_no_subscription(): void
+    {
+        $this->mockXendit();
+
+        $user      = User::factory()->create();
+        $community = Community::factory()->create();
+        $course    = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Paid Course',
+            'access_type'  => Course::ACCESS_PAID_ONCE,
+            'price'        => 500,
+            'position'     => 1,
+        ]);
+
+        $action = app(EnrollInCourse::class);
+        $action->execute($user, $community, $course, 'https://example.com/success');
+
+        $this->assertDatabaseHas('course_enrollments', [
+            'user_id'      => $user->id,
+            'course_id'    => $course->id,
+            'affiliate_id' => null,
+        ]);
+    }
+
+    public function test_community_currency_is_used_in_invoice(): void
+    {
+        $xenditMock = $this->mock(XenditService::class, function (\Mockery\MockInterface $mock) {
+            $mock->shouldReceive('createInvoice')
+                ->withArgs(function (array $payload) {
+                    return $payload['currency'] === 'USD';
+                })
+                ->once()
+                ->andReturn([
+                    'id'          => 'inv_usd_123',
+                    'invoice_url' => 'https://checkout.xendit.co/inv_usd_123',
+                ]);
+        });
+
+        $user      = User::factory()->create();
+        $community = Community::factory()->create(['currency' => 'USD']);
+        $course    = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'USD Course',
+            'access_type'  => Course::ACCESS_PAID_ONCE,
+            'price'        => 999,
+            'position'     => 1,
+        ]);
+
+        $action = app(EnrollInCourse::class);
+        $action->execute($user, $community, $course, 'https://example.com/success');
+    }
+
+    public function test_community_default_currency_php_is_used_in_invoice(): void
+    {
+        $xenditMock = $this->mock(XenditService::class, function (\Mockery\MockInterface $mock) {
+            $mock->shouldReceive('createInvoice')
+                ->withArgs(function (array $payload) {
+                    return $payload['currency'] === 'PHP';
+                })
+                ->once()
+                ->andReturn([
+                    'id'          => 'inv_php_123',
+                    'invoice_url' => 'https://checkout.xendit.co/inv_php_123',
+                ]);
+        });
+
+        $user      = User::factory()->create();
+        // Community factory defaults to 'PHP' currency
+        $community = Community::factory()->create(['currency' => 'PHP']);
+        $course    = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'PHP Course',
+            'access_type'  => Course::ACCESS_PAID_ONCE,
+            'price'        => 500,
+            'position'     => 1,
+        ]);
+
+        $action = app(EnrollInCourse::class);
+        $action->execute($user, $community, $course, 'https://example.com/success');
+    }
 }

@@ -7,6 +7,8 @@ use App\Models\Community;
 use App\Models\CommunityMember;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class CreateCommunityTest extends TestCase
@@ -81,5 +83,29 @@ class CreateCommunityTest extends TestCase
 
         $this->assertEquals(499.00, (float) $community->price);
         $this->assertTrue($community->is_private);
+    }
+
+    public function test_creates_community_with_cover_image(): void
+    {
+        Storage::fake('public');
+
+        $user      = User::factory()->create();
+        $cover     = UploadedFile::fake()->image('cover.jpg', 1200, 400);
+        $community = $this->action->execute($user, ['name' => 'With Cover'], null, $cover);
+
+        $this->assertNotNull($community->cover_image);
+        $this->assertStringContainsString('community-covers', $community->cover_image);
+    }
+
+    public function test_creates_community_with_avatar(): void
+    {
+        Storage::fake('public');
+
+        $user      = User::factory()->create();
+        $avatar    = UploadedFile::fake()->image('avatar.jpg', 200, 200);
+        $community = $this->action->execute($user, ['name' => 'With Avatar'], $avatar);
+
+        $this->assertNotNull($community->avatar);
+        $this->assertStringContainsString('community-avatars', $community->avatar);
     }
 }

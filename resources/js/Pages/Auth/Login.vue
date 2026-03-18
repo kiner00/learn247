@@ -34,16 +34,16 @@
                             required
                             class="w-full px-3.5 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                             :class="
-                                errors.email
+                                form.errors.email
                                     ? 'border-red-400'
                                     : 'border-gray-300'
                             "
                         />
                         <p
-                            v-if="errors.email"
+                            v-if="form.errors.email"
                             class="mt-1 text-xs text-red-600"
                         >
-                            {{ errors.email }}
+                            {{ form.errors.email }}
                         </p>
                     </div>
 
@@ -60,8 +60,12 @@
                             type="password"
                             autocomplete="current-password"
                             required
-                            class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            class="w-full px-3.5 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            :class="form.errors.password ? 'border-red-400' : 'border-gray-300'"
                         />
+                        <p v-if="form.errors.password" class="mt-1 text-xs text-red-600">
+                            {{ form.errors.password }}
+                        </p>
                     </div>
 
                     <!-- Remember me -->
@@ -100,16 +104,13 @@
 </template>
 
 <script setup>
-import { Link, useForm, usePage } from "@inertiajs/vue3";
-const page = usePage();
+import { Link, useForm } from "@inertiajs/vue3";
 
 const form = useForm({
     email: "",
     password: "",
     remember: false,
 });
-
-const errors = form.errors;
 
 function submit() {
     form.post("/login", {

@@ -15,6 +15,8 @@ class AffiliateChaChingTest extends TestCase
 
     public function test_default_subject_contains_community_name(): void
     {
+        EmailTemplate::where('key', 'affiliate-cha-ching')->delete();
+
         $affiliate = User::factory()->create();
         $community = Community::factory()->create(['name' => 'Awesome Community']);
 

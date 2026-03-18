@@ -181,4 +181,67 @@ class GuestCheckoutControllerTest extends TestCase
         $this->assertTrue($user->needs_password_setup);
         $this->assertNotNull($user->username);
     }
+
+    public function test_validation_fails_with_first_name_too_long(): void
+    {
+        $affiliate = $this->createActiveAffiliate();
+
+        $response = $this->post("/ref-checkout/{$affiliate->code}", [
+            'first_name' => str_repeat('A', 101),
+            'last_name'  => 'Cruz',
+            'email'      => 'too@example.com',
+            'phone'      => '09171234567',
+        ]);
+
+        $response->assertSessionHasErrors('first_name');
+    }
+
+    public function test_validation_fails_with_last_name_too_long(): void
+    {
+        $affiliate = $this->createActiveAffiliate();
+
+        $response = $this->post("/ref-checkout/{$affiliate->code}", [
+            'first_name' => 'Juan',
+            'last_name'  => str_repeat('Z', 101),
+            'email'      => 'too@example.com',
+            'phone'      => '09171234567',
+        ]);
+
+        $response->assertSessionHasErrors('last_name');
+    }
+
+    public function test_validation_fails_with_phone_too_long(): void
+    {
+        $affiliate = $this->createActiveAffiliate();
+
+        $response = $this->post("/ref-checkout/{$affiliate->code}", [
+            'first_name' => 'Juan',
+            'last_name'  => 'Cruz',
+            'email'      => 'juan@example.com',
+            'phone'      => str_repeat('1', 31),
+        ]);
+
+        $response->assertSessionHasErrors('phone');
+    }
+
+    public function test_build_callback_url_contains_required_params(): void
+    {
+        $url = \App\Http\Controllers\Web\GuestCheckoutController::buildCallbackUrl(42, 'test-community');
+
+        // Route is /checkout-callback/{user}/{community}?expires=...&token=...
+        $this->assertStringContainsString('/checkout-callback/42/test-community', $url);
+        $this->assertStringContainsString('expires=', $url);
+        $this->assertStringContainsString('token=', $url);
+    }
+
+    public function test_build_callback_url_hmac_changes_with_different_inputs(): void
+    {
+        $url1 = \App\Http\Controllers\Web\GuestCheckoutController::buildCallbackUrl(1, 'community-a');
+        $url2 = \App\Http\Controllers\Web\GuestCheckoutController::buildCallbackUrl(2, 'community-b');
+
+        parse_str(parse_url($url1, PHP_URL_QUERY), $params1);
+        parse_str(parse_url($url2, PHP_URL_QUERY), $params2);
+
+        $this->assertNotEquals($params1['token'], $params2['token']);
+    }
 }

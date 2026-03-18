@@ -33,6 +33,25 @@ class CheckoutCallbackControllerTest extends TestCase
         $this->assertAuthenticatedAs($user);
     }
 
+    public function test_expired_link_returns_403(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->create();
+
+        // Build a valid token but with an expired timestamp
+        $expires  = now()->subHour()->getTimestamp();
+        $expected = hash_hmac('sha256', "{$user->id}|{$community->slug}|{$expires}", config('app.key'));
+
+        $url = route('checkout.callback', [
+            'user'      => $user->id,
+            'community' => $community->slug,
+            'expires'   => $expires,
+            'token'     => $expected,
+        ]);
+
+        $this->get($url)->assertForbidden();
+    }
+
     public function test_invalid_signature_returns_403(): void
     {
         $user = User::factory()->create();
@@ -120,5 +139,49 @@ class CheckoutCallbackControllerTest extends TestCase
 
         $this->getJson(route('checkout.status', $community->slug))
             ->assertUnauthorized();
+    }
+
+    // ── ref_code cookie affiliate pixel branch ────────────────────────────────
+
+    public function test_callback_with_ref_code_cookie_passes_affiliate_pixels(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->create(['facebook_pixel_id' => null]);
+
+        $affiliate = \App\Models\Affiliate::create([
+            'community_id'      => $community->id,
+            'user_id'           => $community->owner_id,
+            'code'              => 'REF-PIXEL',
+            'status'            => \App\Models\Affiliate::STATUS_ACTIVE,
+            'facebook_pixel_id' => 'FB_123',
+            'tiktok_pixel_id'   => 'TT_456',
+        ]);
+
+        $url = GuestCheckoutController::buildCallbackUrl($user->id, $community->slug);
+
+        $this->withCookie('ref_code', $affiliate->code)
+            ->get($url)
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('CheckoutProcessing')
+                ->where('affiliateFbPixelId', 'FB_123')
+                ->where('affiliateTiktokPixelId', 'TT_456')
+            );
+    }
+
+    public function test_callback_with_unknown_ref_code_cookie_passes_null_pixels(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->create();
+
+        $url = GuestCheckoutController::buildCallbackUrl($user->id, $community->slug);
+
+        $this->withCookie('ref_code', 'NONEXISTENT-CODE')
+            ->get($url)
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('CheckoutProcessing')
+                ->where('affiliateFbPixelId', null)
+            );
     }
 }

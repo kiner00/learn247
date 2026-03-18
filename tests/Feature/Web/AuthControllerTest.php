@@ -115,4 +115,107 @@ class AuthControllerTest extends TestCase
         $response->assertRedirect(route('password.setup'));
         $this->assertAuthenticatedAs($user);
     }
+
+    // ─── LoginRequest validation (max:255) ────────────────────────────────────
+
+    public function test_login_rejects_email_over_255_characters(): void
+    {
+        $response = $this->post('/login', [
+            'email'    => str_repeat('a', 250) . '@x.com',
+            'password' => 'password',
+        ]);
+
+        $response->assertSessionHasErrors('email');
+        $this->assertGuest();
+    }
+
+    public function test_login_rejects_password_over_255_characters(): void
+    {
+        $response = $this->post('/login', [
+            'email'    => 'user@example.com',
+            'password' => str_repeat('a', 256),
+        ]);
+
+        $response->assertSessionHasErrors('password');
+        $this->assertGuest();
+    }
+
+    public function test_login_requires_email_field(): void
+    {
+        $response = $this->post('/login', [
+            'password' => 'password',
+        ]);
+
+        $response->assertSessionHasErrors('email');
+        $this->assertGuest();
+    }
+
+    public function test_login_requires_password_field(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->post('/login', [
+            'email' => $user->email,
+        ]);
+
+        $response->assertSessionHasErrors('password');
+        $this->assertGuest();
+    }
+
+    public function test_login_rejects_non_email_format(): void
+    {
+        $response = $this->post('/login', [
+            'email'    => 'not-an-email',
+            'password' => 'password',
+        ]);
+
+        $response->assertSessionHasErrors('email');
+        $this->assertGuest();
+    }
+
+    // ─── Rate limiting ────────────────────────────────────────────────────────
+
+    public function test_login_is_rate_limited_after_5_failed_attempts(): void
+    {
+        // Use a unique IP so this test doesn't pollute the rate limiter for others
+        $this->withServerVariables(['REMOTE_ADDR' => '10.99.1.1']);
+
+        for ($i = 0; $i < 5; $i++) {
+            $this->post('/login', ['email' => 'x@x.com', 'password' => 'wrong']);
+        }
+
+        $response = $this->post('/login', ['email' => 'x@x.com', 'password' => 'wrong']);
+
+        $response->assertStatus(429);
+    }
+
+    // ─── Register: password_confirmation validation ────────────────────────────
+
+    public function test_register_requires_matching_password_confirmation(): void
+    {
+        $response = $this->post('/register', [
+            'first_name'            => 'Jane',
+            'last_name'             => 'Doe',
+            'email'                 => 'jane@example.com',
+            'password'              => 'SecureP@ss1',
+            'password_confirmation' => 'DifferentP@ss1',
+        ]);
+
+        $response->assertSessionHasErrors('password');
+        $this->assertGuest();
+        $this->assertDatabaseMissing('users', ['email' => 'jane@example.com']);
+    }
+
+    public function test_register_rejects_missing_password_confirmation(): void
+    {
+        $response = $this->post('/register', [
+            'first_name' => 'Jane',
+            'last_name'  => 'Doe',
+            'email'      => 'jane@example.com',
+            'password'   => 'SecureP@ss1',
+        ]);
+
+        $response->assertSessionHasErrors('password');
+        $this->assertGuest();
+    }
 }

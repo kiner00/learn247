@@ -6,6 +6,9 @@
       "Bash(docker ps:*)",
       "Bash(docker compose:*)",
       "Bash(k6 run:*)"
+    ],
+    "additionalDirectories": [
+      "/tmp"
     ]
   }
 }

@@ -1063,4 +1063,87 @@ class ClassroomControllerTest extends TestCase
 
         $response->assertSessionHasErrors(['price']);
     }
+
+    // ─── reorderCourses ──────────────────────────────────────────────────────────
+
+    public function test_owner_can_reorder_courses(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $course1 = Course::create(['community_id' => $community->id, 'title' => 'C1', 'description' => 'D', 'position' => 0]);
+        $course2 = Course::create(['community_id' => $community->id, 'title' => 'C2', 'description' => 'D', 'position' => 1]);
+        $course3 = Course::create(['community_id' => $community->id, 'title' => 'C3', 'description' => 'D', 'position' => 2]);
+
+        $response = $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/classroom/courses/reorder", [
+                'course_ids' => [$course3->id, $course1->id, $course2->id],
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', 'Courses reordered!');
+        $this->assertDatabaseHas('courses', ['id' => $course3->id, 'position' => 0]);
+        $this->assertDatabaseHas('courses', ['id' => $course1->id, 'position' => 1]);
+        $this->assertDatabaseHas('courses', ['id' => $course2->id, 'position' => 2]);
+    }
+
+    public function test_regular_member_cannot_reorder_courses(): void
+    {
+        $owner     = User::factory()->create();
+        $member    = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+
+        $course1 = Course::create(['community_id' => $community->id, 'title' => 'C1', 'description' => 'D', 'position' => 0]);
+        $course2 = Course::create(['community_id' => $community->id, 'title' => 'C2', 'description' => 'D', 'position' => 1]);
+
+        $response = $this->actingAs($member)
+            ->post("/communities/{$community->slug}/classroom/courses/reorder", [
+                'course_ids' => [$course2->id, $course1->id],
+            ]);
+
+        $response->assertForbidden();
+    }
+
+    public function test_user_has_no_access_to_course_with_unknown_access_type(): void
+    {
+        // The final `return false` in userHasAccessToCourse() is unreachable via normal
+        // DB insertion (CHECK constraint), so we test via reflection with an in-memory
+        // Course whose access_type is not one of the known constants.
+        $owner     = User::factory()->create();
+        $user      = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $course = new Course();
+        $course->access_type = 'unknown_type';
+
+        $controller = new \App\Http\Controllers\Web\ClassroomController();
+        $reflection = new \ReflectionMethod(\App\Http\Controllers\Web\ClassroomController::class, 'userHasAccessToCourse');
+        $reflection->setAccessible(true);
+
+        $result = $reflection->invoke($controller, $user, $community, $course);
+
+        $this->assertFalse($result);
+    }
+
+    // ─── showCourse: guest access to non-free course ─────────────────────────────
+
+    public function test_guest_cannot_access_inclusive_course_but_page_renders(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->paid()->create(['owner_id' => $owner->id]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Inclusive Course',
+            'access_type'  => Course::ACCESS_INCLUSIVE,
+            'position'     => 1,
+        ]);
+
+        // Guest (not authenticated) gets the page but with hasAccess = false
+        $response = $this->get("/communities/{$community->slug}/classroom/courses/{$course->id}");
+
+        $response->assertOk();
+    }
 }

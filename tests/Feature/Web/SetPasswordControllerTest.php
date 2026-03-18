@@ -85,4 +85,45 @@ class SetPasswordControllerTest extends TestCase
 
         $response->assertRedirect('/login');
     }
+
+    public function test_store_rejects_weak_password(): void
+    {
+        $user = User::factory()->create(['needs_password_setup' => true]);
+
+        $response = $this->actingAs($user)
+            ->post('/set-password', [
+                'password'              => 'short',
+                'password_confirmation' => 'short',
+            ]);
+
+        $response->assertSessionHasErrors('password');
+
+        $user->refresh();
+        $this->assertTrue($user->needs_password_setup);
+    }
+
+    public function test_store_does_not_clear_flag_on_validation_failure(): void
+    {
+        $user = User::factory()->create(['needs_password_setup' => true]);
+
+        $this->actingAs($user)
+            ->post('/set-password', [
+                'password'              => '',
+                'password_confirmation' => '',
+            ]);
+
+        $user->refresh();
+        $this->assertTrue($user->needs_password_setup);
+    }
+
+    public function test_show_accessible_even_when_needs_password_setup_is_false(): void
+    {
+        // The route is auth-only, not restricted to needs_password_setup users
+        $user = User::factory()->create(['needs_password_setup' => false]);
+
+        $response = $this->actingAs($user)->get('/set-password');
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page->component('Auth/SetPassword'));
+    }
 }
