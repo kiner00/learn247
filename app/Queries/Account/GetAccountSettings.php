@@ -66,6 +66,7 @@ class GetAccountSettings
             'chatPrefs'     => array_merge(self::DEFAULT_CHAT_PREFS, $user->chat_prefs ?? []),
             'payoutMethod'  => $user->payout_method,
             'payoutDetails' => $user->payout_details,
+            'bankName'      => $user->bank_name,
             'cryptoWallet'  => $user->crypto_wallet,
             'crzBalance'    => (float) $user->crz_token_balance,
         ];

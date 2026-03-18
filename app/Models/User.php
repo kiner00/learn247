@@ -17,7 +17,7 @@ class User extends Authenticatable
         'name', 'username', 'bio', 'email', 'password', 'needs_password_setup', 'phone', 'is_super_admin', 'is_active',
         'timezone', 'theme', 'notification_prefs', 'chat_prefs',
         'avatar', 'location', 'social_links', 'hide_from_search',
-        'payout_method', 'payout_details',
+        'payout_method', 'payout_details', 'bank_name',
         'crypto_wallet', 'crz_token_balance',
     ];
 

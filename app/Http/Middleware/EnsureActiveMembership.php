@@ -38,7 +38,7 @@ class EnsureActiveMembership
                 : redirect()->route('login');
         }
 
-        if ($user->id === $community->owner_id) {
+        if ($user->id === $community->owner_id || $user->isSuperAdmin()) {
             return $next($request);
         }
 

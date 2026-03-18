@@ -143,6 +143,7 @@ class AccountSettingsController extends Controller
         $data = $request->validate([
             'payout_method'  => ['required', 'string', 'in:gcash,maya,bank,paypal'],
             'payout_details' => ['required', 'string', 'max:255'],
+            'bank_name'      => ['nullable', 'string', 'max:100'],
         ]);
 
         $action->execute($request->user(), $data);

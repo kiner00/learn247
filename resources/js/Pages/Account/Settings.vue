@@ -584,12 +584,20 @@
                                     <option value="paypal">PayPal</option>
                                 </select>
                             </div>
+                            <div v-if="payoutForm.payout_method === 'bank'">
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Bank</label>
+                                <select v-model="payoutForm.bank_name"
+                                        class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    <option value="">-- Select Bank --</option>
+                                    <option v-for="b in PH_BANKS" :key="b.code" :value="b.name">{{ b.name }}</option>
+                                </select>
+                            </div>
                             <div>
                                 <label class="block text-xs font-semibold text-gray-600 mb-1">
-                                    {{ payoutForm.payout_method === 'bank' ? 'Account Number / Bank Name' : 'Account / Mobile Number' }}
+                                    {{ payoutForm.payout_method === 'bank' ? 'Account Number' : 'Account / Mobile Number' }}
                                 </label>
                                 <input v-model="payoutForm.payout_details" type="text"
-                                       placeholder="e.g. 09xxxxxxxxx or account number"
+                                       :placeholder="payoutForm.payout_method === 'bank' ? 'e.g. 1234567890' : 'e.g. 09xxxxxxxxx'"
                                        class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                             </div>
                             <button type="submit" :disabled="payoutForm.processing"
@@ -688,6 +696,7 @@ const props = defineProps({
     chatPrefs:     Object,
     payoutMethod:  String,
     payoutDetails: String,
+    bankName:      String,
     cryptoWallet:  String,
     crzBalance:    Number,
 });
@@ -798,9 +807,29 @@ function savePassword() {
 }
 
 // ── Payout ────────────────────────────────────────────────────────────────────
+const PH_BANKS = [
+    { code: 'BDO',          name: 'BDO Unibank' },
+    { code: 'BPI',          name: 'Bank of the Philippine Islands (BPI)' },
+    { code: 'METROBANK',    name: 'Metrobank' },
+    { code: 'UNIONBANK',    name: 'UnionBank' },
+    { code: 'PNB',          name: 'Philippine National Bank (PNB)' },
+    { code: 'RCBC',         name: 'RCBC' },
+    { code: 'CHINABANK',    name: 'China Bank' },
+    { code: 'EASTWEST',     name: 'EastWest Bank' },
+    { code: 'SECURITYBANK', name: 'Security Bank' },
+    { code: 'LANDBANK',     name: 'Landbank' },
+    { code: 'DBP',          name: 'Development Bank of the Philippines (DBP)' },
+    { code: 'PSBANK',       name: 'PSBank' },
+    { code: 'MAYABANK',     name: 'Maya Bank' },
+    { code: 'SEABANK',      name: 'SeaBank' },
+    { code: 'TONIK',        name: 'Tonik Bank' },
+    { code: 'CIMB',         name: 'CIMB Bank' },
+];
+
 const payoutForm = useForm({
     payout_method:  props.payoutMethod  ?? 'gcash',
     payout_details: props.payoutDetails ?? '',
+    bank_name:      props.bankName      ?? '',
 });
 function savePayout() {
     payoutForm.patch('/account/settings/payout', { preserveScroll: true });
