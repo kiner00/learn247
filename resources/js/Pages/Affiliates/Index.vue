@@ -101,6 +101,11 @@
                                 </th>
                                 <th
                                     class="text-right px-5 py-3 font-semibold text-gray-600"
+                                >
+                                    Pixels
+                                </th>
+                                <th
+                                    class="text-right px-5 py-3 font-semibold text-gray-600"
                                 ></th>
                             </tr>
                         </thead>
@@ -184,6 +189,18 @@
                                                 ? "✓ " +
                                                   payoutMethod.toUpperCase()
                                                 : "Set payout"
+                                        }}
+                                    </button>
+                                </td>
+                                <td class="px-5 py-4 text-right">
+                                    <button
+                                        @click="openPixelModal(a)"
+                                        class="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                                    >
+                                        {{
+                                            a.facebook_pixel_id || a.tiktok_pixel_id || a.google_analytics_id
+                                                ? "✓ Pixels"
+                                                : "Set pixels"
                                         }}
                                     </button>
                                 </td>
@@ -597,6 +614,68 @@
             </div>
         </Teleport>
 
+        <!-- Pixel settings modal -->
+        <Teleport to="body">
+            <div
+                v-if="showPixelModal"
+                class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+                @click.self="showPixelModal = false"
+            >
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+                    <h3 class="text-base font-bold text-gray-900 mb-1">
+                        Ad Tracking Pixels
+                    </h3>
+                    <p class="text-xs text-gray-400 mb-4">
+                        Your pixels fire alongside the creator's pixels when someone visits via your referral link.
+                    </p>
+                    <form @submit.prevent="savePixels" class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Facebook Pixel ID</label>
+                            <input
+                                v-model="pixelForm.facebook_pixel_id"
+                                type="text"
+                                placeholder="e.g. 1234567890123456"
+                                class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">TikTok Pixel ID</label>
+                            <input
+                                v-model="pixelForm.tiktok_pixel_id"
+                                type="text"
+                                placeholder="e.g. CXXXXXXXXXXXXX"
+                                class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Google Analytics ID</label>
+                            <input
+                                v-model="pixelForm.google_analytics_id"
+                                type="text"
+                                placeholder="e.g. G-XXXXXXXXXX"
+                                class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                        </div>
+                        <div class="flex gap-3 pt-1">
+                            <button
+                                type="button"
+                                @click="showPixelModal = false"
+                                class="flex-1 py-2 border border-gray-200 text-gray-600 text-sm rounded-xl hover:bg-gray-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                class="flex-1 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700"
+                            >
+                                Save
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </Teleport>
+
         <!-- Payout method modal -->
         <Teleport to="body">
             <div
@@ -707,8 +786,11 @@ const statusFilter = ref("all");
 const copied = ref(null);
 const showPayoutModal = ref(false);
 const showRequestModal = ref(false);
+const showPixelModal = ref(false);
 const requestingAffiliate = ref(null);
+const pixelAffiliate = ref(null);
 const requestForm = reactive({ amount: 0, processing: false });
+const pixelForm = reactive({ facebook_pixel_id: '', tiktok_pixel_id: '', google_analytics_id: '' });
 
 const payoutForm = reactive({
     payout_method: props.payoutMethod ?? "gcash",
@@ -782,6 +864,23 @@ function savePayout() {
     router.patch("/account/settings/payout", payoutForm, {
         onSuccess: () => {
             showPayoutModal.value = false;
+        },
+        preserveScroll: true,
+    });
+}
+
+function openPixelModal(affiliate) {
+    pixelAffiliate.value = affiliate;
+    pixelForm.facebook_pixel_id   = affiliate.facebook_pixel_id   ?? '';
+    pixelForm.tiktok_pixel_id     = affiliate.tiktok_pixel_id     ?? '';
+    pixelForm.google_analytics_id = affiliate.google_analytics_id ?? '';
+    showPixelModal.value = true;
+}
+
+function savePixels() {
+    router.patch(`/affiliates/${pixelAffiliate.value.id}/pixels`, pixelForm, {
+        onSuccess: () => {
+            showPixelModal.value = false;
         },
         preserveScroll: true,
     });

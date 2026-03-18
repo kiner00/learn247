@@ -16,6 +16,7 @@ class Affiliate extends Model
 
     protected $fillable = [
         'community_id', 'user_id', 'code', 'status', 'total_earned', 'total_paid', 'payout_method', 'payout_details',
+        'facebook_pixel_id', 'tiktok_pixel_id', 'google_analytics_id',
     ];
 
     protected function casts(): array

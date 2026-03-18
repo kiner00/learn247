@@ -251,6 +251,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/affiliate-conversions/{conversion}/paid', [AffiliateController::class, 'markPaid'])->name('affiliate-conversions.paid');
     Route::post('/affiliate-conversions/{conversion}/disburse', [AffiliateController::class, 'disburse'])->name('affiliate-conversions.disburse');
     Route::patch('/affiliates/{affiliate}/payout', [AffiliateController::class, 'updatePayout'])->name('affiliates.payout');
+    Route::patch('/affiliates/{affiliate}/pixels', [AffiliateController::class, 'updatePixels'])->name('affiliates.pixels');
     Route::post('/affiliates/{affiliate}/payout-request', [PayoutRequestController::class, 'storeAffiliate'])->name('affiliates.payout-request.store');
     Route::post('/affiliates/payout-request/all', [PayoutRequestController::class, 'storeAffiliateAll'])->name('affiliates.payout-request.all');
 

@@ -329,7 +329,14 @@ class CommunityController extends Controller
             $refAffiliate = Affiliate::where('code', $refCode)->where('community_id', $community->id)
                 ->where('status', Affiliate::STATUS_ACTIVE)->with('user:id,name,avatar')->first();
             if ($refAffiliate) {
-                $invitedBy = ['name' => $refAffiliate->user->name, 'avatar' => $refAffiliate->user->avatar, 'code' => $refCode];
+                $invitedBy = [
+                    'name'                => $refAffiliate->user->name,
+                    'avatar'              => $refAffiliate->user->avatar,
+                    'code'                => $refCode,
+                    'facebook_pixel_id'   => $refAffiliate->facebook_pixel_id,
+                    'tiktok_pixel_id'     => $refAffiliate->tiktok_pixel_id,
+                    'google_analytics_id' => $refAffiliate->google_analytics_id,
+                ];
             }
         }
 

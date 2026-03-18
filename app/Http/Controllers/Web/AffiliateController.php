@@ -48,6 +48,9 @@ class AffiliateController extends Controller
             'payout_request_status' => $activeRequestsByAffiliate->has($a->id) ? $activeRequestsByAffiliate->get($a->id)->status : null,
             'referral_url'          => url("/ref/{$a->code}"),
             'community'             => ['name' => $a->community->name, 'slug' => $a->community->slug],
+            'facebook_pixel_id'     => $a->facebook_pixel_id,
+            'tiktok_pixel_id'       => $a->tiktok_pixel_id,
+            'google_analytics_id'   => $a->google_analytics_id,
         ]);
 
         $allAffiliateIds = $affiliates->pluck('id');
@@ -190,6 +193,19 @@ class AffiliateController extends Controller
         $affiliate->update($data);
 
         return back()->with('success', 'Payout details saved.');
+    }
+
+    public function updatePixels(Request $request, Affiliate $affiliate): RedirectResponse
+    {
+        abort_unless($affiliate->user_id === $request->user()->id, 403);
+        $data = $request->validate([
+            'facebook_pixel_id'   => ['nullable', 'string', 'regex:/^\d+$/', 'max:30'],
+            'tiktok_pixel_id'     => ['nullable', 'string', 'max:30'],
+            'google_analytics_id' => ['nullable', 'string', 'regex:/^G-[A-Z0-9]+$/i', 'max:20'],
+        ]);
+        $affiliate->update($data);
+
+        return back()->with('success', 'Pixel IDs saved.');
     }
 
     public function disburse(AffiliateConversion $conversion, DisbursePayout $disburse, MarkAffiliateConversionPaid $mark): RedirectResponse

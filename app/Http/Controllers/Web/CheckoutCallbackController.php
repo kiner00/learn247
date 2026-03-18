@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Models\Affiliate;
 use App\Models\Community;
 use App\Models\Subscription;
 use App\Models\User;
@@ -40,7 +41,23 @@ class CheckoutCallbackController extends Controller
 
         Auth::login($userModel, true);
 
-        return Inertia::render('CheckoutProcessing', [
+        $refCode      = $request->cookie('ref_code');
+        $affPixels    = ['affiliateFbPixelId' => null, 'affiliateTiktokPixelId' => null, 'affiliateGaId' => null];
+        if ($refCode) {
+            $aff = Affiliate::where('code', $refCode)
+                ->where('community_id', $communityModel->id)
+                ->where('status', Affiliate::STATUS_ACTIVE)
+                ->first(['facebook_pixel_id', 'tiktok_pixel_id', 'google_analytics_id']);
+            if ($aff) {
+                $affPixels = [
+                    'affiliateFbPixelId'    => $aff->facebook_pixel_id,
+                    'affiliateTiktokPixelId' => $aff->tiktok_pixel_id,
+                    'affiliateGaId'          => $aff->google_analytics_id,
+                ];
+            }
+        }
+
+        return Inertia::render('CheckoutProcessing', array_merge([
             'communitySlug'     => $communityModel->slug,
             'communityName'     => $communityModel->name,
             'pixelId'           => $communityModel->facebook_pixel_id,
@@ -48,7 +65,7 @@ class CheckoutCallbackController extends Controller
             'googleAnalyticsId' => $communityModel->google_analytics_id,
             'amount'            => (float) $communityModel->price,
             'currency'          => $communityModel->currency ?? 'PHP',
-        ]);
+        ], $affPixels));
     }
 
     /**

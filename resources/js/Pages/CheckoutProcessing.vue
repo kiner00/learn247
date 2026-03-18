@@ -36,13 +36,16 @@ import { useTiktokPixel } from '@/composables/useTiktokPixel';
 import { useGoogleAnalytics } from '@/composables/useGoogleAnalytics';
 
 const props = defineProps({
-    communitySlug:      String,
-    communityName:      String,
-    pixelId:            { type: String, default: null },
-    tiktokPixelId:      { type: String, default: null },
-    googleAnalyticsId:  { type: String, default: null },
-    amount:             { type: Number, default: 0 },
-    currency:           { type: String, default: 'PHP' },
+    communitySlug:           String,
+    communityName:           String,
+    pixelId:                 { type: String, default: null },
+    tiktokPixelId:           { type: String, default: null },
+    googleAnalyticsId:       { type: String, default: null },
+    affiliateFbPixelId:      { type: String, default: null },
+    affiliateTiktokPixelId:  { type: String, default: null },
+    affiliateGaId:           { type: String, default: null },
+    amount:                  { type: Number, default: 0 },
+    currency:                { type: String, default: 'PHP' },
 });
 
 const confirmed = ref(false);
@@ -80,9 +83,12 @@ async function poll() {
                 transaction_id: Date.now().toString(),  // GA4 requires this
             };
             const trackers = [
-                props.pixelId           ? usePixel(props.pixelId)                    : null,
-                props.tiktokPixelId     ? useTiktokPixel(props.tiktokPixelId)        : null,
-                props.googleAnalyticsId ? useGoogleAnalytics(props.googleAnalyticsId): null,
+                props.pixelId              ? usePixel(props.pixelId)                          : null,
+                props.tiktokPixelId        ? useTiktokPixel(props.tiktokPixelId)              : null,
+                props.googleAnalyticsId    ? useGoogleAnalytics(props.googleAnalyticsId)      : null,
+                props.affiliateFbPixelId   ? usePixel(props.affiliateFbPixelId)               : null,
+                props.affiliateTiktokPixelId ? useTiktokPixel(props.affiliateTiktokPixelId)   : null,
+                props.affiliateGaId        ? useGoogleAnalytics(props.affiliateGaId)          : null,
             ].filter(Boolean);
             trackers.forEach(t => { t.init(); t.purchase(purchaseParams); });
 

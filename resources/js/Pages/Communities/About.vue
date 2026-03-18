@@ -340,6 +340,9 @@ const trackers = [
     props.community.facebook_pixel_id   ? usePixel(props.community.facebook_pixel_id)              : null,
     props.community.tiktok_pixel_id     ? useTiktokPixel(props.community.tiktok_pixel_id)          : null,
     props.community.google_analytics_id ? useGoogleAnalytics(props.community.google_analytics_id)  : null,
+    props.invitedBy?.facebook_pixel_id  ? usePixel(props.invitedBy.facebook_pixel_id)              : null,
+    props.invitedBy?.tiktok_pixel_id    ? useTiktokPixel(props.invitedBy.tiktok_pixel_id)          : null,
+    props.invitedBy?.google_analytics_id ? useGoogleAnalytics(props.invitedBy.google_analytics_id) : null,
 ].filter(Boolean);
 
 onMounted(() => {
