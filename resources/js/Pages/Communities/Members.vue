@@ -62,7 +62,7 @@
                             </span>
                         </div>
 
-                        <!-- Info -->
+                        <!-- Info + actions -->
                         <div class="flex-1 min-w-0">
                             <p class="font-semibold text-gray-900 text-sm leading-tight">{{ member.user?.name }}</p>
                             <p class="text-xs text-gray-400 mb-1">@{{ member.user?.username ?? `user${member.user?.id}` }}</p>
@@ -84,40 +84,37 @@
                                     {{ member.role }}
                                 </span>
                             </div>
-                        </div>
 
-                        <!-- Right actions -->
-                        <div class="flex items-center gap-2 shrink-0 pt-1">
-                            <!-- DM chat button (only show to other users) -->
-                            <Link
-                                v-if="$page.props.auth?.user && member.user?.id !== $page.props.auth.user.id"
-                                :href="`/messages/${member.user?.username ?? member.user?.id}`"
-                                class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-gray-200 rounded-full text-gray-500 hover:border-indigo-300 hover:text-indigo-600 transition-colors"
-                            >
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-                                </svg>
-                                Chat
-                            </Link>
-
-                            <!-- Admin role change + remove -->
-                            <template v-if="isAdmin && member.user?.id !== community.owner_id">
-                                <select
-                                    :value="member.role"
-                                    @change="changeRole(member, $event.target.value)"
-                                    class="text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                            <!-- Actions (below info on all screen sizes) -->
+                            <div class="flex items-center gap-2 mt-2 flex-wrap">
+                                <Link
+                                    v-if="$page.props.auth?.user && member.user?.id !== $page.props.auth.user.id"
+                                    :href="`/messages/${member.user?.username ?? member.user?.id}`"
+                                    class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-gray-200 rounded-full text-gray-500 hover:border-indigo-300 hover:text-indigo-600 transition-colors"
                                 >
-                                    <option value="member">Member</option>
-                                    <option value="moderator">Moderator</option>
-                                    <option value="admin">Admin</option>
-                                </select>
-                                <button
-                                    @click="removeMember(member)"
-                                    class="text-xs text-gray-400 hover:text-red-500 transition-colors"
-                                >
-                                    Remove
-                                </button>
-                            </template>
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                                    </svg>
+                                    Chat
+                                </Link>
+                                <template v-if="isAdmin && member.user?.id !== community.owner_id">
+                                    <select
+                                        :value="member.role"
+                                        @change="changeRole(member, $event.target.value)"
+                                        class="text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                                    >
+                                        <option value="member">Member</option>
+                                        <option value="moderator">Moderator</option>
+                                        <option value="admin">Admin</option>
+                                    </select>
+                                    <button
+                                        @click="removeMember(member)"
+                                        class="text-xs text-gray-400 hover:text-red-500 transition-colors"
+                                    >
+                                        Remove
+                                    </button>
+                                </template>
+                            </div>
                         </div>
                     </div>
 

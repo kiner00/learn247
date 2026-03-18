@@ -126,11 +126,12 @@
 
             <!-- Abandoned checkouts -->
             <div v-if="c.abandoned_payments.length > 0" class="border-t border-gray-100">
-                <div class="px-5 py-3 bg-red-50 border-b border-red-100 flex items-center justify-between">
+                <div class="px-5 py-3 bg-red-50 border-b border-red-100 flex items-center justify-between gap-3 flex-wrap">
                     <p class="text-xs font-semibold text-red-700 uppercase tracking-wide">Abandoned Checkouts</p>
                     <span class="text-xs text-red-500">Started checkout but did not pay</span>
                 </div>
-                <table class="w-full text-sm">
+                <div class="overflow-x-auto">
+                <table class="w-full text-sm min-w-125">
                     <thead>
                         <tr class="border-b border-gray-100">
                             <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500">Name</th>
@@ -154,6 +155,7 @@
                         </tr>
                     </tbody>
                 </table>
+                </div>
             </div>
 
             <!-- Recent member payments -->
@@ -161,7 +163,8 @@
                 <div class="px-5 py-3 bg-gray-50 border-b border-gray-100">
                     <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Recent Member Payments</p>
                 </div>
-                <table class="w-full text-sm">
+                <div class="overflow-x-auto">
+                <table class="w-full text-sm min-w-100">
                     <thead>
                         <tr class="border-b border-gray-100">
                             <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500">Member</th>
@@ -182,6 +185,7 @@
                         </tr>
                     </tbody>
                 </table>
+                </div>
             </div>
         </div>
 
@@ -190,7 +194,8 @@
             <div class="px-5 py-4 border-b border-gray-100">
                 <h2 class="text-sm font-bold text-gray-900">Payout Request History</h2>
             </div>
-            <table class="w-full text-sm">
+            <div class="overflow-x-auto">
+            <table class="w-full text-sm min-w-125">
                 <thead class="bg-gray-50 border-b border-gray-200">
                     <tr>
                         <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500">Community</th>
@@ -219,6 +224,7 @@
                     </tr>
                 </tbody>
             </table>
+            </div>
         </div>
     </AppLayout>
 </template>
