@@ -1146,4 +1146,72 @@ class ClassroomControllerTest extends TestCase
 
         $response->assertOk();
     }
+
+    // ─── destroyModule ────────────────────────────────────────────────────────────
+
+    public function test_owner_can_destroy_module(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $course    = Course::create(['community_id' => $community->id, 'title' => 'Course', 'position' => 1]);
+        $module    = CourseModule::create(['course_id' => $course->id, 'title' => 'Module to Delete', 'position' => 1]);
+        CourseLesson::create(['module_id' => $module->id, 'title' => 'Lesson in Module', 'position' => 1]);
+
+        $response = $this->actingAs($owner)
+            ->delete("/communities/{$community->slug}/classroom/courses/{$course->id}/modules/{$module->id}");
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', 'Module deleted!');
+        $this->assertDatabaseMissing('course_modules', ['id' => $module->id]);
+        $this->assertDatabaseMissing('course_lessons', ['module_id' => $module->id]);
+    }
+
+    public function test_non_owner_cannot_destroy_module(): void
+    {
+        $owner     = User::factory()->create();
+        $member    = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $course    = Course::create(['community_id' => $community->id, 'title' => 'Course', 'position' => 1]);
+        $module    = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
+
+        $this->actingAs($member)
+            ->delete("/communities/{$community->slug}/classroom/courses/{$course->id}/modules/{$module->id}")
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('course_modules', ['id' => $module->id]);
+    }
+
+    // ─── destroyLesson ────────────────────────────────────────────────────────────
+
+    public function test_owner_can_destroy_lesson(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $course    = Course::create(['community_id' => $community->id, 'title' => 'Course', 'position' => 1]);
+        $module    = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
+        $lesson    = CourseLesson::create(['module_id' => $module->id, 'title' => 'Lesson to Delete', 'position' => 1]);
+
+        $response = $this->actingAs($owner)
+            ->delete("/communities/{$community->slug}/classroom/courses/{$course->id}/modules/{$module->id}/lessons/{$lesson->id}");
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', 'Lesson deleted!');
+        $this->assertDatabaseMissing('course_lessons', ['id' => $lesson->id]);
+    }
+
+    public function test_non_owner_cannot_destroy_lesson(): void
+    {
+        $owner     = User::factory()->create();
+        $member    = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $course    = Course::create(['community_id' => $community->id, 'title' => 'Course', 'position' => 1]);
+        $module    = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
+        $lesson    = CourseLesson::create(['module_id' => $module->id, 'title' => 'Lesson', 'position' => 1]);
+
+        $this->actingAs($member)
+            ->delete("/communities/{$community->slug}/classroom/courses/{$course->id}/modules/{$module->id}/lessons/{$lesson->id}")
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('course_lessons', ['id' => $lesson->id]);
+    }
 }

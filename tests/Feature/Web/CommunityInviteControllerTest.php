@@ -23,18 +23,23 @@ class CommunityInviteControllerTest extends TestCase
 
     // ── accept ────────────────────────────────────────────────────────────────
 
-    public function test_accept_redirects_guest_to_login(): void
+    public function test_accept_auto_creates_account_for_new_guest_email(): void
     {
+        Mail::fake();
+
         $community = Community::factory()->create();
-        $invite = CommunityInvite::create([
+        $invite    = CommunityInvite::create([
             'community_id' => $community->id,
-            'email'        => 'guest@example.com',
+            'email'        => 'newguest@example.com',
             'token'        => Str::random(64),
             'expires_at'   => now()->addDays(7),
         ]);
 
         $this->get(route('community.invite.accept', $invite->token))
-            ->assertRedirect(route('login', ['redirect' => "/invite/{$invite->token}"]));
+            ->assertRedirect(route('communities.show', $community->slug));
+
+        $this->assertDatabaseHas('users', ['email' => 'newguest@example.com', 'needs_password_setup' => true]);
+        $this->assertDatabaseHas('community_members', ['community_id' => $community->id]);
     }
 
     public function test_accept_with_valid_token_joins_authenticated_user(): void

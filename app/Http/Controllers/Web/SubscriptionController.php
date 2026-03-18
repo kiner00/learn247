@@ -12,6 +12,10 @@ class SubscriptionController extends Controller
 {
     public function checkout(Request $request, Community $community, StartSubscriptionCheckout $action): mixed
     {
+        if ($community->isPendingDeletion()) {
+            return back()->with('error', 'This community is no longer accepting new members.');
+        }
+
         $affiliateCode = $request->cookie('ref_code');
 
         $callbackUrl = GuestCheckoutController::buildCallbackUrl($request->user()->id, $community->slug);

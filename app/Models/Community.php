@@ -20,6 +20,7 @@ class Community extends Model
         'avatar', 'cover_image', 'gallery_images', 'is_private', 'price', 'currency',
         'billing_type', 'affiliate_commission_rate',
         'facebook_pixel_id', 'tiktok_pixel_id', 'google_analytics_id',
+        'deletion_requested_at',
     ];
 
     protected function casts(): array
@@ -29,6 +30,7 @@ class Community extends Model
             'price'                     => 'decimal:2',
             'affiliate_commission_rate' => 'integer',
             'gallery_images'            => 'array',
+            'deletion_requested_at'     => 'datetime',
         ];
     }
 
@@ -104,5 +106,18 @@ class Community extends Model
     public function hasAffiliateProgram(): bool
     {
         return $this->affiliate_commission_rate !== null && $this->affiliate_commission_rate > 0;
+    }
+
+    public function isPendingDeletion(): bool
+    {
+        return $this->deletion_requested_at !== null;
+    }
+
+    public function activeSubscribersCount(): int
+    {
+        return $this->subscriptions()
+            ->where('status', Subscription::STATUS_ACTIVE)
+            ->where('expires_at', '>', now())
+            ->count();
     }
 }

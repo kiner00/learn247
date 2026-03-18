@@ -179,6 +179,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/communities/{community}/gallery', [CommunityController::class, 'addGalleryImage'])->name('communities.gallery.add');
     Route::delete('/communities/{community}/gallery/{index}', [CommunityController::class, 'removeGalleryImage'])->name('communities.gallery.remove');
     Route::delete('/communities/{community}', [CommunityController::class, 'destroy'])->name('communities.destroy');
+    Route::post('/communities/{community}/cancel-deletion', [CommunityController::class, 'cancelDeletion'])->name('communities.cancel-deletion');
     Route::post('/communities/{community}/announce', [CommunityController::class, 'announce'])->name('communities.announce');
 
     // Member management (admin only — enforced by Action)

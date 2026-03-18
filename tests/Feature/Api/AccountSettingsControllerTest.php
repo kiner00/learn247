@@ -198,6 +198,7 @@ class AccountSettingsControllerTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user)->postJson('/api/account/settings/profile', [
+            'username'   => 'updateduser',
             'first_name' => 'Updated',
             'last_name'  => 'Name',
             'bio'        => 'Updated bio',

@@ -210,9 +210,27 @@ class CommunityController extends Controller
     public function destroy(Community $community): RedirectResponse
     {
         $this->authorize('delete', $community);
+
+        $activeCount = $community->activeSubscribersCount();
+
+        if ($activeCount > 0) {
+            // Mark for graceful deletion — no new joins, no renewals, auto-delete when last subscriber expires
+            $community->update(['deletion_requested_at' => now()]);
+
+            return back()->with('info', "Deletion scheduled. The community has {$activeCount} active subscriber(s). It will be automatically deleted once all subscriptions expire. No new members can join and subscriptions will not renew.");
+        }
+
         $community->delete();
 
         return redirect()->route('communities.index')->with('success', 'Community deleted.');
+    }
+
+    public function cancelDeletion(Community $community): RedirectResponse
+    {
+        $this->authorize('delete', $community);
+        $community->update(['deletion_requested_at' => null]);
+
+        return back()->with('success', 'Scheduled deletion cancelled. The community is active again.');
     }
 
     public function analytics(Community $community, CalculateEligibility $eligibility): Response

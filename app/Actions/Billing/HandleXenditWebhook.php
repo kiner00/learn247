@@ -140,12 +140,18 @@ class HandleXenditWebhook
         $chaChing          = null;
 
         DB::transaction(function () use ($subscription, $payload, $eventId, $status, &$guestMailData, &$chaChing) {
-            $newSubStatus  = $this->mapSubscriptionStatus($status);
-            $isOneTime     = $subscription->community?->billing_type === \App\Models\Community::BILLING_ONE_TIME;
+            $newSubStatus     = $this->mapSubscriptionStatus($status);
+            $community        = $subscription->community;
+            $pendingDeletion  = $community?->isPendingDeletion();
+            $isOneTime        = $community?->billing_type === \App\Models\Community::BILLING_ONE_TIME;
 
-            // One-time billing → no expiry. Monthly → extend by 1 month.
+            // One-time billing → no expiry.
+            // Monthly pending-deletion → do NOT extend; let current expiry stand so subscriber finishes their paid period.
+            // Monthly normal → extend by 1 month on payment.
             if ($isOneTime) {
                 $newExpiresAt = null;
+            } elseif ($pendingDeletion) {
+                $newExpiresAt = $subscription->expires_at; // keep as-is, no renewal
             } else {
                 $newExpiresAt = $subscription->expires_at && $subscription->expires_at->isFuture()
                     ? $subscription->expires_at->addMonth()
@@ -178,31 +184,31 @@ class HandleXenditWebhook
             }
 
             // Record affiliate commission if this subscription came via a referral
+            // Skip cha-ching emails for pending-deletion communities (renewal payments on the way out)
             if ($payment && $paymentStatus === Payment::STATUS_PAID && $subscription->affiliate_id) {
                 $this->recordConversion->execute($subscription->load('affiliate.community'), $payment);
 
-                // Prepare cha-ching emails for affiliate and creator
-                $affiliate     = $subscription->affiliate;
-                $community     = $subscription->community;
-                $affiliateUser = $affiliate->user;
-                $creator       = $community->owner;
-                $saleAmount    = (float) ($payload['amount'] ?? 0);
-                $rate          = $community->affiliate_commission_rate / 100;
-                $commission    = round($saleAmount * $rate, 2);
+                if (! $pendingDeletion) {
+                    $affiliate     = $subscription->affiliate;
+                    $affiliateUser = $affiliate->user;
+                    $creator       = $community->owner;
+                    $saleAmount    = (float) ($payload['amount'] ?? 0);
+                    $rate          = $community->affiliate_commission_rate / 100;
+                    $commission    = round($saleAmount * $rate, 2);
 
+                    $chaChing = [
+                        'affiliate_user' => $affiliateUser,
+                        'creator'        => $creator,
+                        'community'      => $community,
+                        'sale_amount'    => $saleAmount,
+                        'commission'     => $commission,
+                        'referred_by'    => $affiliateUser->name,
+                    ];
+                }
+            } elseif ($payment && $paymentStatus === Payment::STATUS_PAID && ! $pendingDeletion) {
+                // No affiliate — still notify creator (skip if pending deletion)
+                $creator  = $community->owner;
                 $chaChing = [
-                    'affiliate_user' => $affiliateUser,
-                    'creator'        => $creator,
-                    'community'      => $community,
-                    'sale_amount'    => $saleAmount,
-                    'commission'     => $commission,
-                    'referred_by'    => $affiliateUser->name,
-                ];
-            } elseif ($payment && $paymentStatus === Payment::STATUS_PAID) {
-                // No affiliate — still notify creator
-                $community = $subscription->community;
-                $creator   = $community->owner;
-                $chaChing  = [
                     'affiliate_user' => null,
                     'creator'        => $creator,
                     'community'      => $community,
@@ -256,6 +262,15 @@ class HandleXenditWebhook
             }
 
             $this->syncMembership->execute($subscription->fresh());
+
+            // Auto-delete the community when the last active subscriber expires/cancels
+            if ($pendingDeletion && in_array($newSubStatus, [Subscription::STATUS_EXPIRED, Subscription::STATUS_CANCELLED])) {
+                $remainingActive = $community->activeSubscribersCount();
+                if ($remainingActive === 0) {
+                    Log::info('Graceful deletion: all subscribers expired, deleting community', ['community_id' => $community->id]);
+                    $community->delete();
+                }
+            }
         });
 
         // ── 5. Send email outside transaction so mail errors never roll back payment ──

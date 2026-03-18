@@ -56,9 +56,10 @@ class AccountSettingsControllerTest extends TestCase
 
     public function test_update_profile_basic_fields(): void
     {
-        $user = User::factory()->create(['name' => 'Old Name']);
+        $user = User::factory()->create(['name' => 'Old Name', 'username' => 'oldusername']);
 
         $response = $this->actingAs($user)->patch('/account/settings/profile', [
+            'username'   => 'newusername',
             'first_name' => 'John',
             'last_name'  => 'Doe',
             'bio'        => 'My bio',
@@ -78,9 +79,10 @@ class AccountSettingsControllerTest extends TestCase
     {
         Storage::fake('public');
 
-        $user = User::factory()->create();
+        $user = User::factory()->create(['username' => 'janedoe']);
 
         $response = $this->actingAs($user)->post('/account/settings/profile', [
+            'username'   => 'janedoe',
             'first_name' => 'Jane',
             'last_name'  => 'Doe',
             'avatar'     => UploadedFile::fake()->image('avatar.jpg', 200, 200),

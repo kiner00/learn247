@@ -30,7 +30,12 @@ class GuestCheckoutController extends Controller
         ]);
 
         $community = $affiliate->community;
-        $user      = $checkout->findOrCreateUser($data);
+
+        if ($community->isPendingDeletion()) {
+            return back()->withErrors(['email' => 'This community is no longer accepting new members.']);
+        }
+
+        $user = $checkout->findOrCreateUser($data);
 
         if ($checkout->hasActiveSubscription($user->id, $community->id)) {
             return back()->withErrors(['email' => 'This email already has an active subscription to this community.']);
