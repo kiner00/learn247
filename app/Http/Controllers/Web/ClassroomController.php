@@ -187,6 +187,15 @@ class ClassroomController extends Controller
         return back()->with('success', 'Module deleted!');
     }
 
+    public function destroyLesson(Request $request, Community $community, Course $course, CourseModule $module, CourseLesson $lesson): RedirectResponse
+    {
+        abort_unless($request->user()->id === $community->owner_id, 403);
+
+        $lesson->delete();
+
+        return back()->with('success', 'Lesson deleted!');
+    }
+
     public function storeLesson(Request $request, Community $community, Course $course, CourseModule $module, ManageLesson $action): RedirectResponse
     {
         abort_unless($request->user()->id === $community->owner_id, 403);

@@ -206,6 +206,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/complete', [ClassroomController::class, 'completeLesson'])->name('communities.classroom.lessons.complete');
         Route::post('/communities/{community}/classroom/courses/{course}/modules/{module}/lessons/reorder', [ClassroomController::class, 'reorderLessons'])->name('communities.classroom.lessons.reorder');
         Route::match(['patch', 'post'], '/communities/{community}/classroom/courses/{course}/modules/{module}/lessons/{lesson}', [ClassroomController::class, 'updateLesson'])->name('communities.classroom.lessons.update');
+        Route::delete('/communities/{community}/classroom/courses/{course}/modules/{module}/lessons/{lesson}', [ClassroomController::class, 'destroyLesson'])->name('communities.classroom.lessons.destroy');
         Route::post('/communities/{community}/classroom/lesson-images', [ClassroomController::class, 'uploadLessonImage'])->name('communities.classroom.lesson-images');
 
         // Lesson comments

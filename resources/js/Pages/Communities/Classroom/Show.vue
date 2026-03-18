@@ -213,10 +213,17 @@
                                     >
                                         {{ lesson.title }}
                                     </span>
-                                    <span v-if="lesson.quiz" class="ml-auto shrink-0 text-xs px-1.5 py-0.5 rounded-full"
+                                    <span v-if="lesson.quiz" class="shrink-0 text-xs px-1.5 py-0.5 rounded-full"
                                         :class="bestAttempt(lesson.quiz?.id)?.passed ? 'bg-green-100 text-green-700' : 'bg-indigo-50 text-indigo-500'">
                                         {{ bestAttempt(lesson.quiz?.id)?.passed ? '✓ Quiz' : '📝' }}
                                     </span>
+                                    <button @click.stop="deleteLesson(mod, lesson)"
+                                        class="ml-auto shrink-0 text-gray-300 hover:text-red-500 transition-colors p-0.5 rounded"
+                                        title="Delete lesson">
+                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                    </button>
                                 </div>
                             </template>
                         </draggable>
@@ -766,6 +773,15 @@ function saveModuleTitle(mod) {
                 onSuccess: () => { editingModuleId.value = null; },
             }
         );
+}
+
+// ─── Delete lesson ────────────────────────────────────────────────────────────
+function deleteLesson(mod, lesson) {
+    if (!confirm(`Delete lesson "${lesson.title}"?`)) return;
+    router.delete(
+        `/communities/${props.community.slug}/classroom/courses/${props.course.id}/modules/${mod.id}/lessons/${lesson.id}`,
+        { preserveScroll: true }
+    );
 }
 
 // ─── Delete module ────────────────────────────────────────────────────────────
