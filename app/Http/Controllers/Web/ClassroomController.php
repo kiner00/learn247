@@ -130,7 +130,7 @@ class ClassroomController extends Controller
             return false;
         }
 
-        if ($user->id === $community->owner_id) {
+        if ($user->id === $community->owner_id || $user->isSuperAdmin()) {
             return true;
         }
 
