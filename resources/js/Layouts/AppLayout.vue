@@ -930,8 +930,11 @@
 
 <script setup>
 import { ref, computed, watch, watchEffect, onMounted, onBeforeUnmount, nextTick } from 'vue';
-import { Link, usePage, useForm } from '@inertiajs/vue3';
+import { Link, usePage, useForm, router } from '@inertiajs/vue3';
 import { useCreateModal } from '@/composables/useCreateModal';
+import { usePixel } from '@/composables/usePixel';
+import { useTiktokPixel } from '@/composables/useTiktokPixel';
+import { useGoogleAnalytics } from '@/composables/useGoogleAnalytics';
 
 const curzzoIcon = '/brand/ICON/CURZZO LOGO WHIT BG ROUND.png';
 
@@ -1167,7 +1170,19 @@ function handleOutsideClick(e) {
     }
 }
 
-onMounted(()      => document.addEventListener('click', handleOutsideClick));
+onMounted(() => {
+    document.addEventListener('click', handleOutsideClick);
+
+    // ── Tracking pixels — init each once, fire PageView on every SPA navigation ──
+    const trackers = [
+        props.community?.facebook_pixel_id  ? usePixel(props.community.facebook_pixel_id)                   : null,
+        props.community?.tiktok_pixel_id    ? useTiktokPixel(props.community.tiktok_pixel_id)               : null,
+        props.community?.google_analytics_id ? useGoogleAnalytics(props.community.google_analytics_id)      : null,
+    ].filter(Boolean);
+
+    trackers.forEach(t => { t.init(); t.pageView(); });
+    router.on('navigate', () => trackers.forEach(t => t.pageView()));
+});
 onBeforeUnmount(() => document.removeEventListener('click', handleOutsideClick));
 
 // ─── AI Assistant ──────────────────────────────────────────────────────────────

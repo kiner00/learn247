@@ -321,6 +321,9 @@ import { useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import CommunityTabs from '@/Components/CommunityTabs.vue';
 import InviteModal from '@/Components/InviteModal.vue';
+import { usePixel } from '@/composables/usePixel';
+import { useTiktokPixel } from '@/composables/useTiktokPixel';
+import { useGoogleAnalytics } from '@/composables/useGoogleAnalytics';
 
 const props = defineProps({
     community:     Object,
@@ -333,11 +336,26 @@ const props = defineProps({
 const showInviteModal = ref(false);
 const showJoinModal   = ref(false);
 
+const trackers = [
+    props.community.facebook_pixel_id   ? usePixel(props.community.facebook_pixel_id)              : null,
+    props.community.tiktok_pixel_id     ? useTiktokPixel(props.community.tiktok_pixel_id)          : null,
+    props.community.google_analytics_id ? useGoogleAnalytics(props.community.google_analytics_id)  : null,
+].filter(Boolean);
+
 onMounted(() => {
     const params = new URLSearchParams(window.location.search);
     if ((params.get('popup') === 'true' || params.get('modal') === 'true') && !props.membership) {
         showJoinModal.value = true;
     }
+
+    // ViewContent — someone landed on the community landing page (likely from an ad)
+    trackers.forEach(t => t.viewContent({
+        content_name:     props.community.name,
+        content_category: props.community.category ?? 'Community',
+        content_type:     'product',
+        value:            Number(props.community.price ?? 0),
+        currency:         props.community.currency ?? 'PHP',
+    }));
 });
 const lightboxImg     = ref(null);
 const activeBannerImg = ref(props.community.cover_image || null);
@@ -360,6 +378,12 @@ function closeModal() {
 }
 
 function submitJoin() {
+    trackers.forEach(t => t.lead({
+        content_name: props.community.name,
+        content_type: 'product',
+        value:        Number(props.community.price ?? 0),
+        currency:     props.community.currency ?? 'PHP',
+    }));
     joinForm.post(`/ref-checkout/${props.invitedBy.code}`);
 }
 

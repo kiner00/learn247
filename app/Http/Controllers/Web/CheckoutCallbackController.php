@@ -41,8 +41,13 @@ class CheckoutCallbackController extends Controller
         Auth::login($userModel, true);
 
         return Inertia::render('CheckoutProcessing', [
-            'communitySlug' => $communityModel->slug,
-            'communityName' => $communityModel->name,
+            'communitySlug'     => $communityModel->slug,
+            'communityName'     => $communityModel->name,
+            'pixelId'           => $communityModel->facebook_pixel_id,
+            'tiktokPixelId'     => $communityModel->tiktok_pixel_id,
+            'googleAnalyticsId' => $communityModel->google_analytics_id,
+            'amount'            => (float) $communityModel->price,
+            'currency'          => $communityModel->currency ?? 'PHP',
         ]);
     }
 

@@ -31,10 +31,18 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
 import { router } from '@inertiajs/vue3';
+import { usePixel } from '@/composables/usePixel';
+import { useTiktokPixel } from '@/composables/useTiktokPixel';
+import { useGoogleAnalytics } from '@/composables/useGoogleAnalytics';
 
 const props = defineProps({
-    communitySlug: String,
-    communityName: String,
+    communitySlug:      String,
+    communityName:      String,
+    pixelId:            { type: String, default: null },
+    tiktokPixelId:      { type: String, default: null },
+    googleAnalyticsId:  { type: String, default: null },
+    amount:             { type: Number, default: 0 },
+    currency:           { type: String, default: 'PHP' },
 });
 
 const confirmed = ref(false);
@@ -62,6 +70,22 @@ async function poll() {
         if (data.active) {
             confirmed.value = true;
             clearInterval(timer);
+
+            // Fire Purchase across all active trackers before redirecting
+            const purchaseParams = {
+                value:          props.amount,
+                currency:       props.currency,
+                content_name:   props.communityName,
+                content_type:   'product',
+                transaction_id: Date.now().toString(),  // GA4 requires this
+            };
+            const trackers = [
+                props.pixelId           ? usePixel(props.pixelId)                    : null,
+                props.tiktokPixelId     ? useTiktokPixel(props.tiktokPixelId)        : null,
+                props.googleAnalyticsId ? useGoogleAnalytics(props.googleAnalyticsId): null,
+            ].filter(Boolean);
+            trackers.forEach(t => { t.init(); t.purchase(purchaseParams); });
+
             setTimeout(() => {
                 router.visit(`/communities/${props.communitySlug}`);
             }, 1200);

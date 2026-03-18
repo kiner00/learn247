@@ -19,6 +19,7 @@ class Community extends Model
         'name', 'slug', 'owner_id', 'description', 'category',
         'avatar', 'cover_image', 'gallery_images', 'is_private', 'price', 'currency',
         'billing_type', 'affiliate_commission_rate',
+        'facebook_pixel_id', 'tiktok_pixel_id', 'google_analytics_id',
     ];
 
     protected function casts(): array

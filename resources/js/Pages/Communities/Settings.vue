@@ -452,6 +452,104 @@
                 <p v-if="inviteSent" class="mt-3 text-sm text-green-600">{{ inviteSentMessage }}</p>
             </div>
 
+            <!-- Integrations -->
+            <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
+                <h2 class="text-base font-semibold text-gray-900 mb-1">Integrations</h2>
+                <p class="text-sm text-gray-500 mb-5">
+                    Connect third-party tools to track conversions and optimize your ads.
+                </p>
+                <form @submit.prevent="saveIntegrations" class="space-y-5">
+                    <!-- Facebook Pixel -->
+                    <div>
+                        <label class="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1.5">
+                            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.234 2.686.234v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>
+                            Facebook Pixel ID
+                        </label>
+                        <input
+                            v-model="integrationsForm.facebook_pixel_id"
+                            type="text"
+                            placeholder="e.g. 1234567890123456"
+                            maxlength="30"
+                            class="w-full max-w-sm px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            :class="integrationsForm.errors.facebook_pixel_id ? 'border-red-400' : ''"
+                        />
+                        <p class="mt-1 text-xs text-gray-400">Events Manager → your Pixel → Settings.</p>
+                        <p v-if="integrationsForm.errors.facebook_pixel_id" class="mt-1 text-xs text-red-600">{{ integrationsForm.errors.facebook_pixel_id }}</p>
+                    </div>
+
+                    <!-- TikTok Pixel -->
+                    <div>
+                        <label class="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1.5">
+                            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.79 1.53V6.75a4.85 4.85 0 01-1.02-.06z"/></svg>
+                            TikTok Pixel ID
+                        </label>
+                        <input
+                            v-model="integrationsForm.tiktok_pixel_id"
+                            type="text"
+                            placeholder="e.g. C9ABCDEF12345678"
+                            maxlength="30"
+                            class="w-full max-w-sm px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            :class="integrationsForm.errors.tiktok_pixel_id ? 'border-red-400' : ''"
+                        />
+                        <p class="mt-1 text-xs text-gray-400">TikTok Ads Manager → Assets → Events → Web Events.</p>
+                        <p v-if="integrationsForm.errors.tiktok_pixel_id" class="mt-1 text-xs text-red-600">{{ integrationsForm.errors.tiktok_pixel_id }}</p>
+                    </div>
+
+                    <!-- Google Analytics -->
+                    <div>
+                        <label class="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1.5">
+                            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24"><path d="M12 22.5a2 2 0 002-2V3.5a2 2 0 00-4 0v17a2 2 0 002 2z" fill="#F9AB00"/><path d="M19.5 22.5a2 2 0 002-2v-7a2 2 0 00-4 0v7a2 2 0 002 2z" fill="#E37400"/><path d="M4.5 22.5a2.5 2.5 0 002.5-2.5v-1a2.5 2.5 0 00-5 0v1a2.5 2.5 0 002.5 2.5z" fill="#E37400"/></svg>
+                            Google Analytics 4 ID
+                        </label>
+                        <input
+                            v-model="integrationsForm.google_analytics_id"
+                            type="text"
+                            placeholder="e.g. G-XXXXXXXXXX"
+                            maxlength="20"
+                            class="w-full max-w-sm px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            :class="integrationsForm.errors.google_analytics_id ? 'border-red-400' : ''"
+                        />
+                        <p class="mt-1 text-xs text-gray-400">GA4 → Admin → Data Streams → your stream → Measurement ID.</p>
+                        <p v-if="integrationsForm.errors.google_analytics_id" class="mt-1 text-xs text-red-600">{{ integrationsForm.errors.google_analytics_id }}</p>
+                    </div>
+
+                    <div class="flex items-center gap-3 pt-1">
+                        <button
+                            type="submit"
+                            :disabled="integrationsForm.processing"
+                            class="px-5 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                        >
+                            Save integrations
+                        </button>
+                        <p v-if="integrationsSaved" class="text-sm text-green-600">Saved!</p>
+                    </div>
+
+                    <!-- Events legend -->
+                    <div v-if="integrationsForm.facebook_pixel_id || integrationsForm.tiktok_pixel_id || integrationsForm.google_analytics_id"
+                         class="p-3 bg-gray-50 rounded-lg">
+                        <p class="text-xs font-semibold text-gray-600 mb-2">Events fired automatically across all active platforms:</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-gray-500">
+                            <div>
+                                <p class="font-semibold text-gray-600 mb-1">📄 Page Visit</p>
+                                <p class="text-gray-400">FB: PageView<br>TT: page()<br>GA: page_view</p>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-600 mb-1">👁️ Landing Page</p>
+                                <p class="text-gray-400">FB: ViewContent<br>TT: ViewContent<br>GA: view_item</p>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-600 mb-1">✋ Join Form</p>
+                                <p class="text-gray-400">FB: Lead<br>TT: PlaceAnOrder<br>GA: begin_checkout</p>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-600 mb-1">💰 Payment</p>
+                                <p class="text-gray-400">FB: Purchase<br>TT: CompletePayment<br>GA: purchase</p>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
             <!-- Danger zone -->
             <div class="bg-white border border-red-200 rounded-2xl p-6">
                 <h2 class="text-base font-semibold text-red-600 mb-1">Danger zone</h2>
@@ -480,10 +578,11 @@ const props = defineProps({
     levelPerks:  { type: Object, default: () => ({}) },
 });
 
-const saved          = ref(false);
-const imagesSaved    = ref(false);
-const affiliateSaved = ref(false);
-const perksSaved     = ref(false);
+const saved             = ref(false);
+const imagesSaved       = ref(false);
+const affiliateSaved    = ref(false);
+const integrationsSaved = ref(false);
+const perksSaved        = ref(false);
 const perksSaving    = ref(false);
 const announceSent   = ref(false);
 const coverPreview   = ref(null);
@@ -577,6 +676,23 @@ function saveAffiliate() {
             onSuccess: () => {
                 affiliateSaved.value = true;
                 setTimeout(() => (affiliateSaved.value = false), 3000);
+            },
+        });
+}
+
+const integrationsForm = useForm({
+    name:                 props.community.name,
+    facebook_pixel_id:    props.community.facebook_pixel_id   ?? '',
+    tiktok_pixel_id:      props.community.tiktok_pixel_id     ?? '',
+    google_analytics_id:  props.community.google_analytics_id ?? '',
+});
+
+function saveIntegrations() {
+    integrationsForm.transform(data => ({ ...data, _method: 'PATCH' }))
+        .post(`/communities/${props.community.slug}`, {
+            onSuccess: () => {
+                integrationsSaved.value = true;
+                setTimeout(() => (integrationsSaved.value = false), 3000);
             },
         });
 }

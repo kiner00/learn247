@@ -164,6 +164,9 @@ class CommunityController extends Controller
             'billing_type'             => ['nullable', 'string', 'in:monthly,one_time'],
             'is_private'               => ['boolean'],
             'affiliate_commission_rate' => ['nullable', 'integer', 'min:0', 'max:85'],
+            'facebook_pixel_id'         => ['nullable', 'string', 'max:30', 'regex:/^\d+$/'],
+            'tiktok_pixel_id'           => ['nullable', 'string', 'max:30', 'regex:/^[A-Z0-9]+$/i'],
+            'google_analytics_id'       => ['nullable', 'string', 'max:20', 'regex:/^G-[A-Z0-9]+$/i'],
         ]);
 
         $action->execute($community, $data, $request->file('avatar'), $request->file('cover_image'));
