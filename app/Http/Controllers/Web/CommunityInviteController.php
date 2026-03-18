@@ -66,7 +66,7 @@ class CommunityInviteController extends Controller
             $user = User::where('email', $invite->email)->first();
 
             if (! $user) {
-                // New user — create account and send temp password
+                // New user — create account with temp password
                 $tempPassword = Str::random(12);
                 $user = User::create([
                     'name'                 => explode('@', $invite->email)[0],
@@ -74,6 +74,11 @@ class CommunityInviteController extends Controller
                     'password'             => bcrypt($tempPassword),
                     'needs_password_setup' => true,
                 ]);
+                Mail::to($user)->send(new TempPasswordMail($user, $tempPassword, $invite->community));
+            } elseif ($user->needs_password_setup) {
+                // Existing user who never set a real password — refresh temp password and resend
+                $tempPassword = Str::random(12);
+                $user->update(['password' => bcrypt($tempPassword)]);
                 Mail::to($user)->send(new TempPasswordMail($user, $tempPassword, $invite->community));
             }
 
