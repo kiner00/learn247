@@ -160,6 +160,16 @@
                                 </svg>
                                 Edit
                             </button>
+                            <button
+                                v-if="isOwner && editingModuleId !== mod.id"
+                                @click.stop="deleteModule(mod)"
+                                class="flex items-center px-1.5 py-1 rounded-lg text-xs font-medium text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                title="Delete module"
+                            >
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
                             <span class="text-xs text-gray-400" @click="toggleModule(mod.id)">
                                 {{ completedInModule(mod) }}/{{ mod.lessons.length }}
                                 <span class="ml-1">{{ openModules.has(mod.id) ? '▲' : '▼' }}</span>
@@ -756,6 +766,15 @@ function saveModuleTitle(mod) {
                 onSuccess: () => { editingModuleId.value = null; },
             }
         );
+}
+
+// ─── Delete module ────────────────────────────────────────────────────────────
+function deleteModule(mod) {
+    if (!confirm(`Delete module "${mod.title}" and all its lessons?`)) return;
+    router.delete(
+        `/communities/${props.community.slug}/classroom/courses/${props.course.id}/modules/${mod.id}`,
+        { preserveScroll: true }
+    );
 }
 
 // ─── Toggle module free ────────────────────────────────────────────────────────

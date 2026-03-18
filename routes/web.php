@@ -201,6 +201,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('/communities/{community}/classroom/courses/{course}', [ClassroomController::class, 'destroyCourse'])->name('communities.classroom.courses.destroy');
         Route::post('/communities/{community}/classroom/courses/{course}/modules', [ClassroomController::class, 'storeModule'])->name('communities.classroom.modules.store');
         Route::match(['patch', 'post'], '/communities/{community}/classroom/courses/{course}/modules/{module}', [ClassroomController::class, 'updateModule'])->name('communities.classroom.modules.update');
+        Route::delete('/communities/{community}/classroom/courses/{course}/modules/{module}', [ClassroomController::class, 'destroyModule'])->name('communities.classroom.modules.destroy');
         Route::post('/communities/{community}/classroom/courses/{course}/modules/{module}/lessons', [ClassroomController::class, 'storeLesson'])->name('communities.classroom.lessons.store');
         Route::post('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/complete', [ClassroomController::class, 'completeLesson'])->name('communities.classroom.lessons.complete');
         Route::post('/communities/{community}/classroom/courses/{course}/modules/{module}/lessons/reorder', [ClassroomController::class, 'reorderLessons'])->name('communities.classroom.lessons.reorder');
