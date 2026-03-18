@@ -368,6 +368,15 @@
                         <!-- Edit form (owner only) -->
                         <div v-if="isOwner && editingLesson" class="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-3">
                             <p class="text-xs font-semibold text-gray-700">Edit Lesson</p>
+                            <div>
+                                <p class="text-xs text-gray-500 mb-1.5 font-medium">Title</p>
+                                <input
+                                    v-model="contentForm.title"
+                                    type="text"
+                                    placeholder="Lesson title"
+                                    class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                />
+                            </div>
                             <LessonEditor
                                 v-model="contentForm.content"
                                 placeholder="Lesson description / notes..."
@@ -792,10 +801,11 @@ function onLessonDragEnd(mod) {
 
 // ─── Edit lesson ──────────────────────────────────────────────────────────────
 const editingLesson = ref(false);
-const contentForm   = useForm({ content: '', video_url: '' });
+const contentForm   = useForm({ title: '', content: '', video_url: '' });
 
 function startEdit() {
     const l = selectedLesson.value;
+    contentForm.title     = l?.title ?? '';
     contentForm.content   = l?.content ?? '';
     contentForm.video_url = l?.video_url ?? '';
     editingLesson.value   = true;

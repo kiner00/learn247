@@ -196,6 +196,7 @@ class ClassroomController extends Controller
         abort_unless($request->user()->id === $community->owner_id, 403);
 
         $data = $request->validate([
+            'title'     => ['sometimes', 'string', 'max:255'],
             'content'   => ['nullable', 'string'],
             'video_url' => ['nullable', 'url', 'max:500'],
         ]);
