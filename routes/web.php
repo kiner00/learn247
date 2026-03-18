@@ -230,6 +230,7 @@ Route::middleware('auth')->group(function () {
     });
 
     // Posts & comments (not community-scoped — community check done in Action)
+    Route::patch('/posts/{post}', [PostController::class, 'update'])->name('posts.update');
     Route::delete('/posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
     Route::post('/posts/{post}/pin', [PostController::class, 'togglePin'])->name('posts.pin');
     Route::post('/posts/{post}/like', [LikeController::class, 'togglePost'])->name('posts.like');

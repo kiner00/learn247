@@ -20,6 +20,20 @@ class PostController extends Controller
         return back();
     }
 
+    public function update(Post $post): RedirectResponse
+    {
+        abort_unless(auth()->id() === $post->user_id, 403);
+
+        $data = request()->validate([
+            'title'   => 'nullable|string|max:255',
+            'content' => 'required|string|max:10000',
+        ]);
+
+        $post->update($data);
+
+        return back();
+    }
+
     public function destroy(Post $post, DeletePost $action): RedirectResponse
     {
         $action->execute(auth()->user(), $post);

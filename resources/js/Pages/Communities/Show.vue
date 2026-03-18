@@ -108,6 +108,10 @@
                                     :title="post.is_pinned ? 'Unpin post' : 'Pin post'">
                                     📌
                                 </button>
+                                <button v-if="post.user_id === page.props.auth?.user?.id" @click.stop="startEdit(post)"
+                                    class="text-xs text-gray-400 hover:text-indigo-500 transition-colors px-2 py-1 rounded hover:bg-indigo-50 dark:hover:bg-indigo-900/20">
+                                    Edit
+                                </button>
                                 <button v-if="canDeletePost(post)" @click.stop="deletePost(post)"
                                     class="text-xs text-gray-400 hover:text-red-500 transition-colors px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20">
                                     Delete
@@ -115,9 +119,29 @@
                             </div>
                         </div>
 
+                        <!-- Inline edit form -->
+                        <form v-if="editingPostId === post.id" @submit.prevent="submitEdit(post)" @click.stop class="space-y-2 mb-3">
+                            <input v-model="editForm.title" type="text" placeholder="Title (optional)"
+                                class="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                            <textarea v-model="editForm.content" rows="4" required
+                                class="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
+                            <div class="flex gap-2 justify-end">
+                                <button type="button" @click.stop="cancelEdit()"
+                                    class="px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                    Cancel
+                                </button>
+                                <button type="submit" :disabled="editForm.processing"
+                                    class="px-3 py-1.5 text-xs rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+                                    Save
+                                </button>
+                            </div>
+                        </form>
+
                         <!-- Content -->
-                        <h3 v-if="post.title" class="font-bold text-gray-900 dark:text-gray-100 mb-1.5">{{ post.title }}</h3>
-                        <div class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed line-clamp-4 prose prose-sm max-w-none" v-html="mdToHtml(post.content)" />
+                        <template v-else>
+                            <h3 v-if="post.title" class="font-bold text-gray-900 dark:text-gray-100 mb-1.5">{{ post.title }}</h3>
+                            <div class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed line-clamp-4 prose prose-sm max-w-none" v-html="mdToHtml(post.content)" />
+                        </template>
 
                         <!-- Post image -->
                         <img v-if="post.image" :src="post.image" @click.stop="lightboxImg = post.image"
@@ -622,6 +646,27 @@ function checkout() {
 }
 
 // ─── Posts ────────────────────────────────────────────────────────────────────
+const editingPostId = ref(null);
+const editForm      = useForm({ title: '', content: '' });
+
+function startEdit(post) {
+    editingPostId.value = post.id;
+    editForm.title   = post.title ?? '';
+    editForm.content = post.content ?? '';
+}
+
+function cancelEdit() {
+    editingPostId.value = null;
+    editForm.reset();
+}
+
+function submitEdit(post) {
+    editForm.patch(`/posts/${post.id}`, {
+        preserveScroll: true,
+        onSuccess: () => { editingPostId.value = null; },
+    });
+}
+
 const postForm         = useForm({ title: '', content: '', image: null, video_url: '' });
 const postImagePreview = ref(null);
 const postImageInput   = ref(null);
