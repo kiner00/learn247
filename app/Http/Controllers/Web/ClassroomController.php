@@ -26,9 +26,10 @@ class ClassroomController extends Controller
 {
     public function index(Community $community, GetCourseList $query): Response
     {
-        $userId = auth()->id();
+        $userId        = auth()->id();
+        $isSuperAdmin  = auth()->user()?->isSuperAdmin() ?? false;
         $community->loadCount('members');
-        $courses   = $query->execute($community, $userId);
+        $courses   = $query->execute($community, $userId, $isSuperAdmin);
         $affiliate = $userId ? $community->affiliates()->where('user_id', $userId)->first() : null;
 
         return Inertia::render('Communities/Classroom/Index', compact('community', 'courses', 'affiliate'));

@@ -11,9 +11,9 @@ use Illuminate\Support\Collection;
 
 class GetCourseList
 {
-    public function execute(Community $community, ?int $userId): Collection
+    public function execute(Community $community, ?int $userId, bool $isSuperAdmin = false): Collection
     {
-        $isOwner = $userId && $userId === $community->owner_id;
+        $isOwner = $isSuperAdmin || ($userId && $userId === $community->owner_id);
 
         $isMember = $userId && Subscription::where('community_id', $community->id)
             ->where('user_id', $userId)

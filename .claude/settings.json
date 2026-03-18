@@ -5,7 +5,9 @@
       "Bash(find /Users/kiner/Desktop/learn247 -type f -name *[Bb]adge*)",
       "Bash(docker ps:*)",
       "Bash(docker compose:*)",
-      "Bash(k6 run:*)"
+      "Bash(k6 run:*)",
+      "WebFetch(domain:docs.xendit.co)",
+      "WebSearch"
     ],
     "additionalDirectories": [
       "/tmp"

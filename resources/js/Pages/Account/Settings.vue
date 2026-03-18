@@ -589,7 +589,7 @@
                                 <select v-model="payoutForm.bank_name"
                                         class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                                     <option value="">-- Select Bank --</option>
-                                    <option v-for="b in PH_BANKS" :key="b.code" :value="b.name">{{ b.name }}</option>
+                                    <option v-for="b in PH_BANKS" :key="b.code" :value="b.code">{{ b.name }}</option>
                                 </select>
                             </div>
                             <div>
@@ -808,22 +808,36 @@ function savePassword() {
 
 // ── Payout ────────────────────────────────────────────────────────────────────
 const PH_BANKS = [
-    { code: 'BDO',          name: 'BDO Unibank' },
-    { code: 'BPI',          name: 'Bank of the Philippine Islands (BPI)' },
-    { code: 'METROBANK',    name: 'Metrobank' },
-    { code: 'UNIONBANK',    name: 'UnionBank' },
-    { code: 'PNB',          name: 'Philippine National Bank (PNB)' },
-    { code: 'RCBC',         name: 'RCBC' },
-    { code: 'CHINABANK',    name: 'China Bank' },
-    { code: 'EASTWEST',     name: 'EastWest Bank' },
-    { code: 'SECURITYBANK', name: 'Security Bank' },
-    { code: 'LANDBANK',     name: 'Landbank' },
-    { code: 'DBP',          name: 'Development Bank of the Philippines (DBP)' },
-    { code: 'PSBANK',       name: 'PSBank' },
-    { code: 'MAYABANK',     name: 'Maya Bank' },
-    { code: 'SEABANK',      name: 'SeaBank' },
-    { code: 'TONIK',        name: 'Tonik Bank' },
-    { code: 'CIMB',         name: 'CIMB Bank' },
+    { code: 'PH_BDO',     name: 'BDO Unibank' },
+    { code: 'PH_BPI',     name: 'Bank of the Philippine Islands (BPI)' },
+    { code: 'PH_MET',     name: 'Metrobank' },
+    { code: 'PH_UBP',     name: 'UnionBank of the Philippines' },
+    { code: 'PH_PNB',     name: 'Philippine National Bank (PNB)' },
+    { code: 'PH_RCBC',    name: 'RCBC' },
+    { code: 'PH_CBC',     name: 'China Banking Corporation' },
+    { code: 'PH_CBS',     name: 'China Bank Savings' },
+    { code: 'PH_EWB',     name: 'EastWest Bank' },
+    { code: 'PH_SEC',     name: 'Security Bank' },
+    { code: 'PH_LBP',     name: 'Land Bank of the Philippines' },
+    { code: 'PH_DBP',     name: 'Development Bank of the Philippines (DBP)' },
+    { code: 'PH_PSB',     name: 'PSBank' },
+    { code: 'PH_ROB',     name: 'Robinsons Bank' },
+    { code: 'PH_PBC',     name: 'Philippine Bank of Communications (PBCOM)' },
+    { code: 'PH_PBB',     name: 'Philippine Business Bank' },
+    { code: 'PH_AUB',     name: 'Asia United Bank (AUB)' },
+    { code: 'PH_BOC',     name: 'Bank of Commerce' },
+    { code: 'PH_MPI',     name: 'Maybank Philippines' },
+    { code: 'PH_ONB',     name: 'BDO Network Bank' },
+    { code: 'PH_MAYA',    name: 'Maya Bank' },
+    { code: 'PH_CIMB',    name: 'CIMB Bank Philippines' },
+    { code: 'PH_TONIK',   name: 'Tonik Digital Bank' },
+    { code: 'PH_GOTYME',  name: 'GoTyme Bank' },
+    { code: 'PH_SEA',     name: 'SeaBank Philippines' },
+    { code: 'PH_UNO',     name: 'UNObank' },
+    { code: 'PH_UDP',     name: 'Union Digital Bank' },
+    { code: 'PH_HSBC',    name: 'HSBC' },
+    { code: 'PH_CITI',    name: 'Citibank' },
+    { code: 'PH_SCB',     name: 'Standard Chartered Bank' },
 ];
 
 const payoutForm = useForm({
