@@ -117,20 +117,19 @@
                                 </div>
                             </div>
 
-                            <!-- Username (read-only) -->
+                            <!-- Username -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1.5">Username</label>
                                 <div class="relative">
                                     <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
                                     <input
-                                        :value="props.profileUser?.username"
+                                        v-model="profileForm.username"
                                         type="text"
-                                        readonly
-                                        tabindex="-1"
-                                        class="w-full pl-7 pr-3.5 py-2.5 border border-gray-200 rounded-lg text-sm bg-gray-50 text-gray-400 cursor-not-allowed"
-                                        @keydown.prevent
+                                        class="w-full pl-7 pr-3.5 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                        :class="profileForm.errors.username ? 'border-red-400' : 'border-gray-300'"
                                     />
                                 </div>
+                                <p v-if="profileForm.errors.username" class="mt-1 text-xs text-red-600">{{ profileForm.errors.username }}</p>
                             </div>
 
                             <!-- Bio -->
@@ -737,6 +736,7 @@ const membershipVisOpen = ref(false);
 const advancedOpen      = ref(false);
 
 const profileForm = useForm({
+    username:         props.profileUser?.username         ?? '',
     first_name:       props.profileUser?.first_name       ?? '',
     last_name:        props.profileUser?.last_name        ?? '',
     bio:              props.profileUser?.bio              ?? '',
