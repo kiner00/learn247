@@ -258,7 +258,7 @@
                                 <input
                                     v-model="lessonForm.video_url"
                                     type="url"
-                                    placeholder="https://youtube.com/watch?v=..."
+                                    placeholder="YouTube, Vimeo, or Google Drive link"
                                     class="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 />
                                 <div class="flex gap-1.5">
@@ -388,7 +388,7 @@
                                 <input
                                     v-model="contentForm.video_url"
                                     type="url"
-                                    placeholder="https://youtube.com/watch?v=..."
+                                    placeholder="YouTube, Vimeo, or Google Drive link"
                                     class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 />
                             </div>
@@ -824,8 +824,14 @@ function saveContent() {
 // ─── Embed URL ────────────────────────────────────────────────────────────────
 function embedUrl(url) {
     if (!url) return '';
+    // YouTube short link
     url = url.replace('youtu.be/', 'www.youtube.com/embed/');
+    // YouTube full link
     url = url.replace('youtube.com/watch?v=', 'youtube.com/embed/');
+    // Vimeo: https://vimeo.com/123456789 → https://player.vimeo.com/video/123456789
+    url = url.replace(/vimeo\.com\/(\d+)/, 'player.vimeo.com/video/$1');
+    // Google Drive: /file/d/{id}/view → /file/d/{id}/preview
+    url = url.replace(/drive\.google\.com\/file\/d\/([^/]+)\/view/, 'drive.google.com/file/d/$1/preview');
     return url.split('&')[0];
 }
 
