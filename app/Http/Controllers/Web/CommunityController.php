@@ -123,7 +123,12 @@ class CommunityController extends Controller
         $adminCount = $community->members()->where('role', 'admin')->count();
         $affiliate  = auth()->id() ? $community->affiliates()->where('user_id', auth()->id())->first() : null;
 
-        return Inertia::render('Communities/Members', compact('community', 'members', 'totalCount', 'adminCount', 'affiliate'));
+        $courses = $community->courses()
+            ->select('id', 'title', 'access_type')
+            ->orderBy('position')
+            ->get();
+
+        return Inertia::render('Communities/Members', compact('community', 'members', 'totalCount', 'adminCount', 'affiliate', 'courses'));
     }
 
     public function settings(Community $community): Response
@@ -378,26 +383,43 @@ class CommunityController extends Controller
         $this->authorize('update', $community);
 
         $data = $request->validate([
-            'message' => ['required', 'string', 'max:1600'],
+            'message'     => ['required', 'string', 'max:1600'],
+            'filter_type' => ['required', 'string', 'in:all,new_members,course'],
+            'filter_days' => ['nullable', 'integer', 'in:7,14,30'],
+            'filter_course_id' => ['nullable', 'integer', 'exists:courses,id'],
         ]);
 
         if (! $community->sms_provider || ! $community->sms_api_key) {
             return back()->withErrors(['message' => 'SMS provider not configured. Go to Settings → SMS to set it up.']);
         }
 
-        // Collect phone numbers of all community members who have one
-        $numbers = $community->members()
+        $query = $community->members()
             ->join('users', 'users.id', '=', 'community_members.user_id')
             ->whereNotNull('users.phone')
-            ->where('users.phone', '!=', '')
-            ->pluck('users.phone')
-            ->map(fn ($p) => preg_replace('/\D/', '', $p)) // strip non-digits
+            ->where('users.phone', '!=', '');
+
+        // Apply audience filter
+        if ($data['filter_type'] === 'new_members') {
+            $days = $data['filter_days'] ?? 7;
+            $query->where('community_members.joined_at', '>=', now()->subDays($days));
+        } elseif ($data['filter_type'] === 'course') {
+            $courseId = $data['filter_course_id'];
+            $query->whereExists(function ($q) use ($courseId) {
+                $q->from('course_enrollments')
+                    ->whereColumn('course_enrollments.user_id', 'users.id')
+                    ->where('course_enrollments.course_id', $courseId)
+                    ->where('course_enrollments.status', 'paid');
+            });
+        }
+
+        $numbers = $query->pluck('users.phone')
+            ->map(fn ($p) => preg_replace('/\D/', '', $p))
             ->filter(fn ($p) => strlen($p) >= 10)
             ->values()
             ->toArray();
 
         if (empty($numbers)) {
-            return back()->withErrors(['message' => 'No members with phone numbers found.']);
+            return back()->withErrors(['message' => 'No recipients found with phone numbers for the selected audience.']);
         }
 
         $result = $sms->blast($community, $numbers, $data['message']);
