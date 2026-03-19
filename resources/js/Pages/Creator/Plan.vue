@@ -19,9 +19,9 @@
                         <p class="text-xs text-gray-400 mt-1">No monthly fee</p>
                     </div>
                     <ul class="px-6 py-5 space-y-3 flex-1">
-                        <li v-for="f in freeFeatures" :key="f" class="flex items-start gap-2.5 text-sm text-gray-600">
+                        <li v-for="f in freeFeatures" :key="f.label" class="flex items-start gap-2.5 text-sm text-gray-600">
                             <span class="mt-0.5 text-green-500 shrink-0">✓</span>
-                            {{ f }}
+                            <span><span class="font-medium text-gray-700">{{ f.label }}:</span> {{ f.value }}</span>
                         </li>
                     </ul>
                     <div class="px-6 py-5 border-t border-gray-100">
@@ -65,9 +65,9 @@
                         <li class="pt-2 border-t border-indigo-500">
                             <p class="text-xs text-indigo-300 font-semibold mb-2">Everything in Free, plus:</p>
                         </li>
-                        <li v-for="f in freeFeatures" :key="f" class="flex items-start gap-2.5 text-sm text-indigo-200">
+                        <li v-for="f in freeFeatures" :key="f.label" class="flex items-start gap-2.5 text-sm text-indigo-200">
                             <span class="mt-0.5 text-indigo-300 shrink-0">✓</span>
-                            {{ f }}
+                            <span><span class="font-medium text-indigo-100">{{ f.label }}:</span> {{ f.value }}</span>
                         </li>
                     </ul>
 
@@ -135,35 +135,44 @@ const regularFormatted    = fmt(props.regularPrice);
 const discountedFormatted = fmt(props.discountedPrice);
 
 const freeFeatures = [
-    'Create unlimited communities',
-    'Accept member subscriptions',
-    'Post & engage with members',
-    'Basic analytics',
-    'Affiliate program access',
-    'Course creation (up to 3 courses)',
+    { label: 'Community',      value: '1 community' },
+    { label: 'Courses',        value: 'Up to 3 courses' },
+    { label: 'Analytics',      value: 'Basic stats' },
+    { label: 'Communication',  value: 'Member posts & chat' },
+    { label: 'Branding',       value: '"Powered by Curzzo" badge' },
+    { label: 'Payouts',        value: 'Standard speed' },
 ];
 
 const proFeatures = [
-    { label: 'Advanced Analytics',        sub: 'Revenue trends, member retention, churn insights' },
-    { label: 'Unlimited Courses',          sub: 'No cap on course creation' },
-    { label: 'Email Announcement Blast',   sub: 'Send broadcast emails to all members' },
+    { label: 'Communities',              sub: 'Create & manage unlimited communities' },
+    { label: 'Unlimited Courses',        sub: 'No cap on course creation' },
+    { label: 'Advanced Analytics',       sub: 'Retention & churn insights' },
+    { label: 'Email Announcement Blast', sub: 'Broadcast emails to all members' },
+    { label: 'Custom Branding',          sub: 'Clean look — remove "Powered by Curzzo" badge' },
     { label: 'Priority Payout Processing', sub: 'Faster payout approvals' },
-    { label: 'Custom Branding',            sub: 'Remove "Powered by Curzzo" badge (coming soon)' },
-    { label: 'Priority Support',           sub: 'Dedicated creator support channel' },
+    { label: 'AI Landing Page UI Builder', sub: 'Build beautiful landing pages with AI' },
+    { label: 'Custom Domain',            sub: 'Use your own domain name' },
+    { label: 'Custom Email',             sub: 'Send emails from your own address' },
+    { label: 'Email Inbox Management',   sub: 'Manage your email inbox in one place' },
+    { label: 'Workflow Builder',         sub: 'Tags, automation — like Systeme.io' },
+    { label: 'Video Hosting',            sub: 'Upload and host your videos on-site' },
+    { label: 'Featured Placement',       sub: 'Place your community in featured courses' },
 ];
 
 const comparisonRows = [
-    { feature: 'Communities',            free: 'Unlimited',  pro: 'Unlimited' },
-    { feature: 'Member Subscriptions',   free: true,         pro: true },
-    { feature: 'Posts & Engagement',     free: true,         pro: true },
-    { feature: 'Affiliate Program',      free: true,         pro: true },
-    { feature: 'Courses',                free: 'Up to 3',    pro: 'Unlimited' },
-    { feature: 'Basic Analytics',        free: true,         pro: true },
-    { feature: 'Advanced Analytics',     sub: 'Retention, churn, revenue trends', free: false, pro: true },
-    { feature: 'Email Announcement Blast', sub: 'Broadcast emails to members',    free: false, pro: true },
-    { feature: 'Priority Payout',        free: false,        pro: true },
-    { feature: 'Custom Branding',        sub: 'Remove platform badge',            free: false, pro: 'Coming soon' },
-    { feature: 'Priority Support',       free: false,        pro: true },
+    { feature: 'Communities',               free: '1',          pro: 'Unlimited' },
+    { feature: 'Courses',                   free: 'Up to 3',    pro: 'Unlimited' },
+    { feature: 'Analytics',                 free: 'Basic stats', pro: 'Advanced (Retention & Churn)' },
+    { feature: 'Communication',             free: 'Member posts & chat', pro: 'Email Announcement Blast' },
+    { feature: 'Branding',                  free: '"Powered by Curzzo" badge', pro: 'Custom Branding (Clean look)' },
+    { feature: 'Payouts',                   free: 'Standard speed', pro: 'Priority Processing' },
+    { feature: 'AI Landing Page UI Builder', free: false,        pro: true },
+    { feature: 'Custom Domain',             free: false,        pro: true },
+    { feature: 'Custom Email',              free: false,        pro: true },
+    { feature: 'Email Inbox Management',    free: false,        pro: true },
+    { feature: 'Workflow Builder',          sub: 'Tags, automation', free: false, pro: true },
+    { feature: 'Video Hosting',             sub: 'Upload videos on-site', free: false, pro: true },
+    { feature: 'Featured Placement',        sub: 'Community in featured courses', free: false, pro: true },
 ];
 
 function subscribe() {
