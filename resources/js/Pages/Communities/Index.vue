@@ -103,7 +103,7 @@
                     <!-- Admin unfeature button -->
                     <button
                         v-if="$page.props.auth?.user?.is_super_admin"
-                        @click.prevent="toggleFeatured(c.id)"
+                        @click.prevent="toggleFeatured(c.slug)"
                         class="absolute top-2 right-2 z-10 bg-white text-red-600 text-xs font-semibold px-2 py-0.5 rounded-full shadow border border-red-200 hover:bg-red-50"
                     >
                         Remove

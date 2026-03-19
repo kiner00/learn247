@@ -196,7 +196,7 @@
                             <td class="px-5 py-3 text-gray-400 text-xs">{{ c.created_at }}</td>
                             <td class="px-5 py-3">
                                 <button
-                                    @click="toggleFeatured(c.id)"
+                                    @click="toggleFeatured(c.slug)"
                                     class="text-xs font-semibold px-2 py-0.5 rounded-full border transition-colors"
                                     :class="c.is_featured
                                         ? 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200'
