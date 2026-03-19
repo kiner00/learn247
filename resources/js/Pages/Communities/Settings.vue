@@ -629,7 +629,7 @@
             <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
                 <div class="flex items-center gap-2 mb-1">
                     <h2 class="text-base font-semibold text-gray-900">SMS Blast</h2>
-                    <span class="px-2 py-0.5 text-xs font-semibold bg-indigo-100 text-indigo-700 rounded-full">Pro</span>
+                    <span class="px-2.5 py-1 text-xs font-bold bg-indigo-100 text-indigo-700 rounded-full">⭐ Pro</span>
                 </div>
                 <p class="text-sm text-gray-500 mb-5">
                     Connect your SMS provider to send text blasts to your members. Members must have a phone number on their profile.

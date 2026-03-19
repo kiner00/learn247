@@ -12,9 +12,10 @@
                 <Link
                     v-if="!page.props.auth.user.is_pro_creator && courses.length >= 3"
                     href="/creator/plan"
-                    class="px-4 py-2 bg-indigo-100 text-indigo-700 text-sm font-semibold rounded-xl hover:bg-indigo-200 transition-colors"
+                    class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-100 text-indigo-700 text-sm font-semibold rounded-xl hover:bg-indigo-200 transition-colors"
                 >
                     🔒 Upgrade for more courses
+                    <span class="text-[10px] font-bold bg-indigo-600 text-white px-1.5 py-0.5 rounded-full">Pro</span>
                 </Link>
                 <button
                     v-else

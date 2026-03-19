@@ -19,6 +19,14 @@
 
         <!-- Advanced Analytics (Pro) -->
         <div v-if="isPro && analytics" class="mb-6 space-y-4">
+            <!-- Section header -->
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-bold text-gray-900">Advanced Analytics</p>
+                    <p class="text-xs text-gray-400 mt-0.5">Revenue trends, retention rate, churn insights</p>
+                </div>
+                <span class="text-xs font-bold bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full">⭐ Pro</span>
+            </div>
             <!-- KPI row -->
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
