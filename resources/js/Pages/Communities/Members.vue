@@ -216,11 +216,12 @@
                 class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
                 @click.self="showSmsModal = false"
             >
-                <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
-                    <div class="flex items-center justify-between mb-4">
+                <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6">
+                    <!-- Header -->
+                    <div class="flex items-center justify-between mb-5">
                         <div>
-                            <h3 class="font-semibold text-gray-900">Send SMS Blast</h3>
-                            <p class="text-xs text-gray-400 mt-0.5">Sends to all members with a phone number on their profile.</p>
+                            <h3 class="font-semibold text-gray-900 text-base">Send SMS Blast</h3>
+                            <p class="text-xs text-gray-400 mt-0.5">Only members with a phone number will receive this.</p>
                         </div>
                         <button @click="showSmsModal = false" class="text-gray-400 hover:text-gray-600">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -229,35 +230,97 @@
                         </button>
                     </div>
 
-                    <!-- Provider badge -->
-                    <div class="flex items-center gap-2 mb-4 p-3 bg-gray-50 rounded-xl">
-                        <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                        </svg>
-                        <span class="text-sm text-gray-600">
-                            Provider: <strong>{{ smsProviderLabel }}</strong>
-                        </span>
-                        <Link :href="`/communities/${community.slug}/settings`" class="ml-auto text-xs text-indigo-500 hover:underline">
-                            Change
-                        </Link>
-                    </div>
+                    <form @submit.prevent="sendSmsBlast" class="space-y-4">
 
-                    <form @submit.prevent="sendSmsBlast">
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Message</label>
-                            <textarea
-                                v-model="smsBlastMessage"
-                                rows="5"
-                                maxlength="1600"
-                                placeholder="Type your SMS message here..."
-                                class="w-full px-3.5 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-                            />
-                            <p class="mt-1 text-xs text-gray-400 text-right">{{ smsBlastMessage.length }} / 1600</p>
+                        <!-- Audience Filter -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Audience</label>
+                            <div class="space-y-2">
+                                <!-- All members -->
+                                <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-colors"
+                                    :class="smsFilter === 'all' ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'">
+                                    <input type="radio" v-model="smsFilter" value="all" class="accent-indigo-600" />
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-800">All members</p>
+                                        <p class="text-xs text-gray-400">Everyone in the community with a phone number</p>
+                                    </div>
+                                </label>
+
+                                <!-- New members -->
+                                <label class="flex items-start gap-3 p-3 border rounded-xl cursor-pointer transition-colors"
+                                    :class="smsFilter === 'new_members' ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'">
+                                    <input type="radio" v-model="smsFilter" value="new_members" class="accent-indigo-600 mt-0.5" />
+                                    <div class="flex-1">
+                                        <p class="text-sm font-medium text-gray-800">New members</p>
+                                        <p class="text-xs text-gray-400 mb-2">Recently joined — great for coaching call follow-ups</p>
+                                        <div v-if="smsFilter === 'new_members'" class="flex gap-2">
+                                            <button
+                                                v-for="d in [7, 14, 30]" :key="d"
+                                                type="button"
+                                                @click="smsFilterDays = d"
+                                                class="px-3 py-1 text-xs rounded-lg border transition-colors"
+                                                :class="smsFilterDays === d ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 text-gray-600 hover:border-indigo-300'"
+                                            >
+                                                Last {{ d }} days
+                                            </button>
+                                        </div>
+                                    </div>
+                                </label>
+
+                                <!-- Course enrollees -->
+                                <label v-if="courses.length" class="flex items-start gap-3 p-3 border rounded-xl cursor-pointer transition-colors"
+                                    :class="smsFilter === 'course' ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'">
+                                    <input type="radio" v-model="smsFilter" value="course" class="accent-indigo-600 mt-0.5" />
+                                    <div class="flex-1">
+                                        <p class="text-sm font-medium text-gray-800">Course enrollees</p>
+                                        <p class="text-xs text-gray-400 mb-2">Members who paid for a specific course</p>
+                                        <select
+                                            v-if="smsFilter === 'course'"
+                                            v-model="smsFilterCourseId"
+                                            @click.stop
+                                            class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                                        >
+                                            <option value="">— Select a course —</option>
+                                            <option v-for="c in courses" :key="c.id" :value="c.id">
+                                                {{ c.title }}
+                                                <template v-if="c.access_type === 'free'"> (Free)</template>
+                                                <template v-else-if="c.access_type === 'inclusive'"> (Included)</template>
+                                                <template v-else> (Paid)</template>
+                                            </option>
+                                        </select>
+                                    </div>
+                                </label>
+                            </div>
                         </div>
 
-                        <p v-if="smsBlastError" class="mb-3 text-sm text-red-600">{{ smsBlastError }}</p>
+                        <!-- Message -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1.5">Message</label>
+                            <textarea
+                                v-model="smsBlastMessage"
+                                rows="4"
+                                maxlength="1600"
+                                placeholder="e.g. Hi! You're invited to our Zoom call this Saturday at 10am. Join here: [link]"
+                                class="w-full px-3.5 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                            />
+                            <div class="flex justify-between mt-1">
+                                <p class="text-xs text-gray-400">{{ Math.ceil(smsBlastMessage.length / 160) > 1 ? `${Math.ceil(smsBlastMessage.length / 160)} SMS parts` : '1 SMS part' }}</p>
+                                <p class="text-xs text-gray-400">{{ smsBlastMessage.length }} / 1600</p>
+                            </div>
+                        </div>
 
-                        <div class="flex gap-3">
+                        <!-- Provider badge -->
+                        <div class="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg">
+                            <svg class="w-3.5 h-3.5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                            <span class="text-xs text-gray-500">via <strong>{{ smsProviderLabel }}</strong></span>
+                            <Link :href="`/communities/${community.slug}/settings`" class="ml-auto text-xs text-indigo-500 hover:underline">Change</Link>
+                        </div>
+
+                        <p v-if="smsBlastError" class="text-sm text-red-600">{{ smsBlastError }}</p>
+
+                        <div class="flex gap-3 pt-1">
                             <button
                                 type="button"
                                 @click="showSmsModal = false"
@@ -267,7 +330,7 @@
                             </button>
                             <button
                                 type="submit"
-                                :disabled="smsSending || !smsBlastMessage.trim()"
+                                :disabled="smsSending || !smsBlastMessage.trim() || (smsFilter === 'course' && !smsFilterCourseId)"
                                 class="flex-1 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-50"
                             >
                                 {{ smsSending ? 'Sending…' : 'Send SMS' }}
@@ -293,6 +356,7 @@ const props = defineProps({
     totalCount: Number,
     adminCount: Number,
     affiliate:  Object,
+    courses:    { type: Array, default: () => [] },
 });
 
 const page = usePage();
@@ -307,10 +371,13 @@ const currentUserId = computed(() => page.props.auth?.user?.id);
 const showInviteModal = ref(false);
 
 // SMS blast
-const showSmsModal    = ref(false);
-const smsBlastMessage = ref('');
-const smsSending      = ref(false);
-const smsBlastError   = ref('');
+const showSmsModal      = ref(false);
+const smsBlastMessage   = ref('');
+const smsSending        = ref(false);
+const smsBlastError     = ref('');
+const smsFilter         = ref('all');
+const smsFilterDays     = ref(7);
+const smsFilterCourseId = ref('');
 
 const SMS_PROVIDER_LABELS = {
     semaphore:  'Semaphore',
@@ -324,23 +391,30 @@ const smsProviderLabel = computed(() =>
 
 function sendSmsBlast() {
     if (!smsBlastMessage.value.trim()) return;
-    smsSending.value   = true;
+    smsSending.value    = true;
     smsBlastError.value = '';
-    router.post(
-        `/communities/${props.community.slug}/sms-blast`,
-        { message: smsBlastMessage.value },
-        {
-            preserveScroll: true,
-            onSuccess: () => {
-                showSmsModal.value    = false;
-                smsBlastMessage.value = '';
-            },
-            onError: (errors) => {
-                smsBlastError.value = errors.message ?? 'Something went wrong.';
-            },
-            onFinish: () => { smsSending.value = false; },
+
+    const payload = {
+        message:     smsBlastMessage.value,
+        filter_type: smsFilter.value,
+    };
+    if (smsFilter.value === 'new_members') payload.filter_days = smsFilterDays.value;
+    if (smsFilter.value === 'course')      payload.filter_course_id = smsFilterCourseId.value;
+
+    router.post(`/communities/${props.community.slug}/sms-blast`, payload, {
+        preserveScroll: true,
+        onSuccess: () => {
+            showSmsModal.value      = false;
+            smsBlastMessage.value   = '';
+            smsFilter.value         = 'all';
+            smsFilterDays.value     = 7;
+            smsFilterCourseId.value = '';
         },
-    );
+        onError: (errors) => {
+            smsBlastError.value = errors.message ?? 'Something went wrong.';
+        },
+        onFinish: () => { smsSending.value = false; },
+    });
 }
 
 const inviteUrl = computed(() =>

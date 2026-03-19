@@ -352,6 +352,9 @@ onMounted(() => {
         showJoinModal.value = true;
     }
 
+    // Initialize all pixels (community + affiliate) before firing events
+    trackers.forEach(t => t.init());
+
     // ViewContent — someone landed on the community landing page (likely from an ad)
     trackers.forEach(t => t.viewContent({
         content_name:     props.community.name,
