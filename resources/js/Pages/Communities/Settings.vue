@@ -636,7 +636,7 @@
                         </div>
                     </template>
 
-                    <div class="flex items-center gap-3 pt-1">
+                    <div class="flex flex-wrap items-center gap-3 pt-1">
                         <button
                             type="submit"
                             :disabled="smsForm.processing"
@@ -644,7 +644,28 @@
                         >
                             Save SMS settings
                         </button>
+                        <template v-if="community.sms_provider && community.sms_api_key">
+                            <input
+                                v-model="smsTestPhone"
+                                type="tel"
+                                placeholder="e.g. 09171234567"
+                                class="px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 w-40"
+                            />
+                            <button
+                                type="button"
+                                :disabled="smsTesting || !smsTestPhone.trim()"
+                                @click="sendTestSms"
+                                class="px-4 py-2.5 border border-emerald-400 text-emerald-700 text-sm font-medium rounded-lg hover:bg-emerald-50 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                            >
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                {{ smsTesting ? 'Sending…' : 'Test' }}
+                            </button>
+                        </template>
                         <p v-if="smsSaved" class="text-sm text-green-600">Saved!</p>
+                        <p v-if="smsTestSuccess" class="text-sm text-green-600">{{ smsTestSuccess }}</p>
+                        <p v-if="smsTestError" class="text-sm text-red-600">{{ smsTestError }}</p>
                     </div>
 
                     <!-- Provider info strip -->
@@ -830,7 +851,12 @@ function saveIntegrations() {
         });
 }
 
-const smsSaved = ref(false);
+const smsSaved       = ref(false);
+const smsTesting     = ref(false);
+const smsTestPhone   = ref('');
+const smsTestSuccess = ref('');
+const smsTestError   = ref('');
+
 const smsForm = useForm({
     sms_provider:    props.community.sms_provider    ?? '',
     sms_api_key:     props.community.sms_api_key     ?? '',
@@ -845,6 +871,24 @@ function saveSmsConfig() {
             smsSaved.value = true;
             setTimeout(() => (smsSaved.value = false), 3000);
         },
+    });
+}
+
+function sendTestSms() {
+    smsTesting.value     = true;
+    smsTestSuccess.value = '';
+    smsTestError.value   = '';
+    router.post(`/communities/${props.community.slug}/sms-test`, { phone: smsTestPhone.value }, {
+        preserveScroll: true,
+        onSuccess: (page) => {
+            smsTestSuccess.value = page.props.flash?.success ?? 'Test SMS sent!';
+            setTimeout(() => (smsTestSuccess.value = ''), 5000);
+        },
+        onError: (errors) => {
+            smsTestError.value = errors.sms_test ?? 'Test failed.';
+            setTimeout(() => (smsTestError.value = ''), 6000);
+        },
+        onFinish: () => { smsTesting.value = false; },
     });
 }
 

@@ -366,6 +366,30 @@ class CommunityController extends Controller
         return back()->with('success', 'SMS settings saved.');
     }
 
+    public function testSms(Request $request, Community $community, SmsService $sms): RedirectResponse
+    {
+        $this->authorize('update', $community);
+
+        if (! $community->sms_provider || ! $community->sms_api_key) {
+            return back()->withErrors(['sms_test' => 'Save your SMS settings first before testing.']);
+        }
+
+        $data  = $request->validate(['phone' => ['required', 'string', 'max:20']]);
+        $phone = preg_replace('/\D/', '', $data['phone']);
+
+        if (strlen($phone) < 10) {
+            return back()->withErrors(['sms_test' => 'Please enter a valid phone number.']);
+        }
+
+        $result = $sms->blast($community, [$phone], "This is a test message from {$community->name} via Curzzo. Your SMS integration is working!");
+
+        if ($result['sent'] > 0) {
+            return back()->with('success', "Test SMS sent to {$data['phone']}.");
+        }
+
+        return back()->withErrors(['sms_test' => 'Test failed: ' . ($result['errors'][0] ?? 'Unknown error.')]);
+    }
+
     public function sendSmsBlast(Request $request, Community $community, SmsService $sms): RedirectResponse
     {
         $this->authorize('update', $community);
