@@ -82,6 +82,51 @@
             </div>
         </div>
 
+        <!-- Featured Communities (Pro) -->
+        <div v-if="featured.length" class="mb-8">
+            <div class="flex items-center gap-2 mb-3">
+                <span class="text-base">⭐</span>
+                <h2 class="text-sm font-bold text-gray-900">Featured Communities</h2>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <Link
+                    v-for="c in featured"
+                    :key="c.id"
+                    :href="`/communities/${c.slug}`"
+                    class="group relative bg-white border-2 border-indigo-200 rounded-2xl overflow-hidden hover:shadow-lg hover:border-indigo-400 transition-all duration-200"
+                >
+                    <!-- Featured badge -->
+                    <div class="absolute top-2 left-2 z-10 bg-indigo-600 text-white text-xs font-bold px-2.5 py-0.5 rounded-full shadow">
+                        ⭐ Featured
+                    </div>
+
+                    <!-- Admin unfeature button -->
+                    <button
+                        v-if="$page.props.auth?.user?.is_super_admin"
+                        @click.prevent="toggleFeatured(c.id)"
+                        class="absolute top-2 right-2 z-10 bg-white text-red-600 text-xs font-semibold px-2 py-0.5 rounded-full shadow border border-red-200 hover:bg-red-50"
+                    >
+                        Remove
+                    </button>
+
+                    <div class="relative h-28 overflow-hidden">
+                        <img v-if="c.cover_image" :src="c.cover_image" :alt="c.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        <div v-else class="w-full h-full bg-linear-to-br from-indigo-400 to-purple-500" />
+                    </div>
+                    <div class="p-4">
+                        <p class="font-bold text-gray-900 text-sm truncate">{{ c.name }}</p>
+                        <p class="text-xs text-gray-500 mt-0.5 line-clamp-2">{{ c.description ?? 'A great community.' }}</p>
+                        <div class="flex items-center justify-between mt-3">
+                            <span class="text-xs text-gray-400">{{ c.members_count }} members</span>
+                            <span class="text-xs font-semibold" :class="c.price > 0 ? 'text-amber-600' : 'text-green-600'">
+                                {{ c.price > 0 ? `₱${Number(c.price).toLocaleString()}${c.billing_type === 'one_time' ? '' : '/mo'}` : 'Free' }}
+                            </span>
+                        </div>
+                    </div>
+                </Link>
+            </div>
+        </div>
+
         <!-- Grid -->
         <div v-if="filteredCommunities.length" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             <Link
@@ -202,10 +247,15 @@ import { useCreateModal } from '@/composables/useCreateModal';
 
 const props = defineProps({
     communities: Object,
-    filters: Object,
+    filters:     Object,
+    featured:    { type: Array, default: () => [] },
 });
 
 const { openCreateModal } = useCreateModal();
+
+function toggleFeatured(communityId) {
+    router.post(`/admin/communities/${communityId}/toggle-featured`, {}, { preserveScroll: true });
+}
 
 const search         = ref(props.filters?.search ?? '');
 const activeCategory = ref(props.filters?.category ?? 'All');

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Ai\Agents\LandingPageBuilder;
 use App\Actions\Community\CreateCommunity;
 use App\Actions\Community\JoinCommunity;
 use App\Actions\Community\ManageGallery;
@@ -41,8 +42,28 @@ class CommunityController extends Controller
         $category = $request->string('category')->trim()->toString();
         $sort     = $request->input('sort', 'latest');
 
+        $featured = Community::where('is_featured', true)
+            ->with('owner:id,name')
+            ->withCount('members')
+            ->latest()
+            ->get()
+            ->map(fn ($c) => [
+                'id'           => $c->id,
+                'name'         => $c->name,
+                'slug'         => $c->slug,
+                'description'  => $c->description,
+                'cover_image'  => $c->cover_image,
+                'avatar'       => $c->avatar,
+                'price'        => (float) $c->price,
+                'billing_type' => $c->billing_type,
+                'category'     => $c->category,
+                'members_count'=> $c->members_count,
+                'owner'        => ['name' => $c->owner?->name],
+            ]);
+
         return Inertia::render('Communities/Index', [
             'communities' => $query->execute($search, $category, $sort),
+            'featured'    => $featured,
             'filters'     => ['search' => $search, 'category' => $category ?: 'All', 'sort' => $sort],
         ]);
     }
@@ -480,5 +501,40 @@ class CommunityController extends Controller
         $ownerIsPro = $community->owner?->hasActiveCreatorPlan() ?? false;
 
         return Inertia::render('Communities/About', compact('community', 'affiliate', 'invitedBy', 'membership', 'recentMembers', 'ownerIsPro'));
+    }
+
+    public function generateLandingPage(Request $request, Community $community): \Illuminate\Http\JsonResponse
+    {
+        $user = $request->user();
+
+        if ($community->owner_id !== $user->id && !$user->is_super_admin) {
+            abort(403);
+        }
+
+        if (!$user->hasActiveCreatorPlan()) {
+            return response()->json(['error' => 'Creator Pro required.'], 403);
+        }
+
+        try {
+            $agent  = new LandingPageBuilder([
+                'name'        => $community->name,
+                'category'    => $community->category,
+                'description' => $community->description,
+            ]);
+
+            $response = $agent->forUser($user)->prompt(
+                'Generate the landing page copy now. Return only valid JSON.'
+            );
+
+            $copy = json_decode($response->text, true);
+
+            if (!$copy || !isset($copy['tagline'], $copy['description'], $copy['cta'])) {
+                return response()->json(['error' => 'AI returned an unexpected format. Please try again.'], 422);
+            }
+
+            return response()->json($copy);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'AI generation failed. Please try again.'], 500);
+        }
     }
 }

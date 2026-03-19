@@ -321,6 +321,67 @@
                 </form>
             </div>
 
+            <!-- AI Landing Page Builder -->
+            <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
+                <div class="flex items-center justify-between mb-1">
+                    <h2 class="text-base font-semibold text-gray-900">✨ AI Landing Page Builder</h2>
+                    <span v-if="!$page.props.auth.user.is_pro_creator" class="text-xs font-bold bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full">⭐ Pro</span>
+                </div>
+                <p class="text-sm text-gray-500 mb-5">Generate a compelling tagline, description, and CTA for your community page using AI.</p>
+
+                <!-- Locked for non-Pro -->
+                <div v-if="!$page.props.auth.user.is_pro_creator" class="rounded-xl border border-indigo-100 bg-indigo-50 px-5 py-6 text-center">
+                    <p class="text-sm font-semibold text-indigo-800 mb-1">Creator Pro feature</p>
+                    <p class="text-xs text-indigo-600 mb-3">Upgrade to unlock AI-generated landing page copy.</p>
+                    <Link href="/creator/plan" class="inline-block px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors">
+                        Upgrade to Creator Pro →
+                    </Link>
+                </div>
+
+                <!-- Builder for Pro -->
+                <div v-else>
+                    <button
+                        type="button"
+                        @click="generateLandingPage"
+                        :disabled="aiGenerating"
+                        class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                    >
+                        <svg v-if="aiGenerating" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                        </svg>
+                        {{ aiGenerating ? 'Generating...' : '✨ Generate copy' }}
+                    </button>
+
+                    <!-- AI result -->
+                    <div v-if="aiCopy" class="mt-4 rounded-xl border border-indigo-100 bg-indigo-50 p-4 space-y-3">
+                        <div>
+                            <p class="text-xs font-semibold text-indigo-700 mb-0.5">Tagline</p>
+                            <p class="text-sm text-gray-800">{{ aiCopy.tagline }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold text-indigo-700 mb-0.5">Description</p>
+                            <p class="text-sm text-gray-800">{{ aiCopy.description }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold text-indigo-700 mb-0.5">CTA button label</p>
+                            <p class="text-sm text-gray-800">{{ aiCopy.cta }}</p>
+                        </div>
+                        <div class="flex items-center gap-3 pt-1">
+                            <button
+                                type="button"
+                                @click="applyAiCopy"
+                                class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+                            >
+                                Apply description
+                            </button>
+                            <p class="text-xs text-gray-400">Copies the description into the General form above.</p>
+                        </div>
+                    </div>
+                    <p v-if="aiError" class="mt-3 text-sm text-red-600">{{ aiError }}</p>
+                </div>
+            </div>
+
             <!-- Announcement Blast -->
             <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
                 <div class="flex items-center justify-between mb-1">
@@ -722,6 +783,7 @@
 <script setup>
 import { ref } from 'vue';
 import { Link, useForm, router, usePage } from '@inertiajs/vue3';
+import axios from 'axios';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
 const CATEGORIES = ['Tech', 'Business', 'Design', 'Health', 'Education', 'Finance', 'Other'];
@@ -988,5 +1050,30 @@ function deleteCommunity() {
 function cancelDeletion() {
     if (!confirm('Cancel the scheduled deletion? The community will become active again.')) return;
     router.post(`/communities/${props.community.slug}/cancel-deletion`, {}, { preserveScroll: true });
+}
+
+// ─── AI Landing Page Builder ───────────────────────────────────────────────────
+const aiGenerating = ref(false);
+const aiCopy       = ref(null);
+const aiError      = ref('');
+
+async function generateLandingPage() {
+    aiGenerating.value = true;
+    aiCopy.value       = null;
+    aiError.value      = '';
+    try {
+        const { data } = await axios.post(`/communities/${props.community.slug}/ai-landing`);
+        aiCopy.value = data;
+    } catch (e) {
+        aiError.value = e?.response?.data?.error ?? 'Something went wrong. Please try again.';
+    } finally {
+        aiGenerating.value = false;
+    }
+}
+
+function applyAiCopy() {
+    if (!aiCopy.value) return;
+    form.description = aiCopy.value.description;
+    aiCopy.value = null;
 }
 </script>

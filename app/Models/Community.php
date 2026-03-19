@@ -21,13 +21,14 @@ class Community extends Model
         'billing_type', 'affiliate_commission_rate',
         'facebook_pixel_id', 'tiktok_pixel_id', 'google_analytics_id',
         'sms_provider', 'sms_api_key', 'sms_api_secret', 'sms_sender_name', 'sms_device_url',
-        'deletion_requested_at',
+        'deletion_requested_at', 'is_featured',
     ];
 
     protected function casts(): array
     {
         return [
             'is_private'                => 'boolean',
+            'is_featured'               => 'boolean',
             'price'                     => 'decimal:2',
             'affiliate_commission_rate' => 'integer',
             'gallery_images'            => 'array',

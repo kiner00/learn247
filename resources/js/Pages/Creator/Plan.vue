@@ -77,9 +77,10 @@
 
                     <ul class="px-6 py-5 space-y-3 flex-1">
                         <li v-for="f in proFeatures" :key="f.label" class="flex items-start gap-2.5 text-sm text-indigo-100">
-                            <span class="mt-0.5 text-amber-300 shrink-0">★</span>
+                            <span class="mt-0.5 shrink-0" :class="f.comingSoon ? 'text-indigo-400' : 'text-amber-300'">★</span>
                             <span>
-                                <span class="font-semibold text-white">{{ f.label }}</span>
+                                <span class="font-semibold" :class="f.comingSoon ? 'text-indigo-300' : 'text-white'">{{ f.label }}</span>
+                                <span v-if="f.comingSoon" class="ml-1.5 text-[10px] font-bold bg-indigo-500 text-indigo-100 px-1.5 py-0.5 rounded-full uppercase tracking-wide">Soon</span>
                                 <span v-if="f.sub" class="block text-xs text-indigo-200 mt-0.5">{{ f.sub }}</span>
                             </span>
                         </li>
@@ -136,7 +137,8 @@
                                 <span v-else class="text-xs text-gray-500 font-medium">{{ row.free }}</span>
                             </td>
                             <td class="px-6 py-3.5 text-center">
-                                <span v-if="row.pro === true" class="text-indigo-600 font-bold text-base">✓</span>
+                                <span v-if="row.comingSoon" class="text-[10px] font-bold bg-indigo-100 text-indigo-500 px-1.5 py-0.5 rounded-full uppercase tracking-wide">Soon</span>
+                                <span v-else-if="row.pro === true" class="text-indigo-600 font-bold text-base">✓</span>
                                 <span v-else-if="row.pro === false" class="text-gray-300 text-lg">—</span>
                                 <span v-else class="text-xs font-semibold text-indigo-600">{{ row.pro }}</span>
                             </td>
@@ -190,11 +192,11 @@ const proFeatures = [
     { label: 'Custom Branding',          sub: 'Clean look — remove "Powered by Curzzo" badge' },
     { label: 'Priority Payout Processing', sub: 'Faster payout approvals' },
     { label: 'AI Landing Page UI Builder', sub: 'Build beautiful landing pages with AI' },
-    { label: 'Custom Domain',            sub: 'Use your own domain name' },
-    { label: 'Custom Email',             sub: 'Send emails from your own address' },
-    { label: 'Email Inbox Management',   sub: 'Manage your email inbox in one place' },
-    { label: 'Workflow Builder',         sub: 'Tags, automation — like Systeme.io' },
-    { label: 'Video Hosting',            sub: 'Upload and host your videos on-site' },
+    { label: 'Custom Domain',            sub: 'Use your own domain name',              comingSoon: true },
+    { label: 'Custom Email',             sub: 'Send emails from your own address',     comingSoon: true },
+    { label: 'Email Inbox Management',   sub: 'Manage your email inbox in one place',  comingSoon: true },
+    { label: 'Workflow Builder',         sub: 'Tags, automation — like Systeme.io',    comingSoon: true },
+    { label: 'Video Hosting',            sub: 'Upload and host your videos on-site',   comingSoon: true },
     { label: 'Featured Placement',       sub: 'Place your community in featured courses' },
 ];
 
@@ -206,11 +208,11 @@ const comparisonRows = [
     { feature: 'Branding',                  free: '"Powered by Curzzo" badge', pro: 'Custom Branding (Clean look)' },
     { feature: 'Payouts',                   free: 'Standard speed', pro: 'Priority Processing' },
     { feature: 'AI Landing Page UI Builder', free: false,        pro: true },
-    { feature: 'Custom Domain',             free: false,        pro: true },
-    { feature: 'Custom Email',              free: false,        pro: true },
-    { feature: 'Email Inbox Management',    free: false,        pro: true },
-    { feature: 'Workflow Builder',          sub: 'Tags, automation', free: false, pro: true },
-    { feature: 'Video Hosting',             sub: 'Upload videos on-site', free: false, pro: true },
+    { feature: 'Custom Domain',             free: false,        pro: true, comingSoon: true },
+    { feature: 'Custom Email',              free: false,        pro: true, comingSoon: true },
+    { feature: 'Email Inbox Management',    free: false,        pro: true, comingSoon: true },
+    { feature: 'Workflow Builder',          sub: 'Tags, automation', free: false, pro: true, comingSoon: true },
+    { feature: 'Video Hosting',             sub: 'Upload videos on-site', free: false, pro: true, comingSoon: true },
     { feature: 'Featured Placement',        sub: 'Community in featured courses', free: false, pro: true },
 ];
 

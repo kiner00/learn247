@@ -168,6 +168,7 @@
                             <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Members</th>
                             <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Price</th>
                             <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Created</th>
+                            <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Feature</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
@@ -193,6 +194,17 @@
                                 </span>
                             </td>
                             <td class="px-5 py-3 text-gray-400 text-xs">{{ c.created_at }}</td>
+                            <td class="px-5 py-3">
+                                <button
+                                    @click="toggleFeatured(c.id)"
+                                    class="text-xs font-semibold px-2 py-0.5 rounded-full border transition-colors"
+                                    :class="c.is_featured
+                                        ? 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200'
+                                        : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200'"
+                                >
+                                    {{ c.is_featured ? '⭐ Unfeature' : 'Feature' }}
+                                </button>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -322,6 +334,10 @@ const props = defineProps({
     pendingOnboarding:   { type: Object, default: () => ({ data: [], total: 0, last_page: 1, links: [] }) },
     creatorPlanPricing:  { type: Object, default: () => ({ regular_price: 3000, discounted_price: 1999 }) },
 });
+
+function toggleFeatured(communityId) {
+    router.post(`/admin/communities/${communityId}/toggle-featured`, {}, { preserveScroll: true });
+}
 
 const resending = ref(null);
 function resend(userId) {

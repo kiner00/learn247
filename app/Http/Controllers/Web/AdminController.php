@@ -86,6 +86,7 @@ class AdminController extends Controller
                 'price'         => $c->price,
                 'owner'         => ['name' => $c->owner?->name],
                 'created_at'    => $c->created_at?->toDateString(),
+                'is_featured'   => (bool) $c->is_featured,
             ]);
 
         // Recent users
@@ -578,6 +579,15 @@ class AdminController extends Controller
         ]);
 
         return back()->with('success', "Payout request #{$payoutRequest->id} rejected.");
+    }
+
+    // ── Featured Communities ─────────────────────────────────────────────────
+
+    public function toggleFeatured(Community $community): RedirectResponse
+    {
+        $community->update(['is_featured' => ! $community->is_featured]);
+        $label = $community->is_featured ? 'featured' : 'unfeatured';
+        return back()->with('success', "{$community->name} is now {$label}.");
     }
 
     // ── User Management ──────────────────────────────────────────────────────
