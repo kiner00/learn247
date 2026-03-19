@@ -413,6 +413,14 @@
                                                 Creator Dashboard
                                             </Link>
                                             <Link
+                                                v-if="$page.props.auth.user.is_creator"
+                                                href="/creator/plan"
+                                                class="block w-full px-3 py-2 text-sm font-semibold text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
+                                                @click="menuOpen = false"
+                                            >
+                                                ⭐ Creator Pro Plan
+                                            </Link>
+                                            <Link
                                                 v-if="$page.props.auth.user.is_super_admin"
                                                 href="/admin"
                                                 class="block w-full px-3 py-2 text-sm font-semibold text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
