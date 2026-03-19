@@ -73,4 +73,17 @@ class User extends Authenticatable
     {
         return $this->hasMany(Payment::class);
     }
+
+    public function creatorSubscriptions(): HasMany
+    {
+        return $this->hasMany(CreatorSubscription::class);
+    }
+
+    public function hasActiveCreatorPlan(): bool
+    {
+        return $this->creatorSubscriptions()
+            ->where('status', CreatorSubscription::STATUS_ACTIVE)
+            ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+            ->exists();
+    }
 }

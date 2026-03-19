@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Actions\Billing\StartCreatorPlanCheckout;
 use App\Http\Controllers\Controller;
 use App\Models\AffiliateConversion;
 use App\Models\Community;
@@ -11,6 +12,7 @@ use App\Models\PayoutRequest;
 use App\Models\Setting;
 use App\Models\Subscription;
 use App\Queries\Payout\CalculateEligibility;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -19,10 +21,21 @@ class CreatorController extends Controller
 {
     public function plan(): Response
     {
+        $user = Auth::user();
+
         return Inertia::render('Creator/Plan', [
             'regularPrice'    => (float) Setting::get('creator_plan_regular_price', 3000),
             'discountedPrice' => (float) Setting::get('creator_plan_discounted_price', 1999),
+            'isProActive'     => $user->hasActiveCreatorPlan(),
         ]);
+    }
+
+    public function planCheckout(StartCreatorPlanCheckout $action): RedirectResponse
+    {
+        $user   = Auth::user();
+        $result = $action->execute($user);
+
+        return redirect()->away($result['checkout_url']);
     }
 
     public function dashboard(CalculateEligibility $eligibility): Response

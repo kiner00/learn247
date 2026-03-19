@@ -8,6 +8,28 @@
                 <p class="text-gray-500 mt-2 text-sm">Unlock powerful tools to grow your community faster</p>
             </div>
 
+            <!-- Success / failed banners -->
+            <div v-if="notice === 'success'" class="mb-6 bg-green-50 border border-green-200 rounded-2xl px-5 py-4 flex items-center gap-3">
+                <span class="text-xl">🎉</span>
+                <div>
+                    <p class="text-sm font-bold text-green-800">Payment received! Your Creator Pro plan is now active.</p>
+                    <p class="text-xs text-green-600 mt-0.5">All Pro features are unlocked. Welcome to the next level!</p>
+                </div>
+            </div>
+            <div v-if="notice === 'failed'" class="mb-6 bg-red-50 border border-red-200 rounded-2xl px-5 py-4 flex items-center gap-3">
+                <span class="text-xl">❌</span>
+                <p class="text-sm font-medium text-red-700">Payment was not completed. Please try again or contact support.</p>
+            </div>
+
+            <!-- Already active banner -->
+            <div v-if="isProActive" class="mb-6 bg-indigo-50 border border-indigo-200 rounded-2xl px-5 py-4 flex items-center gap-3">
+                <span class="text-xl">⭐</span>
+                <div>
+                    <p class="text-sm font-bold text-indigo-800">You're on Creator Pro!</p>
+                    <p class="text-xs text-indigo-600 mt-0.5">All Pro features are active on your account.</p>
+                </div>
+            </div>
+
             <!-- Pricing cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
 
@@ -73,11 +95,16 @@
 
                     <div class="px-6 py-5 border-t border-indigo-500">
                         <button
-                            class="w-full py-3 rounded-xl bg-white text-indigo-700 font-bold text-sm hover:bg-indigo-50 transition-colors shadow"
+                            v-if="!isProActive"
+                            class="w-full py-3 rounded-xl bg-white text-indigo-700 font-bold text-sm hover:bg-indigo-50 transition-colors shadow disabled:opacity-50"
+                            :disabled="checkoutForm.processing"
                             @click="subscribe"
                         >
-                            Get Creator Pro →
+                            {{ checkoutForm.processing ? 'Redirecting...' : 'Get Creator Pro →' }}
                         </button>
+                        <div v-else class="w-full py-3 rounded-xl bg-indigo-500 text-white font-bold text-sm text-center">
+                            ⭐ Active Plan
+                        </div>
                         <p class="text-xs text-indigo-300 text-center mt-2">Cancel anytime</p>
                     </div>
                 </div>
@@ -124,10 +151,22 @@
 
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
+import { useForm, router } from '@inertiajs/vue3';
+import { ref, onMounted } from 'vue';
 
 const props = defineProps({
     regularPrice:    { type: Number, default: 3000 },
     discountedPrice: { type: Number, default: 1999 },
+    isProActive:     { type: Boolean, default: false },
+});
+
+const checkoutForm = useForm({});
+const notice = ref(null);
+
+onMounted(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('success') === '1') notice.value = 'success';
+    if (params.get('failed')  === '1') notice.value = 'failed';
 });
 
 const fmt = (n) => Number(n).toLocaleString();
@@ -176,7 +215,6 @@ const comparisonRows = [
 ];
 
 function subscribe() {
-    // TODO: wire up Xendit checkout in next step
-    alert('Checkout coming soon!');
+    checkoutForm.post('/creator/plan/checkout');
 }
 </script>

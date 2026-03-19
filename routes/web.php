@@ -252,6 +252,7 @@ Route::middleware('auth')->group(function () {
 
     // ─── Creator Dashboard ────────────────────────────────────────────────────
     Route::get('/creator/plan', [CreatorController::class, 'plan'])->name('creator.plan');
+    Route::post('/creator/plan/checkout', [CreatorController::class, 'planCheckout'])->name('creator.plan.checkout');
     Route::get('/creator/dashboard', [CreatorController::class, 'dashboard'])->name('creator.dashboard');
     Route::post('/creator/payout-request/{community:id}', [PayoutRequestController::class, 'storeOwner'])->name('creator.payout-request.store');
 
