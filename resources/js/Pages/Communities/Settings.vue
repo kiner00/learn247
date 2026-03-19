@@ -325,7 +325,7 @@
             <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
                 <div class="flex items-center justify-between mb-1">
                     <h2 class="text-base font-semibold text-gray-900">✨ AI Landing Page Builder</h2>
-                    <span v-if="!$page.props.auth.user.is_pro_creator" class="text-xs font-bold bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full">⭐ Pro</span>
+                    <span class="text-xs font-bold bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full">⭐ Pro</span>
                 </div>
                 <p class="text-sm text-gray-500 mb-5">Generate a compelling tagline, description, and CTA for your community page using AI.</p>
 
@@ -386,7 +386,7 @@
             <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
                 <div class="flex items-center justify-between mb-1">
                     <h2 class="text-base font-semibold text-gray-900">📢 Send Announcement</h2>
-                    <span v-if="!$page.props.auth.user.is_pro_creator" class="text-xs font-bold bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full">⭐ Pro</span>
+                    <span class="text-xs font-bold bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full">⭐ Pro</span>
                 </div>
                 <p class="text-sm text-gray-500 mb-5">Email all members of this community at once.</p>
 
