@@ -33,13 +33,25 @@
                         </span>
                     </div>
 
-                    <button
-                        v-if="$page.props.auth?.user"
-                        @click="showInviteModal = true"
-                        class="px-4 py-1.5 text-sm font-semibold rounded-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 transition-colors"
-                    >
-                        Invite
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <button
+                            v-if="isOwner && community.sms_provider"
+                            @click="showSmsModal = true"
+                            class="px-4 py-1.5 text-sm font-semibold rounded-full bg-emerald-500 hover:bg-emerald-600 text-white transition-colors flex items-center gap-1.5"
+                        >
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                            Send SMS
+                        </button>
+                        <button
+                            v-if="$page.props.auth?.user"
+                            @click="showInviteModal = true"
+                            class="px-4 py-1.5 text-sm font-semibold rounded-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 transition-colors"
+                        >
+                            Invite
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Member list -->
@@ -196,12 +208,81 @@
             :invite-url="inviteUrl"
             @close="showInviteModal = false"
         />
+
+        <!-- SMS Blast Modal -->
+        <Teleport to="body">
+            <div
+                v-if="showSmsModal"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+                @click.self="showSmsModal = false"
+            >
+                <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="font-semibold text-gray-900">Send SMS Blast</h3>
+                            <p class="text-xs text-gray-400 mt-0.5">Sends to all members with a phone number on their profile.</p>
+                        </div>
+                        <button @click="showSmsModal = false" class="text-gray-400 hover:text-gray-600">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Provider badge -->
+                    <div class="flex items-center gap-2 mb-4 p-3 bg-gray-50 rounded-xl">
+                        <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                        <span class="text-sm text-gray-600">
+                            Provider: <strong>{{ smsProviderLabel }}</strong>
+                        </span>
+                        <Link :href="`/communities/${community.slug}/settings`" class="ml-auto text-xs text-indigo-500 hover:underline">
+                            Change
+                        </Link>
+                    </div>
+
+                    <form @submit.prevent="sendSmsBlast">
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Message</label>
+                            <textarea
+                                v-model="smsBlastMessage"
+                                rows="5"
+                                maxlength="1600"
+                                placeholder="Type your SMS message here..."
+                                class="w-full px-3.5 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                            />
+                            <p class="mt-1 text-xs text-gray-400 text-right">{{ smsBlastMessage.length }} / 1600</p>
+                        </div>
+
+                        <p v-if="smsBlastError" class="mb-3 text-sm text-red-600">{{ smsBlastError }}</p>
+
+                        <div class="flex gap-3">
+                            <button
+                                type="button"
+                                @click="showSmsModal = false"
+                                class="flex-1 px-4 py-2.5 border border-gray-300 text-sm font-medium rounded-xl text-gray-700 hover:bg-gray-50 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                :disabled="smsSending || !smsBlastMessage.trim()"
+                                class="flex-1 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-50"
+                            >
+                                {{ smsSending ? 'Sending…' : 'Send SMS' }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </Teleport>
     </AppLayout>
 </template>
 
 <script setup>
 import { computed, ref } from 'vue';
-import { Link, usePage, router } from '@inertiajs/vue3';
+import { Link, usePage, router, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import CommunityTabs from '@/Components/CommunityTabs.vue';
 import InviteModal from '@/Components/InviteModal.vue';
@@ -224,6 +305,43 @@ const currentFilter = computed(() => {
 const currentUserId = computed(() => page.props.auth?.user?.id);
 
 const showInviteModal = ref(false);
+
+// SMS blast
+const showSmsModal    = ref(false);
+const smsBlastMessage = ref('');
+const smsSending      = ref(false);
+const smsBlastError   = ref('');
+
+const SMS_PROVIDER_LABELS = {
+    semaphore:  'Semaphore',
+    philsms:    'PhilSMS',
+    xtreme_sms: 'Xtreme SMS',
+};
+
+const smsProviderLabel = computed(() =>
+    SMS_PROVIDER_LABELS[props.community.sms_provider] ?? props.community.sms_provider
+);
+
+function sendSmsBlast() {
+    if (!smsBlastMessage.value.trim()) return;
+    smsSending.value   = true;
+    smsBlastError.value = '';
+    router.post(
+        `/communities/${props.community.slug}/sms-blast`,
+        { message: smsBlastMessage.value },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                showSmsModal.value    = false;
+                smsBlastMessage.value = '';
+            },
+            onError: (errors) => {
+                smsBlastError.value = errors.message ?? 'Something went wrong.';
+            },
+            onFinish: () => { smsSending.value = false; },
+        },
+    );
+}
 
 const inviteUrl = computed(() =>
     props.affiliate?.code
