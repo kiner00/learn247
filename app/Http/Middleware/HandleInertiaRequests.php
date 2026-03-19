@@ -65,7 +65,7 @@ class HandleInertiaRequests extends Middleware
                     'email'          => $request->user()->email,
                     'avatar'         => $request->user()->avatar,
                     'is_super_admin' => $request->user()->is_super_admin,
-                    'is_creator'     => Community::where('owner_id', $request->user()->id)->where('price', '>', 0)->exists(),
+                    'is_creator'     => $request->user()->is_super_admin || Community::where('owner_id', $request->user()->id)->where('price', '>', 0)->exists(),
                     'is_pro_creator' => $request->user()->hasActiveCreatorPlan(),
                     'theme'          => $request->user()->theme ?? 'light',
                 ] : null,
