@@ -81,6 +81,10 @@ class User extends Authenticatable
 
     public function hasActiveCreatorPlan(): bool
     {
+        if ($this->is_super_admin) {
+            return true;
+        }
+
         return $this->creatorSubscriptions()
             ->where('status', CreatorSubscription::STATUS_ACTIVE)
             ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))

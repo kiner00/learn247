@@ -8,13 +8,22 @@
                 Classroom
                 <span class="text-sm font-normal text-gray-400 ml-2">{{ courses.length }} course{{ courses.length !== 1 ? 's' : '' }}</span>
             </h1>
-            <button
-                v-if="isOwner"
-                @click="showForm = !showForm"
-                class="px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition-colors"
-            >
-                + New Course
-            </button>
+            <template v-if="isOwner">
+                <Link
+                    v-if="!page.props.auth.user.is_pro_creator && courses.length >= 3"
+                    href="/creator/plan"
+                    class="px-4 py-2 bg-indigo-100 text-indigo-700 text-sm font-semibold rounded-xl hover:bg-indigo-200 transition-colors"
+                >
+                    🔒 Upgrade for more courses
+                </Link>
+                <button
+                    v-else
+                    @click="showForm = !showForm"
+                    class="px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition-colors"
+                >
+                    + New Course
+                </button>
+            </template>
         </div>
 
         <!-- New course form -->

@@ -202,6 +202,7 @@ class AdminController extends Controller
                     'payout_method'  => $owner->payout_method,
                     'payout_details' => $owner->payout_details,
                     'can_disburse'   => in_array($owner->payout_method, ['gcash', 'maya']) && $owner->payout_details,
+                    'is_pro'         => $owner->hasActiveCreatorPlan(),
                     'total_earned'   => $rows->sum('earned'),
                     'total_paid'     => $rows->sum('paid'),
                     'total_pending'  => $rows->sum('pending'),

@@ -39,6 +39,15 @@ class ClassroomController extends Controller
     {
         abort_unless($request->user()->id === $community->owner_id, 403);
 
+        if (! $request->user()->hasActiveCreatorPlan()) {
+            $courseCount = $community->courses()->count();
+            if ($courseCount >= 3) {
+                return back()->withErrors([
+                    'plan' => 'Free creators can only have 3 courses per community. Upgrade to Creator Pro for unlimited courses.',
+                ]);
+            }
+        }
+
         $data = $request->validate([
             'title'       => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],

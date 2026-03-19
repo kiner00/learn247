@@ -48,6 +48,17 @@ class CommunityController extends Controller
 
     public function store(CreateCommunityRequest $request, CreateCommunity $action): RedirectResponse
     {
+        $user = $request->user();
+
+        if (! $user->hasActiveCreatorPlan()) {
+            $existingCount = Community::where('owner_id', $user->id)->count();
+            if ($existingCount >= 1) {
+                return back()->withErrors([
+                    'plan' => 'Free creators can only have 1 community. Upgrade to Creator Pro to create unlimited communities.',
+                ])->withInput();
+            }
+        }
+
         $community = $action->execute(
             $request->user(),
             $request->validated(),
@@ -322,6 +333,12 @@ class CommunityController extends Controller
     {
         $this->authorize('update', $community);
 
+        if (! $request->user()->hasActiveCreatorPlan()) {
+            return back()->withErrors([
+                'plan' => 'Email Announcement Blast is a Creator Pro feature. Upgrade to send broadcast emails to your members.',
+            ]);
+        }
+
         $data = $request->validate([
             'subject' => ['required', 'string', 'max:200'],
             'message' => ['required', 'string', 'max:5000'],
@@ -360,6 +377,8 @@ class CommunityController extends Controller
 
         $membership = auth()->id() ? $community->members()->where('user_id', auth()->id())->first() : null;
 
-        return Inertia::render('Communities/About', compact('community', 'affiliate', 'invitedBy', 'membership', 'recentMembers'));
+        $ownerIsPro = $community->owner?->hasActiveCreatorPlan() ?? false;
+
+        return Inertia::render('Communities/About', compact('community', 'affiliate', 'invitedBy', 'membership', 'recentMembers', 'ownerIsPro'));
     }
 }

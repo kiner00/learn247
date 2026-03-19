@@ -323,9 +323,23 @@
 
             <!-- Announcement Blast -->
             <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
-                <h2 class="text-base font-semibold text-gray-900 mb-1">📢 Send Announcement</h2>
+                <div class="flex items-center justify-between mb-1">
+                    <h2 class="text-base font-semibold text-gray-900">📢 Send Announcement</h2>
+                    <span v-if="!$page.props.auth.user.is_pro_creator" class="text-xs font-bold bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full">⭐ Pro</span>
+                </div>
                 <p class="text-sm text-gray-500 mb-5">Email all members of this community at once.</p>
-                <form @submit.prevent="sendAnnouncement" class="space-y-4">
+
+                <!-- Locked for non-Pro -->
+                <div v-if="!$page.props.auth.user.is_pro_creator" class="rounded-xl border border-indigo-100 bg-indigo-50 px-5 py-6 text-center">
+                    <p class="text-sm font-semibold text-indigo-800 mb-1">Creator Pro feature</p>
+                    <p class="text-xs text-indigo-600 mb-3">Upgrade to send broadcast emails to all your members.</p>
+                    <Link href="/creator/plan" class="inline-block px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors">
+                        Upgrade to Creator Pro →
+                    </Link>
+                </div>
+
+                <!-- Form for Pro -->
+                <form v-else @submit.prevent="sendAnnouncement" class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1.5">Subject</label>
                         <input v-model="announceForm.subject" type="text" required maxlength="200"

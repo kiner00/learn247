@@ -211,6 +211,7 @@
                         <div class="px-5 py-3 bg-gray-50 flex items-center justify-between">
                             <div>
                                 <span class="font-semibold text-gray-900 text-sm">{{ owner.name }}</span>
+                                <span v-if="owner.is_pro" class="ml-1.5 text-xs font-bold bg-indigo-600 text-white px-2 py-0.5 rounded-full">⭐ Pro</span>
                                 <span class="text-gray-400 text-xs ml-2">{{ owner.email }}</span>
                                 <span v-if="owner.payout_method"
                                       class="ml-2 text-xs font-semibold uppercase bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">

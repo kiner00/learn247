@@ -172,8 +172,8 @@
                     </div>
                 </div>
 
-                <!-- Powered by Curzzo -->
-                <div class="flex items-center justify-center gap-1.5 mt-3">
+                <!-- Powered by Curzzo (hidden for Pro creators) -->
+                <div v-if="!ownerIsPro" class="flex items-center justify-center gap-1.5 mt-3">
                     <span class="text-xs text-gray-400">Powered by</span>
                     <img :src="'/brand/logo-transparent.png'" alt="Curzzo" class="h-5 w-auto" />
                 </div>
@@ -331,6 +331,7 @@ const props = defineProps({
     invitedBy:     Object,
     membership:    Object,
     recentMembers: { type: Array, default: () => [] },
+    ownerIsPro:    { type: Boolean, default: false },
 });
 
 const showInviteModal = ref(false);

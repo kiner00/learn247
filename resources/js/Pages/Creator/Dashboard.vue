@@ -17,6 +17,66 @@
             </div>
         </div>
 
+        <!-- Advanced Analytics (Pro) -->
+        <div v-if="isPro && analytics" class="mb-6 space-y-4">
+            <!-- KPI row -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+                    <p class="text-xs font-medium text-gray-500 mb-1">MRR</p>
+                    <p class="text-2xl font-black text-gray-900">₱{{ fmt(analytics.mrr) }}</p>
+                    <p class="text-xs text-gray-400 mt-0.5">Monthly recurring revenue</p>
+                </div>
+                <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+                    <p class="text-xs font-medium text-gray-500 mb-1">Retention Rate</p>
+                    <p class="text-2xl font-black" :class="analytics.retentionRate >= 80 ? 'text-green-600' : analytics.retentionRate >= 60 ? 'text-amber-500' : 'text-red-500'">
+                        {{ analytics.retentionRate }}%
+                    </p>
+                    <p class="text-xs text-gray-400 mt-0.5">Last 30 days</p>
+                </div>
+                <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+                    <p class="text-xs font-medium text-gray-500 mb-1">New Members (this month)</p>
+                    <p class="text-2xl font-black text-indigo-600">{{ analytics.newMembers.at(-1) }}</p>
+                    <p class="text-xs text-gray-400 mt-0.5">vs {{ analytics.newMembers.at(-2) }} last month</p>
+                </div>
+                <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+                    <p class="text-xs font-medium text-gray-500 mb-1">Churn (this month)</p>
+                    <p class="text-2xl font-black text-red-500">{{ analytics.churn.at(-1) }}</p>
+                    <p class="text-xs text-gray-400 mt-0.5">Expired / cancelled</p>
+                </div>
+            </div>
+
+            <!-- Charts row -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+                    <p class="text-sm font-bold text-gray-900 mb-4">Revenue Trend (6 months)</p>
+                    <canvas ref="revenueChart" height="200"></canvas>
+                </div>
+                <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+                    <p class="text-sm font-bold text-gray-900 mb-4">Members vs Churn (6 months)</p>
+                    <canvas ref="memberChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics locked (non-Pro) -->
+        <div v-else class="mb-6 bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+            <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-bold text-gray-900">Advanced Analytics</p>
+                    <p class="text-xs text-gray-400 mt-0.5">Revenue trends, retention rate, churn insights</p>
+                </div>
+                <span class="text-xs font-bold bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full">⭐ Pro</span>
+            </div>
+            <div class="px-5 py-10 text-center">
+                <p class="text-3xl mb-3">📊</p>
+                <p class="text-sm font-semibold text-gray-700 mb-1">Unlock Advanced Analytics</p>
+                <p class="text-xs text-gray-400 mb-4">See MRR, retention rate, churn, and 6-month revenue & member growth charts.</p>
+                <Link href="/creator/plan" class="inline-block px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors">
+                    Upgrade to Creator Pro →
+                </Link>
+            </div>
+        </div>
+
         <!-- Communities -->
         <div v-if="communities.length === 0" class="bg-white border border-gray-200 rounded-2xl px-5 py-10 text-center text-sm text-gray-400">
             You have no paid communities yet.
@@ -230,15 +290,77 @@
 </template>
 
 <script setup>
-import { reactive } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import { Chart, registerables } from 'chart.js'
+Chart.register(...registerables)
 
 const props = defineProps({
     communities:    Array,
     requestHistory: Array,
     payoutMethod:   String,
     payoutDetails:  String,
+    analytics:      { type: Object, default: null },
+    isPro:          { type: Boolean, default: false },
+})
+
+const revenueChart = ref(null)
+const memberChart  = ref(null)
+
+onMounted(() => {
+    if (!props.isPro || !props.analytics) return
+
+    const { labels, revenue, newMembers, churn } = props.analytics
+
+    new Chart(revenueChart.value, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Revenue (₱)',
+                data: revenue,
+                backgroundColor: 'rgba(99, 102, 241, 0.7)',
+                borderRadius: 6,
+            }],
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { callback: (v) => `₱${Number(v).toLocaleString()}` },
+                },
+            },
+        },
+    })
+
+    new Chart(memberChart.value, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: 'New Members',
+                    data: newMembers,
+                    backgroundColor: 'rgba(34, 197, 94, 0.7)',
+                    borderRadius: 6,
+                },
+                {
+                    label: 'Churn',
+                    data: churn,
+                    backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                    borderRadius: 6,
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'bottom' } },
+            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
+        },
+    })
 })
 
 const requestAmounts = reactive({})
