@@ -214,6 +214,8 @@ class ClassroomController extends Controller
             'title'     => ['required', 'string', 'max:255'],
             'content'   => ['nullable', 'string'],
             'video_url' => ['nullable', 'url', 'max:500'],
+            'cta_label' => ['nullable', 'string', 'max:100'],
+            'cta_url'   => ['nullable', 'url', 'max:500'],
         ]);
 
         $action->store($module, $data);
@@ -236,6 +238,8 @@ class ClassroomController extends Controller
             'title'     => ['sometimes', 'string', 'max:255'],
             'content'   => ['nullable', 'string'],
             'video_url' => ['nullable', 'url', 'max:500'],
+            'cta_label' => ['nullable', 'string', 'max:100'],
+            'cta_url'   => ['nullable', 'url', 'max:500'],
         ]);
 
         $action->update($lesson, $data);

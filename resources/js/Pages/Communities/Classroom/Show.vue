@@ -409,6 +409,23 @@
                                     class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 />
                             </div>
+                            <div>
+                                <p class="text-xs text-gray-500 mb-1.5 font-medium">CTA Button (optional)</p>
+                                <div class="flex gap-2">
+                                    <input
+                                        v-model="contentForm.cta_label"
+                                        type="text"
+                                        placeholder="Button label (e.g. Book a Call)"
+                                        class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    />
+                                    <input
+                                        v-model="contentForm.cta_url"
+                                        type="url"
+                                        placeholder="https://..."
+                                        class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    />
+                                </div>
+                            </div>
                             <div class="flex gap-2 justify-end">
                                 <button type="button" @click="editingLesson = false" class="px-4 py-2 text-sm text-gray-500">Cancel</button>
                                 <button type="button" @click="saveContent" :disabled="contentForm.processing"
@@ -416,6 +433,21 @@
                                     {{ contentForm.processing ? 'Saving...' : 'Save Changes' }}
                                 </button>
                             </div>
+                        </div>
+
+                        <!-- CTA Button -->
+                        <div v-if="selectedLesson.cta_url && selectedLesson.cta_label && !editingLesson" class="mb-5">
+                            <a
+                                :href="selectedLesson.cta_url"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm"
+                            >
+                                {{ selectedLesson.cta_label }}
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                </svg>
+                            </a>
                         </div>
 
                         <!-- Action bar -->
@@ -816,7 +848,7 @@ function createModule() {
 
 // ─── Add lesson ────────────────────────────────────────────────────────────────
 const addingLessonToModule = ref(null);
-const lessonForm = useForm({ title: '', content: '', video_url: '' });
+const lessonForm = useForm({ title: '', content: '', video_url: '', cta_label: '', cta_url: '' });
 
 function createLesson(mod) {
     lessonForm.post(
@@ -836,13 +868,15 @@ function onLessonDragEnd(mod) {
 
 // ─── Edit lesson ──────────────────────────────────────────────────────────────
 const editingLesson = ref(false);
-const contentForm   = useForm({ title: '', content: '', video_url: '' });
+const contentForm   = useForm({ title: '', content: '', video_url: '', cta_label: '', cta_url: '' });
 
 function startEdit() {
     const l = selectedLesson.value;
     contentForm.title     = l?.title ?? '';
     contentForm.content   = l?.content ?? '';
     contentForm.video_url = l?.video_url ?? '';
+    contentForm.cta_label = l?.cta_label ?? '';
+    contentForm.cta_url   = l?.cta_url ?? '';
     editingLesson.value   = true;
 }
 
