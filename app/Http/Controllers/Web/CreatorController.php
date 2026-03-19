@@ -8,6 +8,7 @@ use App\Models\Community;
 use App\Models\OwnerPayout;
 use App\Models\Payment;
 use App\Models\PayoutRequest;
+use App\Models\Setting;
 use App\Models\Subscription;
 use App\Queries\Payout\CalculateEligibility;
 use Illuminate\Support\Facades\Auth;
@@ -16,6 +17,14 @@ use Inertia\Response;
 
 class CreatorController extends Controller
 {
+    public function plan(): Response
+    {
+        return Inertia::render('Creator/Plan', [
+            'regularPrice'    => (float) Setting::get('creator_plan_regular_price', 3000),
+            'discountedPrice' => (float) Setting::get('creator_plan_discounted_price', 1999),
+        ]);
+    }
+
     public function dashboard(CalculateEligibility $eligibility): Response
     {
         $user = Auth::user();

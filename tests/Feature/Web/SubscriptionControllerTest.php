@@ -99,4 +99,15 @@ class SubscriptionControllerTest extends TestCase
 
         $response->assertRedirect('/login');
     }
+
+    public function test_checkout_pending_deletion_community_returns_error(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->paid(499)->create(['deletion_requested_at' => now()]);
+
+        $response = $this->actingAs($user)
+            ->post("/communities/{$community->slug}/checkout");
+
+        $response->assertSessionHas('error');
+    }
 }

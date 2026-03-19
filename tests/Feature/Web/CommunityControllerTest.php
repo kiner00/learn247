@@ -206,6 +206,25 @@ class CommunityControllerTest extends TestCase
         $this->assertDatabaseHas('communities', ['id' => $community->id]);
     }
 
+    public function test_deleting_community_with_active_subscribers_schedules_deletion(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->paid()->create(['owner_id' => $owner->id]);
+        $subscriber = User::factory()->create();
+
+        Subscription::factory()->active()->create([
+            'community_id' => $community->id,
+            'user_id'      => $subscriber->id,
+        ]);
+
+        $response = $this->actingAs($owner)->delete("/communities/{$community->slug}");
+
+        $response->assertRedirect();
+        $response->assertSessionHas('info');
+        $this->assertNotNull($community->fresh()->deletion_requested_at);
+        $this->assertDatabaseHas('communities', ['id' => $community->id]);
+    }
+
     // ─── about ──────────────────────────────────────────────────────────────────
 
     public function test_about_page_returns_200(): void
@@ -507,5 +526,39 @@ class CommunityControllerTest extends TestCase
         CourseModule::create(['course_id' => $course->id, 'title' => 'Empty Module', 'position' => 1]);
 
         $this->actingAs($owner)->get("/communities/{$community->slug}/analytics")->assertOk();
+    }
+
+    // ─── cancelDeletion ───────────────────────────────────────────────────────────
+
+    public function test_owner_can_cancel_scheduled_deletion(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create([
+            'owner_id'              => $owner->id,
+            'deletion_requested_at' => now()->addDays(7),
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/cancel-deletion");
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+        $this->assertNull($community->fresh()->deletion_requested_at);
+    }
+
+    public function test_non_owner_cannot_cancel_scheduled_deletion(): void
+    {
+        $owner     = User::factory()->create();
+        $other     = User::factory()->create();
+        $community = Community::factory()->create([
+            'owner_id'              => $owner->id,
+            'deletion_requested_at' => now()->addDays(7),
+        ]);
+
+        $this->actingAs($other)
+            ->post("/communities/{$community->slug}/cancel-deletion")
+            ->assertForbidden();
+
+        $this->assertNotNull($community->fresh()->deletion_requested_at);
     }
 }

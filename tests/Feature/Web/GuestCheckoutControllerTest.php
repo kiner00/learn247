@@ -66,6 +66,21 @@ class GuestCheckoutControllerTest extends TestCase
         $response->assertRedirect(route('communities.index'));
     }
 
+    public function test_pending_deletion_community_returns_error(): void
+    {
+        $community = Community::factory()->paid()->create(['deletion_requested_at' => now()]);
+        $affiliate = Affiliate::create([
+            'community_id' => $community->id,
+            'user_id'      => $community->owner_id,
+            'code'         => 'REF-DELETED',
+            'status'       => Affiliate::STATUS_ACTIVE,
+        ]);
+
+        $response = $this->post("/ref-checkout/{$affiliate->code}", $this->validPayload());
+
+        $response->assertSessionHasErrors('email');
+    }
+
     public function test_inactive_affiliate_redirects_to_communities(): void
     {
         $community = Community::factory()->paid()->create();

@@ -858,4 +858,66 @@ class HandleXenditWebhookTest extends TestCase
         // No payment record should be created (course enrollments skip subscription logic)
         $this->assertEquals(0, Payment::count());
     }
+
+    // ─── pending deletion ────────────────────────────────────────────────────────
+
+    public function test_paid_invoice_for_pending_deletion_monthly_sub_keeps_current_expiry(): void
+    {
+        Mail::fake();
+        config(['services.xendit.callback_token' => 'valid-token', 'services.xendit.secret_key' => 'test']);
+
+        $user      = User::factory()->create(['needs_password_setup' => false]);
+        $community = Community::factory()->paid()->create(['deletion_requested_at' => now()]);
+        $existingExpiry = now()->addDays(15);
+        $subscription  = Subscription::create([
+            'community_id' => $community->id,
+            'user_id'      => $user->id,
+            'xendit_id'    => 'inv_pd_monthly',
+            'status'       => Subscription::STATUS_ACTIVE,
+            'expires_at'   => $existingExpiry,
+        ]);
+
+        $request = $this->makeRequest([
+            'id'     => 'inv_pd_monthly',
+            'status' => 'PAID',
+            'amount' => 500,
+        ], 'valid-token');
+
+        $action = app(HandleXenditWebhook::class);
+        $action->execute($request);
+
+        $subscription->refresh();
+        // Expiry should stay the same — no renewal when community is pending deletion
+        $this->assertTrue(
+            abs($subscription->expires_at->diffInSeconds($existingExpiry)) < 5,
+            'Expiry should not change for pending-deletion community'
+        );
+    }
+
+    public function test_expired_subscription_triggers_graceful_community_deletion_when_last_subscriber(): void
+    {
+        config(['services.xendit.callback_token' => 'valid-token', 'services.xendit.secret_key' => 'test']);
+
+        $user      = User::factory()->create();
+        $community = Community::factory()->paid()->create(['deletion_requested_at' => now()]);
+        $subscription = Subscription::create([
+            'community_id' => $community->id,
+            'user_id'      => $user->id,
+            'xendit_id'    => 'inv_graceful_del',
+            'status'       => Subscription::STATUS_ACTIVE,
+            'expires_at'   => now()->addDay(),
+        ]);
+
+        $request = $this->makeRequest([
+            'id'     => 'inv_graceful_del',
+            'status' => 'EXPIRED',
+            'amount' => 500,
+        ], 'valid-token');
+
+        $action = app(HandleXenditWebhook::class);
+        $action->execute($request);
+
+        // Community should be soft-deleted (graceful deletion triggered)
+        $this->assertSoftDeleted('communities', ['id' => $community->id]);
+    }
 }

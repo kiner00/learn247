@@ -117,6 +117,10 @@ class AdminController extends Controller
 
         return Inertia::render('Admin/Dashboard', [
             'xenditBalance' => $xenditBalance,
+            'creatorPlanPricing' => [
+                'regular_price'    => (float) Setting::get('creator_plan_regular_price', 3000),
+                'discounted_price' => (float) Setting::get('creator_plan_discounted_price', 1999),
+            ],
             'stats' => [
                 'total_users'          => $totalUsers,
                 'total_communities'    => $totalCommunities,
@@ -144,6 +148,19 @@ class AdminController extends Controller
         $request->validate(['app_theme' => 'required|in:green,yellow']);
         Setting::set('app_theme', $request->app_theme);
         return back()->with('success', 'Theme updated.');
+    }
+
+    public function updateCreatorPlanPricing(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'regular_price'    => 'required|numeric|min:0',
+            'discounted_price' => 'required|numeric|min:0',
+        ]);
+
+        Setting::set('creator_plan_regular_price',    (string) $validated['regular_price']);
+        Setting::set('creator_plan_discounted_price', (string) $validated['discounted_price']);
+
+        return back()->with('success', 'Creator plan pricing updated.');
     }
 
     public function payouts(XenditService $xendit): Response

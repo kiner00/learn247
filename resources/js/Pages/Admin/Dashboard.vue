@@ -118,6 +118,40 @@
             </div>
         </div>
 
+        <!-- Creator Pro Plan Pricing -->
+        <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm mb-8">
+            <div class="px-5 py-4 border-b border-gray-100">
+                <h2 class="text-sm font-bold text-gray-900">Creator Pro Plan Pricing</h2>
+                <p class="text-xs text-gray-400 mt-0.5">Set the regular and discounted price shown on the creator upgrade page</p>
+            </div>
+            <form @submit.prevent="savePlanPricing" class="px-5 py-4 flex flex-wrap items-end gap-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Regular Price (₱)</label>
+                    <input
+                        v-model.number="planForm.regular_price"
+                        type="number" min="0" step="1"
+                        class="w-36 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                    />
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Discounted Price (₱)</label>
+                    <input
+                        v-model.number="planForm.discounted_price"
+                        type="number" min="0" step="1"
+                        class="w-36 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                    />
+                </div>
+                <button
+                    type="submit"
+                    :disabled="planForm.processing"
+                    class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                >
+                    Save Pricing
+                </button>
+                <span v-if="planForm.recentlySuccessful" class="text-xs text-green-600 font-medium">Saved!</span>
+            </form>
+        </div>
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
             <!-- Recent Communities -->
@@ -279,13 +313,14 @@ import { Link, useForm, usePage, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
 const props = defineProps({
-    stats:              Object,
-    revenue:            Object,
-    byCategory:         Array,
-    recentCommunities:  Array,
-    recentUsers:        Array,
-    xenditBalance:      Number,
-    pendingOnboarding:  { type: Object, default: () => ({ data: [], total: 0, last_page: 1, links: [] }) },
+    stats:               Object,
+    revenue:             Object,
+    byCategory:          Array,
+    recentCommunities:   Array,
+    recentUsers:         Array,
+    xenditBalance:       Number,
+    pendingOnboarding:   { type: Object, default: () => ({ data: [], total: 0, last_page: 1, links: [] }) },
+    creatorPlanPricing:  { type: Object, default: () => ({ regular_price: 3000, discounted_price: 1999 }) },
 });
 
 const resending = ref(null);
@@ -342,6 +377,15 @@ const page = usePage();
 const currentTheme = computed(() => page.props.app_theme ?? 'green');
 
 const themeForm = useForm({ app_theme: currentTheme.value });
+
+const planForm = useForm({
+    regular_price:    props.creatorPlanPricing.regular_price,
+    discounted_price: props.creatorPlanPricing.discounted_price,
+});
+
+function savePlanPricing() {
+    planForm.patch('/admin/creator-plan-pricing', { preserveScroll: true });
+}
 
 function setTheme(theme) {
     themeForm.app_theme = theme;

@@ -1170,9 +1170,10 @@ class ClassroomControllerTest extends TestCase
     {
         $owner     = User::factory()->create();
         $member    = User::factory()->create();
-        $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $course    = Course::create(['community_id' => $community->id, 'title' => 'Course', 'position' => 1]);
-        $module    = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+        $course = Course::create(['community_id' => $community->id, 'title' => 'Course', 'position' => 1]);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
 
         $this->actingAs($member)
             ->delete("/communities/{$community->slug}/classroom/courses/{$course->id}/modules/{$module->id}")
@@ -1203,10 +1204,11 @@ class ClassroomControllerTest extends TestCase
     {
         $owner     = User::factory()->create();
         $member    = User::factory()->create();
-        $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $course    = Course::create(['community_id' => $community->id, 'title' => 'Course', 'position' => 1]);
-        $module    = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
-        $lesson    = CourseLesson::create(['module_id' => $module->id, 'title' => 'Lesson', 'position' => 1]);
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+        $course = Course::create(['community_id' => $community->id, 'title' => 'Course', 'position' => 1]);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
+        $lesson = CourseLesson::create(['module_id' => $module->id, 'title' => 'Lesson', 'position' => 1]);
 
         $this->actingAs($member)
             ->delete("/communities/{$community->slug}/classroom/courses/{$course->id}/modules/{$module->id}/lessons/{$lesson->id}")

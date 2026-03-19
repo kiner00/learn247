@@ -82,6 +82,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->n
 Route::middleware(['auth', EnsureSuperAdmin::class])->prefix('admin')->group(function () {
     Route::get('/', [AdminController::class, 'dashboard'])->name('admin.dashboard');
     Route::patch('/settings', [AdminController::class, 'updateSettings'])->name('admin.settings.update');
+    Route::patch('/creator-plan-pricing', [AdminController::class, 'updateCreatorPlanPricing'])->name('admin.creator-plan-pricing.update');
     Route::get('/payouts', [AdminController::class, 'payouts'])->name('admin.payouts');
     Route::post('/payouts/owner/{community:id}', [AdminController::class, 'payOwner'])->name('admin.payouts.owner');
     Route::post('/payouts/owners/batch', [AdminController::class, 'batchPayOwners'])->name('admin.payouts.owners.batch');
@@ -250,6 +251,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/direct-messages/{directMessage}', [DirectMessageController::class, 'destroy'])->name('messages.destroy');
 
     // ─── Creator Dashboard ────────────────────────────────────────────────────
+    Route::get('/creator/plan', [CreatorController::class, 'plan'])->name('creator.plan');
     Route::get('/creator/dashboard', [CreatorController::class, 'dashboard'])->name('creator.dashboard');
     Route::post('/creator/payout-request/{community:id}', [PayoutRequestController::class, 'storeOwner'])->name('creator.payout-request.store');
 

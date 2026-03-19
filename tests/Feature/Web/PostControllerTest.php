@@ -220,4 +220,42 @@ class PostControllerTest extends TestCase
 
         $response->assertForbidden();
     }
+
+    // ─── update ───────────────────────────────────────────────────────────────
+
+    public function test_author_can_update_post(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->create();
+        $post      = Post::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+
+        $this->actingAs($user)->patch("/posts/{$post->id}", [
+            'content' => 'Updated content here.',
+        ])->assertRedirect();
+
+        $this->assertEquals('Updated content here.', $post->fresh()->content);
+    }
+
+    public function test_non_author_cannot_update_post(): void
+    {
+        $author    = User::factory()->create();
+        $other     = User::factory()->create();
+        $community = Community::factory()->create();
+        $post      = Post::factory()->create(['community_id' => $community->id, 'user_id' => $author->id]);
+
+        $this->actingAs($other)->patch("/posts/{$post->id}", [
+            'content' => 'Hacked content.',
+        ])->assertForbidden();
+    }
+
+    public function test_update_requires_content(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->create();
+        $post      = Post::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+
+        $this->actingAs($user)->patch("/posts/{$post->id}", [
+            'content' => '',
+        ])->assertSessionHasErrors('content');
+    }
 }
