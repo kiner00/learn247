@@ -6,6 +6,7 @@ use App\Actions\Community\CreateCommunity;
 use App\Actions\Community\JoinCommunity;
 use App\Actions\Community\ManageGallery;
 use App\Actions\Community\SendAnnouncement;
+use App\Services\SmsService;
 use App\Actions\Community\UpdateCommunity;
 use App\Actions\Community\UpdateLevelPerks;
 use App\Http\Controllers\Controller;
@@ -330,6 +331,59 @@ class CommunityController extends Controller
         $count = $action->execute($request->user(), $community, $data['subject'], $data['message']);
 
         return back()->with('success', "Announcement sent to {$count} members.");
+    }
+
+    public function updateSmsConfig(Request $request, Community $community): RedirectResponse
+    {
+        $this->authorize('update', $community);
+
+        $data = $request->validate([
+            'sms_provider'    => ['nullable', 'string', 'in:semaphore,philsms,xtreme_sms'],
+            'sms_api_key'     => ['nullable', 'string', 'max:255'],
+            'sms_sender_name' => ['nullable', 'string', 'max:11'],
+            'sms_device_url'  => ['nullable', 'string', 'url', 'max:500'],
+        ]);
+
+        $community->update($data);
+
+        return back()->with('success', 'SMS settings saved.');
+    }
+
+    public function sendSmsBlast(Request $request, Community $community, SmsService $sms): RedirectResponse
+    {
+        $this->authorize('update', $community);
+
+        $data = $request->validate([
+            'message' => ['required', 'string', 'max:1600'],
+        ]);
+
+        if (! $community->sms_provider || ! $community->sms_api_key) {
+            return back()->withErrors(['message' => 'SMS provider not configured. Go to Settings → SMS to set it up.']);
+        }
+
+        // Collect phone numbers of all community members who have one
+        $numbers = $community->members()
+            ->join('users', 'users.id', '=', 'community_members.user_id')
+            ->whereNotNull('users.phone')
+            ->where('users.phone', '!=', '')
+            ->pluck('users.phone')
+            ->map(fn ($p) => preg_replace('/\D/', '', $p)) // strip non-digits
+            ->filter(fn ($p) => strlen($p) >= 10)
+            ->values()
+            ->toArray();
+
+        if (empty($numbers)) {
+            return back()->withErrors(['message' => 'No members with phone numbers found.']);
+        }
+
+        $result = $sms->blast($community, $numbers, $data['message']);
+
+        $msg = "SMS sent to {$result['sent']} member(s).";
+        if ($result['failed'] > 0) {
+            $msg .= " {$result['failed']} failed.";
+        }
+
+        return back()->with('success', $msg);
     }
 
     public function about(Request $request, Community $community): Response

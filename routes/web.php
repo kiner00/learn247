@@ -181,6 +181,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('/communities/{community}', [CommunityController::class, 'destroy'])->name('communities.destroy');
     Route::post('/communities/{community}/cancel-deletion', [CommunityController::class, 'cancelDeletion'])->name('communities.cancel-deletion');
     Route::post('/communities/{community}/announce', [CommunityController::class, 'announce'])->name('communities.announce');
+    Route::post('/communities/{community}/sms-config', [CommunityController::class, 'updateSmsConfig'])->name('communities.sms-config');
+    Route::post('/communities/{community}/sms-blast', [CommunityController::class, 'sendSmsBlast'])->name('communities.sms-blast');
 
     // Member management (admin only — enforced by Action)
     Route::delete('/communities/{community}/members/{user}', [CommunityMemberController::class, 'destroy'])->name('communities.members.destroy');
