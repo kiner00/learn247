@@ -19,7 +19,7 @@
                 <p class="text-2xl font-black text-indigo-700">₱{{ fmt(stats.affiliates_pending) }}</p>
             </div>
             <div class="bg-purple-50 border border-purple-200 rounded-2xl p-5">
-                <p class="text-xs font-semibold text-purple-600 uppercase tracking-wide mb-1">Platform Income (15%)</p>
+                <p class="text-xs font-semibold text-purple-600 uppercase tracking-wide mb-1">Platform Income (varies by plan)</p>
                 <p class="text-2xl font-black text-purple-700">₱{{ fmt(stats.platform_fee_collected) }}</p>
                 <p class="text-xs text-purple-400 mt-1">From all collected payments</p>
             </div>
@@ -232,7 +232,7 @@
                                     <th class="px-5 py-2 w-8"></th>
                                     <th class="text-left px-5 py-2 text-xs font-semibold text-gray-500">Community</th>
                                     <th class="text-right px-5 py-2 text-xs font-semibold text-gray-500">Gross</th>
-                                    <th class="text-right px-5 py-2 text-xs font-semibold text-gray-500">Platform (15%)</th>
+                                    <th class="text-right px-5 py-2 text-xs font-semibold text-gray-500">Platform Fee</th>
                                     <th class="text-right px-5 py-2 text-xs font-semibold text-gray-500">Commissions</th>
                                     <th class="text-right px-5 py-2 text-xs font-semibold text-gray-500">Earned</th>
                                     <th class="text-right px-5 py-2 text-xs font-semibold text-gray-500">Paid</th>

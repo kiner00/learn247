@@ -53,7 +53,7 @@
                     <p class="text-xs text-gray-400 mt-0.5">Total collected across all communities</p>
                 </div>
                 <div class="bg-white px-5 py-4">
-                    <p class="text-xs font-medium text-gray-500 mb-1">Platform Fees (15%)</p>
+                    <p class="text-xs font-medium text-gray-500 mb-1">Platform Fees (varies by plan)</p>
                     <p class="text-xl font-black text-indigo-600">₱{{ fmt(revenue.platform_fee) }}</p>
                     <p class="text-xs text-gray-400 mt-0.5">Platform income</p>
                 </div>
@@ -118,25 +118,25 @@
             </div>
         </div>
 
-        <!-- Creator Pro Plan Pricing -->
+        <!-- Creator Plan Pricing -->
         <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm mb-8">
             <div class="px-5 py-4 border-b border-gray-100">
-                <h2 class="text-sm font-bold text-gray-900">Creator Pro Plan Pricing</h2>
-                <p class="text-xs text-gray-400 mt-0.5">Set the regular and discounted price shown on the creator upgrade page</p>
+                <h2 class="text-sm font-bold text-gray-900">Creator Plan Pricing</h2>
+                <p class="text-xs text-gray-400 mt-0.5">Set the monthly price for Basic and Pro plans shown on the creator upgrade page</p>
             </div>
             <form @submit.prevent="savePlanPricing" class="px-5 py-4 flex flex-wrap items-end gap-4">
                 <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Regular Price (₱)</label>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Basic Plan (₱/mo)</label>
                     <input
-                        v-model.number="planForm.regular_price"
+                        v-model.number="planForm.basic_price"
                         type="number" min="0" step="1"
-                        class="w-36 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                        class="w-36 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
                     />
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Discounted Price (₱)</label>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Pro Plan (₱/mo)</label>
                     <input
-                        v-model.number="planForm.discounted_price"
+                        v-model.number="planForm.pro_price"
                         type="number" min="0" step="1"
                         class="w-36 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
                     />
@@ -332,7 +332,7 @@ const props = defineProps({
     recentUsers:         Array,
     xenditBalance:       Number,
     pendingOnboarding:   { type: Object, default: () => ({ data: [], total: 0, last_page: 1, links: [] }) },
-    creatorPlanPricing:  { type: Object, default: () => ({ regular_price: 3000, discounted_price: 1999 }) },
+    creatorPlanPricing:  { type: Object, default: () => ({ basic_price: 499, pro_price: 1999 }) },
 });
 
 function toggleFeatured(communityId) {
@@ -395,8 +395,8 @@ const currentTheme = computed(() => page.props.app_theme ?? 'green');
 const themeForm = useForm({ app_theme: currentTheme.value });
 
 const planForm = useForm({
-    regular_price:    props.creatorPlanPricing.regular_price,
-    discounted_price: props.creatorPlanPricing.discounted_price,
+    basic_price: props.creatorPlanPricing.basic_price,
+    pro_price:   props.creatorPlanPricing.pro_price,
 });
 
 function savePlanPricing() {

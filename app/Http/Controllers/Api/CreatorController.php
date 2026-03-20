@@ -27,7 +27,7 @@ class CreatorController extends Controller
 
                 $gross = (float) Payment::where('community_id', $community->id)->where('status', Payment::STATUS_PAID)->sum('amount');
                 $affiliateCommission = (float) AffiliateConversion::whereHas('affiliate', fn ($q) => $q->where('community_id', $community->id))->sum('commission_amount');
-                $platformFee = round($gross * 0.15, 2);
+                $platformFee = round($gross * $community->platformFeeRate(), 2);
                 $earned      = round($gross - $platformFee - $affiliateCommission, 2);
                 $paid        = (float) OwnerPayout::where('community_id', $community->id)->where('status', '!=', 'failed')->sum('amount');
 

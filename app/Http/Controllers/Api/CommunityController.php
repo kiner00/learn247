@@ -209,7 +209,7 @@ class CommunityController extends Controller
         $affiliateCommission = (float) (clone $conversionBase)->sum('commission_amount');
 
         $nonAffiliateGross       = round($grossRevenue - (float) (clone $conversionBase)->sum('sale_amount'), 2);
-        $nonAffiliatePlatformFee = round(max(0, $nonAffiliateGross) * 0.15, 2);
+        $nonAffiliatePlatformFee = round(max(0, $nonAffiliateGross) * $community->platformFeeRate(), 2);
         $totalPlatformFee        = round((float) (clone $conversionBase)->sum('platform_fee') + $nonAffiliatePlatformFee, 2);
         $totalCreatorNet         = round((float) (clone $conversionBase)->sum('creator_amount') + max(0, $nonAffiliateGross) - $nonAffiliatePlatformFee, 2);
 

@@ -1,6 +1,6 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { useForm } from '@inertiajs/vue3';
+import axios from 'axios';
 import { ref, onMounted } from 'vue';
 
 const props = defineProps({
@@ -10,17 +10,22 @@ const props = defineProps({
 });
 
 const notice = ref(null);
+const processing = ref(false);
+
 onMounted(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('success') === '1') notice.value = 'success';
     if (params.get('failed')  === '1') notice.value = 'failed';
 });
 
-const basicForm = useForm({ plan: 'basic' });
-const proForm   = useForm({ plan: 'pro' });
-
-function subscribe(form) {
-    form.post('/creator/plan/checkout');
+async function subscribe(plan) {
+    processing.value = true;
+    try {
+        const { data } = await axios.post('/creator/plan/checkout', { plan });
+        window.location.href = data.checkout_url;
+    } catch {
+        processing.value = false;
+    }
 }
 
 const fmt = (n) => Number(n).toLocaleString();
@@ -119,10 +124,10 @@ const planLabel = { free: 'Free', basic: 'Basic', pro: 'Pro' };
                         <button
                             v-if="currentPlan !== 'basic'"
                             class="w-full py-3 rounded-xl bg-blue-500 text-white font-bold text-sm hover:bg-blue-600 transition-colors shadow disabled:opacity-50"
-                            :disabled="basicForm.processing"
-                            @click="subscribe(basicForm)"
+                            :disabled="processing"
+                            @click="subscribe('basic')"
                         >
-                            {{ basicForm.processing ? 'Redirecting...' : 'Get Basic →' }}
+                            {{ processing ? 'Redirecting...' : 'Get Basic →' }}
                         </button>
                         <div v-else class="w-full py-3 rounded-xl bg-blue-100 text-blue-700 font-bold text-sm text-center">
                             ⭐ Current Plan

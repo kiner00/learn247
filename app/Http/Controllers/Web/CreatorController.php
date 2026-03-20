@@ -13,7 +13,6 @@ use App\Models\PayoutRequest;
 use App\Models\Setting;
 use App\Models\Subscription;
 use App\Queries\Payout\CalculateEligibility;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -34,13 +33,13 @@ class CreatorController extends Controller
         ]);
     }
 
-    public function planCheckout(Request $request, StartCreatorPlanCheckout $action): RedirectResponse
+    public function planCheckout(Request $request, StartCreatorPlanCheckout $action)
     {
         $user   = Auth::user();
         $plan   = $request->validate(['plan' => ['required', 'in:basic,pro']])['plan'];
         $result = $action->execute($user, $plan);
 
-        return redirect()->away($result['checkout_url']);
+        return response()->json(['checkout_url' => $result['checkout_url']]);
     }
 
     public function dashboard(CalculateEligibility $eligibility): Response

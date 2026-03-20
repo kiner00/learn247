@@ -126,7 +126,7 @@
 
                     <!-- Platform Fee -->
                     <div class="bg-white px-5 py-4">
-                        <p class="text-xs font-medium text-gray-500 mb-1">Platform Fee (15%)</p>
+                        <p class="text-xs font-medium text-gray-500 mb-1">Platform Fee ({{ (revenue.platform_fee_rate * 100).toFixed(1) }}%)</p>
                         <p class="text-xl font-black text-red-500">{{ curr }}{{ fmt(revenue.platform_fee) }}</p>
                         <p class="text-xs text-gray-400 mt-0.5">Deducted from gross</p>
                     </div>

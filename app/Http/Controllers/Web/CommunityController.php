@@ -352,7 +352,7 @@ class CommunityController extends Controller
         return Inertia::render('Communities/Analytics', [
             'community' => $community,
             'stats' => ['monthly_revenue' => $monthlyRevenue, 'active_subscriptions' => $activeCount, 'total_members' => $totalMembers, 'free_members' => $totalMembers - $activeCount],
-            'revenue' => ['gross' => $grossRevenue, 'platform_fee' => $totalPlatformFee, 'affiliate_commission_earned' => $affiliateCommission, 'affiliate_commission_paid' => $affiliatePaid, 'affiliate_commission_pending' => $affiliatePending, 'creator_net' => $totalCreatorNet, 'has_affiliate_data' => $affiliateGross > 0],
+            'revenue' => ['gross' => $grossRevenue, 'platform_fee' => $totalPlatformFee, 'platform_fee_rate' => $community->platformFeeRate(), 'affiliate_commission_earned' => $affiliateCommission, 'affiliate_commission_paid' => $affiliatePaid, 'affiliate_commission_pending' => $affiliatePending, 'creator_net' => $totalCreatorNet, 'has_affiliate_data' => $affiliateGross > 0],
             'payout' => ['eligible_now' => $eligibleNow, 'locked_amount' => $lockedAmount, 'next_eligible_date' => $nextEligibleDate, 'pending_request' => $pendingPayoutRequest ? ['amount' => $pendingPayoutRequest->amount, 'created_at' => $pendingPayoutRequest->created_at->toDateString()] : null],
             'payout_history' => $payoutHistory, 'subscribers' => $subscribers, 'course_stats' => $courseStats->values(),
         ]);
