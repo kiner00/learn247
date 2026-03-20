@@ -668,7 +668,8 @@
                                         </button>
                                         <input ref="coverInputC" type="file" accept="image/*" class="hidden" @change="onCreateCoverChange" />
                                     </div>
-                                    <p v-if="!coverPreviewC && createStep === 2 && createForm.errors.cover_image" class="mt-1 text-xs text-red-600">{{ createForm.errors.cover_image }}</p>
+                                    <p v-if="coverRatioError" class="mt-1 text-xs text-red-600">{{ coverRatioError }}</p>
+                                    <p v-else-if="!coverPreviewC && createStep === 2 && createForm.errors.cover_image" class="mt-1 text-xs text-red-600">{{ createForm.errors.cover_image }}</p>
                                 </div>
 
                                 <!-- Avatar -->
@@ -797,7 +798,7 @@
                             <button
                                 v-if="createStep < 3"
                                 type="button"
-                                :disabled="(createStep === 1 && !createForm.name.trim()) || (createStep === 2 && !createForm.cover_image)"
+                                :disabled="(createStep === 1 && !createForm.name.trim()) || (createStep === 2 && (!createForm.cover_image || coverRatioError))"
                                 class="flex-1 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                 @click="createStep++"
                             >
@@ -1095,11 +1096,12 @@ const CATEGORIES = ['Tech', 'Business', 'Design', 'Health', 'Education', 'Financ
 
 const { showCreateModal, openCreateModal, closeCreateModal } = useCreateModal();
 
-const createStep     = ref(1);
-const coverPreviewC  = ref(null);
-const avatarPreviewC = ref(null);
-const coverInputC    = ref(null);
-const avatarInputC   = ref(null);
+const createStep      = ref(1);
+const coverPreviewC   = ref(null);
+const avatarPreviewC  = ref(null);
+const coverInputC     = ref(null);
+const avatarInputC    = ref(null);
+const coverRatioError = ref(null);
 
 const createForm = useForm({
     name:                      '',
@@ -1134,8 +1136,23 @@ function closeAndResetCreate() {
 function onCreateCoverChange(e) {
     const file = e.target.files[0];
     if (!file) return;
-    createForm.cover_image = file;
-    coverPreviewC.value = URL.createObjectURL(file);
+
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+        const ratio = img.width / img.height;
+        if (ratio < 2.5) {
+            coverRatioError.value = `Image must be a wide landscape (at least 2.5:1 ratio). Yours is ${img.width}×${img.height}. Recommended: 1200×400.`;
+            createForm.cover_image = null;
+            coverPreviewC.value = null;
+            coverInputC.value.value = '';
+        } else {
+            coverRatioError.value = null;
+            createForm.cover_image = file;
+            coverPreviewC.value = url;
+        }
+    };
+    img.src = url;
 }
 
 function onCreateAvatarChange(e) {
