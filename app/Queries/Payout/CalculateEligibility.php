@@ -35,8 +35,10 @@ class CalculateEligibility
             'affiliate', fn ($q) => $q->where('community_id', $community->id)
         )->sum('commission_amount');
 
-        $platformFeeEligible = round($eligibleGross * 0.15, 2);
-        $platformFeeLocked   = round($lockedGross * 0.15, 2);
+        $feeRate             = $community->platformFeeRate();
+
+        $platformFeeEligible = round($eligibleGross * $feeRate, 2);
+        $platformFeeLocked   = round($lockedGross * $feeRate, 2);
 
         $eligibleEarned = round($eligibleGross - $platformFeeEligible - $affiliateCommission, 2);
         $lockedEarned   = round($lockedGross - $platformFeeLocked, 2);

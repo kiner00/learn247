@@ -119,8 +119,8 @@ class AdminController extends Controller
         return Inertia::render('Admin/Dashboard', [
             'xenditBalance' => $xenditBalance,
             'creatorPlanPricing' => [
-                'regular_price'    => (float) Setting::get('creator_plan_regular_price', 3000),
-                'discounted_price' => (float) Setting::get('creator_plan_discounted_price', 1999),
+                'basic_price' => (float) Setting::get('creator_plan_basic_price', 499),
+                'pro_price'   => (float) Setting::get('creator_plan_pro_price', 1999),
             ],
             'stats' => [
                 'total_users'          => $totalUsers,
@@ -154,12 +154,12 @@ class AdminController extends Controller
     public function updateCreatorPlanPricing(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'regular_price'    => 'required|numeric|min:0',
-            'discounted_price' => 'required|numeric|min:0',
+            'basic_price' => 'required|numeric|min:0',
+            'pro_price'   => 'required|numeric|min:0',
         ]);
 
-        Setting::set('creator_plan_regular_price',    (string) $validated['regular_price']);
-        Setting::set('creator_plan_discounted_price', (string) $validated['discounted_price']);
+        Setting::set('creator_plan_basic_price', (string) $validated['basic_price']);
+        Setting::set('creator_plan_pro_price',   (string) $validated['pro_price']);
 
         return back()->with('success', 'Creator plan pricing updated.');
     }
@@ -203,7 +203,7 @@ class AdminController extends Controller
                     'payout_method'  => $owner->payout_method,
                     'payout_details' => $owner->payout_details,
                     'can_disburse'   => in_array($owner->payout_method, ['gcash', 'maya']) && $owner->payout_details,
-                    'is_pro'         => $owner->hasActiveCreatorPlan(),
+                    'creator_plan'   => $owner->creatorPlan(),
                     'total_earned'   => $rows->sum('earned'),
                     'total_paid'     => $rows->sum('paid'),
                     'total_pending'  => $rows->sum('pending'),

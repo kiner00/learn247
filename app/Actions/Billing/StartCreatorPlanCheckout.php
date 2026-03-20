@@ -16,23 +16,36 @@ class StartCreatorPlanCheckout
      * @return array{creator_subscription: CreatorSubscription, checkout_url: string}
      * @throws ValidationException|\RuntimeException
      */
-    public function execute(User $user): array
+    public function execute(User $user, string $plan): array
     {
-        if ($user->hasActiveCreatorPlan()) {
-            throw ValidationException::withMessages([
-                'plan' => 'You already have an active Creator Pro plan.',
-            ]);
+        if ($plan === CreatorSubscription::PLAN_PRO) {
+            throw ValidationException::withMessages(['plan' => 'Creator Pro is coming soon. Please select Basic for now.']);
         }
 
-        $price = (float) Setting::get('creator_plan_discounted_price', 1999);
+        if (! in_array($plan, [CreatorSubscription::PLAN_BASIC, CreatorSubscription::PLAN_PRO])) {
+            throw ValidationException::withMessages(['plan' => 'Invalid plan selected.']);
+        }
 
-        $externalId = "creator_plan_{$user->id}_" . time();
+        $currentPlan = $user->creatorPlan();
+        if ($currentPlan === $plan) {
+            throw ValidationException::withMessages(['plan' => 'You already have this plan active.']);
+        }
+
+        $priceKey = $plan === CreatorSubscription::PLAN_PRO
+            ? 'creator_plan_pro_price'
+            : 'creator_plan_basic_price';
+
+        $defaultPrice = $plan === CreatorSubscription::PLAN_PRO ? 1999 : 499;
+        $price        = (float) Setting::get($priceKey, $defaultPrice);
+
+        $planLabel  = $plan === CreatorSubscription::PLAN_PRO ? 'Pro' : 'Basic';
+        $externalId = "creator_plan_{$plan}_{$user->id}_" . time();
 
         $invoice = $this->xendit->createInvoice([
             'external_id' => $externalId,
             'amount'      => $price,
             'currency'    => 'PHP',
-            'description' => 'Creator Pro Plan — Monthly',
+            'description' => "Creator {$planLabel} Plan — Monthly",
             'customer'    => ['given_names' => $user->name, 'email' => $user->email],
             'customer_notification_preference' => [
                 'invoice_created' => ['email'],
@@ -41,7 +54,7 @@ class StartCreatorPlanCheckout
             'success_redirect_url' => config('app.url') . '/creator/plan?success=1',
             'failure_redirect_url' => config('app.url') . '/creator/plan?failed=1',
             'items' => [[
-                'name'     => 'Creator Pro Plan',
+                'name'     => "Creator {$planLabel} Plan",
                 'quantity' => 1,
                 'price'    => $price,
                 'category' => 'Creator Subscription',
@@ -50,6 +63,7 @@ class StartCreatorPlanCheckout
 
         $creatorSubscription = CreatorSubscription::create([
             'user_id'            => $user->id,
+            'plan'               => $plan,
             'status'             => CreatorSubscription::STATUS_PENDING,
             'xendit_id'          => $invoice['id'],
             'xendit_invoice_url' => $invoice['invoice_url'],

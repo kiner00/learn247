@@ -36,7 +36,7 @@ class StartSubscriptionCheckout
             ]);
         }
 
-        $externalId = "sub_{$community->id}_{$user->id}_" . time();
+        $externalId = "{$community->slug}_sub_{$user->id}_" . time();
 
         $invoice = $this->xendit->createInvoice([
             'external_id' => $externalId,

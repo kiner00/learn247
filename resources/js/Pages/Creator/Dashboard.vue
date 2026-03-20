@@ -1,8 +1,23 @@
 <template>
     <AppLayout title="Creator Dashboard">
-        <div class="mb-6">
-            <h1 class="text-2xl font-black text-gray-900">Creator Dashboard</h1>
-            <p class="text-sm text-gray-500 mt-0.5">Your earnings and payout requests</p>
+        <div class="mb-6 flex items-start justify-between">
+            <div>
+                <h1 class="text-2xl font-black text-gray-900">Creator Dashboard</h1>
+                <p class="text-sm text-gray-500 mt-0.5">Your earnings and payout requests</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <span
+                    class="text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wide"
+                    :class="{
+                        'bg-gray-100 text-gray-500': currentPlan === 'free',
+                        'bg-blue-100 text-blue-700': currentPlan === 'basic',
+                        'bg-indigo-100 text-indigo-700': currentPlan === 'pro',
+                    }"
+                >
+                    {{ currentPlan === 'free' ? 'Free Plan' : currentPlan === 'basic' ? '⭐ Basic Plan' : '⭐ Pro Plan' }}
+                </span>
+                <a v-if="currentPlan !== 'pro'" href="/creator/plan" class="text-xs font-semibold text-indigo-600 hover:underline">Upgrade →</a>
+            </div>
         </div>
 
         <!-- No payout method warning -->
@@ -18,7 +33,7 @@
         </div>
 
         <!-- Advanced Analytics (Pro) -->
-        <div v-if="isPro && analytics" class="mb-6 space-y-4">
+        <div v-if="['basic','pro'].includes(currentPlan) && analytics" class="mb-6 space-y-4">
             <!-- Section header -->
             <div class="flex items-center justify-between">
                 <div>
@@ -111,7 +126,9 @@
                     <p class="text-lg font-black text-gray-900">₱{{ fmt(c.gross) }}</p>
                 </div>
                 <div class="bg-white px-5 py-4">
-                    <p class="text-xs font-medium text-gray-500 mb-1">Platform Fee (15%)</p>
+                    <p class="text-xs font-medium text-gray-500 mb-1">
+                        Platform Fee ({{ (c.platform_fee_rate * 100).toFixed(1) }}%)
+                    </p>
                     <p class="text-lg font-black text-red-500">−₱{{ fmt(c.platform_fee) }}</p>
                 </div>
                 <div class="bg-white px-5 py-4">
@@ -133,7 +150,9 @@
                 <div class="bg-green-50 px-5 py-4">
                     <p class="text-xs font-semibold text-green-700 uppercase tracking-wide mb-1">Available to Request</p>
                     <p class="text-2xl font-black text-green-700">₱{{ fmt(c.eligible_now) }}</p>
-                    <p class="text-xs text-green-600 mt-0.5">Payments older than 15 days, after fees</p>
+                    <p class="text-xs text-green-600 mt-0.5">
+                        Payments older than 7 days, after fees · ₱{{ payoutFee }} payout fee applies on withdrawal
+                    </p>
                 </div>
                 <div class="bg-gray-50 px-5 py-4">
                     <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Locked (< 15 days)</p>
@@ -310,14 +329,15 @@ const props = defineProps({
     payoutMethod:   String,
     payoutDetails:  String,
     analytics:      { type: Object, default: null },
-    isPro:          { type: Boolean, default: false },
+    currentPlan:    { type: String, default: 'free' },
+    payoutFee:      { type: Number, default: 15 },
 })
 
 const revenueChart = ref(null)
 const memberChart  = ref(null)
 
 onMounted(() => {
-    if (!props.isPro || !props.analytics) return
+    if (!['basic', 'pro'].includes(props.currentPlan) || !props.analytics) return
 
     const { labels, revenue, newMembers, churn } = props.analytics
 

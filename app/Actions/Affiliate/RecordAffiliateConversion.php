@@ -36,7 +36,7 @@ class RecordAffiliateConversion
 
         $rate            = $affiliate->community->affiliate_commission_rate / 100;
         $saleAmount      = (float) $payment->amount;
-        $platformFee     = round($saleAmount * self::PLATFORM_FEE_RATE, 2);
+        $platformFee     = round($saleAmount * $affiliate->community->platformFeeRate(), 2);
         $commission      = round($saleAmount * $rate, 2);
         $creatorAmount   = round($saleAmount - $platformFee - $commission, 2);
 
@@ -96,7 +96,7 @@ class RecordAffiliateConversion
         }
 
         $saleAmount    = (float) $course->price;
-        $platformFee   = round($saleAmount * self::PLATFORM_FEE_RATE, 2);
+        $platformFee   = round($saleAmount * $affiliate->community->platformFeeRate(), 2);
         $commission    = round($saleAmount * $rate, 2);
         $creatorAmount = round($saleAmount - $platformFee - $commission, 2);
 

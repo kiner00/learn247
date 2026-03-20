@@ -22,7 +22,7 @@ class CreateRenewalInvoice
         $community = $subscription->community;
 
         $invoice = $this->xendit->createInvoice([
-            'external_id' => "renew_{$community->id}_{$user->id}_" . time(),
+            'external_id' => "{$community->slug}_renew_{$user->id}_" . time(),
             'amount'      => (float) $community->price,
             'currency'    => $community->currency,
             'description' => "Renewal: {$community->name}",

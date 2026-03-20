@@ -122,4 +122,17 @@ class Community extends Model
             ->where('expires_at', '>', now())
             ->count();
     }
+
+    /** Flat payout fee in PHP deducted when a creator requests a payout. */
+    const PAYOUT_FEE = 15.0;
+
+    /** Platform fee rate per transaction: 9.8% free, 4.9% basic, 2.9% pro. */
+    public function platformFeeRate(): float
+    {
+        return match ($this->owner?->creatorPlan()) {
+            'pro'   => 0.029,
+            'basic' => 0.049,
+            default => 0.098,
+        };
+    }
 }

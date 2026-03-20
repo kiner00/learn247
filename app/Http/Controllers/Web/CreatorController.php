@@ -6,6 +6,7 @@ use App\Actions\Billing\StartCreatorPlanCheckout;
 use App\Http\Controllers\Controller;
 use App\Models\AffiliateConversion;
 use App\Models\Community;
+use App\Models\CreatorSubscription;
 use App\Models\OwnerPayout;
 use App\Models\Payment;
 use App\Models\PayoutRequest;
@@ -13,6 +14,7 @@ use App\Models\Setting;
 use App\Models\Subscription;
 use App\Queries\Payout\CalculateEligibility;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -26,16 +28,17 @@ class CreatorController extends Controller
         $user = Auth::user();
 
         return Inertia::render('Creator/Plan', [
-            'regularPrice'    => (float) Setting::get('creator_plan_regular_price', 3000),
-            'discountedPrice' => (float) Setting::get('creator_plan_discounted_price', 1999),
-            'isProActive'     => $user->hasActiveCreatorPlan(),
+            'basicPrice'   => (float) Setting::get('creator_plan_basic_price', 499),
+            'proPrice'     => (float) Setting::get('creator_plan_pro_price', 1999),
+            'currentPlan'  => $user->creatorPlan(),
         ]);
     }
 
-    public function planCheckout(StartCreatorPlanCheckout $action): RedirectResponse
+    public function planCheckout(Request $request, StartCreatorPlanCheckout $action): RedirectResponse
     {
         $user   = Auth::user();
-        $result = $action->execute($user);
+        $plan   = $request->validate(['plan' => ['required', 'in:basic,pro']])['plan'];
+        $result = $action->execute($user, $plan);
 
         return redirect()->away($result['checkout_url']);
     }
@@ -53,7 +56,7 @@ class CreatorController extends Controller
 
                 $gross = (float) Payment::where('community_id', $community->id)->where('status', Payment::STATUS_PAID)->sum('amount');
                 $affiliateCommission = (float) AffiliateConversion::whereHas('affiliate', fn ($q) => $q->where('community_id', $community->id))->sum('commission_amount');
-                $platformFee = round($gross * 0.15, 2);
+                $platformFee = round($gross * $community->platformFeeRate(), 2);
                 $earned      = round($gross - $platformFee - $affiliateCommission, 2);
                 $paid        = (float) OwnerPayout::where('community_id', $community->id)->where('status', '!=', 'failed')->sum('amount');
 
@@ -71,21 +74,23 @@ class CreatorController extends Controller
                     ->map(fn ($s) => ['name' => $s->user?->name, 'email' => $s->user?->email, 'phone' => $s->user?->phone, 'status' => $s->status, 'date' => $s->created_at->toDateString()]);
 
                 return [
-                    'community_id'       => $community->id,
-                    'community_name'     => $community->name,
-                    'community_slug'     => $community->slug,
-                    'members_count'      => $community->members_count,
-                    'gross'              => $gross,
-                    'platform_fee'       => $platformFee,
-                    'commissions'        => $affiliateCommission,
-                    'earned'             => $earned,
-                    'paid'               => $paid,
-                    'eligible_now'       => $eligibleNow,
-                    'locked_amount'      => $lockedAmount,
-                    'next_eligible_date' => $nextEligibleDate,
-                    'pending_request'    => $pendingRequest ? ['id' => $pendingRequest->id, 'amount' => (float) $pendingRequest->amount] : null,
-                    'recent_payments'    => $recentPayments,
-                    'abandoned_payments' => $abandonedPayments,
+                    'community_id'        => $community->id,
+                    'community_name'      => $community->name,
+                    'community_slug'      => $community->slug,
+                    'members_count'       => $community->members_count,
+                    'gross'               => $gross,
+                    'platform_fee'        => $platformFee,
+                    'platform_fee_rate'   => $community->platformFeeRate(),
+                    'payout_fee'          => Community::PAYOUT_FEE,
+                    'commissions'         => $affiliateCommission,
+                    'earned'              => $earned,
+                    'paid'                => $paid,
+                    'eligible_now'        => $eligibleNow,
+                    'locked_amount'       => $lockedAmount,
+                    'next_eligible_date'  => $nextEligibleDate,
+                    'pending_request'     => $pendingRequest ? ['id' => $pendingRequest->id, 'amount' => (float) $pendingRequest->amount] : null,
+                    'recent_payments'     => $recentPayments,
+                    'abandoned_payments'  => $abandonedPayments,
                 ];
             });
 
@@ -97,10 +102,8 @@ class CreatorController extends Controller
                 'requested_at' => $r->created_at->toDateString(), 'processed_at' => $r->processed_at?->toDateString(),
             ]);
 
-        $analytics = null;
-        if ($user->hasActiveCreatorPlan()) {
-            $analytics = $this->buildAnalytics($user->id);
-        }
+        $currentPlan = $user->creatorPlan();
+        $analytics   = in_array($currentPlan, ['basic', 'pro']) ? $this->buildAnalytics($user->id) : null;
 
         return Inertia::render('Creator/Dashboard', [
             'communities'    => $communities,
@@ -108,7 +111,8 @@ class CreatorController extends Controller
             'payoutMethod'   => $user->payout_method,
             'payoutDetails'  => $user->payout_details,
             'analytics'      => $analytics,
-            'isPro'          => $user->hasActiveCreatorPlan(),
+            'currentPlan'    => $currentPlan,
+            'payoutFee'      => Community::PAYOUT_FEE,
         ]);
     }
 
@@ -150,7 +154,7 @@ class CreatorController extends Controller
 
         $churn = $months->map(fn ($m) => (int) ($churnRaw[$m->format('Y-m')] ?? 0))->values()->toArray();
 
-        // Retention rate (active / (active + expired in last 30d))
+        // Retention rate
         $active30  = Subscription::whereIn('community_id', $communityIds)->where('status', Subscription::STATUS_ACTIVE)->count();
         $expired30 = Subscription::whereIn('community_id', $communityIds)
             ->whereIn('status', [Subscription::STATUS_EXPIRED, Subscription::STATUS_CANCELLED])
@@ -161,7 +165,7 @@ class CreatorController extends Controller
             ? round(($active30 / ($active30 + $expired30)) * 100, 1)
             : 100.0;
 
-        // MRR (Monthly Recurring Revenue) = sum of active subscription community prices
+        // MRR
         $mrr = Subscription::whereIn('community_id', $communityIds)
             ->where('status', Subscription::STATUS_ACTIVE)
             ->join('communities', 'subscriptions.community_id', '=', 'communities.id')

@@ -72,13 +72,19 @@ class CommunityController extends Controller
     {
         $user = $request->user();
 
-        if (! $user->hasActiveCreatorPlan()) {
-            $existingCount = Community::where('owner_id', $user->id)->count();
-            if ($existingCount >= 1) {
-                return back()->withErrors([
-                    'plan' => 'Free creators can only have 1 community. Upgrade to Creator Pro to create unlimited communities.',
-                ])->withInput();
-            }
+        $plan          = $user->creatorPlan();
+        $communityLimit = match ($plan) {
+            'pro'   => PHP_INT_MAX,
+            'basic' => 3,
+            default => 1,
+        };
+
+        $existingCount = Community::where('owner_id', $user->id)->count();
+        if ($existingCount >= $communityLimit) {
+            $upgrade = $plan === 'free' ? 'Upgrade to Basic (3 communities) or Pro (unlimited).' : 'Upgrade to Pro for unlimited communities.';
+            return back()->withErrors([
+                'plan' => "Your {$plan} plan allows up to {$communityLimit} " . ($communityLimit === 1 ? 'community' : 'communities') . ". {$upgrade}",
+            ])->withInput();
         }
 
         $community = $action->execute(
@@ -182,14 +188,17 @@ class CommunityController extends Controller
         $pricingGate['can_enable_pricing'] = $moduleCount >= 5
             && $pricingGate['has_banner'] && $pricingGate['has_description'] && $pricingGate['profile_complete'];
 
-        $levelPerks = CommunityLevelPerk::where('community_id', $community->id)->pluck('description', 'level')->toArray();
+        $levelPerks          = CommunityLevelPerk::where('community_id', $community->id)->pluck('description', 'level')->toArray();
+        $canUseIntegrations  = in_array(auth()->user()->creatorPlan(), ['basic', 'pro']);
 
-        return Inertia::render('Communities/Settings', compact('community', 'pricingGate', 'levelPerks'));
+        return Inertia::render('Communities/Settings', compact('community', 'pricingGate', 'levelPerks', 'canUseIntegrations'));
     }
 
     public function update(Request $request, Community $community, UpdateCommunity $action): RedirectResponse
     {
         $this->authorize('update', $community);
+
+        $canUseIntegrations = in_array($request->user()->creatorPlan(), ['basic', 'pro']);
 
         $data = $request->validate([
             'name'                     => ['required', 'string', 'max:255'],
@@ -202,9 +211,9 @@ class CommunityController extends Controller
             'billing_type'             => ['nullable', 'string', 'in:monthly,one_time'],
             'is_private'               => ['boolean'],
             'affiliate_commission_rate' => ['nullable', 'integer', 'min:0', 'max:85'],
-            'facebook_pixel_id'         => ['nullable', 'string', 'max:30', 'regex:/^\d+$/'],
-            'tiktok_pixel_id'           => ['nullable', 'string', 'max:30', 'regex:/^[A-Z0-9]+$/i'],
-            'google_analytics_id'       => ['nullable', 'string', 'max:20', 'regex:/^G-[A-Z0-9]+$/i'],
+            'facebook_pixel_id'         => $canUseIntegrations ? ['nullable', 'string', 'max:30', 'regex:/^\d+$/'] : ['prohibited'],
+            'tiktok_pixel_id'           => $canUseIntegrations ? ['nullable', 'string', 'max:30', 'regex:/^[A-Z0-9]+$/i'] : ['prohibited'],
+            'google_analytics_id'       => $canUseIntegrations ? ['nullable', 'string', 'max:20', 'regex:/^G-[A-Z0-9]+$/i'] : ['prohibited'],
         ]);
 
         $action->execute($community, $data, $request->file('avatar'), $request->file('cover_image'));
@@ -306,7 +315,7 @@ class CommunityController extends Controller
         $affiliatePending     = (float) (clone $conversionBase)->where('status', AffiliateConversion::STATUS_PENDING)->sum('commission_amount');
 
         $nonAffiliateGross       = round($grossRevenue - $affiliateGross, 2);
-        $nonAffiliatePlatformFee = round($nonAffiliateGross * 0.15, 2);
+        $nonAffiliatePlatformFee = round($nonAffiliateGross * $community->platformFeeRate(), 2);
         $nonAffiliateCreator     = round($nonAffiliateGross - $nonAffiliatePlatformFee, 2);
         $totalPlatformFee = round($affiliatePlatformFee + $nonAffiliatePlatformFee, 2);
         $totalCreatorNet  = round($affiliateCreator + $nonAffiliateCreator, 2);
@@ -360,9 +369,9 @@ class CommunityController extends Controller
     {
         $this->authorize('update', $community);
 
-        if (! $request->user()->hasActiveCreatorPlan()) {
+        if (! in_array($request->user()->creatorPlan(), ['basic', 'pro'])) {
             return back()->withErrors([
-                'plan' => 'Email Announcement Blast is a Creator Pro feature. Upgrade to send broadcast emails to your members.',
+                'plan' => 'Email Announcement Blast requires a Basic or Pro plan. Upgrade to send broadcast emails to your members.',
             ]);
         }
 
@@ -498,7 +507,7 @@ class CommunityController extends Controller
 
         $membership = auth()->id() ? $community->members()->where('user_id', auth()->id())->first() : null;
 
-        $ownerIsPro = $community->owner?->hasActiveCreatorPlan() ?? false;
+        $ownerIsPro = in_array($community->owner?->creatorPlan(), ['basic', 'pro']);
 
         return Inertia::render('Communities/About', compact('community', 'affiliate', 'invitedBy', 'membership', 'recentMembers', 'ownerIsPro'));
     }

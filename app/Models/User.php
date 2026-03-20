@@ -79,15 +79,24 @@ class User extends Authenticatable
         return $this->hasMany(CreatorSubscription::class);
     }
 
-    public function hasActiveCreatorPlan(): bool
+    /** Returns 'free', 'basic', or 'pro'. */
+    public function creatorPlan(): string
     {
         if ($this->is_super_admin) {
-            return true;
+            return CreatorSubscription::PLAN_PRO;
         }
 
-        return $this->creatorSubscriptions()
+        $sub = $this->creatorSubscriptions()
             ->where('status', CreatorSubscription::STATUS_ACTIVE)
             ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
-            ->exists();
+            ->orderByDesc('created_at')
+            ->first();
+
+        return $sub?->plan ?? 'free';
+    }
+
+    public function hasActiveCreatorPlan(): bool
+    {
+        return $this->creatorPlan() !== 'free';
     }
 }

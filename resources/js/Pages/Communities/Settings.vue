@@ -278,7 +278,7 @@
                 </div>
                 <p class="text-sm text-gray-500 mb-5">
                     Members can become affiliates and earn a commission for every new subscriber they refer.
-                    The platform always takes 15% off the top.
+                    The platform takes {{ (platformFeeRate * 100).toFixed(1) }}% off the top.
                 </p>
                 <form @submit.prevent="saveAffiliate">
                     <div class="flex items-end gap-4">
@@ -297,7 +297,7 @@
                                 :class="affiliateForm.errors.affiliate_commission_rate ? 'border-red-400' : ''"
                             />
                             <p class="mt-1 text-xs text-gray-400">
-                                0 = disable affiliate program. Max 85 (platform takes 15%).
+                                0 = disable affiliate program. Max 85 (platform takes {{ (platformFeeRate * 100).toFixed(1) }}%).
                             </p>
                             <p v-if="affiliateForm.errors.affiliate_commission_rate" class="mt-1 text-xs text-red-600">
                                 {{ affiliateForm.errors.affiliate_commission_rate }}
@@ -314,9 +314,9 @@
                     </div>
                     <div v-if="community.affiliate_commission_rate" class="mt-3 p-3 bg-gray-50 rounded-lg text-xs text-gray-500">
                         Example split on ₱{{ community.price }} sale:
-                        <strong class="text-red-500">Platform ₱{{ (community.price * 0.15).toFixed(2) }}</strong>
+                        <strong class="text-red-500">Platform ₱{{ (community.price * platformFeeRate).toFixed(2) }}</strong>
                         · <strong class="text-orange-600">Affiliate ₱{{ (community.price * community.affiliate_commission_rate / 100).toFixed(2) }}</strong>
-                        · <strong class="text-green-700">You ₱{{ (community.price - community.price * 0.15 - community.price * community.affiliate_commission_rate / 100).toFixed(2) }}</strong>
+                        · <strong class="text-green-700">You ₱{{ (community.price - community.price * platformFeeRate - community.price * community.affiliate_commission_rate / 100).toFixed(2) }}</strong>
                     </div>
                 </form>
             </div>
@@ -330,7 +330,7 @@
                 <p class="text-sm text-gray-500 mb-5">Generate a compelling tagline, description, and CTA for your community page using AI.</p>
 
                 <!-- Locked for non-Pro -->
-                <div v-if="!$page.props.auth.user.is_pro_creator" class="rounded-xl border border-indigo-100 bg-indigo-50 px-5 py-6 text-center">
+                <div v-if="creatorPlan !== 'pro'" class="rounded-xl border border-indigo-100 bg-indigo-50 px-5 py-6 text-center">
                     <p class="text-sm font-semibold text-indigo-800 mb-1">Creator Pro feature</p>
                     <p class="text-xs text-indigo-600 mb-3">Upgrade to unlock AI-generated landing page copy.</p>
                     <Link href="/creator/plan" class="inline-block px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors">
@@ -390,16 +390,16 @@
                 </div>
                 <p class="text-sm text-gray-500 mb-5">Email all members of this community at once.</p>
 
-                <!-- Locked for non-Pro -->
-                <div v-if="!$page.props.auth.user.is_pro_creator" class="rounded-xl border border-indigo-100 bg-indigo-50 px-5 py-6 text-center">
-                    <p class="text-sm font-semibold text-indigo-800 mb-1">Creator Pro feature</p>
+                <!-- Locked for Free -->
+                <div v-if="creatorPlan === 'free'" class="rounded-xl border border-indigo-100 bg-indigo-50 px-5 py-6 text-center">
+                    <p class="text-sm font-semibold text-indigo-800 mb-1">Basic &amp; Pro feature</p>
                     <p class="text-xs text-indigo-600 mb-3">Upgrade to send broadcast emails to all your members.</p>
                     <Link href="/creator/plan" class="inline-block px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors">
-                        Upgrade to Creator Pro →
+                        Upgrade Plan →
                     </Link>
                 </div>
 
-                <!-- Form for Pro -->
+                <!-- Form for Basic/Pro -->
                 <form v-else @submit.prevent="sendAnnouncement" class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1.5">Subject</label>
@@ -529,11 +529,23 @@
 
             <!-- Integrations -->
             <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
-                <h2 class="text-base font-semibold text-gray-900 mb-1">Integrations</h2>
+                <div class="flex items-center gap-2 mb-1">
+                    <h2 class="text-base font-semibold text-gray-900">Integrations</h2>
+                    <span class="px-2.5 py-1 text-xs font-bold bg-blue-100 text-blue-700 rounded-full">Basic+</span>
+                </div>
                 <p class="text-sm text-gray-500 mb-5">
                     Connect third-party tools to track conversions and optimize your ads.
                 </p>
-                <form @submit.prevent="saveIntegrations" class="space-y-5">
+
+                <!-- Locked state for Free plan -->
+                <div v-if="!canUseIntegrations" class="rounded-xl border border-gray-200 bg-gray-50 px-5 py-6 text-center">
+                    <p class="text-2xl mb-2">🔒</p>
+                    <p class="text-sm font-semibold text-gray-700">Available on Basic &amp; Pro</p>
+                    <p class="text-xs text-gray-500 mt-1 mb-4">Upgrade to connect Facebook Pixel, TikTok Pixel, and Google Analytics.</p>
+                    <a href="/creator/plan" class="inline-block px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-colors">Upgrade Plan →</a>
+                </div>
+
+                <form v-else @submit.prevent="saveIntegrations" class="space-y-5">
                     <!-- Facebook Pixel -->
                     <div>
                         <label class="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1.5">
@@ -781,17 +793,26 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { Link, useForm, router, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
+
+const page = usePage();
+const creatorPlan = computed(() => page.props.auth.user?.creator_plan ?? 'free');
+const platformFeeRate = computed(() => {
+    if (creatorPlan.value === 'pro')   return 0.029;
+    if (creatorPlan.value === 'basic') return 0.049;
+    return 0.098;
+});
 import AppLayout from '@/Layouts/AppLayout.vue';
 
 const CATEGORIES = ['Tech', 'Business', 'Design', 'Health', 'Education', 'Finance', 'Other'];
 
 const props = defineProps({
-    community:   Object,
-    pricingGate: Object,
-    levelPerks:  { type: Object, default: () => ({}) },
+    community:          Object,
+    pricingGate:        Object,
+    levelPerks:         { type: Object, default: () => ({}) },
+    canUseIntegrations: { type: Boolean, default: false },
 });
 
 const saved             = ref(false);

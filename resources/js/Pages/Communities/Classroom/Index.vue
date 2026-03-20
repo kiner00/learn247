@@ -10,12 +10,12 @@
             </h1>
             <template v-if="isOwner">
                 <Link
-                    v-if="!page.props.auth.user.is_pro_creator && courses.length >= 3"
+                    v-if="courseLimit !== null && courses.length >= courseLimit"
                     href="/creator/plan"
                     class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-100 text-indigo-700 text-sm font-semibold rounded-xl hover:bg-indigo-200 transition-colors"
                 >
                     🔒 Upgrade for more courses
-                    <span class="text-[10px] font-bold bg-indigo-600 text-white px-1.5 py-0.5 rounded-full">Pro</span>
+                    <span class="text-[10px] font-bold bg-indigo-600 text-white px-1.5 py-0.5 rounded-full">Upgrade</span>
                 </Link>
                 <button
                     v-else
@@ -438,6 +438,14 @@ const props = defineProps({
 
 const page    = usePage();
 const isOwner = props.community.owner_id === page.props.auth?.user?.id;
+
+// null = unlimited
+const courseLimit = computed(() => {
+    const plan = page.props.auth?.user?.creator_plan ?? 'free';
+    if (plan === 'pro')   return null;
+    if (plan === 'basic') return 5;
+    return 3;
+});
 
 // Local copy for draggable (owner only)
 const localCourses = ref([...props.courses]);

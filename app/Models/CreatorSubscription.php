@@ -12,8 +12,12 @@ class CreatorSubscription extends Model
     const STATUS_EXPIRED   = 'expired';
     const STATUS_CANCELLED = 'cancelled';
 
+    const PLAN_BASIC = 'basic';
+    const PLAN_PRO   = 'pro';
+
     protected $fillable = [
         'user_id',
+        'plan',
         'status',
         'xendit_id',
         'xendit_invoice_url',
