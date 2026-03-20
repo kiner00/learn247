@@ -646,10 +646,10 @@
                                 <!-- Banner / Cover -->
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                                        Banner image <span class="text-gray-400 font-normal">(recommended: 1200×400)</span>
+                                        Banner image <span class="text-red-500">*</span> <span class="text-gray-400 font-normal">(recommended: 1200×400)</span>
                                     </label>
                                     <div
-                                        class="relative w-full h-32 rounded-xl overflow-hidden border-2 border-dashed border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 flex items-center justify-center cursor-pointer group hover:border-indigo-400 transition-colors"
+                                        class="relative w-full aspect-3/1 rounded-xl overflow-hidden border-2 border-dashed border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 flex items-center justify-center cursor-pointer group hover:border-indigo-400 transition-colors"
                                         @click="coverInputC.click()"
                                     >
                                         <img v-if="coverPreviewC" :src="coverPreviewC" class="absolute inset-0 w-full h-full object-cover" />
@@ -668,6 +668,7 @@
                                         </button>
                                         <input ref="coverInputC" type="file" accept="image/*" class="hidden" @change="onCreateCoverChange" />
                                     </div>
+                                    <p v-if="!coverPreviewC && createStep === 2 && createForm.errors.cover_image" class="mt-1 text-xs text-red-600">{{ createForm.errors.cover_image }}</p>
                                 </div>
 
                                 <!-- Avatar -->
@@ -796,7 +797,7 @@
                             <button
                                 v-if="createStep < 3"
                                 type="button"
-                                :disabled="createStep === 1 && !createForm.name.trim()"
+                                :disabled="(createStep === 1 && !createForm.name.trim()) || (createStep === 2 && !createForm.cover_image)"
                                 class="flex-1 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                 @click="createStep++"
                             >
