@@ -1,9 +1,9 @@
 <template>
     <AppLayout title="Profile">
-        <div class="flex gap-6 items-start">
+        <div class="flex flex-col-reverse md:flex-row gap-6 items-start">
 
             <!-- ── Left: main content ─────────────────────────────────────── -->
-            <div class="flex-1 min-w-0 space-y-5">
+            <div class="w-full md:flex-1 min-w-0 space-y-5">
 
                 <!-- Activity heatmap -->
                 <div class="bg-white border border-gray-200 rounded-2xl p-5">
@@ -27,7 +27,7 @@
                     <!-- Member badges -->
                     <div v-if="memberBadges.length">
                         <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Member</p>
-                        <div class="grid grid-cols-3 sm:grid-cols-4 gap-3 mb-5">
+                        <div class="grid grid-cols-4 sm:grid-cols-5 gap-3 mb-5">
                             <div
                                 v-for="badge in memberBadges"
                                 :key="badge.key"
@@ -52,7 +52,7 @@
                     <!-- Creator badges -->
                     <div v-if="creatorBadges.length">
                         <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Creator</p>
-                        <div class="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                        <div class="grid grid-cols-4 sm:grid-cols-5 gap-3">
                             <div
                                 v-for="badge in creatorBadges"
                                 :key="badge.key"
@@ -128,7 +128,7 @@
             </div>
 
             <!-- ── Right sidebar ──────────────────────────────────────────── -->
-            <div class="w-72 shrink-0">
+            <div class="w-full md:w-72 md:shrink-0">
                 <div class="bg-white border border-gray-200 rounded-2xl p-6 text-center">
 
                     <!-- Avatar + level badge -->
