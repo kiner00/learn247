@@ -192,6 +192,7 @@ Route::middleware('auth')->group(function () {
     // Member management (admin only — enforced by Action)
     Route::delete('/communities/{community}/members/{user}', [CommunityMemberController::class, 'destroy'])->name('communities.members.destroy');
     Route::patch('/communities/{community}/members/{user}/role', [CommunityMemberController::class, 'changeRole'])->name('communities.members.role');
+    Route::patch('/communities/{community}/members/{user}/block', [CommunityMemberController::class, 'toggleBlock'])->name('communities.members.block');
 
     // Gated: active membership required
     Route::middleware(EnsureActiveMembership::class)->group(function () {

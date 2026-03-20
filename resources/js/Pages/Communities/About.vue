@@ -337,13 +337,18 @@ const props = defineProps({
 const showInviteModal = ref(false);
 const showJoinModal   = ref(false);
 
+const affFbPixelId = props.invitedBy?.facebook_pixel_id;
+const affTtPixelId = props.invitedBy?.tiktok_pixel_id;
+const affGaId      = props.invitedBy?.google_analytics_id;
+
 const trackers = [
-    props.community.facebook_pixel_id   ? usePixel(props.community.facebook_pixel_id)              : null,
-    props.community.tiktok_pixel_id     ? useTiktokPixel(props.community.tiktok_pixel_id)          : null,
-    props.community.google_analytics_id ? useGoogleAnalytics(props.community.google_analytics_id)  : null,
-    props.invitedBy?.facebook_pixel_id  ? usePixel(props.invitedBy.facebook_pixel_id)              : null,
-    props.invitedBy?.tiktok_pixel_id    ? useTiktokPixel(props.invitedBy.tiktok_pixel_id)          : null,
-    props.invitedBy?.google_analytics_id ? useGoogleAnalytics(props.invitedBy.google_analytics_id) : null,
+    props.community.facebook_pixel_id   ? usePixel(props.community.facebook_pixel_id)             : null,
+    props.community.tiktok_pixel_id     ? useTiktokPixel(props.community.tiktok_pixel_id)         : null,
+    props.community.google_analytics_id ? useGoogleAnalytics(props.community.google_analytics_id) : null,
+    // Only add affiliate pixels if they differ from the community's own pixels
+    affFbPixelId && affFbPixelId !== props.community.facebook_pixel_id ? usePixel(affFbPixelId)              : null,
+    affTtPixelId && affTtPixelId !== props.community.tiktok_pixel_id   ? useTiktokPixel(affTtPixelId)        : null,
+    affGaId      && affGaId      !== props.community.google_analytics_id ? useGoogleAnalytics(affGaId)       : null,
 ].filter(Boolean);
 
 onMounted(() => {

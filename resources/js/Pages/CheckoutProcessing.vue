@@ -83,12 +83,13 @@ async function poll() {
                 transaction_id: Date.now().toString(),  // GA4 requires this
             };
             const trackers = [
-                props.pixelId              ? usePixel(props.pixelId)                          : null,
-                props.tiktokPixelId        ? useTiktokPixel(props.tiktokPixelId)              : null,
-                props.googleAnalyticsId    ? useGoogleAnalytics(props.googleAnalyticsId)      : null,
-                props.affiliateFbPixelId   ? usePixel(props.affiliateFbPixelId)               : null,
-                props.affiliateTiktokPixelId ? useTiktokPixel(props.affiliateTiktokPixelId)   : null,
-                props.affiliateGaId        ? useGoogleAnalytics(props.affiliateGaId)          : null,
+                props.pixelId           ? usePixel(props.pixelId)                     : null,
+                props.tiktokPixelId     ? useTiktokPixel(props.tiktokPixelId)         : null,
+                props.googleAnalyticsId ? useGoogleAnalytics(props.googleAnalyticsId) : null,
+                // Only add affiliate pixels if they differ from the community's own pixels
+                props.affiliateFbPixelId     && props.affiliateFbPixelId     !== props.pixelId           ? usePixel(props.affiliateFbPixelId)               : null,
+                props.affiliateTiktokPixelId && props.affiliateTiktokPixelId !== props.tiktokPixelId     ? useTiktokPixel(props.affiliateTiktokPixelId)      : null,
+                props.affiliateGaId          && props.affiliateGaId          !== props.googleAnalyticsId ? useGoogleAnalytics(props.affiliateGaId)           : null,
             ].filter(Boolean);
             trackers.forEach(t => { t.init(); t.purchase(purchaseParams); });
 

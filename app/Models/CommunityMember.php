@@ -16,7 +16,7 @@ class CommunityMember extends Model
 
     public const ROLES = [self::ROLE_ADMIN, self::ROLE_MODERATOR, self::ROLE_MEMBER];
 
-    protected $fillable = ['community_id', 'user_id', 'role', 'points', 'joined_at', 'notif_prefs', 'chat_enabled', 'show_on_profile'];
+    protected $fillable = ['community_id', 'user_id', 'role', 'points', 'joined_at', 'notif_prefs', 'chat_enabled', 'show_on_profile', 'is_blocked'];
 
     protected $casts = [
         'notif_prefs'  => 'array',
@@ -59,6 +59,7 @@ class CommunityMember extends Model
             'notif_prefs'     => 'array',
             'chat_enabled'    => 'boolean',
             'show_on_profile' => 'boolean',
+            'is_blocked'      => 'boolean',
         ];
     }
 
@@ -89,5 +90,10 @@ class CommunityMember extends Model
     public function canModerate(): bool
     {
         return in_array($this->role, [self::ROLE_ADMIN, self::ROLE_MODERATOR]);
+    }
+
+    public function isBlocked(): bool
+    {
+        return (bool) $this->is_blocked;
     }
 }

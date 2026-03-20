@@ -8,6 +8,7 @@ use App\Actions\Feed\TogglePin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CreatePostRequest;
 use App\Models\Community;
+use App\Models\CommunityMember;
 use App\Models\Post;
 use Illuminate\Http\RedirectResponse;
 
@@ -15,6 +16,14 @@ class PostController extends Controller
 {
     public function store(CreatePostRequest $request, Community $community, CreatePost $action): RedirectResponse
     {
+        $member = CommunityMember::where('community_id', $community->id)
+            ->where('user_id', $request->user()->id)
+            ->first();
+
+        if ($member?->is_blocked) {
+            return back()->withErrors(['blocked' => 'You have been blocked from posting in this community.']);
+        }
+
         $action->execute($request->user(), $community, $request->validated());
 
         return back();

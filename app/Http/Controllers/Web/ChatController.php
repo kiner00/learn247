@@ -7,6 +7,7 @@ use App\Actions\Chat\SendChatMessage;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SendMessageRequest;
 use App\Models\Community;
+use App\Models\CommunityMember;
 use App\Models\Message;
 use App\Queries\Chat\GetChatMessages;
 use Illuminate\Http\JsonResponse;
@@ -33,6 +34,14 @@ class ChatController extends Controller
 
     public function store(SendMessageRequest $request, Community $community, SendChatMessage $action): JsonResponse
     {
+        $member = CommunityMember::where('community_id', $community->id)
+            ->where('user_id', $request->user()->id)
+            ->first();
+
+        if ($member?->is_blocked) {
+            return response()->json(['error' => 'You have been blocked from chatting in this community.'], 403);
+        }
+
         $message = $action->execute($request->user(), $community, $request->validated()['content']);
 
         return response()->json([

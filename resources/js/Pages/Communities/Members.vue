@@ -120,12 +120,21 @@
                                         <option value="admin">Admin</option>
                                     </select>
                                     <button
+                                        @click="toggleBlock(member)"
+                                        class="text-xs font-medium transition-colors"
+                                        :class="member.is_blocked ? 'text-amber-500 hover:text-amber-700' : 'text-gray-400 hover:text-amber-500'"
+                                    >
+                                        {{ member.is_blocked ? '🔓 Unblock' : '🚫 Block' }}
+                                    </button>
+                                    <button
                                         @click="removeMember(member)"
                                         class="text-xs text-gray-400 hover:text-red-500 transition-colors"
                                     >
                                         Remove
                                     </button>
                                 </template>
+                                <!-- Blocked badge visible to admin -->
+                                <span v-if="isAdmin && member.is_blocked" class="text-[10px] font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">Blocked</span>
                             </div>
                         </div>
                     </div>
@@ -448,6 +457,16 @@ function changeRole(member, role) {
     router.patch(
         `/communities/${props.community.slug}/members/${member.user.id}/role`,
         { role },
+        { preserveScroll: true },
+    );
+}
+
+function toggleBlock(member) {
+    const action = member.is_blocked ? 'unblock' : 'block';
+    if (!confirm(`${action === 'block' ? 'Block' : 'Unblock'} ${member.user?.name}? ${action === 'block' ? 'They will not be able to post, comment, or chat.' : 'They will regain posting and chat access.'}`)) return;
+    router.patch(
+        `/communities/${props.community.slug}/members/${member.user.id}/block`,
+        {},
         { preserveScroll: true },
     );
 }
