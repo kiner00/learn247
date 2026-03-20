@@ -208,9 +208,9 @@
 
                 <!-- Community card -->
                 <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden shadow-sm">
-                    <div class="aspect-3/1 overflow-hidden bg-gray-900">
-                        <img v-if="community.cover_image" :src="community.cover_image" :alt="community.name" class="w-full h-full object-contain" />
-                        <div v-else class="w-full h-full bg-linear-to-br from-indigo-500 to-purple-700" />
+                    <div class="overflow-hidden">
+                        <img v-if="community.cover_image" :src="community.cover_image" :alt="community.name" class="w-full h-auto block" />
+                        <div v-else class="w-full h-28 bg-linear-to-br from-indigo-500 to-purple-700" />
                     </div>
 
                     <div class="p-4">
