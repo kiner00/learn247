@@ -109,8 +109,8 @@
                         Remove
                     </button>
 
-                    <div class="relative aspect-3/1 overflow-hidden">
-                        <img v-if="c.cover_image" :src="c.cover_image" :alt="c.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    <div class="relative aspect-3/1 overflow-hidden bg-gray-900">
+                        <img v-if="c.cover_image" :src="c.cover_image" :alt="c.name" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" />
                         <div v-else class="w-full h-full bg-linear-to-br from-indigo-400 to-purple-500" />
                     </div>
                     <div class="p-4">
@@ -136,12 +136,12 @@
                 class="group bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-lg hover:border-indigo-200 transition-all duration-200"
             >
                 <!-- Cover image / gradient -->
-                <div class="relative aspect-3/1 overflow-hidden">
+                <div class="relative aspect-3/1 overflow-hidden bg-gray-900">
                     <img
                         v-if="community.cover_image"
                         :src="community.cover_image"
                         :alt="community.name"
-                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                     />
                     <div
                         v-else
