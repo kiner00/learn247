@@ -98,7 +98,7 @@
                             v-if="community.cover_image"
                             :src="community.cover_image"
                             :alt="community.name"
-                            class="w-full h-full object-cover"
+                            class="w-full h-full object-contain"
                         />
                         <div v-else class="w-full h-full bg-linear-to-br from-indigo-500 to-purple-700 flex items-center justify-center">
                             <span class="text-4xl font-black text-white opacity-40">{{ community.name.charAt(0).toUpperCase() }}</span>
