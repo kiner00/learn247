@@ -133,7 +133,7 @@
                 v-for="(community, index) in filteredCommunities"
                 :key="community.id"
                 :href="`/communities/${community.slug}`"
-                class="group bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-lg hover:border-indigo-200 transition-all duration-200"
+                class="group bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-lg hover:border-indigo-200 transition-all duration-200 flex flex-col"
             >
                 <!-- Cover image / gradient -->
                 <div class="relative h-28 overflow-hidden bg-black">
@@ -168,7 +168,7 @@
                 </div>
 
                 <!-- Card body -->
-                <div class="p-4">
+                <div class="p-4 flex flex-col flex-1">
                     <!-- Logo + name row -->
                     <div class="flex items-center gap-3 -mt-6 mb-2">
                         <div class="w-10 h-10 rounded-xl shrink-0 overflow-hidden border-2 border-white shadow-sm bg-white flex items-center justify-center font-bold text-indigo-600 text-base">
