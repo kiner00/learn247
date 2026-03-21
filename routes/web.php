@@ -101,6 +101,9 @@ Route::middleware(['auth', EnsureSuperAdmin::class])->prefix('admin')->group(fun
     Route::get('/posts/trashed', [AdminController::class, 'trashedPosts'])->name('admin.posts.trashed');
     Route::post('/posts/{postId}/restore', [AdminController::class, 'restorePost'])->name('admin.posts.restore');
     Route::delete('/posts/{postId}/force-delete', [AdminController::class, 'forceDeletePost'])->name('admin.posts.force-delete');
+    // Global announcement
+    Route::get('/announcements', [AdminController::class, 'globalAnnouncement'])->name('admin.announcements');
+    Route::post('/announcements', [AdminController::class, 'sendGlobalAnnouncement'])->name('admin.announcements.send');
     // Email templates
     Route::get('/email-templates', [AdminController::class, 'emailTemplates'])->name('admin.email-templates');
     Route::get('/email-templates/{key}/edit', [AdminController::class, 'editEmailTemplate'])->name('admin.email-templates.edit');

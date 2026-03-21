@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Actions\Admin\SendGlobalAnnouncement;
 use App\Actions\Affiliate\DisbursePayout;
 use App\Actions\Affiliate\MarkAffiliateConversionPaid;
 use App\Http\Controllers\Controller;
@@ -739,5 +740,23 @@ class AdminController extends Controller
         }
 
         return response($html);
+    }
+
+    public function globalAnnouncement(): Response
+    {
+        return Inertia::render('Admin/GlobalAnnouncement');
+    }
+
+    public function sendGlobalAnnouncement(Request $request, SendGlobalAnnouncement $action): RedirectResponse
+    {
+        $data = $request->validate([
+            'subject'  => 'required|string|max:255',
+            'message'  => 'required|string',
+            'audience' => 'required|in:affiliates,creators,members,all',
+        ]);
+
+        $count = $action->execute($request->user(), $data['subject'], $data['message'], $data['audience']);
+
+        return back()->with('success', "Announcement queued for {$count} recipients.");
     }
 }
