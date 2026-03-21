@@ -185,7 +185,7 @@
                     </p>
 
                     <!-- Category badge -->
-                    <span v-if="community.category" class="inline-block mb-2 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-50 text-indigo-600">
+                    <span v-if="community.category" class="self-start mb-2 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-50 text-indigo-600">
                         {{ community.category }}
                     </span>
 
