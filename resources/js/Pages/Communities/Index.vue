@@ -180,8 +180,8 @@
                         </h2>
                     </div>
 
-                    <p v-if="community.description" class="text-xs text-gray-500 line-clamp-2 leading-relaxed mb-2">
-                        {{ community.description }}
+                    <p class="text-xs text-gray-500 line-clamp-2 leading-relaxed mb-2 h-8">
+                        {{ community.description ?? '' }}
                     </p>
 
                     <!-- Category badge -->
@@ -189,14 +189,13 @@
                         {{ community.category }}
                     </span>
 
-                    <!-- Skool-style footer: "1.3k Members · $49/month" -->
-                    <p class="text-xs text-gray-500 mt-auto">
-                        <span class="font-medium text-gray-700">{{ formatCount(community.members_count) }} {{ community.members_count === 1 ? 'Member' : 'Members' }}</span>
-                        <span class="mx-1.5 text-gray-300">·</span>
-                        <span class="font-medium text-gray-700">
-                            {{ community.price > 0 ? `₱${Number(community.price).toLocaleString()}/month` : 'Free' }}
+                    <!-- Footer: members left, price right -->
+                    <div class="flex items-center justify-between mt-auto pt-2">
+                        <span class="text-xs text-gray-500 font-medium">{{ formatCount(community.members_count) }} {{ community.members_count === 1 ? 'Member' : 'Members' }}</span>
+                        <span class="text-xs font-semibold" :class="community.price > 0 ? 'text-amber-600' : 'text-green-600'">
+                            {{ community.price > 0 ? `₱${Number(community.price).toLocaleString()}/mo` : 'Free' }}
                         </span>
-                    </p>
+                    </div>
                 </div>
             </Link>
         </div>
