@@ -180,7 +180,7 @@
                         </h2>
                     </div>
 
-                    <p class="text-xs text-gray-500 line-clamp-2 leading-relaxed mb-2 h-8">
+                    <p class="text-xs text-gray-500 line-clamp-2 leading-relaxed mb-2 h-10">
                         {{ community.description ?? '' }}
                     </p>
 
