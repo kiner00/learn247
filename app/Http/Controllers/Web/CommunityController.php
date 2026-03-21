@@ -20,6 +20,7 @@ use App\Models\CommunityMember;
 use App\Models\LessonCompletion;
 use App\Models\Payment;
 use App\Models\PayoutRequest;
+use App\Models\Comment;
 use App\Models\Post;
 use App\Models\QuizAttempt;
 use App\Models\Subscription;
@@ -143,8 +144,15 @@ class CommunityController extends Controller
             ];
         }
 
+        $recentComments = Comment::with(['author:id,name,username,avatar', 'post:id,title,community_id'])
+            ->where('community_id', $community->id)
+            ->whereNull('parent_id')
+            ->latest()
+            ->take(5)
+            ->get(['id', 'post_id', 'user_id', 'content', 'created_at']);
+
         return Inertia::render('Communities/Show', compact(
-            'community', 'membership', 'affiliate', 'adminCount', 'topMembers', 'checklist'
+            'community', 'membership', 'affiliate', 'adminCount', 'topMembers', 'checklist', 'recentComments'
         ));
     }
 

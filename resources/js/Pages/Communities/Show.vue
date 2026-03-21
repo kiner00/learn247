@@ -307,6 +307,26 @@
                     </div>
                 </div>
 
+                <!-- Recent Comments widget -->
+                <div v-if="isMember && recentComments?.length" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden shadow-sm">
+                    <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+                        <h4 class="text-sm font-bold text-gray-900 dark:text-gray-100">Recent Comments</h4>
+                    </div>
+                    <div class="divide-y divide-gray-50 dark:divide-gray-700/50">
+                        <div v-for="comment in recentComments" :key="comment.id"
+                            class="px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors cursor-pointer"
+                            @click="openPost(comment.post)"
+                        >
+                            <div class="flex items-center gap-2 mb-1">
+                                <UserAvatar :name="comment.author?.name" :avatar="comment.author?.avatar" size="5" />
+                                <span class="text-xs font-semibold text-gray-800 dark:text-gray-100 truncate">{{ comment.author?.name }}</span>
+                            </div>
+                            <p v-if="comment.post?.title" class="text-[11px] text-indigo-500 truncate mb-0.5">{{ comment.post.title }}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{{ comment.content }}</p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Leaderboard widget -->
                 <div v-if="isMember && topMembers?.length" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden shadow-sm">
                     <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
@@ -586,8 +606,9 @@ const props = defineProps({
     membership: Object,
     affiliate:  Object,
     adminCount: { type: Number, default: 0 },
-    topMembers: { type: Array, default: () => [] },
-    checklist:  { type: Array, default: null },
+    topMembers:     { type: Array, default: () => [] },
+    checklist:      { type: Array, default: null },
+    recentComments: { type: Array, default: () => [] },
 });
 
 const page = usePage();
