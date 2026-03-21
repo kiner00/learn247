@@ -92,11 +92,11 @@
             <div class="w-full lg:w-72 shrink-0">
                 <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
 
-                    <!-- Community image: avatar if set, else banner -->
-                    <div class="relative overflow-hidden bg-gray-900" style="aspect-ratio: 1/1;">
+                    <!-- Community avatar (sidebar thumbnail only — not the cover/banner) -->
+                    <div class="relative overflow-hidden" style="aspect-ratio: 1/1;">
                         <img
-                            v-if="community.avatar || community.cover_image"
-                            :src="community.avatar || community.cover_image"
+                            v-if="community.avatar"
+                            :src="community.avatar"
                             :alt="community.name"
                             class="w-full h-full object-cover"
                         />
