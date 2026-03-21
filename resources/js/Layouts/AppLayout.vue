@@ -1141,8 +1141,12 @@ function onCreateCoverChange(e) {
     const img = new Image();
     img.onload = () => {
         const ratio = img.width / img.height;
-        if (ratio < 2.5) {
-            coverRatioError.value = `Image must be a wide landscape (at least 2.5:1 ratio). Yours is ${img.width}×${img.height}. Recommended: 1200×400.`;
+        const target = 16 / 9;
+        const tolerance = 0.1;
+        const tooSmall = img.width < 720 || img.height < 383;
+        const wrongRatio = Math.abs(ratio - target) > target * tolerance;
+        if (tooSmall || wrongRatio) {
+            coverRatioError.value = `Banner must be at least 720×383 px and 16:9 ratio (e.g. 1280×720, 1920×1080). Yours is ${img.width}×${img.height}.`;
             createForm.cover_image = null;
             coverPreviewC.value = null;
             coverInputC.value.value = '';

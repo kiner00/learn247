@@ -184,7 +184,9 @@
                                 {{ coverPreview || community.cover_image ? 'Change banner' : 'Upload banner' }}
                                 <input ref="coverInput" type="file" accept="image/*" class="hidden" @change="onCoverChange" />
                             </label>
-                            <p class="mt-1 text-xs text-gray-400">JPG, PNG, WebP — max 5 MB &nbsp;·&nbsp; <span class="font-medium text-gray-500">Recommended: 1920 × 480 px</span></p>
+                            <p class="mt-1 text-xs text-gray-400">JPG, PNG, WebP — max 5 MB &nbsp;·&nbsp; <span class="font-medium text-gray-500">Recommended: 1280 × 720 px (16:9 ratio, min 720 × 383)</span></p>
+                            <p v-if="coverRatioError" class="mt-1 text-xs text-red-600">{{ coverRatioError }}</p>
+                            <p v-else-if="imageForm.errors.cover_image" class="mt-1 text-xs text-red-600">{{ imageForm.errors.cover_image }}</p>
                         </div>
 
                         <!-- Avatar -->
@@ -209,6 +211,7 @@
                                 <input ref="avatarInput" type="file" accept="image/*" class="hidden" @change="onAvatarChange" />
                             </label>
                             <p class="mt-1 text-xs text-gray-400">Shown as your community icon. JPG, PNG, WebP — max 5 MB &nbsp;·&nbsp; <span class="font-medium text-gray-500">Recommended: 200 × 200 px</span></p>
+                            <p v-if="imageForm.errors.avatar" class="mt-1 text-xs text-red-600">{{ imageForm.errors.avatar }}</p>
                         </div>
                     </div>
 
@@ -822,10 +825,11 @@ const integrationsSaved = ref(false);
 const perksSaved        = ref(false);
 const perksSaving    = ref(false);
 const announceSent   = ref(false);
-const coverPreview   = ref(null);
-const coverInput     = ref(null);
-const avatarPreview  = ref(null);
-const avatarInput    = ref(null);
+const coverPreview    = ref(null);
+const coverInput      = ref(null);
+const coverRatioError = ref(null);
+const avatarPreview   = ref(null);
+const avatarInput     = ref(null);
 
 // Invite members
 const inviteTab        = ref('single');
@@ -857,8 +861,26 @@ const imageForm = useForm({
 function onCoverChange(e) {
     const file = e.target.files[0];
     if (!file) return;
-    imageForm.cover_image = file;
-    coverPreview.value = URL.createObjectURL(file);
+
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+        const ratio = img.width / img.height;
+        const target = 16 / 9;
+        const tooSmall = img.width < 720 || img.height < 383;
+        const wrongRatio = Math.abs(ratio - target) > target * 0.1;
+        if (tooSmall || wrongRatio) {
+            coverRatioError.value = `Banner must be at least 720×383 px and 16:9 ratio (e.g. 1280×720, 1920×1080). Yours is ${img.width}×${img.height}.`;
+            imageForm.cover_image = null;
+            coverPreview.value = null;
+            if (coverInput.value) coverInput.value.value = '';
+        } else {
+            coverRatioError.value = null;
+            imageForm.cover_image = file;
+            coverPreview.value = url;
+        }
+    };
+    img.src = url;
 }
 
 function removeCover() {
