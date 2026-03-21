@@ -188,6 +188,24 @@
                                 </span>
                             </div>
                         </div>
+
+                        <!-- Latest 3 comments preview -->
+                        <div v-if="post.comments?.length" class="mt-3 space-y-2 border-t border-gray-100 dark:border-gray-700 pt-3" @click.stop>
+                            <div v-for="comment in post.comments.slice(0, 3)" :key="comment.id" class="flex gap-2.5 items-start">
+                                <div class="w-6 h-6 rounded-full shrink-0 overflow-hidden bg-indigo-100 flex items-center justify-center ring-1 ring-gray-200 dark:ring-gray-700">
+                                    <img v-if="comment.author?.avatar" :src="comment.author.avatar" :alt="comment.author.name" class="w-full h-full object-cover" />
+                                    <span v-else class="text-indigo-600 font-bold text-[9px]">{{ comment.author?.name?.charAt(0)?.toUpperCase() }}</span>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <span class="text-xs font-semibold text-gray-800 dark:text-gray-100 mr-1.5">{{ comment.author?.name }}</span>
+                                    <span class="text-xs text-gray-600 dark:text-gray-300 break-words">{{ comment.content }}</span>
+                                </div>
+                            </div>
+                            <button v-if="post.comments_count > 3" @click.stop="openPost(post)"
+                                class="text-xs text-indigo-500 hover:text-indigo-700 font-medium transition-colors">
+                                View all {{ post.comments_count }} comments
+                            </button>
+                        </div>
                     </div>
                 </template>
 
