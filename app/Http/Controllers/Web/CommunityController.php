@@ -212,8 +212,8 @@ class CommunityController extends Controller
             'name'                     => ['required', 'string', 'max:255'],
             'description'              => ['nullable', 'string', 'max:2000'],
             'category'                 => ['nullable', 'string', 'in:Tech,Business,Design,Health,Education,Finance,Other'],
-            'avatar'                   => ['nullable', 'image', 'max:10240', 'dimensions:min_width=100,min_height=100'],
-            'cover_image'              => ['nullable', 'image', 'max:10240', 'dimensions:min_width=720,min_height=383,ratio=16/9'],
+            'avatar'      => ['nullable', 'image', 'max:10240'],
+            'cover_image' => ['nullable', 'image', 'max:10240'],
             'price'                    => ['nullable', 'numeric', 'min:0'],
             'currency'                 => ['nullable', 'string', 'in:PHP,USD'],
             'billing_type'             => ['nullable', 'string', 'in:monthly,one_time'],
@@ -222,9 +222,6 @@ class CommunityController extends Controller
             'facebook_pixel_id'         => $canUseIntegrations ? ['nullable', 'string', 'max:30', 'regex:/^\d+$/'] : ['prohibited'],
             'tiktok_pixel_id'           => $canUseIntegrations ? ['nullable', 'string', 'max:30', 'regex:/^[A-Z0-9]+$/i'] : ['prohibited'],
             'google_analytics_id'       => $canUseIntegrations ? ['nullable', 'string', 'max:20', 'regex:/^G-[A-Z0-9]+$/i'] : ['prohibited'],
-        ], [
-            'cover_image.dimensions' => 'Banner image must be at least 720×383 px and 16:9 ratio (e.g. 1280×720, 1920×1080).',
-            'avatar.dimensions'      => 'Logo image must be at least 100×100 px.',
         ]);
 
         $action->execute($community, $data, $request->file('avatar'), $request->file('cover_image'));

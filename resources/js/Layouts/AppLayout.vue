@@ -1136,27 +1136,9 @@ function closeAndResetCreate() {
 function onCreateCoverChange(e) {
     const file = e.target.files[0];
     if (!file) return;
-
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-        const ratio = img.width / img.height;
-        const target = 16 / 9;
-        const tolerance = 0.1;
-        const tooSmall = img.width < 720 || img.height < 383;
-        const wrongRatio = Math.abs(ratio - target) > target * tolerance;
-        if (tooSmall || wrongRatio) {
-            coverRatioError.value = `Banner must be at least 720×383 px and 16:9 ratio (e.g. 1280×720, 1920×1080). Yours is ${img.width}×${img.height}.`;
-            createForm.cover_image = null;
-            coverPreviewC.value = null;
-            coverInputC.value.value = '';
-        } else {
-            coverRatioError.value = null;
-            createForm.cover_image = file;
-            coverPreviewC.value = url;
-        }
-    };
-    img.src = url;
+    coverRatioError.value = null;
+    createForm.cover_image = file;
+    coverPreviewC.value = URL.createObjectURL(file);
 }
 
 function onCreateAvatarChange(e) {
