@@ -38,9 +38,9 @@ const comparisonRows = [
     { feature: 'Pixel / GA Integration', free: false,      basic: true,         pro: true },
     { feature: 'Email Announcement Blast', free: false,    basic: '5,000/mo',   pro: 'More (TBD)' },
     { feature: 'Analytics',            free: 'Basic',      basic: 'Advanced',   pro: 'Advanced' },
-    { feature: 'Custom Branding',      free: false,        basic: false,        pro: true },
-    { feature: 'Priority Payouts',     free: false,        basic: false,        pro: true },
-    { feature: 'AI Landing Page Builder', free: false,     basic: false,        pro: true },
+    { feature: 'Custom Branding',      free: false,        basic: false,        pro: '(Soon)' },
+    { feature: 'Priority Payouts',     free: false,        basic: false,        pro: '(Soon)' },
+    { feature: 'AI Landing Page Builder', free: false,     basic: false,        pro: '(Soon)' },
     { feature: 'Custom Domain',        free: false,        basic: false,        pro: '(Soon)' },
     { feature: 'Workflow Builder',     free: false,        basic: false,        pro: '(Soon)' },
     { feature: 'Video Hosting',        free: false,        basic: false,        pro: '(Soon)' },
@@ -152,15 +152,22 @@ const planLabel = { free: 'Free', basic: 'Basic', pro: 'Pro' };
                         <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Email blast (more TBD)</li>
                         <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> 2.9% per transaction</li>
                         <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> ₱15 flat payout fee</li>
-                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Custom branding</li>
-                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Priority payouts</li>
-                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> AI Landing Page Builder</li>
+                        <li class="flex items-start gap-2 opacity-60"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Custom branding <span class="text-indigo-300 text-xs ml-1">(Soon)</span></li>
+                        <li class="flex items-start gap-2 opacity-60"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Priority payouts <span class="text-indigo-300 text-xs ml-1">(Soon)</span></li>
+                        <li class="flex items-start gap-2 opacity-60"><span class="text-amber-300 mt-0.5 shrink-0">★</span> AI Landing Page Builder <span class="text-indigo-300 text-xs ml-1">(Soon)</span></li>
                     </ul>
                     <div class="px-6 py-5 border-t border-indigo-500">
-                        <div class="w-full py-3 rounded-xl bg-indigo-500 text-indigo-300 font-bold text-sm text-center cursor-not-allowed">
-                            Coming Soon
+                        <button
+                            v-if="currentPlan !== 'pro'"
+                            class="w-full py-3 rounded-xl bg-amber-400 text-amber-900 font-bold text-sm hover:bg-amber-300 transition-colors shadow disabled:opacity-50"
+                            :disabled="processing"
+                            @click="subscribe('pro')"
+                        >
+                            {{ processing ? 'Redirecting...' : 'Get Pro →' }}
+                        </button>
+                        <div v-else class="w-full py-3 rounded-xl bg-indigo-500 text-white font-bold text-sm text-center">
+                            ⭐ Current Plan
                         </div>
-                        <p class="text-xs text-indigo-400 text-center mt-2">Available after MVP launch</p>
                     </div>
                 </div>
 

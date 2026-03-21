@@ -18,10 +18,6 @@ class StartCreatorPlanCheckout
      */
     public function execute(User $user, string $plan): array
     {
-        if ($plan === CreatorSubscription::PLAN_PRO) {
-            throw ValidationException::withMessages(['plan' => 'Creator Pro is coming soon. Please select Basic for now.']);
-        }
-
         if (! in_array($plan, [CreatorSubscription::PLAN_BASIC, CreatorSubscription::PLAN_PRO])) {
             throw ValidationException::withMessages(['plan' => 'Invalid plan selected.']);
         }
