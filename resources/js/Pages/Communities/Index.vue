@@ -172,7 +172,8 @@
                     <!-- Logo + name row -->
                     <div class="flex items-center gap-3 -mt-6 mb-2">
                         <div class="w-10 h-10 rounded-xl shrink-0 overflow-hidden border-2 border-white shadow-sm bg-white flex items-center justify-center font-bold text-indigo-600 text-base">
-                            <span>{{ community.name.charAt(0).toUpperCase() }}</span>
+                            <img v-if="community.avatar" :src="community.avatar" :alt="community.name" class="w-full h-full object-cover" />
+                            <span v-else>{{ community.name.charAt(0).toUpperCase() }}</span>
                         </div>
                         <h2 class="font-bold text-gray-900 text-sm leading-tight truncate group-hover:text-indigo-600 transition-colors">
                             {{ community.name }}
