@@ -35,6 +35,12 @@ class OwnerPayoutDispatcher
             throw new RuntimeException('No pending amount for this community.');
         }
 
+        $disbursementAmount = round($pending - Community::PAYOUT_FEE, 2);
+
+        if ($disbursementAmount <= 0) {
+            throw new RuntimeException('Pending amount must exceed the ₱' . Community::PAYOUT_FEE . ' processing fee.');
+        }
+
         $channelCode = $owner->payout_method === 'gcash' ? 'PH_GCASH' : 'PH_PAYMAYA';
         $referenceId = 'owner-' . $community->id . '-' . time();
 
@@ -46,7 +52,7 @@ class OwnerPayoutDispatcher
                 'account_holder_name' => $owner->name,
                 'account_number'      => $owner->payout_details,
             ],
-            'amount'      => $pending,
+            'amount'      => $disbursementAmount,
             'description' => "Owner earnings – {$community->name}",
         ]);
 

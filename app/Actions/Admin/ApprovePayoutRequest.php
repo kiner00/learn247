@@ -3,16 +3,14 @@
 namespace App\Actions\Admin;
 
 use App\Models\Affiliate;
+use App\Models\Community;
 use App\Models\OwnerPayout;
 use App\Models\PayoutRequest;
 use App\Services\XenditService;
-use RuntimeException;
 
 /**
  * Approves a payout request: sends funds via Xendit, records OwnerPayout
  * (if owner type), and marks the request as approved.
- *
- * Throws RuntimeException on invalid payout method or Xendit failure.
  */
 class ApprovePayoutRequest
 {
@@ -42,6 +40,13 @@ class ApprovePayoutRequest
         $channelCode = $payoutMethod === 'gcash' ? 'PH_GCASH' : 'PH_PAYMAYA';
         $referenceId = 'req-' . $payoutRequest->id . '-' . time();
 
+        $requestedAmount    = (float) $payoutRequest->amount;
+        $disbursementAmount = $payoutRequest->type === PayoutRequest::TYPE_OWNER
+            ? round($requestedAmount - Community::PAYOUT_FEE, 2)
+            : $requestedAmount;
+
+        abort_if($disbursementAmount <= 0, 422, 'Payout amount must exceed the ₱' . Community::PAYOUT_FEE . ' processing fee.');
+
         $result = $this->xendit->createPayout([
             'reference_id'       => $referenceId,
             'currency'           => 'PHP',
@@ -50,7 +55,7 @@ class ApprovePayoutRequest
                 'account_holder_name' => $holderName,
                 'account_number'      => $payoutDetails,
             ],
-            'amount'      => (float) $payoutRequest->amount,
+            'amount'      => $disbursementAmount,
             'description' => "Payout request #{$payoutRequest->id}",
         ]);
 
@@ -58,7 +63,7 @@ class ApprovePayoutRequest
             OwnerPayout::create([
                 'community_id'     => $payoutRequest->community_id,
                 'user_id'          => $user->id,
-                'amount'           => $payoutRequest->amount,
+                'amount'           => $requestedAmount,
                 'status'           => 'accepted',
                 'xendit_reference' => $result['id'] ?? $referenceId,
                 'paid_at'          => now(),

@@ -98,6 +98,29 @@ class XenditService
     }
 
     /**
+     * Calculate Xendit's collection fee for a given payment channel and gross amount.
+     * Returns the fee amount in PHP so callers can store net = gross - fee.
+     *
+     * Rates sourced from Xendit PH pricing (as of 2026-03):
+     *   GCash 2.3% | Maya 1.8% | GrabPay/ShopeePay 2.0% |
+     *   Credit/Debit 3.2% + ₱10 | QRPH 1.4% min ₱15 | Direct Debit 1% min ₱25
+     */
+    public static function collectionFee(string $channel, float $gross): float
+    {
+        $channel = strtoupper($channel);
+
+        return match (true) {
+            $channel === 'GCASH'                          => round($gross * 0.023, 2),
+            in_array($channel, ['PAYMAYA', 'MAYA'])       => round($gross * 0.018, 2),
+            in_array($channel, ['GRABPAY', 'SHOPEEPAY'])  => round($gross * 0.020, 2),
+            in_array($channel, ['CREDIT_CARD', 'DEBIT_CARD', 'VISA', 'MASTERCARD']) => round($gross * 0.032 + 10, 2),
+            $channel === 'QRPH'                           => max(round($gross * 0.014, 2), 15.0),
+            in_array($channel, ['DD_BPI', 'BPI', 'DD_UBP', 'UBP']) => max(round($gross * 0.010, 2), 25.0),
+            default                                       => 0.0,
+        };
+    }
+
+    /**
      * Verify the Xendit x-callback-token header using constant-time comparison.
      */
     public function verifyCallbackToken(?string $token): bool
