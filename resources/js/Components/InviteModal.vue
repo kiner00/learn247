@@ -126,7 +126,10 @@
                                         :key="invite.email"
                                         class="flex items-center justify-between py-2.5 gap-3"
                                     >
-                                        <span class="text-sm text-gray-700 truncate flex-1">{{ invite.email }}</span>
+                                        <div class="flex-1 min-w-0">
+                                            <p v-if="invite.name" class="text-sm font-medium text-gray-800 truncate">{{ invite.name }}</p>
+                                            <p class="text-xs text-gray-400 truncate">{{ invite.email }}</p>
+                                        </div>
                                         <span
                                             class="shrink-0 text-xs font-medium px-2 py-0.5 rounded-full"
                                             :class="{

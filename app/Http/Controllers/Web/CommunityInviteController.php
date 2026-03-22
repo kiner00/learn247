@@ -8,6 +8,7 @@ use App\Actions\Community\SendInvite;
 use App\Http\Controllers\Controller;
 use App\Models\Community;
 use App\Models\CommunityInvite;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,13 +21,18 @@ class CommunityInviteController extends Controller
 
         $invites = $community->invites()
             ->orderByDesc('created_at')
-            ->get()
-            ->map(fn ($invite) => [
-                'email'      => $invite->email,
-                'status'     => $invite->isAccepted() ? 'accepted' : ($invite->isExpired() ? 'expired' : 'pending'),
-                'sent_at'    => $invite->created_at->format('M j, Y'),
-                'expires_at' => $invite->expires_at?->format('M j, Y'),
-            ]);
+            ->get();
+
+        $emails    = $invites->where('accepted_at', '!=', null)->pluck('email')->unique();
+        $userNames = User::whereIn('email', $emails)->pluck('name', 'email');
+
+        $invites = $invites->map(fn ($invite) => [
+            'email'      => $invite->email,
+            'name'       => $invite->isAccepted() ? ($userNames[$invite->email] ?? null) : null,
+            'status'     => $invite->isAccepted() ? 'accepted' : ($invite->isExpired() ? 'expired' : 'pending'),
+            'sent_at'    => $invite->created_at->format('M j, Y'),
+            'expires_at' => $invite->expires_at?->format('M j, Y'),
+        ]);
 
         return response()->json($invites);
     }
