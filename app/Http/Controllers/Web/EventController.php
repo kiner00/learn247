@@ -5,52 +5,30 @@ namespace App\Http\Controllers\Web;
 use App\Actions\Community\ManageEvent;
 use App\Http\Controllers\Controller;
 use App\Models\Community;
-use App\Models\CommunityMember;
 use App\Models\Event;
+use App\Queries\Community\GetCalendarEvents;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class EventController extends Controller
 {
-    public function index(Request $request, Community $community): Response
+    public function index(Request $request, Community $community, GetCalendarEvents $query): Response
     {
-        $user    = $request->user();
-        $isMember = $user && CommunityMember::where('community_id', $community->id)->where('user_id', $user->id)->exists();
-        $isOwner  = $user && $user->id === $community->owner_id;
+        $year  = (int) $request->query('year', now()->year);
+        $month = (int) $request->query('month', now()->month);
 
-        $year  = (int) $request->get('year', now()->year);
-        $month = (int) $request->get('month', now()->month);
-        $from  = now()->setDate($year, $month, 1)->startOfDay();
-        $to    = $from->copy()->endOfMonth()->endOfDay();
-
-        $eventsQuery = $community->events()->whereBetween('start_at', [$from, $to]);
-        if (! $isMember && ! $isOwner) {
-            $eventsQuery->where('is_members_only', false);
-        }
-
-        $events = $eventsQuery->get()->map(fn (Event $e) => [
-            'id'              => $e->id,
-            'title'           => $e->title,
-            'description'     => $e->description,
-            'start_at'        => $e->start_at->toISOString(),
-            'end_at'          => $e->end_at?->toISOString(),
-            'timezone'        => $e->timezone,
-            'url'             => $e->url,
-            'cover_image'     => $e->cover_image ? Storage::url($e->cover_image) : null,
-            'is_members_only' => $e->is_members_only,
-        ]);
+        $data = $query->execute($community, auth()->id(), $year, $month);
 
         return Inertia::render('Communities/Calendar', [
             'community'    => $community->only('id', 'name', 'slug', 'avatar', 'cover_image'),
-            'membership'   => $isMember || $isOwner ? ['role' => $isOwner ? 'owner' : 'member'] : null,
-            'events'       => $events,
+            'membership'   => $data['membership'],
+            'events'       => $data['events'],
             'year'         => $year,
             'month'        => $month,
-            'isOwner'      => $isOwner,
-            'userTimezone' => $user?->timezone ?? 'UTC',
+            'isOwner'      => $data['isOwner'],
+            'userTimezone' => $request->user()?->timezone ?? 'UTC',
         ]);
     }
 

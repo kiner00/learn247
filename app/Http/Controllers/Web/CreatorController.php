@@ -4,19 +4,16 @@ namespace App\Http\Controllers\Web;
 
 use App\Actions\Billing\StartCreatorPlanCheckout;
 use App\Http\Controllers\Controller;
-use App\Models\AffiliateConversion;
 use App\Models\Community;
-use App\Models\CreatorSubscription;
-use App\Models\OwnerPayout;
 use App\Models\Payment;
 use App\Models\PayoutRequest;
 use App\Models\Setting;
 use App\Models\Subscription;
 use App\Queries\Payout\CalculateEligibility;
+use App\Services\Analytics\CreatorAnalyticsService;
+use App\Services\Payout\OwnerEarningsCalculator;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -42,7 +39,7 @@ class CreatorController extends Controller
         return response()->json(['checkout_url' => $result['checkout_url']]);
     }
 
-    public function dashboard(CalculateEligibility $eligibility): Response
+    public function dashboard(CalculateEligibility $eligibility, OwnerEarningsCalculator $earningsCalc, CreatorAnalyticsService $analyticsService): Response
     {
         $user = Auth::user();
 
@@ -50,14 +47,10 @@ class CreatorController extends Controller
             ->where('price', '>', 0)
             ->withCount('members')
             ->get()
-            ->map(function (Community $community) use ($eligibility) {
+            ->map(function (Community $community) use ($eligibility, $earningsCalc) {
                 [$eligibleNow, $lockedAmount, $nextEligibleDate] = $eligibility->forOwner($community);
 
-                $gross = (float) Payment::where('community_id', $community->id)->where('status', Payment::STATUS_PAID)->sum('amount');
-                $affiliateCommission = (float) AffiliateConversion::whereHas('affiliate', fn ($q) => $q->where('community_id', $community->id))->sum('commission_amount');
-                $platformFee = round($gross * $community->platformFeeRate(), 2);
-                $earned      = round($gross - $platformFee - $affiliateCommission, 2);
-                $paid        = (float) OwnerPayout::where('community_id', $community->id)->where('status', '!=', 'failed')->sum('amount');
+                $e = $earningsCalc->forCommunity($community);
 
                 $pendingRequest = PayoutRequest::where('community_id', $community->id)
                     ->where('type', PayoutRequest::TYPE_OWNER)->where('status', PayoutRequest::STATUS_PENDING)->first();
@@ -77,13 +70,13 @@ class CreatorController extends Controller
                     'community_name'      => $community->name,
                     'community_slug'      => $community->slug,
                     'members_count'       => $community->members_count,
-                    'gross'               => $gross,
-                    'platform_fee'        => $platformFee,
-                    'platform_fee_rate'   => $community->platformFeeRate(),
+                    'gross'               => $e['gross'],
+                    'platform_fee'        => $e['platform_fee'],
+                    'platform_fee_rate'   => $e['platform_fee_rate'],
                     'payout_fee'          => Community::PAYOUT_FEE,
-                    'commissions'         => $affiliateCommission,
-                    'earned'              => $earned,
-                    'paid'                => $paid,
+                    'commissions'         => $e['affiliate_commission'],
+                    'earned'              => $e['earned'],
+                    'paid'                => $e['paid'],
                     'eligible_now'        => $eligibleNow,
                     'locked_amount'       => $lockedAmount,
                     'next_eligible_date'  => $nextEligibleDate,
@@ -102,7 +95,7 @@ class CreatorController extends Controller
             ]);
 
         $currentPlan = $user->creatorPlan();
-        $analytics   = in_array($currentPlan, ['basic', 'pro']) ? $this->buildAnalytics($user->id) : null;
+        $analytics   = in_array($currentPlan, ['basic', 'pro']) ? $analyticsService->build($user->id) : null;
 
         return Inertia::render('Creator/Dashboard', [
             'communities'    => $communities,
@@ -113,63 +106,5 @@ class CreatorController extends Controller
             'currentPlan'    => $currentPlan,
             'payoutFee'      => Community::PAYOUT_FEE,
         ]);
-    }
-
-    private function buildAnalytics(int $userId): array
-    {
-        $communityIds = Community::where('owner_id', $userId)->pluck('id');
-
-        // Last 6 months labels
-        $months = collect(range(5, 0))->map(fn ($i) => Carbon::now()->subMonths($i));
-        $labels = $months->map(fn ($m) => $m->format('M Y'))->values()->toArray();
-
-        // Monthly revenue
-        $revenueRaw = Payment::whereIn('community_id', $communityIds)
-            ->where('status', Payment::STATUS_PAID)
-            ->where('paid_at', '>=', Carbon::now()->subMonths(6)->startOfMonth())
-            ->selectRaw("DATE_FORMAT(paid_at, '%Y-%m') as month, SUM(amount) as total")
-            ->groupBy('month')
-            ->pluck('total', 'month');
-
-        $revenue = $months->map(fn ($m) => (float) ($revenueRaw[$m->format('Y-m')] ?? 0))->values()->toArray();
-
-        // New members per month
-        $newMembersRaw = Subscription::whereIn('community_id', $communityIds)
-            ->where('status', Subscription::STATUS_ACTIVE)
-            ->where('created_at', '>=', Carbon::now()->subMonths(6)->startOfMonth())
-            ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as month, COUNT(*) as total")
-            ->groupBy('month')
-            ->pluck('total', 'month');
-
-        $newMembers = $months->map(fn ($m) => (int) ($newMembersRaw[$m->format('Y-m')] ?? 0))->values()->toArray();
-
-        // Churn per month (expired/cancelled subscriptions)
-        $churnRaw = Subscription::whereIn('community_id', $communityIds)
-            ->whereIn('status', [Subscription::STATUS_EXPIRED, Subscription::STATUS_CANCELLED])
-            ->where('updated_at', '>=', Carbon::now()->subMonths(6)->startOfMonth())
-            ->selectRaw("DATE_FORMAT(updated_at, '%Y-%m') as month, COUNT(*) as total")
-            ->groupBy('month')
-            ->pluck('total', 'month');
-
-        $churn = $months->map(fn ($m) => (int) ($churnRaw[$m->format('Y-m')] ?? 0))->values()->toArray();
-
-        // Retention rate
-        $active30  = Subscription::whereIn('community_id', $communityIds)->where('status', Subscription::STATUS_ACTIVE)->count();
-        $expired30 = Subscription::whereIn('community_id', $communityIds)
-            ->whereIn('status', [Subscription::STATUS_EXPIRED, Subscription::STATUS_CANCELLED])
-            ->where('updated_at', '>=', Carbon::now()->subDays(30))
-            ->count();
-
-        $retentionRate = ($active30 + $expired30) > 0
-            ? round(($active30 / ($active30 + $expired30)) * 100, 1)
-            : 100.0;
-
-        // MRR
-        $mrr = Subscription::whereIn('community_id', $communityIds)
-            ->where('status', Subscription::STATUS_ACTIVE)
-            ->join('communities', 'subscriptions.community_id', '=', 'communities.id')
-            ->sum('communities.price');
-
-        return compact('labels', 'revenue', 'newMembers', 'churn', 'retentionRate', 'mrr');
     }
 }

@@ -3,7 +3,9 @@
 namespace App\Queries\Classroom;
 
 use App\Models\Certificate;
+use App\Models\Comment;
 use App\Models\Course;
+use App\Models\CourseEnrollment;
 use App\Models\LessonCompletion;
 use App\Models\QuizAttempt;
 use Illuminate\Support\Collection;
@@ -20,11 +22,21 @@ class GetCourseDetail
         $lessonIds = $course->modules->flatMap(fn ($m) => $m->lessons->pluck('id'));
 
         if (! $userId || ! $hasAccess) {
+            $lessonComments = Comment::whereIn('lesson_id', $lessonIds)
+                ->whereNull('parent_id')
+                ->with(['author:id,name,username,avatar', 'replies.author:id,name,username,avatar'])
+                ->latest()
+                ->get()
+                ->groupBy('lesson_id')
+                ->map(fn ($comments) => $comments->values());
+
             return [
-                'completed_ids' => [],
-                'progress'      => 0,
-                'quiz_attempts' => collect(),
-                'certificate'   => null,
+                'completed_ids'   => [],
+                'progress'        => 0,
+                'quiz_attempts'   => collect(),
+                'certificate'     => null,
+                'lesson_comments' => $lessonComments,
+                'enrollment'      => null,
             ];
         }
 
@@ -46,11 +58,28 @@ class GetCourseDetail
             ->where('course_id', $course->id)
             ->first();
 
+        $lessonComments = Comment::whereIn('lesson_id', $lessonIds)
+            ->whereNull('parent_id')
+            ->with(['author:id,name,username,avatar', 'replies.author:id,name,username,avatar'])
+            ->latest()
+            ->get()
+            ->groupBy('lesson_id')
+            ->map(fn ($comments) => $comments->values());
+
+        $enrollment = $userId
+            ? CourseEnrollment::where('user_id', $userId)
+                ->where('course_id', $course->id)
+                ->orderByDesc('id')
+                ->first()
+            : null;
+
         return [
-            'completed_ids' => $completedIds,
-            'progress'      => $progress,
-            'quiz_attempts' => $quizAttempts,
-            'certificate'   => $certificate,
+            'completed_ids'  => $completedIds,
+            'progress'       => $progress,
+            'quiz_attempts'  => $quizAttempts,
+            'certificate'    => $certificate,
+            'lesson_comments' => $lessonComments,
+            'enrollment'     => $enrollment ? ['status' => $enrollment->status] : null,
         ];
     }
 }

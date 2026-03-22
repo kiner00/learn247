@@ -2,692 +2,203 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Actions\Admin\ApprovePayoutRequest;
+use App\Actions\Admin\BatchPayAffiliates;
+use App\Actions\Admin\RejectPayoutRequest;
+use App\Actions\Admin\ResendOnboardingEmail;
 use App\Actions\Admin\SendGlobalAnnouncement;
-use App\Actions\Affiliate\DisbursePayout;
-use App\Actions\Affiliate\MarkAffiliateConversionPaid;
+use App\Actions\Admin\ToggleUserStatus;
 use App\Http\Controllers\Controller;
-use App\Mail\TempPasswordMail;
-use App\Models\Affiliate;
-use App\Models\AffiliateConversion;
 use App\Models\Community;
-use App\Models\CommunityMember;
 use App\Models\EmailTemplate;
-use App\Models\OwnerPayout;
-use App\Models\Payment;
 use App\Models\PayoutRequest;
 use App\Models\Post;
 use App\Models\Setting;
-use App\Models\Subscription;
 use App\Models\User;
+use App\Queries\Admin\GetPayoutsDashboard;
+use App\Queries\Admin\ListTrashedPosts;
+use App\Queries\Admin\ListUsers;
+use App\Services\Admin\EmailTemplateService;
+use App\Services\Analytics\AdminDashboardService;
+use App\Services\Payout\OwnerPayoutDispatcher;
 use App\Services\XenditService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class AdminController extends Controller
 {
-    public function dashboard(XenditService $xendit): Response
+    // ── Dashboard ─────────────────────────────────────────────────────────────
+
+    public function dashboard(XenditService $xendit, AdminDashboardService $service): Response
     {
-        $xenditBalance = $xendit->getBalance();
-        $totalUsers          = User::count();
-        $totalCommunities    = Community::count();
-        $totalMembers        = CommunityMember::count();
-        // Only count subscriptions backed by an actual paid payment (excludes invited/complimentary members)
-        $activeSubscriptions = Subscription::where('status', Subscription::STATUS_ACTIVE)
-            ->whereHas('payments', fn ($q) => $q->where('status', Payment::STATUS_PAID))
-            ->count();
-
-        // Monthly revenue: sum community.price for each paying active subscription only
-        $monthlyRevenue = Subscription::where('subscriptions.status', Subscription::STATUS_ACTIVE)
-            ->whereHas('payments', fn ($q) => $q->where('status', Payment::STATUS_PAID))
-            ->join('communities', 'subscriptions.community_id', '=', 'communities.id')
-            ->sum('communities.price');
-
-        // Platform-wide gross revenue from actual payments
-        $grossRevenue = (float) Payment::where('status', Payment::STATUS_PAID)->sum('amount');
-
-        // Affiliate conversion totals
-        $convTotals = AffiliateConversion::selectRaw(
-            'SUM(sale_amount) as gross, SUM(platform_fee) as platform_fee,
-             SUM(commission_amount) as commission, SUM(creator_amount) as creator'
-        )->first();
-
-        $affiliateGross          = (float) ($convTotals->gross ?? 0);
-        $affiliatePlatformFee    = (float) ($convTotals->platform_fee ?? 0);
-        $totalAffiliateCommission = (float) ($convTotals->commission ?? 0);
-        $paidAffiliateCommission  = (float) AffiliateConversion::where('status', AffiliateConversion::STATUS_PAID)->sum('commission_amount');
-        $pendingAffiliateCommission = round($totalAffiliateCommission - $paidAffiliateCommission, 2);
-
-        $nonAffiliatePlatformFee = Community::with('owner')->get()->sum(function ($c) {
-            $cGross    = (float) Payment::where('community_id', $c->id)->where('status', Payment::STATUS_PAID)->sum('amount');
-            $cAffGross = (float) AffiliateConversion::whereHas('affiliate', fn ($q) => $q->where('community_id', $c->id))->sum('sale_amount');
-            return max(0, $cGross - $cAffGross) * $c->platformFeeRate();
-        });
-        $totalPlatformFee     = round($affiliatePlatformFee + $nonAffiliatePlatformFee, 2);
-        $totalCreatorNet      = round($grossRevenue - $totalPlatformFee - $totalAffiliateCommission, 2);
-
-        // Communities by category
-        $byCategory = Community::selectRaw("COALESCE(category, 'Uncategorized') as category, COUNT(*) as total")
-            ->groupBy('category')
-            ->orderByDesc('total')
-            ->get();
-
-        // Recent communities
-        $recentCommunities = Community::with('owner')
-            ->withCount('members')
-            ->latest()
-            ->take(5)
-            ->get()
-            ->map(fn ($c) => [
-                'id'            => $c->id,
-                'name'          => $c->name,
-                'slug'          => $c->slug,
-                'category'      => $c->category,
-                'members_count' => $c->members_count,
-                'price'         => $c->price,
-                'owner'         => ['name' => $c->owner?->name],
-                'created_at'    => $c->created_at?->toDateString(),
-                'is_featured'   => (bool) $c->is_featured,
-            ]);
-
-        // Recent users
-        $recentUsers = User::latest()
-            ->take(5)
-            ->get()
-            ->map(fn ($u) => [
-                'id'         => $u->id,
-                'name'       => $u->name,
-                'email'      => $u->email,
-                'avatar'     => $u->avatar,
-                'created_at' => $u->created_at?->toDateString(),
-            ]);
-
-        // Users who paid via affiliate flow but haven't set their password yet
-        $pendingOnboarding = User::where('needs_password_setup', true)
-            ->with(['communityMemberships.community:id,name,slug'])
-            ->latest()
-            ->paginate(15, ['*'], 'pending_page')
-            ->through(fn ($u) => [
-                'id'             => $u->id,
-                'name'           => $u->name,
-                'email'          => $u->email,
-                'joined_at'      => $u->created_at?->toDateString(),
-                'days_since'     => (int) $u->created_at?->diffInDays(now()),
-                'community'      => $u->communityMemberships->first()?->community?->name,
-                'community_slug' => $u->communityMemberships->first()?->community?->slug,
-            ]);
-
-        return Inertia::render('Admin/Dashboard', [
-            'xenditBalance' => $xenditBalance,
+        return Inertia::render('Admin/Dashboard', array_merge($service->build(), [
+            'xenditBalance'      => $xendit->getBalance(),
             'creatorPlanPricing' => [
                 'basic_price' => (float) Setting::get('creator_plan_basic_price', 499),
                 'pro_price'   => (float) Setting::get('creator_plan_pro_price', 1999),
             ],
-            'stats' => [
-                'total_users'          => $totalUsers,
-                'total_communities'    => $totalCommunities,
-                'total_members'        => $totalMembers,
-                'active_subscriptions' => $activeSubscriptions,
-                'monthly_revenue'      => (float) $monthlyRevenue,
-            ],
-            'revenue' => [
-                'gross'                        => $grossRevenue,
-                'platform_fee'                 => $totalPlatformFee,
-                'creator_net'                  => $totalCreatorNet,
-                'affiliate_commission_total'   => $totalAffiliateCommission,
-                'affiliate_commission_paid'    => $paidAffiliateCommission,
-                'affiliate_commission_pending' => $pendingAffiliateCommission,
-            ],
-            'byCategory'         => $byCategory,
-            'recentCommunities'  => $recentCommunities,
-            'recentUsers'        => $recentUsers,
-            'pendingOnboarding'  => $pendingOnboarding,
-        ]);
+        ]));
     }
 
     public function updateSettings(Request $request): RedirectResponse
     {
         $request->validate(['app_theme' => 'required|in:green,yellow']);
         Setting::set('app_theme', $request->app_theme);
+
         return back()->with('success', 'Theme updated.');
     }
 
     public function updateCreatorPlanPricing(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $data = $request->validate([
             'basic_price' => 'required|numeric|min:0',
             'pro_price'   => 'required|numeric|min:0',
         ]);
 
-        Setting::set('creator_plan_basic_price', (string) $validated['basic_price']);
-        Setting::set('creator_plan_pro_price',   (string) $validated['pro_price']);
+        Setting::set('creator_plan_basic_price', (string) $data['basic_price']);
+        Setting::set('creator_plan_pro_price',   (string) $data['pro_price']);
 
         return back()->with('success', 'Creator plan pricing updated.');
     }
 
-    public function payouts(XenditService $xendit): Response
+    // ── Payouts ───────────────────────────────────────────────────────────────
+
+    public function payouts(XenditService $xendit, GetPayoutsDashboard $query): Response
     {
-        $xenditBalance = $xendit->getBalance();
-        // ── Community Owners ─────────────────────────────────────────────────
-        $owners = Community::with('owner')
-            ->where('price', '>', 0)
-            ->get()
-            ->groupBy('owner_id')
-            ->map(function ($communities) {
-                $owner = $communities->first()->owner;
-
-                $rows = $communities->map(function ($community) {
-                    $gross               = (float) Payment::where('community_id', $community->id)->where('status', Payment::STATUS_PAID)->sum('amount');
-                    $affiliateCommission = (float) AffiliateConversion::whereHas('affiliate', fn ($q) => $q->where('community_id', $community->id))->sum('commission_amount');
-                    $feeRate             = $community->platformFeeRate();
-                    $platformFee         = round($gross * $feeRate, 2);
-                    $earned              = round($gross - $platformFee - $affiliateCommission, 2);
-                    $paid                = (float) OwnerPayout::where('community_id', $community->id)->where('status', '!=', 'failed')->sum('amount');
-                    $pending             = round($earned - $paid, 2);
-
-                    return [
-                        'community_id'      => $community->id,
-                        'community_name'    => $community->name,
-                        'community_slug'    => $community->slug,
-                        'gross'             => $gross,
-                        'platform_fee'      => $platformFee,
-                        'platform_fee_rate' => $feeRate,
-                        'commissions'       => $affiliateCommission,
-                        'earned'            => $earned,
-                        'paid'              => $paid,
-                        'pending'           => max(0, $pending),
-                    ];
-                })->values();
-
-                return [
-                    'user_id'        => $owner->id,
-                    'name'           => $owner->name,
-                    'email'          => $owner->email,
-                    'payout_method'  => $owner->payout_method,
-                    'payout_details' => $owner->payout_details,
-                    'can_disburse'   => in_array($owner->payout_method, ['gcash', 'maya']) && $owner->payout_details,
-                    'creator_plan'   => $owner->creatorPlan(),
-                    'total_earned'   => $rows->sum('earned'),
-                    'total_paid'     => $rows->sum('paid'),
-                    'total_pending'  => $rows->sum('pending'),
-                    'communities'    => $rows,
-                ];
-            })
-            ->filter(fn ($o) => $o['total_earned'] > 0)
-            ->values();
-
-        // ── Affiliates ───────────────────────────────────────────────────────
-        $affiliates = Affiliate::with(['user', 'community'])
-            ->get()
-            ->map(fn ($a) => [
-                'id'             => $a->id,
-                'name'           => $a->user->name,
-                'email'          => $a->user->email,
-                'community_name' => $a->community->name,
-                'total_earned'   => (float) $a->total_earned,
-                'total_paid'     => (float) $a->total_paid,
-                'pending'        => $a->pendingAmount(),
-                'payout_method'  => $a->payout_method,
-                'payout_details' => $a->payout_details,
-                'can_disburse'   => DisbursePayout::supports($a->payout_method ?? ''),
-            ])
-            ->filter(fn ($a) => $a['total_earned'] > 0)
-            ->values();
-
-        // ── Payout Requests ──────────────────────────────────────────────────
-        $payoutRequests = PayoutRequest::with(['user', 'community'])
-            ->latest()
-            ->get()
-            ->map(fn ($r) => [
-                'id'               => $r->id,
-                'user_name'        => $r->user->name,
-                'user_email'       => $r->user->email,
-                'payout_method'    => $r->type === PayoutRequest::TYPE_OWNER
-                    ? $r->user->payout_method
-                    : optional(Affiliate::find($r->affiliate_id))->payout_method,
-                'payout_details'   => $r->type === PayoutRequest::TYPE_OWNER
-                    ? $r->user->payout_details
-                    : optional(Affiliate::find($r->affiliate_id))->payout_details,
-                'type'             => $r->type,
-                'community_name'   => $r->community?->name,
-                'amount'           => (float) $r->amount,
-                'eligible_amount'  => (float) $r->eligible_amount,
-                'status'           => $r->status,
-                'rejection_reason' => $r->rejection_reason,
-                'requested_at'     => $r->created_at->toDateString(),
-                'processed_at'     => $r->processed_at?->toDateString(),
-            ]);
-
-        // ── Summary stats ────────────────────────────────────────────────────
-        $totalPlatformFee = round(
-            Community::with('owner')->get()->sum(function ($c) {
-                $gross = (float) Payment::where('community_id', $c->id)->where('status', Payment::STATUS_PAID)->sum('amount');
-                return $gross * $c->platformFeeRate();
-            }),
-            2
-        );
-
-        $stats = [
-            'owners_pending'           => $owners->sum('total_pending'),
-            'affiliates_pending'       => $affiliates->sum('pending'),
-            'payout_requests_pending'  => PayoutRequest::where('status', PayoutRequest::STATUS_PENDING)->count(),
-            'platform_fee_collected'   => $totalPlatformFee,
-        ];
-
-        return Inertia::render('Admin/Payouts', compact('owners', 'affiliates', 'stats', 'xenditBalance', 'payoutRequests'));
+        return Inertia::render('Admin/Payouts', array_merge(
+            $query->execute(),
+            ['xenditBalance' => $xendit->getBalance()]
+        ));
     }
 
-    public function payOwner(Community $community, XenditService $xendit): RedirectResponse
+    public function payOwner(Community $community, OwnerPayoutDispatcher $dispatcher): RedirectResponse
     {
-        $owner = $community->owner;
-
-        abort_unless(in_array($owner->payout_method, ['gcash', 'maya']) && $owner->payout_details, 422, 'Owner has no payout details set.');
-
-        $gross              = (float) Payment::where('community_id', $community->id)->where('status', Payment::STATUS_PAID)->sum('amount');
-        $affiliateCommission = (float) AffiliateConversion::whereHas('affiliate', fn ($q) => $q->where('community_id', $community->id))->sum('commission_amount');
-        $platformFee        = round($gross * $community->platformFeeRate(), 2);
-        $earned             = round($gross - $platformFee - $affiliateCommission, 2);
-        $paid               = (float) OwnerPayout::where('community_id', $community->id)->where('status', '!=', 'failed')->sum('amount');
-        $pending            = round($earned - $paid, 2);
-
-        if ($pending <= 0) {
-            return back()->with('error', 'No pending amount for this community.');
-        }
-
-        $channelCode = $owner->payout_method === 'gcash' ? 'PH_GCASH' : 'PH_PAYMAYA';
-        $referenceId = 'owner-' . $community->id . '-' . time();
+        abort_unless($dispatcher->canDispatch($community), 422, 'Owner has no payout details set.');
 
         try {
-            $result = $xendit->createPayout([
-                'reference_id'       => $referenceId,
-                'currency'           => 'PHP',
-                'channel_code'       => $channelCode,
-                'channel_properties' => [
-                    'account_holder_name' => $owner->name,
-                    'account_number'      => $owner->payout_details,
-                ],
-                'amount'      => $pending,
-                'description' => "Owner earnings – {$community->name}",
-            ]);
-
-            OwnerPayout::create([
-                'community_id'     => $community->id,
-                'user_id'          => $owner->id,
-                'amount'           => $pending,
-                'status'           => 'accepted',
-                'xendit_reference' => $result['id'] ?? $referenceId,
-                'paid_at'          => now(),
-            ]);
-
-            return back()->with('success', "Paid ₱" . number_format($pending, 2) . " to {$owner->name} via Xendit.");
+            $result = $dispatcher->dispatch($community);
+            return back()->with('success', "Paid ₱" . number_format($result['amount'], 2) . " to {$community->owner->name} via Xendit.");
         } catch (\RuntimeException $e) {
-            return back()->with('error', 'Xendit payout failed: ' . $e->getMessage());
+            return back()->with('error', $e->getMessage());
         }
     }
 
-    public function batchPayOwners(XenditService $xendit): RedirectResponse
+    public function batchPayOwners(OwnerPayoutDispatcher $dispatcher): RedirectResponse
     {
-        $communities = Community::with('owner')->where('price', '>', 0)->get();
-        $paid = 0;
-        $errors = [];
+        $result = $dispatcher->batchDispatch(
+            Community::with('owner')->where('price', '>', 0)->get()
+        );
 
-        foreach ($communities as $community) {
-            $owner = $community->owner;
-            if (!in_array($owner->payout_method, ['gcash', 'maya']) || !$owner->payout_details) continue;
-
-            $gross              = (float) Payment::where('community_id', $community->id)->where('status', Payment::STATUS_PAID)->sum('amount');
-            $affiliateCommission = (float) AffiliateConversion::whereHas('affiliate', fn ($q) => $q->where('community_id', $community->id))->sum('commission_amount');
-            $platformFee        = round($gross * $community->platformFeeRate(), 2);
-            $earned             = round($gross - $platformFee - $affiliateCommission, 2);
-            $paidOut            = (float) OwnerPayout::where('community_id', $community->id)->where('status', '!=', 'failed')->sum('amount');
-            $pending            = round($earned - $paidOut, 2);
-
-            if ($pending <= 0) continue;
-
-            $channelCode = $owner->payout_method === 'gcash' ? 'PH_GCASH' : 'PH_PAYMAYA';
-            $referenceId = 'owner-' . $community->id . '-' . time();
-
-            try {
-                $result = $xendit->createPayout([
-                    'reference_id'       => $referenceId,
-                    'currency'           => 'PHP',
-                    'channel_code'       => $channelCode,
-                    'channel_properties' => [
-                        'account_holder_name' => $owner->name,
-                        'account_number'      => $owner->payout_details,
-                    ],
-                    'amount'      => $pending,
-                    'description' => "Owner earnings – {$community->name}",
-                ]);
-
-                OwnerPayout::create([
-                    'community_id'     => $community->id,
-                    'user_id'          => $owner->id,
-                    'amount'           => $pending,
-                    'status'           => 'accepted',
-                    'xendit_reference' => $result['id'] ?? $referenceId,
-                    'paid_at'          => now(),
-                ]);
-                $paid++;
-            } catch (\RuntimeException $e) {
-                $errors[] = "{$community->name}: " . $e->getMessage();
-            }
-        }
-
-        $msg = "Paid {$paid} community owner(s).";
-        if ($errors) $msg .= ' Errors: ' . implode('; ', $errors);
-
-        return back()->with($errors ? 'error' : 'success', $msg);
+        return back()->with($result['errors'] ? 'error' : 'success', $result['message']);
     }
 
-    public function paySelectedOwners(Request $request, XenditService $xendit): RedirectResponse
+    public function paySelectedOwners(Request $request, OwnerPayoutDispatcher $dispatcher): RedirectResponse
     {
         $ids = $request->validate(['community_ids' => 'required|array', 'community_ids.*' => 'integer'])['community_ids'];
 
-        $communities = Community::with('owner')->whereIn('id', $ids)->get();
-        $paid = 0;
-        $errors = [];
-
-        foreach ($communities as $community) {
-            $owner = $community->owner;
-            if (!in_array($owner->payout_method, ['gcash', 'maya']) || !$owner->payout_details) continue;
-
-            $gross               = (float) Payment::where('community_id', $community->id)->where('status', Payment::STATUS_PAID)->sum('amount');
-            $affiliateCommission = (float) AffiliateConversion::whereHas('affiliate', fn ($q) => $q->where('community_id', $community->id))->sum('commission_amount');
-            $platformFee         = round($gross * $community->platformFeeRate(), 2);
-            $earned              = round($gross - $platformFee - $affiliateCommission, 2);
-            $paidOut             = (float) OwnerPayout::where('community_id', $community->id)->where('status', '!=', 'failed')->sum('amount');
-            $pending             = round($earned - $paidOut, 2);
-
-            if ($pending <= 0) continue;
-
-            $channelCode = $owner->payout_method === 'gcash' ? 'PH_GCASH' : 'PH_PAYMAYA';
-            $referenceId = 'owner-' . $community->id . '-' . time();
-
-            try {
-                $result = $xendit->createPayout([
-                    'reference_id'       => $referenceId,
-                    'currency'           => 'PHP',
-                    'channel_code'       => $channelCode,
-                    'channel_properties' => [
-                        'account_holder_name' => $owner->name,
-                        'account_number'      => $owner->payout_details,
-                    ],
-                    'amount'      => $pending,
-                    'description' => "Owner earnings – {$community->name}",
-                ]);
-
-                OwnerPayout::create([
-                    'community_id'     => $community->id,
-                    'user_id'          => $owner->id,
-                    'amount'           => $pending,
-                    'status'           => 'accepted',
-                    'xendit_reference' => $result['id'] ?? $referenceId,
-                    'paid_at'          => now(),
-                ]);
-                $paid++;
-            } catch (\RuntimeException $e) {
-                $errors[] = "{$community->name}: " . $e->getMessage();
-            }
-        }
-
-        $msg = "Paid {$paid} selected owner(s).";
-        if ($errors) $msg .= ' Errors: ' . implode('; ', $errors);
-
-        return back()->with($errors ? 'error' : 'success', $msg);
-    }
-
-    public function paySelectedAffiliates(Request $request, DisbursePayout $disburse, MarkAffiliateConversionPaid $mark): RedirectResponse
-    {
-        $ids = $request->validate(['affiliate_ids' => 'required|array', 'affiliate_ids.*' => 'integer'])['affiliate_ids'];
-
-        $conversions = AffiliateConversion::where('status', AffiliateConversion::STATUS_PENDING)
-            ->whereIn('affiliate_id', $ids)
-            ->with(['affiliate.user', 'affiliate.community'])
-            ->get()
-            ->filter(fn ($c) => DisbursePayout::supports($c->affiliate->payout_method ?? ''));
-
-        $paid = 0;
-        $errors = [];
-
-        foreach ($conversions as $conversion) {
-            try {
-                $disburse->execute($conversion);
-                $mark->execute($conversion);
-                $paid++;
-            } catch (\RuntimeException $e) {
-                $errors[] = "Conversion #{$conversion->id}: " . $e->getMessage();
-            }
-        }
-
-        $msg = "Paid {$paid} selected affiliate conversion(s).";
-        if ($errors) $msg .= ' Errors: ' . implode('; ', $errors);
-
-        return back()->with($errors ? 'error' : 'success', $msg);
-    }
-
-    public function batchPayAffiliates(DisbursePayout $disburse, MarkAffiliateConversionPaid $mark): RedirectResponse
-    {
-        $conversions = AffiliateConversion::where('status', AffiliateConversion::STATUS_PENDING)
-            ->with(['affiliate.user', 'affiliate.community'])
-            ->get()
-            ->filter(fn ($c) => DisbursePayout::supports($c->affiliate->payout_method ?? ''));
-
-        $paid = 0;
-        $errors = [];
-
-        foreach ($conversions as $conversion) {
-            try {
-                $disburse->execute($conversion);
-                $mark->execute($conversion);
-                $paid++;
-            } catch (\RuntimeException $e) {
-                $errors[] = "Conversion #{$conversion->id}: " . $e->getMessage();
-            }
-        }
-
-        $msg = "Paid {$paid} affiliate conversion(s).";
-        if ($errors) $msg .= ' Errors: ' . implode('; ', $errors);
-
-        return back()->with($errors ? 'error' : 'success', $msg);
-    }
-
-    public function approvePayoutRequest(PayoutRequest $payoutRequest, XenditService $xendit): RedirectResponse
-    {
-        abort_unless($payoutRequest->isPending(), 422, 'Request is no longer pending.');
-
-        $user = $payoutRequest->user;
-
-        if ($payoutRequest->type === PayoutRequest::TYPE_OWNER) {
-            $payoutMethod  = $user->payout_method;
-            $payoutDetails = $user->payout_details;
-            $holderName    = $user->name;
-        } else {
-            $affiliate     = Affiliate::findOrFail($payoutRequest->affiliate_id);
-            $payoutMethod  = $affiliate->payout_method;
-            $payoutDetails = $affiliate->payout_details;
-            $holderName    = $user->name;
-        }
-
-        abort_unless(
-            in_array($payoutMethod, ['gcash', 'maya']) && $payoutDetails,
-            422,
-            'User has no valid payout method on file.'
+        $result = $dispatcher->batchDispatch(
+            Community::with('owner')->whereIn('id', $ids)->get(),
+            'selected owner(s)'
         );
 
-        $channelCode = $payoutMethod === 'gcash' ? 'PH_GCASH' : 'PH_PAYMAYA';
-        $referenceId = 'req-' . $payoutRequest->id . '-' . time();
+        return back()->with($result['errors'] ? 'error' : 'success', $result['message']);
+    }
 
+    public function paySelectedAffiliates(Request $request, BatchPayAffiliates $action): RedirectResponse
+    {
+        $ids    = $request->validate(['affiliate_ids' => 'required|array', 'affiliate_ids.*' => 'integer'])['affiliate_ids'];
+        $result = $action->execute(affiliateIds: $ids);
+
+        return back()->with($result['errors'] ? 'error' : 'success', $result['message']);
+    }
+
+    public function batchPayAffiliates(BatchPayAffiliates $action): RedirectResponse
+    {
+        $result = $action->execute();
+
+        return back()->with($result['errors'] ? 'error' : 'success', $result['message']);
+    }
+
+    public function approvePayoutRequest(PayoutRequest $payoutRequest, ApprovePayoutRequest $action): RedirectResponse
+    {
         try {
-            $result = $xendit->createPayout([
-                'reference_id'       => $referenceId,
-                'currency'           => 'PHP',
-                'channel_code'       => $channelCode,
-                'channel_properties' => [
-                    'account_holder_name' => $holderName,
-                    'account_number'      => $payoutDetails,
-                ],
-                'amount'      => (float) $payoutRequest->amount,
-                'description' => "Payout request #{$payoutRequest->id}",
-            ]);
-
-            // Record in owner_payouts if type is owner
-            if ($payoutRequest->type === PayoutRequest::TYPE_OWNER) {
-                OwnerPayout::create([
-                    'community_id'     => $payoutRequest->community_id,
-                    'user_id'          => $user->id,
-                    'amount'           => $payoutRequest->amount,
-                    'status'           => 'accepted',
-                    'xendit_reference' => $result['id'] ?? $referenceId,
-                    'paid_at'          => now(),
-                ]);
-            }
-
-            $payoutRequest->update([
-                'status'           => PayoutRequest::STATUS_APPROVED,
-                'xendit_reference' => $result['id'] ?? $referenceId,
-                'processed_at'     => now(),
-            ]);
-
-            return back()->with('success', "Approved & sent ₱" . number_format($payoutRequest->amount, 2) . " to {$user->name}.");
+            $action->execute($payoutRequest);
+            return back()->with('success', "Approved & sent ₱" . number_format($payoutRequest->amount, 2) . " to {$payoutRequest->user->name}.");
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            throw $e;
         } catch (\RuntimeException $e) {
-            return back()->with('error', 'Xendit payout failed: ' . $e->getMessage());
+            return back()->with('error', $e->getMessage());
         }
     }
 
-    public function resendOnboardingEmail(User $user): RedirectResponse
+    public function rejectPayoutRequest(Request $request, PayoutRequest $payoutRequest, RejectPayoutRequest $action): RedirectResponse
     {
-        abort_unless($user->needs_password_setup, 422, 'User has already set their password.');
-
-        $community = $user->communityMemberships()->with('community')->first()?->community;
-        abort_unless($community, 422, 'No community found for this user.');
-
-        $tempPassword = 'Tmp@' . Str::upper(Str::random(3)) . Str::random(3);
-        $user->forceFill(['password' => Hash::make($tempPassword)])->save();
-
-        Mail::to($user->email)->queue(new TempPasswordMail($user, $tempPassword, $community));
-
-        return back()->with('success', "Resent login email to {$user->email}.");
-    }
-
-    public function rejectPayoutRequest(PayoutRequest $payoutRequest, Request $request): RedirectResponse
-    {
-        abort_unless($payoutRequest->isPending(), 422, 'Request is no longer pending.');
-
-        $validated = $request->validate([
-            'reason' => 'nullable|string|max:255',
-        ]);
-
-        $payoutRequest->update([
-            'status'           => PayoutRequest::STATUS_REJECTED,
-            'rejection_reason' => $validated['reason'] ?? null,
-            'processed_at'     => now(),
-        ]);
+        $reason = $request->validate(['reason' => 'nullable|string|max:255'])['reason'] ?? null;
+        $action->execute($payoutRequest, $reason);
 
         return back()->with('success', "Payout request #{$payoutRequest->id} rejected.");
     }
 
-    // ── Featured Communities ─────────────────────────────────────────────────
+    // ── Onboarding ────────────────────────────────────────────────────────────
+
+    public function resendOnboardingEmail(User $user, ResendOnboardingEmail $action): RedirectResponse
+    {
+        $action->execute($user);
+
+        return back()->with('success', "Resent login email to {$user->email}.");
+    }
+
+    // ── Communities ───────────────────────────────────────────────────────────
 
     public function toggleFeatured(Community $community): RedirectResponse
     {
         $community->update(['is_featured' => ! $community->is_featured]);
-        $label = $community->is_featured ? 'featured' : 'unfeatured';
-        return back()->with('success', "{$community->name} is now {$label}.");
+
+        return back()->with('success', "{$community->name} is now " . ($community->is_featured ? 'featured' : 'unfeatured') . ".");
     }
 
-    // ── User Management ──────────────────────────────────────────────────────
+    // ── Users ─────────────────────────────────────────────────────────────────
 
-    public function users(Request $request): Response
+    public function users(Request $request, ListUsers $query): Response
     {
-        $search = $request->string('search')->trim()->toString();
-
-        $users = User::withCount('communityMemberships')
-            ->when($search, fn ($q) => $q->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('username', 'like', "%{$search}%");
-            }))
-            ->latest()
-            ->paginate(25)
-            ->withQueryString()
-            ->through(fn ($u) => [
-                'id'             => $u->id,
-                'name'           => $u->name,
-                'email'          => $u->email,
-                'username'       => $u->username,
-                'is_active'      => (bool) $u->is_active,
-                'is_super_admin' => (bool) $u->is_super_admin,
-                'memberships'    => $u->community_memberships_count,
-                'created_at'     => $u->created_at?->toDateString(),
-            ]);
-
-        return Inertia::render('Admin/Users', [
-            'users'   => $users,
-            'filters' => ['search' => $search],
-        ]);
+        return Inertia::render('Admin/Users', $query->execute(
+            $request->string('search')->trim()->toString()
+        ));
     }
 
-    public function toggleUserStatus(User $user): RedirectResponse
+    public function toggleUserStatus(User $user, ToggleUserStatus $action): RedirectResponse
     {
-        abort_if($user->is_super_admin, 422, 'Cannot disable a super admin.');
+        $action->execute($user);
 
-        $user->update(['is_active' => ! $user->is_active]);
-
-        $status = $user->is_active ? 'enabled' : 'disabled';
-        return back()->with('success', "User {$user->name} has been {$status}.");
+        return back()->with('success', "User {$user->name} has been " . ($user->is_active ? 'enabled' : 'disabled') . ".");
     }
 
-    // ── Soft Delete Recovery ─────────────────────────────────────────────────
+    // ── Posts ─────────────────────────────────────────────────────────────────
 
-    public function trashedPosts(Request $request): Response
+    public function trashedPosts(Request $request, ListTrashedPosts $query): Response
     {
-        $search = $request->string('search')->trim()->toString();
-
-        $posts = Post::onlyTrashed()
-            ->with(['author:id,name', 'community:id,name,slug'])
-            ->when($search, fn ($q) => $q->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('content', 'like', "%{$search}%");
-            }))
-            ->latest('deleted_at')
-            ->paginate(25)
-            ->withQueryString()
-            ->through(fn ($p) => [
-                'id'             => $p->id,
-                'title'          => $p->title,
-                'content'        => substr($p->content, 0, 120),
-                'author'         => $p->author?->name,
-                'community'      => $p->community?->name,
-                'community_slug' => $p->community?->slug,
-                'deleted_at'     => $p->deleted_at?->toDateString(),
-            ]);
-
-        return Inertia::render('Admin/TrashedPosts', [
-            'posts'   => $posts,
-            'filters' => ['search' => $search],
-        ]);
+        return Inertia::render('Admin/TrashedPosts', $query->execute(
+            $request->string('search')->trim()->toString()
+        ));
     }
 
     public function restorePost(int $postId): RedirectResponse
     {
-        $post = Post::onlyTrashed()->findOrFail($postId);
-        $post->restore();
+        Post::onlyTrashed()->findOrFail($postId)->restore();
 
         return back()->with('success', 'Post restored.');
     }
 
     public function forceDeletePost(int $postId): RedirectResponse
     {
-        $post = Post::onlyTrashed()->findOrFail($postId);
-        $post->forceDelete();
+        Post::onlyTrashed()->findOrFail($postId)->forceDelete();
 
         return back()->with('success', 'Post permanently deleted.');
     }
+
+    // ── Email Templates ───────────────────────────────────────────────────────
 
     public function emailTemplates(): Response
     {
@@ -698,49 +209,34 @@ class AdminController extends Controller
 
     public function editEmailTemplate(string $key): Response
     {
-        $template = EmailTemplate::where('key', $key)->firstOrFail();
-
         return Inertia::render('Admin/EmailTemplateEdit', [
-            'template' => $template,
+            'template' => EmailTemplate::where('key', $key)->firstOrFail(),
         ]);
     }
 
     public function updateEmailTemplate(Request $request, string $key): RedirectResponse
     {
-        $request->validate([
+        $data = $request->validate([
             'subject'   => 'required|string|max:255',
             'html_body' => 'required|string',
         ]);
 
-        EmailTemplate::where('key', $key)->firstOrFail()->update([
-            'subject'   => $request->subject,
-            'html_body' => $request->html_body,
-        ]);
+        EmailTemplate::where('key', $key)->firstOrFail()->update($data);
 
         return back()->with('success', 'Email template saved.');
     }
 
-    public function previewEmailTemplate(Request $request, string $key): \Illuminate\Http\Response
+    public function previewEmailTemplate(Request $request, string $key, EmailTemplateService $service): \Illuminate\Http\Response
     {
-        $request->validate([
+        $data = $request->validate([
             'subject'   => 'required|string|max:255',
             'html_body' => 'required|string',
         ]);
 
-        $template = EmailTemplate::where('key', $key)->firstOrFail();
-
-        // Replace variables with sample values for preview
-        $samples = collect($template->variables ?? [])->mapWithKeys(function ($desc, $var) {
-            return [$var => "[{$var}]"];
-        })->toArray();
-
-        $html = $request->html_body;
-        foreach ($samples as $var => $value) {
-            $html = str_replace('{{' . $var . '}}', $value, $html);
-        }
-
-        return response($html);
+        return response($service->preview($key, $data['html_body']));
     }
+
+    // ── Global Announcement ───────────────────────────────────────────────────
 
     public function globalAnnouncement(): Response
     {

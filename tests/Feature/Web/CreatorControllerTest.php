@@ -87,7 +87,7 @@ class CreatorControllerTest extends TestCase
             ->where('communities.0.community_id', $community->id)
             ->where('communities.0.community_name', $community->name)
             ->where('communities.0.gross', fn ($v) => (float) $v === 200.0)
-            ->where('communities.0.platform_fee', fn ($v) => (float) $v === 30.0)
+            ->where('communities.0.platform_fee', fn ($v) => (float) $v === round(200 * 0.098, 2)) // 9.8% (free plan)
         );
     }
 
@@ -124,7 +124,7 @@ class CreatorControllerTest extends TestCase
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page->component('Creator/Dashboard')
             ->where('communities.0.commissions', fn ($v) => (float) $v === 10.0)
-            ->where('communities.0.earned', fn ($v) => (float) $v === 75.0)
+            ->where('communities.0.earned', fn ($v) => (float) $v === round(100 - round(100 * 0.098, 2) - 10, 2)) // gross - platform_fee(9.8%) - commission
         );
     }
 

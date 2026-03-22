@@ -33,11 +33,13 @@ class CommunityControllerTest extends TestCase
 
     public function test_authenticated_user_can_create_community(): void
     {
+        Storage::fake('public');
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post('/communities', [
             'name'        => 'My Community',
             'description' => 'A test community.',
+            'cover_image' => UploadedFile::fake()->image('cover.jpg'),
         ]);
 
         $response->assertRedirect();

@@ -136,8 +136,8 @@ class AffiliateCommissionTest extends TestCase
             'referred_user_id' => $referredUser->id,
             'sale_amount'      => 1000,
             'commission_amount'=> 200.00,  // 20% of 1000
-            'platform_fee'     => 150.00,  // 15% of 1000
-            'creator_amount'   => 650.00,  // 1000 - 150 - 200
+            'platform_fee'     => 98.00,   // 9.8% of 1000 (free plan)
+            'creator_amount'   => 702.00,  // 1000 - 98 - 200
         ]);
     }
 
@@ -204,7 +204,7 @@ class AffiliateCommissionTest extends TestCase
         $this->assertDatabaseCount('affiliate_conversions', 0);
     }
 
-    /** Commission maths: 15% platform fee, rate% to affiliate, rest to creator */
+    /** Commission maths: 9.8% platform fee (free plan), rate% to affiliate, rest to creator */
     public function test_subscription_commission_math_is_correct(): void
     {
         $community     = $this->community(['affiliate_commission_rate' => 30]);
@@ -220,9 +220,9 @@ class AffiliateCommissionTest extends TestCase
 
         $conversion = AffiliateConversion::first();
         $this->assertEquals(1000.00, (float) $conversion->sale_amount);
-        $this->assertEquals(150.00,  (float) $conversion->platform_fee);      // 15%
+        $this->assertEquals(98.00,   (float) $conversion->platform_fee);      // 9.8% (free plan)
         $this->assertEquals(300.00,  (float) $conversion->commission_amount); // 30%
-        $this->assertEquals(550.00,  (float) $conversion->creator_amount);    // 55%
+        $this->assertEquals(602.00,  (float) $conversion->creator_amount);    // 1000 - 98 - 300
         $this->assertEquals(
             (float) $conversion->sale_amount,
             round((float) $conversion->platform_fee + (float) $conversion->commission_amount + (float) $conversion->creator_amount, 2),
@@ -273,8 +273,8 @@ class AffiliateCommissionTest extends TestCase
             'referred_user_id'      => $buyer->id,
             'sale_amount'           => 1000,
             'commission_amount'     => 300.00,  // 30% of 1000
-            'platform_fee'          => 150.00,  // 15% of 1000
-            'creator_amount'        => 550.00,  // 1000 - 150 - 300
+            'platform_fee'          => 98.00,   // 9.8% of 1000 (free plan)
+            'creator_amount'        => 602.00,  // 1000 - 98 - 300
         ]);
 
         $this->assertEquals(300.00, (float) $affiliate->fresh()->total_earned);
@@ -408,7 +408,7 @@ class AffiliateCommissionTest extends TestCase
         $this->assertDatabaseCount('affiliate_conversions', 0);
     }
 
-    /** Course commission maths: 15% platform, rate% affiliate, rest to creator */
+    /** Course commission maths: 9.8% platform (free plan), rate% affiliate, rest to creator */
     public function test_course_commission_math_is_correct(): void
     {
         $community     = $this->community();
@@ -425,9 +425,9 @@ class AffiliateCommissionTest extends TestCase
 
         $conversion = AffiliateConversion::first();
         $this->assertEquals(1000.00, (float) $conversion->sale_amount);
-        $this->assertEquals(150.00,  (float) $conversion->platform_fee);      // 15%
+        $this->assertEquals(98.00,   (float) $conversion->platform_fee);      // 9.8% (free plan)
         $this->assertEquals(300.00,  (float) $conversion->commission_amount); // 30%
-        $this->assertEquals(550.00,  (float) $conversion->creator_amount);    // 55%
+        $this->assertEquals(602.00,  (float) $conversion->creator_amount);    // 1000 - 98 - 300
         $this->assertEquals(
             (float) $conversion->sale_amount,
             round((float) $conversion->platform_fee + (float) $conversion->commission_amount + (float) $conversion->creator_amount, 2),

@@ -29,7 +29,7 @@ class AccountSettingsController extends Controller
 {
     public function show(Request $request, GetAccountSettings $query): Response
     {
-        $data = $query->execute($request->user(), $request->get('tab', 'communities'));
+        $data = $query->execute($request->user(), $request->query('tab', 'communities'));
 
         return Inertia::render('Account/Settings', $data);
     }

@@ -84,7 +84,12 @@ class CommunityController extends Controller
 
     public function store(CreateCommunityRequest $request, CreateCommunity $action): JsonResponse
     {
-        $community = $action->execute($request->user(), $request->validated());
+        $community = $action->execute(
+            $request->user(),
+            $request->validated(),
+            $request->file('avatar'),
+            $request->file('cover_image'),
+        );
 
         return response()->json([
             'message'   => 'Community created.',

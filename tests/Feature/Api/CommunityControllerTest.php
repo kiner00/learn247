@@ -66,13 +66,15 @@ class CommunityControllerTest extends TestCase
 
     public function test_store_creates_community_returns_201(): void
     {
+        Storage::fake('public');
         $user = User::factory()->create();
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson('/api/communities', [
+            ->post('/api/communities', [
                 'name'        => 'My New Community',
                 'description' => 'A test community description.',
-            ]);
+                'cover_image' => UploadedFile::fake()->image('cover.jpg'),
+            ], ['Accept' => 'application/json']);
 
         $response->assertStatus(201)
             ->assertJsonPath('message', 'Community created.')

@@ -95,7 +95,7 @@ class CreatorControllerTest extends TestCase
         $data = $response->json('communities.0');
         $this->assertEquals($community->id, $data['community_id']);
         $this->assertEquals(499, $data['gross']);
-        $this->assertEquals(round(499 * 0.15, 2), $data['platform_fee']);
+        $this->assertEquals(round(499 * 0.098, 2), $data['platform_fee']); // 9.8% (free plan)
     }
 
     public function test_dashboard_includes_payout_request_history(): void

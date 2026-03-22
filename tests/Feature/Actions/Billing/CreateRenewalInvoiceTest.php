@@ -35,7 +35,7 @@ class CreateRenewalInvoiceTest extends TestCase
         $xenditMock->shouldReceive('createInvoice')
             ->once()
             ->withArgs(function (array $data) use ($community, $subscriber) {
-                return str_contains($data['external_id'], "renew_{$community->id}_{$subscriber->id}")
+                return str_contains($data['external_id'], "{$community->slug}_renew_{$subscriber->id}_")
                     && $data['amount'] === (float) $community->price
                     && $data['currency'] === 'PHP'
                     && str_contains($data['description'], $community->name)

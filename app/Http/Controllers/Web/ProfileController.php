@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
-use App\Models\CommunityMember;
 use App\Models\User;
 use App\Queries\Profile\GetProfileData;
 use Illuminate\Http\Request;
@@ -27,21 +26,11 @@ class ProfileController extends Controller
 
     private function renderProfile(User $user, Request $request, bool $isOwn, GetProfileData $query): Response
     {
-        $data        = $query->execute($user, $isOwn);
-        $memberships = $data['memberships'];
+        $data               = $query->execute($user, $isOwn);
+        $membershipsMapped  = $query->getMappedMemberships($user);
 
-        $membershipsMapped = $memberships->map(fn ($m) => [
-            'community_id'  => $m->community_id,
-            'name'          => $m->community?->name,
-            'slug'          => $m->community?->slug,
-            'avatar'        => $m->community?->avatar,
-            'price'         => $m->community?->price,
-            'members_count' => CommunityMember::where('community_id', $m->community_id)->count(),
-            'joined_at'     => $m->joined_at,
-        ]);
-
-        $communitySlug      = $request->get('community');
-        $selectedMembership = $membershipsMapped->firstWhere('slug', $communitySlug) ?? $membershipsMapped->first();
+        $communitySlug       = $request->query('community');
+        $selectedMembership  = $membershipsMapped->firstWhere('slug', $communitySlug) ?? $membershipsMapped->first();
         $selectedCommunityId = $selectedMembership['community_id'] ?? null;
         $contributionsCount  = $query->getContributionsCount($user, $selectedCommunityId);
 

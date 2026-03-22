@@ -1108,9 +1108,8 @@ class ClassroomControllerTest extends TestCase
 
     public function test_user_has_no_access_to_course_with_unknown_access_type(): void
     {
-        // The final `return false` in userHasAccessToCourse() is unreachable via normal
-        // DB insertion (CHECK constraint), so we test via reflection with an in-memory
-        // Course whose access_type is not one of the known constants.
+        // The final `return false` in CourseAccessService::hasAccess() is unreachable via normal
+        // DB insertion (CHECK constraint), so we test via an in-memory Course with unknown access_type.
         $owner     = User::factory()->create();
         $user      = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
@@ -1118,11 +1117,8 @@ class ClassroomControllerTest extends TestCase
         $course = new Course();
         $course->access_type = 'unknown_type';
 
-        $controller = new \App\Http\Controllers\Web\ClassroomController();
-        $reflection = new \ReflectionMethod(\App\Http\Controllers\Web\ClassroomController::class, 'userHasAccessToCourse');
-        $reflection->setAccessible(true);
-
-        $result = $reflection->invoke($controller, $user, $community, $course);
+        $service = new \App\Services\Classroom\CourseAccessService();
+        $result  = $service->hasAccess($user, $community, $course);
 
         $this->assertFalse($result);
     }

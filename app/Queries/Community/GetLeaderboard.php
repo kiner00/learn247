@@ -53,6 +53,30 @@ class GetLeaderboard
         ];
     }
 
+    public function levelDistribution(Community $community): array
+    {
+        $totalMembers = $community->members()->count();
+        $thresholds   = CommunityMember::LEVEL_THRESHOLDS;
+        $levelCounts  = array_fill(1, count($thresholds), 0);
+
+        CommunityMember::where('community_id', $community->id)
+            ->pluck('points')
+            ->each(function ($pts) use (&$levelCounts) {
+                $level = CommunityMember::computeLevel($pts);
+                $levelCounts[$level] = ($levelCounts[$level] ?? 0) + 1;
+            });
+
+        $perks = CommunityLevelPerk::where('community_id', $community->id)->pluck('description', 'level');
+
+        return collect(range(1, count($thresholds)))->map(fn ($l) => [
+            'level'     => $l,
+            'count'     => $levelCounts[$l] ?? 0,
+            'percent'   => $totalMembers > 0 ? round(($levelCounts[$l] ?? 0) / $totalMembers * 100) : 0,
+            'perk'      => $perks[$l] ?? null,
+            'threshold' => $thresholds[$l - 1],
+        ])->all();
+    }
+
     public function topMembers(Community $community, int $limit = 5): array
     {
         return CommunityMember::where('community_id', $community->id)

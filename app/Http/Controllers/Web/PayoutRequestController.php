@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Web;
 
 use App\Actions\Payout\RequestAffiliatePayout;
+use App\Actions\Payout\RequestAllAffiliatePayouts;
 use App\Actions\Payout\RequestOwnerPayout;
 use App\Http\Controllers\Controller;
 use App\Models\Affiliate;
 use App\Models\Community;
-use App\Models\PayoutRequest;
 use App\Queries\Payout\CalculateEligibility;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -41,50 +41,11 @@ class PayoutRequestController extends Controller
         return back()->with($result['success'] ? 'success' : 'error', $result['message']);
     }
 
-    public function storeAffiliateAll(Request $request, CalculateEligibility $eligibility): RedirectResponse
+    public function storeAffiliateAll(RequestAllAffiliatePayouts $action): RedirectResponse
     {
-        $user = Auth::user();
+        $result = $action->execute(Auth::user());
 
-        $affiliates = Affiliate::where('user_id', $user->id)
-            ->where('status', Affiliate::STATUS_ACTIVE)
-            ->whereIn('payout_method', ['gcash', 'maya'])
-            ->whereNotNull('payout_details')
-            ->get();
-
-        if ($affiliates->isEmpty()) {
-            return back()->with('error', 'No affiliates with a valid payout method set.');
-        }
-
-        $submitted = 0;
-        foreach ($affiliates as $affiliate) {
-            $hasPending = PayoutRequest::where('affiliate_id', $affiliate->id)
-                ->where('type', PayoutRequest::TYPE_AFFILIATE)
-                ->whereIn('status', [PayoutRequest::STATUS_PENDING, PayoutRequest::STATUS_APPROVED])
-                ->exists();
-
-            if ($hasPending) continue;
-
-            $eligibleNow = $eligibility->forAffiliate($affiliate);
-            if ($eligibleNow <= 0) continue;
-
-            PayoutRequest::create([
-                'user_id'         => $affiliate->user_id,
-                'type'            => PayoutRequest::TYPE_AFFILIATE,
-                'community_id'    => $affiliate->community_id,
-                'affiliate_id'    => $affiliate->id,
-                'amount'          => $eligibleNow,
-                'eligible_amount' => $eligibleNow,
-                'status'          => PayoutRequest::STATUS_PENDING,
-            ]);
-
-            $submitted++;
-        }
-
-        if ($submitted === 0) {
-            return back()->with('error', 'No eligible affiliate earnings to request payout for.');
-        }
-
-        return back()->with('success', "Payout request submitted for {$submitted} affiliate program(s). The admin will review shortly.");
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
     }
 
     /**

@@ -3,18 +3,14 @@
 namespace App\Http\Controllers\Web;
 
 use App\Actions\Community\AcceptInvite;
+use App\Actions\Community\ProvisionInviteUser;
 use App\Actions\Community\SendInvite;
 use App\Http\Controllers\Controller;
-use App\Mail\TempPasswordMail;
 use App\Models\Community;
 use App\Models\CommunityInvite;
-use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
 
 class CommunityInviteController extends Controller
 {
@@ -58,32 +54,12 @@ class CommunityInviteController extends Controller
         return back()->with($result['type'], $result['message']);
     }
 
-    public function accept(string $token, AcceptInvite $action): RedirectResponse
+    public function accept(string $token, AcceptInvite $action, ProvisionInviteUser $provision): RedirectResponse
     {
         $invite = CommunityInvite::with('community')->where('token', $token)->firstOrFail();
 
         if (! auth()->check()) {
-            $user = User::where('email', $invite->email)->first();
-
-            if (! $user) {
-                // New user — create account with temp password
-                $tempPassword = Str::random(12);
-                $user = User::create([
-                    'name'                 => explode('@', $invite->email)[0],
-                    'email'                => $invite->email,
-                    'password'             => bcrypt($tempPassword),
-                    'needs_password_setup' => true,
-                ]);
-                Mail::to($user)->send(new TempPasswordMail($user, $tempPassword, $invite->community));
-            } elseif ($user->needs_password_setup) {
-                // Existing user who never set a real password — refresh temp password and resend
-                $tempPassword = Str::random(12);
-                $user->update(['password' => bcrypt($tempPassword)]);
-                Mail::to($user)->send(new TempPasswordMail($user, $tempPassword, $invite->community));
-            }
-
-            Auth::login($user);
-            request()->session()->regenerate();
+            $provision->execute($invite);
         }
 
         $result    = $action->execute(auth()->user(), $invite);

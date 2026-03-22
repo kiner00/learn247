@@ -4,6 +4,7 @@ namespace App\Queries\DirectMessage;
 
 use App\Models\DirectMessage;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class GetConversationThread
 {
@@ -29,5 +30,33 @@ class GetConversationThread
             ->update(['read_at' => now()]);
 
         return ['messages' => $messages];
+    }
+
+    /**
+     * Return new messages from a partner after a given ID, and mark them as read.
+     */
+    public function poll(int $myId, int $partnerId, int $afterId, int $limit = 50): Collection
+    {
+        $messages = DirectMessage::where('sender_id', $partnerId)
+            ->where('receiver_id', $myId)
+            ->where('id', '>', $afterId)
+            ->oldest()
+            ->take($limit)
+            ->get()
+            ->map(fn ($m) => [
+                'id'         => $m->id,
+                'content'    => $m->content,
+                'is_mine'    => false,
+                'created_at' => $m->created_at,
+            ]);
+
+        if ($messages->isNotEmpty()) {
+            DirectMessage::where('sender_id', $partnerId)
+                ->where('receiver_id', $myId)
+                ->whereNull('read_at')
+                ->update(['read_at' => now()]);
+        }
+
+        return $messages;
     }
 }

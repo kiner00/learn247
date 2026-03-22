@@ -48,6 +48,23 @@ class GetProfileData
             ->get();
     }
 
+    public function getMappedMemberships(User $user): Collection
+    {
+        return CommunityMember::where('user_id', $user->id)
+            ->with(['community:id,name,slug,avatar,price'])
+            ->withCount(['community as members_count' => fn ($q) => $q->join('community_members as cm2', 'cm2.community_id', '=', 'communities.id')])
+            ->get()
+            ->map(fn ($m) => [
+                'community_id'  => $m->community_id,
+                'name'          => $m->community?->name,
+                'slug'          => $m->community?->slug,
+                'avatar'        => $m->community?->avatar,
+                'price'         => $m->community?->price,
+                'members_count' => CommunityMember::where('community_id', $m->community_id)->count(),
+                'joined_at'     => $m->joined_at,
+            ]);
+    }
+
     /**
      * @return array{total_points: int, level: int, points_to_next: int|null}
      */

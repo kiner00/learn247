@@ -7,13 +7,12 @@ use App\Actions\Classroom\ManageCourse;
 use App\Actions\Classroom\ManageLesson;
 use App\Actions\Classroom\ManageModule;
 use App\Http\Controllers\Controller;
-use App\Models\Comment;
+use App\Services\Classroom\CourseAccessService;
+use App\Services\Community\PlanLimitService;
 use App\Models\Community;
 use App\Models\Course;
-use App\Models\CourseEnrollment;
 use App\Models\CourseLesson;
 use App\Models\CourseModule;
-use App\Models\Subscription;
 use App\Queries\Classroom\GetCourseDetail;
 use App\Queries\Classroom\GetCourseList;
 use Illuminate\Http\JsonResponse;
@@ -35,18 +34,11 @@ class ClassroomController extends Controller
         return Inertia::render('Communities/Classroom/Index', compact('community', 'courses', 'affiliate'));
     }
 
-    public function storeCourse(Request $request, Community $community, ManageCourse $action): RedirectResponse
+    public function storeCourse(Request $request, Community $community, ManageCourse $action, PlanLimitService $planLimit): RedirectResponse
     {
         abort_unless($request->user()->id === $community->owner_id, 403);
 
-        $plan        = $request->user()->creatorPlan();
-        $courseLimit = match ($plan) {
-            'pro'   => PHP_INT_MAX,
-            'basic' => 5,
-            default => 3,
-        };
-
-        if ($community->courses()->count() >= $courseLimit) {
+        if (! $planLimit->canCreateCourse($request->user(), $community)) {
             return back()->withErrors([
                 'plan' => 'Free creators can only have 3 courses per community. Upgrade to Basic or Pro for more courses.',
             ]);
@@ -105,66 +97,23 @@ class ClassroomController extends Controller
         return redirect()->route('communities.classroom', $community)->with('success', 'Course deleted!');
     }
 
-    public function showCourse(Community $community, Course $course, GetCourseDetail $query): Response
+    public function showCourse(Community $community, Course $course, GetCourseDetail $query, CourseAccessService $access): Response
     {
         $userId    = auth()->id();
-        $hasAccess = $this->userHasAccessToCourse(auth()->user(), $community, $course);
+        $hasAccess = $access->hasAccess(auth()->user(), $community, $course);
         $detail    = $query->execute($course, $userId, $hasAccess);
-
-        $lessonIds = $course->modules->flatMap(fn ($m) => $m->lessons->pluck('id'));
-        $lessonComments = Comment::whereIn('lesson_id', $lessonIds)
-            ->whereNull('parent_id')
-            ->with(['author:id,name,username,avatar', 'replies.author:id,name,username,avatar'])
-            ->latest()->get()->groupBy('lesson_id')->map(fn ($comments) => $comments->values());
-
-        $enrollment = $userId
-            ? CourseEnrollment::where('user_id', $userId)->where('course_id', $course->id)->orderByDesc('id')->first()
-            : null;
 
         return Inertia::render('Communities/Classroom/Show', [
             'community'      => $community,
             'course'         => $course->append([]),
             'hasAccess'      => $hasAccess,
-            'enrollment'     => $enrollment ? ['status' => $enrollment->status] : null,
+            'enrollment'     => $detail['enrollment'],
             'completedIds'   => $detail['completed_ids'],
             'progress'       => $detail['progress'],
-            'lessonComments' => $lessonComments,
+            'lessonComments' => $detail['lesson_comments'],
             'quizAttempts'   => $detail['quiz_attempts'],
             'certificate'    => $detail['certificate'] ? ['uuid' => $detail['certificate']->uuid] : null,
         ]);
-    }
-
-    private function userHasAccessToCourse(?\App\Models\User $user, Community $community, Course $course): bool
-    {
-        if ($course->access_type === Course::ACCESS_FREE) {
-            return true;
-        }
-
-        if (! $user) {
-            return false;
-        }
-
-        if ($user->id === $community->owner_id || $user->isSuperAdmin()) {
-            return true;
-        }
-
-        if ($course->access_type === Course::ACCESS_INCLUSIVE) {
-            return Subscription::where('community_id', $community->id)
-                ->where('user_id', $user->id)
-                ->where('status', Subscription::STATUS_ACTIVE)
-                ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
-                ->exists();
-        }
-
-        if (in_array($course->access_type, [Course::ACCESS_PAID_ONCE, Course::ACCESS_PAID_MONTHLY])) {
-            return CourseEnrollment::where('user_id', $user->id)
-                ->where('course_id', $course->id)
-                ->where('status', CourseEnrollment::STATUS_PAID)
-                ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
-                ->exists();
-        }
-
-        return false;
     }
 
     public function storeModule(Request $request, Community $community, Course $course, ManageModule $action): RedirectResponse
@@ -191,12 +140,11 @@ class ClassroomController extends Controller
         return back()->with('success', 'Module updated!');
     }
 
-    public function destroyModule(Request $request, Community $community, Course $course, CourseModule $module): RedirectResponse
+    public function destroyModule(Request $request, Community $community, Course $course, CourseModule $module, ManageModule $action): RedirectResponse
     {
         abort_unless($request->user()->id === $community->owner_id, 403);
 
-        $module->lessons()->delete();
-        $module->delete();
+        $action->destroy($module);
 
         return back()->with('success', 'Module deleted!');
     }

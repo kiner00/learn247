@@ -72,9 +72,9 @@ class RecordAffiliateConversionTest extends TestCase
             'payment_id'       => $payment->id,
             'referred_user_id' => $referredUser->id,
             'sale_amount'      => 1000,
-            'platform_fee'     => 150,
+            'platform_fee'     => 98,   // 9.8% of 1000 (free plan)
             'commission_amount' => 100,
-            'creator_amount'   => 750,
+            'creator_amount'   => 802,
             'status'           => AffiliateConversion::STATUS_PENDING,
         ]);
     }
@@ -214,9 +214,9 @@ class RecordAffiliateConversionTest extends TestCase
 
         $this->assertDatabaseHas('affiliate_conversions', [
             'sale_amount'       => 500,
-            'platform_fee'      => 75,
+            'platform_fee'      => 49,   // 9.8% of 500 (free plan)
             'commission_amount' => 100,
-            'creator_amount'    => 325,
+            'creator_amount'    => 351,
         ]);
     }
 }

@@ -20,4 +20,10 @@ class ManageModule
 
         return $module;
     }
+
+    public function destroy(CourseModule $module): void
+    {
+        $module->lessons()->delete();
+        $module->delete();
+    }
 }

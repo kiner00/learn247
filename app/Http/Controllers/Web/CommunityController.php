@@ -4,88 +4,54 @@ namespace App\Http\Controllers\Web;
 
 use App\Ai\Agents\LandingPageBuilder;
 use App\Actions\Community\CreateCommunity;
+use App\Actions\Community\EnsureMemberAffiliate;
 use App\Actions\Community\JoinCommunity;
+use App\Models\Affiliate;
 use App\Actions\Community\ManageGallery;
 use App\Actions\Community\SendAnnouncement;
+use App\Actions\Community\SendSmsBlast;
+use App\Services\Analytics\CommunityAnalyticsService;
+use App\Services\Community\CommunityChecklistService;
+use App\Services\Community\PlanLimitService;
 use App\Services\SmsService;
 use App\Actions\Community\UpdateCommunity;
 use App\Actions\Community\UpdateLevelPerks;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CreateCommunityRequest;
-use App\Models\Affiliate;
-use App\Models\AffiliateConversion;
 use App\Models\Community;
 use App\Models\CommunityLevelPerk;
 use App\Models\CommunityMember;
-use App\Models\LessonCompletion;
-use App\Models\Payment;
-use App\Models\PayoutRequest;
 use App\Models\Comment;
-use App\Models\Post;
-use App\Models\QuizAttempt;
-use App\Models\Subscription;
+use App\Queries\Community\GetFeaturedCommunities;
 use App\Queries\Community\GetLeaderboard;
 use App\Queries\Community\ListCommunities;
 use App\Queries\Feed\GetCommunityFeed;
-use App\Queries\Payout\CalculateEligibility;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class CommunityController extends Controller
 {
-    public function index(Request $request, ListCommunities $query): Response
+    public function index(Request $request, ListCommunities $query, GetFeaturedCommunities $featured): Response
     {
         $search   = $request->string('search')->trim()->toString();
         $category = $request->string('category')->trim()->toString();
         $sort     = $request->input('sort', 'latest');
 
-        $featured = Community::where('is_featured', true)
-            ->with('owner:id,name')
-            ->withCount('members')
-            ->latest()
-            ->get()
-            ->map(fn ($c) => [
-                'id'           => $c->id,
-                'name'         => $c->name,
-                'slug'         => $c->slug,
-                'description'  => $c->description,
-                'cover_image'  => $c->cover_image,
-                'avatar'       => $c->avatar,
-                'price'        => (float) $c->price,
-                'billing_type' => $c->billing_type,
-                'category'     => $c->category,
-                'members_count'=> $c->members_count,
-                'owner'        => ['name' => $c->owner?->name],
-            ]);
-
         return Inertia::render('Communities/Index', [
             'communities' => $query->execute($search, $category, $sort),
-            'featured'    => $featured,
+            'featured'    => $featured->execute(),
             'filters'     => ['search' => $search, 'category' => $category ?: 'All', 'sort' => $sort],
         ]);
     }
 
-    public function store(CreateCommunityRequest $request, CreateCommunity $action): RedirectResponse
+    public function store(CreateCommunityRequest $request, CreateCommunity $action, PlanLimitService $planLimit): RedirectResponse
     {
         $user = $request->user();
 
-        $plan          = $user->creatorPlan();
-        $communityLimit = match ($plan) {
-            'pro'   => PHP_INT_MAX,
-            'basic' => 3,
-            default => 1,
-        };
-
-        $existingCount = Community::where('owner_id', $user->id)->count();
-        if ($existingCount >= $communityLimit) {
-            $upgrade = $plan === 'free' ? 'Upgrade to Basic (3 communities) or Pro (unlimited).' : 'Upgrade to Pro for unlimited communities.';
-            return back()->withErrors([
-                'plan' => "Your {$plan} plan allows up to {$communityLimit} " . ($communityLimit === 1 ? 'community' : 'communities') . ". {$upgrade}",
-            ])->withInput();
+        if (! $planLimit->canCreateCommunity($user)) {
+            return back()->withErrors(['plan' => $planLimit->communityLimitError($user)])->withInput();
         }
 
         $community = $action->execute(
@@ -99,7 +65,7 @@ class CommunityController extends Controller
             ->with('success', 'Community created!');
     }
 
-    public function show(Community $community, GetLeaderboard $leaderboard, GetCommunityFeed $feed): Response
+    public function show(Community $community, GetLeaderboard $leaderboard, GetCommunityFeed $feed, CommunityChecklistService $checklistService, EnsureMemberAffiliate $ensureAffiliate): Response
     {
         $this->authorize('view', $community);
 
@@ -108,41 +74,14 @@ class CommunityController extends Controller
         $feed->forShow($community, $userId);
 
         $membership = $userId ? $community->members()->where('user_id', $userId)->first() : null;
-        $affiliate  = $userId ? $community->affiliates()->where('user_id', $userId)->first() : null;
-
-        if (! $affiliate && $userId) {
-            $isActiveSubscriber = Subscription::where('user_id', $userId)
-                ->where('community_id', $community->id)
-                ->where('status', Subscription::STATUS_ACTIVE)
-                ->where('expires_at', '>', now())
-                ->exists();
-
-            if ($isActiveSubscriber) {
-                do { $code = Str::random(12); } while (Affiliate::where('code', $code)->exists());
-                $affiliate = Affiliate::create([
-                    'community_id' => $community->id,
-                    'user_id'      => $userId,
-                    'code'         => $code,
-                    'status'       => Affiliate::STATUS_ACTIVE,
-                ]);
-            }
-        }
+        $affiliate  = $userId ? $ensureAffiliate->execute($community, $userId) : null;
 
         $adminCount = $community->members()->where('role', CommunityMember::ROLE_ADMIN)->count();
         $topMembers = $leaderboard->topMembers($community);
 
-        $checklist = null;
-        if ($userId && $community->owner_id === $userId) {
-            $hasPost    = Post::where('community_id', $community->id)->exists();
-            $courseCount = $community->courses()->count();
-            $checklist = [
-                ['key' => 'cover',       'label' => 'Upload a banner image',       'done' => (bool) $community->cover_image],
-                ['key' => 'description', 'label' => 'Add a community description', 'done' => (bool) trim($community->description ?? '')],
-                ['key' => 'post',        'label' => 'Write your first post',       'done' => $hasPost],
-                ['key' => 'course',      'label' => 'Create a course',             'done' => $courseCount > 0],
-                ['key' => 'affiliate',   'label' => 'Set affiliate commission',    'done' => (bool) $community->affiliate_commission_rate],
-            ];
-        }
+        $checklist = ($userId && $community->owner_id === $userId)
+            ? $checklistService->compute($community)
+            : null;
 
         $recentComments = Comment::with(['author:id,name,username,avatar', 'post:id,title,community_id'])
             ->where('community_id', $community->id)
@@ -177,27 +116,13 @@ class CommunityController extends Controller
         return Inertia::render('Communities/Members', compact('community', 'members', 'totalCount', 'adminCount', 'affiliate', 'courses'));
     }
 
-    public function settings(Community $community): Response
+    public function settings(Community $community, PlanLimitService $planLimit): Response
     {
         $this->authorize('update', $community);
 
-        $moduleCount = $community->courses()
-            ->withCount(['modules' => fn ($q) => $q->where('is_free', false)])
-            ->get()->sum('modules_count');
-        $owner       = $community->owner;
-
-        $pricingGate = [
-            'module_count'       => $moduleCount,
-            'has_banner'         => (bool) $community->cover_image,
-            'has_description'    => (bool) ($community->description && strlen(trim($community->description)) > 0),
-            'profile_complete'   => (bool) ($owner && $owner->name && $owner->bio && $owner->avatar),
-            'can_enable_pricing' => false,
-        ];
-        $pricingGate['can_enable_pricing'] = $moduleCount >= 5
-            && $pricingGate['has_banner'] && $pricingGate['has_description'] && $pricingGate['profile_complete'];
-
-        $levelPerks          = CommunityLevelPerk::where('community_id', $community->id)->pluck('description', 'level')->toArray();
-        $canUseIntegrations  = in_array(auth()->user()->creatorPlan(), ['basic', 'pro']);
+        $pricingGate        = $planLimit->pricingGate($community);
+        $levelPerks         = CommunityLevelPerk::where('community_id', $community->id)->pluck('description', 'level')->toArray();
+        $canUseIntegrations = $planLimit->canSendAnnouncement(auth()->user());
 
         return Inertia::render('Communities/Settings', compact('community', 'pricingGate', 'levelPerks', 'canUseIntegrations'));
     }
@@ -288,82 +213,13 @@ class CommunityController extends Controller
         return back()->with('success', 'Scheduled deletion cancelled. The community is active again.');
     }
 
-    public function analytics(Community $community, CalculateEligibility $eligibility): Response
+    public function analytics(Community $community, CommunityAnalyticsService $analyticsService): Response
     {
         $this->authorize('viewAnalytics', $community);
 
-        $activeCount = Subscription::where('community_id', $community->id)
-            ->where('status', Subscription::STATUS_ACTIVE)
-            ->whereHas('payments', fn ($q) => $q->where('status', Payment::STATUS_PAID))
-            ->count();
+        $data = $analyticsService->build($community);
 
-        $monthlyRevenue = $activeCount * (float) $community->price;
-        $totalMembers   = $community->members()->count();
-
-        $subscribers = Subscription::where('community_id', $community->id)
-            ->with(['user', 'payments' => fn ($q) => $q->where('status', Payment::STATUS_PAID)->orderByDesc('paid_at')->limit(1)])
-            ->latest()->get()
-            ->map(fn ($s) => [
-                'id'          => $s->id,
-                'user'        => ['name' => $s->user?->name, 'email' => $s->user?->email],
-                'status'      => $s->status,
-                'expires_at'  => $s->expires_at?->toDateString(),
-                'created_at'  => $s->created_at?->toDateString(),
-                'amount_paid' => $s->payments->first()?->amount !== null ? (float) $s->payments->first()->amount : null,
-            ]);
-
-        $grossRevenue = (float) Payment::where('community_id', $community->id)->where('status', Payment::STATUS_PAID)->sum('amount');
-
-        $conversionBase = AffiliateConversion::whereHas('affiliate', fn ($q) => $q->where('community_id', $community->id));
-        $affiliateGross       = (float) (clone $conversionBase)->sum('sale_amount');
-        $affiliatePlatformFee = (float) (clone $conversionBase)->sum('platform_fee');
-        $affiliateCommission  = (float) (clone $conversionBase)->sum('commission_amount');
-        $affiliateCreator     = (float) (clone $conversionBase)->sum('creator_amount');
-        $affiliatePaid        = (float) (clone $conversionBase)->where('status', AffiliateConversion::STATUS_PAID)->sum('commission_amount');
-        $affiliatePending     = (float) (clone $conversionBase)->where('status', AffiliateConversion::STATUS_PENDING)->sum('commission_amount');
-
-        $nonAffiliateGross       = round($grossRevenue - $affiliateGross, 2);
-        $nonAffiliatePlatformFee = round($nonAffiliateGross * $community->platformFeeRate(), 2);
-        $nonAffiliateCreator     = round($nonAffiliateGross - $nonAffiliatePlatformFee, 2);
-        $totalPlatformFee = round($affiliatePlatformFee + $nonAffiliatePlatformFee, 2);
-        $totalCreatorNet  = round($affiliateCreator + $nonAffiliateCreator, 2);
-
-        $courses = $community->courses()->with('modules.lessons')->get();
-        $courseStats = $courses->map(function ($course) {
-            $paidModules  = $course->modules->where('is_free', false);
-            $lessonIds    = $paidModules->flatMap(fn ($m) => $m->lessons->pluck('id'));
-            $totalLessons = $lessonIds->count();
-            $completedMembers = $totalLessons > 0
-                ? LessonCompletion::whereIn('lesson_id', $lessonIds)->selectRaw('user_id, count(*) as cnt')->groupBy('user_id')->havingRaw('cnt >= ?', [$totalLessons])->count()
-                : 0;
-            $totalCompletions = LessonCompletion::whereIn('lesson_id', $lessonIds)->count();
-            $quizIds      = \App\Models\Quiz::whereIn('lesson_id', $lessonIds)->pluck('id');
-            $quizAttempts = QuizAttempt::whereIn('quiz_id', $quizIds)->count();
-            $quizPasses   = QuizAttempt::whereIn('quiz_id', $quizIds)->where('passed', true)->count();
-
-            return [
-                'id' => $course->id, 'title' => $course->title, 'total_lessons' => $totalLessons,
-                'total_completions' => $totalCompletions, 'completed_members' => $completedMembers,
-                'quiz_attempts' => $quizAttempts, 'quiz_passes' => $quizPasses,
-                'quiz_pass_rate' => $quizAttempts > 0 ? round($quizPasses / $quizAttempts * 100) : null,
-            ];
-        });
-
-        [$eligibleNow, $lockedAmount, $nextEligibleDate] = $eligibility->forOwner($community);
-
-        $pendingPayoutRequest = PayoutRequest::where('community_id', $community->id)
-            ->where('type', PayoutRequest::TYPE_OWNER)->where('status', PayoutRequest::STATUS_PENDING)->latest()->first();
-
-        $payoutHistory = \App\Models\OwnerPayout::where('community_id', $community->id)->latest('paid_at')->get()
-            ->map(fn ($p) => ['amount' => $p->amount, 'status' => $p->status, 'paid_at' => $p->paid_at?->toDateString(), 'reference' => $p->xendit_reference]);
-
-        return Inertia::render('Communities/Analytics', [
-            'community' => $community,
-            'stats' => ['monthly_revenue' => $monthlyRevenue, 'active_subscriptions' => $activeCount, 'total_members' => $totalMembers, 'free_members' => $totalMembers - $activeCount],
-            'revenue' => ['gross' => $grossRevenue, 'platform_fee' => $totalPlatformFee, 'platform_fee_rate' => $community->platformFeeRate(), 'affiliate_commission_earned' => $affiliateCommission, 'affiliate_commission_paid' => $affiliatePaid, 'affiliate_commission_pending' => $affiliatePending, 'creator_net' => $totalCreatorNet, 'has_affiliate_data' => $affiliateGross > 0],
-            'payout' => ['eligible_now' => $eligibleNow, 'locked_amount' => $lockedAmount, 'next_eligible_date' => $nextEligibleDate, 'pending_request' => $pendingPayoutRequest ? ['amount' => $pendingPayoutRequest->amount, 'created_at' => $pendingPayoutRequest->created_at->toDateString()] : null],
-            'payout_history' => $payoutHistory, 'subscribers' => $subscribers, 'course_stats' => $courseStats->values(),
-        ]);
+        return Inertia::render('Communities/Analytics', array_merge(['community' => $community], $data));
     }
 
     public function join(Request $request, Community $community, JoinCommunity $action): RedirectResponse
@@ -373,11 +229,11 @@ class CommunityController extends Controller
         return back()->with('success', 'You have joined the community!');
     }
 
-    public function announce(Request $request, Community $community, SendAnnouncement $action): RedirectResponse
+    public function announce(Request $request, Community $community, SendAnnouncement $action, PlanLimitService $planLimit): RedirectResponse
     {
         $this->authorize('update', $community);
 
-        if (! in_array($request->user()->creatorPlan(), ['basic', 'pro'])) {
+        if (! $planLimit->canSendAnnouncement($request->user())) {
             return back()->withErrors([
                 'plan' => 'Email Announcement Blast requires a Basic or Pro plan. Upgrade to send broadcast emails to your members.',
             ]);
@@ -433,14 +289,14 @@ class CommunityController extends Controller
         return back()->withErrors(['sms_test' => 'Test failed: ' . ($result['errors'][0] ?? 'Unknown error.')]);
     }
 
-    public function sendSmsBlast(Request $request, Community $community, SmsService $sms): RedirectResponse
+    public function sendSmsBlast(Request $request, Community $community, SendSmsBlast $action): RedirectResponse
     {
         $this->authorize('update', $community);
 
         $data = $request->validate([
-            'message'     => ['required', 'string', 'max:1600'],
-            'filter_type' => ['required', 'string', 'in:all,new_members,course'],
-            'filter_days' => ['nullable', 'integer', 'in:7,14,30'],
+            'message'          => ['required', 'string', 'max:1600'],
+            'filter_type'      => ['required', 'string', 'in:all,new_members,course'],
+            'filter_days'      => ['nullable', 'integer', 'in:7,14,30'],
             'filter_course_id' => ['nullable', 'integer', 'exists:courses,id'],
         ]);
 
@@ -448,36 +304,11 @@ class CommunityController extends Controller
             return back()->withErrors(['message' => 'SMS provider not configured. Go to Settings → SMS to set it up.']);
         }
 
-        $query = $community->members()
-            ->join('users', 'users.id', '=', 'community_members.user_id')
-            ->whereNotNull('users.phone')
-            ->where('users.phone', '!=', '');
+        $result = $action->execute($community, $data);
 
-        // Apply audience filter
-        if ($data['filter_type'] === 'new_members') {
-            $days = $data['filter_days'] ?? 7;
-            $query->where('community_members.joined_at', '>=', now()->subDays($days));
-        } elseif ($data['filter_type'] === 'course') {
-            $courseId = $data['filter_course_id'];
-            $query->whereExists(function ($q) use ($courseId) {
-                $q->from('course_enrollments')
-                    ->whereColumn('course_enrollments.user_id', 'users.id')
-                    ->where('course_enrollments.course_id', $courseId)
-                    ->where('course_enrollments.status', 'paid');
-            });
-        }
-
-        $numbers = $query->pluck('users.phone')
-            ->map(fn ($p) => preg_replace('/\D/', '', $p))
-            ->filter(fn ($p) => strlen($p) >= 10)
-            ->values()
-            ->toArray();
-
-        if (empty($numbers)) {
+        if ($result['no_recipients']) {
             return back()->withErrors(['message' => 'No recipients found with phone numbers for the selected audience.']);
         }
-
-        $result = $sms->blast($community, $numbers, $data['message']);
 
         $msg = "SMS sent to {$result['sent']} member(s).";
         if ($result['failed'] > 0) {
