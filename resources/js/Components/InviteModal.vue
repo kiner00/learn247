@@ -60,6 +60,22 @@
                                 >Sent invites</button>
                             </div>
 
+                            <!-- Free access duration (shown for single + csv tabs) -->
+                            <div v-if="inviteTab !== 'status'" class="mb-3">
+                                <label class="block text-xs font-medium text-gray-600 mb-1.5">Free access duration</label>
+                                <div class="flex gap-2 flex-wrap">
+                                    <button
+                                        v-for="opt in durationOptions" :key="opt.value"
+                                        type="button"
+                                        @click="freeAccessMonths = opt.value"
+                                        class="px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors"
+                                        :class="freeAccessMonths === opt.value
+                                            ? 'bg-indigo-600 text-white border-indigo-600'
+                                            : 'text-gray-600 border-gray-300 hover:bg-gray-50'"
+                                    >{{ opt.label }}</button>
+                                </div>
+                            </div>
+
                             <!-- Single email -->
                             <form v-if="inviteTab === 'single'" @submit.prevent="sendSingleInvite" class="flex gap-2">
                                 <input
@@ -152,15 +168,24 @@ const props = defineProps({
 
 defineEmits(['close']);
 
-const copied        = ref(false);
-const inviteTab     = ref('single');
-const emailInput    = ref('');
-const csvFile       = ref(null);
-const sending       = ref(false);
-const inviteResult  = ref('');
-const inviteError   = ref(false);
-const statusList    = ref([]);
-const statusLoading = ref(false);
+const copied           = ref(false);
+const inviteTab        = ref('single');
+const emailInput       = ref('');
+const csvFile          = ref(null);
+const sending          = ref(false);
+const inviteResult     = ref('');
+const inviteError      = ref(false);
+const statusList       = ref([]);
+const statusLoading    = ref(false);
+const freeAccessMonths = ref(null); // null = forever
+
+const durationOptions = [
+    { label: 'Forever',   value: null },
+    { label: '1 month',   value: 1 },
+    { label: '3 months',  value: 3 },
+    { label: '6 months',  value: 6 },
+    { label: '12 months', value: 12 },
+];
 
 function copy() {
     navigator.clipboard.writeText(props.inviteUrl).then(() => {
@@ -192,6 +217,7 @@ function sendSingleInvite() {
 
     const formData = new FormData();
     formData.append('email', emailInput.value);
+    if (freeAccessMonths.value) formData.append('free_access_months', freeAccessMonths.value);
 
     axios.post(`/communities/${props.communitySlug}/invite`, formData)
         .then(({ data }) => {
@@ -228,6 +254,7 @@ function sendCsvInvite() {
 
     const formData = new FormData();
     formData.append('csv', csvFile.value);
+    if (freeAccessMonths.value) formData.append('free_access_months', freeAccessMonths.value);
 
     axios.post(`/communities/${props.communitySlug}/invite`, formData)
         .then(({ data }) => {

@@ -28,6 +28,26 @@
                         >
                             Admins <span class="ml-1 opacity-70">{{ adminCount }}</span>
                         </Link>
+                        <template v-if="isOwner">
+                            <Link
+                                :href="`/communities/${community.slug}/members?filter=paid`"
+                                class="px-4 py-1.5 text-sm rounded-full font-medium border transition-colors"
+                                :class="currentFilter === 'paid'
+                                    ? 'bg-gray-900 text-white border-gray-900'
+                                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'"
+                            >
+                                Paid <span class="ml-1 opacity-70">{{ paidCount }}</span>
+                            </Link>
+                            <Link
+                                :href="`/communities/${community.slug}/members?filter=free`"
+                                class="px-4 py-1.5 text-sm rounded-full font-medium border transition-colors"
+                                :class="currentFilter === 'free'
+                                    ? 'bg-green-700 text-white border-green-700'
+                                    : 'bg-white text-green-700 border-green-300 hover:border-green-500'"
+                            >
+                                Free <span class="ml-1 opacity-70">{{ freeCount }}</span>
+                            </Link>
+                        </template>
                         <span class="px-4 py-1.5 text-sm rounded-full font-medium border border-gray-200 bg-white text-gray-400 cursor-default">
                             Online <span class="ml-1">0</span>
                         </span>
@@ -54,13 +74,45 @@
                     </div>
                 </div>
 
+                <!-- Batch extend bar (owner only, free members selected) -->
+                <div v-if="isOwner && selectedIds.length > 0"
+                    class="flex items-center gap-3 bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-3 mb-4">
+                    <span class="text-sm font-medium text-indigo-800">{{ selectedIds.length }} selected</span>
+                    <div class="flex-1" />
+                    <label class="text-xs font-medium text-indigo-700">Extend by</label>
+                    <select v-model="extendMonths"
+                        class="text-xs border border-indigo-300 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option :value="1">1 month</option>
+                        <option :value="3">3 months</option>
+                        <option :value="6">6 months</option>
+                        <option :value="12">12 months</option>
+                        <option :value="24">24 months</option>
+                    </select>
+                    <button @click="extendAccess" :disabled="extendForm.processing"
+                        class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg transition-colors disabled:opacity-50">
+                        {{ extendForm.processing ? 'Extending…' : 'Extend access' }}
+                    </button>
+                    <button @click="selectedIds = []" class="text-xs text-gray-400 hover:text-gray-600">Clear</button>
+                </div>
+
                 <!-- Member list -->
                 <div class="divide-y divide-gray-100 bg-white border border-gray-200 rounded-2xl overflow-hidden">
+                    <!-- Select all (free tab, owner only) -->
+                    <div v-if="isOwner && hasFreeMembers" class="flex items-center gap-3 px-5 py-2.5 bg-gray-50 border-b border-gray-100">
+                        <input type="checkbox" :checked="allSelected" @change="toggleSelectAll"
+                            class="w-4 h-4 accent-indigo-600 rounded cursor-pointer" />
+                        <span class="text-xs text-gray-500">Select all free members</span>
+                    </div>
                     <div
                         v-for="member in members.data"
                         :key="member.id"
                         class="flex items-start gap-4 px-5 py-4 hover:bg-gray-50 transition-colors"
                     >
+                        <!-- Checkbox (free members, owner only) -->
+                        <div v-if="isOwner && member.membership_type === 'free'" class="shrink-0 mt-1">
+                            <input type="checkbox" :value="member.user?.id" v-model="selectedIds"
+                                class="w-4 h-4 accent-indigo-600 rounded cursor-pointer" />
+                        </div>
                         <!-- Avatar + level badge -->
                         <div class="relative shrink-0">
                             <div
@@ -95,6 +147,14 @@
                                 >
                                     {{ member.role }}
                                 </span>
+                                <template v-if="member.membership_type === 'free'">
+                                    <span class="text-gray-200">·</span>
+                                    <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Free</span>
+                                    <span v-if="member.expires_at" class="text-gray-400">
+                                        · expires {{ formatDate(member.expires_at) }}
+                                    </span>
+                                    <span v-else class="text-gray-400">· no expiry</span>
+                                </template>
                             </div>
 
                             <!-- Actions (below info on all screen sizes) -->
@@ -364,6 +424,8 @@ const props = defineProps({
     members:    Object,
     totalCount: Number,
     adminCount: Number,
+    freeCount:  { type: Number, default: 0 },
+    paidCount:  { type: Number, default: 0 },
     affiliate:  Object,
     courses:    { type: Array, default: () => [] },
 });
@@ -433,6 +495,37 @@ const inviteUrl = computed(() =>
 );
 
 const isOwner = computed(() => currentUserId.value === props.community.owner_id);
+
+// ── Extend free access ────────────────────────────────────────────────────────
+const selectedIds   = ref([]);
+const extendMonths  = ref(3);
+const extendForm    = useForm({});
+
+const freeMembers = computed(() =>
+    props.members.data.filter(m => m.membership_type === 'free')
+);
+const hasFreeMembers = computed(() => freeMembers.value.length > 0);
+const allSelected    = computed(() =>
+    hasFreeMembers.value && freeMembers.value.every(m => selectedIds.value.includes(m.user?.id))
+);
+
+function toggleSelectAll() {
+    if (allSelected.value) {
+        selectedIds.value = [];
+    } else {
+        selectedIds.value = freeMembers.value.map(m => m.user?.id).filter(Boolean);
+    }
+}
+
+function extendAccess() {
+    extendForm.transform(() => ({
+        user_ids: selectedIds.value,
+        months:   extendMonths.value,
+    })).patch(`/communities/${props.community.slug}/members/extend-access`, {
+        preserveScroll: true,
+        onSuccess: () => { selectedIds.value = []; },
+    });
+}
 
 const isAdmin = computed(() => {
     const me = props.members.data.find((m) => m.user?.id === currentUserId.value);

@@ -35,13 +35,23 @@ class CommunityInviteController extends Controller
     {
         abort_if(auth()->id() !== $community->owner_id, 403);
 
+        $freeAccessMonths = $request->input('free_access_months')
+            ? (int) $request->input('free_access_months')
+            : null;
+
         if ($request->hasFile('csv')) {
-            $request->validate(['csv' => 'file|mimes:csv,txt|max:2048']);
+            $request->validate([
+                'csv'                => 'file|mimes:csv,txt|max:2048',
+                'free_access_months' => 'nullable|integer|min:1|max:120',
+            ]);
             $emails = $action->parseCSV($request->file('csv')->getPathname());
-            $result = $action->batch($community, $emails);
+            $result = $action->batch($community, $emails, $freeAccessMonths);
         } else {
-            $request->validate(['email' => 'required|email']);
-            $result = $action->single($community, $request->email);
+            $request->validate([
+                'email'              => 'required|email',
+                'free_access_months' => 'nullable|integer|min:1|max:120',
+            ]);
+            $result = $action->single($community, $request->email, $freeAccessMonths);
         }
 
         if ($request->expectsJson()) {

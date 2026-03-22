@@ -3,6 +3,7 @@
 namespace App\Services\Classroom;
 
 use App\Models\Community;
+use App\Models\CommunityMember;
 use App\Models\Course;
 use App\Models\CourseEnrollment;
 use App\Models\Subscription;
@@ -13,7 +14,18 @@ class CourseAccessService
     public function hasAccess(?User $user, Community $community, Course $course): bool
     {
         if ($course->access_type === Course::ACCESS_FREE) {
-            return true;
+            if (! $user) {
+                return false;
+            }
+
+            if ($user->id === $community->owner_id || $user->isSuperAdmin()) {
+                return true;
+            }
+
+            return CommunityMember::where('community_id', $community->id)
+                ->where('user_id', $user->id)
+                ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+                ->exists();
         }
 
         if (! $user) {

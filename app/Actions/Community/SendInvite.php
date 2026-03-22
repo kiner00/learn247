@@ -15,7 +15,7 @@ class SendInvite
     /**
      * @return array{type: string, message: string}
      */
-    public function single(Community $community, string $email): array
+    public function single(Community $community, string $email, ?int $freeAccessMonths = null): array
     {
         $email = strtolower(trim($email));
 
@@ -30,9 +30,10 @@ class SendInvite
         $invite = CommunityInvite::updateOrCreate(
             ['community_id' => $community->id, 'email' => $email],
             [
-                'token'       => Str::random(64),
-                'accepted_at' => null,
-                'expires_at'  => now()->addDays(7),
+                'token'               => Str::random(64),
+                'accepted_at'         => null,
+                'expires_at'          => now()->addDays(7),
+                'free_access_months'  => $freeAccessMonths,
             ]
         );
 
@@ -44,7 +45,7 @@ class SendInvite
     /**
      * @return array{type: string, message: string}
      */
-    public function batch(Community $community, array $emails): array
+    public function batch(Community $community, array $emails, ?int $freeAccessMonths = null): array
     {
         $emails = array_unique(array_map('strtolower', $emails));
 
@@ -52,7 +53,7 @@ class SendInvite
             return ['type' => 'error', 'message' => 'No valid email addresses found in the CSV.'];
         }
 
-        SendBatchInvites::dispatch($community, $emails);
+        SendBatchInvites::dispatch($community, $emails, $freeAccessMonths);
 
         $count = count($emails);
 

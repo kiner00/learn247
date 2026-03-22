@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Classroom\CourseAccessService;
 use App\Services\Community\PlanLimitService;
 use App\Models\Community;
+use App\Models\CommunityMember;
 use App\Models\Course;
 use App\Models\CourseLesson;
 use App\Models\CourseModule;
@@ -28,10 +29,11 @@ class ClassroomController extends Controller
         $userId        = auth()->id();
         $isSuperAdmin  = auth()->user()?->isSuperAdmin() ?? false;
         $community->loadCount('members');
-        $courses   = $query->execute($community, $userId, $isSuperAdmin);
-        $affiliate = $userId ? $community->affiliates()->where('user_id', $userId)->first() : null;
+        $courses    = $query->execute($community, $userId, $isSuperAdmin);
+        $affiliate  = $userId ? $community->affiliates()->where('user_id', $userId)->first() : null;
+        $membership = $userId ? CommunityMember::where('community_id', $community->id)->where('user_id', $userId)->first(['id', 'membership_type']) : null;
 
-        return Inertia::render('Communities/Classroom/Index', compact('community', 'courses', 'affiliate'));
+        return Inertia::render('Communities/Classroom/Index', compact('community', 'courses', 'affiliate', 'membership'));
     }
 
     public function storeCourse(Request $request, Community $community, ManageCourse $action, PlanLimitService $planLimit): RedirectResponse

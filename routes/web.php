@@ -30,6 +30,7 @@ use App\Http\Controllers\Web\GuestCheckoutController;
 use App\Http\Controllers\Web\RefController;
 use App\Http\Controllers\Web\ForgotPasswordController;
 use App\Http\Controllers\Web\SetPasswordController;
+use App\Http\Controllers\Web\FreeSubscribeController;
 use App\Http\Controllers\Web\SubscriptionController;
 use App\Http\Middleware\EnsureActiveMembership;
 use App\Http\Controllers\XenditWebhookController;
@@ -167,6 +168,9 @@ Route::middleware('auth')->group(function () {
     // Paid community checkout → redirects to Xendit invoice URL
     Route::post('/communities/{community}/checkout', [SubscriptionController::class, 'checkout'])->name('communities.checkout');
 
+    // Free community subscription (for access to free courses)
+    Route::post('/communities/{community}/free-subscribe', [FreeSubscribeController::class, 'store'])->name('communities.free-subscribe');
+
     // Course one-time purchase (no membership required)
     Route::post('/communities/{community}/classroom/courses/{course}/enroll', [CourseEnrollmentController::class, 'checkout'])->name('communities.classroom.courses.enroll');
 
@@ -196,6 +200,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/communities/{community}/members/{user}', [CommunityMemberController::class, 'destroy'])->name('communities.members.destroy');
     Route::patch('/communities/{community}/members/{user}/role', [CommunityMemberController::class, 'changeRole'])->name('communities.members.role');
     Route::patch('/communities/{community}/members/{user}/block', [CommunityMemberController::class, 'toggleBlock'])->name('communities.members.block');
+    Route::patch('/communities/{community}/members/extend-access', [CommunityMemberController::class, 'extendAccess'])->name('communities.members.extend-access');
 
     // Gated: active membership required
     Route::middleware(EnsureActiveMembership::class)->group(function () {

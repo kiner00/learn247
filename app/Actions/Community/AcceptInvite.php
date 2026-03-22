@@ -40,9 +40,18 @@ class AcceptInvite
             ];
         }
 
+        $memberExpiry = $invite->free_access_months
+            ? now()->addMonths($invite->free_access_months)
+            : null;
+
         CommunityMember::firstOrCreate(
             ['community_id' => $community->id, 'user_id' => $user->id],
-            ['role' => CommunityMember::ROLE_MEMBER, 'joined_at' => now()]
+            [
+                'role'            => CommunityMember::ROLE_MEMBER,
+                'membership_type' => CommunityMember::MEMBERSHIP_FREE,
+                'expires_at'      => $memberExpiry,
+                'joined_at'       => now(),
+            ]
         );
 
         if (! $community->isFree()) {

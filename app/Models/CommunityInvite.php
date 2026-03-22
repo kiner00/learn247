@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CommunityInvite extends Model
 {
-    protected $fillable = ['community_id', 'email', 'token', 'accepted_at', 'expires_at'];
+    protected $fillable = ['community_id', 'email', 'token', 'accepted_at', 'expires_at', 'free_access_months'];
 
     protected function casts(): array
     {

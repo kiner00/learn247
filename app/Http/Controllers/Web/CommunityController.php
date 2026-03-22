@@ -101,11 +101,17 @@ class CommunityController extends Controller
 
         if ($request->filter === 'admin') {
             $query->where('role', 'admin');
+        } elseif ($request->filter === 'free') {
+            $query->where('membership_type', CommunityMember::MEMBERSHIP_FREE);
+        } elseif ($request->filter === 'paid') {
+            $query->where('membership_type', CommunityMember::MEMBERSHIP_PAID);
         }
 
         $members    = $query->orderByRaw("CASE role WHEN 'admin' THEN 0 WHEN 'moderator' THEN 1 ELSE 2 END")->paginate(20)->withQueryString();
         $totalCount = $community->members()->count();
         $adminCount = $community->members()->where('role', 'admin')->count();
+        $freeCount  = $community->members()->where('membership_type', CommunityMember::MEMBERSHIP_FREE)->count();
+        $paidCount  = $community->members()->where('membership_type', CommunityMember::MEMBERSHIP_PAID)->count();
         $affiliate  = auth()->id() ? $community->affiliates()->where('user_id', auth()->id())->first() : null;
 
         $courses = $community->courses()
@@ -113,7 +119,7 @@ class CommunityController extends Controller
             ->orderBy('position')
             ->get();
 
-        return Inertia::render('Communities/Members', compact('community', 'members', 'totalCount', 'adminCount', 'affiliate', 'courses'));
+        return Inertia::render('Communities/Members', compact('community', 'members', 'totalCount', 'adminCount', 'freeCount', 'paidCount', 'affiliate', 'courses'));
     }
 
     public function settings(Community $community, PlanLimitService $planLimit): Response
