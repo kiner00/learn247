@@ -3,6 +3,7 @@
 namespace App\Queries\Classroom;
 
 use App\Models\Community;
+use App\Models\CommunityMember;
 use App\Models\Course;
 use App\Models\CourseEnrollment;
 use App\Models\LessonCompletion;
@@ -15,7 +16,14 @@ class GetCourseList
     {
         $isOwner = $isSuperAdmin || ($userId && $userId === $community->owner_id);
 
-        $isMember = $userId && Subscription::where('community_id', $community->id)
+        // Any active community member (free or paid) counts as a member for free-course access
+        $isMember = $userId && CommunityMember::where('community_id', $community->id)
+            ->where('user_id', $userId)
+            ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+            ->exists();
+
+        // Paid membership = active subscription (used for inclusive courses)
+        $isPaidMember = $userId && Subscription::where('community_id', $community->id)
             ->where('user_id', $userId)
             ->where('status', Subscription::STATUS_ACTIVE)
             ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
@@ -32,8 +40,8 @@ class GetCourseList
         return $community->courses()->with('modules.lessons')
             ->orderByRaw("CASE access_type WHEN 'free' THEN 0 WHEN 'inclusive' THEN 1 WHEN 'paid_once' THEN 2 WHEN 'paid_monthly' THEN 3 ELSE 4 END")
             ->orderBy('position')
-            ->get()->map(function ($course) use ($userId, $isOwner, $isMember, $paidEnrollmentIds) {
-            $hasAccess = $this->resolveAccess($course, $isOwner, $isMember, $paidEnrollmentIds);
+            ->get()->map(function ($course) use ($userId, $isOwner, $isMember, $isPaidMember, $paidEnrollmentIds) {
+            $hasAccess = $this->resolveAccess($course, $isOwner, $isMember, $isPaidMember, $paidEnrollmentIds);
 
             $lessonIds = $course->modules->flatMap(fn ($m) => $m->lessons->pluck('id'));
             $total     = $lessonIds->count();
@@ -58,18 +66,18 @@ class GetCourseList
         });
     }
 
-    private function resolveAccess(Course $course, bool $isOwner, bool $isMember, $paidEnrollmentIds): bool
+    private function resolveAccess(Course $course, bool $isOwner, bool $isMember, bool $isPaidMember, $paidEnrollmentIds): bool
     {
-        if ($course->access_type === Course::ACCESS_FREE) {
-            return true;
-        }
-
         if ($isOwner) {
             return true;
         }
 
+        if ($course->access_type === Course::ACCESS_FREE) {
+            return $isMember; // requires free or paid membership
+        }
+
         if ($course->access_type === Course::ACCESS_INCLUSIVE) {
-            return $isMember;
+            return $isPaidMember;
         }
 
         if (in_array($course->access_type, [Course::ACCESS_PAID_ONCE, Course::ACCESS_PAID_MONTHLY])) {

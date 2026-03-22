@@ -15,15 +15,15 @@ class ManageEvent
         $path = $coverImage ? $coverImage->store("events/{$community->id}", 'public') : null;
 
         return $community->events()->create([
-            'created_by'      => $creator->id,
-            'title'           => $data['title'],
-            'description'     => $data['description'] ?? null,
-            'start_at'        => $data['start_at'],
-            'end_at'          => $data['end_at'] ?? null,
-            'timezone'        => $data['timezone'],
-            'url'             => $data['url'] ?? null,
-            'cover_image'     => $path,
-            'is_members_only' => $data['is_members_only'] ?? false,
+            'created_by'  => $creator->id,
+            'title'       => $data['title'],
+            'description' => $data['description'] ?? null,
+            'start_at'    => $data['start_at'],
+            'end_at'      => $data['end_at'] ?? null,
+            'timezone'    => $data['timezone'],
+            'url'         => $data['url'] ?? null,
+            'cover_image' => $path,
+            'visibility'  => $data['visibility'] ?? 'public',
         ]);
     }
 

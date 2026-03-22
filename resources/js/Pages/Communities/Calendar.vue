@@ -71,11 +71,13 @@
                             :key="ev.id"
                             @click="openEvent(ev)"
                             class="w-full text-left px-2 py-1 rounded-md text-xs font-medium truncate transition-colors"
-                            :class="ev.is_members_only
-                                ? 'bg-amber-50 text-amber-700 hover:bg-amber-100'
-                                : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'"
+                            :class="{
+                                'bg-indigo-50 text-indigo-700 hover:bg-indigo-100': ev.visibility === 'public',
+                                'bg-green-50 text-green-700 hover:bg-green-100':   ev.visibility === 'free',
+                                'bg-amber-50 text-amber-700 hover:bg-amber-100':   ev.visibility === 'paid',
+                            }"
                         >
-                            <span class="mr-0.5">{{ ev.is_members_only ? '🔒' : '' }}</span>
+                            <span class="mr-0.5">{{ ev.visibility === 'paid' ? '🔒' : ev.visibility === 'free' ? '🟢' : '' }}</span>
                             {{ formatTime(ev.start_at) }} · {{ ev.title }}
                         </button>
                     </div>
@@ -104,7 +106,9 @@
                     <!-- Content -->
                     <div class="p-6">
                         <h3 class="text-xl font-bold text-gray-900 mb-4">
-                            {{ selectedEvent.is_members_only ? '🔒 ' : '' }}{{ selectedEvent.title }}
+                            <span v-if="selectedEvent.visibility === 'paid'">🔒 </span>
+                            <span v-else-if="selectedEvent.visibility === 'free'">🟢 </span>
+                            {{ selectedEvent.title }}
                         </h3>
 
                         <!-- Date/time -->
@@ -233,11 +237,20 @@
                                 class="w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700" />
                         </div>
 
-                        <!-- Members only toggle -->
-                        <label class="flex items-center gap-3 cursor-pointer">
-                            <input type="checkbox" v-model="form.is_members_only" class="w-4 h-4 rounded text-indigo-600" />
-                            <span class="text-sm text-gray-700">Members only 🔒</span>
-                        </label>
+                        <!-- Visibility -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Visibility</label>
+                            <div class="flex gap-2">
+                                <label v-for="opt in visibilityOptions" :key="opt.value"
+                                    :class="['flex-1 cursor-pointer rounded-xl border-2 p-2.5 text-center transition-all',
+                                        form.visibility === opt.value ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300']">
+                                    <input type="radio" :value="opt.value" v-model="form.visibility" class="sr-only" />
+                                    <div class="text-base mb-0.5">{{ opt.icon }}</div>
+                                    <div class="text-xs font-semibold text-gray-800">{{ opt.label }}</div>
+                                    <div class="text-[10px] text-gray-400 leading-tight mt-0.5">{{ opt.hint }}</div>
+                                </label>
+                            </div>
+                        </div>
 
                         <p v-if="formError" class="text-sm text-red-500">{{ formError }}</p>
 
@@ -428,14 +441,20 @@ function onStartChange() {
     }
 }
 
+const visibilityOptions = [
+    { value: 'public', label: 'Public',  icon: '🌐', hint: 'Everyone can see' },
+    { value: 'free',   label: 'Free',    icon: '🟢', hint: 'Free + paid members' },
+    { value: 'paid',   label: 'Paid',    icon: '🔒', hint: 'Paid members only' },
+]
+
 const defaultForm = () => ({
-    title:          '',
-    description:    '',
-    start_at:       '',
-    end_at:         '',
-    timezone:       props.userTimezone || 'Asia/Manila',
-    url:            '',
-    is_members_only: false,
+    title:       '',
+    description: '',
+    start_at:    '',
+    end_at:      '',
+    timezone:    props.userTimezone || 'Asia/Manila',
+    url:         '',
+    visibility:  'public',
 })
 
 const form = ref(defaultForm())
@@ -452,13 +471,13 @@ function openEditModal(ev) {
     editingEvent.value = ev
     const toLocal = (iso) => iso ? iso.slice(0, 16) : ''
     form.value = {
-        title:          ev.title,
-        description:    ev.description || '',
-        start_at:       toLocal(ev.start_at),
-        end_at:         toLocal(ev.end_at),
-        timezone:       ev.timezone,
-        url:            ev.url || '',
-        is_members_only: ev.is_members_only,
+        title:       ev.title,
+        description: ev.description || '',
+        start_at:    toLocal(ev.start_at),
+        end_at:      toLocal(ev.end_at),
+        timezone:    ev.timezone,
+        url:         ev.url || '',
+        visibility:  ev.visibility ?? 'public',
     }
     coverFile.value = null
     formError.value = ''

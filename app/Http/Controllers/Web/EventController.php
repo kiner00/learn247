@@ -44,7 +44,7 @@ class EventController extends Controller
             'timezone'        => 'required|string|timezone',
             'url'             => 'nullable|url|max:500',
             'cover_image'     => 'nullable|image|max:10240',
-            'is_members_only' => 'boolean',
+            'visibility'      => 'required|in:public,free,paid',
         ]);
 
         $action->store($community, $request->user(), $data, $request->file('cover_image'));
@@ -65,7 +65,7 @@ class EventController extends Controller
             'timezone'        => 'required|string|timezone',
             'url'             => 'nullable|url|max:500',
             'cover_image'     => 'nullable|image|max:10240',
-            'is_members_only' => 'boolean',
+            'visibility'      => 'required|in:public,free,paid',
         ]);
 
         $action->update($event, $data, $request->file('cover_image'));
