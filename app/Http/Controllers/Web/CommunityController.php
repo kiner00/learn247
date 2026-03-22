@@ -90,8 +90,10 @@ class CommunityController extends Controller
             ->take(5)
             ->get(['id', 'post_id', 'user_id', 'content', 'created_at']);
 
+        $hasFreeCourses = $community->courses()->where('access_type', 'free')->exists();
+
         return Inertia::render('Communities/Show', compact(
-            'community', 'membership', 'affiliate', 'adminCount', 'topMembers', 'checklist', 'recentComments'
+            'community', 'membership', 'affiliate', 'adminCount', 'topMembers', 'checklist', 'recentComments', 'hasFreeCourses'
         ));
     }
 

@@ -27,33 +27,6 @@
             </template>
         </div>
 
-        <!-- Free subscribe banner (shown to logged-in non-members when free courses exist) -->
-        <div v-if="authUser && !isOwner && !isMember && hasFreeCoursesLocked"
-            class="flex items-center justify-between gap-4 bg-green-50 border border-green-200 rounded-2xl px-5 py-4 mb-6">
-            <div>
-                <p class="text-sm font-bold text-green-800">Free courses available</p>
-                <p class="text-xs text-green-600 mt-0.5">Subscribe for free to unlock them instantly — no payment needed.</p>
-            </div>
-            <form @submit.prevent="freeSubscribeForm.post(`/communities/${community.slug}/free-subscribe`)">
-                <button type="submit" :disabled="freeSubscribeForm.processing"
-                    class="shrink-0 px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-xl hover:bg-green-700 disabled:opacity-50 transition-colors">
-                    {{ freeSubscribeForm.processing ? 'Subscribing...' : 'Subscribe for Free' }}
-                </button>
-            </form>
-        </div>
-
-        <!-- Guest prompt (not logged in) when free courses exist -->
-        <div v-if="!authUser && courses.some(c => c.access_type === 'free')"
-            class="flex items-center justify-between gap-4 bg-green-50 border border-green-200 rounded-2xl px-5 py-4 mb-6">
-            <div>
-                <p class="text-sm font-bold text-green-800">Free courses available</p>
-                <p class="text-xs text-green-600 mt-0.5">Create a free account to access them.</p>
-            </div>
-            <Link href="/register" class="shrink-0 px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-xl hover:bg-green-700 transition-colors">
-                Sign up for free
-            </Link>
-        </div>
-
         <!-- New course form -->
         <div v-if="showForm" class="bg-white border border-indigo-200 rounded-2xl p-5 shadow-sm mb-6">
             <h2 class="text-sm font-bold text-gray-900 mb-3">New Course</h2>
@@ -467,16 +440,10 @@ const props = defineProps({
     membership: Object,
 });
 
-const page     = usePage();
-const authUser = computed(() => page.props.auth?.user);
-const isOwner  = props.community.owner_id === authUser.value?.id;
+const page    = usePage();
+const isOwner = props.community.owner_id === page.props.auth?.user?.id;
 const isMember = computed(() => !!props.membership);
 
-const hasFreeCoursesLocked = computed(() =>
-    props.courses.some(c => c.access_type === 'free' && !c.has_access)
-);
-
-const freeSubscribeForm = useForm({});
 
 // null = unlimited
 const courseLimit = computed(() => {

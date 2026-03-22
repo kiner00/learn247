@@ -269,10 +269,16 @@
                                 class="w-full py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50">
                                 {{ joinForm.processing ? 'Joining...' : 'Join for free' }}
                             </button>
-                            <button v-else @click="checkout" :disabled="checkoutForm.processing"
-                                class="w-full py-2.5 bg-amber-500 text-white text-sm font-bold rounded-xl hover:bg-amber-600 transition-colors disabled:opacity-50">
-                                {{ checkoutForm.processing ? 'Redirecting...' : `Join · ₱${Number(community.price).toLocaleString()}/mo` }}
-                            </button>
+                            <template v-else>
+                                <button @click="checkout" :disabled="checkoutForm.processing"
+                                    class="w-full py-2.5 bg-amber-500 text-white text-sm font-bold rounded-xl hover:bg-amber-600 transition-colors disabled:opacity-50">
+                                    {{ checkoutForm.processing ? 'Redirecting...' : `Join · ₱${Number(community.price).toLocaleString()}/mo` }}
+                                </button>
+                                <button v-if="hasFreeCourses" @click="freeSubscribe" :disabled="freeSubscribeForm.processing"
+                                    class="w-full py-2.5 bg-green-600 text-white text-sm font-bold rounded-xl hover:bg-green-700 transition-colors disabled:opacity-50">
+                                    {{ freeSubscribeForm.processing ? 'Subscribing...' : 'Subscribe for Free' }}
+                                </button>
+                            </template>
                         </div>
 
                         <div v-else class="space-y-2">
@@ -620,13 +626,14 @@ import InviteModal from '@/Components/InviteModal.vue';
 import UserAvatar from '@/Components/UserAvatar.vue';
 
 const props = defineProps({
-    community:  Object,
-    membership: Object,
-    affiliate:  Object,
-    adminCount: { type: Number, default: 0 },
+    community:      Object,
+    membership:     Object,
+    affiliate:      Object,
+    adminCount:     { type: Number, default: 0 },
     topMembers:     { type: Array, default: () => [] },
     checklist:      { type: Array, default: null },
     recentComments: { type: Array, default: () => [] },
+    hasFreeCourses: { type: Boolean, default: false },
 });
 
 const page = usePage();
@@ -682,6 +689,12 @@ const checkoutForm = useForm({});
 function checkout() {
     if (!requireAuth()) return;
     checkoutForm.post(`/communities/${props.community.slug}/checkout`);
+}
+
+const freeSubscribeForm = useForm({});
+function freeSubscribe() {
+    if (!requireAuth()) return;
+    freeSubscribeForm.post(`/communities/${props.community.slug}/free-subscribe`);
 }
 
 // ─── Posts ────────────────────────────────────────────────────────────────────
