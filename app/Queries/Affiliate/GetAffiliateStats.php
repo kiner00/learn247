@@ -42,7 +42,7 @@ class GetAffiliateStats
 
         return AffiliateConversion::whereIn('affiliate_id', $affiliateIds)
             ->when($from, fn ($q) => $q->where('created_at', '>=', $from))
-            ->with(['affiliate.community'])
+            ->with(['affiliate.community', 'referredUser:id,name,email'])
             ->latest()
             ->limit($limit)
             ->get()
@@ -50,6 +50,8 @@ class GetAffiliateStats
                 'id'                => $c->id,
                 'date'              => $c->created_at->toDateString(),
                 'community'         => $c->affiliate->community->name,
+                'referred_name'     => $c->referredUser?->name,
+                'referred_email'    => $c->referredUser?->email,
                 'sale_amount'       => (float) $c->sale_amount,
                 'commission_amount' => (float) $c->commission_amount,
                 'status'            => $c->status,

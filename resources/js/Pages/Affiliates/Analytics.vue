@@ -130,6 +130,7 @@
                             <tr class="text-left border-b border-gray-100">
                                 <th class="pb-2 text-xs font-semibold text-gray-400">Date</th>
                                 <th class="pb-2 text-xs font-semibold text-gray-400">Community</th>
+                                <th class="pb-2 text-xs font-semibold text-gray-400">Referred</th>
                                 <th class="pb-2 text-xs font-semibold text-gray-400 text-right">Sale</th>
                                 <th class="pb-2 text-xs font-semibold text-gray-400 text-right">Commission</th>
                                 <th class="pb-2 text-xs font-semibold text-gray-400">Status</th>
@@ -140,6 +141,11 @@
                             <tr v-for="c in filteredConversions" :key="c.id" class="hover:bg-gray-50">
                                 <td class="py-2.5 text-gray-600 whitespace-nowrap">{{ c.date }}</td>
                                 <td class="py-2.5 text-gray-800 font-medium max-w-[150px] truncate">{{ c.community }}</td>
+                                <td class="py-2.5 max-w-37.5">
+                                    <div v-if="c.referred_name" class="font-medium text-gray-800 truncate">{{ c.referred_name }}</div>
+                                    <div v-if="c.referred_email" class="text-xs text-gray-400 truncate">{{ c.referred_email }}</div>
+                                    <span v-if="!c.referred_name && !c.referred_email" class="text-gray-400">—</span>
+                                </td>
                                 <td class="py-2.5 text-gray-600 text-right whitespace-nowrap">₱{{ fmt(c.sale_amount) }}</td>
                                 <td class="py-2.5 text-indigo-700 font-semibold text-right whitespace-nowrap">₱{{ fmt(c.commission_amount) }}</td>
                                 <td class="py-2.5">
