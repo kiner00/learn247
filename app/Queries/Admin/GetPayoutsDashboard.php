@@ -125,9 +125,10 @@ class GetPayoutsDashboard
                 'amount'           => (float) $r->amount,
                 'eligible_amount'  => (float) $r->eligible_amount,
                 'status'           => $r->status,
-                'rejection_reason' => $r->rejection_reason,
-                'requested_at'     => $r->created_at->toDateString(),
-                'processed_at'     => $r->processed_at?->toDateString(),
+                'rejection_reason'  => $r->rejection_reason,
+                'xendit_reference'  => $r->xendit_reference,
+                'requested_at'      => $r->created_at->toDateString(),
+                'processed_at'      => $r->processed_at?->format('M d, Y H:i'),
             ]);
     }
 }
