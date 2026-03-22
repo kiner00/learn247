@@ -22,6 +22,7 @@ use App\Models\Community;
 use App\Models\CommunityLevelPerk;
 use App\Models\CommunityMember;
 use App\Models\Comment;
+use App\Models\Subscription;
 use App\Queries\Community\GetFeaturedCommunities;
 use App\Queries\Community\GetLeaderboard;
 use App\Queries\Community\ListCommunities;
@@ -74,6 +75,20 @@ class CommunityController extends Controller
         $feed->forShow($community, $userId);
 
         $membership = $userId ? $community->members()->where('user_id', $userId)->first() : null;
+
+        // For paid communities, free-only subscribers cannot post/comment/chat.
+        // Null out membership so the UI correctly hides those interactions.
+        if ($membership && !$community->isFree() && $membership->membership_type === CommunityMember::MEMBERSHIP_FREE) {
+            $hasActiveSub = Subscription::where('community_id', $community->id)
+                ->where('user_id', $userId)
+                ->where('status', Subscription::STATUS_ACTIVE)
+                ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+                ->exists();
+
+            if (!$hasActiveSub) {
+                $membership = null;
+            }
+        }
         $affiliate  = $userId ? $ensureAffiliate->execute($community, $userId) : null;
 
         $adminCount = $community->members()->where('role', CommunityMember::ROLE_ADMIN)->count();
