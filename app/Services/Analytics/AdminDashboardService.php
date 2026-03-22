@@ -103,6 +103,25 @@ class AdminDashboardService
                 'community_slug' => $u->communityMemberships->first()?->community?->slug,
             ]);
 
+        $recentPayments = Payment::with(['user:id,name,email', 'community:id,name,slug'])
+            ->latest()
+            ->take(20)
+            ->get()
+            ->map(fn ($p) => [
+                'id'                 => $p->id,
+                'user_name'          => $p->user?->name,
+                'user_email'         => $p->user?->email,
+                'community_name'     => $p->community?->name,
+                'community_slug'     => $p->community?->slug,
+                'amount'             => (float) $p->amount,
+                'currency'           => $p->currency,
+                'status'             => $p->status,
+                'xendit_event_id'    => $p->xendit_event_id,
+                'provider_reference' => $p->provider_reference,
+                'paid_at'            => $p->paid_at?->format('M d, Y H:i'),
+                'created_at'         => $p->created_at?->format('M d, Y H:i'),
+            ]);
+
         return [
             'stats' => [
                 'total_users'          => $totalUsers,
@@ -123,6 +142,7 @@ class AdminDashboardService
             'recentCommunities' => $recentCommunities,
             'recentUsers'       => $recentUsers,
             'pendingOnboarding' => $pendingOnboarding,
+            'recentPayments'    => $recentPayments,
         ];
     }
 }

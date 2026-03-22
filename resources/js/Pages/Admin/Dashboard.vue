@@ -258,6 +258,65 @@
             </div>
         </div>
 
+        <!-- Recent Payments -->
+        <div class="mt-6 bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+            <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                <div>
+                    <h2 class="text-sm font-bold text-gray-900">Recent Payments</h2>
+                    <p class="text-xs text-gray-400 mt-0.5">Last 20 webhook-processed payments — use Xendit ID to verify</p>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-gray-100 bg-gray-50">
+                            <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">User</th>
+                            <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Community</th>
+                            <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Amount</th>
+                            <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                            <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Xendit ID</th>
+                            <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Paid At</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        <tr v-for="p in recentPayments" :key="p.id" class="hover:bg-gray-50 transition-colors">
+                            <td class="px-5 py-3">
+                                <p class="text-sm font-medium text-gray-900">{{ p.user_name ?? '—' }}</p>
+                                <p class="text-xs text-gray-400">{{ p.user_email ?? '—' }}</p>
+                            </td>
+                            <td class="px-5 py-3">
+                                <Link v-if="p.community_slug" :href="`/communities/${p.community_slug}`" class="text-xs text-indigo-600 hover:underline">
+                                    {{ p.community_name }}
+                                </Link>
+                                <span v-else class="text-xs text-gray-400">—</span>
+                            </td>
+                            <td class="px-5 py-3 text-sm font-semibold text-gray-800">
+                                ₱{{ p.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
+                            </td>
+                            <td class="px-5 py-3">
+                                <span class="text-xs font-semibold px-2 py-0.5 rounded-full"
+                                    :class="{
+                                        'bg-green-100 text-green-700': p.status === 'paid',
+                                        'bg-red-100 text-red-700': p.status === 'failed',
+                                        'bg-gray-100 text-gray-600': p.status === 'expired',
+                                        'bg-yellow-100 text-yellow-700': p.status === 'pending',
+                                    }">
+                                    {{ p.status.toUpperCase() }}
+                                </span>
+                            </td>
+                            <td class="px-5 py-3">
+                                <span class="text-xs font-mono text-gray-500 break-all">{{ p.xendit_event_id ?? '—' }}</span>
+                            </td>
+                            <td class="px-5 py-3 text-xs text-gray-400 whitespace-nowrap">{{ p.paid_at ?? p.created_at }}</td>
+                        </tr>
+                        <tr v-if="!recentPayments?.length">
+                            <td colspan="6" class="px-5 py-6 text-center text-xs text-gray-400">No payments yet</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- Pending Password Setup -->
         <div v-if="pendingOnboarding?.data?.length" class="mt-6 bg-white border border-orange-200 rounded-2xl overflow-hidden shadow-sm">
             <div class="px-5 py-4 border-b border-orange-100 flex items-center gap-3">
@@ -337,6 +396,7 @@ const props = defineProps({
     xenditBalance:       Number,
     pendingOnboarding:   { type: Object, default: () => ({ data: [], total: 0, last_page: 1, links: [] }) },
     creatorPlanPricing:  { type: Object, default: () => ({ basic_price: 499, pro_price: 1999 }) },
+    recentPayments:      { type: Array, default: () => [] },
 });
 
 function toggleFeatured(communityId) {
