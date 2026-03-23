@@ -45,6 +45,10 @@
                         <p class="text-sm font-bold text-gray-900">Monthly subscription · ₱{{ Number(course.price).toLocaleString() }}/mo</p>
                         <p class="text-xs text-gray-400 mt-0.5">Subscribe monthly to access this course.</p>
                     </template>
+                    <template v-else-if="course.access_type === 'member_once'">
+                        <p class="text-sm font-bold text-gray-900">Past members only</p>
+                        <p class="text-xs text-gray-400 mt-0.5">Available to anyone who has ever been a paying member of this community.</p>
+                    </template>
                     <template v-else>
                         <p class="text-sm font-bold text-gray-900">Members only</p>
                         <p class="text-xs text-gray-400 mt-0.5">Subscribe to the community to unlock all included courses.</p>
@@ -342,6 +346,7 @@
                         <p class="text-xs text-gray-400 mt-1">
                             {{ course.access_type === 'paid_once' ? 'Purchase this course to unlock'
                              : course.access_type === 'paid_monthly' ? 'Subscribe to unlock this course'
+                             : course.access_type === 'member_once' ? 'Available to past & current paying members'
                              : 'Join the community to unlock' }}
                         </p>
                     </div>

@@ -37,11 +37,17 @@ class GetCourseList
                 ->flip()
             : collect();
 
+        // member_once: user who has ever paid (any non-pending subscription)
+        $wasEverMember = $userId && Subscription::where('community_id', $community->id)
+            ->where('user_id', $userId)
+            ->whereIn('status', [Subscription::STATUS_ACTIVE, Subscription::STATUS_EXPIRED, Subscription::STATUS_CANCELLED])
+            ->exists();
+
         return $community->courses()->with('modules.lessons')
-            ->orderByRaw("CASE access_type WHEN 'free' THEN 0 WHEN 'inclusive' THEN 1 WHEN 'paid_once' THEN 2 WHEN 'paid_monthly' THEN 3 ELSE 4 END")
+            ->orderByRaw("CASE access_type WHEN 'free' THEN 0 WHEN 'inclusive' THEN 1 WHEN 'member_once' THEN 2 WHEN 'paid_once' THEN 3 WHEN 'paid_monthly' THEN 4 ELSE 5 END")
             ->orderBy('position')
-            ->get()->map(function ($course) use ($userId, $isOwner, $isMember, $isPaidMember, $paidEnrollmentIds) {
-            $hasAccess = $this->resolveAccess($course, $isOwner, $isMember, $isPaidMember, $paidEnrollmentIds);
+            ->get()->map(function ($course) use ($userId, $isOwner, $isMember, $isPaidMember, $paidEnrollmentIds, $wasEverMember) {
+            $hasAccess = $this->resolveAccess($course, $isOwner, $isMember, $isPaidMember, $paidEnrollmentIds, $wasEverMember);
 
             $lessonIds = $course->modules->flatMap(fn ($m) => $m->lessons->pluck('id'));
             $total     = $lessonIds->count();
@@ -66,7 +72,7 @@ class GetCourseList
         });
     }
 
-    private function resolveAccess(Course $course, bool $isOwner, bool $isMember, bool $isPaidMember, $paidEnrollmentIds): bool
+    private function resolveAccess(Course $course, bool $isOwner, bool $isMember, bool $isPaidMember, $paidEnrollmentIds, bool $wasEverMember = false): bool
     {
         if ($isOwner) {
             return true;
@@ -82,6 +88,10 @@ class GetCourseList
 
         if (in_array($course->access_type, [Course::ACCESS_PAID_ONCE, Course::ACCESS_PAID_MONTHLY])) {
             return $paidEnrollmentIds->has($course->id);
+        }
+
+        if ($course->access_type === Course::ACCESS_MEMBER_ONCE) {
+            return $wasEverMember;
         }
 
         return false;

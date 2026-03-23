@@ -65,6 +65,14 @@
                             <div class="text-xs font-semibold text-gray-800">Included</div>
                             <div class="text-[10px] text-gray-400 leading-tight mt-0.5">Members only</div>
                         </label>
+                        <!-- One-Time (member_once) -->
+                        <label :class="['flex-1 cursor-pointer rounded-lg border-2 p-2.5 text-center transition-all',
+                            courseForm.access_type === 'member_once' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300']">
+                            <input type="radio" value="member_once" v-model="courseForm.access_type" class="sr-only" />
+                            <div class="text-base mb-0.5">🎟️</div>
+                            <div class="text-xs font-semibold text-gray-800">One-Time</div>
+                            <div class="text-[10px] text-gray-400 leading-tight mt-0.5">Past members included</div>
+                        </label>
                         <!-- Paid (covers both paid_once + paid_monthly) -->
                         <label :class="['flex-1 cursor-pointer rounded-lg border-2 p-2.5 text-center transition-all',
                             isPaidType(courseForm.access_type) ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300']"
@@ -154,7 +162,7 @@
 
             <!-- Owner: draggable grid (manual order) -->
             <template v-if="isOwner">
-                <p class="text-xs text-gray-400 mb-3">Drag to reorder. Visitors see: Free → Included → Paid.</p>
+                <p class="text-xs text-gray-400 mb-3">Drag to reorder. Visitors see: Free → Included → One-Time → Paid.</p>
                 <draggable
                     v-model="localCourses"
                     item-key="id"
@@ -184,6 +192,7 @@
                                         <h3 class="font-bold text-gray-900 group-hover:text-indigo-700 transition-colors line-clamp-1">{{ course.title }}</h3>
                                         <span v-if="course.access_type === 'free'" class="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-green-100 text-green-700">FREE</span>
                                         <span v-else-if="course.access_type === 'inclusive'" class="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">INCLUDED</span>
+                                        <span v-else-if="course.access_type === 'member_once'" class="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700">ONE-TIME</span>
                                         <span v-else class="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
                                             ₱{{ Number(course.price).toLocaleString() }}{{ course.access_type === 'paid_monthly' ? '/mo' : '' }}
                                         </span>
@@ -247,6 +256,7 @@
                                             </div>
                                             <span v-if="course.access_type === 'paid_once'" class="text-white text-xs font-bold bg-indigo-600 px-3 py-1 rounded-full">₱{{ Number(course.price).toLocaleString() }}</span>
                                             <span v-else-if="course.access_type === 'paid_monthly'" class="text-white text-xs font-bold bg-indigo-600 px-3 py-1 rounded-full">₱{{ Number(course.price).toLocaleString() }}/mo</span>
+                                            <span v-else-if="course.access_type === 'member_once'" class="text-white text-xs font-semibold bg-purple-600/80 px-3 py-1 rounded-full">For past members</span>
                                             <span v-else-if="course.access_type === 'free'" class="text-white text-xs font-semibold bg-green-600/80 px-3 py-1 rounded-full">Subscribe for Free</span>
                                             <span v-else class="text-white text-xs font-semibold bg-black/40 px-3 py-1 rounded-full">Members only</span>
                                         </div>
@@ -261,6 +271,7 @@
                                             <h3 class="font-bold text-gray-900 group-hover:text-indigo-700 transition-colors line-clamp-1">{{ course.title }}</h3>
                                             <span v-if="course.access_type === 'free'" class="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-green-100 text-green-700">FREE</span>
                                             <span v-else-if="course.access_type === 'inclusive'" class="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">INCLUDED</span>
+                                            <span v-else-if="course.access_type === 'member_once'" class="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700">ONE-TIME</span>
                                             <span v-else class="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
                                                 ₱{{ Number(course.price).toLocaleString() }}{{ course.access_type === 'paid_monthly' ? '/mo' : '' }}
                                             </span>
@@ -275,6 +286,7 @@
                                         <div v-else class="text-xs text-gray-400">
                                             <span v-if="course.access_type === 'paid_once'">One-time purchase to unlock</span>
                                             <span v-else-if="course.access_type === 'paid_monthly'">Monthly subscription to unlock</span>
+                                            <span v-else-if="course.access_type === 'member_once'">Available to past & current members</span>
                                             <span v-else-if="course.access_type === 'free'">Subscribe for free to unlock</span>
                                             <span v-else-if="course.access_type === 'inclusive'">Join the community to unlock</span>
                                         </div>
@@ -315,6 +327,14 @@
                                     <div class="text-base mb-0.5">⭐</div>
                                     <div class="text-xs font-semibold text-gray-800">Included</div>
                                     <div class="text-[10px] text-gray-400 leading-tight mt-0.5">Members only</div>
+                                </label>
+                                <!-- One-Time (member_once) -->
+                                <label :class="['flex-1 cursor-pointer rounded-lg border-2 p-2.5 text-center transition-all',
+                                    editForm.access_type === 'member_once' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300']">
+                                    <input type="radio" value="member_once" v-model="editForm.access_type" class="sr-only" />
+                                    <div class="text-base mb-0.5">🎟️</div>
+                                    <div class="text-xs font-semibold text-gray-800">One-Time</div>
+                                    <div class="text-[10px] text-gray-400 leading-tight mt-0.5">Past members included</div>
                                 </label>
                                 <label :class="['flex-1 cursor-pointer rounded-lg border-2 p-2.5 text-center transition-all',
                                     isPaidType(editForm.access_type) ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300']"
@@ -457,9 +477,10 @@ const courseLimit = computed(() => {
 const localCourses = ref([...props.courses]);
 
 const groupedCourses = computed(() => ({
-    'Free':     props.courses.filter(c => c.access_type === 'free'),
-    'Included': props.courses.filter(c => c.access_type === 'inclusive'),
-    'Paid':     props.courses.filter(c => c.access_type === 'paid_once' || c.access_type === 'paid_monthly'),
+    'Free':      props.courses.filter(c => c.access_type === 'free'),
+    'Included':  props.courses.filter(c => c.access_type === 'inclusive'),
+    'One-Time':  props.courses.filter(c => c.access_type === 'member_once'),
+    'Paid':      props.courses.filter(c => c.access_type === 'paid_once' || c.access_type === 'paid_monthly'),
 }));
 
 function onCourseReorder() {

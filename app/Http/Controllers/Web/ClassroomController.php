@@ -50,7 +50,7 @@ class ClassroomController extends Controller
             'title'       => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
             'cover_image' => ['nullable', 'image', 'max:10240'],
-            'access_type' => ['required', 'in:free,inclusive,paid_once,paid_monthly'],
+            'access_type' => ['required', 'in:free,inclusive,paid_once,paid_monthly,member_once'],
             'price'       => ['nullable', 'numeric', 'min:0', 'required_if:access_type,paid_once', 'required_if:access_type,paid_monthly'],
         ]);
 
@@ -67,7 +67,7 @@ class ClassroomController extends Controller
             'title'       => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
             'cover_image' => ['nullable', 'image', 'max:10240'],
-            'access_type' => ['required', 'in:free,inclusive,paid_once,paid_monthly'],
+            'access_type' => ['required', 'in:free,inclusive,paid_once,paid_monthly,member_once'],
             'price'       => ['nullable', 'numeric', 'min:0', 'required_if:access_type,paid_once', 'required_if:access_type,paid_monthly'],
         ]);
 

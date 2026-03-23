@@ -41,6 +41,13 @@ class CourseAccessService
                 ->exists();
         }
 
+        if ($course->access_type === Course::ACCESS_MEMBER_ONCE) {
+            return Subscription::where('community_id', $community->id)
+                ->where('user_id', $user->id)
+                ->whereIn('status', [Subscription::STATUS_ACTIVE, Subscription::STATUS_EXPIRED, Subscription::STATUS_CANCELLED])
+                ->exists();
+        }
+
         return false;
     }
 }
