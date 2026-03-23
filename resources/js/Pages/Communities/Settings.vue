@@ -724,7 +724,7 @@
                                         <p class="font-semibold text-blue-700 mb-1">Option A — A Record <span class="font-normal text-blue-500">(recommended)</span></p>
                                         <table class="w-full font-mono text-gray-700">
                                             <tr class="text-gray-400 text-[11px]"><th class="text-left pr-4">Type</th><th class="text-left pr-4">Host / Name</th><th class="text-left">Value</th></tr>
-                                            <tr><td class="pr-4">A</td><td class="pr-4">@ or {{ domainForm.custom_domain }}</td><td class="text-indigo-700">your-server-ip</td></tr>
+                                            <tr><td class="pr-4">A</td><td class="pr-4">@ or {{ domainForm.custom_domain }}</td><td class="text-indigo-700">{{ serverIp || 'your-server-ip' }}</td></tr>
                                         </table>
                                     </div>
                                     <div class="bg-white border border-blue-100 rounded-lg p-3">
@@ -931,6 +931,7 @@ const props = defineProps({
     canUseIntegrations: { type: Boolean, default: false },
     isPro:              { type: Boolean, default: false },
     baseDomain:         { type: String, default: 'curzzo.com' },
+    serverIp:           { type: String, default: '' },
 });
 
 const saved             = ref(false);

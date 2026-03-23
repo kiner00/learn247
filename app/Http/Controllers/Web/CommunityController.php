@@ -148,9 +148,10 @@ class CommunityController extends Controller
         // Base domain shown in the subdomain preview (strips port for display)
         $appHost    = parse_url(config('app.url'), PHP_URL_HOST) ?? 'curzzo.com';
         $baseDomain = explode(':', $appHost)[0];
+        $serverIp   = config('app.server_ip', '');
 
         return Inertia::render('Communities/Settings', compact(
-            'community', 'pricingGate', 'levelPerks', 'canUseIntegrations', 'isPro', 'baseDomain'
+            'community', 'pricingGate', 'levelPerks', 'canUseIntegrations', 'isPro', 'baseDomain', 'serverIp'
         ));
     }
 
