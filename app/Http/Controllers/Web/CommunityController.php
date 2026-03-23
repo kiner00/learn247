@@ -29,6 +29,7 @@ use App\Queries\Community\ListCommunities;
 use App\Queries\Feed\GetCommunityFeed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -108,8 +109,10 @@ class CommunityController extends Controller
 
         $hasFreeCourses = $community->courses()->where('access_type', 'free')->exists();
 
+        $hasLandingPage = !empty($community->landing_page);
+
         return Inertia::render('Communities/Show', compact(
-            'community', 'membership', 'affiliate', 'adminCount', 'topMembers', 'checklist', 'recentComments', 'hasFreeCourses'
+            'community', 'membership', 'affiliate', 'adminCount', 'topMembers', 'checklist', 'recentComments', 'hasFreeCourses', 'hasLandingPage'
         ));
     }
 
@@ -420,6 +423,17 @@ class CommunityController extends Controller
         $membership  = auth()->id() ? $community->members()->where('user_id', auth()->id())->first() : null;
         $ownerIsPro  = in_array($community->owner?->creatorPlan(), ['basic', 'pro']);
         $isOwner     = auth()->id() === $community->owner_id;
+
+        // Redirect non-owners to About if no landing page has been generated yet
+        if (!$isOwner && empty($community->landing_page)) {
+            $refCode = $request->query('ref') ?? $request->cookie('ref_code');
+            $redirect = route('communities.about', $community->slug);
+            if ($refCode) {
+                Cookie::queue('ref_code', $refCode, 60 * 24 * 30);
+                $redirect .= '?modal=true';
+            }
+            return redirect($redirect);
+        }
 
         $affiliate = null;
         $invitedBy = null;

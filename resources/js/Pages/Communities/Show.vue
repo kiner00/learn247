@@ -320,7 +320,7 @@
                                         </button>
                                     </div>
                                     <!-- Landing page link (only if landing page exists) -->
-                                    <template v-if="community.landing_page">
+                                    <template v-if="hasLandingPage">
                                         <p class="text-xs text-gray-400 mb-1">Landing page</p>
                                         <div class="flex items-center gap-2 mb-2">
                                             <input :value="affiliateLandingUrl" readonly
@@ -645,8 +645,9 @@ const props = defineProps({
     adminCount:     { type: Number, default: 0 },
     topMembers:     { type: Array, default: () => [] },
     checklist:      { type: Array, default: null },
-    recentComments: { type: Array, default: () => [] },
-    hasFreeCourses: { type: Boolean, default: false },
+    recentComments:  { type: Array, default: () => [] },
+    hasFreeCourses:  { type: Boolean, default: false },
+    hasLandingPage:  { type: Boolean, default: false },
 });
 
 const page = usePage();
