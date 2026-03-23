@@ -486,7 +486,13 @@ class CommunityController extends Controller
 
             return response()->json($copy);
         } catch (\Throwable $e) {
-            return response()->json(['error' => 'AI generation failed. Please try again.'], 500);
+            \Log::error('LandingPageBuilder failed', [
+                'community' => $community->slug,
+                'error'     => $e->getMessage(),
+                'trace'     => $e->getTraceAsString(),
+            ]);
+
+            return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 }

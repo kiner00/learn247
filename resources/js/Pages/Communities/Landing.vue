@@ -35,7 +35,7 @@
     </div>
 
     <!-- Empty state for owners -->
-    <div v-if="!lp && isOwner" :class="isOwner ? 'pt-12' : ''" class="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 flex items-center justify-center p-6">
+    <div v-if="!lp && isOwner" :class="isOwner ? 'pt-12' : ''" class="min-h-screen bg-linear-to-br from-slate-900 via-indigo-950 to-slate-900 flex items-center justify-center p-6">
         <div class="text-center max-w-md">
             <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-indigo-500/20 flex items-center justify-center">
                 <svg class="w-10 h-10 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -56,7 +56,7 @@
     </div>
 
     <!-- Empty state for visitors -->
-    <div v-else-if="!lp && !isOwner" class="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 flex items-center justify-center p-6">
+    <div v-else-if="!lp && !isOwner" class="min-h-screen bg-linear-to-br from-slate-900 via-indigo-950 to-slate-900 flex items-center justify-center p-6">
         <div class="text-center max-w-sm">
             <div class="w-16 h-16 mx-auto mb-4 rounded-full overflow-hidden bg-indigo-900 flex items-center justify-center">
                 <img v-if="community.cover_image" :src="community.cover_image" class="w-full h-full object-cover" />
@@ -75,14 +75,14 @@
     <div v-else :class="isOwner ? 'pt-12' : ''" class="bg-white font-sans antialiased">
 
         <!-- ── HERO ── -->
-        <section class="relative overflow-hidden bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white">
+        <section class="relative overflow-hidden bg-linear-to-br from-slate-900 via-indigo-950 to-slate-900 text-white">
             <!-- Background cover -->
             <div v-if="community.cover_image" class="absolute inset-0 opacity-20">
                 <img :src="community.cover_image" class="w-full h-full object-cover" />
                 <div class="absolute inset-0 bg-gradient-to-b from-slate-900/60 via-transparent to-slate-900" />
             </div>
             <!-- Glow -->
-            <div class="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
+            <div class="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150 h-150 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
 
             <!-- Invited-by pill -->
             <div v-if="invitedBy" class="relative z-10 flex justify-center pt-10">
@@ -167,7 +167,7 @@
         </section>
 
         <!-- ── FOR YOU ── -->
-        <section v-if="lp.for_you" class="py-20 bg-gradient-to-br from-indigo-50 to-white">
+        <section v-if="lp.for_you" class="py-20 bg-linear-to-br from-indigo-50 to-white">
             <div class="max-w-2xl mx-auto px-6 text-center">
                 <h2 class="text-3xl sm:text-4xl font-black text-gray-900 mb-12">{{ lp.for_you.headline }}</h2>
                 <div class="space-y-4 text-left">
@@ -187,7 +187,7 @@
         <!-- ── CREATOR ── -->
         <section v-if="lp.creator" class="py-24 bg-white">
             <div class="max-w-3xl mx-auto px-6">
-                <div class="flex flex-col sm:flex-row items-center gap-10 bg-gradient-to-br from-slate-900 to-indigo-950 rounded-3xl p-10 text-white">
+                <div class="flex flex-col sm:flex-row items-center gap-10 bg-linear-to-br from-slate-900 to-indigo-950 rounded-3xl p-10 text-white">
                     <div class="shrink-0 text-center">
                         <div class="w-28 h-28 rounded-2xl overflow-hidden mx-auto mb-3 ring-4 ring-indigo-500/40">
                             <img v-if="community.owner?.avatar" :src="community.owner.avatar" class="w-full h-full object-cover" />
@@ -260,8 +260,8 @@
         </section>
 
         <!-- ── FINAL CTA ── -->
-        <section class="py-24 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white text-center relative overflow-hidden">
-            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
+        <section class="py-24 bg-linear-to-br from-slate-900 via-indigo-950 to-slate-900 text-white text-center relative overflow-hidden">
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-125 h-125 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
             <div class="relative z-10 max-w-xl mx-auto px-6">
                 <h2 class="text-3xl sm:text-4xl font-black mb-4 text-white">
                     {{ lp.cta_section?.headline ?? `Join ${community.name} Today` }}
@@ -320,7 +320,7 @@
                         <!-- Cover -->
                         <div class="relative h-44 bg-gray-900 overflow-hidden">
                             <img v-if="community.cover_image" :src="community.cover_image" class="w-full h-full object-cover opacity-80" />
-                            <div v-else class="w-full h-full bg-gradient-to-br from-indigo-500 to-purple-700" />
+                            <div v-else class="w-full h-full bg-linear-to-br from-indigo-500 to-purple-700" />
                             <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                             <div class="absolute bottom-4 left-6">
                                 <h2 class="text-xl font-black text-white">{{ community.name }}</h2>
@@ -473,8 +473,8 @@ async function generate() {
         }
 
         lp.value = data;
-    } catch {
-        generateError.value = 'Something went wrong. Please try again.';
+    } catch (e) {
+        generateError.value = e?.message ?? 'Something went wrong. Please try again.';
     } finally {
         generating.value = false;
     }
