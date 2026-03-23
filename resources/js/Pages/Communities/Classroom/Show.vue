@@ -11,8 +11,8 @@
             <span class="text-gray-800 font-medium">{{ course.title }}</span>
         </div>
 
-        <!-- Progress bar -->
-        <div class="bg-white border border-gray-200 rounded-2xl p-4 mb-6 shadow-sm flex items-center gap-4">
+        <!-- Progress bar (only shown when enrolled) -->
+        <div v-if="hasAccess" class="bg-white border border-gray-200 rounded-2xl p-4 mb-6 shadow-sm flex items-center gap-4">
             <div class="flex-1">
                 <div class="flex items-center justify-between text-xs text-gray-500 mb-1.5">
                     <span class="font-medium text-gray-700">{{ course.title }}</span>
@@ -28,62 +28,110 @@
             <span class="text-sm font-black text-indigo-600 shrink-0">{{ currentProgress }}%</span>
         </div>
 
-        <!-- Access gate banner (locked course) -->
-        <div v-if="!hasAccess" class="bg-white border border-gray-200 rounded-2xl p-5 mb-6 shadow-sm flex items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-                    <svg class="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                    </svg>
+        <!-- Sales landing page (locked course) -->
+        <div v-if="!hasAccess" class="mb-8">
+
+            <!-- Hero: cover + title + CTA -->
+            <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm mb-4">
+                <!-- Cover image -->
+                <div class="relative w-full bg-gray-900" style="aspect-ratio:16/7;">
+                    <img
+                        v-if="course.cover_image"
+                        :src="course.cover_image"
+                        :alt="course.title"
+                        class="w-full h-full object-cover opacity-90"
+                    />
+                    <div v-else class="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-600 to-purple-700">
+                        <svg class="w-16 h-16 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                        </svg>
+                    </div>
+                    <!-- Price badge overlay -->
+                    <div class="absolute top-3 right-3">
+                        <span class="px-3 py-1.5 bg-indigo-600 text-white text-sm font-black rounded-xl shadow-lg">
+                            {{ course.access_type === 'paid_once' ? `₱${Number(course.price).toLocaleString()}` : course.access_type === 'paid_monthly' ? `₱${Number(course.price).toLocaleString()}/mo` : 'Members Only' }}
+                        </span>
+                    </div>
                 </div>
-                <div>
-                    <template v-if="course.access_type === 'paid_once'">
-                        <p class="text-sm font-bold text-gray-900">One-time purchase · ₱{{ Number(course.price).toLocaleString() }}</p>
-                        <p class="text-xs text-gray-400 mt-0.5">Pay once to get lifetime access to this course.</p>
-                    </template>
-                    <template v-else-if="course.access_type === 'paid_monthly'">
-                        <p class="text-sm font-bold text-gray-900">Monthly subscription · ₱{{ Number(course.price).toLocaleString() }}/mo</p>
-                        <p class="text-xs text-gray-400 mt-0.5">Subscribe monthly to access this course.</p>
-                    </template>
-                    <template v-else-if="course.access_type === 'member_once'">
-                        <p class="text-sm font-bold text-gray-900">Past members only</p>
-                        <p class="text-xs text-gray-400 mt-0.5">Available to anyone who has ever been a paying member of this community.</p>
-                    </template>
-                    <template v-else>
-                        <p class="text-sm font-bold text-gray-900">Members only</p>
-                        <p class="text-xs text-gray-400 mt-0.5">Subscribe to the community to unlock all included courses.</p>
-                    </template>
+
+                <!-- Title + description + CTA -->
+                <div class="p-6">
+                    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-5">
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs font-semibold text-indigo-500 uppercase tracking-wide mb-1">{{ community.name }}</p>
+                            <h1 class="text-2xl font-black text-gray-900 leading-tight mb-3">{{ course.title }}</h1>
+                            <p v-if="course.description" class="text-sm text-gray-600 leading-relaxed">{{ course.description }}</p>
+                            <div class="flex items-center gap-4 mt-4 text-xs text-gray-400">
+                                <span class="flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                                    {{ totalLessons }} lessons
+                                </span>
+                                <span class="flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                                    {{ course.modules?.length ?? 0 }} modules
+                                </span>
+                                <span v-if="course.access_type === 'paid_once'" class="flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                    Lifetime access
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- CTA block -->
+                        <div class="shrink-0 flex flex-col items-center gap-2 md:items-end">
+                            <template v-if="course.access_type === 'paid_once' || course.access_type === 'paid_monthly'">
+                                <div v-if="!authUserId">
+                                    <Link :href="`/login`"
+                                        class="inline-block px-8 py-3 bg-indigo-600 text-white text-base font-black rounded-2xl hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200">
+                                        Sign in to enroll
+                                    </Link>
+                                </div>
+                                <div v-else-if="enrollment?.status === 'pending'" class="flex items-center gap-2">
+                                    <span class="text-xs text-amber-600 font-medium">Payment pending…</span>
+                                    <button @click="enrollInCourse" :disabled="enrollForm.processing"
+                                        class="px-5 py-2.5 border border-amber-400 text-amber-700 text-sm font-semibold rounded-xl hover:bg-amber-50 transition-colors">
+                                        Retry payment
+                                    </button>
+                                </div>
+                                <div v-else class="text-center md:text-right">
+                                    <button @click="enrollInCourse" :disabled="enrollForm.processing"
+                                        class="px-8 py-3 bg-indigo-600 text-white text-base font-black rounded-2xl hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-md shadow-indigo-200 whitespace-nowrap">
+                                        {{ enrollForm.processing ? 'Redirecting...' : `Get Access · ₱${Number(course.price).toLocaleString()}${course.access_type === 'paid_monthly' ? '/mo' : ''}` }}
+                                    </button>
+                                    <p class="text-[10px] text-gray-400 mt-1.5">Processed securely under <strong>learn247</strong></p>
+                                </div>
+                            </template>
+                            <template v-else>
+                                <Link :href="`/communities/${community.slug}/about`"
+                                    class="px-8 py-3 bg-indigo-600 text-white text-base font-black rounded-2xl hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200">
+                                    Join Community to Unlock
+                                </Link>
+                            </template>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <!-- Enroll button (paid courses) -->
-            <div v-if="course.access_type === 'paid_once' || course.access_type === 'paid_monthly'" class="shrink-0">
-                <div v-if="!authUserId">
-                    <Link :href="`/login`"
-                        class="px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors">
-                        Sign in to enroll
-                    </Link>
+
+            <!-- What's inside -->
+            <div v-if="course.modules?.length" class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+                <div class="px-5 py-4 border-b border-gray-100">
+                    <h2 class="text-sm font-bold text-gray-900">What's inside</h2>
                 </div>
-                <div v-else-if="enrollment?.status === 'pending'" class="flex items-center gap-2">
-                    <span class="text-xs text-amber-600 font-medium">Payment pending…</span>
-                    <button @click="enrollInCourse" :disabled="enrollForm.processing"
-                        class="px-4 py-2 border border-amber-400 text-amber-700 text-xs font-semibold rounded-xl hover:bg-amber-50 transition-colors">
-                        Retry payment
-                    </button>
+                <div class="divide-y divide-gray-50">
+                    <div v-for="mod in course.modules" :key="mod.id" class="px-5 py-3">
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{{ mod.title }}</p>
+                        <div class="space-y-1">
+                            <div v-for="lesson in mod.lessons" :key="lesson.id"
+                                class="flex items-center gap-2 text-sm text-gray-600">
+                                <svg class="w-3.5 h-3.5 text-indigo-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <span>{{ lesson.title }}</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div v-else class="text-right">
-                    <button @click="enrollInCourse" :disabled="enrollForm.processing"
-                        class="px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-colors">
-                        {{ enrollForm.processing ? 'Redirecting...' : `Enroll · ₱${Number(course.price).toLocaleString()}${course.access_type === 'paid_monthly' ? '/mo' : ''}` }}
-                    </button>
-                    <p class="text-[10px] text-gray-400 mt-1">Payment is processed under <strong>learn247</strong></p>
-                </div>
-            </div>
-            <!-- Join community (inclusive) -->
-            <div v-else class="shrink-0">
-                <Link :href="`/communities/${community.slug}/about`"
-                    class="px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors">
-                    Join Community
-                </Link>
             </div>
         </div>
 
@@ -114,10 +162,10 @@
             </button>
         </div>
 
-        <div :class="['grid grid-cols-1 lg:grid-cols-3 gap-6', !hasAccess && 'pointer-events-none select-none']">
+        <div v-if="hasAccess" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
             <!-- Sidebar: module + lesson tree -->
-            <div :class="['space-y-3', !hasAccess && 'opacity-50 blur-[1px]']">
+            <div class="space-y-3">
                 <div
                     v-for="mod in course.modules"
                     :key="mod.id"
