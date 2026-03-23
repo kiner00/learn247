@@ -146,15 +146,17 @@ class HandleXenditWebhook
                 $creatorSub->update(['status' => $newStatus, 'expires_at' => $expiresAt]);
 
                 // Record idempotency payment row so this event isn't re-processed
-                $csGross    = (float) ($payload['amount'] ?? 0);
-                $csChannel  = $payload['payment_channel'] ?? '';
-                $csNet      = round($csGross - XenditService::collectionFee($csChannel, $csGross), 2);
+                $csGross         = (float) ($payload['amount'] ?? 0);
+                $csChannel       = $payload['payment_channel'] ?? '';
+                $csProcessingFee = XenditService::collectionFee($csChannel, $csGross);
 
                 Payment::create([
                     'subscription_id'    => null,
                     'community_id'       => null,
                     'user_id'            => $creatorSub->user_id,
-                    'amount'             => $csNet,
+                    'amount'             => $csGross,
+                    'processing_fee'     => $csProcessingFee,
+                    'platform_fee'       => 0,
                     'currency'           => $payload['currency'] ?? 'PHP',
                     'status'             => Payment::STATUS_PAID,
                     'provider_reference' => $payload['payment_id'] ?? ($payload['external_id'] ?? null),
@@ -216,14 +218,16 @@ class HandleXenditWebhook
             if ($paymentStatus !== Payment::STATUS_PENDING) {
                 $gross          = (float) ($payload['amount'] ?? 0);
                 $channel        = $payload['payment_channel'] ?? '';
-                $xenditFee      = XenditService::collectionFee($channel, $gross);
-                $netAmount      = round($gross - $xenditFee, 2);
+                $processingFee  = XenditService::collectionFee($channel, $gross);
+                $platformFee    = round($gross * $community->platformFeeRate(), 2);
 
                 $payment = Payment::create([
                     'subscription_id'    => $subscription->id,
                     'community_id'       => $subscription->community_id,
                     'user_id'            => $subscription->user_id,
-                    'amount'             => $netAmount,
+                    'amount'             => $gross,
+                    'processing_fee'     => $processingFee,
+                    'platform_fee'       => $platformFee,
                     'currency'           => $payload['currency']    ?? 'PHP',
                     'status'             => $paymentStatus,
                     'provider_reference' => $payload['payment_id']  ?? ($payload['external_id'] ?? null),

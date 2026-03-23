@@ -17,17 +17,25 @@ class Payment extends Model
 
     protected $fillable = [
         'subscription_id', 'community_id', 'user_id',
-        'amount', 'currency', 'status',
+        'amount', 'processing_fee', 'platform_fee', 'currency', 'status',
         'provider_reference', 'xendit_event_id', 'metadata', 'paid_at',
     ];
 
     protected function casts(): array
     {
         return [
-            'amount'   => 'decimal:2',
-            'metadata' => 'array',
-            'paid_at'  => 'datetime',
+            'amount'         => 'decimal:2',
+            'processing_fee' => 'decimal:2',
+            'platform_fee'   => 'decimal:2',
+            'metadata'       => 'array',
+            'paid_at'        => 'datetime',
         ];
+    }
+
+    /** Amount the creator actually keeps from this payment. */
+    public function creatorNet(): float
+    {
+        return round((float) $this->amount - (float) $this->processing_fee - (float) $this->platform_fee, 2);
     }
 
     public function subscription(): BelongsTo

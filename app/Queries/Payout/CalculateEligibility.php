@@ -21,27 +21,32 @@ class CalculateEligibility
     {
         $cutoff = now()->subDays(self::HOLD_DAYS);
 
-        $eligibleGross = (float) Payment::where('community_id', $community->id)
+        $eligiblePayments = Payment::where('community_id', $community->id)
             ->where('status', Payment::STATUS_PAID)
             ->where('paid_at', '<=', $cutoff)
-            ->sum('amount');
+            ->selectRaw('SUM(amount) as gross, SUM(processing_fee) as processing_fee, SUM(platform_fee) as platform_fee')
+            ->first();
 
-        $lockedGross = (float) Payment::where('community_id', $community->id)
+        $eligibleGross         = (float) $eligiblePayments->gross;
+        $eligibleProcessingFee = (float) $eligiblePayments->processing_fee;
+        $eligiblePlatformFee   = (float) $eligiblePayments->platform_fee;
+
+        $lockedPayments = Payment::where('community_id', $community->id)
             ->where('status', Payment::STATUS_PAID)
             ->where('paid_at', '>', $cutoff)
-            ->sum('amount');
+            ->selectRaw('SUM(amount) as gross, SUM(processing_fee) as processing_fee, SUM(platform_fee) as platform_fee')
+            ->first();
+
+        $lockedGross         = (float) $lockedPayments->gross;
+        $lockedProcessingFee = (float) $lockedPayments->processing_fee;
+        $lockedPlatformFee   = (float) $lockedPayments->platform_fee;
 
         $affiliateCommission = (float) AffiliateConversion::whereHas(
             'affiliate', fn ($q) => $q->where('community_id', $community->id)
         )->sum('commission_amount');
 
-        $feeRate             = $community->platformFeeRate();
-
-        $platformFeeEligible = round($eligibleGross * $feeRate, 2);
-        $platformFeeLocked   = round($lockedGross * $feeRate, 2);
-
-        $eligibleEarned = round($eligibleGross - $platformFeeEligible - $affiliateCommission, 2);
-        $lockedEarned   = round($lockedGross - $platformFeeLocked, 2);
+        $eligibleEarned = round($eligibleGross - $eligibleProcessingFee - $eligiblePlatformFee - $affiliateCommission, 2);
+        $lockedEarned   = round($lockedGross - $lockedProcessingFee - $lockedPlatformFee, 2);
 
         $alreadyPaid = (float) OwnerPayout::where('community_id', $community->id)
             ->where('status', '!=', 'failed')
