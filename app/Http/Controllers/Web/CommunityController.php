@@ -472,7 +472,7 @@ class CommunityController extends Controller
                 'member_count' => $community->members_count ?? $community->members()->count(),
             ]);
 
-            $response = $agent->forUser($user)->prompt(
+            $response = $agent->prompt(
                 'Generate the full funnel landing page now. Return only valid JSON.'
             );
 
