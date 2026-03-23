@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Queries\AI\BuildAIContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Laravel\Ai\Image;
 
 class AIAssistantController extends Controller
 {
@@ -43,6 +44,16 @@ class AIAssistantController extends Controller
             return response()->json(['error' => 'You must be a member of a community to use the AI assistant.'], 403);
         }
 
+        if ($this->isImageRequest($request->message)) {
+            $imageResponse = Image::of($request->message)->size('3:2')->generate('openai');
+            $img           = $imageResponse->firstImage();
+
+            return response()->json([
+                'type'    => 'image',
+                'message' => "data:{$img->mime};base64,{$img->image}",
+            ]);
+        }
+
         $agent = new CommunityAssistant($context);
 
         $response = $request->conversation_id
@@ -50,8 +61,27 @@ class AIAssistantController extends Controller
             : $agent->forUser($user)->prompt($request->message);
 
         return response()->json([
+            'type'            => 'text',
             'message'         => $response->text,
             'conversation_id' => $response->conversationId,
         ]);
+    }
+
+    private function isImageRequest(string $message): bool
+    {
+        $lower = strtolower($message);
+
+        $patterns = [
+            '/\b(generate|create|make|draw|design|produce)\b.{0,30}\b(image|photo|picture|banner|thumbnail|cover|poster|visual|graphic|illustration)\b/',
+            '/\b(image|photo|picture|banner|thumbnail|cover|poster|visual|graphic|illustration)\b.{0,30}\b(generate|create|make|draw|design)\b/',
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $lower)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -888,7 +888,11 @@
                             <div class="w-6 h-6 rounded-full shrink-0 mb-0.5 overflow-hidden bg-gray-100">
                                 <img :src="curzzoIcon" alt="Curzzo" class="w-full h-full object-cover" />
                             </div>
-                            <div class="max-w-[75%] px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm rounded-2xl rounded-tl-sm whitespace-pre-wrap">
+                            <div v-if="msg.type === 'image'" class="max-w-[85%]">
+                                <img :src="msg.content" alt="Generated image" class="rounded-2xl rounded-tl-sm w-full" />
+                                <a :href="msg.content" download="curzzo-image.png" class="block mt-1 text-[11px] text-indigo-500 hover:underline text-center">Download</a>
+                            </div>
+                            <div v-else class="max-w-[75%] px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm rounded-2xl rounded-tl-sm whitespace-pre-wrap">
                                 {{ msg.content }}
                             </div>
                         </div>
@@ -1255,13 +1259,13 @@ async function sendAiMessage() {
             conversation_id: aiConversationId.value,
         });
 
-        aiConversationId.value = res.data.conversation_id;
-        aiMessages.value.push({ role: 'assistant', content: res.data.message });
+        if (res.data.conversation_id) aiConversationId.value = res.data.conversation_id;
+        aiMessages.value.push({ role: 'assistant', type: res.data.type ?? 'text', content: res.data.message });
     } catch (e) {
         const msg = e?.response?.data?.message
             ?? e?.response?.data?.error
             ?? 'Something went wrong. Please try again.';
-        aiMessages.value.push({ role: 'assistant', content: msg });
+        aiMessages.value.push({ role: 'assistant', type: 'text', content: msg });
     } finally {
         aiLoading.value = false;
         await nextTick();
