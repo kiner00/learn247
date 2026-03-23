@@ -388,9 +388,12 @@ class CommunityController extends Controller
             ->map(fn ($m) => ['name' => $m->user?->name, 'avatar' => $m->user?->avatar])
             ->filter(fn ($m) => $m['name'])->values();
 
+        $membership = auth()->id() ? $community->members()->where('user_id', auth()->id())->first() : null;
+        $isOwner    = auth()->id() === $community->owner_id;
+
         $invitedBy = null;
         $refCode   = $request->cookie('ref_code');
-        if ($refCode) {
+        if ($refCode && !$membership && !$isOwner) {
             $refAffiliate = Affiliate::where('code', $refCode)->where('community_id', $community->id)
                 ->where('status', Affiliate::STATUS_ACTIVE)->with('user:id,name,avatar')->first();
             if ($refAffiliate) {
@@ -405,8 +408,6 @@ class CommunityController extends Controller
             }
         }
 
-        $membership = auth()->id() ? $community->members()->where('user_id', auth()->id())->first() : null;
-
         $ownerIsPro = in_array($community->owner?->creatorPlan(), ['basic', 'pro']);
 
         return Inertia::render('Communities/About', compact('community', 'affiliate', 'invitedBy', 'membership', 'recentMembers', 'ownerIsPro'));
@@ -416,11 +417,15 @@ class CommunityController extends Controller
     {
         $community->load('owner')->loadCount('members');
 
+        $membership  = auth()->id() ? $community->members()->where('user_id', auth()->id())->first() : null;
+        $ownerIsPro  = in_array($community->owner?->creatorPlan(), ['basic', 'pro']);
+        $isOwner     = auth()->id() === $community->owner_id;
+
         $affiliate = null;
         $invitedBy = null;
         $refCode   = $request->cookie('ref_code');
 
-        if ($refCode) {
+        if ($refCode && !$membership && !$isOwner) {
             $refAffiliate = Affiliate::where('code', $refCode)
                 ->where('community_id', $community->id)
                 ->where('status', Affiliate::STATUS_ACTIVE)
@@ -443,10 +448,6 @@ class CommunityController extends Controller
         if (!$affiliate && auth()->id()) {
             $affiliate = $community->affiliates()->where('user_id', auth()->id())->first();
         }
-
-        $membership  = auth()->id() ? $community->members()->where('user_id', auth()->id())->first() : null;
-        $ownerIsPro  = in_array($community->owner?->creatorPlan(), ['basic', 'pro']);
-        $isOwner     = auth()->id() === $community->owner_id;
 
         return Inertia::render('Communities/Landing', compact(
             'community', 'affiliate', 'invitedBy', 'membership', 'ownerIsPro', 'isOwner'
