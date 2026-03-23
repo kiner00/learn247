@@ -196,6 +196,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/communities/{community}/sms-test', [CommunityController::class, 'testSms'])->name('communities.sms-test');
     Route::post('/communities/{community}/sms-blast', [CommunityController::class, 'sendSmsBlast'])->name('communities.sms-blast');
     Route::post('/communities/{community}/ai-landing', [CommunityController::class, 'generateLandingPage'])->name('communities.ai-landing');
+    Route::patch('/communities/{community}/landing-page', [CommunityController::class, 'updateLandingPage'])->name('communities.landing-page.update');
 
     // Member management (admin only — enforced by Action)
     Route::delete('/communities/{community}/members/{user}', [CommunityMemberController::class, 'destroy'])->name('communities.members.destroy');

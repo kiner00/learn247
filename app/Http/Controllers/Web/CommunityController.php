@@ -410,7 +410,7 @@ class CommunityController extends Controller
 
         $ownerIsPro = in_array($community->owner?->creatorPlan(), ['basic', 'pro']);
 
-        return Inertia::render('Communities/About', compact('community', 'affiliate', 'invitedBy', 'membership', 'recentMembers', 'ownerIsPro'));
+        return Inertia::render('Communities/About', compact('community', 'affiliate', 'invitedBy', 'membership', 'recentMembers', 'ownerIsPro', 'isOwner'));
     }
 
     public function landing(Request $request, Community $community): Response
@@ -423,7 +423,7 @@ class CommunityController extends Controller
 
         $affiliate = null;
         $invitedBy = null;
-        $refCode   = $request->cookie('ref_code');
+        $refCode   = $request->query('ref') ?? $request->cookie('ref_code');
 
         if ($refCode && !$membership && !$isOwner) {
             $refAffiliate = Affiliate::where('code', $refCode)
@@ -449,9 +449,61 @@ class CommunityController extends Controller
             $affiliate = $community->affiliates()->where('user_id', auth()->id())->first();
         }
 
-        return Inertia::render('Communities/Landing', compact(
+        $response = Inertia::render('Communities/Landing', compact(
             'community', 'affiliate', 'invitedBy', 'membership', 'ownerIsPro', 'isOwner'
         ));
+
+        // Persist ?ref= query param as a cookie so it carries through to checkout
+        if ($request->query('ref') && !$request->cookie('ref_code')) {
+            $response->withCookie(cookie('ref_code', $refCode, 60 * 24 * 30));
+        }
+
+        return $response;
+    }
+
+    public function updateLandingPage(Request $request, Community $community): \Illuminate\Http\JsonResponse
+    {
+        $user = $request->user();
+
+        if ($community->owner_id !== $user->id && !$user->is_super_admin) {
+            abort(403);
+        }
+
+        $data = $request->validate([
+            'hero.headline'           => 'required|string|max:120',
+            'hero.subheadline'        => 'required|string|max:200',
+            'hero.cta_label'          => 'required|string|max:50',
+            'social_proof.stat_label' => 'nullable|string|max:100',
+            'social_proof.trust_line' => 'nullable|string|max:100',
+            'benefits.headline'       => 'nullable|string|max:100',
+            'benefits.items'          => 'nullable|array|max:6',
+            'benefits.items.*.icon'   => 'nullable|string|max:10',
+            'benefits.items.*.title'  => 'nullable|string|max:80',
+            'benefits.items.*.body'   => 'nullable|string|max:300',
+            'for_you.headline'        => 'nullable|string|max:100',
+            'for_you.points'          => 'nullable|array|max:6',
+            'for_you.points.*'        => 'nullable|string|max:120',
+            'creator.headline'        => 'nullable|string|max:80',
+            'creator.bio'             => 'nullable|string|max:500',
+            'testimonials'            => 'nullable|array|max:6',
+            'testimonials.*.name'     => 'nullable|string|max:80',
+            'testimonials.*.role'     => 'nullable|string|max:80',
+            'testimonials.*.quote'    => 'nullable|string|max:300',
+            'faq'                     => 'nullable|array|max:10',
+            'faq.*.question'          => 'nullable|string|max:200',
+            'faq.*.answer'            => 'nullable|string|max:300',
+            'cta_section.headline'    => 'nullable|string|max:120',
+            'cta_section.subtext'     => 'nullable|string|max:150',
+            'cta_section.cta_label'   => 'nullable|string|max:50',
+        ]);
+
+        // Merge into existing landing page so unreferenced sections are preserved
+        $current = $community->landing_page ?? [];
+        $merged  = array_replace_recursive($current, $data);
+
+        $community->update(['landing_page' => $merged]);
+
+        return response()->json($merged);
     }
 
     public function generateLandingPage(Request $request, Community $community): \Illuminate\Http\JsonResponse

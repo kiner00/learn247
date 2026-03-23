@@ -310,13 +310,26 @@
                                     <span class="font-normal text-gray-400 ml-1">{{ community.affiliate_commission_rate }}% commission</span>
                                 </p>
                                 <div v-if="affiliate">
-                                    <div class="flex items-center gap-2 mb-1">
+                                    <!-- About page link -->
+                                    <p class="text-xs text-gray-400 mb-1">About page</p>
+                                    <div class="flex items-center gap-2 mb-2">
                                         <input :value="affiliateUrl" readonly
                                             class="flex-1 text-xs px-2.5 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 dark:text-gray-100 font-mono" />
-                                        <button @click="copyAffiliateUrl" class="shrink-0 text-xs text-indigo-600 hover:text-indigo-800 font-medium">
-                                            {{ affiliateCopied ? '✓' : 'Copy' }}
+                                        <button @click="copyAffiliateUrl('about')" class="shrink-0 text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+                                            {{ affiliateCopied === 'about' ? '✓' : 'Copy' }}
                                         </button>
                                     </div>
+                                    <!-- Landing page link (only if landing page exists) -->
+                                    <template v-if="community.landing_page">
+                                        <p class="text-xs text-gray-400 mb-1">Landing page</p>
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <input :value="affiliateLandingUrl" readonly
+                                                class="flex-1 text-xs px-2.5 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 dark:text-gray-100 font-mono" />
+                                            <button @click="copyAffiliateUrl('landing')" class="shrink-0 text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+                                                {{ affiliateCopied === 'landing' ? '✓' : 'Copy' }}
+                                            </button>
+                                        </div>
+                                    </template>
                                     <Link href="/my-affiliates" class="text-xs text-gray-400 hover:text-indigo-600">View my earnings →</Link>
                                 </div>
                                 <button v-else @click="joinAffiliate" :disabled="affiliateForm.processing"
@@ -829,18 +842,22 @@ const inviteUrl = computed(() =>
 );
 
 // ─── Affiliate ────────────────────────────────────────────────────────────────
-const affiliateForm   = useForm({});
-const affiliateCopied = ref(false);
-const affiliateUrl    = computed(() =>
+const affiliateForm        = useForm({});
+const affiliateCopied      = ref(null); // 'about' | 'landing' | null
+const affiliateUrl         = computed(() =>
     props.affiliate ? `${window.location.origin}/ref/${props.affiliate.code}` : ''
+);
+const affiliateLandingUrl  = computed(() =>
+    props.affiliate ? `${window.location.origin}/communities/${props.community.slug}/landing?ref=${props.affiliate.code}` : ''
 );
 
 function joinAffiliate() { affiliateForm.post(`/communities/${props.community.slug}/affiliates`); }
 
-async function copyAffiliateUrl() {
-    await navigator.clipboard.writeText(affiliateUrl.value);
-    affiliateCopied.value = true;
-    setTimeout(() => { affiliateCopied.value = false; }, 2000);
+async function copyAffiliateUrl(type = 'about') {
+    const url = type === 'landing' ? affiliateLandingUrl.value : affiliateUrl.value;
+    await navigator.clipboard.writeText(url);
+    affiliateCopied.value = type;
+    setTimeout(() => { affiliateCopied.value = null; }, 2000);
 }
 
 // ─── Checklist ────────────────────────────────────────────────────────────────

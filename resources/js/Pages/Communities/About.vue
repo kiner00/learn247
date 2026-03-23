@@ -332,6 +332,7 @@ const props = defineProps({
     membership:    Object,
     recentMembers: { type: Array, default: () => [] },
     ownerIsPro:    { type: Boolean, default: false },
+    isOwner:       { type: Boolean, default: false },
 });
 
 const showInviteModal = ref(false);
@@ -357,6 +358,7 @@ onMounted(() => {
         showJoinModal.value = true;
     }
 
+    if (props.isOwner) return; // don't pollute creator's own analytics
     // Initialize all pixels (community + affiliate) before firing events
     trackers.forEach(t => t.init());
 
