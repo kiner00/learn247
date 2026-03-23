@@ -447,6 +447,7 @@ class CommunityController extends Controller
             'hero.headline'           => 'required|string|max:120',
             'hero.subheadline'        => 'required|string|max:200',
             'hero.cta_label'          => 'required|string|max:50',
+            'hero.vsl_url'            => 'nullable|url|max:500',
             'social_proof.stat_label' => 'nullable|string|max:100',
             'social_proof.trust_line' => 'nullable|string|max:100',
             'benefits.headline'       => 'nullable|string|max:100',

@@ -342,18 +342,24 @@
 
                 <!-- Builder for Pro -->
                 <div v-else>
-                    <button
-                        type="button"
-                        @click="generateLandingPage"
-                        :disabled="aiGenerating"
-                        class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
-                    >
-                        <svg v-if="aiGenerating" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                        </svg>
-                        {{ aiGenerating ? 'Generating...' : '✨ Generate copy' }}
-                    </button>
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <button
+                            type="button"
+                            @click="generateLandingPage"
+                            :disabled="aiGenerating"
+                            class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                        >
+                            <svg v-if="aiGenerating" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                            </svg>
+                            {{ aiGenerating ? 'Generating...' : '✨ Generate copy' }}
+                        </button>
+                        <Link :href="`/communities/${community.slug}/landing`"
+                            class="inline-flex items-center gap-1.5 px-4 py-2.5 border border-indigo-200 text-indigo-600 text-sm font-medium rounded-lg hover:bg-indigo-50 transition-colors">
+                            View / Edit Landing Page →
+                        </Link>
+                    </div>
 
                     <!-- AI result -->
                     <div v-if="aiCopy" class="mt-4 rounded-xl border border-indigo-100 bg-indigo-50 p-4 space-y-3">

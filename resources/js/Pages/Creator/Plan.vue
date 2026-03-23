@@ -40,7 +40,7 @@ const comparisonRows = [
     { feature: 'Analytics',            free: 'Basic',      basic: 'Advanced',   pro: 'Advanced' },
     { feature: 'Custom Branding',      free: false,        basic: false,        pro: '(Soon)' },
     { feature: 'Priority Payouts',     free: false,        basic: false,        pro: '(Soon)' },
-    { feature: 'AI Landing Page Builder', free: false,     basic: false,        pro: '(Soon)' },
+    { feature: 'AI Landing Page Builder', free: false,     basic: false,        pro: 'Beta ✨' },
     { feature: 'Custom Domain',        free: false,        basic: false,        pro: '(Soon)' },
     { feature: 'Workflow Builder',     free: false,        basic: false,        pro: '(Soon)' },
     { feature: 'Video Hosting',        free: false,        basic: false,        pro: '(Soon)' },
@@ -154,7 +154,7 @@ const planLabel = { free: 'Free', basic: 'Basic', pro: 'Pro' };
                         <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> ₱15 flat payout fee</li>
                         <li class="flex items-start gap-2 opacity-60"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Custom branding <span class="text-indigo-300 text-xs ml-1">(Soon)</span></li>
                         <li class="flex items-start gap-2 opacity-60"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Priority payouts <span class="text-indigo-300 text-xs ml-1">(Soon)</span></li>
-                        <li class="flex items-start gap-2 opacity-60"><span class="text-amber-300 mt-0.5 shrink-0">★</span> AI Landing Page Builder <span class="text-indigo-300 text-xs ml-1">(Soon)</span></li>
+                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> AI Landing Page Builder <span class="ml-1 bg-amber-400/20 text-amber-300 text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide">Beta</span></li>
                     </ul>
                     <div class="px-6 py-5 border-t border-indigo-500">
                         <button

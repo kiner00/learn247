@@ -291,6 +291,10 @@
                                     class="flex-1 text-center py-1.5 text-xs font-medium border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                     Settings
                                 </Link>
+                                <Link v-if="isOwner" :href="`/communities/${community.slug}/landing`"
+                                    class="flex-1 text-center py-1.5 text-xs font-medium border border-indigo-200 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors">
+                                    ✨ Landing Page
+                                </Link>
                                 <Link v-if="isAdmin" :href="`/communities/${community.slug}/analytics`"
                                     class="flex-1 text-center py-1.5 text-xs font-medium border border-gray-200 dark:border-gray-600 text-indigo-600 dark:text-indigo-400 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors">
                                     📊 Analytics
