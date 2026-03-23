@@ -4,7 +4,9 @@ namespace App\Queries\Affiliate;
 
 use App\Models\Affiliate;
 use App\Models\AffiliateConversion;
+use App\Models\PayoutRequest;
 use App\Models\User;
+use App\Queries\Payout\CalculateEligibility;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
@@ -16,6 +18,40 @@ class GetAffiliateStats
             ->with('community:id,name,slug')
             ->latest()
             ->get();
+    }
+
+    /**
+     * Returns a fully mapped affiliate collection for dashboard display.
+     * Single source of truth for affiliate data shape used by Web and API.
+     */
+    public function mapForDashboard(User $user, CalculateEligibility $eligibility): Collection
+    {
+        $affiliates = $this->getAffiliates($user);
+
+        $activeRequestsByAffiliate = PayoutRequest::where('user_id', $user->id)
+            ->where('type', PayoutRequest::TYPE_AFFILIATE)
+            ->whereIn('status', [PayoutRequest::STATUS_PENDING, PayoutRequest::STATUS_APPROVED])
+            ->get()
+            ->keyBy('affiliate_id');
+
+        return $affiliates->map(fn ($a) => [
+            'id'                    => $a->id,
+            'code'                  => $a->code,
+            'status'                => $a->status,
+            'is_active'             => $a->isActive(),
+            'total_earned'          => (float) $a->total_earned,
+            'total_paid'            => (float) $a->total_paid,
+            'pending_amount'        => (float) $a->pendingAmount(),
+            'eligible_amount'       => $eligibility->forAffiliate($a),
+            'payout_request_status' => $activeRequestsByAffiliate->has($a->id)
+                ? $activeRequestsByAffiliate->get($a->id)->status
+                : null,
+            'referral_url'          => url("/ref/{$a->code}"),
+            'community'             => ['name' => $a->community->name, 'slug' => $a->community->slug],
+            'facebook_pixel_id'     => $a->facebook_pixel_id,
+            'tiktok_pixel_id'       => $a->tiktok_pixel_id,
+            'google_analytics_id'   => $a->google_analytics_id,
+        ]);
     }
 
     /**

@@ -24,22 +24,22 @@ class CalculateEligibility
         $eligiblePayments = Payment::where('community_id', $community->id)
             ->where('status', Payment::STATUS_PAID)
             ->where('paid_at', '<=', $cutoff)
-            ->selectRaw('SUM(amount) as gross, SUM(processing_fee) as processing_fee, SUM(platform_fee) as platform_fee')
+            ->selectRaw('SUM(amount) as gross, SUM(processing_fee) as processing_fee')
             ->first();
 
         $eligibleGross         = (float) $eligiblePayments->gross;
         $eligibleProcessingFee = (float) $eligiblePayments->processing_fee;
-        $eligiblePlatformFee   = (float) $eligiblePayments->platform_fee;
+        $eligiblePlatformFee   = round($eligibleGross * $community->platformFeeRate(), 2);
 
         $lockedPayments = Payment::where('community_id', $community->id)
             ->where('status', Payment::STATUS_PAID)
             ->where('paid_at', '>', $cutoff)
-            ->selectRaw('SUM(amount) as gross, SUM(processing_fee) as processing_fee, SUM(platform_fee) as platform_fee')
+            ->selectRaw('SUM(amount) as gross, SUM(processing_fee) as processing_fee')
             ->first();
 
         $lockedGross         = (float) $lockedPayments->gross;
         $lockedProcessingFee = (float) $lockedPayments->processing_fee;
-        $lockedPlatformFee   = (float) $lockedPayments->platform_fee;
+        $lockedPlatformFee   = round($lockedGross * $community->platformFeeRate(), 2);
 
         $affiliateCommission = (float) AffiliateConversion::whereHas(
             'affiliate', fn ($q) => $q->where('community_id', $community->id)

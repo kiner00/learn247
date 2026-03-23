@@ -26,7 +26,7 @@ class EventController extends Controller
 
         $eventsQuery = $community->events()->whereBetween('start_at', [$from, $to]);
         if (! $isMember && ! $isOwner) {
-            $eventsQuery->where('is_members_only', false);
+            $eventsQuery->where('visibility', Event::VISIBILITY_PUBLIC);
         }
 
         $events = $eventsQuery->get()->map(fn (Event $e) => [
@@ -38,7 +38,7 @@ class EventController extends Controller
             'timezone'        => $e->timezone,
             'url'             => $e->url,
             'cover_image'     => $e->cover_image ? Storage::url($e->cover_image) : null,
-            'is_members_only' => $e->is_members_only,
+            'visibility'      => $e->visibility,
         ]);
 
         return response()->json(['events' => $events, 'year' => $year, 'month' => $month]);
@@ -56,7 +56,7 @@ class EventController extends Controller
             'timezone'        => 'required|string|timezone',
             'url'             => 'nullable|url|max:500',
             'cover_image'     => 'nullable|image|max:10240',
-            'is_members_only' => 'boolean',
+            'visibility'      => 'nullable|in:public,free,paid',
         ]);
 
         $event = $action->store($community, $request->user(), $data, $request->file('cover_image'));
@@ -77,7 +77,7 @@ class EventController extends Controller
             'timezone'        => 'required|string|timezone',
             'url'             => 'nullable|url|max:500',
             'cover_image'     => 'nullable|image|max:10240',
-            'is_members_only' => 'boolean',
+            'visibility'      => 'nullable|in:public,free,paid',
         ]);
 
         $action->update($event, $data, $request->file('cover_image'));

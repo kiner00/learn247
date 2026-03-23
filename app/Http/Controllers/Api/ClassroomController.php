@@ -9,29 +9,28 @@ use App\Actions\Classroom\ManageModule;
 use App\Actions\Classroom\SubmitQuiz;
 use App\Http\Controllers\Controller;
 use App\Models\Community;
-use App\Models\CommunityMember;
 use App\Models\Course;
 use App\Models\CourseLesson;
 use App\Models\CourseModule;
 use App\Models\Quiz;
-use App\Models\Subscription;
 use App\Queries\Classroom\GetCourseDetail;
 use App\Queries\Classroom\GetCourseList;
+use App\Services\Community\MembershipAccessService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ClassroomController extends Controller
 {
-    public function courses(Request $request, Community $community, GetCourseList $query): JsonResponse
+    public function courses(Request $request, Community $community, GetCourseList $query, MembershipAccessService $membership): JsonResponse
     {
-        $this->requireMembership($request, $community);
+        $membership->assertMembership($request->user(), $community);
 
         return response()->json(['courses' => $query->execute($community, $request->user()->id)]);
     }
 
-    public function course(Request $request, Community $community, Course $course, GetCourseDetail $query): JsonResponse
+    public function course(Request $request, Community $community, Course $course, GetCourseDetail $query, MembershipAccessService $membership): JsonResponse
     {
-        $this->requireMembership($request, $community);
+        $membership->assertMembership($request->user(), $community);
 
         $detail       = $query->execute($course, $request->user()->id, true);
         $completedIds = $detail['completed_ids'];
@@ -110,12 +109,12 @@ class ClassroomController extends Controller
         abort_unless($request->user()->id === $community->owner_id, 403);
 
         $data = $request->validate([
-            'title'                    => ['required', 'string', 'max:255'],
-            'description'              => ['nullable', 'string', 'max:2000'],
-            'cover_image'              => ['nullable', 'image', 'max:10240'],
-            'access_type'              => ['nullable', 'in:free,inclusive,paid_once,paid_monthly'],
-            'price'                    => ['nullable', 'numeric', 'min:1'],
-            'affiliate_commission_rate'=> ['nullable', 'integer', 'min:0', 'max:100'],
+            'title'                     => ['required', 'string', 'max:255'],
+            'description'               => ['nullable', 'string', 'max:2000'],
+            'cover_image'               => ['nullable', 'image', 'max:10240'],
+            'access_type'               => ['nullable', 'in:free,inclusive,paid_once,paid_monthly'],
+            'price'                     => ['nullable', 'numeric', 'min:0'],
+            'affiliate_commission_rate' => ['nullable', 'integer', 'min:0', 'max:100'],
         ]);
 
         $course = $action->store($community, $data, $request->file('cover_image'));
@@ -128,12 +127,12 @@ class ClassroomController extends Controller
         abort_unless($request->user()->id === $community->owner_id, 403);
 
         $data = $request->validate([
-            'title'                    => ['required', 'string', 'max:255'],
-            'description'              => ['nullable', 'string', 'max:2000'],
-            'cover_image'              => ['nullable', 'image', 'max:10240'],
-            'access_type'              => ['nullable', 'in:free,inclusive,paid_once,paid_monthly'],
-            'price'                    => ['nullable', 'numeric', 'min:1'],
-            'affiliate_commission_rate'=> ['nullable', 'integer', 'min:0', 'max:100'],
+            'title'                     => ['required', 'string', 'max:255'],
+            'description'               => ['nullable', 'string', 'max:2000'],
+            'cover_image'               => ['nullable', 'image', 'max:10240'],
+            'access_type'               => ['nullable', 'in:free,inclusive,paid_once,paid_monthly'],
+            'price'                     => ['nullable', 'numeric', 'min:0'],
+            'affiliate_commission_rate' => ['nullable', 'integer', 'min:0', 'max:100'],
         ]);
 
         $action->update($course, $data, $request->file('cover_image'));
@@ -231,33 +230,5 @@ class ClassroomController extends Controller
         $action->reorder($module, $request->lesson_ids);
 
         return response()->json(['message' => 'Lessons reordered.']);
-    }
-
-    private function requireMembership(Request $request, Community $community): void
-    {
-        $user = $request->user();
-
-        if ($community->owner_id === $user->id) {
-            return;
-        }
-
-        if ($community->isFree()) {
-            abort_unless(
-                CommunityMember::where('community_id', $community->id)->where('user_id', $user->id)->exists(),
-                403,
-                'You must be a member of this community.'
-            );
-            return;
-        }
-
-        abort_unless(
-            Subscription::where('community_id', $community->id)
-                ->where('user_id', $user->id)
-                ->where('status', Subscription::STATUS_ACTIVE)
-                ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
-                ->exists(),
-            403,
-            'An active membership is required.'
-        );
     }
 }

@@ -344,7 +344,7 @@ class CommunityControllerTest extends TestCase
         $this->actingAs($owner, 'sanctum')
             ->getJson("/api/communities/{$community->slug}/analytics")
             ->assertOk()
-            ->assertJsonPath('revenue.affiliate_commission', 100);
+            ->assertJsonPath('revenue.affiliate_commission_earned', 100);
     }
 
     public function test_index_with_authenticated_user_flags_membership(): void

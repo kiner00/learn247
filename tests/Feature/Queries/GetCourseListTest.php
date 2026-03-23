@@ -188,7 +188,7 @@ class GetCourseListTest extends TestCase
         $reflection = new \ReflectionMethod(GetCourseList::class, 'resolveAccess');
         $reflection->setAccessible(true);
 
-        $result = $reflection->invoke($query, $course, false, false, collect());
+        $result = $reflection->invoke($query, $course, false, false, false, collect());
 
         $this->assertFalse($result);
     }

@@ -16,8 +16,14 @@ class CreatePost
     /** @throws AuthorizationException */
     public function execute(User $user, Community $community, array $data): Post
     {
-        if (! CommunityMember::where('community_id', $community->id)->where('user_id', $user->id)->exists()) {
+        $member = CommunityMember::where('community_id', $community->id)->where('user_id', $user->id)->first();
+
+        if (! $member) {
             throw new AuthorizationException('You must be a member to post in this community.');
+        }
+
+        if ($member->is_blocked) {
+            throw new AuthorizationException('You have been blocked from posting in this community.');
         }
 
         if (isset($data['image']) && $data['image'] instanceof UploadedFile) {

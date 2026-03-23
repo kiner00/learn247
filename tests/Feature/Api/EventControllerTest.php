@@ -140,7 +140,7 @@ class EventControllerTest extends TestCase
             'title'           => 'Public Event',
             'start_at'        => now()->addDay(),
             'end_at'          => now()->addDay()->addHour(),
-            'is_members_only' => false,
+            'visibility'      => 'public',
         ]);
 
         Event::create([
@@ -149,7 +149,7 @@ class EventControllerTest extends TestCase
             'title'           => 'Members Only Event',
             'start_at'        => now()->addDay(),
             'end_at'          => now()->addDay()->addHour(),
-            'is_members_only' => true,
+            'visibility'      => 'free',
         ]);
 
         $this->actingAs($outsider)
@@ -171,7 +171,7 @@ class EventControllerTest extends TestCase
             'title'           => 'Public Event',
             'start_at'        => now()->addDay(),
             'end_at'          => now()->addDay()->addHour(),
-            'is_members_only' => false,
+            'visibility'      => 'public',
         ]);
 
         Event::create([
@@ -180,7 +180,7 @@ class EventControllerTest extends TestCase
             'title'           => 'Members Only Event',
             'start_at'        => now()->addDay(),
             'end_at'          => now()->addDay()->addHour(),
-            'is_members_only' => true,
+            'visibility'      => 'free',
         ]);
 
         $this->actingAs($member)

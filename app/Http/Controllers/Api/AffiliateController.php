@@ -18,30 +18,13 @@ class AffiliateController extends Controller
         $user   = $request->user();
         $period = $request->get('period', 'month');
 
-        $affiliates = $query->getAffiliates($user);
-
-        $affiliatesMapped = $affiliates->map(fn ($a) => [
-            'id'              => $a->id,
-            'code'            => $a->code,
-            'status'          => $a->status,
-            'is_active'       => $a->isActive(),
-            'total_earned'    => (float) $a->total_earned,
-            'total_paid'      => (float) $a->total_paid,
-            'pending_amount'  => (float) $a->pendingAmount(),
-            'eligible_amount' => $eligibility->forAffiliate($a),
-            'referral_url'    => url("/ref/{$a->code}"),
-            'community'       => [
-                'name' => $a->community->name,
-                'slug' => $a->community->slug,
-            ],
-        ]);
-
+        $affiliates   = $query->mapForDashboard($user, $eligibility);
         $affiliateIds = $affiliates->pluck('id');
         $summary      = $query->summary($affiliateIds, $period);
         $conversions  = $query->conversions($affiliateIds, $period);
 
         return response()->json([
-            'affiliates'  => $affiliatesMapped,
+            'affiliates'  => $affiliates,
             'summary'     => $summary,
             'conversions' => $conversions,
             'period'      => $period,

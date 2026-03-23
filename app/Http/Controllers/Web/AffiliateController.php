@@ -9,7 +9,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Affiliate;
 use App\Models\AffiliateConversion;
 use App\Models\Community;
-use App\Models\PayoutRequest;
 use App\Queries\Affiliate\GetAffiliateDashboard;
 use App\Queries\Affiliate\GetAffiliateStats;
 use App\Queries\Payout\CalculateEligibility;
@@ -28,30 +27,7 @@ class AffiliateController extends Controller
         $communityId = $request->query('community');
         $tab         = $request->query('tab', 'links');
 
-        $activeRequestsByAffiliate = PayoutRequest::where('user_id', $user->id)
-            ->where('type', PayoutRequest::TYPE_AFFILIATE)
-            ->whereIn('status', [PayoutRequest::STATUS_PENDING, PayoutRequest::STATUS_APPROVED])
-            ->get()->keyBy('affiliate_id');
-
-        $rawAffiliates = $stats->getAffiliates($user);
-
-        $affiliates = $rawAffiliates->map(fn ($a) => [
-            'id'                    => $a->id,
-            'code'                  => $a->code,
-            'status'                => $a->status,
-            'is_active'             => $a->isActive(),
-            'total_earned'          => $a->total_earned,
-            'total_paid'            => $a->total_paid,
-            'pending_amount'        => $a->pendingAmount(),
-            'eligible_amount'       => $eligibility->forAffiliate($a),
-            'payout_request_status' => $activeRequestsByAffiliate->has($a->id) ? $activeRequestsByAffiliate->get($a->id)->status : null,
-            'referral_url'          => url("/ref/{$a->code}"),
-            'community'             => ['name' => $a->community->name, 'slug' => $a->community->slug],
-            'facebook_pixel_id'     => $a->facebook_pixel_id,
-            'tiktok_pixel_id'       => $a->tiktok_pixel_id,
-            'google_analytics_id'   => $a->google_analytics_id,
-        ]);
-
+        $affiliates      = $stats->mapForDashboard($user, $eligibility);
         $allAffiliateIds = $affiliates->pluck('id');
         $filteredIds = $communityId
             ? Affiliate::where('user_id', $user->id)->where('community_id', $communityId)->pluck('id')

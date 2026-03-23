@@ -14,18 +14,7 @@ class CourseAccessService
     public function hasAccess(?User $user, Community $community, Course $course): bool
     {
         if ($course->access_type === Course::ACCESS_FREE) {
-            if (! $user) {
-                return false;
-            }
-
-            if ($user->id === $community->owner_id || $user->isSuperAdmin()) {
-                return true;
-            }
-
-            return CommunityMember::where('community_id', $community->id)
-                ->where('user_id', $user->id)
-                ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
-                ->exists();
+            return true; // free courses are public — no auth required
         }
 
         if (! $user) {

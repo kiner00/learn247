@@ -5,10 +5,10 @@ namespace App\Http\Controllers\Web;
 use App\Actions\Feed\CreatePost;
 use App\Actions\Feed\DeletePost;
 use App\Actions\Feed\TogglePin;
+use App\Actions\Feed\UpdatePost;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CreatePostRequest;
 use App\Models\Community;
-use App\Models\CommunityMember;
 use App\Models\Post;
 use Illuminate\Http\RedirectResponse;
 
@@ -16,29 +16,19 @@ class PostController extends Controller
 {
     public function store(CreatePostRequest $request, Community $community, CreatePost $action): RedirectResponse
     {
-        $member = CommunityMember::where('community_id', $community->id)
-            ->where('user_id', $request->user()->id)
-            ->first();
-
-        if ($member?->is_blocked) {
-            return back()->withErrors(['blocked' => 'You have been blocked from posting in this community.']);
-        }
-
         $action->execute($request->user(), $community, $request->validated());
 
         return back();
     }
 
-    public function update(Post $post): RedirectResponse
+    public function update(Post $post, UpdatePost $action): RedirectResponse
     {
-        abort_unless(auth()->id() === $post->user_id, 403);
-
         $data = request()->validate([
             'title'   => 'nullable|string|max:255',
             'content' => 'required|string|max:10000',
         ]);
 
-        $post->update($data);
+        $action->execute(auth()->user(), $post, $data);
 
         return back();
     }

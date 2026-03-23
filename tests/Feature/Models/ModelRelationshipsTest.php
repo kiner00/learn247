@@ -557,7 +557,7 @@ class ModelRelationshipsTest extends TestCase
     public function test_community_invite_fillable(): void
     {
         $model = new CommunityInvite();
-        $expected = ['community_id', 'email', 'token', 'accepted_at', 'expires_at'];
+        $expected = ['community_id', 'email', 'token', 'accepted_at', 'expires_at', 'free_access_months'];
         $this->assertSame($expected, $model->getFillable());
     }
 

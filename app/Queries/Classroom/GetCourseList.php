@@ -73,7 +73,7 @@ class GetCourseList
         }
 
         if ($course->access_type === Course::ACCESS_FREE) {
-            return $isMember; // requires free or paid membership
+            return true; // free courses are public — no membership required
         }
 
         if ($course->access_type === Course::ACCESS_INCLUSIVE) {

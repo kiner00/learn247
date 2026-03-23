@@ -28,12 +28,12 @@ class OwnerEarningsCalculator
     {
         $payments = Payment::where('community_id', $community->id)
             ->where('status', Payment::STATUS_PAID)
-            ->selectRaw('SUM(amount) as gross, SUM(processing_fee) as processing_fee, SUM(platform_fee) as platform_fee')
+            ->selectRaw('SUM(amount) as gross, SUM(processing_fee) as processing_fee')
             ->first();
 
         $gross         = (float) $payments->gross;
         $processingFee = (float) $payments->processing_fee;
-        $platformFee   = (float) $payments->platform_fee;
+        $platformFee   = round($gross * $community->platformFeeRate(), 2);
 
         $affiliateCommission = (float) AffiliateConversion::whereHas(
             'affiliate', fn ($q) => $q->where('community_id', $community->id)

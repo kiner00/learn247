@@ -6,12 +6,12 @@ use App\Ai\Agents\LandingPageBuilder;
 use App\Actions\Community\CreateCommunity;
 use App\Actions\Community\EnsureMemberAffiliate;
 use App\Actions\Community\JoinCommunity;
-use App\Models\Affiliate;
 use App\Actions\Community\ManageGallery;
 use App\Actions\Community\SendAnnouncement;
 use App\Actions\Community\SendSmsBlast;
 use App\Services\Analytics\CommunityAnalyticsService;
 use App\Services\Community\CommunityChecklistService;
+use App\Services\Community\MembershipAccessService;
 use App\Services\Community\PlanLimitService;
 use App\Services\SmsService;
 use App\Actions\Community\UpdateCommunity;
@@ -22,8 +22,8 @@ use App\Models\Community;
 use App\Models\CommunityLevelPerk;
 use App\Models\CommunityMember;
 use App\Models\Comment;
-use App\Models\Subscription;
 use App\Queries\Community\GetFeaturedCommunities;
+use App\Queries\Community\GetInvitedByAffiliate;
 use App\Queries\Community\GetLeaderboard;
 use App\Queries\Community\ListCommunities;
 use App\Queries\Feed\GetCommunityFeed;
@@ -68,7 +68,7 @@ class CommunityController extends Controller
             ->with('success', 'Community created!');
     }
 
-    public function show(Community $community, GetLeaderboard $leaderboard, GetCommunityFeed $feed, CommunityChecklistService $checklistService, EnsureMemberAffiliate $ensureAffiliate): Response
+    public function show(Community $community, GetLeaderboard $leaderboard, GetCommunityFeed $feed, CommunityChecklistService $checklistService, EnsureMemberAffiliate $ensureAffiliate, MembershipAccessService $membershipService): Response
     {
         $this->authorize('view', $community);
 
@@ -78,19 +78,12 @@ class CommunityController extends Controller
 
         $membership = $userId ? $community->members()->where('user_id', $userId)->first() : null;
 
-        // For paid communities, free-only subscribers cannot post/comment/chat.
-        // Null out membership so the UI correctly hides those interactions.
-        if ($membership && !$community->isFree() && $membership->membership_type === CommunityMember::MEMBERSHIP_FREE) {
-            $hasActiveSub = Subscription::where('community_id', $community->id)
-                ->where('user_id', $userId)
-                ->where('status', Subscription::STATUS_ACTIVE)
-                ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
-                ->exists();
-
-            if (!$hasActiveSub) {
-                $membership = null;
-            }
+        // For paid communities, free-only members without an active subscription
+        // cannot post/comment/chat. Null out membership so the UI hides those interactions.
+        if ($membership && !$community->isFree() && !$membershipService->hasActiveMembership(auth()->user(), $community)) {
+            $membership = null;
         }
+
         $affiliate  = $userId ? $ensureAffiliate->execute($community, $userId) : null;
 
         $adminCount = $community->members()->where('role', CommunityMember::ROLE_ADMIN)->count();
@@ -382,7 +375,7 @@ class CommunityController extends Controller
         return back()->with('success', $msg);
     }
 
-    public function about(Request $request, Community $community): Response
+    public function about(Request $request, Community $community, GetInvitedByAffiliate $invitedByQuery): Response
     {
         $community->load('owner')->loadCount('members');
         $affiliate = auth()->id() ? $community->affiliates()->where('user_id', auth()->id())->first() : null;
@@ -394,39 +387,26 @@ class CommunityController extends Controller
         $membership = auth()->id() ? $community->members()->where('user_id', auth()->id())->first() : null;
         $isOwner    = auth()->id() === $community->owner_id;
 
-        $invitedBy = null;
-        $refCode   = $request->cookie('ref_code');
-        if ($refCode && !$membership && !$isOwner) {
-            $refAffiliate = Affiliate::where('code', $refCode)->where('community_id', $community->id)
-                ->where('status', Affiliate::STATUS_ACTIVE)->with('user:id,name,avatar')->first();
-            if ($refAffiliate) {
-                $invitedBy = [
-                    'name'                => $refAffiliate->user->name,
-                    'avatar'              => $refAffiliate->user->avatar,
-                    'code'                => $refCode,
-                    'facebook_pixel_id'   => $refAffiliate->facebook_pixel_id,
-                    'tiktok_pixel_id'     => $refAffiliate->tiktok_pixel_id,
-                    'google_analytics_id' => $refAffiliate->google_analytics_id,
-                ];
-            }
-        }
+        $invitedBy  = (!$membership && !$isOwner)
+            ? $invitedByQuery->execute($community, $request->cookie('ref_code'))
+            : null;
 
         $ownerIsPro = in_array($community->owner?->creatorPlan(), ['basic', 'pro']);
 
         return Inertia::render('Communities/About', compact('community', 'affiliate', 'invitedBy', 'membership', 'recentMembers', 'ownerIsPro', 'isOwner'));
     }
 
-    public function landing(Request $request, Community $community): Response
+    public function landing(Request $request, Community $community, GetInvitedByAffiliate $invitedByQuery): Response
     {
         $community->load('owner')->loadCount('members');
 
-        $membership  = auth()->id() ? $community->members()->where('user_id', auth()->id())->first() : null;
-        $ownerIsPro  = in_array($community->owner?->creatorPlan(), ['basic', 'pro']);
-        $isOwner     = auth()->id() === $community->owner_id;
+        $membership = auth()->id() ? $community->members()->where('user_id', auth()->id())->first() : null;
+        $ownerIsPro = in_array($community->owner?->creatorPlan(), ['basic', 'pro']);
+        $isOwner    = auth()->id() === $community->owner_id;
+        $refCode    = $request->query('ref') ?? $request->cookie('ref_code');
 
         // Redirect non-owners to About if no landing page has been generated yet
         if (!$isOwner && empty($community->landing_page)) {
-            $refCode = $request->query('ref') ?? $request->cookie('ref_code');
             $redirect = route('communities.about', $community->slug);
             if ($refCode) {
                 Cookie::queue('ref_code', $refCode, 60 * 24 * 30);
@@ -435,33 +415,13 @@ class CommunityController extends Controller
             return redirect($redirect);
         }
 
-        $affiliate = null;
-        $invitedBy = null;
-        $refCode   = $request->query('ref') ?? $request->cookie('ref_code');
+        $invitedBy = (!$membership && !$isOwner)
+            ? $invitedByQuery->execute($community, $refCode)
+            : null;
 
-        if ($refCode && !$membership && !$isOwner) {
-            $refAffiliate = Affiliate::where('code', $refCode)
-                ->where('community_id', $community->id)
-                ->where('status', Affiliate::STATUS_ACTIVE)
-                ->with('user:id,name,avatar')
-                ->first();
-
-            if ($refAffiliate) {
-                $affiliate = $refAffiliate;
-                $invitedBy = [
-                    'name'                => $refAffiliate->user->name,
-                    'avatar'              => $refAffiliate->user->avatar,
-                    'code'                => $refCode,
-                    'facebook_pixel_id'   => $refAffiliate->facebook_pixel_id,
-                    'tiktok_pixel_id'     => $refAffiliate->tiktok_pixel_id,
-                    'google_analytics_id' => $refAffiliate->google_analytics_id,
-                ];
-            }
-        }
-
-        if (!$affiliate && auth()->id()) {
-            $affiliate = $community->affiliates()->where('user_id', auth()->id())->first();
-        }
+        $affiliate = $invitedBy
+            ? $community->affiliates()->where('code', $refCode)->first()
+            : (auth()->id() ? $community->affiliates()->where('user_id', auth()->id())->first() : null);
 
         $response = Inertia::render('Communities/Landing', compact(
             'community', 'affiliate', 'invitedBy', 'membership', 'ownerIsPro', 'isOwner'

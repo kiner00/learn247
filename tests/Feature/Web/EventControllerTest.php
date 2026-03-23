@@ -56,7 +56,7 @@ class EventControllerTest extends TestCase
             'start_at'       => $startAt,
             'end_at'         => $startAt->copy()->addHours(1),
             'timezone'       => 'UTC',
-            'is_members_only' => false,
+            'visibility'     => 'public',
         ]);
         Event::create([
             'community_id'   => $community->id,
@@ -65,7 +65,7 @@ class EventControllerTest extends TestCase
             'start_at'       => $startAt->copy()->addHours(2),
             'end_at'         => $startAt->copy()->addHours(3),
             'timezone'       => 'UTC',
-            'is_members_only' => true,
+            'visibility'     => 'free',
         ]);
 
         $response = $this->get("/communities/{$community->slug}/calendar");
@@ -95,7 +95,7 @@ class EventControllerTest extends TestCase
             'start_at'        => $startAt,
             'end_at'          => $startAt->copy()->addHours(1),
             'timezone'        => 'UTC',
-            'is_members_only' => false,
+            'visibility'      => 'public',
         ]);
         Event::create([
             'community_id'    => $community->id,
@@ -104,7 +104,7 @@ class EventControllerTest extends TestCase
             'start_at'        => $startAt->copy()->addHours(2),
             'end_at'          => $startAt->copy()->addHours(3),
             'timezone'        => 'UTC',
-            'is_members_only' => true,
+            'visibility'      => 'free',
         ]);
 
         $response = $this->actingAs($member)->get("/communities/{$community->slug}/calendar");
@@ -128,7 +128,7 @@ class EventControllerTest extends TestCase
             'start_at'        => $startAt,
             'end_at'          => $startAt->copy()->addHours(1),
             'timezone'        => 'UTC',
-            'is_members_only' => true,
+            'visibility'      => 'free',
         ]);
 
         $response = $this->actingAs($owner)->get("/communities/{$community->slug}/calendar");
@@ -154,7 +154,7 @@ class EventControllerTest extends TestCase
             'start_at'       => $startAt,
             'end_at'         => $startAt->copy()->addHours(1),
             'timezone'       => 'UTC',
-            'is_members_only' => false,
+            'visibility'     => 'public',
         ]);
 
         $response = $this->get("/communities/{$community->slug}/calendar?year={$year}&month={$month}");

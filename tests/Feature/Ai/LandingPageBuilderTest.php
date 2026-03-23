@@ -56,9 +56,9 @@ class LandingPageBuilderTest extends TestCase
         $agent        = new LandingPageBuilder(['name' => 'Test']);
         $instructions = $agent->instructions();
 
-        $this->assertStringContainsString('"tagline"', $instructions);
-        $this->assertStringContainsString('"description"', $instructions);
-        $this->assertStringContainsString('"cta"', $instructions);
+        $this->assertStringContainsString('"headline"', $instructions);
+        $this->assertStringContainsString('"benefits"', $instructions);
+        $this->assertStringContainsString('"cta_label"', $instructions);
     }
 
     public function test_instructions_mention_max_character_limits(): void
@@ -87,7 +87,7 @@ class LandingPageBuilderTest extends TestCase
         $agent        = new LandingPageBuilder(['name' => 'Test']);
         $instructions = $agent->instructions();
 
-        $this->assertStringContainsString('not invent', $instructions);
+        $this->assertStringContainsString('specific', $instructions);
     }
 
     public function test_instructions_require_active_voice(): void

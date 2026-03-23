@@ -8,18 +8,17 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\SendMessageRequest;
 use App\Http\Resources\ChatMessageResource;
 use App\Models\Community;
-use App\Models\CommunityMember;
 use App\Models\Message;
-use App\Models\Subscription;
 use App\Queries\Chat\GetChatMessages;
+use App\Services\Community\MembershipAccessService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ChatController extends Controller
 {
-    public function index(Request $request, Community $community, GetChatMessages $query): JsonResponse
+    public function index(Request $request, Community $community, GetChatMessages $query, MembershipAccessService $membership): JsonResponse
     {
-        $this->requireMembership($request, $community);
+        $membership->assertMembership($request->user(), $community);
 
         $userId = $request->user()->id;
         $after  = (int) $request->query('after', 0);
@@ -35,9 +34,9 @@ class ChatController extends Controller
         ]);
     }
 
-    public function store(SendMessageRequest $request, Community $community, SendChatMessage $action): JsonResponse
+    public function store(SendMessageRequest $request, Community $community, SendChatMessage $action, MembershipAccessService $membership): JsonResponse
     {
-        $this->requireMembership($request, $community);
+        $membership->assertMembership($request->user(), $community);
 
         $message = $action->execute($request->user(), $community, $request->validated()['content']);
 
@@ -46,9 +45,9 @@ class ChatController extends Controller
         ], 201);
     }
 
-    public function poll(Request $request, Community $community, GetChatMessages $query): JsonResponse
+    public function poll(Request $request, Community $community, GetChatMessages $query, MembershipAccessService $membership): JsonResponse
     {
-        $this->requireMembership($request, $community);
+        $membership->assertMembership($request->user(), $community);
 
         $after    = (int) $request->query('after', 0);
         $messages = $query->after($community, $after)->map(fn ($m) => [
@@ -67,40 +66,12 @@ class ChatController extends Controller
         return response()->json(['messages' => $messages]);
     }
 
-    public function destroy(Request $request, Community $community, Message $message, DeleteChatMessage $action): JsonResponse
+    public function destroy(Request $request, Community $community, Message $message, DeleteChatMessage $action, MembershipAccessService $membership): JsonResponse
     {
-        $this->requireMembership($request, $community);
+        $membership->assertMembership($request->user(), $community);
 
         $action->execute($request->user(), $community, $message);
 
         return response()->json(['deleted' => $message->id]);
-    }
-
-    private function requireMembership(Request $request, Community $community): void
-    {
-        $user = $request->user();
-
-        if ($community->owner_id === $user->id) {
-            return;
-        }
-
-        if ($community->isFree()) {
-            abort_unless(
-                CommunityMember::where('community_id', $community->id)->where('user_id', $user->id)->exists(),
-                403,
-                'You must be a member of this community.'
-            );
-            return;
-        }
-
-        abort_unless(
-            Subscription::where('community_id', $community->id)
-                ->where('user_id', $user->id)
-                ->where('status', Subscription::STATUS_ACTIVE)
-                ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
-                ->exists(),
-            403,
-            'An active membership is required.'
-        );
     }
 }
