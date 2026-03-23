@@ -194,7 +194,23 @@ class CommunityController extends Controller
             ],
         ]);
 
+        // Capture old value before the update so we can diff
+        $oldCustomDomain = $community->custom_domain;
+
         $action->execute($community, $data, $request->file('avatar'), $request->file('cover_image'));
+
+        // Sync custom domain with Ploi (only when it actually changed)
+        $newCustomDomain = $community->fresh()->custom_domain;
+
+        if ($oldCustomDomain !== $newCustomDomain) {
+            if ($oldCustomDomain) {
+                \App\Jobs\RemoveCustomDomain::dispatch($oldCustomDomain);
+            }
+            if ($newCustomDomain) {
+                // Delay slightly — DNS propagation needs time before cert request succeeds
+                \App\Jobs\ProvisionCustomDomain::dispatch($newCustomDomain)->delay(now()->addMinutes(2));
+            }
+        }
 
         return back()->with('success', 'Community updated.');
     }
@@ -396,6 +412,47 @@ class CommunityController extends Controller
         return Inertia::render('Communities/About', compact('community', 'affiliate', 'invitedBy', 'membership', 'recentMembers', 'ownerIsPro'));
     }
 
+    public function landing(Request $request, Community $community): Response
+    {
+        $community->load('owner')->loadCount('members');
+
+        $affiliate = null;
+        $invitedBy = null;
+        $refCode   = $request->cookie('ref_code');
+
+        if ($refCode) {
+            $refAffiliate = Affiliate::where('code', $refCode)
+                ->where('community_id', $community->id)
+                ->where('status', Affiliate::STATUS_ACTIVE)
+                ->with('user:id,name,avatar')
+                ->first();
+
+            if ($refAffiliate) {
+                $affiliate = $refAffiliate;
+                $invitedBy = [
+                    'name'                => $refAffiliate->user->name,
+                    'avatar'              => $refAffiliate->user->avatar,
+                    'code'                => $refCode,
+                    'facebook_pixel_id'   => $refAffiliate->facebook_pixel_id,
+                    'tiktok_pixel_id'     => $refAffiliate->tiktok_pixel_id,
+                    'google_analytics_id' => $refAffiliate->google_analytics_id,
+                ];
+            }
+        }
+
+        if (!$affiliate && auth()->id()) {
+            $affiliate = $community->affiliates()->where('user_id', auth()->id())->first();
+        }
+
+        $membership  = auth()->id() ? $community->members()->where('user_id', auth()->id())->first() : null;
+        $ownerIsPro  = in_array($community->owner?->creatorPlan(), ['basic', 'pro']);
+        $isOwner     = auth()->id() === $community->owner_id;
+
+        return Inertia::render('Communities/Landing', compact(
+            'community', 'affiliate', 'invitedBy', 'membership', 'ownerIsPro', 'isOwner'
+        ));
+    }
+
     public function generateLandingPage(Request $request, Community $community): \Illuminate\Http\JsonResponse
     {
         $user = $request->user();
@@ -404,26 +461,28 @@ class CommunityController extends Controller
             abort(403);
         }
 
-        if (!$user->hasActiveCreatorPlan()) {
-            return response()->json(['error' => 'Creator Pro required.'], 403);
-        }
-
         try {
-            $agent  = new LandingPageBuilder([
-                'name'        => $community->name,
-                'category'    => $community->category,
-                'description' => $community->description,
+            $agent = new LandingPageBuilder([
+                'name'         => $community->name,
+                'category'     => $community->category,
+                'description'  => $community->description,
+                'price'        => $community->price,
+                'currency'     => $community->currency ?? 'PHP',
+                'creator_name' => $user->name,
+                'member_count' => $community->members_count ?? $community->members()->count(),
             ]);
 
             $response = $agent->forUser($user)->prompt(
-                'Generate the landing page copy now. Return only valid JSON.'
+                'Generate the full funnel landing page now. Return only valid JSON.'
             );
 
             $copy = json_decode($response->text, true);
 
-            if (!$copy || !isset($copy['tagline'], $copy['description'], $copy['cta'])) {
+            if (!$copy || !isset($copy['hero'], $copy['benefits'], $copy['faq'])) {
                 return response()->json(['error' => 'AI returned an unexpected format. Please try again.'], 422);
             }
+
+            $community->update(['landing_page' => $copy]);
 
             return response()->json($copy);
         } catch (\Throwable $e) {

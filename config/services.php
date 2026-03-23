@@ -41,4 +41,10 @@ return [
         'callback_token' => env('XENDIT_CALLBACK_TOKEN'),
     ],
 
+    'ploi' => [
+        'token'     => env('PLOI_API_TOKEN'),
+        'server_id' => env('PLOI_SERVER_ID'),
+        'site_id'   => env('PLOI_SITE_ID'),
+    ],
+
 ];

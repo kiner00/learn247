@@ -155,6 +155,7 @@ Route::middleware('auth')->prefix('account')->group(function () {
 Route::get('/communities', [CommunityController::class, 'index'])->name('communities.index');
 Route::get('/communities/{community}', [CommunityController::class, 'show'])->name('communities.show');
 Route::get('/communities/{community}/about', [CommunityController::class, 'about'])->name('communities.about');
+Route::get('/communities/{community}/landing', [CommunityController::class, 'landing'])->name('communities.landing');
 Route::get('/communities/{community}/calendar', [EventController::class, 'index'])->name('communities.calendar');
 
 // ─── Classroom (public read) ───────────────────────────────────────────────
