@@ -16,7 +16,7 @@ class Community extends Model
     public const BILLING_ONE_TIME = 'one_time';
 
     protected $fillable = [
-        'name', 'slug', 'owner_id', 'description', 'category',
+        'name', 'slug', 'subdomain', 'custom_domain', 'owner_id', 'description', 'category',
         'avatar', 'cover_image', 'gallery_images', 'is_private', 'price', 'currency',
         'billing_type', 'affiliate_commission_rate',
         'facebook_pixel_id', 'tiktok_pixel_id', 'google_analytics_id',
@@ -108,6 +108,26 @@ class Community extends Model
     public function hasAffiliateProgram(): bool
     {
         return $this->affiliate_commission_rate !== null && $this->affiliate_commission_rate > 0;
+    }
+
+    /** Returns the preferred public URL for this community. */
+    public function url(): string
+    {
+        if ($this->custom_domain) {
+            return 'https://' . $this->custom_domain;
+        }
+
+        $appUrl  = rtrim(config('app.url'), '/');
+        $appHost = parse_url($appUrl, PHP_URL_HOST) ?? '';
+        // Strip port for the subdomain host
+        $bareHost = explode(':', $appHost)[0];
+
+        if ($this->subdomain && $bareHost) {
+            $scheme = parse_url($appUrl, PHP_URL_SCHEME) ?? 'https';
+            return $scheme . '://' . $this->subdomain . '.' . $bareHost;
+        }
+
+        return $appUrl . '/communities/' . $this->slug;
     }
 
     public function isPendingDeletion(): bool

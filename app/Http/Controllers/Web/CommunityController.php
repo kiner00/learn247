@@ -29,6 +29,7 @@ use App\Queries\Community\ListCommunities;
 use App\Queries\Feed\GetCommunityFeed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -146,15 +147,24 @@ class CommunityController extends Controller
         $pricingGate        = $planLimit->pricingGate($community);
         $levelPerks         = CommunityLevelPerk::where('community_id', $community->id)->pluck('description', 'level')->toArray();
         $canUseIntegrations = $planLimit->canSendAnnouncement(auth()->user());
+        $isPro              = auth()->user()->creatorPlan() === 'pro';
 
-        return Inertia::render('Communities/Settings', compact('community', 'pricingGate', 'levelPerks', 'canUseIntegrations'));
+        // Base domain shown in the subdomain preview (strips port for display)
+        $appHost    = parse_url(config('app.url'), PHP_URL_HOST) ?? 'curzzo.com';
+        $baseDomain = explode(':', $appHost)[0];
+
+        return Inertia::render('Communities/Settings', compact(
+            'community', 'pricingGate', 'levelPerks', 'canUseIntegrations', 'isPro', 'baseDomain'
+        ));
     }
 
     public function update(Request $request, Community $community, UpdateCommunity $action): RedirectResponse
     {
         $this->authorize('update', $community);
 
-        $canUseIntegrations = in_array($request->user()->creatorPlan(), ['basic', 'pro']);
+        $plan               = $request->user()->creatorPlan();
+        $canUseIntegrations = in_array($plan, ['basic', 'pro']);
+        $isPro              = $plan === 'pro';
 
         $data = $request->validate([
             'name'                     => ['required', 'string', 'max:255'],
@@ -170,6 +180,18 @@ class CommunityController extends Controller
             'facebook_pixel_id'         => $canUseIntegrations ? ['nullable', 'string', 'max:30', 'regex:/^\d+$/'] : ['prohibited'],
             'tiktok_pixel_id'           => $canUseIntegrations ? ['nullable', 'string', 'max:30', 'regex:/^[A-Z0-9]+$/i'] : ['prohibited'],
             'google_analytics_id'       => $canUseIntegrations ? ['nullable', 'string', 'max:20', 'regex:/^G-[A-Z0-9]+$/i'] : ['prohibited'],
+            // Domain fields
+            'subdomain'    => [
+                'nullable', 'string', 'max:63',
+                'regex:/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/',
+                Rule::unique('communities', 'subdomain')->ignore($community->id),
+            ],
+            'custom_domain' => [
+                Rule::prohibitedIf(! $isPro),
+                'nullable', 'string', 'max:253',
+                'regex:/^([a-z0-9]([a-z0-9\-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/',
+                Rule::unique('communities', 'custom_domain')->ignore($community->id),
+            ],
         ]);
 
         $action->execute($community, $data, $request->file('avatar'), $request->file('cover_image'));

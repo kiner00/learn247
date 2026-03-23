@@ -12,6 +12,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Resolve custom/subdomain before anything else so route matching sees the rewritten URI
+        $middleware->prepend(\App\Http\Middleware\ResolveCustomDomain::class);
+
         $middleware->validateCsrfTokens(except: ['webhooks/*']);
 
         // Inertia: encrypt sessions and share flash data
