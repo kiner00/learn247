@@ -64,7 +64,7 @@
             </div>
             <h1 class="text-2xl font-black text-white mb-2">{{ community.name }}</h1>
             <p class="text-slate-400 mb-6">{{ community.description || 'Join this community today.' }}</p>
-            <button @click="showJoinModal = true"
+            <button @click="handleCta"
                 class="px-8 py-3 bg-amber-400 hover:bg-amber-500 text-gray-900 font-black rounded-2xl transition uppercase tracking-wide">
                 {{ community.price > 0 ? `Join · ₱${Number(community.price).toLocaleString()}` : 'Join for Free' }}
             </button>
@@ -109,7 +109,7 @@
                     {{ lp.hero.subheadline }}
                 </p>
 
-                <button @click="showJoinModal = true"
+                <button @click="handleCta"
                     class="inline-flex items-center gap-2 px-10 py-4 bg-amber-400 hover:bg-amber-500 text-gray-900 font-black text-lg rounded-2xl transition-all shadow-xl shadow-amber-500/30 uppercase tracking-wide hover:scale-105 active:scale-95">
                     {{ lp.hero.cta_label }}
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -269,7 +269,7 @@
                 <p class="text-slate-400 mb-8 leading-relaxed">
                     {{ lp.cta_section?.subtext ?? 'Start your journey. Cancel anytime.' }}
                 </p>
-                <button @click="showJoinModal = true"
+                <button @click="handleCta"
                     class="inline-flex items-center gap-2 px-10 py-4 bg-amber-400 hover:bg-amber-500 text-gray-900 font-black text-lg rounded-2xl transition-all shadow-xl shadow-amber-500/20 uppercase tracking-wide hover:scale-105 active:scale-95">
                     {{ lp.cta_section?.cta_label ?? lp.hero.cta_label }}
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -478,6 +478,15 @@ async function generate() {
     } finally {
         generating.value = false;
     }
+}
+
+// ── CTA handler ──────────────────────────────────────────────────────────────
+function handleCta() {
+    if (props.membership || props.isOwner) {
+        window.location.href = `/communities/${props.community.slug}`;
+        return;
+    }
+    showJoinModal.value = true;
 }
 
 // ── Join form ────────────────────────────────────────────────────────────────
