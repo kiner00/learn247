@@ -476,9 +476,20 @@ class CommunityController extends Controller
                 'Generate the full funnel landing page now. Return only valid JSON.'
             );
 
-            $copy = json_decode($response->text, true);
+            $raw  = trim($response->text);
+
+            // Strip markdown code fences if AI wrapped the JSON
+            $raw = preg_replace('/^```(?:json)?\s*/i', '', $raw);
+            $raw = preg_replace('/\s*```$/', '', $raw);
+
+            $copy = json_decode($raw, true);
 
             if (!$copy || !isset($copy['hero'], $copy['benefits'], $copy['faq'])) {
+                \Log::warning('LandingPageBuilder unexpected format', [
+                    'community' => $community->slug,
+                    'raw'       => substr($raw, 0, 500),
+                ]);
+
                 return response()->json(['error' => 'AI returned an unexpected format. Please try again.'], 422);
             }
 
