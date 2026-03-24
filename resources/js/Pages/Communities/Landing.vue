@@ -83,7 +83,7 @@
                 <label title="Text color" class="relative w-8 h-7 flex items-center justify-center rounded hover:bg-white/20 transition cursor-pointer select-none">
                     <span class="text-sm font-bold" :style="{ color: activeColor }">A</span>
                     <span class="absolute bottom-1 left-1.5 right-1.5 h-0.5 rounded" :style="{ background: activeColor }"></span>
-                    <input type="color" v-model="activeColor" @input="execFmt('foreColor', activeColor)" class="absolute inset-0 opacity-0 w-full h-full cursor-pointer" />
+                    <input type="color" v-model="activeColor" @input="execFmt('foreColor', activeColor)" @mousedown.stop class="absolute inset-0 opacity-0 w-full h-full cursor-pointer" />
                 </label>
                 <div class="w-px h-4 bg-white/20 mx-1" />
                 <!-- Align -->
@@ -332,6 +332,27 @@
                                         <div>
                                             <label class="field-label">Price Note <span class="text-gray-400 font-normal">(e.g. /month)</span></label>
                                             <input v-model="editDraft.offer_stack.price_note" type="text" placeholder="/month" class="field-input" />
+                                        </div>
+                                    </template>
+                                </template>
+
+                                <!-- INCLUDED COURSES -->
+                                <template v-if="sec.type === 'included_courses'">
+                                    <div v-if="!props.courses.length" class="text-xs text-gray-500 italic">
+                                        No published inclusive courses yet. Add courses in the Classroom with access type "Inclusive".
+                                    </div>
+                                    <template v-else>
+                                        <div>
+                                            <label class="field-label">Section Headline</label>
+                                            <input v-model="editDraft.included_courses_headline" type="text" placeholder="Everything included in your membership" class="field-input" />
+                                        </div>
+                                        <p class="text-xs text-gray-400">Courses are pulled automatically from your Classroom (inclusive access type).</p>
+                                        <div v-for="c in props.courses" :key="c.id" class="flex items-center gap-3 bg-white rounded-xl p-3 border border-gray-200">
+                                            <div class="w-10 h-10 rounded-lg overflow-hidden shrink-0 bg-indigo-100 flex items-center justify-center text-lg">
+                                                <img v-if="c.cover_image" :src="c.cover_image" class="w-full h-full object-cover" />
+                                                <span v-else>🎓</span>
+                                            </div>
+                                            <p class="text-sm font-medium text-gray-800 truncate">{{ c.title }}</p>
                                         </div>
                                     </template>
                                 </template>
@@ -778,6 +799,33 @@
             </div>
         </section>
 
+        <!-- ── INCLUDED COURSES ── -->
+        <section v-if="isVisible('included_courses') && props.courses.length" class="py-24 bg-gray-50">
+            <div class="max-w-5xl mx-auto px-6">
+                <h2 class="text-3xl sm:text-4xl font-black text-gray-900 text-center mb-4">
+                    {{ lp?.included_courses_headline || 'Everything included in your membership' }}
+                </h2>
+                <p class="text-center text-gray-500 mb-12">All courses below are unlocked the moment you join.</p>
+                <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div v-for="course in props.courses" :key="course.id"
+                        class="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm flex flex-col">
+                        <div class="aspect-video bg-indigo-100 overflow-hidden">
+                            <img v-if="course.cover_image" :src="course.cover_image" class="w-full h-full object-cover" />
+                            <div v-else class="w-full h-full flex items-center justify-center text-4xl">🎓</div>
+                        </div>
+                        <div class="p-5 flex flex-col flex-1">
+                            <h3 class="font-bold text-gray-900 text-base mb-1">{{ course.title }}</h3>
+                            <p v-if="course.description" class="text-gray-500 text-sm leading-relaxed line-clamp-2 flex-1">{{ course.description }}</p>
+                            <span class="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full self-start">
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                                Included
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- ── PRICE JUSTIFICATION ── -->
         <section v-if="isVisible('price_justification') && lp.price_justification" class="py-20 bg-gray-50">
             <div class="max-w-2xl mx-auto px-6">
@@ -1005,6 +1053,7 @@ const SECTION_DEFS = {
     creator:              { label: 'Authority / Creator',  icon: '👤' },
     testimonials:         { label: 'Testimonials',         icon: '⭐' },
     offer_stack:          { label: 'Offer Stack',          icon: '💎' },
+    included_courses:     { label: 'Included Courses',     icon: '🎓' },
     price_justification:  { label: 'Price Justification',  icon: '💰' },
     guarantee:            { label: 'Guarantee',            icon: '🛡️' },
     faq:                  { label: 'FAQ',                  icon: '❓' },
@@ -1013,7 +1062,7 @@ const SECTION_DEFS = {
 
 const DEFAULT_SECTION_ORDER = [
     'hero', 'social_proof', 'benefits', 'for_you', 'creator',
-    'testimonials', 'offer_stack', 'price_justification', 'guarantee',
+    'testimonials', 'offer_stack', 'included_courses', 'price_justification', 'guarantee',
     'faq', 'cta_section',
 ];
 
@@ -1025,6 +1074,7 @@ const props = defineProps({
     membership: Object,
     ownerIsPro: { type: Boolean, default: false },
     isOwner:    { type: Boolean, default: false },
+    courses:    { type: Array, default: () => [] },
 });
 
 // ── State ─────────────────────────────────────────────────────────────────────

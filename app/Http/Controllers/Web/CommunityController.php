@@ -401,6 +401,7 @@ class CommunityController extends Controller
     public function landing(Request $request, Community $community, GetInvitedByAffiliate $invitedByQuery): Response
     {
         $community->load('owner')->loadCount('members');
+        $community->load(['courses' => fn ($q) => $q->where('is_published', true)->where('access_type', 'inclusive')]);
 
         $membership = auth()->id() ? $community->members()->where('user_id', auth()->id())->first() : null;
         $ownerIsPro = in_array($community->owner?->creatorPlan(), ['basic', 'pro']);
@@ -425,8 +426,9 @@ class CommunityController extends Controller
             ? $community->affiliates()->where('code', $refCode)->first()
             : (auth()->id() ? $community->affiliates()->where('user_id', auth()->id())->first() : null);
 
+        $courses = $community->courses->values();
         $inertia = Inertia::render('Communities/Landing', compact(
-            'community', 'affiliate', 'invitedBy', 'membership', 'ownerIsPro', 'isOwner'
+            'community', 'affiliate', 'invitedBy', 'membership', 'ownerIsPro', 'isOwner', 'courses'
         ));
 
         // Persist ?ref= query param as a cookie so it carries through to checkout
