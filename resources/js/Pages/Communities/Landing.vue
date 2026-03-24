@@ -90,10 +90,10 @@
                                 <button
                                     @click.stop="regenSection(sec.type)"
                                     :disabled="regenLoading === sec.type"
-                                    title="Regenerate with AI"
-                                    class="w-7 h-7 flex items-center justify-center rounded-md bg-indigo-50 hover:bg-indigo-100 text-indigo-600 transition disabled:opacity-40 shrink-0">
-                                    <svg v-if="regenLoading === sec.type" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
-                                    <svg v-else class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>
+                                    class="flex items-center gap-1 px-2 py-1 rounded-md bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-xs font-semibold transition disabled:opacity-40 shrink-0">
+                                    <svg v-if="regenLoading === sec.type" class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+                                    <svg v-else class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>
+                                    {{ regenLoading === sec.type ? 'AI…' : 'AI' }}
                                 </button>
 
                                 <!-- Remove (only for non-core sections) -->
@@ -367,20 +367,30 @@
                             </div>
                         </div>
 
-                        <!-- Add section button -->
-                        <div class="p-4">
-                            <div v-if="availableSectionsToAdd.length > 0">
-                                <p class="text-xs text-gray-400 font-medium uppercase tracking-wide mb-2">Add Section</p>
-                                <div class="flex flex-wrap gap-2">
-                                    <button
-                                        v-for="type in availableSectionsToAdd" :key="type"
-                                        @click="addSection(type)"
-                                        class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-gray-100 hover:bg-indigo-50 hover:text-indigo-700 text-gray-600 rounded-lg border border-gray-200 hover:border-indigo-200 transition">
-                                        <span>{{ SECTION_DEFS[type]?.icon }}</span>
-                                        {{ SECTION_DEFS[type]?.label }}
-                                    </button>
-                                </div>
+                    </div>
+
+                    <!-- Sticky footer: Add Section -->
+                    <div class="shrink-0 border-t border-gray-100 bg-white">
+                        <!-- collapsed toggle -->
+                        <button @click="showAddSection = !showAddSection"
+                            class="w-full flex items-center justify-between px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition">
+                            <span class="flex items-center gap-2">
+                                <svg class="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                                Add Section
+                            </span>
+                            <svg class="w-4 h-4 text-gray-400 transition-transform" :class="showAddSection ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div v-if="showAddSection" class="px-5 pb-4">
+                            <div v-if="availableSectionsToAdd.length > 0" class="flex flex-wrap gap-2">
+                                <button
+                                    v-for="type in availableSectionsToAdd" :key="type"
+                                    @click="addSection(type)"
+                                    class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-gray-100 hover:bg-indigo-50 hover:text-indigo-700 text-gray-600 rounded-lg border border-gray-200 hover:border-indigo-200 transition">
+                                    <span>{{ SECTION_DEFS[type]?.icon }}</span>
+                                    {{ SECTION_DEFS[type]?.label }}
+                                </button>
                             </div>
+                            <p v-else class="text-xs text-gray-400">All sections are already added. Remove a section above to re-add it.</p>
                         </div>
                     </div>
 
@@ -886,6 +896,7 @@ const editDraft      = ref({});
 const expandedSection = ref(null);
 const regenLoading   = ref(null);
 const uploadLoading  = ref(null);
+const showAddSection  = ref(false);
 
 // ── Section visibility helpers ────────────────────────────────────────────────
 function isVisible(type) {
