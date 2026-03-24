@@ -1221,7 +1221,11 @@ async function generateLandingPage() {
     aiError.value      = '';
     try {
         const { data } = await axios.post(`/communities/${props.community.slug}/ai-landing`);
-        aiCopy.value = data;
+        aiCopy.value = {
+            tagline:     data.hero?.headline,
+            description: data.hero?.subheadline,
+            cta:         data.hero?.cta_label,
+        };
     } catch (e) {
         aiError.value = e?.response?.data?.error ?? 'Something went wrong. Please try again.';
     } finally {

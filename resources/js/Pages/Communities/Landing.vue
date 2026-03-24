@@ -82,8 +82,8 @@
                                     <input v-model="editDraft.hero.cta_label" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-600 mb-1">VSL Video URL <span class="text-gray-400 font-normal">(optional — YouTube or Vimeo embed link)</span></label>
-                                    <input v-model="editDraft.hero.vsl_url" type="url" placeholder="https://www.youtube.com/embed/..." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                    <label class="block text-xs font-medium text-gray-600 mb-1">VSL Video URL <span class="text-gray-400 font-normal">(optional — YouTube, Google Drive, or Vimeo link)</span></label>
+                                    <input v-model="editDraft.hero.vsl_url" type="url" placeholder="https://www.youtube.com/watch?v=... or drive.google.com/..." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                                 </div>
                             </div>
                         </section>
@@ -293,19 +293,11 @@
                     {{ lp.hero.subheadline }}
                 </p>
 
-                <button @click="handleCta"
-                    class="inline-flex items-center gap-2 px-10 py-4 bg-amber-400 hover:bg-amber-500 text-gray-900 font-black text-lg rounded-2xl transition-all shadow-xl shadow-amber-500/30 uppercase tracking-wide hover:scale-105 active:scale-95">
-                    {{ lp.hero.cta_label }}
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                    </svg>
-                </button>
-
                 <!-- VSL Video -->
-                <div v-if="lp.hero.vsl_url" class="mt-12 w-full max-w-2xl mx-auto rounded-2xl overflow-hidden shadow-2xl shadow-black/40 border border-white/10">
+                <div v-if="lp.hero.vsl_url" class="mb-10 w-full max-w-2xl mx-auto rounded-2xl overflow-hidden shadow-2xl shadow-black/40 border border-white/10">
                     <div class="relative w-full" style="padding-bottom: 56.25%;">
                         <iframe
-                            :src="lp.hero.vsl_url"
+                            :src="normalizeVideoUrl(lp.hero.vsl_url)"
                             class="absolute inset-0 w-full h-full"
                             frameborder="0"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -313,6 +305,14 @@
                         />
                     </div>
                 </div>
+
+                <button @click="handleCta"
+                    class="inline-flex items-center gap-2 px-10 py-4 bg-amber-400 hover:bg-amber-500 text-gray-900 font-black text-lg rounded-2xl transition-all shadow-xl shadow-amber-500/30 uppercase tracking-wide hover:scale-105 active:scale-95">
+                    {{ lp.hero.cta_label }}
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                    </svg>
+                </button>
 
                 <p class="mt-4 text-slate-400 text-sm">
                     {{ community.price > 0
@@ -728,7 +728,7 @@ async function saveEdits() {
     try {
         const res = await fetch(`/communities/${props.community.slug}/landing-page`, {
             method:  'PATCH',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
             body:    JSON.stringify(editDraft.value),
         });
         const data = await res.json();
@@ -750,6 +750,17 @@ function copyLink() {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
+function normalizeVideoUrl(url) {
+    if (!url) return url;
+    // YouTube watch → embed
+    const ytWatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+    if (ytWatch) return `https://www.youtube.com/embed/${ytWatch[1]}`;
+    // Google Drive view/share → preview embed
+    const gdrive = url.match(/drive\.google\.com\/file\/d\/([A-Za-z0-9_-]+)/);
+    if (gdrive) return `https://drive.google.com/file/d/${gdrive[1]}/preview`;
+    return url;
+}
+
 function formatCount(n) {
     if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
     if (n >= 1_000)     return (n / 1_000).toFixed(1).replace(/\.0$/, '') + 'k';
