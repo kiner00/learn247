@@ -4,19 +4,18 @@
         <!-- Hero -->
         <div class="text-center py-10 mb-6">
             <h1 class="text-4xl font-black text-gray-900 tracking-tight mb-2">
-                Discover communities
+                Teach. Learn. Earn.
             </h1>
             <p class="text-gray-500 text-base">
-                or
                 <button
                     v-if="$page.props.auth?.user"
                     @click="openCreateModal()"
                     class="text-indigo-600 font-medium hover:underline"
                 >
-                    create your own
+                    create your community today.
                 </button>
                 <Link v-else href="/register" class="text-indigo-600 font-medium hover:underline">
-                    create your own
+                    create your community today.
                 </Link>
             </p>
 
