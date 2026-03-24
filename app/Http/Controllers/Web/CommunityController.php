@@ -12,6 +12,7 @@ use App\Actions\Community\SendAnnouncement;
 use App\Actions\Community\SendSmsBlast;
 use App\Services\Analytics\CommunityAnalyticsService;
 use App\Services\Community\CommunityChecklistService;
+use App\Services\TelegramService;
 use App\Services\Community\MembershipAccessService;
 use App\Services\Community\PlanLimitService;
 use App\Services\SmsService;
@@ -178,6 +179,9 @@ class CommunityController extends Controller
             'facebook_pixel_id'         => $canUseIntegrations ? ['nullable', 'string', 'max:30', 'regex:/^\d+$/'] : ['prohibited'],
             'tiktok_pixel_id'           => $canUseIntegrations ? ['nullable', 'string', 'max:30', 'regex:/^[A-Z0-9]+$/i'] : ['prohibited'],
             'google_analytics_id'       => $canUseIntegrations ? ['nullable', 'string', 'max:20', 'regex:/^G-[A-Z0-9]+$/i'] : ['prohibited'],
+            'telegram_bot_token'        => ['nullable', 'string', 'max:100'],
+            'telegram_chat_id'          => ['nullable', 'string', 'max:50'],
+            'telegram_clear'            => ['sometimes', 'boolean'],
             // Domain fields
             'subdomain'    => [
                 'nullable', 'string', 'max:63',
@@ -195,7 +199,31 @@ class CommunityController extends Controller
         // Capture old value before the update so we can diff
         $oldCustomDomain = $community->custom_domain;
 
+        $oldTelegramToken = $community->telegram_bot_token;
+
+        // Clear telegram if explicitly requested
+        if (! empty($data['telegram_clear'])) {
+            $data['telegram_bot_token'] = null;
+            $data['telegram_chat_id']   = null;
+        } elseif (empty($data['telegram_bot_token'])) {
+            // Don't overwrite existing token when field is left blank
+            unset($data['telegram_bot_token']);
+        }
+        unset($data['telegram_clear']);
+
         $action->execute($community, $data, $request->file('avatar'), $request->file('cover_image'));
+
+        // Register / update Telegram webhook when token changes
+        $community->refresh();
+        $newToken = $community->telegram_bot_token;
+        $telegram = app(TelegramService::class);
+
+        if ($newToken && $community->telegram_chat_id && $newToken !== $oldTelegramToken) {
+            $webhookUrl = route('webhooks.telegram', ['slug' => $community->slug]);
+            $telegram->setWebhook($newToken, $webhookUrl, $telegram->webhookSecret($newToken));
+        } elseif (! $newToken && $oldTelegramToken) {
+            $telegram->deleteWebhook($oldTelegramToken);
+        }
 
         // Sync custom domain with Ploi (only when it actually changed)
         $newCustomDomain = $community->fresh()->custom_domain;

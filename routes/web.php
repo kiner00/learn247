@@ -34,6 +34,7 @@ use App\Http\Controllers\Web\FreeSubscribeController;
 use App\Http\Controllers\Web\SubscriptionController;
 use App\Http\Middleware\EnsureActiveMembership;
 use App\Http\Controllers\XenditWebhookController;
+use App\Http\Controllers\Web\TelegramWebhookController;
 use App\Http\Middleware\EnsureSuperAdmin;
 use Illuminate\Support\Facades\Route;
 
@@ -301,3 +302,6 @@ Route::middleware('auth')->group(function () {
 
 // ─── Xendit Webhooks (no auth, no CSRF) ────────────────────────────────────
 Route::post('/webhooks/xendit/payouts', [XenditWebhookController::class, 'payouts'])->name('webhooks.xendit.payouts');
+
+// ─── Telegram Webhooks (no auth, no CSRF) ──────────────────────────────────
+Route::post('/webhooks/telegram/{slug}', TelegramWebhookController::class)->name('webhooks.telegram');

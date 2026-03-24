@@ -12,6 +12,10 @@
                     <div class="px-5 py-3.5 border-b border-gray-100 flex items-center gap-2 shrink-0">
                         <div class="w-2 h-2 rounded-full bg-green-400"></div>
                         <span class="text-sm font-semibold text-gray-900"># general</span>
+                        <div v-if="telegramConnected" class="ml-auto flex items-center gap-1.5 px-2.5 py-1 bg-sky-50 border border-sky-200 rounded-full">
+                            <svg class="w-3 h-3 text-sky-500" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L8.32 13.617l-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.828.942z"/></svg>
+                            <span class="text-xs font-medium text-sky-600">Telegram connected</span>
+                        </div>
                     </div>
 
                     <!-- Messages -->
@@ -39,26 +43,40 @@
                             v-for="(msg, i) in messages"
                             :key="msg.id"
                             class="flex gap-3 group"
-                            :class="{ 'mt-4': i > 0 && messages[i - 1]?.user?.id !== msg.user?.id }"
+                            :class="{ 'mt-4': i > 0 && msgGroupKey(messages[i - 1]) !== msgGroupKey(msg) }"
                         >
                             <!-- Avatar (only for first message in a group) -->
                             <div class="shrink-0 w-8 mt-0.5">
-                                <div
-                                    v-if="i === 0 || messages[i - 1]?.user?.id !== msg.user?.id"
-                                    class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
-                                    :class="avatarColor(msg.user?.name)"
-                                >
-                                    {{ msg.user?.name?.charAt(0)?.toUpperCase() }}
-                                </div>
+                                <template v-if="i === 0 || msgGroupKey(messages[i - 1]) !== msgGroupKey(msg)">
+                                    <!-- Telegram avatar -->
+                                    <div
+                                        v-if="msg.telegram_author"
+                                        class="w-8 h-8 rounded-full bg-sky-100 flex items-center justify-center"
+                                    >
+                                        <svg class="w-4 h-4 text-sky-500" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L8.32 13.617l-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.828.942z"/></svg>
+                                    </div>
+                                    <!-- Normal avatar -->
+                                    <div
+                                        v-else
+                                        class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
+                                        :class="avatarColor(msg.user?.name)"
+                                    >
+                                        {{ msg.user?.name?.charAt(0)?.toUpperCase() }}
+                                    </div>
+                                </template>
                             </div>
 
                             <div class="flex-1 min-w-0">
                                 <!-- Name + time (only first in group) -->
                                 <div
-                                    v-if="i === 0 || messages[i - 1]?.user?.id !== msg.user?.id"
+                                    v-if="i === 0 || msgGroupKey(messages[i - 1]) !== msgGroupKey(msg)"
                                     class="flex items-baseline gap-2 mb-0.5"
                                 >
-                                    <span class="text-sm font-semibold text-gray-900">{{ msg.user?.name }}</span>
+                                    <span v-if="msg.telegram_author" class="flex items-center gap-1 text-sm font-semibold text-sky-600">
+                                        {{ msg.telegram_author }}
+                                        <svg class="w-3 h-3 opacity-70" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L8.32 13.617l-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.828.942z"/></svg>
+                                    </span>
+                                    <span v-else class="text-sm font-semibold text-gray-900">{{ msg.user?.name }}</span>
                                     <span class="text-xs text-gray-400">{{ formatTime(msg.created_at) }}</span>
                                 </div>
 
@@ -178,9 +196,10 @@ import CommunityTabs from '@/Components/CommunityTabs.vue';
 import InviteModal from '@/Components/InviteModal.vue';
 
 const props = defineProps({
-    community: Object,
-    messages:  Array,
-    affiliate: Object,
+    community:         Object,
+    messages:          Array,
+    affiliate:         Object,
+    telegramConnected: { type: Boolean, default: false },
 });
 
 const page    = usePage();
@@ -211,6 +230,11 @@ const avatarColors = [
     'bg-amber-100 text-amber-600',
     'bg-sky-100 text-sky-600',
 ];
+
+// Group consecutive messages from the same sender (telegram or app user)
+function msgGroupKey(msg) {
+    return msg.telegram_author ? `tg:${msg.telegram_author}` : `u:${msg.user?.id}`;
+}
 
 function avatarColor(name) {
     if (!name) return avatarColors[0];

@@ -29,7 +29,9 @@ class ChatController extends Controller
         $community->loadCount('members');
         $affiliate = $userId ? $community->affiliates()->where('user_id', $userId)->first() : null;
 
-        return Inertia::render('Communities/Chat', compact('community', 'messages', 'affiliate'));
+        $telegramConnected = (bool) ($community->telegram_bot_token && $community->telegram_chat_id);
+
+        return Inertia::render('Communities/Chat', compact('community', 'messages', 'affiliate', 'telegramConnected'));
     }
 
     public function store(SendMessageRequest $request, Community $community, SendChatMessage $action): JsonResponse
@@ -46,10 +48,11 @@ class ChatController extends Controller
 
         return response()->json([
             'message' => [
-                'id'         => $message->id,
-                'content'    => $message->content,
-                'created_at' => $message->created_at,
-                'user'       => [
+                'id'              => $message->id,
+                'content'         => $message->content,
+                'created_at'      => $message->created_at,
+                'telegram_author' => null,
+                'user'            => [
                     'id'       => $message->user->id,
                     'name'     => $message->user->name,
                     'username' => $message->user->username,
@@ -62,14 +65,15 @@ class ChatController extends Controller
     {
         $after    = (int) $request->query('after', 0);
         $messages = $query->after($community, $after)->map(fn ($m) => [
-            'id'         => $m->id,
-            'content'    => $m->content,
-            'created_at' => $m->created_at,
-            'user'       => [
+            'id'              => $m->id,
+            'content'         => $m->content,
+            'created_at'      => $m->created_at,
+            'telegram_author' => $m->telegram_author,
+            'user'            => $m->user ? [
                 'id'       => $m->user->id,
                 'name'     => $m->user->name,
                 'username' => $m->user->username,
-            ],
+            ] : null,
         ]);
 
         if (auth()->id()) {
