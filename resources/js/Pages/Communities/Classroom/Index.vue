@@ -461,7 +461,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { Link, useForm, usePage, router } from '@inertiajs/vue3';
 
 import draggable from 'vuedraggable';
@@ -491,6 +491,7 @@ const courseLimit = computed(() => {
 
 // Local copy for draggable (owner only)
 const localCourses = ref([...props.courses]);
+watch(() => props.courses, (val) => { localCourses.value = [...val]; });
 
 const groupedCourses = computed(() => ({
     'Free':      props.courses.filter(c => c.access_type === 'free'),
