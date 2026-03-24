@@ -179,9 +179,9 @@ class CommunityController extends Controller
             'facebook_pixel_id'         => $canUseIntegrations ? ['nullable', 'string', 'max:30', 'regex:/^\d+$/'] : ['prohibited'],
             'tiktok_pixel_id'           => $canUseIntegrations ? ['nullable', 'string', 'max:30', 'regex:/^[A-Z0-9]+$/i'] : ['prohibited'],
             'google_analytics_id'       => $canUseIntegrations ? ['nullable', 'string', 'max:20', 'regex:/^G-[A-Z0-9]+$/i'] : ['prohibited'],
-            'telegram_bot_token'        => ['nullable', 'string', 'max:100'],
-            'telegram_chat_id'          => ['nullable', 'string', 'max:50'],
-            'telegram_clear'            => ['sometimes', 'boolean'],
+            'telegram_bot_token'        => $isPro ? ['nullable', 'string', 'max:100'] : ['prohibited'],
+            'telegram_chat_id'          => $isPro ? ['nullable', 'string', 'max:50'] : ['prohibited'],
+            'telegram_clear'            => $isPro ? ['sometimes', 'boolean'] : ['prohibited'],
             // Domain fields
             'subdomain'    => [
                 'nullable', 'string', 'max:63',

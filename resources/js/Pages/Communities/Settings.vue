@@ -650,10 +650,23 @@
                 <div class="flex items-center gap-2 mb-1">
                     <svg class="w-5 h-5 text-sky-500 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L8.32 13.617l-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.828.942z"/></svg>
                     <h2 class="text-base font-semibold text-gray-900">Telegram Group Chat</h2>
+                    <span class="px-2.5 py-1 text-xs font-bold bg-purple-100 text-purple-700 rounded-full">⭐ Pro</span>
                 </div>
                 <p class="text-sm text-gray-500 mb-5">
                     Sync your community chat with a Telegram group. Messages posted in the app are forwarded to Telegram, and messages from Telegram appear in the app chat.
                 </p>
+
+                <!-- Locked for non-Pro -->
+                <div v-if="!isPro" class="rounded-xl border border-gray-200 bg-gray-50 px-5 py-6 flex items-center gap-4">
+                    <span class="text-2xl">🔒</span>
+                    <div>
+                        <p class="text-sm font-semibold text-gray-700">Available on Pro</p>
+                        <p class="text-xs text-gray-500 mt-0.5 mb-3">Upgrade to connect your community chat to a Telegram group.</p>
+                        <a href="/creator/plan" class="inline-block px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-colors">Upgrade to Pro →</a>
+                    </div>
+                </div>
+
+                <template v-else>
 
                 <!-- Setup guide -->
                 <div class="mb-5 p-4 bg-sky-50 border border-sky-200 rounded-xl space-y-2 text-sm text-sky-800">
@@ -720,6 +733,7 @@
                         <p v-if="telegramSaved" class="text-sm text-green-600">Saved! Webhook registered.</p>
                     </div>
                 </form>
+                </template>
             </div>
 
             <!-- Domain -->
