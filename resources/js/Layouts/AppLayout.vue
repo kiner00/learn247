@@ -904,11 +904,16 @@
                             <img :src="curzzoIcon" alt="Curzzo" class="w-full h-full object-cover" />
                         </div>
                         <div class="px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-2xl rounded-tl-sm">
-                            <span class="flex gap-1">
-                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay:0ms"></span>
-                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay:150ms"></span>
-                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay:300ms"></span>
-                            </span>
+                            <template v-if="aiGeneratingImage">
+                                <span class="text-xs text-gray-500 dark:text-gray-400">Generating image, this may take up to a minute...</span>
+                            </template>
+                            <template v-else>
+                                <span class="flex gap-1">
+                                    <span class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay:0ms"></span>
+                                    <span class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay:150ms"></span>
+                                    <span class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay:300ms"></span>
+                                </span>
+                            </template>
                         </div>
                     </div>
                 </div>
@@ -1207,6 +1212,7 @@ const aiOpen           = ref(false);
 const aiMessages       = ref([]);
 const aiInput          = ref('');
 const aiLoading        = ref(false);
+const aiGeneratingImage = ref(false);
 const aiConversationId = ref(null);
 const aiScrollRef      = ref(null);
 
@@ -1241,6 +1247,12 @@ watch(() => page.props.flash?.show_ai_greeting, (val) => {
     }
 }, { immediate: true });
 
+function isImageRequestMsg(text) {
+    const lower = text.toLowerCase();
+    return /\b(generate|create|make|draw|design|produce)\b.{0,30}\b(image|photo|picture|banner|thumbnail|cover|poster|visual|graphic|illustration)\b/.test(lower)
+        || /\b(image|photo|picture|banner|thumbnail|cover|poster|visual|graphic|illustration)\b.{0,30}\b(generate|create|make|draw|design)\b/.test(lower);
+}
+
 async function sendAiMessage() {
     const text = aiInput.value.trim();
     if (!text || aiLoading.value) return;
@@ -1248,6 +1260,7 @@ async function sendAiMessage() {
     aiMessages.value.push({ role: 'user', content: text });
     aiInput.value  = '';
     aiLoading.value = true;
+    aiGeneratingImage.value = isImageRequestMsg(text);
 
     await nextTick();
     if (aiScrollRef.value) aiScrollRef.value.scrollTop = aiScrollRef.value.scrollHeight;
@@ -1257,7 +1270,7 @@ async function sendAiMessage() {
         const res   = await axios.post('/ai/chat', {
             message:         text,
             conversation_id: aiConversationId.value,
-        });
+        }, { timeout: 120000 });
 
         if (res.data.conversation_id) aiConversationId.value = res.data.conversation_id;
         aiMessages.value.push({ role: 'assistant', type: res.data.type ?? 'text', content: res.data.message });
@@ -1268,6 +1281,7 @@ async function sendAiMessage() {
         aiMessages.value.push({ role: 'assistant', type: 'text', content: msg });
     } finally {
         aiLoading.value = false;
+        aiGeneratingImage.value = false;
         await nextTick();
         if (aiScrollRef.value) aiScrollRef.value.scrollTop = aiScrollRef.value.scrollHeight;
     }
