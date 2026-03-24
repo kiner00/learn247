@@ -136,7 +136,7 @@
                 class="group bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-lg hover:border-indigo-200 transition-all duration-200 flex flex-col"
             >
                 <!-- Cover image / gradient -->
-                <div class="relative h-28 overflow-hidden bg-black">
+                <div class="relative h-40 overflow-hidden bg-black">
                     <img
                         v-if="community.cover_image"
                         :src="community.cover_image"
@@ -171,7 +171,7 @@
                 <div class="p-4 flex flex-col flex-1">
                     <!-- Logo + name row -->
                     <div class="flex items-center gap-3 -mt-6 mb-2">
-                        <div class="w-10 h-10 rounded-xl shrink-0 overflow-hidden border-2 border-white shadow-sm bg-white flex items-center justify-center font-bold text-indigo-600 text-base">
+                        <div class="w-10 h-10 rounded-xl shrink-0 overflow-hidden border-2 border-white bg-white flex items-center justify-center font-bold text-indigo-600 text-base" style="box-shadow: 0 2px 8px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.6);">
                             <img v-if="community.avatar" :src="community.avatar" :alt="community.name" class="w-full h-full object-cover" />
                             <span v-else>{{ community.name.charAt(0).toUpperCase() }}</span>
                         </div>
