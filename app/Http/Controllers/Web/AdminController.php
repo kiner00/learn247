@@ -15,6 +15,8 @@ use App\Models\PayoutRequest;
 use App\Models\Post;
 use App\Models\Setting;
 use App\Models\User;
+use App\Queries\Admin\AffiliateAnalytics;
+use App\Queries\Admin\CreatorAnalytics;
 use App\Queries\Admin\GetPayoutsDashboard;
 use App\Queries\Admin\ListTrashedPosts;
 use App\Queries\Admin\ListUsers;
@@ -157,6 +159,24 @@ class AdminController extends Controller
         $community->update(['is_featured' => ! $community->is_featured]);
 
         return back()->with('success', "{$community->name} is now " . ($community->is_featured ? 'featured' : 'unfeatured') . ".");
+    }
+
+    // ── Analytics ─────────────────────────────────────────────────────────────
+
+    public function creatorAnalytics(Request $request, CreatorAnalytics $query): Response
+    {
+        return Inertia::render('Admin/CreatorAnalytics', $query->execute(
+            $request->string('search')->trim()->toString(),
+            $request->string('plan')->trim()->toString(),
+        ));
+    }
+
+    public function affiliateAnalytics(Request $request, AffiliateAnalytics $query): Response
+    {
+        return Inertia::render('Admin/AffiliateAnalytics', $query->execute(
+            $request->string('search')->trim()->toString(),
+            $request->string('status')->trim()->toString(),
+        ));
     }
 
     // ── Users ─────────────────────────────────────────────────────────────────

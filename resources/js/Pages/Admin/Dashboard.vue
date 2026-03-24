@@ -6,6 +6,14 @@
                 <p class="text-sm text-gray-500 mt-0.5">Platform overview</p>
             </div>
             <div class="flex items-center gap-2">
+                <Link href="/admin/creator-analytics"
+                    class="px-3.5 py-2 text-sm font-medium text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+                    📊 Creator Analytics
+                </Link>
+                <Link href="/admin/affiliate-analytics"
+                    class="px-3.5 py-2 text-sm font-medium text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+                    🔗 Affiliate Analytics
+                </Link>
                 <Link href="/admin/users"
                     class="px-3.5 py-2 text-sm font-medium text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
                     👤 Users

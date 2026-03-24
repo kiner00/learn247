@@ -95,6 +95,9 @@ Route::middleware(['auth', EnsureSuperAdmin::class])->prefix('admin')->group(fun
     Route::post('/onboarding/{user}/resend', [AdminController::class, 'resendOnboardingEmail'])->name('admin.onboarding.resend');
     // Featured communities
     Route::post('/communities/{community}/toggle-featured', [AdminController::class, 'toggleFeatured'])->name('admin.communities.toggle-featured');
+    // Analytics
+    Route::get('/creator-analytics', [AdminController::class, 'creatorAnalytics'])->name('admin.creator-analytics');
+    Route::get('/affiliate-analytics', [AdminController::class, 'affiliateAnalytics'])->name('admin.affiliate-analytics');
     // User management
     Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
     Route::patch('/users/{user}/toggle-status', [AdminController::class, 'toggleUserStatus'])->name('admin.users.toggle');
