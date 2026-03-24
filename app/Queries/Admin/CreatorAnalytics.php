@@ -13,7 +13,7 @@ class CreatorAnalytics
     public function execute(string $search = '', string $plan = ''): array
     {
         $communities = Community::with('owner')
-            ->withCount(['memberships as subscribers_count' => fn ($q) => $q->where('status', 'active')])
+            ->withCount(['members as subscribers_count' => fn ($q) => $q->where('status', 'active')])
             ->when($search, fn ($q) => $q->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhereHas('owner', fn ($q) => $q->where('name', 'like', "%{$search}%")
