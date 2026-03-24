@@ -1145,6 +1145,8 @@ function formatCount(n) {
 </script>
 
 <style scoped>
+@reference "tailwindcss";
+
 .field-label {
     @apply block text-xs font-medium text-gray-600 mb-1;
 }
