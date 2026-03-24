@@ -99,9 +99,27 @@ class ClassroomController extends Controller
         return redirect()->route('communities.classroom', $community)->with('success', 'Course deleted!');
     }
 
+    public function togglePublish(Request $request, Community $community, Course $course): RedirectResponse
+    {
+        abort_unless($request->user()->id === $community->owner_id, 403);
+
+        $course->update(['is_published' => ! $course->is_published]);
+
+        $label = $course->is_published ? 'published' : 'set to draft';
+
+        return back()->with('success', "Course {$label}!");
+    }
+
     public function showCourse(Community $community, Course $course, GetCourseDetail $query, CourseAccessService $access): Response
     {
-        $userId    = auth()->id();
+        $userId = auth()->id();
+        $isOwner = $userId && ($userId === $community->owner_id || (auth()->user()?->isSuperAdmin() ?? false));
+
+        // Unpublished courses are only visible to the owner
+        if (! $course->is_published && ! $isOwner) {
+            abort(404);
+        }
+
         $hasAccess = $access->hasAccess(auth()->user(), $community, $course);
         $detail    = $query->execute($course, $userId, $hasAccess);
 

@@ -221,6 +221,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/communities/{community}/classroom/courses', [ClassroomController::class, 'storeCourse'])->name('communities.classroom.courses.store');
         Route::post('/communities/{community}/classroom/courses/{course}/update', [ClassroomController::class, 'updateCourse'])->name('communities.classroom.courses.update');
         Route::delete('/communities/{community}/classroom/courses/{course}', [ClassroomController::class, 'destroyCourse'])->name('communities.classroom.courses.destroy');
+        Route::post('/communities/{community}/classroom/courses/{course}/toggle-publish', [ClassroomController::class, 'togglePublish'])->name('communities.classroom.courses.toggle-publish');
         Route::post('/communities/{community}/classroom/courses/{course}/modules', [ClassroomController::class, 'storeModule'])->name('communities.classroom.modules.store');
         Route::match(['patch', 'post'], '/communities/{community}/classroom/courses/{course}/modules/{module}', [ClassroomController::class, 'updateModule'])->name('communities.classroom.modules.update');
         Route::delete('/communities/{community}/classroom/courses/{course}/modules/{module}', [ClassroomController::class, 'destroyModule'])->name('communities.classroom.modules.destroy');

@@ -43,10 +43,15 @@ class GetCourseList
             ->whereIn('status', [Subscription::STATUS_ACTIVE, Subscription::STATUS_EXPIRED, Subscription::STATUS_CANCELLED])
             ->exists();
 
-        return $community->courses()->with('modules.lessons')
+        $query = $community->courses()->with('modules.lessons')
             ->orderByRaw("CASE access_type WHEN 'free' THEN 0 WHEN 'inclusive' THEN 1 WHEN 'member_once' THEN 2 WHEN 'paid_once' THEN 3 WHEN 'paid_monthly' THEN 4 ELSE 5 END")
-            ->orderBy('position')
-            ->get()->map(function ($course) use ($userId, $isOwner, $isMember, $isPaidMember, $paidEnrollmentIds, $wasEverMember) {
+            ->orderBy('position');
+
+        if (! $isOwner) {
+            $query->where('is_published', true);
+        }
+
+        return $query->get()->map(function ($course) use ($userId, $isOwner, $isMember, $isPaidMember, $paidEnrollmentIds, $wasEverMember) {
             $hasAccess = $this->resolveAccess($course, $isOwner, $isMember, $isPaidMember, $paidEnrollmentIds, $wasEverMember);
 
             $lessonIds = $course->modules->flatMap(fn ($m) => $m->lessons->pluck('id'));
@@ -64,6 +69,7 @@ class GetCourseList
                 'access_type'              => $course->access_type,
                 'price'                    => $course->price,
                 'affiliate_commission_rate'=> $course->affiliate_commission_rate,
+                'is_published' => $course->is_published,
                 'total'       => $total,
                 'completed'   => $completed,
                 'progress'    => $total > 0 && $hasAccess ? round($completed / $total * 100) : 0,
