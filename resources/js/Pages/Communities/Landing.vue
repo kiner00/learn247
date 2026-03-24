@@ -24,7 +24,15 @@
             </button>
             <button
                 v-if="lp"
-                @click="showEditPanel = true"
+                @click="inlineMode = !inlineMode; showEditPanel = false"
+                :class="inlineMode ? 'bg-amber-400 text-gray-900 hover:bg-amber-500' : 'bg-white/10 hover:bg-white/20 text-white'"
+                class="px-3 py-1.5 rounded-lg transition text-xs font-bold"
+            >
+                {{ inlineMode ? '✓ Done Editing' : '✏️ Edit Text' }}
+            </button>
+            <button
+                v-if="lp"
+                @click="showEditPanel = true; inlineMode = false"
                 class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 transition text-xs font-bold"
             >
                 Edit Sections
@@ -38,6 +46,48 @@
             </button>
         </div>
     </div>
+
+    <!-- ── Floating inline format toolbar ── -->
+    <Teleport to="body">
+        <Transition
+            enter-active-class="transition duration-100 ease-out"
+            enter-from-class="opacity-0 scale-95 -translate-y-1"
+            enter-to-class="opacity-100 scale-100 translate-y-0"
+            leave-active-class="transition duration-75 ease-in"
+            leave-from-class="opacity-100"
+            leave-to-class="opacity-0 scale-95">
+            <div v-if="isOwner && inlineMode && toolbarVisible"
+                data-inline-toolbar
+                tabindex="-1"
+                @mousedown.prevent
+                class="fixed z-[300] bg-gray-900 text-white rounded-xl shadow-2xl flex items-center gap-0.5 px-2 py-1.5"
+                :style="{ top: toolbarPos.top + 'px', left: toolbarPos.left + 'px' }">
+                <!-- Bold -->
+                <button @click="execFmt('bold')"
+                    :class="{'bg-white/20': fmtActive.bold}"
+                    class="w-8 h-7 rounded font-bold text-sm hover:bg-white/20 active:bg-white/30 transition select-none">B</button>
+                <!-- Italic -->
+                <button @click="execFmt('italic')"
+                    :class="{'bg-white/20': fmtActive.italic}"
+                    class="w-8 h-7 rounded italic text-sm hover:bg-white/20 active:bg-white/30 transition select-none">I</button>
+                <!-- Underline -->
+                <button @click="execFmt('underline')"
+                    :class="{'bg-white/20': fmtActive.underline}"
+                    class="w-8 h-7 rounded underline text-sm hover:bg-white/20 active:bg-white/30 transition select-none">U</button>
+                <div class="w-px h-4 bg-white/20 mx-1" />
+                <!-- Font size -->
+                <button @click="execFmt('fontSize', '5')" title="Larger" class="w-8 h-7 rounded text-xs hover:bg-white/20 transition font-bold select-none">A+</button>
+                <button @click="execFmt('fontSize', '2')" title="Smaller" class="w-8 h-7 rounded text-xs hover:bg-white/20 transition select-none opacity-80">A-</button>
+                <div class="w-px h-4 bg-white/20 mx-1" />
+                <!-- Align -->
+                <button @click="execFmt('justifyLeft')" title="Align left" class="w-7 h-7 rounded hover:bg-white/20 transition select-none text-xs">⬅</button>
+                <button @click="execFmt('justifyCenter')" title="Center" class="w-7 h-7 rounded hover:bg-white/20 transition select-none text-xs">↔</button>
+                <div class="w-px h-4 bg-white/20 mx-1" />
+                <!-- Save hint -->
+                <span class="text-white/40 text-xs px-1">Click away to save</span>
+            </div>
+        </Transition>
+    </Teleport>
 
     <!-- ═══════════════════════════════════════════════════════════
          SECTION-BASED EDITOR PANEL
@@ -445,6 +495,13 @@
     ════════════════════════════════════════════════════════════ -->
     <div v-else :class="isOwner ? 'pt-12' : ''" class="bg-white font-sans antialiased">
 
+        <!-- Inline edit mode hint bar -->
+        <Transition enter-active-class="transition duration-200" enter-from-class="opacity-0 -translate-y-2" leave-active-class="transition duration-150" leave-to-class="opacity-0 -translate-y-2">
+            <div v-if="isOwner && inlineMode" class="sticky top-12 z-40 bg-amber-400 text-gray-900 text-xs font-semibold text-center py-2 px-4">
+                ✏️ Click on any text to edit it. Use the toolbar to format. Click away to save automatically.
+            </div>
+        </Transition>
+
         <!-- ── HERO ── -->
         <section v-if="isVisible('hero')" class="relative overflow-hidden bg-linear-to-br from-slate-900 via-indigo-950 to-slate-900 text-white">
             <!-- Background image (custom upload or community cover) -->
@@ -467,21 +524,37 @@
 
             <div class="relative z-10 max-w-3xl mx-auto px-6 py-24 text-center">
                 <!-- Pre-headline -->
-                <p v-if="lp.hero?.pre_headline" class="text-indigo-300 text-sm font-semibold uppercase tracking-widest mb-4">
-                    {{ lp.hero.pre_headline }}
-                </p>
+                <p v-if="lp.hero?.pre_headline"
+                    v-html="lp.hero.pre_headline"
+                    :contenteditable="inlineMode ? 'true' : 'false'"
+                    @focus="inlineMode && onElFocus($event, 'hero.pre_headline')"
+                    @blur="inlineMode && saveFromEl($event, 'hero.pre_headline')"
+                    @keydown.enter.prevent
+                    :class="['text-indigo-300 text-sm font-semibold uppercase tracking-widest mb-4', inlineMode ? editableClass : '']"
+                />
                 <!-- Badge -->
                 <div v-else class="inline-flex items-center gap-2 bg-indigo-500/30 border border-indigo-400/40 text-indigo-200 text-xs font-semibold px-4 py-1.5 rounded-full mb-8 uppercase tracking-widest">
                     <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 inline-block"></span>
                     {{ community.category || 'Community' }}
                 </div>
 
-                <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black leading-tight mb-6 text-white">
-                    {{ lp.hero.headline }}
-                </h1>
-                <p class="text-lg sm:text-xl text-slate-300 mb-10 max-w-xl mx-auto leading-relaxed">
-                    {{ lp.hero.subheadline }}
-                </p>
+                <h1
+                    :key="renderKey + '_hero_h'"
+                    v-html="lp.hero.headline"
+                    :contenteditable="inlineMode ? 'true' : 'false'"
+                    @focus="inlineMode && onElFocus($event, 'hero.headline')"
+                    @blur="inlineMode && saveFromEl($event, 'hero.headline')"
+                    @keydown.enter.prevent
+                    :class="['text-4xl sm:text-5xl lg:text-6xl font-black leading-tight mb-6 text-white', inlineMode ? editableClass : '']"
+                />
+                <p
+                    :key="renderKey + '_hero_sub'"
+                    v-html="lp.hero.subheadline"
+                    :contenteditable="inlineMode ? 'true' : 'false'"
+                    @focus="inlineMode && onElFocus($event, 'hero.subheadline')"
+                    @blur="inlineMode && saveFromEl($event, 'hero.subheadline')"
+                    :class="['text-lg sm:text-xl text-slate-300 mb-10 max-w-xl mx-auto leading-relaxed', inlineMode ? editableClass : '']"
+                />
 
                 <!-- VSL Video -->
                 <div v-if="lp.hero.vsl_url" class="mb-10 w-full max-w-2xl mx-auto rounded-2xl overflow-hidden shadow-2xl shadow-black/40 border border-white/10">
@@ -530,14 +603,26 @@
                     </div>
                 </div>
                 <div class="hidden sm:block w-px h-6 bg-indigo-400/40"></div>
-                <p class="text-indigo-100 text-sm font-medium">{{ lp.social_proof.trust_line }}</p>
+                <p v-html="lp.social_proof.trust_line"
+                    :contenteditable="inlineMode ? 'true' : 'false'"
+                    @focus="inlineMode && onElFocus($event, 'social_proof.trust_line')"
+                    @blur="inlineMode && saveFromEl($event, 'social_proof.trust_line')"
+                    @keydown.enter.prevent
+                    :class="['text-indigo-100 text-sm font-medium', inlineMode ? editableClass : '']"
+                />
             </div>
         </section>
 
         <!-- ── BENEFITS ── -->
         <section v-if="isVisible('benefits') && lp.benefits" class="py-24 bg-white">
             <div class="max-w-5xl mx-auto px-6">
-                <h2 class="text-3xl sm:text-4xl font-black text-gray-900 text-center mb-16">{{ lp.benefits.headline }}</h2>
+                <h2 v-html="lp.benefits.headline"
+                    :contenteditable="inlineMode ? 'true' : 'false'"
+                    @focus="inlineMode && onElFocus($event, 'benefits.headline')"
+                    @blur="inlineMode && saveFromEl($event, 'benefits.headline')"
+                    @keydown.enter.prevent
+                    :class="['text-3xl sm:text-4xl font-black text-gray-900 text-center mb-16', inlineMode ? editableClass : '']"
+                />
                 <div class="grid sm:grid-cols-2 gap-8">
                     <div v-for="(item, i) in lp.benefits.items" :key="i"
                         class="flex gap-5 p-6 rounded-2xl border border-gray-100 bg-gray-50 hover:border-indigo-200 hover:bg-indigo-50/40 transition-all group">
@@ -545,8 +630,19 @@
                             {{ item.icon }}
                         </div>
                         <div>
-                            <h3 class="font-bold text-gray-900 mb-1.5">{{ item.title }}</h3>
-                            <p class="text-sm text-gray-500 leading-relaxed">{{ item.body }}</p>
+                            <h3 v-html="item.title"
+                                :contenteditable="inlineMode ? 'true' : 'false'"
+                                @focus="inlineMode && onElFocus($event, `benefits.items.${i}.title`)"
+                                @blur="inlineMode && saveFromEl($event, `benefits.items.${i}.title`)"
+                                @keydown.enter.prevent
+                                :class="['font-bold text-gray-900 mb-1.5', inlineMode ? editableClass : '']"
+                            />
+                            <p v-html="item.body"
+                                :contenteditable="inlineMode ? 'true' : 'false'"
+                                @focus="inlineMode && onElFocus($event, `benefits.items.${i}.body`)"
+                                @blur="inlineMode && saveFromEl($event, `benefits.items.${i}.body`)"
+                                :class="['text-sm text-gray-500 leading-relaxed', inlineMode ? editableClass : '']"
+                            />
                         </div>
                     </div>
                 </div>
@@ -556,7 +652,13 @@
         <!-- ── FOR YOU ── -->
         <section v-if="isVisible('for_you') && lp.for_you" class="py-20 bg-linear-to-br from-indigo-50 to-white">
             <div class="max-w-2xl mx-auto px-6 text-center">
-                <h2 class="text-3xl sm:text-4xl font-black text-gray-900 mb-12">{{ lp.for_you.headline }}</h2>
+                <h2 v-html="lp.for_you.headline"
+                    :contenteditable="inlineMode ? 'true' : 'false'"
+                    @focus="inlineMode && onElFocus($event, 'for_you.headline')"
+                    @blur="inlineMode && saveFromEl($event, 'for_you.headline')"
+                    @keydown.enter.prevent
+                    :class="['text-3xl sm:text-4xl font-black text-gray-900 mb-12', inlineMode ? editableClass : '']"
+                />
                 <div class="space-y-4 text-left">
                     <div v-for="(point, i) in lp.for_you.points" :key="i"
                         class="flex items-start gap-4 bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
@@ -565,7 +667,13 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                             </svg>
                         </div>
-                        <p class="text-gray-700 font-medium leading-relaxed">{{ point }}</p>
+                        <p v-html="point"
+                            :contenteditable="inlineMode ? 'true' : 'false'"
+                            @focus="inlineMode && onElFocus($event, `for_you.points.${i}`)"
+                            @blur="inlineMode && saveFromEl($event, `for_you.points.${i}`)"
+                            @keydown.enter.prevent
+                            :class="['text-gray-700 font-medium leading-relaxed flex-1', inlineMode ? editableClass : '']"
+                        />
                     </div>
                 </div>
             </div>
@@ -586,8 +694,19 @@
                         <p class="text-indigo-300 text-xs mt-0.5">Creator</p>
                     </div>
                     <div>
-                        <h2 class="text-2xl font-black mb-4 text-white">{{ lp.creator.headline }}</h2>
-                        <p class="text-slate-300 leading-relaxed">{{ lp.creator.bio }}</p>
+                        <h2 v-html="lp.creator.headline"
+                            :contenteditable="inlineMode ? 'true' : 'false'"
+                            @focus="inlineMode && onElFocus($event, 'creator.headline')"
+                            @blur="inlineMode && saveFromEl($event, 'creator.headline')"
+                            @keydown.enter.prevent
+                            :class="['text-2xl font-black mb-4 text-white', inlineMode ? editableClass : '']"
+                        />
+                        <p v-html="lp.creator.bio"
+                            :contenteditable="inlineMode ? 'true' : 'false'"
+                            @focus="inlineMode && onElFocus($event, 'creator.bio')"
+                            @blur="inlineMode && saveFromEl($event, 'creator.bio')"
+                            :class="['text-slate-300 leading-relaxed', inlineMode ? editableClass : '']"
+                        />
                     </div>
                 </div>
             </div>
@@ -605,7 +724,12 @@
                                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
                             </svg>
                         </div>
-                        <p class="text-gray-600 text-sm leading-relaxed italic flex-1">"{{ t.quote }}"</p>
+                        <p v-html="`&ldquo;${t.quote}&rdquo;`"
+                            :contenteditable="inlineMode ? 'true' : 'false'"
+                            @focus="inlineMode && onElFocus($event, `testimonials.${i}.quote`)"
+                            @blur="inlineMode && saveFromEl($event, `testimonials.${i}.quote`)"
+                            :class="['text-gray-600 text-sm leading-relaxed italic flex-1', inlineMode ? editableClass : '']"
+                        />
                         <div class="flex items-center gap-3 pt-2 border-t border-gray-100">
                             <div class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm text-white"
                                 :style="`background-color: hsl(${i * 120}, 60%, 55%)`">
@@ -690,9 +814,13 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
                             </svg>
                         </button>
-                        <div v-if="openFaq === i" class="px-6 pb-4 text-sm text-gray-500 leading-relaxed border-t border-gray-100 pt-3">
-                            {{ item.answer }}
-                        </div>
+                        <div v-if="openFaq === i || inlineMode"
+                            v-html="item.answer"
+                            :contenteditable="inlineMode ? 'true' : 'false'"
+                            @focus="inlineMode && onElFocus($event, `faq.${i}.answer`)"
+                            @blur="inlineMode && saveFromEl($event, `faq.${i}.answer`)"
+                            :class="['px-6 pb-4 text-sm text-gray-500 leading-relaxed border-t border-gray-100 pt-3', inlineMode ? editableClass : '']"
+                        />
                     </div>
                 </div>
             </div>
@@ -705,12 +833,22 @@
             <div v-else class="absolute inset-0 bg-slate-900/80" />
             <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-125 h-125 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
             <div class="relative z-10 max-w-xl mx-auto px-6">
-                <h2 class="text-3xl sm:text-4xl font-black mb-4 text-white">
-                    {{ lp.cta_section?.headline ?? `Join ${community.name} Today` }}
-                </h2>
-                <p class="text-slate-400 mb-8 leading-relaxed">
-                    {{ lp.cta_section?.subtext ?? 'Start your journey. Cancel anytime.' }}
-                </p>
+                <h2
+                    v-html="lp.cta_section?.headline ?? `Join ${community.name} Today`"
+                    :contenteditable="inlineMode ? 'true' : 'false'"
+                    @focus="inlineMode && onElFocus($event, 'cta_section.headline')"
+                    @blur="inlineMode && saveFromEl($event, 'cta_section.headline')"
+                    @keydown.enter.prevent
+                    :class="['text-3xl sm:text-4xl font-black mb-4 text-white', inlineMode ? editableClass : '']"
+                />
+                <p
+                    v-html="lp.cta_section?.subtext ?? 'Start your journey. Cancel anytime.'"
+                    :contenteditable="inlineMode ? 'true' : 'false'"
+                    @focus="inlineMode && onElFocus($event, 'cta_section.subtext')"
+                    @blur="inlineMode && saveFromEl($event, 'cta_section.subtext')"
+                    @keydown.enter.prevent
+                    :class="['text-slate-400 mb-8 leading-relaxed', inlineMode ? editableClass : '']"
+                />
                 <button @click="handleCta"
                     class="inline-flex items-center gap-2 px-10 py-4 bg-amber-400 hover:bg-amber-500 text-gray-900 font-black text-lg rounded-2xl transition-all shadow-xl shadow-amber-500/20 uppercase tracking-wide hover:scale-105 active:scale-95">
                     {{ lp.cta_section?.cta_label ?? lp.hero.cta_label }}
@@ -898,6 +1036,86 @@ const regenLoading   = ref(null);
 const uploadLoading  = ref(null);
 const showAddSection  = ref(false);
 
+// ── Inline text editing ───────────────────────────────────────────────────────
+const inlineMode      = ref(false);
+const toolbarVisible  = ref(false);
+const toolbarPos      = ref({ top: 0, left: 0 });
+const renderKey       = ref(0);
+const fmtActive       = ref({ bold: false, italic: false, underline: false });
+
+// Shared CSS class applied to editable elements when inlineMode is on
+const editableClass = 'outline-none cursor-text rounded hover:ring-2 hover:ring-amber-400/50 focus:ring-2 focus:ring-amber-400 transition-shadow';
+
+function onElFocus(event) {
+    const rect = event.target.getBoundingClientRect();
+    toolbarPos.value = {
+        top:  Math.max(56, rect.top - 48),
+        left: Math.max(8, Math.min(rect.left, window.innerWidth - 340)),
+    };
+    toolbarVisible.value = true;
+    updateFmtState();
+}
+
+function saveFromEl(event, path) {
+    setTimeout(() => {
+        if (document.activeElement?.closest('[data-inline-toolbar]')) return;
+        setNestedValue(path, event.target.innerHTML);
+        toolbarVisible.value = false;
+        autoSave();
+    }, 160);
+}
+
+function setNestedValue(path, value) {
+    const parts = path.split('.');
+    let cur = lp.value;
+    for (let i = 0; i < parts.length - 1; i++) {
+        const key = /^\d+$/.test(parts[i]) ? parseInt(parts[i]) : parts[i];
+        if (!cur[key] && cur[key] !== 0) return;
+        cur = cur[key];
+    }
+    const last = parts[parts.length - 1];
+    cur[/^\d+$/.test(last) ? parseInt(last) : last] = value;
+}
+
+function execFmt(cmd, value = null) {
+    document.execCommand(cmd, false, value);
+    updateFmtState();
+}
+
+function updateFmtState() {
+    fmtActive.value = {
+        bold:      document.queryCommandState('bold'),
+        italic:    document.queryCommandState('italic'),
+        underline: document.queryCommandState('underline'),
+    };
+}
+
+let autoSaveTimer = null;
+async function autoSave() {
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(async () => {
+        try {
+            await fetch(`/communities/${props.community.slug}/landing-page`, {
+                method:  'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept':       'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                },
+                body: JSON.stringify(lp.value),
+            });
+        } catch (e) { /* silent */ }
+    }, 1500);
+}
+
+// Turn off inline mode → blur any active editable
+watch(inlineMode, (on) => {
+    if (!on) {
+        document.querySelectorAll('[contenteditable="true"]').forEach(el => el.blur());
+        toolbarVisible.value = false;
+    }
+});
+
 // ── Section visibility helpers ────────────────────────────────────────────────
 function isVisible(type) {
     if (!lp.value) return false;
@@ -977,6 +1195,7 @@ async function regenSection(type) {
         editDraft.value[type] = data.data;
         // Also update lp so preview reflects it immediately
         if (lp.value) lp.value[type] = data.data;
+        renderKey.value++;
     } catch (e) {
         alert(e?.message ?? 'Something went wrong.');
     } finally {
@@ -1067,6 +1286,7 @@ async function generate() {
         }
 
         lp.value = data;
+        renderKey.value++;
     } catch (e) {
         generateError.value = e?.message ?? 'Something went wrong. Please try again.';
     } finally {
