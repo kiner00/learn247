@@ -372,7 +372,11 @@ onMounted(() => {
     }));
 });
 const lightboxImg     = ref(null);
-const activeBannerImg = ref(props.community.cover_image || null);
+const activeBannerImg = ref(
+    props.community.gallery_images?.length
+        ? props.community.gallery_images[0]
+        : (props.community.cover_image || null)
+);
 
 const inviteUrl = computed(() =>
     props.affiliate?.code
