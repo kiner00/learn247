@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Ai\Agents\LandingPageBuilder;
+use App\Ai\Agents\LandingPageSectionBuilder;
 use App\Actions\Community\CreateCommunity;
 use App\Actions\Community\EnsureMemberAffiliate;
 use App\Actions\Community\JoinCommunity;
@@ -471,11 +472,42 @@ class CommunityController extends Controller
             'cta_section.headline'    => 'nullable|string|max:120',
             'cta_section.subtext'     => 'nullable|string|max:150',
             'cta_section.cta_label'   => 'nullable|string|max:50',
+            'cta_section.bg_image'    => 'nullable|url|max:500',
+            // Hero bg image
+            'hero.bg_image'                       => 'nullable|url|max:500',
+            // Offer stack
+            'offer_stack.headline'                => 'nullable|string|max:120',
+            'offer_stack.items'                   => 'nullable|array|max:8',
+            'offer_stack.items.*.name'            => 'nullable|string|max:80',
+            'offer_stack.items.*.value'           => 'nullable|string|max:40',
+            'offer_stack.items.*.description'     => 'nullable|string|max:200',
+            'offer_stack.total_value'             => 'nullable|string|max:40',
+            'offer_stack.price'                   => 'nullable|string|max:40',
+            'offer_stack.price_note'              => 'nullable|string|max:60',
+            // Guarantee
+            'guarantee.headline'                  => 'nullable|string|max:100',
+            'guarantee.days'                      => 'nullable|integer|min:1|max:365',
+            'guarantee.body'                      => 'nullable|string|max:400',
+            // Price justification
+            'price_justification.headline'              => 'nullable|string|max:100',
+            'price_justification.options'               => 'nullable|array|max:5',
+            'price_justification.options.*.label'       => 'nullable|string|max:80',
+            'price_justification.options.*.description' => 'nullable|string|max:300',
+            // Section visibility/ordering metadata
+            '_sections'               => 'nullable|array',
+            '_sections.*.type'        => 'nullable|string|max:50',
+            '_sections.*.visible'     => 'nullable|boolean',
         ]);
 
         // Merge into existing landing page so unreferenced sections are preserved
         $current = $community->landing_page ?? [];
-        $merged  = array_replace_recursive($current, $data);
+        // Handle _sections separately (full replace, not deep merge)
+        $sections = $data['_sections'] ?? null;
+        unset($data['_sections']);
+        $merged = array_replace_recursive($current, $data);
+        if ($sections !== null) {
+            $merged['_sections'] = $sections;
+        }
 
         $community->update(['landing_page' => $merged]);
 
@@ -522,6 +554,21 @@ class CommunityController extends Controller
                 return response()->json(['error' => 'AI returned an unexpected format. Please try again.'], 422);
             }
 
+            // Inject _sections metadata for the new section-based editor
+            $copy['_sections'] = [
+                ['type' => 'hero',                'visible' => true],
+                ['type' => 'social_proof',        'visible' => isset($copy['social_proof'])],
+                ['type' => 'benefits',            'visible' => isset($copy['benefits'])],
+                ['type' => 'for_you',             'visible' => isset($copy['for_you'])],
+                ['type' => 'creator',             'visible' => isset($copy['creator'])],
+                ['type' => 'testimonials',        'visible' => !empty($copy['testimonials'])],
+                ['type' => 'offer_stack',         'visible' => false],
+                ['type' => 'guarantee',           'visible' => false],
+                ['type' => 'price_justification', 'visible' => false],
+                ['type' => 'faq',                 'visible' => !empty($copy['faq'])],
+                ['type' => 'cta_section',         'visible' => true],
+            ];
+
             $community->update(['landing_page' => $copy]);
 
             return response()->json($copy);
@@ -534,5 +581,74 @@ class CommunityController extends Controller
 
             return response()->json(['error' => $e->getMessage()], 500);
         }
+    }
+
+    public function regenerateSection(Request $request, Community $community): \Illuminate\Http\JsonResponse
+    {
+        $user = $request->user();
+
+        if ($community->owner_id !== $user->id && !$user->is_super_admin) {
+            abort(403);
+        }
+
+        $request->validate([
+            'section' => 'required|string|in:hero,social_proof,benefits,for_you,creator,testimonials,faq,cta_section,offer_stack,guarantee,price_justification',
+        ]);
+
+        $section = $request->input('section');
+        $community->load('owner')->loadCount('members');
+
+        try {
+            $agent = new LandingPageSectionBuilder([
+                'name'         => $community->name,
+                'category'     => $community->category,
+                'description'  => $community->description,
+                'price'        => $community->price,
+                'currency'     => $community->currency ?? 'PHP',
+                'creator_name' => $community->owner->name ?? $user->name,
+                'member_count' => $community->members_count ?? 0,
+                'section'      => $section,
+            ]);
+
+            $response = $agent->prompt("Regenerate the '{$section}' section now. Return ONLY valid JSON for this section, no markdown.");
+            $raw = trim($response->text);
+            $raw = preg_replace('/^```(?:json)?\s*/i', '', $raw);
+            $raw = preg_replace('/\s*```$/', '', $raw);
+
+            $data = json_decode($raw, true);
+
+            if ($data === null) {
+                return response()->json(['error' => 'AI returned invalid JSON. Please try again.'], 422);
+            }
+
+            $current = $community->landing_page ?? [];
+            $current[$section] = $data;
+            $community->update(['landing_page' => $current]);
+
+            return response()->json(['section' => $section, 'data' => $data]);
+        } catch (\Throwable $e) {
+            \Log::error('LandingPageSectionBuilder failed', [
+                'community' => $community->slug,
+                'section'   => $section,
+                'error'     => $e->getMessage(),
+            ]);
+
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function uploadSectionImage(Request $request, Community $community): \Illuminate\Http\JsonResponse
+    {
+        $user = $request->user();
+
+        if ($community->owner_id !== $user->id && !$user->is_super_admin) {
+            abort(403);
+        }
+
+        $request->validate(['image' => 'required|image|max:5120']);
+
+        $url = asset('storage/' . $request->file('image')->store('landing-images', 'public'));
+
+        return response()->json(['url' => $url]);
     }
 }
