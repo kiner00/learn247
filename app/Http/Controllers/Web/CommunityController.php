@@ -425,16 +425,16 @@ class CommunityController extends Controller
             ? $community->affiliates()->where('code', $refCode)->first()
             : (auth()->id() ? $community->affiliates()->where('user_id', auth()->id())->first() : null);
 
-        $response = Inertia::render('Communities/Landing', compact(
+        $inertia = Inertia::render('Communities/Landing', compact(
             'community', 'affiliate', 'invitedBy', 'membership', 'ownerIsPro', 'isOwner'
         ));
 
         // Persist ?ref= query param as a cookie so it carries through to checkout
         if ($request->query('ref') && !$request->cookie('ref_code')) {
-            $response->withCookie(cookie('ref_code', $refCode, 60 * 24 * 30));
+            return $inertia->toResponse($request)->withCookie(cookie('ref_code', $refCode, 60 * 24 * 30));
         }
 
-        return $response;
+        return $inertia;
     }
 
     public function updateLandingPage(Request $request, Community $community): \Illuminate\Http\JsonResponse

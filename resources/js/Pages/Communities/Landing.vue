@@ -79,6 +79,13 @@
                 <button @click="execFmt('fontSize', '5')" title="Larger" class="w-8 h-7 rounded text-xs hover:bg-white/20 transition font-bold select-none">A+</button>
                 <button @click="execFmt('fontSize', '2')" title="Smaller" class="w-8 h-7 rounded text-xs hover:bg-white/20 transition select-none opacity-80">A-</button>
                 <div class="w-px h-4 bg-white/20 mx-1" />
+                <!-- Text color -->
+                <label title="Text color" class="relative w-8 h-7 flex items-center justify-center rounded hover:bg-white/20 transition cursor-pointer select-none">
+                    <span class="text-sm font-bold" :style="{ color: activeColor }">A</span>
+                    <span class="absolute bottom-1 left-1.5 right-1.5 h-0.5 rounded" :style="{ background: activeColor }"></span>
+                    <input type="color" v-model="activeColor" @input="execFmt('foreColor', activeColor)" class="absolute inset-0 opacity-0 w-full h-full cursor-pointer" />
+                </label>
+                <div class="w-px h-4 bg-white/20 mx-1" />
                 <!-- Align -->
                 <button @click="execFmt('justifyLeft')" title="Align left" class="w-7 h-7 rounded hover:bg-white/20 transition select-none text-xs">⬅</button>
                 <button @click="execFmt('justifyCenter')" title="Center" class="w-7 h-7 rounded hover:bg-white/20 transition select-none text-xs">↔</button>
@@ -1042,6 +1049,7 @@ const toolbarVisible  = ref(false);
 const toolbarPos      = ref({ top: 0, left: 0 });
 const renderKey       = ref(0);
 const fmtActive       = ref({ bold: false, italic: false, underline: false });
+const activeColor     = ref('#ffffff');
 
 // Shared CSS class applied to editable elements when inlineMode is on
 const editableClass = 'outline-none cursor-text rounded hover:ring-2 hover:ring-amber-400/50 focus:ring-2 focus:ring-amber-400 transition-shadow';
