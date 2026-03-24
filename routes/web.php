@@ -51,6 +51,9 @@ Route::get('/ref/{code}', [RefController::class, 'redirect'])->name('ref.redirec
 // ─── Guest checkout via affiliate link (public, POST only) ───────────────────
 Route::post('/ref-checkout/{code}', [GuestCheckoutController::class, 'process'])->name('ref.checkout.process');
 
+// ─── Guest checkout without affiliate code (public, POST only) ───────────────
+Route::post('/communities/{community}/guest-checkout', [GuestCheckoutController::class, 'processNoAffiliate'])->name('communities.guest.checkout');
+
 // ─── Checkout callback: auto-login + processing screen (signed URL) ──────────
 Route::get('/checkout-callback/{user}/{community}', CheckoutCallbackController::class)->name('checkout.callback');
 

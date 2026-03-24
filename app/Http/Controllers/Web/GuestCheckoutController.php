@@ -6,6 +6,7 @@ use App\Actions\Auth\GuestCheckout;
 use App\Actions\Billing\StartSubscriptionCheckout;
 use App\Http\Controllers\Controller;
 use App\Models\Affiliate;
+use App\Models\Community;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -44,6 +45,34 @@ class GuestCheckoutController extends Controller
         $callbackUrl = self::buildCallbackUrl($user->id, $community->slug);
 
         $result = $action->execute($user, $community, $code, successRedirectUrl: $callbackUrl);
+
+        return Inertia::location($result['checkout_url']);
+    }
+
+    public function processNoAffiliate(Request $request, Community $community, StartSubscriptionCheckout $action, GuestCheckout $checkout): mixed
+    {
+        if ($community->isPendingDeletion()) {
+            return back()->withErrors(['email' => 'This community is no longer accepting new members.']);
+        }
+
+        $data = $request->validate([
+            'first_name' => ['required', 'string', 'max:100'],
+            'last_name'  => ['required', 'string', 'max:100'],
+            'email'      => ['required', 'email'],
+            'phone'      => ['required', 'string', 'max:30'],
+        ]);
+
+        $user = $checkout->findOrCreateUser($data);
+
+        if ($checkout->hasActiveSubscription($user->id, $community->id)) {
+            return back()->withErrors(['email' => 'This email already has an active subscription to this community.']);
+        }
+
+        // Pick up ref_code from cookie if present (affiliate may have set it earlier)
+        $refCode = $request->cookie('ref_code');
+
+        $callbackUrl = self::buildCallbackUrl($user->id, $community->slug);
+        $result = $action->execute($user, $community, $refCode, successRedirectUrl: $callbackUrl);
 
         return Inertia::location($result['checkout_url']);
     }

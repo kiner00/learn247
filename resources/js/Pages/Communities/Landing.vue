@@ -1380,7 +1380,7 @@ function submitJoin() {
     if (props.invitedBy?.code) {
         joinForm.post(`/ref-checkout/${props.invitedBy.code}`);
     } else {
-        joinForm.post(`/communities/${props.community.slug}/join`);
+        joinForm.post(`/communities/${props.community.slug}/guest-checkout`);
     }
 }
 
