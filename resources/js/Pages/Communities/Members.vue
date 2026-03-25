@@ -226,12 +226,12 @@
             <div class="w-full lg:w-72 shrink-0 space-y-4">
                 <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
                     <!-- Cover image -->
-                    <div class="h-32 bg-black flex items-center justify-center overflow-hidden">
+                    <div class="h-50 overflow-hidden">
                         <img
                             v-if="community.cover_image"
                             :src="community.cover_image"
                             :alt="community.name"
-                            class="w-full h-full object-contain"
+                            class="w-full h-full object-cover"
                         />
                         <span v-else class="text-3xl font-black text-white opacity-20">
                             {{ community.name.charAt(0).toUpperCase() }}
