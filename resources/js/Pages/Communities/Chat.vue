@@ -376,11 +376,15 @@ async function poll() {
             params: { after: lastMessageId.value },
         });
         if (res.data.messages.length) {
-            const atBottom = messagesEl.value
-                ? messagesEl.value.scrollHeight - messagesEl.value.scrollTop - messagesEl.value.clientHeight < 100
-                : true;
-            messages.value.push(...res.data.messages);
-            if (atBottom) scrollToBottom(true);
+            const existingIds = new Set(messages.value.map(m => m.id));
+            const newMessages = res.data.messages.filter(m => !existingIds.has(m.id));
+            if (newMessages.length) {
+                const atBottom = messagesEl.value
+                    ? messagesEl.value.scrollHeight - messagesEl.value.scrollTop - messagesEl.value.clientHeight < 100
+                    : true;
+                messages.value.push(...newMessages);
+                if (atBottom) scrollToBottom(true);
+            }
         }
     } catch { /* ignore poll errors */ }
 }
