@@ -42,15 +42,30 @@ class TelegramWebhookController extends Controller
             return response('', 200);
         }
 
-        // Skip messages with no text (photos, stickers, etc.)
-        $text = $chatMessage['text'] ?? null;
-        if (! $text) {
-            return response('', 200);
-        }
-
         // Skip bot's own messages to avoid loops
         $fromUser = $chatMessage['from'] ?? null;
         if ($fromUser && ($fromUser['is_bot'] ?? false)) {
+            return response('', 200);
+        }
+
+        $text      = $chatMessage['text'] ?? $chatMessage['caption'] ?? null;
+        $mediaUrl  = null;
+        $mediaType = null;
+
+        if (isset($chatMessage['photo'])) {
+            // Telegram sends multiple sizes; pick the largest
+            $photo    = end($chatMessage['photo']);
+            $fileId   = $photo['file_id'];
+            $mediaUrl = $this->telegram->getFileUrl($community->telegram_bot_token, $fileId);
+            $mediaType = 'image';
+        } elseif (isset($chatMessage['video'])) {
+            $fileId   = $chatMessage['video']['file_id'];
+            $mediaUrl = $this->telegram->getFileUrl($community->telegram_bot_token, $fileId);
+            $mediaType = 'video';
+        }
+
+        // Skip if no text and no media
+        if (! $text && ! $mediaUrl) {
             return response('', 200);
         }
 
@@ -62,8 +77,10 @@ class TelegramWebhookController extends Controller
         Message::create([
             'community_id'    => $community->id,
             'user_id'         => $community->owner_id,
-            'content'         => $text,
+            'content'         => $text ?? '',
             'telegram_author' => $authorName,
+            'media_url'       => $mediaUrl,
+            'media_type'      => $mediaType,
         ]);
 
         return response('', 200);

@@ -47,6 +47,25 @@ class TelegramService
         }
     }
 
+    public function getFileUrl(string $token, string $fileId): ?string
+    {
+        try {
+            $response = Http::timeout(10)->get(self::API_BASE . $token . '/getFile', [
+                'file_id' => $fileId,
+            ]);
+
+            $filePath = $response->json('result.file_path');
+            if (! $filePath) {
+                return null;
+            }
+
+            return 'https://api.telegram.org/file/bot' . $token . '/' . $filePath;
+        } catch (\Throwable $e) {
+            Log::warning('Telegram getFile failed', ['error' => $e->getMessage()]);
+            return null;
+        }
+    }
+
     public function webhookSecret(string $token): string
     {
         return substr(hash('sha256', $token), 0, 32);

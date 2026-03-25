@@ -81,7 +81,21 @@
                                 </div>
 
                                 <div class="flex items-start gap-2">
-                                    <p class="flex-1 text-sm text-gray-700 leading-relaxed wrap-break-word">{{ msg.content }}</p>
+                                    <div class="flex-1 min-w-0">
+                                        <img
+                                            v-if="msg.media_type === 'image' && msg.media_url"
+                                            :src="msg.media_url"
+                                            class="max-w-xs rounded-lg mb-1 cursor-pointer"
+                                            @click="() => window.open(msg.media_url, '_blank')"
+                                        />
+                                        <video
+                                            v-else-if="msg.media_type === 'video' && msg.media_url"
+                                            :src="msg.media_url"
+                                            controls
+                                            class="max-w-xs rounded-lg mb-1"
+                                        />
+                                        <p v-if="msg.content" class="text-sm text-gray-700 leading-relaxed wrap-break-word">{{ msg.content }}</p>
+                                    </div>
                                     <button
                                         v-if="canDelete(msg)"
                                         @click="deleteMessage(msg)"
