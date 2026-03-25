@@ -133,8 +133,9 @@
                                     <span class="text-xs font-bold uppercase px-2 py-0.5 rounded-full"
                                           :class="{
                                               'bg-amber-100 text-amber-700': r.status === 'pending',
-                                              'bg-green-100 text-green-700': r.status === 'approved',
-                                              'bg-red-100 text-red-700':    r.status === 'rejected',
+                                              'bg-blue-100 text-blue-700':   r.status === 'approved',
+                                              'bg-green-100 text-green-700': r.status === 'paid',
+                                              'bg-red-100 text-red-700':     r.status === 'rejected',
                                           }">
                                         {{ r.status }}
                                     </span>
@@ -155,6 +156,12 @@
                                         <button @click="rejectingId = rejectingId === r.id ? null : r.id"
                                                 class="text-xs bg-red-50 hover:bg-red-100 text-red-600 font-semibold px-3 py-1.5 rounded-lg transition-colors border border-red-200">
                                             Reject
+                                        </button>
+                                    </div>
+                                    <div v-else-if="r.status === 'approved' && r.type === 'affiliate'" class="flex items-center justify-end">
+                                        <button @click="markRequestPaid(r.id)"
+                                                class="text-xs bg-green-600 hover:bg-green-700 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors">
+                                            Mark Paid
                                         </button>
                                     </div>
                                 </td>
@@ -396,6 +403,10 @@ const rejectReason = ref('')
 
 function approveRequest(id) {
     router.post(`/admin/payout-requests/${id}/approve`)
+}
+
+function markRequestPaid(id) {
+    router.post(`/admin/payout-requests/${id}/mark-paid`)
 }
 
 function confirmReject(id) {

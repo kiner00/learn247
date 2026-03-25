@@ -849,7 +849,7 @@ function requestAll() {
 
 function openRequestModal(affiliate) {
     requestingAffiliate.value = affiliate;
-    requestForm.amount = affiliate.eligible_amount;
+    requestForm.amount = null;
     showRequestModal.value = true;
 }
 

@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Affiliate\MarkAffiliateConversionPaid;
 use App\Models\AffiliateConversion;
 use App\Models\OwnerPayout;
+use App\Models\PayoutRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
@@ -44,6 +46,41 @@ class XenditWebhookController extends Controller
             $ownerPayout->update(['status' => $status]);
             Log::info("XenditWebhook: OwnerPayout #{$ownerPayout->id} → {$status}");
             return response('OK', 200);
+        }
+
+        // ── Try to match an affiliate PayoutRequest via reference_id pattern ──
+        // reference_id format: req-{payout_request_id}-{timestamp}
+        if ($referenceId && str_starts_with($referenceId, 'req-')) {
+            $parts          = explode('-', $referenceId);
+            $payoutRequestId = $parts[1] ?? null;
+
+            if ($payoutRequestId) {
+                $payoutRequest = PayoutRequest::find($payoutRequestId);
+
+                if ($payoutRequest && $payoutRequest->type === PayoutRequest::TYPE_AFFILIATE) {
+                    if ($status === 'succeeded') {
+                        $mark      = app(MarkAffiliateConversionPaid::class);
+                        $remaining = (float) $payoutRequest->amount;
+
+                        AffiliateConversion::where('affiliate_id', $payoutRequest->affiliate_id)
+                            ->where('status', AffiliateConversion::STATUS_PENDING)
+                            ->orderBy('created_at')
+                            ->get()
+                            ->each(function ($conversion) use (&$remaining, $mark) {
+                                if ($remaining <= 0) return false;
+                                $mark->execute($conversion);
+                                $remaining -= (float) $conversion->commission_amount;
+                            });
+
+                        $payoutRequest->update(['status' => PayoutRequest::STATUS_PAID]);
+                    } else {
+                        $payoutRequest->update(['status' => PayoutRequest::STATUS_PENDING]);
+                    }
+
+                    Log::info("XenditWebhook: affiliate PayoutRequest #{$payoutRequest->id} → {$status}");
+                    return response('OK', 200);
+                }
+            }
         }
 
         // ── Try to match an AffiliateConversion via reference_id pattern ─────

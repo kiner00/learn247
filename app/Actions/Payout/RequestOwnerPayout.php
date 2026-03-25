@@ -22,11 +22,11 @@ class RequestOwnerPayout
 
         $hasPending = PayoutRequest::where('community_id', $community->id)
             ->where('type', PayoutRequest::TYPE_OWNER)
-            ->where('status', PayoutRequest::STATUS_PENDING)
+            ->whereIn('status', [PayoutRequest::STATUS_PENDING, PayoutRequest::STATUS_APPROVED])
             ->exists();
 
         if ($hasPending) {
-            return ['success' => false, 'message' => 'You already have a pending payout request for this community.'];
+            return ['success' => false, 'message' => 'You already have a pending or approved payout request for this community.'];
         }
 
         [$eligibleNow] = $this->eligibility->forOwner($community);

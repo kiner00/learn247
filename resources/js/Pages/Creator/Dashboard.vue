@@ -165,8 +165,15 @@
 
             <!-- Pending request notice OR request form -->
             <div class="px-5 py-4 border-t border-gray-100">
-                <!-- Already has pending request -->
-                <div v-if="c.pending_request" class="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+                <!-- Already has pending or approved request -->
+                <div v-if="c.pending_request && c.pending_request.status === 'approved'" class="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
+                    <div>
+                        <p class="text-sm font-semibold text-blue-800">Payout approved — being processed</p>
+                        <p class="text-xs text-blue-600 mt-0.5">₱{{ fmt(c.pending_request.amount) }} — approved and being sent to your account</p>
+                    </div>
+                    <span class="text-xs font-bold uppercase text-blue-600 bg-blue-100 px-3 py-1 rounded-full">Approved</span>
+                </div>
+                <div v-else-if="c.pending_request" class="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
                     <div>
                         <p class="text-sm font-semibold text-amber-800">Payout request pending</p>
                         <p class="text-xs text-amber-600 mt-0.5">₱{{ fmt(c.pending_request.amount) }} — waiting for admin approval</p>

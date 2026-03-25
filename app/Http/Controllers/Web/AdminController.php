@@ -143,6 +143,32 @@ class AdminController extends Controller
         return back()->with('success', "Payout request #{$payoutRequest->id} rejected.");
     }
 
+    public function markPayoutRequestPaid(PayoutRequest $payoutRequest): RedirectResponse
+    {
+        abort_unless(
+            $payoutRequest->type === PayoutRequest::TYPE_AFFILIATE && $payoutRequest->status === PayoutRequest::STATUS_APPROVED,
+            422,
+            'Only approved affiliate requests can be marked paid.'
+        );
+
+        $mark      = app(\App\Actions\Affiliate\MarkAffiliateConversionPaid::class);
+        $remaining = (float) $payoutRequest->amount;
+
+        \App\Models\AffiliateConversion::where('affiliate_id', $payoutRequest->affiliate_id)
+            ->where('status', \App\Models\AffiliateConversion::STATUS_PENDING)
+            ->orderBy('created_at')
+            ->get()
+            ->each(function ($conversion) use (&$remaining, $mark) {
+                if ($remaining <= 0) return false;
+                $mark->execute($conversion);
+                $remaining -= (float) $conversion->commission_amount;
+            });
+
+        $payoutRequest->update(['status' => PayoutRequest::STATUS_PAID]);
+
+        return back()->with('success', "Payout request #{$payoutRequest->id} marked as paid and conversions settled.");
+    }
+
     // ── Onboarding ────────────────────────────────────────────────────────────
 
     public function resendOnboardingEmail(User $user, ResendOnboardingEmail $action): RedirectResponse

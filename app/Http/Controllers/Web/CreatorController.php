@@ -53,7 +53,9 @@ class CreatorController extends Controller
                 $e = $earningsCalc->forCommunity($community);
 
                 $pendingRequest = PayoutRequest::where('community_id', $community->id)
-                    ->where('type', PayoutRequest::TYPE_OWNER)->where('status', PayoutRequest::STATUS_PENDING)->first();
+                    ->where('type', PayoutRequest::TYPE_OWNER)
+                    ->whereIn('status', [PayoutRequest::STATUS_PENDING, PayoutRequest::STATUS_APPROVED])
+                    ->latest()->first();
 
                 $recentPayments = Payment::where('community_id', $community->id)->where('status', Payment::STATUS_PAID)
                     ->with('user:id,name,email,phone')->latest('paid_at')->take(10)->get()
@@ -80,7 +82,7 @@ class CreatorController extends Controller
                     'eligible_now'        => $eligibleNow,
                     'locked_amount'       => $lockedAmount,
                     'next_eligible_date'  => $nextEligibleDate,
-                    'pending_request'     => $pendingRequest ? ['id' => $pendingRequest->id, 'amount' => (float) $pendingRequest->amount] : null,
+                    'pending_request'     => $pendingRequest ? ['id' => $pendingRequest->id, 'amount' => (float) $pendingRequest->amount, 'status' => $pendingRequest->status] : null,
                     'recent_payments'     => $recentPayments,
                     'abandoned_payments'  => $abandonedPayments,
                 ];

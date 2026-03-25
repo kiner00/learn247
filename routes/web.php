@@ -96,6 +96,7 @@ Route::middleware(['auth', EnsureSuperAdmin::class])->prefix('admin')->group(fun
     Route::post('/payouts/affiliates/selected', [AdminController::class, 'paySelectedAffiliates'])->name('admin.payouts.affiliates.selected');
     Route::post('/payout-requests/{payoutRequest}/approve', [AdminController::class, 'approvePayoutRequest'])->name('admin.payout-requests.approve');
     Route::post('/payout-requests/{payoutRequest}/reject', [AdminController::class, 'rejectPayoutRequest'])->name('admin.payout-requests.reject');
+    Route::post('/payout-requests/{payoutRequest}/mark-paid', [AdminController::class, 'markPayoutRequestPaid'])->name('admin.payout-requests.mark-paid');
     Route::post('/onboarding/{user}/resend', [AdminController::class, 'resendOnboardingEmail'])->name('admin.onboarding.resend');
     // Featured communities
     Route::post('/communities/{community}/toggle-featured', [AdminController::class, 'toggleFeatured'])->name('admin.communities.toggle-featured');
