@@ -2,10 +2,10 @@
     <AppLayout :title="`${community.name} · Chat`" :community="community">
         <CommunityTabs :community="community" active-tab="chat" />
 
-        <div class="flex flex-col lg:flex-row gap-6 items-start">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
             <!-- ── Chat column ─────────────────────────────────────────────── -->
-            <div class="flex-1 min-w-0 w-full flex flex-col" style="height: calc(100vh - 220px);">
+            <div class="lg:col-span-2 flex flex-col" style="height: calc(100vh - 220px);">
                 <div class="bg-white border border-gray-200 rounded-2xl flex flex-col overflow-hidden h-full shadow-sm">
 
                     <!-- Header -->
@@ -183,7 +183,7 @@
             </div>
 
             <!-- ── Right sidebar ────────────────────────────────────────────── -->
-            <div class="w-full lg:w-72 shrink-0">
+            <div>
                 <CommunitySidebarCard :community="community">
                     <button
                         v-if="$page.props.auth?.user"

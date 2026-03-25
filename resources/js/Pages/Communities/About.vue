@@ -15,10 +15,10 @@
             </div>
         </div>
 
-        <div class="flex flex-col-reverse lg:flex-row gap-6 items-start">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-            <!-- Main content: one unified white card like Skool -->
-            <div class="flex-1 min-w-0 w-full">
+            <!-- Main content -->
+            <div class="lg:col-span-2 min-w-0">
                 <div class="bg-white rounded-2xl overflow-hidden mb-4">
 
                     <!-- Community name (above banner) -->
@@ -89,7 +89,7 @@
             </div>
 
             <!-- Right sidebar (Skool-style) -->
-            <div class="w-full lg:w-72 shrink-0">
+            <div>
                 <CommunitySidebarCard :community="community" :admin-count="1">
                     <!-- Recent member avatars -->
                     <div v-if="recentMembers.length" class="flex flex-wrap gap-1 mb-3">
