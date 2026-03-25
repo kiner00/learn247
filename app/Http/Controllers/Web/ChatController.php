@@ -52,6 +52,8 @@ class ChatController extends Controller
                 'content'         => $message->content,
                 'created_at'      => $message->created_at,
                 'telegram_author' => null,
+                'media_url'       => null,
+                'media_type'      => null,
                 'user'            => [
                     'id'       => $message->user->id,
                     'name'     => $message->user->name,
@@ -69,6 +71,8 @@ class ChatController extends Controller
             'content'         => $m->content,
             'created_at'      => $m->created_at,
             'telegram_author' => $m->telegram_author,
+            'media_url'       => $m->media_url,
+            'media_type'      => $m->media_type,
             'user'            => $m->user ? [
                 'id'       => $m->user->id,
                 'name'     => $m->user->name,
