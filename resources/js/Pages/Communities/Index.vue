@@ -10,12 +10,12 @@
                 <button
                     v-if="$page.props.auth?.user"
                     @click="openCreateModal()"
-                    class="text-indigo-600 font-medium hover:underline"
+                    class="text-indigo-600 font-medium underline underline-offset-2 hover:text-indigo-800 inline-flex items-center gap-1"
                 >
-                    create your community today.
+                    create your community today. <span>→</span>
                 </button>
-                <Link v-else href="/register" class="text-indigo-600 font-medium hover:underline">
-                    create your community today.
+                <Link v-else href="/register" class="text-indigo-600 font-medium underline underline-offset-2 hover:text-indigo-800 inline-flex items-center gap-1">
+                    create your community today. <span>→</span>
                 </Link>
             </p>
 
