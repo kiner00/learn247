@@ -146,23 +146,25 @@ class AdminController extends Controller
     public function markPayoutRequestPaid(PayoutRequest $payoutRequest): RedirectResponse
     {
         abort_unless(
-            $payoutRequest->type === PayoutRequest::TYPE_AFFILIATE && $payoutRequest->status === PayoutRequest::STATUS_APPROVED,
+            $payoutRequest->status === PayoutRequest::STATUS_APPROVED,
             422,
-            'Only approved affiliate requests can be marked paid.'
+            'Only approved requests can be marked paid.'
         );
 
-        $mark      = app(\App\Actions\Affiliate\MarkAffiliateConversionPaid::class);
-        $remaining = (float) $payoutRequest->amount;
+        if ($payoutRequest->type === PayoutRequest::TYPE_AFFILIATE) {
+            $mark      = app(\App\Actions\Affiliate\MarkAffiliateConversionPaid::class);
+            $remaining = (float) $payoutRequest->amount;
 
-        \App\Models\AffiliateConversion::where('affiliate_id', $payoutRequest->affiliate_id)
-            ->where('status', \App\Models\AffiliateConversion::STATUS_PENDING)
-            ->orderBy('created_at')
-            ->get()
-            ->each(function ($conversion) use (&$remaining, $mark) {
-                if ($remaining <= 0) return false;
-                $mark->execute($conversion);
-                $remaining -= (float) $conversion->commission_amount;
-            });
+            \App\Models\AffiliateConversion::where('affiliate_id', $payoutRequest->affiliate_id)
+                ->where('status', \App\Models\AffiliateConversion::STATUS_PENDING)
+                ->orderBy('created_at')
+                ->get()
+                ->each(function ($conversion) use (&$remaining, $mark) {
+                    if ($remaining <= 0) return false;
+                    $mark->execute($conversion);
+                    $remaining -= (float) $conversion->commission_amount;
+                });
+        }
 
         $payoutRequest->update(['status' => PayoutRequest::STATUS_PAID]);
 

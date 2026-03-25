@@ -57,6 +57,13 @@ class XenditWebhookController extends Controller
             if ($payoutRequestId) {
                 $payoutRequest = PayoutRequest::find($payoutRequestId);
 
+                if ($payoutRequest && $payoutRequest->type === PayoutRequest::TYPE_OWNER) {
+                    $newStatus = $status === 'succeeded' ? PayoutRequest::STATUS_PAID : PayoutRequest::STATUS_PENDING;
+                    $payoutRequest->update(['status' => $newStatus]);
+                    Log::info("XenditWebhook: owner PayoutRequest #{$payoutRequest->id} → {$newStatus}");
+                    return response('OK', 200);
+                }
+
                 if ($payoutRequest && $payoutRequest->type === PayoutRequest::TYPE_AFFILIATE) {
                     if ($status === 'succeeded') {
                         $mark      = app(MarkAffiliateConversionPaid::class);

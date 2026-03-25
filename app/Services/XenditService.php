@@ -98,6 +98,21 @@ class XenditService
     }
 
     /**
+     * Fetch a Xendit Payout by ID.
+     */
+    public function getPayout(string $payoutId): array
+    {
+        $response = Http::withBasicAuth($this->secretKey, '')
+            ->get(self::BASE_URL . "/v2/payouts/{$payoutId}");
+
+        if ($response->failed()) {
+            throw new \RuntimeException('Failed to fetch Xendit payout: ' . $response->body());
+        }
+
+        return $response->json();
+    }
+
+    /**
      * Calculate Xendit's collection fee for a given payment channel and gross amount.
      * Returns the fee amount in PHP so callers can store net = gross - fee.
      *

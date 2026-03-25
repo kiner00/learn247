@@ -166,7 +166,7 @@
                                             Reject
                                         </button>
                                     </div>
-                                    <div v-else-if="r.status === 'approved' && r.type === 'affiliate'" class="flex items-center justify-end">
+                                    <div v-else-if="r.status === 'approved'" class="flex items-center justify-end">
                                         <button @click="markRequestPaid(r.id)"
                                                 class="text-xs bg-green-600 hover:bg-green-700 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors">
                                             Mark Paid
