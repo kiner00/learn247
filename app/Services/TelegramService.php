@@ -47,6 +47,34 @@ class TelegramService
         }
     }
 
+    public function sendPhoto(string $token, string $chatId, string $photoUrl, ?string $caption = null): void
+    {
+        try {
+            Http::timeout(15)->post(self::API_BASE . $token . '/sendPhoto', array_filter([
+                'chat_id'    => $chatId,
+                'photo'      => $photoUrl,
+                'caption'    => $caption,
+                'parse_mode' => 'HTML',
+            ]));
+        } catch (\Throwable $e) {
+            Log::warning('Telegram sendPhoto failed', ['error' => $e->getMessage()]);
+        }
+    }
+
+    public function sendVideo(string $token, string $chatId, string $videoUrl, ?string $caption = null): void
+    {
+        try {
+            Http::timeout(15)->post(self::API_BASE . $token . '/sendVideo', array_filter([
+                'chat_id'    => $chatId,
+                'video'      => $videoUrl,
+                'caption'    => $caption,
+                'parse_mode' => 'HTML',
+            ]));
+        } catch (\Throwable $e) {
+            Log::warning('Telegram sendVideo failed', ['error' => $e->getMessage()]);
+        }
+    }
+
     public function getFileUrl(string $token, string $fileId): ?string
     {
         try {

@@ -121,7 +121,39 @@
 
                     <!-- Input bar -->
                     <div class="px-4 py-3 border-t border-gray-100 shrink-0">
+                        <!-- Media preview -->
+                        <div v-if="mediaPreviewUrl" class="mb-2 relative inline-block">
+                            <img
+                                v-if="mediaFile?.type?.startsWith('image/')"
+                                :src="mediaPreviewUrl"
+                                class="h-24 rounded-lg object-cover border border-gray-200"
+                            />
+                            <video
+                                v-else
+                                :src="mediaPreviewUrl"
+                                class="h-24 rounded-lg border border-gray-200"
+                            />
+                            <button
+                                type="button"
+                                @click="clearMedia"
+                                class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gray-800 text-white rounded-full flex items-center justify-center text-xs leading-none"
+                            >×</button>
+                        </div>
+
                         <form @submit.prevent="send" class="flex items-end gap-2">
+                            <!-- Attach button -->
+                            <input ref="fileInputEl" type="file" accept="image/*,video/*" class="hidden" @change="onFileSelected" />
+                            <button
+                                type="button"
+                                @click="fileInputEl.click()"
+                                class="shrink-0 w-9 h-9 flex items-center justify-center text-gray-400 hover:text-indigo-600 transition-colors"
+                                title="Attach image or video"
+                            >
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+                                </svg>
+                            </button>
+
                             <div class="flex-1 relative">
                                 <textarea
                                     v-model="content"
@@ -137,7 +169,7 @@
                             </div>
                             <button
                                 type="submit"
-                                :disabled="!content.trim() || sending"
+                                :disabled="(!content.trim() && !mediaFile) || sending"
                                 class="shrink-0 w-9 h-9 flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white rounded-xl transition-colors"
                             >
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -221,11 +253,27 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
 
 // ── State ──────────────────────────────────────────────────────────────────────
 const messages      = ref([...props.messages]);
-const content       = ref('');
-const sending       = ref(false);
-const messagesEl    = ref(null);
-const inputEl       = ref(null);
+const content         = ref('');
+const sending         = ref(false);
+const messagesEl      = ref(null);
+const inputEl         = ref(null);
+const fileInputEl     = ref(null);
+const mediaFile       = ref(null);
+const mediaPreviewUrl = ref(null);
 const showInviteModal = ref(false);
+
+function onFileSelected(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    mediaFile.value = file;
+    mediaPreviewUrl.value = URL.createObjectURL(file);
+}
+
+function clearMedia() {
+    mediaFile.value = null;
+    mediaPreviewUrl.value = null;
+    if (fileInputEl.value) fileInputEl.value.value = '';
+}
 
 const lastMessageId = computed(() => messages.value.at(-1)?.id ?? 0);
 
@@ -293,22 +341,27 @@ async function deleteMessage(msg) {
 // ── Send message ───────────────────────────────────────────────────────────────
 async function send() {
     const text = content.value.trim();
-    if (!text || sending.value) return;
+    if ((!text && !mediaFile.value) || sending.value) return;
 
     sending.value = true;
+    const savedText  = text;
+    const savedFile  = mediaFile.value;
     content.value = '';
-    if (inputEl.value) {
-        inputEl.value.style.height = 'auto';
-    }
+    clearMedia();
+    if (inputEl.value) inputEl.value.style.height = 'auto';
 
     try {
-        const res = await axios.post(`/communities/${props.community.slug}/chat`, { content: text }, {
-            headers: { 'X-CSRF-TOKEN': csrfToken },
+        const formData = new FormData();
+        if (savedText) formData.append('content', savedText);
+        if (savedFile) formData.append('media', savedFile);
+
+        const res = await axios.post(`/communities/${props.community.slug}/chat`, formData, {
+            headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'multipart/form-data' },
         });
         messages.value.push(res.data.message);
         scrollToBottom(true);
     } catch {
-        content.value = text; // restore on error
+        content.value = savedText; // restore on error
     } finally {
         sending.value = false;
     }

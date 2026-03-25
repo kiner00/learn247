@@ -12,6 +12,7 @@ use App\Models\Message;
 use App\Queries\Chat\GetChatMessages;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -44,7 +45,17 @@ class ChatController extends Controller
             return response()->json(['error' => 'You have been blocked from chatting in this community.'], 403);
         }
 
-        $message = $action->execute($request->user(), $community, $request->validated()['content']);
+        $mediaUrl  = null;
+        $mediaType = null;
+
+        if ($request->hasFile('media')) {
+            $file      = $request->file('media');
+            $path      = $file->store('chat-media', 'public');
+            $mediaUrl  = Storage::disk('public')->url($path);
+            $mediaType = str_starts_with($file->getMimeType(), 'video/') ? 'video' : 'image';
+        }
+
+        $message = $action->execute($request->user(), $community, $request->validated()['content'] ?? '', $mediaUrl, $mediaType);
 
         return response()->json([
             'message' => [
@@ -52,8 +63,8 @@ class ChatController extends Controller
                 'content'         => $message->content,
                 'created_at'      => $message->created_at,
                 'telegram_author' => null,
-                'media_url'       => null,
-                'media_type'      => null,
+                'media_url'       => $message->media_url,
+                'media_type'      => $message->media_type,
                 'user'            => [
                     'id'       => $message->user->id,
                     'name'     => $message->user->name,

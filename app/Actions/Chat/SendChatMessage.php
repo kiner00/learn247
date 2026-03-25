@@ -11,12 +11,14 @@ class SendChatMessage
 {
     public function __construct(private TelegramService $telegram) {}
 
-    public function execute(User $user, Community $community, string $content): Message
+    public function execute(User $user, Community $community, string $content, ?string $mediaUrl = null, ?string $mediaType = null): Message
     {
         $message = Message::create([
             'community_id' => $community->id,
             'user_id'      => $user->id,
             'content'      => $content,
+            'media_url'    => $mediaUrl,
+            'media_type'   => $mediaType,
         ]);
 
         $community->members()->where('user_id', $user->id)->update([
@@ -24,11 +26,21 @@ class SendChatMessage
         ]);
 
         if ($community->telegram_bot_token && $community->telegram_chat_id) {
-            $this->telegram->sendMessage(
-                $community->telegram_bot_token,
-                $community->telegram_chat_id,
-                "<b>{$user->name}</b>: " . htmlspecialchars($content, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
-            );
+            $isAdmin = $community->owner_id === $user->id;
+            $prefix  = $isAdmin ? "From Curzzo Admin - <b>{$user->name}</b>" : "From Curzzo Member - <b>{$user->name}</b>";
+            $caption = $content ? "{$prefix}\n" . htmlspecialchars($content, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') : $prefix;
+
+            if ($mediaUrl && $mediaType === 'image') {
+                $this->telegram->sendPhoto($community->telegram_bot_token, $community->telegram_chat_id, $mediaUrl, $caption);
+            } elseif ($mediaUrl && $mediaType === 'video') {
+                $this->telegram->sendVideo($community->telegram_bot_token, $community->telegram_chat_id, $mediaUrl, $caption);
+            } else {
+                $this->telegram->sendMessage(
+                    $community->telegram_bot_token,
+                    $community->telegram_chat_id,
+                    "{$prefix}\n" . htmlspecialchars($content, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
+                );
+            }
         }
 
         return $message->load('user:id,name,username,avatar');
