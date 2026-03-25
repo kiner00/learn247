@@ -43,8 +43,19 @@ class CalculateEligibility
             'affiliate', fn ($q) => $q->where('community_id', $community->id)
         )->sum('commission_amount');
 
-        $eligibleEarned = round($eligibleGross - $eligiblePlatformFee - $affiliateCommission, 2);
-        $lockedEarned   = round($lockedGross - $lockedPlatformFee, 2);
+        // Prorate affiliate commissions between eligible and locked buckets
+        // proportionally to their gross, so neither bucket is unfairly depleted.
+        $totalGross = $eligibleGross + $lockedGross;
+        if ($totalGross > 0) {
+            $eligibleCommission = round($affiliateCommission * ($eligibleGross / $totalGross), 2);
+            $lockedCommission   = round($affiliateCommission * ($lockedGross / $totalGross), 2);
+        } else {
+            $eligibleCommission = 0.0;
+            $lockedCommission   = 0.0;
+        }
+
+        $eligibleEarned = round($eligibleGross - $eligiblePlatformFee - $eligibleCommission, 2);
+        $lockedEarned   = round($lockedGross - $lockedPlatformFee - $lockedCommission, 2);
 
         $alreadyPaid = (float) OwnerPayout::where('community_id', $community->id)
             ->where('status', '!=', 'failed')
