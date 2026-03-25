@@ -99,6 +99,7 @@
                             <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500">Community</th>
                             <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500">Payout To</th>
                             <th class="text-right px-5 py-3 text-xs font-semibold text-gray-500">Requested</th>
+                            <th class="text-right px-5 py-3 text-xs font-semibold text-gray-500">Xendit Balance</th>
                             <th class="text-right px-5 py-3 text-xs font-semibold text-gray-500">Eligible at Request</th>
                             <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500">Status</th>
                             <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500">Xendit Reference</th>
@@ -128,6 +129,13 @@
                                     <span v-else class="text-xs text-red-400 italic">Not set</span>
                                 </td>
                                 <td class="px-5 py-3 text-right font-semibold text-gray-900">₱{{ fmt(r.amount) }}</td>
+                                <td class="px-5 py-3 text-right">
+                                    <p class="text-xs text-gray-500">Before: <span class="font-semibold text-gray-800">₱{{ fmt(xenditBalance) }}</span></p>
+                                    <p class="text-xs mt-0.5"
+                                       :class="(xenditBalance - r.amount) >= 0 ? 'text-green-600' : 'text-red-600'">
+                                        After: <span class="font-semibold">₱{{ fmt(xenditBalance - r.amount) }}</span>
+                                    </p>
+                                </td>
                                 <td class="px-5 py-3 text-right text-gray-400">₱{{ fmt(r.eligible_amount) }}</td>
                                 <td class="px-5 py-3">
                                     <span class="text-xs font-bold uppercase px-2 py-0.5 rounded-full"
