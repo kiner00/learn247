@@ -224,51 +224,19 @@
 
             <!-- ── Right sidebar ────────────────────────────────────────── -->
             <div class="w-full lg:w-72 shrink-0 space-y-4">
-                <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
-                    <!-- Cover image -->
-                    <div class="h-50 overflow-hidden">
-                        <img
-                            v-if="community.cover_image"
-                            :src="community.cover_image"
-                            :alt="community.name"
-                            class="w-full h-full object-cover"
-                        />
-                        <span v-else class="text-3xl font-black text-white opacity-20">
-                            {{ community.name.charAt(0).toUpperCase() }}
-                        </span>
-                    </div>
-
-                    <div class="p-4">
-                        <h2 class="font-bold text-gray-900 text-sm">{{ community.name }}</h2>
-                        <p class="text-xs text-gray-400 mt-0.5 mb-3">curzzo.com/communities/{{ community.slug }}</p>
-                        <p v-if="community.description" class="text-sm text-gray-600 mb-4 line-clamp-3">{{ community.description }}</p>
-
-                        <!-- Stats -->
-                        <div class="flex justify-around text-center border-t border-gray-100 pt-3 mb-4">
-                            <div>
-                                <p class="text-sm font-bold text-gray-900">{{ totalCount }}</p>
-                                <p class="text-xs text-gray-400">Members</p>
-                            </div>
-                            <div>
-                                <p class="text-sm font-bold text-gray-900">0</p>
-                                <p class="text-xs text-gray-400">Online</p>
-                            </div>
-                            <div>
-                                <p class="text-sm font-bold text-gray-900">{{ adminCount }}</p>
-                                <p class="text-xs text-gray-400">Admin</p>
-                            </div>
-                        </div>
-
-                        <!-- Invite button -->
-                        <button
-                            v-if="$page.props.auth?.user"
-                            @click="showInviteModal = true"
-                            class="w-full py-2 text-sm font-semibold border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                            Invite People
-                        </button>
-                    </div>
-                </div>
+                <CommunitySidebarCard
+                    :community="community"
+                    :members-count="totalCount"
+                    :admin-count="adminCount"
+                >
+                    <button
+                        v-if="$page.props.auth?.user"
+                        @click="showInviteModal = true"
+                        class="w-full py-2 text-sm font-semibold border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    >
+                        Invite People
+                    </button>
+                </CommunitySidebarCard>
             </div>
         </div>
         <InviteModal
@@ -417,6 +385,7 @@ import { computed, ref } from 'vue';
 import { Link, usePage, router, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import CommunityTabs from '@/Components/CommunityTabs.vue';
+import CommunitySidebarCard from '@/Components/CommunitySidebarCard.vue';
 import InviteModal from '@/Components/InviteModal.vue';
 
 const props = defineProps({

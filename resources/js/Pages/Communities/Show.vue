@@ -536,78 +536,11 @@
             <!-- ── Sidebar ──────────────────────────────────────────────────── -->
             <div class="space-y-4">
                 <!-- Community card -->
-                <div
-                    class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden shadow-sm"
+                <CommunitySidebarCard
+                    :community="community"
+                    :admin-count="adminCount"
+                    :is-member="isMember"
                 >
-                    <div class="h-50 overflow-hidden">
-                        <img
-                            v-if="community.cover_image"
-                            :src="community.cover_image"
-                            :alt="community.name"
-                            class="w-full h-full object-cover"
-                        />
-                        <div
-                            v-else
-                            class="w-full h-full bg-linear-to-br from-indigo-500 to-purple-700"
-                        />
-                    </div>
-
-                    <div class="p-4">
-                        <h3
-                            class="font-bold text-gray-900 dark:text-gray-100 text-base mb-0.5"
-                        >
-                            {{ community.name }}
-                        </h3>
-                        <p class="text-xs text-gray-400 mb-2">
-                            curzzo.com/communities/{{ community.slug }}
-                        </p>
-                        <p
-                            v-if="community.description"
-                            class="text-sm text-gray-500 dark:text-gray-400 mb-4 leading-relaxed"
-                        >
-                            {{ community.description }}
-                        </p>
-
-                        <!-- Stats (members only) -->
-                        <div
-                            v-if="isMember"
-                            class="flex items-center justify-around text-center border-y border-gray-100 dark:border-gray-700 py-3 mb-4"
-                        >
-                            <div>
-                                <p
-                                    class="text-base font-black text-gray-900 dark:text-gray-100"
-                                >
-                                    {{ formatCount(community.members_count) }}
-                                </p>
-                                <p class="text-xs text-gray-400">Members</p>
-                            </div>
-                            <div>
-                                <p
-                                    class="text-base font-black text-gray-900 dark:text-gray-100"
-                                >
-                                    0
-                                </p>
-                                <p class="text-xs text-gray-400">Online</p>
-                            </div>
-                            <div>
-                                <p
-                                    class="text-base font-black text-gray-900 dark:text-gray-100"
-                                >
-                                    {{ adminCount }}
-                                </p>
-                                <p class="text-xs text-gray-400">
-                                    {{ adminCount === 1 ? "Admin" : "Admins" }}
-                                </p>
-                            </div>
-                        </div>
-                        <div
-                            v-else
-                            class="border-y border-gray-100 dark:border-gray-700 py-3 mb-4 text-center"
-                        >
-                            <p class="text-xs text-gray-400">
-                                Join to see member stats
-                            </p>
-                        </div>
 
                         <!-- Milestone plaque -->
                         <div
@@ -804,8 +737,7 @@
                                 </p>
                             </div>
                         </template>
-                    </div>
-                </div>
+                </CommunitySidebarCard>
 
                 <!-- Recent Comments widget -->
                 <div
@@ -1546,6 +1478,7 @@ import { ref, computed } from "vue";
 import { Link, useForm, usePage, router } from "@inertiajs/vue3";
 import AppLayout from "@/Layouts/AppLayout.vue";
 import CommunityTabs from "@/Components/CommunityTabs.vue";
+import CommunitySidebarCard from "@/Components/CommunitySidebarCard.vue";
 import InviteModal from "@/Components/InviteModal.vue";
 import UserAvatar from "@/Components/UserAvatar.vue";
 
