@@ -155,7 +155,7 @@
                     </p>
                 </div>
                 <div class="bg-gray-50 px-5 py-4">
-                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Locked (< 15 days)</p>
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Locked (< 7 days)</p>
                     <p class="text-2xl font-black text-gray-400">₱{{ fmt(c.locked_amount) }}</p>
                     <p v-if="c.next_eligible_date" class="text-xs text-gray-400 mt-0.5">
                         Next unlock: {{ c.next_eligible_date }}
