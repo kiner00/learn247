@@ -1064,6 +1064,15 @@ import { usePixel } from '@/composables/usePixel';
 import { useTiktokPixel } from '@/composables/useTiktokPixel';
 import { useGoogleAnalytics } from '@/composables/useGoogleAnalytics';
 
+function xsrfToken() {
+    return decodeURIComponent(
+        document.cookie.split('; ').find(r => r.startsWith('XSRF-TOKEN='))?.split('=')[1] ?? ''
+    );
+}
+function jsonHeaders() {
+    return { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-XSRF-TOKEN': xsrfToken() };
+}
+
 // ── Section definitions ───────────────────────────────────────────────────────
 const SECTION_DEFS = {
     hero:                 { label: 'Headline & Hero',      icon: '🎯', required: true },
@@ -1176,11 +1185,7 @@ async function autoSave() {
         try {
             await fetch(`/communities/${props.community.slug}/landing-page`, {
                 method:  'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept':       'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                },
+                headers: jsonHeaders(),
                 body: JSON.stringify(lp.value),
             });
         } catch (e) { /* silent */ }
@@ -1260,11 +1265,7 @@ async function regenSection(type) {
     try {
         const res = await fetch(`/communities/${props.community.slug}/ai-landing/section`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            },
+            headers: jsonHeaders(),
             body: JSON.stringify({ section: type }),
         });
 
@@ -1298,10 +1299,7 @@ async function uploadImage(section, event) {
     try {
         const res = await fetch(`/communities/${props.community.slug}/landing-page/upload-image`, {
             method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json',
-            },
+            headers: { 'Accept': 'application/json', 'X-XSRF-TOKEN': xsrfToken() },
             body: formData,
         });
         const data = await res.json();
@@ -1354,11 +1352,7 @@ async function generate() {
     try {
         const res = await fetch(`/communities/${props.community.slug}/ai-landing`, {
             method:  'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept':       'application/json',
-            },
+            headers: jsonHeaders(),
         });
 
         const data = await res.json();
@@ -1416,11 +1410,7 @@ async function saveEdits() {
     try {
         const res = await fetch(`/communities/${props.community.slug}/landing-page`, {
             method:  'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept':       'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            },
+            headers: jsonHeaders(),
             body: JSON.stringify(editDraft.value),
         });
         const data = await res.json();
