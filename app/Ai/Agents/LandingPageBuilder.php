@@ -9,7 +9,7 @@ use Laravel\Ai\Enums\Lab;
 use Laravel\Ai\Promptable;
 
 #[Provider(Lab::Gemini)]
-#[Model('gemini-2.5-pro-preview-05-06')]
+#[Model('gemini-2.5-pro')]
 class LandingPageBuilder implements Agent
 {
     use Promptable;
