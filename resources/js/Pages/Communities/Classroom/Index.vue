@@ -474,10 +474,11 @@ const props = defineProps({
     courses:    Array,
     affiliate:  Object,
     membership: Object,
+    canManage:  Boolean,
 });
 
 const page    = usePage();
-const isOwner = props.community.owner_id === page.props.auth?.user?.id;
+const isOwner = props.canManage;
 const isMember = computed(() => !!props.membership);
 
 

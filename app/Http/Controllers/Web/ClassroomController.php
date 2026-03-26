@@ -24,6 +24,22 @@ use Inertia\Response;
 
 class ClassroomController extends Controller
 {
+    private function canManage(?\Illuminate\Contracts\Auth\Authenticatable $user, Community $community): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        if ($user->id === $community->owner_id || $user->isSuperAdmin()) {
+            return true;
+        }
+
+        return CommunityMember::where('community_id', $community->id)
+            ->where('user_id', $user->id)
+            ->where('role', CommunityMember::ROLE_ADMIN)
+            ->exists();
+    }
+
     public function index(Community $community, GetCourseList $query): Response
     {
         $userId        = auth()->id();
@@ -32,13 +48,14 @@ class ClassroomController extends Controller
         $courses    = $query->execute($community, $userId, $isSuperAdmin);
         $affiliate  = $userId ? $community->affiliates()->where('user_id', $userId)->first() : null;
         $membership = $userId ? CommunityMember::where('community_id', $community->id)->where('user_id', $userId)->first(['id', 'membership_type']) : null;
+        $canManage  = $this->canManage(auth()->user(), $community);
 
-        return Inertia::render('Communities/Classroom/Index', compact('community', 'courses', 'affiliate', 'membership'));
+        return Inertia::render('Communities/Classroom/Index', compact('community', 'courses', 'affiliate', 'membership', 'canManage'));
     }
 
     public function storeCourse(Request $request, Community $community, ManageCourse $action, PlanLimitService $planLimit): RedirectResponse
     {
-        abort_unless($request->user()->id === $community->owner_id, 403);
+        abort_unless($this->canManage($request->user(), $community), 403);
 
         if (! $planLimit->canCreateCourse($request->user(), $community)) {
             return back()->withErrors([
@@ -61,7 +78,7 @@ class ClassroomController extends Controller
 
     public function updateCourse(Request $request, Community $community, Course $course, ManageCourse $action): RedirectResponse
     {
-        abort_unless($request->user()->id === $community->owner_id, 403);
+        abort_unless($this->canManage($request->user(), $community), 403);
 
         $data = $request->validate([
             'title'       => ['required', 'string', 'max:255'],
@@ -78,7 +95,7 @@ class ClassroomController extends Controller
 
     public function reorderCourses(Request $request, Community $community, ManageCourse $action): RedirectResponse
     {
-        abort_unless($request->user()->id === $community->owner_id, 403);
+        abort_unless($this->canManage($request->user(), $community), 403);
 
         $request->validate([
             'course_ids'   => ['required', 'array'],
@@ -92,7 +109,7 @@ class ClassroomController extends Controller
 
     public function destroyCourse(Request $request, Community $community, Course $course, ManageCourse $action): RedirectResponse
     {
-        abort_unless($request->user()->id === $community->owner_id, 403);
+        abort_unless($this->canManage($request->user(), $community), 403);
 
         $action->destroy($course);
 
@@ -101,7 +118,7 @@ class ClassroomController extends Controller
 
     public function togglePublish(Request $request, Community $community, Course $course): RedirectResponse
     {
-        abort_unless($request->user()->id === $community->owner_id, 403);
+        abort_unless($this->canManage($request->user(), $community), 403);
 
         $course->update(['is_published' => ! $course->is_published]);
 
@@ -112,11 +129,11 @@ class ClassroomController extends Controller
 
     public function showCourse(Community $community, Course $course, GetCourseDetail $query, CourseAccessService $access): Response
     {
-        $userId = auth()->id();
-        $isOwner = $userId && ($userId === $community->owner_id || (auth()->user()?->isSuperAdmin() ?? false));
+        $userId    = auth()->id();
+        $canManage = $this->canManage(auth()->user(), $community);
 
-        // Unpublished courses are only visible to the owner
-        if (! $course->is_published && ! $isOwner) {
+        // Unpublished courses are only visible to managers (owner/admin)
+        if (! $course->is_published && ! $canManage) {
             abort(404);
         }
 
@@ -133,12 +150,13 @@ class ClassroomController extends Controller
             'lessonComments' => $detail['lesson_comments'],
             'quizAttempts'   => $detail['quiz_attempts'],
             'certificate'    => $detail['certificate'] ? ['uuid' => $detail['certificate']->uuid] : null,
+            'canManage'      => $canManage,
         ]);
     }
 
     public function storeModule(Request $request, Community $community, Course $course, ManageModule $action): RedirectResponse
     {
-        abort_unless($request->user()->id === $community->owner_id, 403);
+        abort_unless($this->canManage($request->user(), $community), 403);
         $data = $request->validate([
             'title'   => ['required', 'string', 'max:255'],
             'is_free' => ['sometimes', 'boolean'],
@@ -150,7 +168,7 @@ class ClassroomController extends Controller
 
     public function updateModule(Request $request, Community $community, Course $course, CourseModule $module, ManageModule $action): RedirectResponse
     {
-        abort_unless($request->user()->id === $community->owner_id, 403);
+        abort_unless($this->canManage($request->user(), $community), 403);
         $data = $request->validate([
             'title'   => ['required', 'string', 'max:255'],
             'is_free' => ['sometimes', 'boolean'],
@@ -162,7 +180,7 @@ class ClassroomController extends Controller
 
     public function destroyModule(Request $request, Community $community, Course $course, CourseModule $module, ManageModule $action): RedirectResponse
     {
-        abort_unless($request->user()->id === $community->owner_id, 403);
+        abort_unless($this->canManage($request->user(), $community), 403);
 
         $action->destroy($module);
 
@@ -171,7 +189,7 @@ class ClassroomController extends Controller
 
     public function destroyLesson(Request $request, Community $community, Course $course, CourseModule $module, CourseLesson $lesson): RedirectResponse
     {
-        abort_unless($request->user()->id === $community->owner_id, 403);
+        abort_unless($this->canManage($request->user(), $community), 403);
 
         $lesson->delete();
 
@@ -180,7 +198,7 @@ class ClassroomController extends Controller
 
     public function storeLesson(Request $request, Community $community, Course $course, CourseModule $module, ManageLesson $action): RedirectResponse
     {
-        abort_unless($request->user()->id === $community->owner_id, 403);
+        abort_unless($this->canManage($request->user(), $community), 403);
 
         $data = $request->validate([
             'title'     => ['required', 'string', 'max:255'],
@@ -204,7 +222,7 @@ class ClassroomController extends Controller
 
     public function updateLesson(Request $request, Community $community, Course $course, CourseModule $module, CourseLesson $lesson, ManageLesson $action): RedirectResponse
     {
-        abort_unless($request->user()->id === $community->owner_id, 403);
+        abort_unless($this->canManage($request->user(), $community), 403);
 
         $data = $request->validate([
             'title'     => ['sometimes', 'string', 'max:255'],
@@ -221,7 +239,7 @@ class ClassroomController extends Controller
 
     public function uploadLessonImage(Request $request, Community $community, ManageLesson $action): JsonResponse
     {
-        abort_unless($request->user()->id === $community->owner_id, 403);
+        abort_unless($this->canManage($request->user(), $community), 403);
 
         $request->validate([
             'image' => ['required', 'image', 'max:10240'],
@@ -234,7 +252,7 @@ class ClassroomController extends Controller
 
     public function reorderLessons(Request $request, Community $community, Course $course, CourseModule $module, ManageLesson $action): RedirectResponse
     {
-        abort_unless($request->user()->id === $community->owner_id, 403);
+        abort_unless($this->canManage($request->user(), $community), 403);
 
         $request->validate([
             'lesson_ids'   => ['required', 'array'],

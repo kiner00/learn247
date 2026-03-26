@@ -781,10 +781,11 @@ const props = defineProps({
     lessonComments: Object,   // { [lesson_id]: Comment[] }
     quizAttempts:   Object,   // { [quiz_id]: QuizAttempt }
     certificate:    Object,   // { uuid } or null
+    canManage:      Boolean,
 });
 
 const page      = usePage();
-const isOwner   = props.community.owner_id === page.props.auth?.user?.id;
+const isOwner   = props.canManage;
 const authUserId = page.props.auth?.user?.id;
 const lessonImageUploadUrl = `/communities/${props.community.slug}/classroom/lesson-images`;
 
