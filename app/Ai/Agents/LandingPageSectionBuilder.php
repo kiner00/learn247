@@ -8,8 +8,8 @@ use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Enums\Lab;
 use Laravel\Ai\Promptable;
 
-#[Provider(Lab::OpenAI)]
-#[Model('gpt-4o')]
+#[Provider(Lab::Gemini)]
+#[Model('gemini-2.5-pro-preview-05-06')]
 class LandingPageSectionBuilder implements Agent
 {
     use Promptable;
