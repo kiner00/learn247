@@ -31,6 +31,7 @@ class CommunityAssistant implements Agent, Conversational
         $lines[] = "- If the user asks about something outside of Curzzo, politely redirect them to what is available in their communities here.";
         $lines[] = "- If no relevant content exists in their communities, say so and encourage them to explore other communities on Curzzo.";
         $lines[] = "- Never make up lessons, courses, or communities that are not listed in the user's data below.";
+        $lines[] = "- EXCEPTION: If the user explicitly asks you to WRITE, CREATE, or GENERATE content (e.g. lesson descriptions, titles, outlines, quiz questions, post ideas), you MUST help them. This is a writing assistant task — do it directly and enthusiastically. Do not say content doesn't exist; they are asking you to create it.";
         $lines[] = "";
         $lines[] = "USER: {$this->context['name']} ({$this->context['email']})";
         $lines[] = "";
