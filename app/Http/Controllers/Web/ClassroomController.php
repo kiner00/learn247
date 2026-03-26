@@ -14,6 +14,7 @@ use App\Models\CommunityMember;
 use App\Models\Course;
 use App\Models\CourseLesson;
 use App\Models\CourseModule;
+use App\Models\Certificate;
 use App\Queries\Classroom\GetCourseDetail;
 use App\Queries\Classroom\GetCourseList;
 use Illuminate\Http\JsonResponse;
@@ -52,7 +53,42 @@ class ClassroomController extends Controller
 
         $ownerPlan = $community->owner?->creatorPlan() ?? 'free';
 
-        return Inertia::render('Communities/Classroom/Index', compact('community', 'courses', 'affiliate', 'membership', 'canManage', 'ownerPlan'));
+        // Certificates for this community's courses
+        $courseIds = Course::where('community_id', $community->id)->pluck('id');
+        if ($canManage) {
+            // Owner sees all issued certificates
+            $certificates = Certificate::whereIn('course_id', $courseIds)
+                ->with(['user:id,name,avatar', 'course:id,title'])
+                ->latest('issued_at')
+                ->get()
+                ->map(fn ($c) => [
+                    'uuid'         => $c->uuid,
+                    'issued_at'    => $c->issued_at?->format('M j, Y'),
+                    'course_title' => $c->course?->title,
+                    'cert_title'   => $c->cert_title,
+                    'student_name' => $c->user?->name,
+                    'student_avatar' => $c->user?->avatar,
+                ]);
+        } elseif ($userId) {
+            // Student sees only their own certificates
+            $certificates = Certificate::where('user_id', $userId)
+                ->whereIn('course_id', $courseIds)
+                ->with(['course:id,title'])
+                ->latest('issued_at')
+                ->get()
+                ->map(fn ($c) => [
+                    'uuid'         => $c->uuid,
+                    'issued_at'    => $c->issued_at?->format('M j, Y'),
+                    'course_title' => $c->course?->title,
+                    'cert_title'   => $c->cert_title,
+                    'student_name' => null,
+                    'student_avatar' => null,
+                ]);
+        } else {
+            $certificates = collect();
+        }
+
+        return Inertia::render('Communities/Classroom/Index', compact('community', 'courses', 'affiliate', 'membership', 'canManage', 'ownerPlan', 'certificates'));
     }
 
     public function storeCourse(Request $request, Community $community, ManageCourse $action, PlanLimitService $planLimit): RedirectResponse

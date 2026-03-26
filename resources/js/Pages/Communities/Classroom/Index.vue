@@ -3,12 +3,26 @@
         <CommunityTabs :community="community" active-tab="classroom" />
 
         <!-- Header row -->
-        <div class="flex items-center justify-between mb-6">
-            <h1 class="text-xl font-black text-gray-900">
-                Classroom
-                <span class="text-sm font-normal text-gray-400 ml-2">{{ courses.length }} course{{ courses.length !== 1 ? 's' : '' }}</span>
-            </h1>
-            <template v-if="isOwner">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
+                <button
+                    @click="activeTab = 'courses'"
+                    :class="['px-4 py-1.5 rounded-lg text-sm font-semibold transition-all',
+                        activeTab === 'courses' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700']"
+                >
+                    Courses
+                    <span class="ml-1.5 text-xs font-normal" :class="activeTab === 'courses' ? 'text-gray-400' : 'text-gray-400'">{{ courses.length }}</span>
+                </button>
+                <button
+                    @click="activeTab = 'certifications'"
+                    :class="['px-4 py-1.5 rounded-lg text-sm font-semibold transition-all',
+                        activeTab === 'certifications' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700']"
+                >
+                    Certification
+                    <span v-if="certificates.length" class="ml-1.5 text-xs font-normal text-gray-400">{{ certificates.length }}</span>
+                </button>
+            </div>
+            <template v-if="isOwner && activeTab === 'courses'">
                 <Link
                     v-if="courseLimit !== null && courses.length >= courseLimit"
                     href="/creator/plan"
@@ -27,8 +41,52 @@
             </template>
         </div>
 
+        <!-- Certification tab panel -->
+        <div v-if="activeTab === 'certifications'">
+            <div v-if="certificates.length" class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+                <div class="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+                    <p class="text-sm font-bold text-gray-700">🏆 Issued Certificates</p>
+                    <span class="text-xs text-gray-400">{{ certificates.length }} total</span>
+                </div>
+                <div class="divide-y divide-gray-50">
+                    <div v-for="cert in certificates" :key="cert.uuid"
+                        class="flex items-center gap-4 px-5 py-3.5 hover:bg-gray-50 transition-colors">
+                        <!-- Student avatar (owner view) -->
+                        <template v-if="isOwner && cert.student_name">
+                            <img v-if="cert.student_avatar" :src="cert.student_avatar"
+                                class="w-9 h-9 rounded-full object-cover shrink-0 border border-gray-100" />
+                            <div v-else
+                                class="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center shrink-0 text-sm font-bold text-indigo-600">
+                                {{ cert.student_name.charAt(0).toUpperCase() }}
+                            </div>
+                        </template>
+                        <!-- Certificate icon (student view) -->
+                        <div v-else class="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center shrink-0 text-base">🏆</div>
+
+                        <div class="flex-1 min-w-0">
+                            <p v-if="isOwner && cert.student_name" class="text-sm font-semibold text-gray-800 truncate">{{ cert.student_name }}</p>
+                            <p class="text-sm font-semibold text-gray-800 truncate">{{ cert.cert_title || cert.course_title }}</p>
+                            <p class="text-xs text-gray-400 truncate">{{ cert.course_title }} · {{ cert.issued_at }}</p>
+                        </div>
+
+                        <a :href="`/certificates/${cert.uuid}`" target="_blank"
+                            class="shrink-0 px-3 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors">
+                            View
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div v-else class="bg-white border border-gray-200 rounded-2xl p-16 text-center shadow-sm">
+                <span class="text-4xl block mb-3">🏆</span>
+                <p class="text-sm font-medium text-gray-700 mb-1">No certificates yet</p>
+                <p class="text-xs text-gray-400">
+                    {{ isOwner ? 'Certificates will appear here once students pass a certification exam.' : 'Complete a certification exam to earn your first certificate.' }}
+                </p>
+            </div>
+        </div>
+
         <!-- New course form -->
-        <div v-if="showForm" class="bg-white border border-indigo-200 rounded-2xl p-5 shadow-sm mb-6">
+        <div v-if="activeTab === 'courses' && showForm" class="bg-white border border-indigo-200 rounded-2xl p-5 shadow-sm mb-6">
             <h2 class="text-sm font-bold text-gray-900 mb-3">New Course</h2>
             <form @submit.prevent="createCourse">
                 <input
@@ -158,7 +216,7 @@
         </div>
 
         <!-- Course grid -->
-        <div v-if="courses.length">
+        <div v-if="activeTab === 'courses' && courses.length">
 
             <!-- Owner: draggable grid (manual order) -->
             <template v-if="isOwner">
@@ -442,7 +500,7 @@
         </Teleport>
 
         <!-- Empty state -->
-        <div v-if="!courses.length" class="bg-white border border-gray-200 rounded-2xl p-16 text-center shadow-sm">
+        <div v-if="activeTab === 'courses' && !courses.length" class="bg-white border border-gray-200 rounded-2xl p-16 text-center shadow-sm">
             <div class="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-4">
                 <span class="text-3xl">🎓</span>
             </div>
@@ -470,16 +528,18 @@ import CommunityTabs from '@/Components/CommunityTabs.vue';
 import InviteModal from '@/Components/InviteModal.vue';
 
 const props = defineProps({
-    community:  Object,
-    courses:    Array,
-    affiliate:  Object,
-    membership: Object,
-    canManage:  Boolean,
-    ownerPlan:  String,
+    community:     Object,
+    courses:       Array,
+    affiliate:     Object,
+    membership:    Object,
+    canManage:     Boolean,
+    ownerPlan:     String,
+    certificates:  Array,
 });
 
-const page    = usePage();
-const isOwner = props.canManage;
+const page      = usePage();
+const isOwner   = props.canManage;
+const activeTab = ref('courses');
 const isMember = computed(() => !!props.membership);
 
 
