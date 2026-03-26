@@ -203,11 +203,12 @@ class ClassroomController extends Controller
         abort_unless($this->canManage($request->user(), $community), 403);
 
         $data = $request->validate([
-            'title'     => ['required', 'string', 'max:255'],
-            'content'   => ['nullable', 'string'],
-            'video_url' => ['nullable', 'url', 'max:500'],
-            'cta_label' => ['nullable', 'string', 'max:100'],
-            'cta_url'   => ['nullable', 'url', 'max:500'],
+            'title'      => ['required', 'string', 'max:255'],
+            'content'    => ['nullable', 'string'],
+            'embed_html' => ['nullable', 'string'],
+            'video_url'  => ['nullable', 'url', 'max:500'],
+            'cta_label'  => ['nullable', 'string', 'max:100'],
+            'cta_url'    => ['nullable', 'url', 'max:500'],
         ]);
 
         $action->store($module, $data);
@@ -227,11 +228,12 @@ class ClassroomController extends Controller
         abort_unless($this->canManage($request->user(), $community), 403);
 
         $data = $request->validate([
-            'title'     => ['sometimes', 'string', 'max:255'],
-            'content'   => ['nullable', 'string'],
-            'video_url' => ['nullable', 'url', 'max:500'],
-            'cta_label' => ['nullable', 'string', 'max:100'],
-            'cta_url'   => ['nullable', 'url', 'max:500'],
+            'title'      => ['sometimes', 'string', 'max:255'],
+            'content'    => ['nullable', 'string'],
+            'embed_html' => ['nullable', 'string'],
+            'video_url'  => ['nullable', 'url', 'max:500'],
+            'cta_label'  => ['nullable', 'string', 'max:100'],
+            'cta_url'    => ['nullable', 'url', 'max:500'],
         ]);
 
         $action->update($lesson, $data);

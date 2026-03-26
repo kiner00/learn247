@@ -17,7 +17,7 @@ use Laravel\Ai\Enums\Lab;
 use Laravel\Ai\Promptable;
 
 #[Provider(Lab::Gemini)]
-#[Model('gemini-2.0-flash')]
+#[Model('gemini-2.5-flash-preview-05-20')]
 class CommunityAssistant implements Agent, Conversational, HasTools
 {
     use Promptable, RemembersConversations;

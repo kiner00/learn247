@@ -12,7 +12,7 @@ class CourseLesson extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['module_id', 'title', 'content', 'video_url', 'video_path', 'position', 'cta_label', 'cta_url'];
+    protected $fillable = ['module_id', 'title', 'content', 'embed_html', 'video_url', 'video_path', 'position', 'cta_label', 'cta_url'];
 
     public function module(): BelongsTo
     {

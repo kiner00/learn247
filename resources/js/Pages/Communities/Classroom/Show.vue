@@ -451,6 +451,10 @@
                             v-if="selectedLesson.content && !editingLesson"
                             :html="selectedLesson.content"
                         />
+                        <SafeHtmlRenderer
+                            v-if="selectedLesson.embed_html && !editingLesson"
+                            :html="selectedLesson.embed_html"
+                        />
 
                         <!-- Edit form (owner only) -->
                         <div v-if="isOwner && editingLesson" class="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-3">
@@ -477,6 +481,15 @@
                                     type="url"
                                     placeholder="YouTube, Vimeo, or Google Drive link"
                                     class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                />
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 mb-1.5 font-medium">Embed Code <span class="text-gray-400">(paste iframe / script embeds here)</span></p>
+                                <textarea
+                                    v-model="contentForm.embed_html"
+                                    placeholder="Paste your embed code here (e.g. converteai, Vimeo embed, etc.)"
+                                    rows="4"
+                                    class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 />
                             </div>
                             <div>
@@ -945,16 +958,17 @@ function onLessonDragEnd(mod) {
 
 // ─── Edit lesson ──────────────────────────────────────────────────────────────
 const editingLesson = ref(false);
-const contentForm   = useForm({ title: '', content: '', video_url: '', cta_label: '', cta_url: '' });
+const contentForm   = useForm({ title: '', content: '', embed_html: '', video_url: '', cta_label: '', cta_url: '' });
 
 function startEdit() {
     const l = selectedLesson.value;
-    contentForm.title     = l?.title ?? '';
-    contentForm.content   = l?.content ?? '';
-    contentForm.video_url = l?.video_url ?? '';
-    contentForm.cta_label = l?.cta_label ?? '';
-    contentForm.cta_url   = l?.cta_url ?? '';
-    editingLesson.value   = true;
+    contentForm.title      = l?.title ?? '';
+    contentForm.content    = l?.content ?? '';
+    contentForm.embed_html = l?.embed_html ?? '';
+    contentForm.video_url  = l?.video_url ?? '';
+    contentForm.cta_label  = l?.cta_label ?? '';
+    contentForm.cta_url    = l?.cta_url ?? '';
+    editingLesson.value    = true;
 }
 
 function saveContent() {
