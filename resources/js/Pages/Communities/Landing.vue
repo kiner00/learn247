@@ -143,8 +143,9 @@
                                     <span v-if="!sec.visible" class="ml-2 text-xs text-gray-400 font-normal">hidden</span>
                                 </button>
 
-                                <!-- AI Regen button -->
+                                <!-- AI Regen button (not for manual embed section) -->
                                 <button
+                                    v-if="sec.type !== 'embed'"
                                     @click.stop="regenSection(sec.type)"
                                     :disabled="regenLoading === sec.type"
                                     class="flex items-center gap-1 px-2 py-1 rounded-md bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-xs font-semibold transition disabled:opacity-40 shrink-0">
@@ -1231,6 +1232,11 @@ watch(showEditPanel, (open) => {
                     ? true
                     : !!(editDraft.value[type] && (Array.isArray(editDraft.value[type]) ? editDraft.value[type].length > 0 : true)),
             }));
+        }
+
+        // Ensure embed object is initialized
+        if (!editDraft.value.embed) {
+            editDraft.value.embed = { title: '', html: '' };
         }
     }
 });
