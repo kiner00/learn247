@@ -475,6 +475,7 @@ const props = defineProps({
     affiliate:  Object,
     membership: Object,
     canManage:  Boolean,
+    ownerPlan:  String,
 });
 
 const page    = usePage();
@@ -482,9 +483,9 @@ const isOwner = props.canManage;
 const isMember = computed(() => !!props.membership);
 
 
-// null = unlimited
+// null = unlimited — based on community owner's plan
 const courseLimit = computed(() => {
-    const plan = page.props.auth?.user?.creator_plan ?? 'free';
+    const plan = props.ownerPlan ?? 'free';
     if (plan === 'pro')   return null;
     if (plan === 'basic') return 5;
     return 3;

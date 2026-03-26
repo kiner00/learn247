@@ -50,14 +50,16 @@ class ClassroomController extends Controller
         $membership = $userId ? CommunityMember::where('community_id', $community->id)->where('user_id', $userId)->first(['id', 'membership_type']) : null;
         $canManage  = $this->canManage(auth()->user(), $community);
 
-        return Inertia::render('Communities/Classroom/Index', compact('community', 'courses', 'affiliate', 'membership', 'canManage'));
+        $ownerPlan = $community->owner?->creatorPlan() ?? 'free';
+
+        return Inertia::render('Communities/Classroom/Index', compact('community', 'courses', 'affiliate', 'membership', 'canManage', 'ownerPlan'));
     }
 
     public function storeCourse(Request $request, Community $community, ManageCourse $action, PlanLimitService $planLimit): RedirectResponse
     {
         abort_unless($this->canManage($request->user(), $community), 403);
 
-        if (! $planLimit->canCreateCourse($request->user(), $community)) {
+        if (! $planLimit->canCreateCourse($community->owner, $community)) {
             return back()->withErrors([
                 'plan' => 'Free creators can only have 3 courses per community. Upgrade to Basic or Pro for more courses.',
             ]);
