@@ -412,6 +412,17 @@
                                 </template>
 
                                 <!-- CTA SECTION -->
+                                <template v-if="sec.type === 'embed'">
+                                    <div>
+                                        <label class="field-label">Section Title <span class="text-gray-400 font-normal">(optional)</span></label>
+                                        <input v-model="editDraft.embed.title" type="text" placeholder="e.g. Watch This First" class="field-input" />
+                                    </div>
+                                    <div>
+                                        <label class="field-label">Embed Code <span class="text-gray-400 font-normal">(paste iframe / script embed)</span></label>
+                                        <textarea v-model="editDraft.embed.html" rows="5" placeholder="Paste your embed code here (converteai, Vimeo, etc.)" class="field-input font-mono resize-none" />
+                                    </div>
+                                </template>
+
                                 <template v-if="sec.type === 'cta_section'">
                                     <div v-if="!editDraft.cta_section" class="text-xs text-gray-500">
                                         <button @click="editDraft.cta_section = { headline: '', subtext: '', cta_label: '' }" class="text-indigo-600 font-medium hover:underline">+ Initialize section</button>
@@ -882,6 +893,14 @@
         </section>
 
         <!-- ── FINAL CTA ── -->
+        <!-- ── EMBED ── -->
+        <section v-if="isVisible('embed') && lp.embed?.html" class="py-16 bg-white">
+            <div class="max-w-2xl mx-auto px-6 text-center">
+                <h2 v-if="lp.embed.title" class="text-2xl font-black text-gray-900 mb-8">{{ lp.embed.title }}</h2>
+                <SafeHtmlRenderer :html="lp.embed.html" class="mb-0!" />
+            </div>
+        </section>
+
         <section v-if="isVisible('cta_section')" class="py-24 text-white text-center relative overflow-hidden"
             :style="lp.cta_section?.bg_image ? `background-image: url('${lp.cta_section.bg_image}'); background-size: cover; background-position: center;` : ''">
             <div v-if="!lp.cta_section?.bg_image" class="absolute inset-0 bg-linear-to-br from-slate-900 via-indigo-950 to-slate-900" />
@@ -1039,6 +1058,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
+import SafeHtmlRenderer from '@/Components/SafeHtmlRenderer.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { usePixel } from '@/composables/usePixel';
 import { useTiktokPixel } from '@/composables/useTiktokPixel';
@@ -1057,13 +1077,14 @@ const SECTION_DEFS = {
     price_justification:  { label: 'Price Justification',  icon: '💰' },
     guarantee:            { label: 'Guarantee',            icon: '🛡️' },
     faq:                  { label: 'FAQ',                  icon: '❓' },
+    embed:                { label: 'Embed / Video',         icon: '🎬' },
     cta_section:          { label: 'Final CTA',            icon: '🚀', required: true },
 };
 
 const DEFAULT_SECTION_ORDER = [
     'hero', 'social_proof', 'benefits', 'for_you', 'creator',
     'testimonials', 'offer_stack', 'included_courses', 'price_justification', 'guarantee',
-    'faq', 'cta_section',
+    'faq', 'embed', 'cta_section',
 ];
 
 // ── Props ─────────────────────────────────────────────────────────────────────
@@ -1212,6 +1233,10 @@ watch(showEditPanel, (open) => {
 // ── Section management ────────────────────────────────────────────────────────
 function addSection(type) {
     if (!editDraft.value._sections) return;
+    // Initialize data object for sections that need it
+    if (type === 'embed' && !editDraft.value.embed) {
+        editDraft.value.embed = { title: '', html: '' };
+    }
     // Insert before cta_section if present, otherwise at end
     const ctaIdx = editDraft.value._sections.findIndex(s => s.type === 'cta_section');
     const newSec = { type, visible: true };
