@@ -447,9 +447,9 @@
                     </div>
 
                     <div class="px-6 py-5">
-                        <div v-if="selectedLesson.content && !editingLesson"
-                            class="lesson-display text-sm text-gray-700 leading-relaxed mb-6"
-                            v-html="selectedLesson.content"
+                        <SafeHtmlRenderer
+                            v-if="selectedLesson.content && !editingLesson"
+                            :html="selectedLesson.content"
                         />
 
                         <!-- Edit form (owner only) -->
@@ -770,6 +770,7 @@ import axios from 'axios';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import CommunityTabs from '@/Components/CommunityTabs.vue';
 import LessonEditor from '@/Components/LessonEditor.vue';
+import SafeHtmlRenderer from '@/Components/SafeHtmlRenderer.vue';
 
 const props = defineProps({
     community:      Object,
