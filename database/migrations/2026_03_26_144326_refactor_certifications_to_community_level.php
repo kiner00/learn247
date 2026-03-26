@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // 1. course_certifications: add community_id (if not already added), drop course_id
+        // 1. course_certifications: add community_id, drop course_id
         if (! Schema::hasColumn('course_certifications', 'community_id')) {
             Schema::table('course_certifications', function (Blueprint $table) {
                 $table->foreignId('community_id')->nullable()->after('id')->constrained()->cascadeOnDelete();
@@ -16,11 +16,23 @@ return new class extends Migration
         }
 
         if (Schema::hasColumn('course_certifications', 'course_id')) {
+            try {
+                Schema::table('course_certifications', function (Blueprint $table) {
+                    $table->dropForeign(['course_id']);
+                });
+            } catch (\Throwable $e) {
+                // FK may already be dropped
+            }
+
+            try {
+                Schema::table('course_certifications', function (Blueprint $table) {
+                    $table->dropUnique(['course_id']);
+                });
+            } catch (\Throwable $e) {
+                // Index may already be dropped
+            }
+
             Schema::table('course_certifications', function (Blueprint $table) {
-                $table->dropForeign(['course_id']);
-            });
-            Schema::table('course_certifications', function (Blueprint $table) {
-                $table->dropUnique(['course_id']);
                 $table->dropColumn('course_id');
             });
         }
@@ -33,16 +45,27 @@ return new class extends Migration
         }
 
         if (Schema::hasColumn('certificates', 'course_id')) {
+            try {
+                Schema::table('certificates', function (Blueprint $table) {
+                    $table->dropForeign(['course_id']);
+                });
+            } catch (\Throwable $e) {
+                // FK may already be dropped
+            }
+
+            try {
+                Schema::table('certificates', function (Blueprint $table) {
+                    $table->dropUnique(['user_id', 'course_id']);
+                });
+            } catch (\Throwable $e) {
+                // Index may already be dropped
+            }
+
             Schema::table('certificates', function (Blueprint $table) {
-                $table->dropForeign(['course_id']);
-            });
-            Schema::table('certificates', function (Blueprint $table) {
-                $table->dropUnique(['user_id', 'course_id']);
                 $table->dropColumn('course_id');
             });
         }
 
-        // Add unique constraint if not already present
         try {
             Schema::table('certificates', function (Blueprint $table) {
                 $table->unique(['user_id', 'certification_id']);
