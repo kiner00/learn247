@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 
 class Certificate extends Model
 {
-    protected $fillable = ['uuid', 'user_id', 'course_id', 'issued_at'];
+    protected $fillable = ['uuid', 'user_id', 'course_id', 'issued_at', 'cert_title', 'description', 'cover_image'];
 
     protected $casts = ['issued_at' => 'datetime'];
 

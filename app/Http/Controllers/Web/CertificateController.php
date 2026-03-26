@@ -38,6 +38,9 @@ class CertificateController extends Controller
                 'course_title'   => $cert->course->title,
                 'community_name' => $community->name,
                 'community_slug' => $community->slug,
+                'cert_title'     => $cert->cert_title,
+                'description'    => $cert->description,
+                'cover_image'    => $cert->cover_image ? asset('storage/' . $cert->cover_image) : null,
             ],
         ]);
     }

@@ -24,6 +24,7 @@ use App\Http\Controllers\Web\LikeController;
 use App\Http\Controllers\Web\PostController;
 use App\Http\Controllers\Web\AIAssistantController;
 use App\Http\Controllers\Web\QuizController;
+use App\Http\Controllers\Web\CertificationExamController;
 use App\Http\Controllers\Web\CheckoutCallbackController;
 use App\Http\Controllers\Web\CourseEnrollmentController;
 use App\Http\Controllers\Web\GuestCheckoutController;
@@ -250,6 +251,11 @@ Route::middleware('auth')->group(function () {
 
         // Certificates
         Route::post('/communities/{community}/classroom/courses/{course}/certificate', [CertificateController::class, 'issue'])->name('communities.classroom.courses.certificate');
+
+        // Certification Exam
+        Route::post('/communities/{community}/classroom/courses/{course}/certification-exam', [CertificationExamController::class, 'store'])->name('certification.store');
+        Route::post('/communities/{community}/classroom/courses/{course}/certification-exam/{certification}/submit', [CertificationExamController::class, 'submit'])->name('certification.submit');
+        Route::delete('/communities/{community}/classroom/courses/{course}/certification-exam/{certification}', [CertificationExamController::class, 'destroy'])->name('certification.destroy');
 
         // ─── Chat ─────────────────────────────────────────────────────────────
         Route::get('/communities/{community}/chat', [ChatController::class, 'index'])->name('communities.chat');

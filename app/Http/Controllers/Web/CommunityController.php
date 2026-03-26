@@ -523,6 +523,9 @@ class CommunityController extends Controller
             'price_justification.options'               => 'nullable|array|max:5',
             'price_justification.options.*.label'       => 'nullable|string|max:80',
             'price_justification.options.*.description' => 'nullable|string|max:300',
+            // Embed / Video section
+            'embed.title'             => 'nullable|string|max:120',
+            'embed.html'              => 'nullable|string|max:5000',
             // Section visibility/ordering metadata
             '_sections'               => 'nullable|array',
             '_sections.*.type'        => 'nullable|string|max:50',

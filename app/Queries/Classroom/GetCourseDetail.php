@@ -3,6 +3,7 @@
 namespace App\Queries\Classroom;
 
 use App\Models\Certificate;
+use App\Models\CertificationAttempt;
 use App\Models\Comment;
 use App\Models\Course;
 use App\Models\CourseEnrollment;
@@ -17,9 +18,11 @@ class GetCourseDetail
      */
     public function execute(Course $course, ?int $userId, bool $hasAccess = false): array
     {
-        $course->load('modules.lessons.quiz.questions.options');
+        $course->load('modules.lessons.quiz.questions.options', 'certification.questions.options');
 
         $lessonIds = $course->modules->flatMap(fn ($m) => $m->lessons->pluck('id'));
+
+        $certificationExam = $course->certification;
 
         if (! $userId || ! $hasAccess) {
             $lessonComments = Comment::whereIn('lesson_id', $lessonIds)
@@ -31,12 +34,14 @@ class GetCourseDetail
                 ->map(fn ($comments) => $comments->values());
 
             return [
-                'completed_ids'   => [],
-                'progress'        => 0,
-                'quiz_attempts'   => collect(),
-                'certificate'     => null,
-                'lesson_comments' => $lessonComments,
-                'enrollment'      => null,
+                'completed_ids'     => [],
+                'progress'          => 0,
+                'quiz_attempts'     => collect(),
+                'certificate'       => null,
+                'lesson_comments'   => $lessonComments,
+                'enrollment'        => null,
+                'certification_exam' => $certificationExam,
+                'cert_attempt'      => null,
             ];
         }
 
@@ -58,6 +63,13 @@ class GetCourseDetail
             ->where('course_id', $course->id)
             ->first();
 
+        $certAttempt = $certificationExam
+            ? CertificationAttempt::where('user_id', $userId)
+                ->where('certification_id', $certificationExam->id)
+                ->orderByDesc('score')
+                ->first()
+            : null;
+
         $lessonComments = Comment::whereIn('lesson_id', $lessonIds)
             ->whereNull('parent_id')
             ->with(['author:id,name,username,avatar', 'replies.author:id,name,username,avatar'])
@@ -74,12 +86,14 @@ class GetCourseDetail
             : null;
 
         return [
-            'completed_ids'  => $completedIds,
-            'progress'       => $progress,
-            'quiz_attempts'  => $quizAttempts,
-            'certificate'    => $certificate,
-            'lesson_comments' => $lessonComments,
-            'enrollment'     => $enrollment ? ['status' => $enrollment->status] : null,
+            'completed_ids'      => $completedIds,
+            'progress'           => $progress,
+            'quiz_attempts'      => $quizAttempts,
+            'certificate'        => $certificate,
+            'lesson_comments'    => $lessonComments,
+            'enrollment'         => $enrollment ? ['status' => $enrollment->status] : null,
+            'certification_exam' => $certificationExam,
+            'cert_attempt'       => $certAttempt,
         ];
     }
 }

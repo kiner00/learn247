@@ -16,6 +16,11 @@
                     <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-2xl">🏆</div>
                 </div>
 
+                <!-- Cover image (optional) -->
+                <div v-if="certificate.cover_image" class="w-full" style="aspect-ratio:16/6;">
+                    <img :src="certificate.cover_image" alt="Certificate cover" class="w-full h-full object-cover" />
+                </div>
+
                 <!-- Body -->
                 <div class="px-10 py-10 text-center">
                     <p class="text-gray-500 text-sm mb-4">This is to certify that</p>
@@ -35,7 +40,9 @@
                     </div>
 
                     <p class="text-gray-500 text-sm mb-2">has successfully completed</p>
-                    <h3 class="text-xl font-bold text-indigo-700 mb-6">{{ certificate.course_title }}</h3>
+                    <h3 class="text-xl font-bold text-indigo-700 mb-2">{{ certificate.cert_title || certificate.course_title }}</h3>
+                    <p v-if="certificate.description" class="text-sm text-gray-500 mb-6 max-w-md mx-auto">{{ certificate.description }}</p>
+                    <div v-else class="mb-6" />
 
                     <div class="h-px bg-gray-100 mb-6" />
 

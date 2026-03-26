@@ -142,17 +142,43 @@ class ClassroomController extends Controller
         $hasAccess = $access->hasAccess(auth()->user(), $community, $course);
         $detail    = $query->execute($course, $userId, $hasAccess);
 
+        $certificationExam = $detail['certification_exam'];
+
         return Inertia::render('Communities/Classroom/Show', [
-            'community'      => $community,
-            'course'         => $course->append([]),
-            'hasAccess'      => $hasAccess,
-            'enrollment'     => $detail['enrollment'],
-            'completedIds'   => $detail['completed_ids'],
-            'progress'       => $detail['progress'],
-            'lessonComments' => $detail['lesson_comments'],
-            'quizAttempts'   => $detail['quiz_attempts'],
-            'certificate'    => $detail['certificate'] ? ['uuid' => $detail['certificate']->uuid] : null,
-            'canManage'      => $canManage,
+            'community'         => $community,
+            'course'            => $course->append([]),
+            'hasAccess'         => $hasAccess,
+            'enrollment'        => $detail['enrollment'],
+            'completedIds'      => $detail['completed_ids'],
+            'progress'          => $detail['progress'],
+            'lessonComments'    => $detail['lesson_comments'],
+            'quizAttempts'      => $detail['quiz_attempts'],
+            'certificate'       => $detail['certificate'] ? ['uuid' => $detail['certificate']->uuid] : null,
+            'canManage'         => $canManage,
+            'certificationExam' => $certificationExam ? [
+                'id'                  => $certificationExam->id,
+                'title'               => $certificationExam->title,
+                'cert_title'          => $certificationExam->cert_title,
+                'description'         => $certificationExam->description,
+                'cover_image'         => $certificationExam->cover_image ? asset('storage/' . $certificationExam->cover_image) : null,
+                'pass_score'          => $certificationExam->pass_score,
+                'randomize_questions' => $certificationExam->randomize_questions,
+                'questions'           => $certificationExam->questions->map(fn ($q) => [
+                    'id'       => $q->id,
+                    'question' => $q->question,
+                    'type'     => $q->type,
+                    'options'  => $q->options->map(fn ($o) => [
+                        'id'         => $o->id,
+                        'label'      => $o->label,
+                        'is_correct' => $canManage ? $o->is_correct : false,
+                    ])->values(),
+                ])->values(),
+            ] : null,
+            'certAttempt'       => $detail['cert_attempt'] ? [
+                'score'       => $detail['cert_attempt']->score,
+                'passed'      => $detail['cert_attempt']->passed,
+                'completed_at' => $detail['cert_attempt']->completed_at?->format('F j, Y'),
+            ] : null,
         ]);
     }
 
