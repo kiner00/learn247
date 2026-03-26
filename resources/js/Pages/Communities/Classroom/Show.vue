@@ -448,12 +448,12 @@
 
                     <div class="px-6 py-5">
                         <SafeHtmlRenderer
-                            v-if="selectedLesson.content && !editingLesson"
-                            :html="selectedLesson.content"
-                        />
-                        <SafeHtmlRenderer
                             v-if="selectedLesson.embed_html && !editingLesson"
                             :html="selectedLesson.embed_html"
+                        />
+                        <SafeHtmlRenderer
+                            v-if="selectedLesson.content && !editingLesson"
+                            :html="selectedLesson.content"
                         />
 
                         <!-- Edit form (owner only) -->
