@@ -249,13 +249,12 @@ Route::middleware('auth')->group(function () {
         Route::post('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/quiz/{quiz}/submit', [QuizController::class, 'submit'])->name('lesson.quiz.submit');
         Route::delete('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/quiz/{quiz}', [QuizController::class, 'destroy'])->name('lesson.quiz.destroy');
 
-        // Certificates
-        Route::post('/communities/{community}/classroom/courses/{course}/certificate', [CertificateController::class, 'issue'])->name('communities.classroom.courses.certificate');
-
-        // Certification Exam
-        Route::post('/communities/{community}/classroom/courses/{course}/certification-exam', [CertificationExamController::class, 'store'])->name('certification.store');
-        Route::post('/communities/{community}/classroom/courses/{course}/certification-exam/{certification}/submit', [CertificationExamController::class, 'submit'])->name('certification.submit');
-        Route::delete('/communities/{community}/classroom/courses/{course}/certification-exam/{certification}', [CertificationExamController::class, 'destroy'])->name('certification.destroy');
+        // Certifications (community-level)
+        Route::get('/communities/{community}/certifications', [CertificationExamController::class, 'index'])->name('communities.certifications');
+        Route::post('/communities/{community}/certifications', [CertificationExamController::class, 'store'])->name('certification.store');
+        Route::post('/communities/{community}/certifications/{certification}', [CertificationExamController::class, 'update'])->name('certification.update');
+        Route::post('/communities/{community}/certifications/{certification}/submit', [CertificationExamController::class, 'submit'])->name('certification.submit');
+        Route::delete('/communities/{community}/certifications/{certification}', [CertificationExamController::class, 'destroy'])->name('certification.destroy');
 
         // ─── Chat ─────────────────────────────────────────────────────────────
         Route::get('/communities/{community}/chat', [ChatController::class, 'index'])->name('communities.chat');

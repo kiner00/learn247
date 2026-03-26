@@ -46,8 +46,8 @@ class SubmitCertificationExam
         if ($passed) {
             $certificate = Certificate::firstOrCreate(
                 [
-                    'user_id'   => $user->id,
-                    'course_id' => $certification->course_id,
+                    'user_id'          => $user->id,
+                    'certification_id' => $certification->id,
                 ],
                 [
                     'issued_at'   => now(),

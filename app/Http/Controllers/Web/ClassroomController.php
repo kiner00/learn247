@@ -14,7 +14,6 @@ use App\Models\CommunityMember;
 use App\Models\Course;
 use App\Models\CourseLesson;
 use App\Models\CourseModule;
-use App\Models\Certificate;
 use App\Queries\Classroom\GetCourseDetail;
 use App\Queries\Classroom\GetCourseList;
 use Illuminate\Http\JsonResponse;
@@ -53,42 +52,7 @@ class ClassroomController extends Controller
 
         $ownerPlan = $community->owner?->creatorPlan() ?? 'free';
 
-        // Certificates for this community's courses
-        $courseIds = Course::where('community_id', $community->id)->pluck('id');
-        if ($canManage) {
-            // Owner sees all issued certificates
-            $certificates = Certificate::whereIn('course_id', $courseIds)
-                ->with(['user:id,name,avatar', 'course:id,title'])
-                ->latest('issued_at')
-                ->get()
-                ->map(fn ($c) => [
-                    'uuid'         => $c->uuid,
-                    'issued_at'    => $c->issued_at?->format('M j, Y'),
-                    'course_title' => $c->course?->title,
-                    'cert_title'   => $c->cert_title,
-                    'student_name' => $c->user?->name,
-                    'student_avatar' => $c->user?->avatar,
-                ]);
-        } elseif ($userId) {
-            // Student sees only their own certificates
-            $certificates = Certificate::where('user_id', $userId)
-                ->whereIn('course_id', $courseIds)
-                ->with(['course:id,title'])
-                ->latest('issued_at')
-                ->get()
-                ->map(fn ($c) => [
-                    'uuid'         => $c->uuid,
-                    'issued_at'    => $c->issued_at?->format('M j, Y'),
-                    'course_title' => $c->course?->title,
-                    'cert_title'   => $c->cert_title,
-                    'student_name' => null,
-                    'student_avatar' => null,
-                ]);
-        } else {
-            $certificates = collect();
-        }
-
-        return Inertia::render('Communities/Classroom/Index', compact('community', 'courses', 'affiliate', 'membership', 'canManage', 'ownerPlan', 'certificates'));
+        return Inertia::render('Communities/Classroom/Index', compact('community', 'courses', 'affiliate', 'membership', 'canManage', 'ownerPlan'));
     }
 
     public function storeCourse(Request $request, Community $community, ManageCourse $action, PlanLimitService $planLimit): RedirectResponse
@@ -178,43 +142,16 @@ class ClassroomController extends Controller
         $hasAccess = $access->hasAccess(auth()->user(), $community, $course);
         $detail    = $query->execute($course, $userId, $hasAccess);
 
-        $certificationExam = $detail['certification_exam'];
-
         return Inertia::render('Communities/Classroom/Show', [
-            'community'         => $community,
-            'course'            => $course->append([]),
-            'hasAccess'         => $hasAccess,
-            'enrollment'        => $detail['enrollment'],
-            'completedIds'      => $detail['completed_ids'],
-            'progress'          => $detail['progress'],
-            'lessonComments'    => $detail['lesson_comments'],
-            'quizAttempts'      => $detail['quiz_attempts'],
-            'certificate'       => $detail['certificate'] ? ['uuid' => $detail['certificate']->uuid] : null,
-            'canManage'         => $canManage,
-            'certificationExam' => $certificationExam ? [
-                'id'                  => $certificationExam->id,
-                'title'               => $certificationExam->title,
-                'cert_title'          => $certificationExam->cert_title,
-                'description'         => $certificationExam->description,
-                'cover_image'         => $certificationExam->cover_image ? asset('storage/' . $certificationExam->cover_image) : null,
-                'pass_score'          => $certificationExam->pass_score,
-                'randomize_questions' => $certificationExam->randomize_questions,
-                'questions'           => $certificationExam->questions->map(fn ($q) => [
-                    'id'       => $q->id,
-                    'question' => $q->question,
-                    'type'     => $q->type,
-                    'options'  => $q->options->map(fn ($o) => [
-                        'id'         => $o->id,
-                        'label'      => $o->label,
-                        'is_correct' => $canManage ? $o->is_correct : false,
-                    ])->values(),
-                ])->values(),
-            ] : null,
-            'certAttempt'       => $detail['cert_attempt'] ? [
-                'score'       => $detail['cert_attempt']->score,
-                'passed'      => $detail['cert_attempt']->passed,
-                'completed_at' => $detail['cert_attempt']->completed_at?->format('F j, Y'),
-            ] : null,
+            'community'      => $community,
+            'course'         => $course->append([]),
+            'hasAccess'      => $hasAccess,
+            'enrollment'     => $detail['enrollment'],
+            'completedIds'   => $detail['completed_ids'],
+            'progress'       => $detail['progress'],
+            'lessonComments' => $detail['lesson_comments'],
+            'quizAttempts'   => $detail['quiz_attempts'],
+            'canManage'      => $canManage,
         ]);
     }
 

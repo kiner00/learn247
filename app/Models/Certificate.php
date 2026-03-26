@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 
 class Certificate extends Model
 {
-    protected $fillable = ['uuid', 'user_id', 'course_id', 'issued_at', 'cert_title', 'description', 'cover_image'];
+    protected $fillable = ['uuid', 'user_id', 'certification_id', 'issued_at', 'cert_title', 'description', 'cover_image'];
 
     protected $casts = ['issued_at' => 'datetime'];
 
@@ -23,8 +23,8 @@ class Certificate extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function course(): BelongsTo
+    public function certification(): BelongsTo
     {
-        return $this->belongsTo(Course::class);
+        return $this->belongsTo(CourseCertification::class, 'certification_id');
     }
 }

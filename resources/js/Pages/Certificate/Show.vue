@@ -1,5 +1,5 @@
 <template>
-    <Head :title="`Certificate – ${certificate.course_title}`" />
+    <Head :title="`Certificate – ${certificate.cert_title}`" />
 
     <div class="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-amber-50 flex items-center justify-center p-6">
         <div class="w-full max-w-2xl">
@@ -40,7 +40,7 @@
                     </div>
 
                     <p class="text-gray-500 text-sm mb-2">has successfully completed</p>
-                    <h3 class="text-xl font-bold text-indigo-700 mb-2">{{ certificate.cert_title || certificate.course_title }}</h3>
+                    <h3 class="text-xl font-bold text-indigo-700 mb-2">{{ certificate.cert_title }}</h3>
                     <p v-if="certificate.description" class="text-sm text-gray-500 mb-6 max-w-md mx-auto">{{ certificate.description }}</p>
                     <div v-else class="mb-6" />
 
@@ -65,10 +65,10 @@
             <!-- Back link -->
             <div class="text-center mt-6 print:hidden">
                 <a
-                    :href="`/communities/${certificate.community_slug}/classroom`"
+                    :href="`/communities/${certificate.community_slug}/certifications`"
                     class="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
                 >
-                    ← Back to Classroom
+                    ← Back to Certifications
                 </a>
             </div>
         </div>

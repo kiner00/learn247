@@ -152,31 +152,13 @@
             </div>
         </div>
 
-        <!-- Certificate banner (100% complete) -->
-        <div v-if="currentProgress === 100" class="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6 flex items-center justify-between shadow-sm">
-            <div class="flex items-center gap-3">
-                <span class="text-2xl">🏆</span>
-                <div>
-                    <p class="text-sm font-bold text-amber-900">Course Complete!</p>
-                    <p class="text-xs text-amber-700">You've finished all lessons.</p>
-                </div>
+        <!-- Course complete banner -->
+        <div v-if="currentProgress === 100" class="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6 flex items-center gap-3 shadow-sm">
+            <span class="text-2xl">🎉</span>
+            <div>
+                <p class="text-sm font-bold text-amber-900">Course Complete!</p>
+                <p class="text-xs text-amber-700">You've finished all lessons.</p>
             </div>
-            <a
-                v-if="certUuid"
-                :href="`/certificates/${certUuid}`"
-                target="_blank"
-                class="px-4 py-2 bg-amber-500 text-white text-xs font-bold rounded-xl hover:bg-amber-600 transition-colors"
-            >
-                View Certificate
-            </a>
-            <button
-                v-else
-                @click="issueCert"
-                :disabled="certForm.processing"
-                class="px-4 py-2 bg-amber-500 text-white text-xs font-bold rounded-xl hover:bg-amber-600 disabled:opacity-50 transition-colors"
-            >
-                {{ certForm.processing ? 'Generating...' : 'Get Certificate' }}
-            </button>
         </div>
 
         <div v-if="hasAccess" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -364,24 +346,6 @@
                             </button>
                         </div>
                     </div>
-                </div>
-
-                <!-- Certification Exam in sidebar -->
-                <div v-if="certificationExam || isOwner" class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-                    <button @click="selectCertificationExam()"
-                        class="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-amber-50 transition-colors"
-                        :class="showingCertExam ? 'bg-amber-50' : ''">
-                        <span class="text-base">🏆</span>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-semibold text-gray-800 truncate">
-                                {{ certificationExam ? certificationExam.title : 'Certification Exam' }}
-                            </p>
-                            <p class="text-xs text-gray-400">{{ certificationExam ? `Pass: ${certificationExam.pass_score}%` : 'Not set up yet' }}</p>
-                        </div>
-                        <span v-if="currentCertAttempt?.passed" class="text-xs font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded-full">✓ Passed</span>
-                        <span v-else-if="currentCertAttempt" class="text-xs text-red-500 bg-red-50 px-2 py-0.5 rounded-full">{{ currentCertAttempt.score }}%</span>
-                        <span v-else-if="!certificationExam && isOwner" class="text-xs text-indigo-500">+ Setup</span>
-                    </button>
                 </div>
 
                 <!-- Add module (owner only) -->
@@ -783,280 +747,11 @@
                 </div>
 
                 <!-- No lesson selected -->
-                <div v-if="!selectedLesson && !showingCertExam && hasAccess" class="bg-white border border-gray-200 rounded-2xl p-14 text-center shadow-sm">
+                <div v-if="!selectedLesson && hasAccess" class="bg-white border border-gray-200 rounded-2xl p-14 text-center shadow-sm">
                     <span class="text-4xl block mb-3">🎓</span>
                     <p class="text-sm font-medium text-gray-700 mb-1">{{ course.description || course.title }}</p>
                     <p class="text-xs text-gray-400">Select a lesson from the sidebar to get started</p>
                 </div>
-
-                <!-- ─── Certification Exam Panel ──────────────────────────────── -->
-                <div v-if="showingCertExam && hasAccess">
-
-                    <!-- Owner: Exam Builder -->
-                    <div v-if="isOwner">
-                        <!-- Builder toggle header -->
-                        <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm mb-4">
-                            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                                <div>
-                                    <h2 class="text-lg font-black text-gray-900">🏆 Certification Exam</h2>
-                                    <p class="text-xs text-gray-400 mt-0.5">Set up the exam students must pass to earn a certificate</p>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <button v-if="certificationExam && !showCertExamBuilder"
-                                        @click="deleteCertExam"
-                                        class="text-xs text-red-400 hover:text-red-600 border border-red-200 px-2.5 py-1 rounded-lg">
-                                        Delete Exam
-                                    </button>
-                                    <button v-if="!showCertExamBuilder"
-                                        @click="initCertBuilder"
-                                        class="px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition-colors">
-                                        {{ certificationExam ? 'Edit Exam' : 'Create Exam' }}
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Exam summary (when not editing) -->
-                            <div v-if="certificationExam && !showCertExamBuilder" class="px-6 py-5 space-y-4">
-                                <div class="grid grid-cols-2 gap-4 text-sm">
-                                    <div>
-                                        <p class="text-xs text-gray-500 font-medium mb-0.5">Exam Title</p>
-                                        <p class="text-gray-800 font-semibold">{{ certificationExam.title }}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-xs text-gray-500 font-medium mb-0.5">Certificate Title</p>
-                                        <p class="text-gray-800 font-semibold">{{ certificationExam.cert_title }}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-xs text-gray-500 font-medium mb-0.5">Pass Score</p>
-                                        <p class="text-gray-800 font-semibold">{{ certificationExam.pass_score }}%</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-xs text-gray-500 font-medium mb-0.5">Questions</p>
-                                        <p class="text-gray-800 font-semibold">{{ certificationExam.questions.length }}</p>
-                                    </div>
-                                </div>
-                                <div v-if="certificationExam.description">
-                                    <p class="text-xs text-gray-500 font-medium mb-0.5">Certificate Description</p>
-                                    <p class="text-sm text-gray-700">{{ certificationExam.description }}</p>
-                                </div>
-                                <div v-if="certificationExam.cover_image">
-                                    <p class="text-xs text-gray-500 font-medium mb-1">Cover Image</p>
-                                    <img :src="certificationExam.cover_image" alt="Cover" class="h-28 rounded-xl object-cover border border-gray-100" />
-                                </div>
-                            </div>
-
-                            <!-- Empty state for owner -->
-                            <div v-if="!certificationExam && !showCertExamBuilder" class="px-6 py-10 text-center">
-                                <span class="text-3xl block mb-2">🏆</span>
-                                <p class="text-sm text-gray-500">No certification exam yet. Click "Create Exam" to set one up.</p>
-                            </div>
-                        </div>
-
-                        <!-- Exam Builder form -->
-                        <div v-if="showCertExamBuilder" class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-                            <div class="px-6 py-4 border-b border-gray-100">
-                                <h3 class="font-bold text-gray-900">{{ certificationExam ? 'Edit Certification Exam' : 'New Certification Exam' }}</h3>
-                            </div>
-                            <div class="p-6 space-y-5">
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-xs font-semibold text-gray-600 mb-1">Exam Title <span class="text-gray-400 font-normal">(shown before taking)</span></label>
-                                        <input v-model="certBuilderForm.title" type="text" placeholder="e.g. Final Certification Exam"
-                                            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-semibold text-gray-600 mb-1">Certificate Title <span class="text-gray-400 font-normal">(on certificate)</span></label>
-                                        <input v-model="certBuilderForm.cert_title" type="text" placeholder="e.g. AI UGC Secrets Certification"
-                                            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-600 mb-1">Certificate Description <span class="text-gray-400 font-normal">(optional, shown on certificate)</span></label>
-                                    <textarea v-model="certBuilderForm.description" rows="2" placeholder="Brief description displayed on the certificate..."
-                                        class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
-                                </div>
-
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-600 mb-1">Certificate Cover Image <span class="text-gray-400 font-normal">(optional)</span></label>
-                                    <div v-if="certCoverPreview" class="mb-2 flex items-start gap-3">
-                                        <img :src="certCoverPreview" alt="Cover preview" class="h-24 rounded-xl object-cover border border-gray-100" />
-                                        <button @click="removeCertCover" type="button" class="text-xs text-red-400 hover:text-red-600">Remove</button>
-                                    </div>
-                                    <input v-else type="file" accept="image/*" @change="onCertCoverChange"
-                                        class="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100" />
-                                </div>
-
-                                <div class="flex items-center gap-6">
-                                    <div class="flex items-center gap-3">
-                                        <label class="text-xs text-gray-600 font-semibold shrink-0">Pass Score (%)</label>
-                                        <input v-model.number="certBuilderForm.pass_score" type="number" min="50" max="100"
-                                            class="w-24 px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                                        <span class="text-xs text-gray-400">min 50%</span>
-                                    </div>
-                                    <label class="flex items-center gap-2 cursor-pointer">
-                                        <input type="checkbox" v-model="certBuilderForm.randomize_questions" class="accent-indigo-600 w-4 h-4" />
-                                        <span class="text-xs text-gray-600 font-semibold">Randomize Questions</span>
-                                    </label>
-                                </div>
-
-                                <!-- Questions -->
-                                <div>
-                                    <p class="text-xs font-semibold text-gray-700 mb-3">Questions</p>
-                                    <div v-if="certBuilderForm.questions.length === 0" class="text-center py-6 text-sm text-gray-400 border border-dashed border-gray-200 rounded-xl">
-                                        No questions yet. Click "+ Add Question" below.
-                                    </div>
-                                    <div v-for="(q, qi) in certBuilderForm.questions" :key="qi" class="p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-2 mb-3">
-                                        <div class="flex items-center gap-2">
-                                            <span class="text-xs font-bold text-gray-500 shrink-0">Q{{ qi + 1 }}</span>
-                                            <input v-model="q.question" type="text" placeholder="Question text"
-                                                class="flex-1 px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                                            <select v-model="q.type" class="px-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                                                <option value="multiple_choice">Multiple Choice</option>
-                                                <option value="true_false">True / False</option>
-                                            </select>
-                                            <button @click="certBuilderForm.questions.splice(qi, 1)" class="text-red-400 hover:text-red-600 text-xs shrink-0">✕</button>
-                                        </div>
-                                        <div v-for="(opt, oi) in q.options" :key="oi" class="flex items-center gap-2 pl-6">
-                                            <input type="radio" :name="`cert_builder_q_${qi}`" @change="setCertCorrect(qi, oi)"
-                                                :checked="opt.is_correct" class="accent-indigo-600" title="Mark as correct answer" />
-                                            <input v-model="opt.label" type="text" :placeholder="`Option ${oi + 1}`"
-                                                class="flex-1 px-2.5 py-1 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                                            <button v-if="q.options.length > 2" @click="q.options.splice(oi, 1)" class="text-red-400 text-xs">✕</button>
-                                        </div>
-                                        <button @click="q.options.push({ label: '', is_correct: false })"
-                                            class="text-xs text-indigo-500 hover:text-indigo-700 pl-6 font-medium">+ Add Option</button>
-                                    </div>
-
-                                    <button @click="addCertQuestion"
-                                        class="w-full py-2 border border-dashed border-indigo-300 text-sm text-indigo-500 hover:text-indigo-700 rounded-xl">
-                                        + Add Question
-                                    </button>
-                                </div>
-
-                                <div class="flex gap-3 justify-end pt-2 border-t border-gray-100">
-                                    <button @click="cancelCertBuilder" type="button" class="px-4 py-2 text-sm text-gray-500 hover:text-gray-700">Cancel</button>
-                                    <button @click="saveCertExam" :disabled="certBuilderForm.processing"
-                                        class="px-5 py-2 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-colors">
-                                        {{ certBuilderForm.processing ? 'Saving...' : 'Save Exam' }}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Student: Take Exam or Results -->
-                    <div v-else>
-                        <!-- No exam set up -->
-                        <div v-if="!certificationExam" class="bg-white border border-gray-200 rounded-2xl p-14 text-center shadow-sm">
-                            <span class="text-4xl block mb-3">🏆</span>
-                            <p class="text-sm text-gray-500">No certification exam has been set up for this course yet.</p>
-                        </div>
-
-                        <!-- Exam available -->
-                        <div v-else class="space-y-4">
-                            <!-- Exam header -->
-                            <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-                                <div class="px-6 py-5">
-                                    <div class="flex items-start gap-4">
-                                        <div v-if="certificationExam.cover_image" class="shrink-0">
-                                            <img :src="certificationExam.cover_image" alt="Exam cover" class="w-24 h-16 rounded-xl object-cover border border-gray-100" />
-                                        </div>
-                                        <div class="flex-1">
-                                            <span class="text-xs font-semibold text-amber-600 uppercase tracking-wide">Certification Exam</span>
-                                            <h2 class="text-xl font-black text-gray-900 mt-0.5">{{ certificationExam.title }}</h2>
-                                            <div class="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                                                <span>{{ certificationExam.questions.length }} questions</span>
-                                                <span>Pass score: {{ certificationExam.pass_score }}%</span>
-                                            </div>
-                                        </div>
-                                        <div v-if="currentCertAttempt?.passed" class="shrink-0">
-                                            <span class="text-sm font-bold text-green-700 bg-green-50 border border-green-200 px-3 py-1.5 rounded-xl">✓ Passed</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Result banner (just submitted) -->
-                            <div v-if="certExamResult" class="p-5 rounded-2xl border shadow-sm"
-                                :class="certExamResult.passed ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'">
-                                <p class="font-black text-lg" :class="certExamResult.passed ? 'text-green-800' : 'text-red-800'">
-                                    {{ certExamResult.passed ? '🎉 Congratulations! You passed!' : '😕 Not quite — keep studying!' }}
-                                </p>
-                                <p class="text-sm mt-1" :class="certExamResult.passed ? 'text-green-700' : 'text-red-700'">
-                                    Score: {{ certExamResult.score }}% ({{ certExamResult.correct }}/{{ certExamResult.total }} correct)
-                                </p>
-                                <div v-if="certExamResult.passed && certExamResult.certificate_uuid" class="mt-3">
-                                    <a :href="`/certificates/${certExamResult.certificate_uuid}`" target="_blank"
-                                        class="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-500 text-white text-sm font-bold rounded-xl hover:bg-amber-600 transition-colors">
-                                        🏆 View Your Certificate
-                                    </a>
-                                </div>
-                                <button v-if="!certExamResult.passed" @click="retakeCertExam"
-                                    class="mt-3 text-sm text-indigo-600 font-semibold hover:text-indigo-800">
-                                    ↺ Retake Exam
-                                </button>
-                            </div>
-
-                            <!-- Previous attempt banner (from props, no fresh result) -->
-                            <div v-else-if="currentCertAttempt && !certExamResult" class="p-4 rounded-2xl border shadow-sm"
-                                :class="currentCertAttempt.passed ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'">
-                                <p class="text-sm font-bold" :class="currentCertAttempt.passed ? 'text-green-800' : 'text-amber-800'">
-                                    {{ currentCertAttempt.passed ? '✓ You have passed this exam' : 'Previous attempt: ' + currentCertAttempt.score + '%' }}
-                                </p>
-                                <p class="text-xs mt-0.5" :class="currentCertAttempt.passed ? 'text-green-600' : 'text-amber-600'">
-                                    {{ currentCertAttempt.passed ? 'Completed on ' + currentCertAttempt.completed_at : 'You can retake the exam below' }}
-                                </p>
-                                <div v-if="currentCertAttempt.passed && certificate?.uuid" class="mt-2">
-                                    <a :href="`/certificates/${certificate.uuid}`" target="_blank"
-                                        class="text-sm font-semibold text-amber-700 hover:text-amber-900 underline">
-                                        View Certificate →
-                                    </a>
-                                </div>
-                            </div>
-
-                            <!-- Take exam (show if no result yet or retaking) -->
-                            <div v-if="!certExamResult || !certExamResult.passed" class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-                                <div class="px-6 py-4 border-b border-gray-100">
-                                    <h3 class="font-bold text-gray-900">Answer all questions to submit</h3>
-                                </div>
-                                <div class="p-6 space-y-6">
-                                    <div v-for="(question, qi) in certificationExam.questions" :key="question.id" class="space-y-2">
-                                        <p class="text-sm font-semibold text-gray-800">{{ qi + 1 }}. {{ question.question }}</p>
-                                        <div class="space-y-1.5">
-                                            <label
-                                                v-for="option in question.options"
-                                                :key="option.id"
-                                                class="flex items-center gap-3 px-3 py-2 rounded-lg border cursor-pointer transition-colors"
-                                                :class="certExamAnswers[question.id] === option.id
-                                                    ? 'border-indigo-400 bg-indigo-50'
-                                                    : 'border-gray-200 hover:bg-gray-50'"
-                                            >
-                                                <input
-                                                    type="radio"
-                                                    :name="`cert_q_${question.id}`"
-                                                    :value="option.id"
-                                                    v-model="certExamAnswers[question.id]"
-                                                    class="accent-indigo-600"
-                                                />
-                                                <span class="text-sm text-gray-700">{{ option.label }}</span>
-                                            </label>
-                                        </div>
-                                    </div>
-
-                                    <button
-                                        @click="submitCertExam"
-                                        :disabled="certExamForm.processing || !certExamAllAnswered"
-                                        class="w-full py-3 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-                                    >
-                                        {{ certExamForm.processing ? 'Submitting...' : 'Submit Exam' }}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- ─── End Certification Exam Panel ─────────────────────────── -->
             </div>
         </div>
     </AppLayout>
@@ -1081,10 +776,7 @@ const props = defineProps({
     progress:           Number,
     lessonComments:     Object,   // { [lesson_id]: Comment[] }
     quizAttempts:       Object,   // { [quiz_id]: QuizAttempt }
-    certificate:        Object,   // { uuid } or null
     canManage:          Boolean,
-    certificationExam:  Object,   // CourseCertification data or null
-    certAttempt:        Object,   // { score, passed, completed_at } or null
 });
 
 const page      = usePage();
@@ -1119,7 +811,6 @@ function toggleModule(id) {
 }
 
 const selectedLesson   = ref(props.course.modules[0]?.lessons[0] ?? null);
-const showingCertExam  = ref(false);
 
 // Keep selectedLesson in sync when Inertia refreshes props (e.g. after quiz save)
 watch(() => props.course, (updatedCourse) => {
@@ -1133,19 +824,10 @@ watch(() => props.course, (updatedCourse) => {
 
 function selectLesson(lesson) {
     selectedLesson.value  = lesson;
-    showingCertExam.value = false;
     editingLesson.value   = false;
     quizResult.value      = null;
-    certExamResult.value  = null;
     resetQuizAnswers();
     commentForm.reset();
-}
-
-function selectCertificationExam() {
-    showingCertExam.value = true;
-    selectedLesson.value  = null;
-    certExamResult.value  = null;
-    resetCertAnswers();
 }
 
 // ─── Mark complete ─────────────────────────────────────────────────────────────
@@ -1425,174 +1107,7 @@ function enrollInCourse() {
     enrollForm.post(`/communities/${props.community.slug}/classroom/courses/${props.course.id}/enroll`);
 }
 
-// ─── Certificate ──────────────────────────────────────────────────────────────
-const certUuid  = ref(props.certificate?.uuid ?? null);
-const certForm  = useForm({});
+// (Certification logic moved to Communities/Certifications/Index.vue)
 
-function issueCert() {
-    certForm.post(
-        `/communities/${props.community.slug}/classroom/courses/${props.course.id}/certificate`,
-        {
-            onSuccess: () => {
-                // Inertia redirects to certificate page — no local state needed
-            },
-        }
-    );
-}
 
-// ─── Certification Exam ───────────────────────────────────────────────────────
-const certExamAnswers = ref({});
-const certExamResult  = ref(null);
-const certExamForm    = useForm({});
-
-// Reactive best attempt (updated after successful submission via Inertia)
-const currentCertAttempt = computed(() => props.certAttempt ?? null);
-
-const certExamAllAnswered = computed(() => {
-    const exam = props.certificationExam;
-    if (!exam) return false;
-    return exam.questions.every((q) => certExamAnswers.value[q.id] != null);
-});
-
-function resetCertAnswers() {
-    certExamAnswers.value = {};
-}
-
-function submitCertExam() {
-    const exam = props.certificationExam;
-    if (!exam) return;
-
-    certExamForm
-        .transform(() => ({ answers: certExamAnswers.value }))
-        .post(
-            `/communities/${props.community.slug}/classroom/courses/${props.course.id}/certification-exam/${exam.id}/submit`,
-            {
-                preserveScroll: true,
-                onSuccess: () => {
-                    const flash = page.props.flash?.cert_exam_result;
-                    if (flash) certExamResult.value = flash;
-                },
-            }
-        );
-}
-
-function retakeCertExam() {
-    certExamResult.value = null;
-    resetCertAnswers();
-}
-
-// ─── Certification Exam Builder (owner) ───────────────────────────────────────
-const showCertExamBuilder = ref(false);
-const certCoverPreview    = ref(null);
-
-const certBuilderForm = useForm({
-    title:               '',
-    cert_title:          '',
-    description:         '',
-    cover_image:         null,
-    pass_score:          70,
-    randomize_questions: false,
-    questions:           [],
-});
-
-function initCertBuilder() {
-    const exam = props.certificationExam;
-    if (exam) {
-        certBuilderForm.title               = exam.title;
-        certBuilderForm.cert_title          = exam.cert_title;
-        certBuilderForm.description         = exam.description ?? '';
-        certBuilderForm.cover_image         = null;
-        certBuilderForm.pass_score          = exam.pass_score;
-        certBuilderForm.randomize_questions = exam.randomize_questions;
-        certBuilderForm.questions           = exam.questions.map((q) => ({
-            question: q.question,
-            type:     q.type,
-            options:  q.options.map((o) => ({ label: o.label, is_correct: o.is_correct })),
-        }));
-        certCoverPreview.value = exam.cover_image ?? null;
-    } else {
-        certBuilderForm.reset();
-        certBuilderForm.questions = [];
-        certCoverPreview.value    = null;
-    }
-    showCertExamBuilder.value = true;
-}
-
-function cancelCertBuilder() {
-    showCertExamBuilder.value = false;
-    certBuilderForm.reset();
-    certBuilderForm.questions = [];
-    certCoverPreview.value    = null;
-}
-
-function addCertQuestion() {
-    certBuilderForm.questions.push({
-        question: '',
-        type:     'multiple_choice',
-        options:  [
-            { label: '', is_correct: true },
-            { label: '', is_correct: false },
-        ],
-    });
-}
-
-function setCertCorrect(qi, oi) {
-    certBuilderForm.questions[qi].options.forEach((o, i) => {
-        o.is_correct = i === oi;
-    });
-}
-
-function onCertCoverChange(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    certBuilderForm.cover_image = file;
-    certCoverPreview.value = URL.createObjectURL(file);
-}
-
-function removeCertCover() {
-    certBuilderForm.cover_image = null;
-    certCoverPreview.value      = null;
-}
-
-function saveCertExam() {
-    certBuilderForm
-        .transform((data) => {
-            const fd = new FormData();
-            fd.append('title', data.title);
-            fd.append('cert_title', data.cert_title);
-            fd.append('description', data.description ?? '');
-            fd.append('pass_score', data.pass_score);
-            fd.append('randomize_questions', data.randomize_questions ? '1' : '0');
-            if (data.cover_image) {
-                fd.append('cover_image', data.cover_image);
-            }
-            data.questions.forEach((q, qi) => {
-                fd.append(`questions[${qi}][question]`, q.question);
-                fd.append(`questions[${qi}][type]`, q.type);
-                q.options.forEach((o, oi) => {
-                    fd.append(`questions[${qi}][options][${oi}][label]`, o.label);
-                    fd.append(`questions[${qi}][options][${oi}][is_correct]`, o.is_correct ? '1' : '0');
-                });
-            });
-            return fd;
-        })
-        .post(
-            `/communities/${props.community.slug}/classroom/courses/${props.course.id}/certification-exam`,
-            {
-                forceFormData: true,
-                onSuccess: () => {
-                    showCertExamBuilder.value = false;
-                },
-            }
-        );
-}
-
-function deleteCertExam() {
-    const exam = props.certificationExam;
-    if (!exam || !confirm('Delete the certification exam? All attempts will also be removed.')) return;
-    router.delete(
-        `/communities/${props.community.slug}/classroom/courses/${props.course.id}/certification-exam/${exam.id}`,
-        { preserveScroll: true }
-    );
-}
 </script>

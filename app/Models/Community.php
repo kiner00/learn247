@@ -100,6 +100,11 @@ class Community extends Model
         return $this->hasMany(CommunityInvite::class);
     }
 
+    public function certifications(): HasMany
+    {
+        return $this->hasMany(CourseCertification::class);
+    }
+
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     public function isFree(): bool

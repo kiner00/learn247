@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class CourseCertification extends Model
 {
     protected $fillable = [
-        'course_id',
+        'community_id',
         'title',
         'cert_title',
         'description',
@@ -25,9 +25,9 @@ class CourseCertification extends Model
         ];
     }
 
-    public function course(): BelongsTo
+    public function community(): BelongsTo
     {
-        return $this->belongsTo(Course::class);
+        return $this->belongsTo(Community::class);
     }
 
     public function questions(): HasMany
@@ -38,5 +38,10 @@ class CourseCertification extends Model
     public function attempts(): HasMany
     {
         return $this->hasMany(CertificationAttempt::class, 'certification_id');
+    }
+
+    public function certificates(): HasMany
+    {
+        return $this->hasMany(Certificate::class, 'certification_id');
     }
 }

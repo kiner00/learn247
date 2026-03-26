@@ -3,21 +3,17 @@
 namespace App\Actions\Classroom;
 
 use App\Models\CourseCertification;
-use App\Models\Course;
+use App\Models\Community;
 use Illuminate\Support\Facades\Storage;
 
 class ManageCertificationExam
 {
-    public function store(Course $course, array $data, $coverImageFile = null): CourseCertification
+    public function store(Community $community, array $data, $coverImageFile = null, ?CourseCertification $existing = null): CourseCertification
     {
-        // Delete existing certification (cascade deletes questions/options/attempts)
-        $existing = $course->certification;
-
         $coverImage = $existing?->cover_image ?? null;
 
         // Handle cover image upload
         if ($coverImageFile) {
-            // Delete old cover image if present
             if ($coverImage) {
                 Storage::disk('public')->delete($coverImage);
             }
@@ -45,7 +41,7 @@ class ManageCertificationExam
             $certification = $existing;
         } else {
             $certification = CourseCertification::create([
-                'course_id'           => $course->id,
+                'community_id'        => $community->id,
                 'title'               => $data['title'],
                 'cert_title'          => $data['cert_title'],
                 'description'         => $data['description'] ?? null,

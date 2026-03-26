@@ -108,9 +108,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/communities/{community}/courses/{course}/lessons/{lesson}/quiz',           [QuizController::class, 'store']);
     Route::delete('/communities/{community}/courses/{course}/lessons/{lesson}/quiz/{quiz}',  [QuizController::class, 'destroy']);
 
-    // ─── Certificates ──────────────────────────────────────────────────────
-    Route::post('/communities/{community}/courses/{course}/certificate', [CertificateController::class, 'issue']);
-
     // ─── Community members ─────────────────────────────────────────────────
     Route::get('/community-members',                                     [CommunityMemberController::class, 'index']);
     Route::delete('/communities/{community}/members/{user}',             [CommunityMemberController::class, 'destroy']);
