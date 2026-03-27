@@ -6,22 +6,22 @@ use App\Models\Affiliate;
 use App\Models\Community;
 use App\Models\CommunityMember;
 use App\Models\User;
+use App\Services\StorageService;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class CreateCommunity
 {
+    public function __construct(private StorageService $storage) {}
+
     public function execute(User $user, array $data, ?UploadedFile $avatar = null, ?UploadedFile $coverImage = null): Community
     {
         if ($coverImage) {
-            $path = $coverImage->store('community-covers', 'public');
-            $data['cover_image'] = Storage::url($path);
+            $data['cover_image'] = $this->storage->upload($coverImage, 'community-covers');
         }
 
         if ($avatar) {
-            $path = $avatar->store('community-avatars', 'public');
-            $data['avatar'] = Storage::url($path);
+            $data['avatar'] = $this->storage->upload($avatar, 'community-avatars');
         }
 
         $community = Community::create([

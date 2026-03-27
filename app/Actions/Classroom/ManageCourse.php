@@ -4,15 +4,17 @@ namespace App\Actions\Classroom;
 
 use App\Models\Community;
 use App\Models\Course;
+use App\Services\StorageService;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 
 class ManageCourse
 {
+    public function __construct(private StorageService $storage) {}
+
     public function store(Community $community, array $data, ?UploadedFile $coverImage = null): Course
     {
         if ($coverImage) {
-            $data['cover_image'] = asset('storage/' . $coverImage->store('course-covers', 'public'));
+            $data['cover_image'] = $this->storage->upload($coverImage, 'course-covers');
         }
 
         $position = $community->courses()->max('position') + 1;
@@ -23,7 +25,8 @@ class ManageCourse
     public function update(Course $course, array $data, ?UploadedFile $coverImage = null): Course
     {
         if ($coverImage) {
-            $data['cover_image'] = asset('storage/' . $coverImage->store('course-covers', 'public'));
+            $this->storage->delete($course->cover_image);
+            $data['cover_image'] = $this->storage->upload($coverImage, 'course-covers');
         } else {
             unset($data['cover_image']);
         }
@@ -42,11 +45,7 @@ class ManageCourse
 
     public function destroy(Course $course): void
     {
-        if ($course->cover_image) {
-            $path = str_replace(asset('storage/'), '', $course->cover_image);
-            Storage::disk('public')->delete($path);
-        }
-
+        $this->storage->delete($course->cover_image);
         $course->delete();
     }
 }

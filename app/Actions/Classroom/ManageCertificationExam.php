@@ -4,24 +4,21 @@ namespace App\Actions\Classroom;
 
 use App\Models\CourseCertification;
 use App\Models\Community;
-use Illuminate\Support\Facades\Storage;
+use App\Services\StorageService;
 
 class ManageCertificationExam
 {
+    public function __construct(private StorageService $storage) {}
+
     public function store(Community $community, array $data, $coverImageFile = null, ?CourseCertification $existing = null): CourseCertification
     {
         $coverImage = $existing?->cover_image ?? null;
 
-        // Handle cover image upload
         if ($coverImageFile) {
-            if ($coverImage) {
-                Storage::disk('public')->delete($coverImage);
-            }
-            $coverImage = $coverImageFile->store('certification-covers', 'public');
+            $this->storage->delete($coverImage);
+            $coverImage = $this->storage->upload($coverImageFile, 'certification-covers');
         } elseif (isset($data['remove_cover_image']) && $data['remove_cover_image']) {
-            if ($coverImage) {
-                Storage::disk('public')->delete($coverImage);
-            }
+            $this->storage->delete($coverImage);
             $coverImage = null;
         }
 
@@ -55,7 +52,6 @@ class ManageCertificationExam
             ]);
         }
 
-        // Create questions and options
         foreach ($data['questions'] as $position => $qData) {
             $question = $certification->questions()->create([
                 'question' => $qData['question'],
@@ -76,10 +72,7 @@ class ManageCertificationExam
 
     public function destroy(CourseCertification $certification): void
     {
-        if ($certification->cover_image) {
-            Storage::disk('public')->delete($certification->cover_image);
-        }
-
+        $this->storage->delete($certification->cover_image);
         $certification->delete();
     }
 }

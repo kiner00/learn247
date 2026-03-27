@@ -3,15 +3,16 @@
 namespace App\Actions\Community;
 
 use App\Models\Community;
+use App\Services\StorageService;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 
 class ManageGallery
 {
+    public function __construct(private StorageService $storage) {}
+
     public function addImage(Community $community, UploadedFile $image): string
     {
-        $path    = $image->store('community-gallery', 'public');
-        $url     = Storage::url($path);
+        $url     = $this->storage->upload($image, 'community-gallery');
         $gallery = $community->gallery_images ?? [];
         $gallery[] = $url;
         $community->update(['gallery_images' => $gallery]);
@@ -23,8 +24,7 @@ class ManageGallery
     {
         $gallery = $community->gallery_images ?? [];
         if (isset($gallery[$index])) {
-            $path = ltrim(str_replace('/storage/', '', $gallery[$index]), '/');
-            Storage::disk('public')->delete($path);
+            $this->storage->delete($gallery[$index]);
             array_splice($gallery, $index, 1);
             $community->update(['gallery_images' => array_values($gallery)]);
         }

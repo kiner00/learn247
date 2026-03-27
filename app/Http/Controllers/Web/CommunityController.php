@@ -16,6 +16,7 @@ use App\Services\TelegramService;
 use App\Services\Community\MembershipAccessService;
 use App\Services\Community\PlanLimitService;
 use App\Services\SmsService;
+use App\Services\StorageService;
 use App\Actions\Community\UpdateCommunity;
 use App\Actions\Community\UpdateLevelPerks;
 use App\Http\Controllers\Controller;
@@ -708,7 +709,7 @@ class CommunityController extends Controller
 
         $request->validate(['image' => 'required|image|max:5120']);
 
-        $url = asset('storage/' . $request->file('image')->store('landing-images', 'public'));
+        $url = app(StorageService::class)->upload($request->file('image'), 'landing-images');
 
         return response()->json(['url' => $url]);
     }

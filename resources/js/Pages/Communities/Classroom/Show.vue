@@ -411,7 +411,7 @@
                     <!-- Uploaded video -->
                     <div v-if="selectedLesson.video_path" class="bg-black">
                         <video
-                            :src="`/storage/${selectedLesson.video_path}`"
+                            :src="selectedLesson.video_path"
                             controls
                             class="w-full max-h-120 object-contain"
                             controlsList="nodownload"
@@ -464,6 +464,30 @@
                                     placeholder="YouTube, Vimeo, or Google Drive link"
                                     class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 />
+                            </div>
+                            <div v-if="canUploadVideo">
+                                <p class="text-xs text-gray-500 mb-1.5 font-medium">
+                                    Upload Video
+                                    <span class="ml-1 px-1.5 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-bold rounded-full uppercase">Pro</span>
+                                </p>
+                                <div class="flex items-center gap-3">
+                                    <label class="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 transition-colors">
+                                        <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                        </svg>
+                                        <span class="text-xs text-gray-500">
+                                            {{ videoUploading ? `Uploading... ${videoUploadProgress}%` : 'Choose video file (MP4, WebM, MOV — max 500MB)' }}
+                                        </span>
+                                        <input
+                                            type="file"
+                                            accept="video/mp4,video/webm,video/quicktime"
+                                            class="hidden"
+                                            :disabled="videoUploading"
+                                            @change="handleVideoUpload"
+                                        />
+                                    </label>
+                                </div>
+                                <p v-if="videoUploadError" class="text-xs text-red-500 mt-1">{{ videoUploadError }}</p>
                             </div>
                             <div>
                                 <p class="text-xs text-gray-500 mb-1.5 font-medium">Embed Code <span class="text-gray-400">(paste iframe / script embeds here)</span></p>
@@ -777,12 +801,14 @@ const props = defineProps({
     lessonComments:     Object,   // { [lesson_id]: Comment[] }
     quizAttempts:       Object,   // { [quiz_id]: QuizAttempt }
     canManage:          Boolean,
+    canUploadVideo:     Boolean,
 });
 
 const page      = usePage();
 const isOwner   = props.canManage;
 const authUserId = page.props.auth?.user?.id;
 const lessonImageUploadUrl = `/communities/${props.community.slug}/classroom/lesson-images`;
+const lessonVideoUploadUrl = `/communities/${props.community.slug}/classroom/lesson-videos`;
 
 // ─── Completion ───────────────────────────────────────────────────────────────
 const doneIds = ref(new Set(props.completedIds));
@@ -960,6 +986,46 @@ function saveContent() {
             `/communities/${props.community.slug}/classroom/courses/${props.course.id}/modules/${lesson.module_id}/lessons/${lesson.id}`,
             { onSuccess: () => { editingLesson.value = false; } }
         );
+}
+
+// ─── Video upload (Pro plan) ─────────────────────────────────────────────────
+const videoUploading = ref(false);
+const videoUploadProgress = ref(0);
+const videoUploadError = ref('');
+
+async function handleVideoUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    videoUploading.value = true;
+    videoUploadProgress.value = 0;
+    videoUploadError.value = '';
+
+    const formData = new FormData();
+    formData.append('video', file);
+
+    try {
+        const { data } = await axios.post(lessonVideoUploadUrl, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+            onUploadProgress: (e) => {
+                videoUploadProgress.value = Math.round((e.loaded / e.total) * 100);
+            },
+        });
+
+        // Update the lesson with the uploaded video path
+        const lesson = selectedLesson.value;
+        await axios.post(
+            `/communities/${props.community.slug}/classroom/courses/${props.course.id}/modules/${lesson.module_id}/lessons/${lesson.id}`,
+            { video_path: data.url, video_url: '', _method: 'PATCH' }
+        );
+
+        router.reload({ only: ['course'] });
+    } catch (err) {
+        videoUploadError.value = err.response?.data?.error || err.response?.data?.message || 'Upload failed. Please try again.';
+    } finally {
+        videoUploading.value = false;
+        e.target.value = '';
+    }
 }
 
 // ─── Embed URL ────────────────────────────────────────────────────────────────

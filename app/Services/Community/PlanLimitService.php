@@ -67,6 +67,19 @@ class PlanLimitService
         return in_array($user->creatorPlan(), ['basic', 'pro']);
     }
 
+    public function canUploadVideo(User $user): bool
+    {
+        return $user->creatorPlan() === 'pro';
+    }
+
+    public function maxVideoSizeMb(string $plan): int
+    {
+        return match ($plan) {
+            'pro'   => 500,
+            default => 0,
+        };
+    }
+
     // ── Pricing gate (settings page) ──────────────────────────────────────────
 
     /**

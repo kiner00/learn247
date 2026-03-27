@@ -12,7 +12,7 @@ use App\Models\Message;
 use App\Queries\Chat\GetChatMessages;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use App\Services\StorageService;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -50,8 +50,7 @@ class ChatController extends Controller
 
         if ($request->hasFile('media')) {
             $file      = $request->file('media');
-            $path      = $file->store('chat-media', 'public');
-            $mediaUrl  = Storage::disk('public')->url($path);
+            $mediaUrl  = app(StorageService::class)->upload($file, 'chat-media');
             $mediaType = str_starts_with($file->getMimeType(), 'video/') ? 'video' : 'image';
         }
 

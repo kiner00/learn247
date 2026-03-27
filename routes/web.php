@@ -239,6 +239,7 @@ Route::middleware('auth')->group(function () {
         Route::match(['patch', 'post'], '/communities/{community}/classroom/courses/{course}/modules/{module}/lessons/{lesson}', [ClassroomController::class, 'updateLesson'])->name('communities.classroom.lessons.update');
         Route::delete('/communities/{community}/classroom/courses/{course}/modules/{module}/lessons/{lesson}', [ClassroomController::class, 'destroyLesson'])->name('communities.classroom.lessons.destroy');
         Route::post('/communities/{community}/classroom/lesson-images', [ClassroomController::class, 'uploadLessonImage'])->name('communities.classroom.lesson-images');
+        Route::post('/communities/{community}/classroom/lesson-videos', [ClassroomController::class, 'uploadLessonVideo'])->name('communities.classroom.lesson-videos');
 
         // Lesson comments
         Route::post('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/comments', [LessonCommentController::class, 'store'])->name('lesson.comments.store');

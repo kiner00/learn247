@@ -152,6 +152,7 @@ class ClassroomController extends Controller
             'lessonComments' => $detail['lesson_comments'],
             'quizAttempts'   => $detail['quiz_attempts'],
             'canManage'      => $canManage,
+            'canUploadVideo' => $canManage && ($community->owner?->creatorPlan() === 'pro'),
         ]);
     }
 
@@ -231,6 +232,7 @@ class ClassroomController extends Controller
             'content'    => ['nullable', 'string'],
             'embed_html' => ['nullable', 'string'],
             'video_url'  => ['nullable', 'url', 'max:500'],
+            'video_path' => ['nullable', 'string', 'max:1000'],
             'cta_label'  => ['nullable', 'string', 'max:100'],
             'cta_url'    => ['nullable', 'url', 'max:500'],
         ]);
@@ -249,6 +251,26 @@ class ClassroomController extends Controller
         ]);
 
         $url = $action->uploadImage($request->file('image'));
+
+        return response()->json(['url' => $url]);
+    }
+
+    public function uploadLessonVideo(Request $request, Community $community, ManageLesson $action, PlanLimitService $planLimit): JsonResponse
+    {
+        abort_unless($this->canManage($request->user(), $community), 403);
+
+        $owner = $community->owner;
+        if (! $planLimit->canUploadVideo($owner)) {
+            return response()->json(['error' => 'Video uploads require a Pro plan.'], 403);
+        }
+
+        $maxKb = $planLimit->maxVideoSizeMb($owner->creatorPlan()) * 1024;
+
+        $request->validate([
+            'video' => ['required', 'file', 'mimetypes:video/mp4,video/quicktime,video/webm,video/x-msvideo', "max:{$maxKb}"],
+        ]);
+
+        $url = $action->uploadVideo($request->file('video'));
 
         return response()->json(['url' => $url]);
     }

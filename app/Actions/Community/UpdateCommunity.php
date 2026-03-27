@@ -3,12 +3,14 @@
 namespace App\Actions\Community;
 
 use App\Models\Community;
+use App\Services\StorageService;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class UpdateCommunity
 {
+    public function __construct(private StorageService $storage) {}
+
     /**
      * @throws ValidationException
      */
@@ -19,17 +21,15 @@ class UpdateCommunity
         }
 
         if ($coverImage) {
-            $this->deleteOldFile($community->cover_image);
-            $path = $coverImage->store('community-covers', 'public');
-            $data['cover_image'] = Storage::url($path);
+            $this->storage->delete($community->cover_image);
+            $data['cover_image'] = $this->storage->upload($coverImage, 'community-covers');
         } else {
             unset($data['cover_image']);
         }
 
         if ($avatar) {
-            $this->deleteOldFile($community->avatar);
-            $path = $avatar->store('community-avatars', 'public');
-            $data['avatar'] = Storage::url($path);
+            $this->storage->delete($community->avatar);
+            $data['avatar'] = $this->storage->upload($avatar, 'community-avatars');
         } else {
             unset($data['avatar']);
         }
@@ -68,13 +68,6 @@ class UpdateCommunity
             throw ValidationException::withMessages([
                 'price' => 'Complete your profile (name, bio, avatar) before enabling pricing.',
             ]);
-        }
-    }
-
-    private function deleteOldFile(?string $url): void
-    {
-        if ($url && str_starts_with($url, '/storage/')) {
-            Storage::disk('public')->delete(ltrim(str_replace('/storage/', '', $url), '/'));
         }
     }
 }

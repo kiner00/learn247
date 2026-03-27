@@ -7,12 +7,14 @@ use App\Models\CommunityMember;
 use App\Models\Notification;
 use App\Models\Post;
 use App\Models\User;
+use App\Services\StorageService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 
 class CreatePost
 {
+    public function __construct(private StorageService $storage) {}
+
     /** @throws AuthorizationException */
     public function execute(User $user, Community $community, array $data): Post
     {
@@ -27,8 +29,7 @@ class CreatePost
         }
 
         if (isset($data['image']) && $data['image'] instanceof UploadedFile) {
-            $path = $data['image']->store('post-images', 'public');
-            $data['image'] = Storage::url($path);
+            $data['image'] = $this->storage->upload($data['image'], 'post-images');
         }
 
         $post = Post::create([

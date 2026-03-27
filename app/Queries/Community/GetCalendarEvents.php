@@ -6,8 +6,6 @@ use App\Models\Community;
 use App\Models\CommunityMember;
 use App\Models\Event;
 use App\Models\Subscription;
-use Illuminate\Support\Facades\Storage;
-
 class GetCalendarEvents
 {
     public function execute(Community $community, ?int $userId, int $year, int $month): array
@@ -55,7 +53,7 @@ class GetCalendarEvents
             'end_at'      => $e->end_at?->toISOString(),
             'timezone'    => $e->timezone,
             'url'         => $e->url,
-            'cover_image' => $e->cover_image ? Storage::url($e->cover_image) : null,
+            'cover_image' => $e->cover_image,
             'visibility'  => $e->visibility,
         ]);
 

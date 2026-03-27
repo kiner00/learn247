@@ -5,14 +5,16 @@ namespace App\Actions\Community;
 use App\Models\Community;
 use App\Models\Event;
 use App\Models\User;
+use App\Services\StorageService;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 
 class ManageEvent
 {
+    public function __construct(private StorageService $storage) {}
+
     public function store(Community $community, User $creator, array $data, ?UploadedFile $coverImage = null): Event
     {
-        $path = $coverImage ? $coverImage->store("events/{$community->id}", 'public') : null;
+        $url = $coverImage ? $this->storage->upload($coverImage, "events/{$community->id}") : null;
 
         return $community->events()->create([
             'created_by'  => $creator->id,
@@ -22,7 +24,7 @@ class ManageEvent
             'end_at'      => $data['end_at'] ?? null,
             'timezone'    => $data['timezone'],
             'url'         => $data['url'] ?? null,
-            'cover_image' => $path,
+            'cover_image' => $url,
             'visibility'  => $data['visibility'] ?? 'public',
         ]);
     }
@@ -30,10 +32,8 @@ class ManageEvent
     public function update(Event $event, array $data, ?UploadedFile $coverImage = null): Event
     {
         if ($coverImage) {
-            if ($event->cover_image) {
-                Storage::disk('public')->delete($event->cover_image);
-            }
-            $data['cover_image'] = $coverImage->store("events/{$event->community_id}", 'public');
+            $this->storage->delete($event->cover_image);
+            $data['cover_image'] = $this->storage->upload($coverImage, "events/{$event->community_id}");
         }
 
         $event->update($data);
@@ -43,9 +43,7 @@ class ManageEvent
 
     public function destroy(Event $event): void
     {
-        if ($event->cover_image) {
-            Storage::disk('public')->delete($event->cover_image);
-        }
+        $this->storage->delete($event->cover_image);
         $event->delete();
     }
 }
