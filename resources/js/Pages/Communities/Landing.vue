@@ -1555,6 +1555,7 @@ async function generate() {
 
 // ── CTA handler ───────────────────────────────────────────────────────────────
 function handleCta() {
+    if (inlineMode.value || showEditPanel.value) return;
     if (props.membership || props.isOwner) {
         window.location.href = `/communities/${props.community.slug}`;
         return;
