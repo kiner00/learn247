@@ -2,9 +2,7 @@
     <AppLayout title="Communities">
         <!-- Hero -->
         <div class="text-center py-10 mb-6">
-            <h1 class="text-4xl font-black text-gray-900 tracking-tight mb-2">
-                Teach. Learn. Earn.
-            </h1>
+            <img src="/brand/logo-transparent.png" alt="Curzzo" class="h-12 mx-auto mb-2" />
             <p class="text-gray-500 text-base">
                 <button
                     v-if="$page.props.auth?.user"
