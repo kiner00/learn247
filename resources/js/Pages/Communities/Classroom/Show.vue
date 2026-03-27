@@ -408,13 +408,19 @@
                         </span>
                     </div>
 
-                    <!-- Uploaded video -->
+                    <!-- Uploaded video (served via signed URL) -->
                     <div v-if="selectedLesson.video_path" class="bg-black">
+                        <div v-if="videoStreamLoading" class="flex items-center justify-center h-64 text-white text-sm">
+                            Loading video…
+                        </div>
                         <video
-                            :src="selectedLesson.video_path"
+                            v-else-if="videoStreamUrl"
+                            :src="videoStreamUrl"
                             controls
                             class="w-full max-h-120 object-contain"
-                            controlsList="nodownload"
+                            controlsList="nodownload nofullscreen"
+                            disablePictureInPicture
+                            oncontextmenu="return false;"
                         />
                     </div>
 
@@ -844,7 +850,12 @@ watch(() => props.course, (updatedCourse) => {
     const id = selectedLesson.value.id;
     for (const mod of updatedCourse.modules) {
         const fresh = mod.lessons.find((l) => l.id === id);
-        if (fresh) { selectedLesson.value = fresh; return; }
+        if (fresh) {
+            const videoChanged = fresh.video_path !== selectedLesson.value.video_path;
+            selectedLesson.value = fresh;
+            if (videoChanged) fetchVideoStreamUrl(fresh);
+            return;
+        }
     }
 }, { deep: true });
 
@@ -854,6 +865,33 @@ function selectLesson(lesson) {
     quizResult.value      = null;
     resetQuizAnswers();
     commentForm.reset();
+    fetchVideoStreamUrl(lesson);
+}
+
+// ─── Secure video streaming via signed URLs ─────────────────────────────────
+const videoStreamUrl    = ref(null);
+const videoStreamLoading = ref(false);
+
+async function fetchVideoStreamUrl(lesson) {
+    videoStreamUrl.value = null;
+    if (!lesson?.video_path) return;
+
+    videoStreamLoading.value = true;
+    try {
+        const { data } = await axios.get(
+            `/communities/${props.community.slug}/classroom/courses/${props.course.id}/lessons/${lesson.id}/stream`
+        );
+        videoStreamUrl.value = data.url;
+    } catch {
+        videoStreamUrl.value = null;
+    } finally {
+        videoStreamLoading.value = false;
+    }
+}
+
+// Fetch signed URL for the initially selected lesson
+if (selectedLesson.value?.video_path) {
+    fetchVideoStreamUrl(selectedLesson.value);
 }
 
 // ─── Mark complete ─────────────────────────────────────────────────────────────

@@ -19,6 +19,7 @@ use App\Queries\Classroom\GetCourseList;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -271,6 +272,40 @@ class ClassroomController extends Controller
         ]);
 
         $url = $action->uploadVideo($request->file('video'));
+
+        return response()->json(['url' => $url]);
+    }
+
+    public function streamLessonVideo(Request $request, Community $community, Course $course, CourseLesson $lesson, CourseAccessService $access): JsonResponse
+    {
+        $user      = $request->user();
+        $canManage = $this->canManage($user, $community);
+
+        // Unpublished courses only visible to managers
+        if (! $course->is_published && ! $canManage) {
+            abort(404);
+        }
+
+        // Check course-level access
+        if (! $canManage && ! $access->hasAccess($user, $community, $course)) {
+            abort(403, 'You do not have access to this course.');
+        }
+
+        if (! $lesson->video_path) {
+            abort(404, 'No video for this lesson.');
+        }
+
+        $path = $lesson->video_path;
+
+        // Handle legacy full S3 URLs stored before the migration to private keys
+        if (str_starts_with($path, 'http')) {
+            $bucket = config('filesystems.disks.s3.bucket');
+            $parsed = parse_url($path);
+            $path   = ltrim($parsed['path'] ?? '', '/');
+        }
+
+        // Generate a temporary signed URL (expires in 2 hours)
+        $url = Storage::temporaryUrl($path, now()->addHours(2));
 
         return response()->json(['url' => $url]);
     }

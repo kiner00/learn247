@@ -29,6 +29,12 @@ class StorageService
 
         $disk = Storage::disk();
 
+        // S3 key stored directly (e.g. lesson-videos/abc.mp4)
+        if (! str_starts_with($url, '/') && ! str_starts_with($url, 'http') && $disk->exists($url)) {
+            $disk->delete($url);
+            return;
+        }
+
         // Old local storage URL: /storage/community-covers/abc.jpg
         if (str_starts_with($url, '/storage/')) {
             $path = ltrim(str_replace('/storage/', '', $url), '/');

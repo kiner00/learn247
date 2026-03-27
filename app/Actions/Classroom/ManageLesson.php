@@ -46,7 +46,11 @@ class ManageLesson
     {
         $path = $video->store('lesson-videos', config('filesystems.default'));
 
-        return Storage::url($path);
+        // Store as private so subscribers cannot download directly
+        Storage::setVisibility($path, 'private');
+
+        // Return the S3 key (not the public URL) — videos are served via signed URLs
+        return $path;
     }
 
     public function reorder(CourseModule $module, array $lessonIds): void
