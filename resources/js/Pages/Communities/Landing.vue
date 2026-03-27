@@ -358,6 +358,30 @@
                                     </template>
                                 </template>
 
+                                <!-- CERTIFICATIONS -->
+                                <template v-if="sec.type === 'certifications'">
+                                    <div v-if="!props.certifications.length" class="text-xs text-gray-500 italic">
+                                        No certification exams yet. Create one in the Certifications tab.
+                                    </div>
+                                    <template v-else>
+                                        <div>
+                                            <label class="field-label">Section Headline</label>
+                                            <input v-model="editDraft.certifications_headline" type="text" placeholder="Get Certified" class="field-input" />
+                                        </div>
+                                        <p class="text-xs text-gray-400">Certifications are pulled automatically from your community exams.</p>
+                                        <div v-for="c in props.certifications" :key="c.id" class="flex items-center gap-3 bg-white rounded-xl p-3 border border-gray-200">
+                                            <div class="w-10 h-10 rounded-lg overflow-hidden shrink-0 bg-amber-100 flex items-center justify-center text-lg">
+                                                <img v-if="c.cover_image" :src="c.cover_image" class="w-full h-full object-cover" />
+                                                <span v-else>🏆</span>
+                                            </div>
+                                            <div class="min-w-0">
+                                                <p class="text-sm font-medium text-gray-800 truncate">{{ c.title }}</p>
+                                                <p class="text-xs text-gray-400">{{ c.questions_count }} questions</p>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </template>
+
                                 <!-- GUARANTEE -->
                                 <template v-if="sec.type === 'guarantee'">
                                     <div v-if="!editDraft.guarantee" class="text-xs text-gray-500">
@@ -838,6 +862,35 @@
             </div>
         </section>
 
+        <!-- ── CERTIFICATIONS ── -->
+        <section v-if="isVisible('certifications') && props.certifications.length" class="py-24 bg-white">
+            <div class="max-w-5xl mx-auto px-6">
+                <h2 class="text-3xl sm:text-4xl font-black text-gray-900 text-center mb-4">
+                    {{ lp?.certifications_headline || 'Get Certified' }}
+                </h2>
+                <p class="text-center text-gray-500 mb-12">Pass the exam and earn your certificate.</p>
+                <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div v-for="cert in props.certifications" :key="cert.id"
+                        class="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm flex flex-col">
+                        <div class="aspect-video bg-amber-50 overflow-hidden">
+                            <img v-if="cert.cover_image" :src="cert.cover_image" class="w-full h-full object-cover" />
+                            <div v-else class="w-full h-full flex items-center justify-center text-4xl">🏆</div>
+                        </div>
+                        <div class="p-5 flex flex-col flex-1">
+                            <h3 class="font-bold text-gray-900 text-base mb-1">{{ cert.title }}</h3>
+                            <p v-if="cert.description" class="text-gray-500 text-sm leading-relaxed line-clamp-2 flex-1">{{ cert.description }}</p>
+                            <div class="flex items-center gap-3 mt-4">
+                                <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 px-3 py-1.5 rounded-full">
+                                    🏆 {{ cert.cert_title || 'Certificate' }}
+                                </span>
+                                <span class="text-xs text-gray-400">{{ cert.questions_count }} questions</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- ── PRICE JUSTIFICATION ── -->
         <section v-if="isVisible('price_justification') && lp.price_justification" class="py-20 bg-gray-50">
             <div class="max-w-2xl mx-auto px-6">
@@ -1084,6 +1137,7 @@ const SECTION_DEFS = {
     testimonials:         { label: 'Testimonials',         icon: '⭐' },
     offer_stack:          { label: 'Offer Stack',          icon: '💎' },
     included_courses:     { label: 'Included Courses',     icon: '🎓' },
+    certifications:       { label: 'Certifications',       icon: '🏆' },
     price_justification:  { label: 'Price Justification',  icon: '💰' },
     guarantee:            { label: 'Guarantee',            icon: '🛡️' },
     faq:                  { label: 'FAQ',                  icon: '❓' },
@@ -1093,7 +1147,7 @@ const SECTION_DEFS = {
 
 const DEFAULT_SECTION_ORDER = [
     'hero', 'social_proof', 'benefits', 'for_you', 'creator',
-    'testimonials', 'offer_stack', 'included_courses', 'price_justification', 'guarantee',
+    'testimonials', 'offer_stack', 'included_courses', 'certifications', 'price_justification', 'guarantee',
     'faq', 'embed', 'cta_section',
 ];
 
@@ -1105,7 +1159,8 @@ const props = defineProps({
     membership: Object,
     ownerIsPro: { type: Boolean, default: false },
     isOwner:    { type: Boolean, default: false },
-    courses:    { type: Array, default: () => [] },
+    courses:        { type: Array, default: () => [] },
+    certifications: { type: Array, default: () => [] },
 });
 
 // ── State ─────────────────────────────────────────────────────────────────────

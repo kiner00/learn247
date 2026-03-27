@@ -13,8 +13,7 @@
                         <p class="text-indigo-200 text-xs font-semibold uppercase tracking-widest mb-1">Certificate of Completion</p>
                         <h1 class="text-white text-xl font-black">{{ certificate.community_name }}</h1>
                     </div>
-                    <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-2xl">🏆</div>
-                </div>
+                    <img src="/brand/logo-transparent.png" alt="Curzzo" class="h-10 object-contain" />
 
                 <!-- Cover image (optional) -->
                 <div v-if="certificate.cover_image" class="w-full" style="aspect-ratio:16/6;">
@@ -48,11 +47,13 @@
 
                     <p class="text-xs text-gray-400">Issued on {{ certificate.issued_at }}</p>
                     <p class="text-xs text-gray-300 mt-1 font-mono">{{ certificate.uuid }}</p>
+
+                    <img src="/brand/logo-transparent.png" alt="Curzzo" class="h-8 mx-auto mt-6 opacity-40" />
                 </div>
 
                 <!-- Footer -->
                 <div class="bg-gray-50 px-10 py-4 flex items-center justify-between border-t border-gray-100">
-                    <span class="text-xs text-gray-400">curzzo.com/communities/{{ certificate.community_slug }}</span>
+                    <span class="text-xs text-gray-400">Powered by Curzzo</span>
                     <button
                         @click="print"
                         class="px-4 py-2 bg-indigo-600 text-white text-xs font-semibold rounded-lg hover:bg-indigo-700 transition-colors print:hidden"

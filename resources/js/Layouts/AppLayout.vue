@@ -23,7 +23,7 @@
                                 <img
                                     :src="'/brand/logo-transparent.png'"
                                     alt="Curzzo"
-                                    class="h-12 w-auto"
+                                    class="h-7 w-auto"
                                 />
                             </Link>
                         </template>
@@ -138,7 +138,7 @@
                             <div class="w-5 h-5 rounded-full overflow-hidden shrink-0 bg-gray-100 ring-1 ring-indigo-200">
                                 <img :src="curzzoIcon" alt="Curzzo" class="w-full h-full object-cover" />
                             </div>
-                            <span class="hidden sm:inline">Curzzo</span>
+                            <span class="hidden sm:inline">AI Assistant</span>
                         </button>
                     </div><!-- end logo+switcher flex -->
 
@@ -839,7 +839,7 @@
                             <img :src="curzzoIcon" alt="Curzzo" class="w-full h-full object-cover" />
                         </div>
                         <div>
-                            <p class="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight">Curzzo</p>
+                            <p class="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight">AI Assistant</p>
                             <p class="text-[10px] text-indigo-400 leading-tight">AI Learning Assistant</p>
                         </div>
                     </div>
@@ -867,7 +867,7 @@
                             <img :src="curzzoIcon" alt="Curzzo" class="w-full h-full object-cover" />
                         </div>
                         <div>
-                            <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">Hi, I'm Curzzo!</p>
+                            <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">Hi, I'm your AI Assistant!</p>
                             <p class="text-xs mt-0.5 text-gray-400">Ask me about your lessons, quizzes &amp; progress.</p>
                         </div>
                     </div>

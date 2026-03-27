@@ -455,8 +455,19 @@ class CommunityController extends Controller
             : (auth()->id() ? $community->affiliates()->where('user_id', auth()->id())->first() : null);
 
         $courses = $community->courses->values();
+        $certifications = $community->certifications()
+            ->withCount('questions')
+            ->get()
+            ->map(fn ($c) => [
+                'id'         => $c->id,
+                'title'      => $c->title,
+                'cert_title' => $c->cert_title,
+                'description'=> $c->description,
+                'cover_image'=> $c->cover_image ? asset('storage/' . $c->cover_image) : null,
+                'questions_count' => $c->questions_count,
+            ]);
         $inertia = Inertia::render('Communities/Landing', compact(
-            'community', 'affiliate', 'invitedBy', 'membership', 'ownerIsPro', 'isOwner', 'courses'
+            'community', 'affiliate', 'invitedBy', 'membership', 'ownerIsPro', 'isOwner', 'courses', 'certifications'
         ));
 
         // Persist ?ref= query param as a cookie so it carries through to checkout
