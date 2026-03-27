@@ -97,7 +97,9 @@ class MigrateStorageToS3 extends Command
 
     private function updateDatabaseUrls(): void
     {
-        $s3BaseUrl = rtrim(Storage::disk('s3')->url(''), '/');
+        $bucket = config('filesystems.disks.s3.bucket');
+        $region = config('filesystems.disks.s3.region');
+        $s3BaseUrl = "https://{$bucket}.s3.{$region}.amazonaws.com";
 
         // Patterns to find: /storage/path or https://domain/storage/path
         $tables = [
