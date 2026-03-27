@@ -1,8 +1,13 @@
 <template>
     <AppLayout title="Communities">
         <!-- Hero -->
-        <div class="text-center py-10 mb-6">
-            <img :src="'/brand/logo-transparent.png'" alt="Curzzo" class="h-24 mx-auto mb-2" />
+        <div class="text-center py-12 mb-6">
+            <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight text-gray-900 mb-2">
+                Teach. Learn. Earn.
+            </h1>
+            <p class="text-gray-400 text-sm mb-5">
+                Build and grow your community on <span class="font-semibold text-gray-600">Curzzo</span>
+            </p>
             <p class="text-gray-500 text-base">
                 <button
                     v-if="$page.props.auth?.user"
