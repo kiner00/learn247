@@ -58,7 +58,7 @@ class MigrateStorageToS3 extends Command
                     }
 
                     $stream = $local->readStream($path);
-                    $s3->writeStream($path, $stream, ['visibility' => 'public']);
+                    $s3->writeStream($path, $stream);
 
                     if (is_resource($stream)) {
                         fclose($stream);

@@ -44,10 +44,7 @@ class ManageLesson
 
     public function uploadVideo(UploadedFile $video): string
     {
-        $path = $video->store('lesson-videos', [
-            'disk'       => config('filesystems.default'),
-            'visibility' => 'public',
-        ]);
+        $path = $video->store('lesson-videos', config('filesystems.default'));
 
         return Storage::url($path);
     }

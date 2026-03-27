@@ -12,10 +12,7 @@ class StorageService
      */
     public function upload(UploadedFile $file, string $folder): string
     {
-        $path = $file->store($folder, [
-            'disk'       => config('filesystems.default'),
-            'visibility' => 'public',
-        ]);
+        $path = $file->store($folder, config('filesystems.default'));
 
         return Storage::url($path);
     }
