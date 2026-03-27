@@ -96,6 +96,24 @@
         </Transition>
     </Teleport>
 
+    <!-- ── INLINE COLOR POPOVER ── -->
+    <Teleport to="body">
+        <Transition enter-from-class="opacity-0 scale-95" enter-active-class="transition duration-150" leave-to-class="opacity-0 scale-95" leave-active-class="transition duration-100">
+            <div v-if="colorPopover.visible" class="fixed z-[400]" :style="{ top: colorPopover.top + 'px', left: colorPopover.left + 'px' }">
+                <div class="fixed inset-0" @click="closeColorPopover" />
+                <div class="relative bg-white rounded-xl shadow-2xl border border-gray-200 p-3 w-[240px] space-y-3">
+                    <div v-for="field in colorPopover.fields" :key="field.path">
+                        <label class="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">{{ field.label }}</label>
+                        <div class="flex items-center gap-2 mt-1">
+                            <input type="color" :value="getColorValue(field.path) || field.fallback" @input="setColorValue(field.path, $event.target.value)" class="w-8 h-8 rounded cursor-pointer border border-gray-200 p-0.5" />
+                            <input type="text" :value="getColorValue(field.path) || field.fallback" @input="setColorValue(field.path, $event.target.value)" :placeholder="field.fallback" class="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </Transition>
+    </Teleport>
+
     <!-- ═══════════════════════════════════════════════════════════
          SECTION-BASED EDITOR PANEL
     ════════════════════════════════════════════════════════════ -->
@@ -220,6 +238,25 @@
                                             <input type="file" accept="image/*" class="sr-only" @change="uploadImage('hero', $event)" />
                                         </label>
                                         <div v-if="uploadLoading === 'hero'" class="text-xs text-indigo-600 mt-1">Uploading…</div>
+                                    </div>
+                                    <div class="pt-2 border-t border-gray-200 mt-1">
+                                        <label class="field-label mb-2">Button Colors</label>
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <div>
+                                                <label class="text-[10px] text-gray-400 font-medium">Button BG</label>
+                                                <div class="flex items-center gap-2">
+                                                    <input type="color" v-model="editDraft.hero.btn_bg" class="w-8 h-8 rounded cursor-pointer border border-gray-200 p-0.5" />
+                                                    <input v-model="editDraft.hero.btn_bg" type="text" placeholder="#fbbf24" class="field-input flex-1 text-xs" />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label class="text-[10px] text-gray-400 font-medium">Button Text</label>
+                                                <div class="flex items-center gap-2">
+                                                    <input type="color" v-model="editDraft.hero.btn_text" class="w-8 h-8 rounded cursor-pointer border border-gray-200 p-0.5" />
+                                                    <input v-model="editDraft.hero.btn_text" type="text" placeholder="#111827" class="field-input flex-1 text-xs" />
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </template>
 
@@ -571,6 +608,25 @@
                                             <label class="field-label">CTA Button Label</label>
                                             <input v-model="editDraft.cta_section.cta_label" type="text" class="field-input" />
                                         </div>
+                                        <div class="pt-2 border-t border-gray-200 mt-1">
+                                            <label class="field-label mb-2">Button Colors</label>
+                                            <div class="grid grid-cols-2 gap-2">
+                                                <div>
+                                                    <label class="text-[10px] text-gray-400 font-medium">Button BG</label>
+                                                    <div class="flex items-center gap-2">
+                                                        <input type="color" v-model="editDraft.cta_section.btn_bg" class="w-8 h-8 rounded cursor-pointer border border-gray-200 p-0.5" />
+                                                        <input v-model="editDraft.cta_section.btn_bg" type="text" placeholder="#fbbf24" class="field-input flex-1 text-xs" />
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label class="text-[10px] text-gray-400 font-medium">Button Text</label>
+                                                    <div class="flex items-center gap-2">
+                                                        <input type="color" v-model="editDraft.cta_section.btn_text" class="w-8 h-8 rounded cursor-pointer border border-gray-200 p-0.5" />
+                                                        <input v-model="editDraft.cta_section.btn_text" type="text" placeholder="#111827" class="field-input flex-1 text-xs" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                         <div>
                                             <label class="field-label">Background Image</label>
                                             <input v-model="editDraft.cta_section.bg_image" type="url" placeholder="https://…" class="field-input" />
@@ -745,8 +801,12 @@
                     <SafeHtmlRenderer :html="lp.hero.embed_html" />
                 </div>
 
-                <button @click="handleCta"
-                    class="inline-flex items-center gap-2 px-10 py-4 bg-amber-400 hover:bg-amber-500 text-gray-900 font-black text-lg rounded-2xl transition-all shadow-xl shadow-amber-500/30 uppercase tracking-wide hover:scale-105 active:scale-95">
+                <button @click="(inlineMode || showEditPanel) ? openColorPopover($event, [
+                        { label: 'Button Background', path: 'hero.btn_bg', fallback: '#fbbf24' },
+                        { label: 'Button Text', path: 'hero.btn_text', fallback: '#111827' },
+                    ]) : handleCta()"
+                    class="inline-flex items-center gap-2 px-10 py-4 font-black text-lg rounded-2xl transition-all shadow-xl uppercase tracking-wide hover:scale-105 active:scale-95 hover:brightness-110"
+                    :style="{ backgroundColor: lp.hero?.btn_bg || '#fbbf24', color: lp.hero?.btn_text || '#111827' }">
                     {{ lp.hero.cta_label }}
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
@@ -930,6 +990,11 @@
 
         <!-- ── OFFER STACK ── -->
         <section v-if="isVisible('offer_stack') && lp.offer_stack" class="py-24 text-white"
+            :class="{ 'cursor-pointer ring-2 ring-transparent hover:ring-amber-400/50': isOwner && (inlineMode || showEditPanel) }"
+            @click.self="(inlineMode || showEditPanel) && openColorPopover($event, [
+                { label: 'Section Background', path: 'offer_stack.bg_color', fallback: '#1e1b4b' },
+                { label: 'Price Color', path: 'offer_stack.price_color', fallback: '#fbbf24' },
+            ])"
             :style="{ backgroundColor: lp.offer_stack.bg_color || '#1e1b4b' }">
             <div class="max-w-2xl mx-auto px-6 text-center">
                 <h2 class="text-3xl sm:text-4xl font-black mb-12">{{ lp.offer_stack.headline }}</h2>
@@ -947,7 +1012,10 @@
                     <p class="text-sm mb-1" style="color: rgba(255,255,255,0.6);">Total Value: <span class="line-through">{{ lp.offer_stack.total_value }}</span></p>
                     <p class="text-5xl font-black mb-1" :style="{ color: lp.offer_stack.price_color || '#fbbf24' }">{{ lp.offer_stack.price }}<span class="text-xl font-normal" style="color: rgba(255,255,255,0.6);">{{ lp.offer_stack.price_note }}</span></p>
                 </div>
-                <button @click="handleCta"
+                <button @click="(inlineMode || showEditPanel) ? openColorPopover($event, [
+                        { label: 'Button Background', path: 'offer_stack.btn_bg', fallback: '#fbbf24' },
+                        { label: 'Button Text', path: 'offer_stack.btn_text', fallback: '#111827' },
+                    ]) : handleCta()"
                     class="mt-8 inline-flex items-center gap-2 px-10 py-4 font-black text-lg rounded-2xl transition-all shadow-xl uppercase tracking-wide hover:scale-105 active:scale-95 hover:brightness-110"
                     :style="{ backgroundColor: lp.offer_stack.btn_bg || '#fbbf24', color: lp.offer_stack.btn_text || '#111827' }">
                     {{ lp.offer_stack.cta_label || 'Get Access Now' }}
@@ -958,6 +1026,12 @@
 
         <!-- ── INCLUDED COURSES ── -->
         <section v-if="isVisible('included_courses') && props.courses.length" class="py-24"
+            :class="{ 'cursor-pointer ring-2 ring-transparent hover:ring-amber-400/50': isOwner && (inlineMode || showEditPanel) }"
+            @click.self="(inlineMode || showEditPanel) && openColorPopover($event, [
+                { label: 'Section Background', path: 'included_courses_bg_color', fallback: '#f9fafb' },
+                { label: 'Badge Background', path: 'included_courses_btn_bg', fallback: '#059669' },
+                { label: 'Badge Text', path: 'included_courses_btn_text', fallback: '#ffffff' },
+            ])"
             :style="{ backgroundColor: lp?.included_courses_bg_color || '#f9fafb' }">
             <div class="max-w-5xl mx-auto px-6">
                 <h2 class="text-3xl sm:text-4xl font-black text-gray-900 text-center mb-4">
@@ -1095,8 +1169,12 @@
                     @keydown.enter.prevent
                     :class="['text-slate-400 mb-8 leading-relaxed', inlineMode ? editableClass : '']"
                 />
-                <button @click="handleCta"
-                    class="inline-flex items-center gap-2 px-10 py-4 bg-amber-400 hover:bg-amber-500 text-gray-900 font-black text-lg rounded-2xl transition-all shadow-xl shadow-amber-500/20 uppercase tracking-wide hover:scale-105 active:scale-95">
+                <button @click="(inlineMode || showEditPanel) ? openColorPopover($event, [
+                        { label: 'Button Background', path: 'cta_section.btn_bg', fallback: '#fbbf24' },
+                        { label: 'Button Text', path: 'cta_section.btn_text', fallback: '#111827' },
+                    ]) : handleCta()"
+                    class="inline-flex items-center gap-2 px-10 py-4 font-black text-lg rounded-2xl transition-all shadow-xl uppercase tracking-wide hover:scale-105 active:scale-95 hover:brightness-110"
+                    :style="{ backgroundColor: lp.cta_section?.btn_bg || lp.hero?.btn_bg || '#fbbf24', color: lp.cta_section?.btn_text || lp.hero?.btn_text || '#111827' }">
                     {{ lp.cta_section?.cta_label ?? lp.hero.cta_label }}
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
@@ -1295,6 +1373,55 @@ const expandedSection = ref(null);
 const regenLoading   = ref(null);
 const uploadLoading  = ref(null);
 const showAddSection  = ref(false);
+
+// ── Inline color picker ──────────────────────────────────────────────────────
+const colorPopover = ref({ visible: false, top: 0, left: 0, fields: [] });
+
+function openColorPopover(event, fields) {
+    if (!inlineMode.value && !showEditPanel.value) return;
+    event.stopPropagation();
+    const rect = event.currentTarget.getBoundingClientRect();
+    colorPopover.value = {
+        visible: true,
+        top: rect.bottom + 8,
+        left: Math.max(8, Math.min(rect.left + rect.width / 2 - 120, window.innerWidth - 260)),
+        fields,
+    };
+}
+
+function closeColorPopover() {
+    colorPopover.value.visible = false;
+}
+
+function getColorValue(path) {
+    const parts = path.split('.');
+    let cur = lp.value;
+    for (const p of parts) {
+        if (!cur) return '';
+        cur = cur[p];
+    }
+    return cur || '';
+}
+
+function setColorValue(path, value) {
+    const parts = path.split('.');
+    let cur = lp.value;
+    for (let i = 0; i < parts.length - 1; i++) {
+        if (!cur[parts[i]]) cur[parts[i]] = {};
+        cur = cur[parts[i]];
+    }
+    cur[parts[parts.length - 1]] = value;
+    // Also update editDraft if panel is open
+    if (showEditPanel.value) {
+        let d = editDraft.value;
+        for (let i = 0; i < parts.length - 1; i++) {
+            if (!d[parts[i]]) d[parts[i]] = {};
+            d = d[parts[i]];
+        }
+        d[parts[parts.length - 1]] = value;
+    }
+    autoSave();
+}
 
 // ── Inline text editing ───────────────────────────────────────────────────────
 const inlineMode      = ref(false);
@@ -1555,7 +1682,6 @@ async function generate() {
 
 // ── CTA handler ───────────────────────────────────────────────────────────────
 function handleCta() {
-    if (inlineMode.value || showEditPanel.value) return;
     if (props.membership || props.isOwner) {
         window.location.href = `/communities/${props.community.slug}`;
         return;

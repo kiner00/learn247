@@ -494,6 +494,8 @@ class CommunityController extends Controller
             'hero.vsl_url'            => 'nullable|url|max:500',
             'hero.video_type'         => 'nullable|string|in:vsl,embed',
             'hero.embed_html'        => 'nullable|string|max:5000',
+            'hero.btn_bg'                         => 'nullable|string|max:20',
+            'hero.btn_text'                       => 'nullable|string|max:20',
             'social_proof.stat_label' => 'nullable|string|max:100',
             'social_proof.trust_line' => 'nullable|string|max:100',
             'benefits.headline'       => 'nullable|string|max:100',
@@ -521,6 +523,8 @@ class CommunityController extends Controller
             'cta_section.subtext'     => 'nullable|string|max:150',
             'cta_section.cta_label'   => 'nullable|string|max:50',
             'cta_section.bg_image'    => 'nullable|url|max:500',
+            'cta_section.btn_bg'                  => 'nullable|string|max:20',
+            'cta_section.btn_text'                => 'nullable|string|max:20',
             // Hero bg image
             'hero.bg_image'                       => 'nullable|url|max:500',
             // Offer stack
