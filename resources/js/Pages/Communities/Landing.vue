@@ -143,9 +143,8 @@
                                     <span v-if="!sec.visible" class="ml-2 text-xs text-gray-400 font-normal">hidden</span>
                                 </button>
 
-                                <!-- AI Regen button (not for manual embed section) -->
+                                <!-- AI Regen button -->
                                 <button
-                                    v-if="sec.type !== 'embed'"
                                     @click.stop="regenSection(sec.type)"
                                     :disabled="regenLoading === sec.type"
                                     class="flex items-center gap-1 px-2 py-1 rounded-md bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-xs font-semibold transition disabled:opacity-40 shrink-0">
@@ -192,8 +191,23 @@
                                         <input v-model="editDraft.hero.cta_label" type="text" class="field-input" />
                                     </div>
                                     <div>
+                                        <label class="field-label">Video Type</label>
+                                        <div class="flex items-center gap-1 p-0.5 bg-gray-100 rounded-lg w-fit">
+                                            <button type="button" @click="editDraft.hero.video_type = 'vsl'" class="px-3 py-1 text-xs font-medium rounded-md transition-colors" :class="(!editDraft.hero.video_type || editDraft.hero.video_type === 'vsl') ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'">
+                                                VSL Video URL
+                                            </button>
+                                            <button type="button" @click="editDraft.hero.video_type = 'embed'" class="px-3 py-1 text-xs font-medium rounded-md transition-colors" :class="editDraft.hero.video_type === 'embed' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'">
+                                                Embed Script
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div v-if="!editDraft.hero.video_type || editDraft.hero.video_type === 'vsl'">
                                         <label class="field-label">VSL Video URL <span class="text-gray-400 font-normal">(YouTube, Drive, Vimeo)</span></label>
                                         <input v-model="editDraft.hero.vsl_url" type="url" placeholder="https://youtube.com/watch?v=..." class="field-input" />
+                                    </div>
+                                    <div v-else>
+                                        <label class="field-label">Embed Code <span class="text-gray-400 font-normal">(paste iframe / script embed)</span></label>
+                                        <textarea v-model="editDraft.hero.embed_html" rows="5" placeholder="Paste your embed code here (converteai, Vimeo, etc.)" class="field-input font-mono resize-none" />
                                     </div>
                                     <div>
                                         <label class="field-label">Background Image</label>
@@ -285,20 +299,41 @@
 
                                 <!-- TESTIMONIALS -->
                                 <template v-if="sec.type === 'testimonials'">
-                                    <div v-if="!editDraft.testimonials?.length" class="text-xs text-gray-500">
-                                        <button @click="editDraft.testimonials = [{ name: '', role: '', quote: '' }]" class="text-indigo-600 font-medium hover:underline">+ Initialize section</button>
-                                    </div>
-                                    <template v-else>
-                                        <div v-for="(t, i) in editDraft.testimonials" :key="i" class="bg-white rounded-xl p-3 border border-gray-200 space-y-2">
-                                            <div class="flex gap-2">
-                                                <input v-model="t.name" type="text" placeholder="Name" class="field-input flex-1" />
-                                                <input v-model="t.role" type="text" placeholder="Role" class="field-input flex-1" />
-                                            </div>
-                                            <textarea v-model="t.quote" rows="2" placeholder="Quote…" class="field-input resize-none w-full" />
-                                            <button @click="editDraft.testimonials.splice(i, 1)" class="text-xs text-red-400 hover:text-red-600">Remove</button>
+                                    <div>
+                                        <label class="field-label">Display Type</label>
+                                        <div class="flex items-center gap-1 p-0.5 bg-gray-100 rounded-lg w-fit">
+                                            <button type="button" @click="editDraft.testimonials_type = 'manual'" class="px-3 py-1 text-xs font-medium rounded-md transition-colors" :class="(!editDraft.testimonials_type || editDraft.testimonials_type === 'manual') ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'">
+                                                Manual
+                                            </button>
+                                            <button type="button" @click="editDraft.testimonials_type = 'embed'" class="px-3 py-1 text-xs font-medium rounded-md transition-colors" :class="editDraft.testimonials_type === 'embed' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'">
+                                                Embed Script
+                                            </button>
                                         </div>
-                                        <button @click="editDraft.testimonials.push({ name: '', role: '', quote: '' })" class="text-xs text-indigo-600 font-medium hover:underline">+ Add testimonial</button>
+                                    </div>
+
+                                    <!-- Manual testimonials -->
+                                    <template v-if="!editDraft.testimonials_type || editDraft.testimonials_type === 'manual'">
+                                        <div v-if="!editDraft.testimonials?.length" class="text-xs text-gray-500">
+                                            <button @click="editDraft.testimonials = [{ name: '', role: '', quote: '' }]" class="text-indigo-600 font-medium hover:underline">+ Initialize section</button>
+                                        </div>
+                                        <template v-else>
+                                            <div v-for="(t, i) in editDraft.testimonials" :key="i" class="bg-white rounded-xl p-3 border border-gray-200 space-y-2">
+                                                <div class="flex gap-2">
+                                                    <input v-model="t.name" type="text" placeholder="Name" class="field-input flex-1" />
+                                                    <input v-model="t.role" type="text" placeholder="Role" class="field-input flex-1" />
+                                                </div>
+                                                <textarea v-model="t.quote" rows="2" placeholder="Quote…" class="field-input resize-none w-full" />
+                                                <button @click="editDraft.testimonials.splice(i, 1)" class="text-xs text-red-400 hover:text-red-600">Remove</button>
+                                            </div>
+                                            <button @click="editDraft.testimonials.push({ name: '', role: '', quote: '' })" class="text-xs text-indigo-600 font-medium hover:underline">+ Add testimonial</button>
+                                        </template>
                                     </template>
+
+                                    <!-- Embed script -->
+                                    <div v-else>
+                                        <label class="field-label">Embed Code <span class="text-gray-400 font-normal">(paste iframe / script embed)</span></label>
+                                        <textarea v-model="editDraft.testimonials_embed_html" rows="5" placeholder="Paste your testimonial widget embed code here (e.g. Senja, Testimonial.to, etc.)" class="field-input font-mono resize-none" />
+                                    </div>
                                 </template>
 
                                 <!-- OFFER STACK -->
@@ -312,11 +347,11 @@
                                             <input v-model="editDraft.offer_stack.headline" type="text" class="field-input" />
                                         </div>
                                         <div v-for="(item, i) in editDraft.offer_stack.items" :key="i" class="bg-white rounded-xl p-3 border border-gray-200 space-y-2">
+                                            <input v-model="item.name" type="text" placeholder="Item name (e.g. The Faceless Marketer Community)" class="field-input w-full font-medium" />
                                             <div class="flex gap-2">
-                                                <input v-model="item.name" type="text" placeholder="Component name" class="field-input flex-1" />
-                                                <input v-model="item.value" type="text" placeholder="₱5,000" class="field-input w-24 shrink-0" />
+                                                <input v-model="item.value" type="text" placeholder="₱5,000" class="field-input w-28 shrink-0" />
+                                                <input v-model="item.description" type="text" placeholder="What it includes…" class="field-input flex-1" />
                                             </div>
-                                            <input v-model="item.description" type="text" placeholder="What it includes…" class="field-input w-full" />
                                             <button @click="editDraft.offer_stack.items.splice(i, 1)" class="text-xs text-red-400 hover:text-red-600">Remove</button>
                                         </div>
                                         <button @click="editDraft.offer_stack.items.push({ name: '', value: '', description: '' })" class="text-xs text-indigo-600 font-medium hover:underline">+ Add item</button>
@@ -333,6 +368,43 @@
                                         <div>
                                             <label class="field-label">Price Note <span class="text-gray-400 font-normal">(e.g. /month)</span></label>
                                             <input v-model="editDraft.offer_stack.price_note" type="text" placeholder="/month" class="field-input" />
+                                        </div>
+                                        <div class="pt-2 border-t border-gray-200 mt-1">
+                                            <label class="field-label mb-2">Colors</label>
+                                            <div class="grid grid-cols-2 gap-2">
+                                                <div>
+                                                    <label class="text-[10px] text-gray-400 font-medium">Background</label>
+                                                    <div class="flex items-center gap-2">
+                                                        <input type="color" v-model="editDraft.offer_stack.bg_color" class="w-8 h-8 rounded cursor-pointer border border-gray-200 p-0.5" />
+                                                        <input v-model="editDraft.offer_stack.bg_color" type="text" placeholder="#1e1b4b" class="field-input flex-1 text-xs" />
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label class="text-[10px] text-gray-400 font-medium">Price Color</label>
+                                                    <div class="flex items-center gap-2">
+                                                        <input type="color" v-model="editDraft.offer_stack.price_color" class="w-8 h-8 rounded cursor-pointer border border-gray-200 p-0.5" />
+                                                        <input v-model="editDraft.offer_stack.price_color" type="text" placeholder="#fbbf24" class="field-input flex-1 text-xs" />
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label class="text-[10px] text-gray-400 font-medium">Button BG</label>
+                                                    <div class="flex items-center gap-2">
+                                                        <input type="color" v-model="editDraft.offer_stack.btn_bg" class="w-8 h-8 rounded cursor-pointer border border-gray-200 p-0.5" />
+                                                        <input v-model="editDraft.offer_stack.btn_bg" type="text" placeholder="#fbbf24" class="field-input flex-1 text-xs" />
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label class="text-[10px] text-gray-400 font-medium">Button Text</label>
+                                                    <div class="flex items-center gap-2">
+                                                        <input type="color" v-model="editDraft.offer_stack.btn_text" class="w-8 h-8 rounded cursor-pointer border border-gray-200 p-0.5" />
+                                                        <input v-model="editDraft.offer_stack.btn_text" type="text" placeholder="#111827" class="field-input flex-1 text-xs" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="field-label">CTA Button Label</label>
+                                            <input v-model="editDraft.offer_stack.cta_label" type="text" placeholder="Get Access Now" class="field-input" />
                                         </div>
                                     </template>
                                 </template>
@@ -434,18 +506,6 @@
                                         </div>
                                         <button @click="editDraft.faq.push({ question: '', answer: '' })" class="text-xs text-indigo-600 font-medium hover:underline">+ Add FAQ</button>
                                     </template>
-                                </template>
-
-                                <!-- CTA SECTION -->
-                                <template v-if="sec.type === 'embed'">
-                                    <div>
-                                        <label class="field-label">Section Title <span class="text-gray-400 font-normal">(optional)</span></label>
-                                        <input v-model="editDraft.embed.title" type="text" placeholder="e.g. Watch This First" class="field-input" />
-                                    </div>
-                                    <div>
-                                        <label class="field-label">Embed Code <span class="text-gray-400 font-normal">(paste iframe / script embed)</span></label>
-                                        <textarea v-model="editDraft.embed.html" rows="5" placeholder="Paste your embed code here (converteai, Vimeo, etc.)" class="field-input font-mono resize-none" />
-                                    </div>
                                 </template>
 
                                 <template v-if="sec.type === 'cta_section'">
@@ -621,7 +681,7 @@
                 />
 
                 <!-- VSL Video -->
-                <div v-if="lp.hero.vsl_url" class="mb-10 w-full max-w-2xl mx-auto rounded-2xl overflow-hidden shadow-2xl shadow-black/40 border border-white/10">
+                <div v-if="(!lp.hero.video_type || lp.hero.video_type === 'vsl') && lp.hero.vsl_url" class="mb-10 w-full max-w-2xl mx-auto rounded-2xl overflow-hidden shadow-2xl shadow-black/40 border border-white/10">
                     <p class="text-xs text-indigo-300 text-center py-2 bg-black/30 font-medium tracking-wide uppercase">🔊 Make sure your sound is on</p>
                     <div class="relative w-full" style="padding-bottom: 56.25%;">
                         <iframe
@@ -632,6 +692,11 @@
                             allowfullscreen
                         />
                     </div>
+                </div>
+
+                <!-- Embed Script -->
+                <div v-else-if="lp.hero.video_type === 'embed' && lp.hero.embed_html" class="mb-10 w-full max-w-2xl mx-auto">
+                    <SafeHtmlRenderer :html="lp.hero.embed_html" />
                 </div>
 
                 <button @click="handleCta"
@@ -777,7 +842,15 @@
         </section>
 
         <!-- ── TESTIMONIALS ── -->
-        <section v-if="isVisible('testimonials') && lp.testimonials?.length" class="py-20 bg-gray-50">
+        <!-- Embed testimonials -->
+        <section v-if="isVisible('testimonials') && lp.testimonials_type === 'embed' && lp.testimonials_embed_html" class="py-20 bg-gray-50">
+            <div class="max-w-5xl mx-auto px-6 text-center">
+                <h2 class="text-3xl font-black text-gray-900 text-center mb-12">What members are saying</h2>
+                <SafeHtmlRenderer :html="lp.testimonials_embed_html" />
+            </div>
+        </section>
+        <!-- Manual testimonials -->
+        <section v-else-if="isVisible('testimonials') && lp.testimonials?.length" class="py-20 bg-gray-50">
             <div class="max-w-5xl mx-auto px-6">
                 <h2 class="text-3xl font-black text-gray-900 text-center mb-12">What members are saying</h2>
                 <div class="grid sm:grid-cols-3 gap-6">
@@ -810,26 +883,28 @@
         </section>
 
         <!-- ── OFFER STACK ── -->
-        <section v-if="isVisible('offer_stack') && lp.offer_stack" class="py-24 bg-indigo-950 text-white">
+        <section v-if="isVisible('offer_stack') && lp.offer_stack" class="py-24 text-white"
+            :style="{ backgroundColor: lp.offer_stack.bg_color || '#1e1b4b' }">
             <div class="max-w-2xl mx-auto px-6 text-center">
                 <h2 class="text-3xl sm:text-4xl font-black mb-12">{{ lp.offer_stack.headline }}</h2>
                 <div class="space-y-3 mb-8 text-left">
                     <div v-for="(item, i) in lp.offer_stack.items" :key="i"
-                        class="flex items-center justify-between bg-white/10 rounded-xl px-5 py-4 border border-white/10">
+                        class="flex items-center justify-between rounded-xl px-5 py-4 border border-white/10" style="background: rgba(255,255,255,0.1);">
                         <div class="text-left">
                             <p class="font-bold text-white">{{ item.name }}</p>
-                            <p v-if="item.description" class="text-sm text-indigo-300 mt-0.5">{{ item.description }}</p>
+                            <p v-if="item.description" class="text-sm mt-0.5" style="color: rgba(255,255,255,0.6);">{{ item.description }}</p>
                         </div>
-                        <span class="text-indigo-200 font-semibold shrink-0 ml-4 line-through opacity-60">{{ item.value }}</span>
+                        <span class="font-semibold shrink-0 ml-4 line-through opacity-60" style="color: rgba(255,255,255,0.7);">{{ item.value }}</span>
                     </div>
                 </div>
                 <div class="border-t border-white/20 pt-8">
-                    <p class="text-indigo-300 text-sm mb-1">Total Value: <span class="line-through">{{ lp.offer_stack.total_value }}</span></p>
-                    <p class="text-5xl font-black text-amber-400 mb-1">{{ lp.offer_stack.price }}<span class="text-xl font-normal text-indigo-300">{{ lp.offer_stack.price_note }}</span></p>
+                    <p class="text-sm mb-1" style="color: rgba(255,255,255,0.6);">Total Value: <span class="line-through">{{ lp.offer_stack.total_value }}</span></p>
+                    <p class="text-5xl font-black mb-1" :style="{ color: lp.offer_stack.price_color || '#fbbf24' }">{{ lp.offer_stack.price }}<span class="text-xl font-normal" style="color: rgba(255,255,255,0.6);">{{ lp.offer_stack.price_note }}</span></p>
                 </div>
                 <button @click="handleCta"
-                    class="mt-8 inline-flex items-center gap-2 px-10 py-4 bg-amber-400 hover:bg-amber-500 text-gray-900 font-black text-lg rounded-2xl transition-all shadow-xl shadow-amber-500/20 uppercase tracking-wide hover:scale-105 active:scale-95">
-                    Get Access Now
+                    class="mt-8 inline-flex items-center gap-2 px-10 py-4 font-black text-lg rounded-2xl transition-all shadow-xl uppercase tracking-wide hover:scale-105 active:scale-95 hover:brightness-110"
+                    :style="{ backgroundColor: lp.offer_stack.btn_bg || '#fbbf24', color: lp.offer_stack.btn_text || '#111827' }">
+                    {{ lp.offer_stack.cta_label || 'Get Access Now' }}
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
                 </button>
             </div>
@@ -949,13 +1024,6 @@
         </section>
 
         <!-- ── FINAL CTA ── -->
-        <!-- ── EMBED ── -->
-        <section v-if="isVisible('embed') && lp.embed?.html" class="py-16 bg-white">
-            <div class="max-w-2xl mx-auto px-6 text-center">
-                <h2 v-if="lp.embed.title" class="text-2xl font-black text-gray-900 mb-8">{{ lp.embed.title }}</h2>
-                <SafeHtmlRenderer :html="lp.embed.html" class="mb-0!" />
-            </div>
-        </section>
 
         <section v-if="isVisible('cta_section')" class="py-24 text-white text-center relative overflow-hidden"
             :style="lp.cta_section?.bg_image ? `background-image: url('${lp.cta_section.bg_image}'); background-size: cover; background-position: center;` : ''">
@@ -1143,14 +1211,13 @@ const SECTION_DEFS = {
     price_justification:  { label: 'Price Justification',  icon: '💰' },
     guarantee:            { label: 'Guarantee',            icon: '🛡️' },
     faq:                  { label: 'FAQ',                  icon: '❓' },
-    embed:                { label: 'Embed / Video',         icon: '🎬' },
     cta_section:          { label: 'Final CTA',            icon: '🚀', required: true },
 };
 
 const DEFAULT_SECTION_ORDER = [
     'hero', 'social_proof', 'benefits', 'for_you', 'creator',
     'testimonials', 'offer_stack', 'included_courses', 'certifications', 'price_justification', 'guarantee',
-    'faq', 'embed', 'cta_section',
+    'faq', 'cta_section',
 ];
 
 // ── Props ─────────────────────────────────────────────────────────────────────
@@ -1291,9 +1358,12 @@ watch(showEditPanel, (open) => {
             }));
         }
 
-        // Ensure embed object is initialized
-        if (!editDraft.value.embed) {
-            editDraft.value.embed = { title: '', html: '' };
+        // Ensure hero video_type is initialized
+        if (!editDraft.value.hero.video_type) {
+            editDraft.value.hero.video_type = editDraft.value.hero.vsl_url ? 'vsl' : 'vsl';
+        }
+        if (!editDraft.value.hero.embed_html) {
+            editDraft.value.hero.embed_html = editDraft.value.embed?.html || '';
         }
     }
 });
@@ -1302,9 +1372,6 @@ watch(showEditPanel, (open) => {
 function addSection(type) {
     if (!editDraft.value._sections) return;
     // Initialize data object for sections that need it
-    if (type === 'embed' && !editDraft.value.embed) {
-        editDraft.value.embed = { title: '', html: '' };
-    }
     // Insert before cta_section if present, otherwise at end
     const ctaIdx = editDraft.value._sections.findIndex(s => s.type === 'cta_section');
     const newSec = { type, visible: true };
