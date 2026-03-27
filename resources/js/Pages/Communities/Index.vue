@@ -2,12 +2,11 @@
     <AppLayout title="Communities">
         <!-- Hero -->
         <div class="text-center py-12 mb-6">
-            <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight text-gray-900 mb-2">
+            <h1
+                class="text-4xl sm:text-5xl font-extrabold tracking-tight text-gray-900 mb-2"
+            >
                 Teach. Learn. Earn.
             </h1>
-            <p class="text-gray-400 text-sm mb-5">
-                Build and grow your community on <span class="font-semibold text-gray-600">Curzzo</span>
-            </p>
             <p class="text-gray-500 text-base">
                 <button
                     v-if="$page.props.auth?.user"
@@ -250,7 +249,9 @@
                 <!-- Card body -->
                 <div class="p-4 flex flex-col flex-1">
                     <!-- Logo + name row -->
-                    <div class="flex items-center gap-3 -mt-6 mb-2 relative z-10">
+                    <div
+                        class="flex items-center gap-3 -mt-6 mb-2 relative z-10"
+                    >
                         <div
                             class="w-10 h-10 rounded-xl shrink-0 overflow-hidden border-2 border-white bg-white flex items-center justify-center font-bold text-indigo-600 text-base"
                             style="
