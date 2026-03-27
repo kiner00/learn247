@@ -730,6 +730,15 @@
 
         <!-- ── HERO ── -->
         <section v-if="isVisible('hero')" class="relative overflow-hidden bg-linear-to-br from-slate-900 via-indigo-950 to-slate-900 text-white">
+            <button v-if="isOwner && (inlineMode || showEditPanel)"
+                @click="openColorPopover($event, [
+                    { label: 'Button Background', path: 'hero.btn_bg', fallback: '#fbbf24' },
+                    { label: 'Button Text', path: 'hero.btn_text', fallback: '#111827' },
+                ])"
+                class="absolute top-3 left-3 z-20 w-8 h-8 bg-white/20 hover:bg-white/40 rounded-full shadow-lg flex items-center justify-center transition hover:scale-110 backdrop-blur"
+                title="Edit colors">
+                <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
+            </button>
             <!-- Background image (custom upload or community cover) -->
             <div v-if="lp.hero?.bg_image || community.cover_image" class="absolute inset-0 opacity-20">
                 <img :src="lp.hero?.bg_image || community.cover_image" class="w-full h-full object-cover" />
@@ -989,13 +998,17 @@
         </section>
 
         <!-- ── OFFER STACK ── -->
-        <section v-if="isVisible('offer_stack') && lp.offer_stack" class="py-24 text-white"
-            :class="{ 'cursor-pointer ring-2 ring-transparent hover:ring-amber-400/50': isOwner && (inlineMode || showEditPanel) }"
-            @click.self="(inlineMode || showEditPanel) && openColorPopover($event, [
-                { label: 'Section Background', path: 'offer_stack.bg_color', fallback: '#1e1b4b' },
-                { label: 'Price Color', path: 'offer_stack.price_color', fallback: '#fbbf24' },
-            ])"
+        <section v-if="isVisible('offer_stack') && lp.offer_stack" class="py-24 text-white relative"
             :style="{ backgroundColor: lp.offer_stack.bg_color || '#1e1b4b' }">
+            <button v-if="isOwner && (inlineMode || showEditPanel)"
+                @click="openColorPopover($event, [
+                    { label: 'Section Background', path: 'offer_stack.bg_color', fallback: '#1e1b4b' },
+                    { label: 'Price Color', path: 'offer_stack.price_color', fallback: '#fbbf24' },
+                ])"
+                class="absolute top-3 left-3 z-20 w-8 h-8 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition hover:scale-110"
+                title="Edit colors">
+                <svg class="w-4 h-4 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
+            </button>
             <div class="max-w-2xl mx-auto px-6 text-center">
                 <h2 class="text-3xl sm:text-4xl font-black mb-12">{{ lp.offer_stack.headline }}</h2>
                 <div class="space-y-3 mb-8 text-left">
@@ -1025,14 +1038,18 @@
         </section>
 
         <!-- ── INCLUDED COURSES ── -->
-        <section v-if="isVisible('included_courses') && props.courses.length" class="py-24"
-            :class="{ 'cursor-pointer ring-2 ring-transparent hover:ring-amber-400/50': isOwner && (inlineMode || showEditPanel) }"
-            @click.self="(inlineMode || showEditPanel) && openColorPopover($event, [
-                { label: 'Section Background', path: 'included_courses_bg_color', fallback: '#f9fafb' },
-                { label: 'Badge Background', path: 'included_courses_btn_bg', fallback: '#059669' },
-                { label: 'Badge Text', path: 'included_courses_btn_text', fallback: '#ffffff' },
-            ])"
+        <section v-if="isVisible('included_courses') && props.courses.length" class="py-24 relative"
             :style="{ backgroundColor: lp?.included_courses_bg_color || '#f9fafb' }">
+            <button v-if="isOwner && (inlineMode || showEditPanel)"
+                @click="openColorPopover($event, [
+                    { label: 'Section Background', path: 'included_courses_bg_color', fallback: '#f9fafb' },
+                    { label: 'Badge Background', path: 'included_courses_btn_bg', fallback: '#059669' },
+                    { label: 'Badge Text', path: 'included_courses_btn_text', fallback: '#ffffff' },
+                ])"
+                class="absolute top-3 left-3 z-20 w-8 h-8 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition hover:scale-110"
+                title="Edit colors">
+                <svg class="w-4 h-4 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
+            </button>
             <div class="max-w-5xl mx-auto px-6">
                 <h2 class="text-3xl sm:text-4xl font-black text-gray-900 text-center mb-4">
                     {{ lp?.included_courses_headline || 'Everything included in your membership' }}
@@ -1152,6 +1169,15 @@
             <div v-if="!lp.cta_section?.bg_image" class="absolute inset-0 bg-linear-to-br from-slate-900 via-indigo-950 to-slate-900" />
             <div v-else class="absolute inset-0 bg-slate-900/80" />
             <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-125 h-125 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
+            <button v-if="isOwner && (inlineMode || showEditPanel)"
+                @click="openColorPopover($event, [
+                    { label: 'Button Background', path: 'cta_section.btn_bg', fallback: '#fbbf24' },
+                    { label: 'Button Text', path: 'cta_section.btn_text', fallback: '#111827' },
+                ])"
+                class="absolute top-3 left-3 z-20 w-8 h-8 bg-white/20 hover:bg-white/40 rounded-full shadow-lg flex items-center justify-center transition hover:scale-110 backdrop-blur"
+                title="Edit colors">
+                <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
+            </button>
             <div class="relative z-10 max-w-xl mx-auto px-6">
                 <h2
                     v-html="lp.cta_section?.headline ?? `Join ${community.name} Today`"
