@@ -537,6 +537,10 @@ class CommunityController extends Controller
             'offer_stack.btn_bg'                  => 'nullable|string|max:20',
             'offer_stack.btn_text'                => 'nullable|string|max:20',
             'offer_stack.cta_label'               => 'nullable|string|max:50',
+            // Included courses
+            'included_courses_bg_color'           => 'nullable|string|max:20',
+            'included_courses_btn_bg'             => 'nullable|string|max:20',
+            'included_courses_btn_text'           => 'nullable|string|max:20',
             // Guarantee
             'guarantee.headline'                  => 'nullable|string|max:100',
             'guarantee.days'                      => 'nullable|integer|min:1|max:365',

@@ -444,6 +444,27 @@
                                             <label class="field-label">Section Headline</label>
                                             <input v-model="editDraft.included_courses_headline" type="text" placeholder="Everything included in your membership" class="field-input" />
                                         </div>
+                                        <div>
+                                            <label class="field-label">Background Color</label>
+                                            <div class="flex items-center gap-2">
+                                                <input type="color" v-model="editDraft.included_courses_bg_color" class="w-8 h-8 rounded cursor-pointer border border-gray-200 p-0.5" />
+                                                <input v-model="editDraft.included_courses_bg_color" type="text" placeholder="#f9fafb" class="field-input flex-1 text-xs" />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="field-label">Button Background</label>
+                                            <div class="flex items-center gap-2">
+                                                <input type="color" v-model="editDraft.included_courses_btn_bg" class="w-8 h-8 rounded cursor-pointer border border-gray-200 p-0.5" />
+                                                <input v-model="editDraft.included_courses_btn_bg" type="text" placeholder="#059669" class="field-input flex-1 text-xs" />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="field-label">Button Text Color</label>
+                                            <div class="flex items-center gap-2">
+                                                <input type="color" v-model="editDraft.included_courses_btn_text" class="w-8 h-8 rounded cursor-pointer border border-gray-200 p-0.5" />
+                                                <input v-model="editDraft.included_courses_btn_text" type="text" placeholder="#ffffff" class="field-input flex-1 text-xs" />
+                                            </div>
+                                        </div>
                                         <p class="text-xs text-gray-400">Courses are pulled automatically from your Classroom (inclusive access type).</p>
                                         <div v-for="c in props.courses" :key="c.id" class="flex items-center gap-3 bg-white rounded-xl p-3 border border-gray-200">
                                             <div class="w-10 h-10 rounded-lg overflow-hidden shrink-0 bg-indigo-100 flex items-center justify-center text-lg">
@@ -936,7 +957,8 @@
         </section>
 
         <!-- ── INCLUDED COURSES ── -->
-        <section v-if="isVisible('included_courses') && props.courses.length" class="py-24 bg-gray-50">
+        <section v-if="isVisible('included_courses') && props.courses.length" class="py-24"
+            :style="{ backgroundColor: lp?.included_courses_bg_color || '#f9fafb' }">
             <div class="max-w-5xl mx-auto px-6">
                 <h2 class="text-3xl sm:text-4xl font-black text-gray-900 text-center mb-4">
                     {{ lp?.included_courses_headline || 'Everything included in your membership' }}
@@ -952,7 +974,8 @@
                         <div class="p-5 flex flex-col flex-1">
                             <h3 class="font-bold text-gray-900 text-base mb-1">{{ course.title }}</h3>
                             <p v-if="course.description" class="text-gray-500 text-sm leading-relaxed line-clamp-2 flex-1">{{ course.description }}</p>
-                            <span class="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full self-start">
+                            <span class="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full self-start"
+                                :style="{ backgroundColor: lp?.included_courses_btn_bg || '#059669', color: lp?.included_courses_btn_text || '#ffffff' }">
                                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
                                 Included
                             </span>
