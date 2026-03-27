@@ -1039,22 +1039,29 @@ async function handleVideoUpload(e) {
     videoUploadProgress.value = 0;
     videoUploadError.value = '';
 
-    const formData = new FormData();
-    formData.append('video', file);
-
     try {
-        const { data } = await axios.post(lessonVideoUploadUrl, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
+        // Step 1: Get presigned upload URL from server
+        const { data } = await axios.post(lessonVideoUploadUrl, {
+            filename: file.name,
+            content_type: file.type,
+            size: file.size,
+        });
+
+        // Step 2: Upload directly to S3 using presigned URL
+        await axios.put(data.upload_url, file, {
+            headers: {
+                'Content-Type': file.type,
+            },
             onUploadProgress: (e) => {
                 videoUploadProgress.value = Math.round((e.loaded / e.total) * 100);
             },
         });
 
-        // Update the lesson with the uploaded video path
+        // Step 3: Save the S3 key on the lesson
         const lesson = selectedLesson.value;
         await axios.post(
             `/communities/${props.community.slug}/classroom/courses/${props.course.id}/modules/${lesson.module_id}/lessons/${lesson.id}`,
-            { video_path: data.url, video_url: '', _method: 'PATCH' }
+            { video_path: data.key, video_url: '', _method: 'PATCH' }
         );
 
         router.reload({ only: ['course'] });

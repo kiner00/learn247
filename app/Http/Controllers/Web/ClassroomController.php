@@ -265,15 +265,38 @@ class ClassroomController extends Controller
             return response()->json(['error' => 'Video uploads require a Pro plan.'], 403);
         }
 
-        $maxKb = $planLimit->maxVideoSizeMb($owner->creatorPlan()) * 1024;
-
         $request->validate([
-            'video' => ['required', 'file', 'mimetypes:video/mp4,video/quicktime,video/webm,video/x-msvideo', "max:{$maxKb}"],
+            'filename'     => ['required', 'string', 'max:255'],
+            'content_type' => ['required', 'string', 'in:video/mp4,video/quicktime,video/webm,video/x-msvideo'],
+            'size'         => ['required', 'integer', 'min:1'],
         ]);
 
-        $url = $action->uploadVideo($request->file('video'));
+        $maxBytes = $planLimit->maxVideoSizeMb($owner->creatorPlan()) * 1024 * 1024;
 
-        return response()->json(['url' => $url]);
+        if ($request->size > $maxBytes) {
+            return response()->json([
+                'error' => 'File too large. Maximum size is ' . $planLimit->maxVideoSizeMb($owner->creatorPlan()) . 'MB.',
+            ], 422);
+        }
+
+        $extension = pathinfo($request->filename, PATHINFO_EXTENSION) ?: 'mp4';
+        $key       = 'lesson-videos/' . \Illuminate\Support\Str::uuid() . '.' . $extension;
+
+        // Generate a presigned PUT URL (expires in 30 minutes)
+        $client  = Storage::disk('s3')->getClient();
+        $command = $client->getCommand('PutObject', [
+            'Bucket'      => config('filesystems.disks.s3.bucket'),
+            'Key'         => $key,
+            'ContentType' => $request->content_type,
+            'ACL'         => 'private',
+        ]);
+
+        $presigned = $client->createPresignedRequest($command, '+30 minutes');
+
+        return response()->json([
+            'upload_url' => (string) $presigned->getUri(),
+            'key'        => $key,
+        ]);
     }
 
     public function streamLessonVideo(Request $request, Community $community, Course $course, CourseLesson $lesson, CourseAccessService $access): JsonResponse
