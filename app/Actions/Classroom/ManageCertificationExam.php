@@ -30,24 +30,28 @@ class ManageCertificationExam
             $existing->questions()->delete();
 
             $existing->update([
-                'title'               => $data['title'],
-                'cert_title'          => $data['cert_title'],
-                'description'         => $data['description'] ?? null,
-                'cover_image'         => $coverImage,
-                'pass_score'          => $data['pass_score'],
-                'randomize_questions' => $data['randomize_questions'] ?? false,
+                'title'                     => $data['title'],
+                'cert_title'                => $data['cert_title'],
+                'description'               => $data['description'] ?? null,
+                'cover_image'               => $coverImage,
+                'pass_score'                => $data['pass_score'],
+                'randomize_questions'       => $data['randomize_questions'] ?? false,
+                'price'                     => $data['price'] ?? 0,
+                'affiliate_commission_rate' => $data['affiliate_commission_rate'] ?? null,
             ]);
 
             $certification = $existing;
         } else {
             $certification = CourseCertification::create([
-                'community_id'        => $community->id,
-                'title'               => $data['title'],
-                'cert_title'          => $data['cert_title'],
-                'description'         => $data['description'] ?? null,
-                'cover_image'         => $coverImage,
-                'pass_score'          => $data['pass_score'],
-                'randomize_questions' => $data['randomize_questions'] ?? false,
+                'community_id'              => $community->id,
+                'title'                     => $data['title'],
+                'cert_title'                => $data['cert_title'],
+                'description'               => $data['description'] ?? null,
+                'cover_image'               => $coverImage,
+                'pass_score'                => $data['pass_score'],
+                'randomize_questions'       => $data['randomize_questions'] ?? false,
+                'price'                     => $data['price'] ?? 0,
+                'affiliate_commission_rate' => $data['affiliate_commission_rate'] ?? null,
             ]);
         }
 

@@ -254,6 +254,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/communities/{community}/certifications', [CertificationExamController::class, 'store'])->name('certification.store');
         Route::post('/communities/{community}/certifications/{certification}', [CertificationExamController::class, 'update'])->name('certification.update');
         Route::post('/communities/{community}/certifications/{certification}/submit', [CertificationExamController::class, 'submit'])->name('certification.submit');
+        Route::post('/communities/{community}/certifications/{certification}/checkout', [CertificationExamController::class, 'checkout'])->name('certification.checkout');
         Route::delete('/communities/{community}/certifications/{certification}', [CertificationExamController::class, 'destroy'])->name('certification.destroy');
 
         // ─── Chat ─────────────────────────────────────────────────────────────

@@ -884,6 +884,8 @@
                                     🏆 {{ cert.cert_title || 'Certificate' }}
                                 </span>
                                 <span class="text-xs text-gray-400">{{ cert.questions_count }} questions</span>
+                                <span v-if="cert.price > 0" class="text-xs font-semibold text-amber-600">₱{{ Number(cert.price).toLocaleString() }}</span>
+                                <span v-else class="text-xs font-semibold text-green-600">Free</span>
                             </div>
                         </div>
                     </div>

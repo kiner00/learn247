@@ -464,6 +464,7 @@ class CommunityController extends Controller
                 'cert_title' => $c->cert_title,
                 'description'=> $c->description,
                 'cover_image'=> $c->cover_image ? asset('storage/' . $c->cover_image) : null,
+                'price'      => (float) ($c->price ?? 0),
                 'questions_count' => $c->questions_count,
             ]);
         $inertia = Inertia::render('Communities/Landing', compact(

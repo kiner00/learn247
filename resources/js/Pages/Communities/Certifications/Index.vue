@@ -60,13 +60,25 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Certificate Cover Image <span class="text-gray-400 font-normal">(optional)</span></label>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Certificate Cover Image <span class="text-gray-400 font-normal">(optional, recommended: 1200×400)</span></label>
                         <div v-if="coverPreview" class="mb-2 flex items-start gap-3">
                             <img :src="coverPreview" alt="Cover preview" class="h-24 rounded-xl object-cover border border-gray-100" />
                             <button @click="removeCover" type="button" class="text-xs text-red-400 hover:text-red-600">Remove</button>
                         </div>
                         <input v-else type="file" accept="image/*" @change="onCoverChange"
                             class="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100" />
+                    </div>
+
+                    <!-- Community Logo -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Community Logo <span class="text-gray-400 font-normal">(shown on certificate, square, min 200×200)</span></label>
+                        <div class="flex items-center gap-3">
+                            <div class="w-14 h-14 rounded-xl overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center shrink-0">
+                                <img v-if="community.avatar" :src="community.avatar" class="w-full h-full object-cover" />
+                                <span v-else class="text-lg font-bold text-indigo-600">{{ community.name.charAt(0).toUpperCase() }}</span>
+                            </div>
+                            <p class="text-xs text-gray-400">The community avatar is used as the logo on certificates. You can change it in the <a :href="`/communities/${community.slug}/about`" class="text-indigo-500 hover:underline">About</a> settings.</p>
+                        </div>
                     </div>
 
                     <div class="flex items-center gap-6">
@@ -80,6 +92,30 @@
                             <input type="checkbox" v-model="builderForm.randomize_questions" class="accent-indigo-600 w-4 h-4" />
                             <span class="text-xs text-gray-600 font-semibold">Randomize Questions</span>
                         </label>
+                    </div>
+
+                    <!-- Pricing -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Price <span class="text-gray-400 font-normal">(0 = free)</span></label>
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm text-gray-500">₱</span>
+                                <input v-model.number="builderForm.price" type="number" min="0" step="0.01" placeholder="0"
+                                    class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Affiliate Commission <span class="text-gray-400 font-normal">(%)</span></label>
+                            <div class="flex items-center gap-2">
+                                <input v-model.number="builderForm.affiliate_commission_rate" type="number" min="0" max="100" placeholder="0"
+                                    :disabled="!builderForm.price || builderForm.price <= 0"
+                                    class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed" />
+                                <span class="text-xs text-gray-400 shrink-0">max 100%</span>
+                            </div>
+                            <p v-if="builderForm.price > 0 && builderForm.affiliate_commission_rate > 0" class="text-xs text-gray-400 mt-1">
+                                Affiliate earns ₱{{ (builderForm.price * builderForm.affiliate_commission_rate / 100).toFixed(2) }} per sale
+                            </p>
+                        </div>
                     </div>
 
                     <!-- Questions -->
@@ -143,6 +179,8 @@
                                 <div class="flex items-center gap-4 mt-2 text-xs text-gray-500">
                                     <span>{{ cert.questions_count }} questions</span>
                                     <span>Pass score: {{ cert.pass_score }}%</span>
+                                    <span v-if="cert.price > 0" class="font-semibold text-amber-600">₱{{ Number(cert.price).toLocaleString() }}</span>
+                                    <span v-else class="font-semibold text-green-600">Free</span>
                                 </div>
                                 <p v-if="cert.description" class="text-sm text-gray-500 mt-2">{{ cert.description }}</p>
                             </div>
@@ -235,13 +273,25 @@
                     <!-- Take exam button (student, not currently taking) -->
                     <div v-if="!isOwner && takingExamId !== cert.id && (!examResult || examResult.certification_id !== cert.id || !examResult.passed)"
                         class="px-6 pb-5">
-                        <button
-                            v-if="!attempts[cert.id]?.passed"
-                            @click="startExam(cert)"
-                            class="px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors"
-                        >
-                            {{ attempts[cert.id] ? 'Retake Exam' : 'Take Exam' }}
-                        </button>
+                        <template v-if="!attempts[cert.id]?.passed">
+                            <!-- Paid cert: not yet purchased -->
+                            <button
+                                v-if="cert.price > 0 && !purchases[cert.id]"
+                                @click="checkoutCert(cert)"
+                                :disabled="checkoutLoading === cert.id"
+                                class="px-5 py-2.5 bg-amber-500 text-white text-sm font-bold rounded-xl hover:bg-amber-600 disabled:opacity-50 transition-colors"
+                            >
+                                {{ checkoutLoading === cert.id ? 'Redirecting...' : `Pay ₱${Number(cert.price).toLocaleString()} & Take Exam` }}
+                            </button>
+                            <!-- Free or already purchased -->
+                            <button
+                                v-else
+                                @click="startExam(cert)"
+                                class="px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors"
+                            >
+                                {{ attempts[cert.id] ? 'Retake Exam' : 'Take Exam' }}
+                            </button>
+                        </template>
                     </div>
                 </div>
             </div>
@@ -313,6 +363,7 @@ const props = defineProps({
     userCertificates:   Object,
     issuedCertificates: Array,
     canManage:          Boolean,
+    purchases:          { type: Object, default: () => ({}) },
 });
 
 const page    = usePage();
@@ -326,24 +377,28 @@ const editingCert  = ref(null);
 const coverPreview = ref(null);
 
 const builderForm = useForm({
-    title:               '',
-    cert_title:          '',
-    description:         '',
-    cover_image:         null,
-    pass_score:          70,
-    randomize_questions: false,
-    questions:           [],
+    title:                     '',
+    cert_title:                '',
+    description:               '',
+    cover_image:               null,
+    pass_score:                70,
+    randomize_questions:       false,
+    price:                     0,
+    affiliate_commission_rate: null,
+    questions:                 [],
 });
 
 function initBuilder(cert = null) {
     editingCert.value = cert;
     if (cert) {
-        builderForm.title               = cert.title;
-        builderForm.cert_title          = cert.cert_title;
-        builderForm.description         = cert.description ?? '';
-        builderForm.cover_image         = null;
-        builderForm.pass_score          = cert.pass_score;
-        builderForm.randomize_questions = cert.randomize_questions;
+        builderForm.title                     = cert.title;
+        builderForm.cert_title                = cert.cert_title;
+        builderForm.description               = cert.description ?? '';
+        builderForm.cover_image               = null;
+        builderForm.pass_score                = cert.pass_score;
+        builderForm.randomize_questions       = cert.randomize_questions;
+        builderForm.price                     = cert.price ?? 0;
+        builderForm.affiliate_commission_rate = cert.affiliate_commission_rate ?? null;
         builderForm.questions           = cert.questions.map((q) => ({
             question: q.question,
             type:     q.type,
@@ -408,6 +463,10 @@ function saveExam() {
             fd.append('description', data.description ?? '');
             fd.append('pass_score', data.pass_score);
             fd.append('randomize_questions', data.randomize_questions ? '1' : '0');
+            fd.append('price', data.price ?? 0);
+            if (data.affiliate_commission_rate != null) {
+                fd.append('affiliate_commission_rate', data.affiliate_commission_rate);
+            }
             if (data.cover_image) {
                 fd.append('cover_image', data.cover_image);
             }
@@ -433,6 +492,20 @@ function saveExam() {
 function deleteExam(cert) {
     if (!confirm('Delete this certification exam? All attempts and certificates will also be removed.')) return;
     router.delete(`/communities/${props.community.slug}/certifications/${cert.id}`, { preserveScroll: true });
+}
+
+// ─── Certification Checkout ──────────────────────────────────────────────────
+const checkoutLoading = ref(null);
+
+function checkoutCert(cert) {
+    checkoutLoading.value = cert.id;
+    router.post(
+        `/communities/${props.community.slug}/certifications/${cert.id}/checkout`,
+        {},
+        {
+            onError: () => { checkoutLoading.value = null; },
+        }
+    );
 }
 
 // ─── Exam Taking (student) ───────────────────────────────────────────────────

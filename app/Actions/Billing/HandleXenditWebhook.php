@@ -7,6 +7,7 @@ use App\Mail\AffiliateChaChing;
 use App\Mail\CreatorChaChing;
 use App\Mail\TempPasswordMail;
 use App\Models\Affiliate;
+use App\Models\CertificationPurchase;
 use App\Models\CourseEnrollment;
 use App\Models\CreatorSubscription;
 use App\Models\Payment;
@@ -128,7 +129,60 @@ class HandleXenditWebhook
             return;
         }
 
-        // ── 3b. Check if this is a creator plan invoice ───────────────────────
+        // ── 3b. Check if this is a certification purchase invoice ────────
+        $certPurchase = CertificationPurchase::with(['certification.community', 'affiliate.user'])
+            ->where('xendit_id', $xenditId)->first();
+        if ($certPurchase) {
+            $paymentStatus = $this->mapPaymentStatus($status);
+            if ($paymentStatus === Payment::STATUS_PAID) {
+                $certPurchase->update([
+                    'status'  => CertificationPurchase::STATUS_PAID,
+                    'paid_at' => now(),
+                ]);
+                Log::info('Xendit webhook: certification purchase paid', ['purchase_id' => $certPurchase->id]);
+
+                // Record affiliate commission
+                $certChaChing = null;
+                $conversion = $this->recordConversion->executeForCertification($certPurchase);
+                if ($conversion) {
+                    $certChaChing = [
+                        'affiliate_user' => $certPurchase->affiliate->user,
+                        'creator'        => $certPurchase->certification->community->owner,
+                        'community'      => $certPurchase->certification->community,
+                        'sale_amount'    => $conversion['sale_amount'],
+                        'commission'     => $conversion['commission'],
+                    ];
+                }
+
+                if ($certChaChing) {
+                    try {
+                        Mail::to($certChaChing['affiliate_user']->email)->queue(
+                            new AffiliateChaChing(
+                                $certChaChing['affiliate_user'],
+                                $certChaChing['community'],
+                                $certChaChing['sale_amount'],
+                                $certChaChing['commission'],
+                            )
+                        );
+                        if ($certChaChing['creator']) {
+                            Mail::to($certChaChing['creator']->email)->queue(
+                                new CreatorChaChing(
+                                    $certChaChing['creator'],
+                                    $certChaChing['community'],
+                                    $certChaChing['sale_amount'],
+                                    $certChaChing['affiliate_user']->name,
+                                )
+                            );
+                        }
+                    } catch (\Throwable $e) {
+                        Log::error('Failed to send certification cha-ching email', ['error' => $e->getMessage()]);
+                    }
+                }
+            }
+            return;
+        }
+
+        // ── 3c. Check if this is a creator plan invoice ───────────────────────
         $creatorSub = CreatorSubscription::with('user')->where('xendit_id', $xenditId)->first();
         if ($creatorSub) {
             $newStatus = match (strtoupper($status)) {

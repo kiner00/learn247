@@ -16,13 +16,26 @@ class CourseCertification extends Model
         'cover_image',
         'pass_score',
         'randomize_questions',
+        'price',
+        'affiliate_commission_rate',
     ];
 
     protected function casts(): array
     {
         return [
             'randomize_questions' => 'boolean',
+            'price'               => 'decimal:2',
         ];
+    }
+
+    public function isFree(): bool
+    {
+        return ! $this->price || $this->price <= 0;
+    }
+
+    public function purchases(): HasMany
+    {
+        return $this->hasMany(CertificationPurchase::class, 'certification_id');
     }
 
     public function community(): BelongsTo
