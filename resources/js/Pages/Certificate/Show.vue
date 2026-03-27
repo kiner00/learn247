@@ -13,7 +13,7 @@
                         <p class="text-indigo-200 text-xs font-semibold uppercase tracking-widest mb-1">Certificate of Completion</p>
                         <h1 class="text-white text-xl font-black">{{ certificate.community_name }}</h1>
                     </div>
-                    <img src="/brand/logo-transparent.png" alt="Curzzo" class="h-10 object-contain" />
+                    <img :src="'/brand/logo-transparent.png'" alt="Curzzo" class="h-10 object-contain" />
                 </div>
 
                 <!-- Cover image (optional) -->
@@ -49,7 +49,7 @@
                     <p class="text-xs text-gray-400">Issued on {{ certificate.issued_at }}</p>
                     <p class="text-xs text-gray-300 mt-1 font-mono">{{ certificate.uuid }}</p>
 
-                    <img src="/brand/logo-transparent.png" alt="Curzzo" class="h-8 mx-auto mt-6 opacity-40" />
+                    <img :src="'/brand/logo-transparent.png'" alt="Curzzo" class="h-8 mx-auto mt-6 opacity-40" />
                 </div>
 
                 <!-- Footer -->
