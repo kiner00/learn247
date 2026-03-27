@@ -506,6 +506,8 @@ class CommunityController extends Controller
             'for_you.points.*'        => 'nullable|string|max:120',
             'creator.headline'        => 'nullable|string|max:80',
             'creator.bio'             => 'nullable|string|max:500',
+            'creator.name'            => 'nullable|string|max:80',
+            'creator.photo'           => 'nullable|url|max:500',
             'testimonials_type'       => 'nullable|string|in:manual,embed',
             'testimonials_embed_html' => 'nullable|string|max:5000',
             'testimonials'            => 'nullable|array|max:6',

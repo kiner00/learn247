@@ -8,6 +8,7 @@ use App\Models\AffiliateConversion;
 use App\Models\Community;
 use App\Models\Payment;
 use App\Models\PayoutRequest;
+use App\Queries\Payout\CalculateEligibility;
 use App\Services\Payout\OwnerEarningsCalculator;
 
 /**
@@ -16,7 +17,10 @@ use App\Services\Payout\OwnerEarningsCalculator;
  */
 class GetPayoutsDashboard
 {
-    public function __construct(private OwnerEarningsCalculator $earnings) {}
+    public function __construct(
+        private OwnerEarningsCalculator $earnings,
+        private CalculateEligibility $eligibility,
+    ) {}
 
     public function execute(): array
     {
@@ -53,6 +57,7 @@ class GetPayoutsDashboard
 
                 $rows = $communities->map(function ($community) {
                     $e = $this->earnings->forCommunity($community);
+                    [$availablePayout] = $this->eligibility->forOwner($community);
                     return [
                         'community_id'      => $community->id,
                         'community_name'    => $community->name,
@@ -64,6 +69,7 @@ class GetPayoutsDashboard
                         'earned'            => $e['earned'],
                         'paid'              => $e['paid'],
                         'pending'           => $e['pending'],
+                        'available_payout'  => $availablePayout,
                     ];
                 })->values();
 

@@ -257,6 +257,7 @@
                                     <th class="text-right px-5 py-2 text-xs font-semibold text-gray-500">Platform Fee</th>
                                     <th class="text-right px-5 py-2 text-xs font-semibold text-gray-500">Commissions</th>
                                     <th class="text-right px-5 py-2 text-xs font-semibold text-gray-500">Earned</th>
+                                    <th class="text-right px-5 py-2 text-xs font-semibold text-gray-500">Available to Payout</th>
                                     <th class="text-right px-5 py-2 text-xs font-semibold text-gray-500">Paid</th>
                                     <th class="text-right px-5 py-2 text-xs font-semibold text-gray-500">Pending</th>
                                     <th class="px-5 py-2"></th>
@@ -277,6 +278,11 @@
                                     <td class="px-5 py-2.5 text-right text-red-500">−₱{{ fmt(c.platform_fee) }}</td>
                                     <td class="px-5 py-2.5 text-right text-orange-500">−₱{{ fmt(c.commissions) }}</td>
                                     <td class="px-5 py-2.5 text-right font-medium text-gray-900">₱{{ fmt(c.earned) }}</td>
+                                    <td class="px-5 py-2.5 text-right">
+                                        <span :class="c.available_payout > 0 ? 'text-blue-700 font-semibold' : 'text-gray-400'">
+                                            ₱{{ fmt(c.available_payout) }}
+                                        </span>
+                                    </td>
                                     <td class="px-5 py-2.5 text-right text-gray-400">₱{{ fmt(c.paid) }}</td>
                                     <td class="px-5 py-2.5 text-right">
                                         <span :class="c.pending > 0 ? 'text-green-700 font-semibold' : 'text-gray-400'">

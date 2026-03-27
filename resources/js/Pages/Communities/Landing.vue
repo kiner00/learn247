@@ -283,9 +283,34 @@
                                 <!-- CREATOR -->
                                 <template v-if="sec.type === 'creator'">
                                     <div v-if="!editDraft.creator" class="text-xs text-gray-500">
-                                        <button @click="editDraft.creator = { headline: 'Meet Your Coach', bio: '' }" class="text-indigo-600 font-medium hover:underline">+ Initialize section</button>
+                                        <button @click="editDraft.creator = { headline: 'Meet Your Coach', bio: '', name: '', photo: '' }" class="text-indigo-600 font-medium hover:underline">+ Initialize section</button>
                                     </div>
                                     <template v-else>
+                                        <div>
+                                            <label class="field-label">Photo</label>
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-14 h-14 rounded-xl overflow-hidden bg-gray-100 shrink-0">
+                                                    <img v-if="editDraft.creator.photo || community.owner?.avatar"
+                                                         :src="editDraft.creator.photo || community.owner?.avatar"
+                                                         class="w-full h-full object-cover" />
+                                                    <div v-else class="w-full h-full flex items-center justify-center text-lg font-black text-gray-400">
+                                                        {{ community.owner?.name?.charAt(0) ?? '?' }}
+                                                    </div>
+                                                </div>
+                                                <label class="relative cursor-pointer text-xs text-indigo-600 font-medium hover:underline">
+                                                    {{ uploadLoading === 'creator' ? 'Uploading…' : 'Change photo' }}
+                                                    <input type="file" accept="image/*" class="sr-only" @change="uploadImage('creator', $event)" />
+                                                </label>
+                                                <button v-if="editDraft.creator.photo" @click="editDraft.creator.photo = ''"
+                                                        class="text-xs text-red-400 hover:text-red-600">Remove</button>
+                                            </div>
+                                            <p class="text-xs text-gray-400 mt-1">Leave empty to use account avatar</p>
+                                        </div>
+                                        <div>
+                                            <label class="field-label">Display Name</label>
+                                            <input v-model="editDraft.creator.name" type="text" class="field-input" :placeholder="community.owner?.name ?? 'Creator name'" />
+                                            <p class="text-xs text-gray-400 mt-1">Leave empty to use account name</p>
+                                        </div>
                                         <div>
                                             <label class="field-label">Headline <span class="text-gray-400 font-normal">(e.g. "Meet Your Coach")</span></label>
                                             <input v-model="editDraft.creator.headline" type="text" class="field-input" />
@@ -814,12 +839,12 @@
                 <div class="flex flex-col sm:flex-row items-center gap-10 bg-linear-to-br from-slate-900 to-indigo-950 rounded-3xl p-10 text-white">
                     <div class="shrink-0 text-center">
                         <div class="w-28 h-28 rounded-2xl overflow-hidden mx-auto mb-3 ring-4 ring-indigo-500/40">
-                            <img v-if="community.owner?.avatar" :src="community.owner.avatar" class="w-full h-full object-cover" />
+                            <img v-if="lp.creator.photo || community.owner?.avatar" :src="lp.creator.photo || community.owner.avatar" class="w-full h-full object-cover" />
                             <div v-else class="w-full h-full bg-indigo-700 flex items-center justify-center text-3xl font-black text-white">
-                                {{ community.owner?.name?.charAt(0) ?? '?' }}
+                                {{ (lp.creator.name || community.owner?.name)?.charAt(0) ?? '?' }}
                             </div>
                         </div>
-                        <p class="font-bold text-white text-sm">{{ community.owner?.name }}</p>
+                        <p class="font-bold text-white text-sm">{{ lp.creator.name || community.owner?.name }}</p>
                         <p class="text-indigo-300 text-xs mt-0.5">Creator</p>
                     </div>
                     <div>
@@ -1439,7 +1464,11 @@ async function uploadImage(section, event) {
         }
 
         if (!editDraft.value[section]) editDraft.value[section] = {};
-        editDraft.value[section].bg_image = data.url;
+        if (section === 'creator') {
+            editDraft.value[section].photo = data.url;
+        } else {
+            editDraft.value[section].bg_image = data.url;
+        }
     } catch (e) {
         alert(e?.message ?? 'Upload failed.');
     } finally {
