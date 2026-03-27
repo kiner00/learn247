@@ -14,6 +14,7 @@
                         <h1 class="text-white text-xl font-black">{{ certificate.community_name }}</h1>
                     </div>
                     <img src="/brand/logo-transparent.png" alt="Curzzo" class="h-10 object-contain" />
+                </div>
 
                 <!-- Cover image (optional) -->
                 <div v-if="certificate.cover_image" class="w-full" style="aspect-ratio:16/6;">
