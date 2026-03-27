@@ -21,9 +21,9 @@
                         <template v-else>
                             <Link href="/communities" class="px-1 py-1.5">
                                 <img
-                                    :src="'/brand/logo-transparent.png'"
+                                    :src="'/brand/logo-new.png'"
                                     alt="Curzzo"
-                                    class="h-7 w-auto"
+                                    class="h-6 w-auto"
                                 />
                             </Link>
                         </template>
