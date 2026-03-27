@@ -426,7 +426,7 @@ class CommunityController extends Controller
         return Inertia::render('Communities/About', compact('community', 'affiliate', 'invitedBy', 'membership', 'recentMembers', 'ownerIsPro', 'isOwner'));
     }
 
-    public function landing(Request $request, Community $community, GetInvitedByAffiliate $invitedByQuery): Response
+    public function landing(Request $request, Community $community, GetInvitedByAffiliate $invitedByQuery): Response|\Illuminate\Http\RedirectResponse
     {
         $community->load('owner')->loadCount('members');
         $community->load(['courses' => fn ($q) => $q->where('is_published', true)->where('access_type', 'inclusive')]);

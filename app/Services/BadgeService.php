@@ -254,7 +254,7 @@ class BadgeService
 
     private function countCertifiedCompletions(int $userId): int
     {
-        return Certificate::whereHas('course.community', fn ($q) => $q->where('owner_id', $userId))->count();
+        return Certificate::whereHas('certification.community', fn ($q) => $q->where('owner_id', $userId))->count();
     }
 
     private function countActiveAffiliatesWithSale(int $userId): int
