@@ -359,6 +359,20 @@
                                     </template>
                                 </template>
 
+                                <!-- VIDEO (generic handler for all 3 video sections) -->
+                                <template v-if="sec.type === 'video_creator' || sec.type === 'video_testimonials' || sec.type === 'video_courses'">
+                                    <div v-if="!editDraft[sec.type]" class="text-xs text-gray-500">
+                                        <button @click="editDraft[sec.type] = { embed_html: '' }" class="text-indigo-600 font-medium hover:underline">+ Initialize section</button>
+                                    </div>
+                                    <template v-else>
+                                        <div>
+                                            <label class="field-label">Embed Code <span class="text-gray-400 font-normal">(paste YouTube / Vimeo iframe or any embed script)</span></label>
+                                            <textarea v-model="editDraft[sec.type].embed_html" rows="5" placeholder='<iframe src="https://www.youtube.com/embed/..." ...></iframe>' class="field-input font-mono resize-none" />
+                                        </div>
+                                        <p class="text-xs text-gray-400">Paste the full embed code from YouTube, Vimeo, or any video platform.</p>
+                                    </template>
+                                </template>
+
                                 <!-- TESTIMONIALS -->
                                 <template v-if="sec.type === 'testimonials'">
                                     <div>
@@ -956,6 +970,13 @@
             </div>
         </section>
 
+        <!-- ── VIDEO AFTER CREATOR ── -->
+        <section v-if="isVisible('video_creator') && lp.video_creator?.embed_html" class="py-16 bg-white">
+            <div class="max-w-3xl mx-auto px-6">
+                <SafeHtmlRenderer :html="lp.video_creator.embed_html" />
+            </div>
+        </section>
+
         <!-- ── TESTIMONIALS ── -->
         <!-- Embed testimonials -->
         <section v-if="isVisible('testimonials') && lp.testimonials_type === 'embed' && lp.testimonials_embed_html" class="py-20 bg-gray-50">
@@ -994,6 +1015,13 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </section>
+
+        <!-- ── VIDEO AFTER TESTIMONIALS ── -->
+        <section v-if="isVisible('video_testimonials') && lp.video_testimonials?.embed_html" class="py-16 bg-white">
+            <div class="max-w-3xl mx-auto px-6">
+                <SafeHtmlRenderer :html="lp.video_testimonials.embed_html" />
             </div>
         </section>
 
@@ -1073,6 +1101,13 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </section>
+
+        <!-- ── VIDEO AFTER COURSES ── -->
+        <section v-if="isVisible('video_courses') && lp.video_courses?.embed_html" class="py-16 bg-white">
+            <div class="max-w-3xl mx-auto px-6">
+                <SafeHtmlRenderer :html="lp.video_courses.embed_html" />
             </div>
         </section>
 
@@ -1356,9 +1391,12 @@ const SECTION_DEFS = {
     benefits:             { label: 'Benefits',             icon: '✨' },
     for_you:              { label: 'This Is For You',      icon: '🙋' },
     creator:              { label: 'Authority / Creator',  icon: '👤' },
+    video_creator:        { label: 'Video (After Creator)',     icon: '🎬' },
     testimonials:         { label: 'Testimonials',         icon: '⭐' },
+    video_testimonials:   { label: 'Video (After Testimonials)', icon: '🎬' },
     offer_stack:          { label: 'Offer Stack',          icon: '💎' },
     included_courses:     { label: 'Included Courses',     icon: '🎓' },
+    video_courses:        { label: 'Video (After Courses)',     icon: '🎬' },
     certifications:       { label: 'Certifications',       icon: '🏆' },
     price_justification:  { label: 'Price Justification',  icon: '💰' },
     guarantee:            { label: 'Guarantee',            icon: '🛡️' },
@@ -1367,8 +1405,8 @@ const SECTION_DEFS = {
 };
 
 const DEFAULT_SECTION_ORDER = [
-    'hero', 'social_proof', 'benefits', 'for_you', 'creator',
-    'testimonials', 'offer_stack', 'included_courses', 'certifications', 'price_justification', 'guarantee',
+    'hero', 'social_proof', 'benefits', 'for_you', 'creator', 'video_creator',
+    'testimonials', 'video_testimonials', 'offer_stack', 'included_courses', 'video_courses', 'certifications', 'price_justification', 'guarantee',
     'faq', 'cta_section',
 ];
 
