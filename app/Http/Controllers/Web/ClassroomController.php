@@ -288,7 +288,6 @@ class ClassroomController extends Controller
             'Bucket'      => config('filesystems.disks.s3.bucket'),
             'Key'         => $key,
             'ContentType' => $request->content_type,
-            'ACL'         => 'private',
         ]);
 
         $presigned = $client->createPresignedRequest($command, '+30 minutes');

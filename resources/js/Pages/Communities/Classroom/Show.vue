@@ -468,8 +468,10 @@
                                     v-model="contentForm.video_url"
                                     type="url"
                                     placeholder="YouTube, Vimeo, or Google Drive link"
-                                    class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    class="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    :class="contentForm.errors.video_url ? 'border-red-400' : 'border-gray-200'"
                                 />
+                                <p v-if="contentForm.errors.video_url" class="text-xs text-red-500 mt-1">{{ contentForm.errors.video_url }}</p>
                             </div>
                             <div v-if="canUploadVideo">
                                 <p class="text-xs text-gray-500 mb-1.5 font-medium">
@@ -511,15 +513,20 @@
                                         v-model="contentForm.cta_label"
                                         type="text"
                                         placeholder="Button label (e.g. Book a Call)"
-                                        class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        class="flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        :class="contentForm.errors.cta_label ? 'border-red-400' : 'border-gray-200'"
                                     />
                                     <input
                                         v-model="contentForm.cta_url"
                                         type="url"
                                         placeholder="https://..."
-                                        class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        class="flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        :class="contentForm.errors.cta_url ? 'border-red-400' : 'border-gray-200'"
                                     />
                                 </div>
+                                <p v-if="contentForm.errors.cta_label || contentForm.errors.cta_url" class="text-xs text-red-500 mt-1">
+                                    {{ contentForm.errors.cta_label || contentForm.errors.cta_url }}
+                                </p>
                             </div>
                             <div class="flex gap-2 justify-end">
                                 <button type="button" @click="editingLesson = false" class="px-4 py-2 text-sm text-gray-500">Cancel</button>
