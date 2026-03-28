@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Web;
 
-use App\Ai\Agents\LandingPageBuilder;
-use App\Ai\Agents\LandingPageSectionBuilder;
 use App\Actions\Community\CreateCommunity;
 use App\Actions\Community\EnsureMemberAffiliate;
+use App\Actions\Community\GenerateLandingPage;
+use App\Actions\Community\RegenerateLandingSection;
 use App\Actions\Community\JoinCommunity;
 use App\Actions\Community\ManageGallery;
 use App\Actions\Community\SendAnnouncement;
@@ -15,7 +15,7 @@ use App\Services\Community\CommunityChecklistService;
 use App\Services\TelegramService;
 use App\Services\Community\MembershipAccessService;
 use App\Services\Community\PlanLimitService;
-use App\Services\SmsService;
+use App\Contracts\SmsProvider;
 use App\Services\StorageService;
 use App\Actions\Community\UpdateCommunity;
 use App\Actions\Community\UpdateLevelPerks;
@@ -353,7 +353,7 @@ class CommunityController extends Controller
         return back()->with('success', 'SMS settings saved.');
     }
 
-    public function testSms(Request $request, Community $community, SmsService $sms): RedirectResponse
+    public function testSms(Request $request, Community $community, SmsProvider $sms): RedirectResponse
     {
         $this->authorize('update', $community);
 
@@ -427,7 +427,7 @@ class CommunityController extends Controller
         return Inertia::render('Communities/About', compact('community', 'affiliate', 'invitedBy', 'membership', 'recentMembers', 'ownerIsPro', 'isOwner'));
     }
 
-    public function landing(Request $request, Community $community, GetInvitedByAffiliate $invitedByQuery): Response|\Illuminate\Http\RedirectResponse
+    public function landing(Request $request, Community $community, GetInvitedByAffiliate $invitedByQuery): Response|\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
     {
         $community->load('owner')->loadCount('members');
         $community->load(['courses' => fn ($q) => $q->where('is_published', true)->where('access_type', 'inclusive')]);
@@ -576,80 +576,35 @@ class CommunityController extends Controller
         return response()->json($merged);
     }
 
-    public function generateLandingPage(Request $request, Community $community): \Illuminate\Http\JsonResponse
+    public function generateLandingPage(Request $request, Community $community, GenerateLandingPage $action): \Illuminate\Http\JsonResponse
     {
         $user = $request->user();
 
-        if ($community->owner_id !== $user->id && !$user->is_super_admin) {
+        if ($community->owner_id !== $user->id && ! $user->is_super_admin) {
             abort(403);
         }
 
         try {
-            $agent = new LandingPageBuilder([
-                'name'         => $community->name,
-                'category'     => $community->category,
-                'description'  => $community->description,
-                'price'        => $community->price,
-                'currency'     => $community->currency ?? 'PHP',
-                'creator_name' => $user->name,
-                'member_count' => $community->members_count ?? $community->members()->count(),
-            ]);
-
-            $response = $agent->prompt(
-                'Generate the full funnel landing page now. Return only valid JSON.'
-            );
-
-            $raw  = trim($response->text);
-
-            // Strip markdown code fences if AI wrapped the JSON
-            $raw = preg_replace('/^```(?:json)?\s*/i', '', $raw);
-            $raw = preg_replace('/\s*```$/', '', $raw);
-
-            $copy = json_decode($raw, true);
-
-            if (!$copy || !isset($copy['hero'], $copy['benefits'], $copy['faq'])) {
-                \Log::warning('LandingPageBuilder unexpected format', [
-                    'community' => $community->slug,
-                    'raw'       => substr($raw, 0, 500),
-                ]);
-
-                return response()->json(['error' => 'AI returned an unexpected format. Please try again.'], 422);
-            }
-
-            // Inject _sections metadata for the new section-based editor
-            $copy['_sections'] = [
-                ['type' => 'hero',                'visible' => true],
-                ['type' => 'social_proof',        'visible' => isset($copy['social_proof'])],
-                ['type' => 'benefits',            'visible' => isset($copy['benefits'])],
-                ['type' => 'for_you',             'visible' => isset($copy['for_you'])],
-                ['type' => 'creator',             'visible' => isset($copy['creator'])],
-                ['type' => 'testimonials',        'visible' => !empty($copy['testimonials'])],
-                ['type' => 'offer_stack',         'visible' => false],
-                ['type' => 'guarantee',           'visible' => false],
-                ['type' => 'price_justification', 'visible' => false],
-                ['type' => 'faq',                 'visible' => !empty($copy['faq'])],
-                ['type' => 'cta_section',         'visible' => true],
-            ];
-
-            $community->update(['landing_page' => $copy]);
+            $copy = $action->execute($community, $user);
 
             return response()->json($copy);
+        } catch (\RuntimeException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
         } catch (\Throwable $e) {
-            \Log::error('LandingPageBuilder failed', [
+            \Log::error('CommunityController@generateLandingPage failed', [
                 'community' => $community->slug,
                 'error'     => $e->getMessage(),
-                'trace'     => $e->getTraceAsString(),
             ]);
 
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 
-    public function regenerateSection(Request $request, Community $community): \Illuminate\Http\JsonResponse
+    public function regenerateSection(Request $request, Community $community, RegenerateLandingSection $action): \Illuminate\Http\JsonResponse
     {
         $user = $request->user();
 
-        if ($community->owner_id !== $user->id && !$user->is_super_admin) {
+        if ($community->owner_id !== $user->id && ! $user->is_super_admin) {
             abort(403);
         }
 
@@ -657,41 +612,16 @@ class CommunityController extends Controller
             'section' => 'required|string|in:hero,social_proof,benefits,for_you,creator,testimonials,faq,cta_section,offer_stack,guarantee,price_justification',
         ]);
 
-        $section = $request->input('section');
-        $community->load('owner')->loadCount('members');
-
         try {
-            $agent = new LandingPageSectionBuilder([
-                'name'         => $community->name,
-                'category'     => $community->category,
-                'description'  => $community->description,
-                'price'        => $community->price,
-                'currency'     => $community->currency ?? 'PHP',
-                'creator_name' => $community->owner->name ?? $user->name,
-                'member_count' => $community->members_count ?? 0,
-                'section'      => $section,
-            ]);
+            $result = $action->execute($community, $request->input('section'));
 
-            $response = $agent->prompt("Regenerate the '{$section}' section now. Return ONLY valid JSON for this section, no markdown.");
-            $raw = trim($response->text);
-            $raw = preg_replace('/^```(?:json)?\s*/i', '', $raw);
-            $raw = preg_replace('/\s*```$/', '', $raw);
-
-            $data = json_decode($raw, true);
-
-            if ($data === null) {
-                return response()->json(['error' => 'AI returned invalid JSON. Please try again.'], 422);
-            }
-
-            $current = $community->landing_page ?? [];
-            $current[$section] = $data;
-            $community->update(['landing_page' => $current]);
-
-            return response()->json(['section' => $section, 'data' => $data]);
+            return response()->json($result);
+        } catch (\RuntimeException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
         } catch (\Throwable $e) {
-            \Log::error('LandingPageSectionBuilder failed', [
+            \Log::error('CommunityController@regenerateSection failed', [
                 'community' => $community->slug,
-                'section'   => $section,
+                'section'   => $request->input('section'),
                 'error'     => $e->getMessage(),
             ]);
 
@@ -707,7 +637,7 @@ class CommunityController extends Controller
             abort(403);
         }
 
-        $request->validate(['image' => 'required|image|max:5120']);
+        $request->validate(['image' => 'required|image|max:15360']);
 
         $url = app(StorageService::class)->upload($request->file('image'), 'landing-images');
 
