@@ -75,7 +75,7 @@
 
         <!-- ── Payout Requests tab ────────────────────────────────────────────── -->
         <div v-if="activeTab === 'requests'">
-            <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+            <div class="bg-white rounded-2xl border border-gray-200 overflow-x-auto">
                 <div class="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
                     <h2 class="font-semibold text-gray-800">Payout Requests</h2>
                     <div class="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
