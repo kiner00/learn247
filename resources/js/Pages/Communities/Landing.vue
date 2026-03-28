@@ -444,10 +444,8 @@
                                         </div>
                                         <div v-for="(item, i) in editDraft.offer_stack.items" :key="i" class="bg-white rounded-xl p-3 border border-gray-200 space-y-2">
                                             <input v-model="item.name" type="text" placeholder="Item name (e.g. The Faceless Marketer Community)" class="field-input w-full font-medium" />
-                                            <div class="flex gap-2">
-                                                <input v-model="item.value" type="text" placeholder="₱5,000" class="field-input w-28 shrink-0" />
-                                                <input v-model="item.description" type="text" placeholder="What it includes…" class="field-input flex-1" />
-                                            </div>
+                                            <textarea v-model="item.description" rows="2" placeholder="Description (what it includes…)" class="field-input resize-none w-full" />
+                                            <input v-model="item.value" type="text" placeholder="₱5,000 (original value)" class="field-input w-full" />
                                             <button @click="editDraft.offer_stack.items.splice(i, 1)" class="text-xs text-red-400 hover:text-red-600">Remove</button>
                                         </div>
                                         <button @click="editDraft.offer_stack.items.push({ name: '', value: '', description: '' })" class="text-xs text-indigo-600 font-medium hover:underline">+ Add item</button>

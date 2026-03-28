@@ -531,9 +531,9 @@ class CommunityController extends Controller
             // Offer stack
             'offer_stack.headline'                => 'nullable|string|max:120',
             'offer_stack.items'                   => 'nullable|array|max:8',
-            'offer_stack.items.*.name'            => 'nullable|string|max:80',
+            'offer_stack.items.*.name'            => 'nullable|string|max:500',
             'offer_stack.items.*.value'           => 'nullable|string|max:40',
-            'offer_stack.items.*.description'     => 'nullable|string|max:200',
+            'offer_stack.items.*.description'     => 'nullable|string|max:500',
             'offer_stack.total_value'             => 'nullable|string|max:40',
             'offer_stack.price'                   => 'nullable|string|max:40',
             'offer_stack.price_note'              => 'nullable|string|max:60',
