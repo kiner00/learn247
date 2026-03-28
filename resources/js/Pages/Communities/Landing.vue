@@ -302,11 +302,17 @@
                                             <input v-model="editDraft.benefits.headline" type="text" class="field-input" />
                                         </div>
                                         <div v-for="(item, i) in editDraft.benefits.items" :key="i" class="bg-white rounded-xl p-3 border border-gray-200 space-y-2">
-                                            <div class="flex gap-2">
-                                                <input v-model="item.icon" type="text" placeholder="🎯" class="field-input w-14 text-center text-base shrink-0" />
-                                                <input v-model="item.title" type="text" placeholder="Title" class="field-input flex-1" />
+                                            <div class="flex gap-2 items-center">
+                                                <input v-model="item.icon" type="text" placeholder="🎯" class="field-input w-10 text-center text-base shrink-0" />
+                                                <div class="flex-1">
+                                                    <label class="text-[10px] text-gray-400 font-medium">Title</label>
+                                                    <input v-model="item.title" type="text" placeholder="Benefit title" class="field-input w-full" />
+                                                </div>
                                             </div>
-                                            <textarea v-model="item.body" rows="2" placeholder="Description…" class="field-input resize-none w-full" />
+                                            <div>
+                                                <label class="text-[10px] text-gray-400 font-medium">Description</label>
+                                                <textarea v-model="item.body" rows="2" placeholder="Description…" class="field-input resize-none w-full" />
+                                            </div>
                                         </div>
                                         <button @click="editDraft.benefits.items.push({ icon: '✨', title: '', body: '' })"
                                             class="text-xs text-indigo-600 font-medium hover:underline">+ Add item</button>
