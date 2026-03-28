@@ -489,8 +489,8 @@ class CommunityController extends Controller
         }
 
         $data = $request->validate([
-            'hero.headline'           => 'required|string|max:120',
-            'hero.subheadline'        => 'required|string|max:200',
+            'hero.headline'           => 'required|string|max:500',
+            'hero.subheadline'        => 'required|string|max:500',
             'hero.cta_label'          => 'required|string|max:50',
             'hero.vsl_url'            => 'nullable|url|max:500',
             'hero.video_type'         => 'nullable|string|in:vsl,embed',
