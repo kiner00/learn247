@@ -587,6 +587,13 @@
                                             <textarea v-model="opt.description" rows="2" placeholder="Description…" class="field-input resize-none w-full" />
                                         </div>
                                         <button @click="editDraft.price_justification.options.push({ label: '', description: '' })" class="text-xs text-indigo-600 font-medium hover:underline">+ Add option</button>
+                                        <div class="pt-2 border-t border-gray-200 mt-1">
+                                            <label class="field-label">Background Color</label>
+                                            <div class="flex items-center gap-2">
+                                                <input type="color" v-model="editDraft.price_justification.bg_color" class="w-8 h-8 rounded cursor-pointer border border-gray-200 p-0.5" />
+                                                <input v-model="editDraft.price_justification.bg_color" type="text" placeholder="#f9fafb" class="field-input flex-1 text-xs" />
+                                            </div>
+                                        </div>
                                     </template>
                                 </template>
 
@@ -1143,7 +1150,16 @@
         </section>
 
         <!-- ── PRICE JUSTIFICATION ── -->
-        <section v-if="isVisible('price_justification') && lp.price_justification" class="py-20 bg-gray-50">
+        <section v-if="isVisible('price_justification') && lp.price_justification" class="py-20 relative"
+            :style="{ backgroundColor: lp.price_justification.bg_color || '#f9fafb' }">
+            <button v-if="isOwner && (inlineMode || showEditPanel)"
+                @click="openColorPopover($event, [
+                    { label: 'Section Background', path: 'price_justification.bg_color', fallback: '#f9fafb' },
+                ])"
+                class="absolute top-3 left-3 z-20 w-8 h-8 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition hover:scale-110"
+                title="Edit colors">
+                <svg class="w-4 h-4 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
+            </button>
             <div class="max-w-2xl mx-auto px-6">
                 <h2 class="text-3xl font-black text-gray-900 text-center mb-12">{{ lp.price_justification.headline }}</h2>
                 <div class="space-y-4">
