@@ -6,6 +6,7 @@ use App\Models\AffiliateConversion;
 use App\Models\Community;
 use App\Models\OwnerPayout;
 use App\Models\Payment;
+use App\Models\PayoutRequest;
 
 /**
  * Single source of truth for computing how much a community owner has earned,
@@ -44,7 +45,12 @@ class OwnerEarningsCalculator
             ->where('status', '!=', 'failed')
             ->sum('amount');
 
-        $pending = round($earned - $paid, 2);
+        $pendingRequested = (float) PayoutRequest::where('community_id', $community->id)
+            ->where('type', PayoutRequest::TYPE_OWNER)
+            ->where('status', PayoutRequest::STATUS_PENDING)
+            ->sum('amount');
+
+        $pending = round($earned - $paid - $pendingRequested, 2);
 
         return [
             'gross'                => $gross,
