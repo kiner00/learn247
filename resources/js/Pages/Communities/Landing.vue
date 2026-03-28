@@ -274,6 +274,12 @@
                                             <label class="field-label">Trust Line</label>
                                             <input v-model="editDraft.social_proof.trust_line" type="text" class="field-input" />
                                         </div>
+                                        <div>
+                                            <label class="flex items-center gap-2 cursor-pointer">
+                                                <input type="checkbox" v-model="editDraft.social_proof.hide_avatars" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                                                <span class="field-label !mb-0">Hide avatar circles</span>
+                                            </label>
+                                        </div>
                                     </template>
                                 </template>
 
@@ -855,7 +861,7 @@
         <section v-if="isVisible('social_proof') && lp.social_proof" class="bg-indigo-600 text-white py-5">
             <div class="max-w-4xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-center gap-4 text-center sm:text-left">
                 <div class="flex items-center gap-3">
-                    <div class="flex -space-x-2">
+                    <div v-if="!lp.social_proof.hide_avatars" class="flex -space-x-2">
                         <div v-for="i in 4" :key="i"
                             class="w-8 h-8 rounded-full bg-indigo-400 border-2 border-indigo-600 overflow-hidden flex items-center justify-center text-xs font-bold text-white"
                             :style="`background-color: hsl(${i * 60}, 70%, 60%)`">
