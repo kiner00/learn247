@@ -1078,7 +1078,8 @@
                 </div>
                 <div class="border-t border-white/20 pt-8">
                     <p class="text-sm mb-1" style="color: rgba(255,255,255,0.6);">Total Value: <span class="line-through">{{ lp.offer_stack.total_value }}</span></p>
-                    <p class="text-5xl font-black mb-1" :style="{ color: lp.offer_stack.price_color || '#fbbf24' }">{{ lp.offer_stack.price }}<span class="text-xl font-normal" style="color: rgba(255,255,255,0.6);">{{ lp.offer_stack.price_note }}</span></p>
+                    <p class="text-5xl font-black" :style="{ color: lp.offer_stack.price_color || '#fbbf24' }">{{ lp.offer_stack.price }}</p>
+                    <p v-if="lp.offer_stack.price_note" class="text-sm mt-2" style="color: rgba(255,255,255,0.6);">{{ lp.offer_stack.price_note }}</p>
                 </div>
                 <button @click="(inlineMode || showEditPanel) ? openColorPopover($event, [
                         { label: 'Button Background', path: 'offer_stack.btn_bg', fallback: '#fbbf24' },
