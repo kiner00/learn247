@@ -205,6 +205,14 @@
                                         <textarea v-model="editDraft.hero.subheadline" rows="2" class="field-input resize-none" />
                                     </div>
                                     <div>
+                                        <label class="field-label">Headline Font Size <span class="text-gray-400 font-normal">({{ editDraft.hero.headline_font_size || 48 }}px)</span></label>
+                                        <input type="range" v-model.number="editDraft.hero.headline_font_size" min="24" max="80" step="2" class="w-full accent-indigo-600" />
+                                    </div>
+                                    <div>
+                                        <label class="field-label">Subheadline Font Size <span class="text-gray-400 font-normal">({{ editDraft.hero.subheadline_font_size || 20 }}px)</span></label>
+                                        <input type="range" v-model.number="editDraft.hero.subheadline_font_size" min="12" max="40" step="1" class="w-full accent-indigo-600" />
+                                    </div>
+                                    <div>
                                         <label class="field-label">CTA Button Label</label>
                                         <input v-model="editDraft.hero.cta_label" type="text" class="field-input" />
                                     </div>
@@ -807,7 +815,8 @@
                     @focus="inlineMode && onElFocus($event, 'hero.headline')"
                     @blur="inlineMode && saveFromEl($event, 'hero.headline')"
                     @keydown.enter.prevent
-                    :class="['text-4xl sm:text-5xl lg:text-6xl font-black leading-tight mb-6 text-white', inlineMode ? editableClass : '']"
+                    :class="[lp.hero.headline_font_size ? '' : 'text-4xl sm:text-5xl lg:text-6xl', 'font-black leading-tight mb-6 text-white', inlineMode ? editableClass : '']"
+                    :style="lp.hero.headline_font_size ? { fontSize: lp.hero.headline_font_size + 'px' } : {}"
                 />
                 <p
                     :key="renderKey + '_hero_sub'"
@@ -815,7 +824,8 @@
                     :contenteditable="inlineMode ? 'true' : 'false'"
                     @focus="inlineMode && onElFocus($event, 'hero.subheadline')"
                     @blur="inlineMode && saveFromEl($event, 'hero.subheadline')"
-                    :class="['text-lg sm:text-xl text-slate-300 mb-10 max-w-xl mx-auto leading-relaxed', inlineMode ? editableClass : '']"
+                    :class="[lp.hero.subheadline_font_size ? '' : 'text-lg sm:text-xl', 'text-slate-300 mb-10 max-w-xl mx-auto leading-relaxed', inlineMode ? editableClass : '']"
+                    :style="lp.hero.subheadline_font_size ? { fontSize: lp.hero.subheadline_font_size + 'px' } : {}"
                 />
 
                 <!-- VSL Video -->
