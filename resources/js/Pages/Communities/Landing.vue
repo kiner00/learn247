@@ -1634,6 +1634,23 @@ watch(showEditPanel, (open) => {
             }));
         }
 
+        // Ensure any new section types are present in _sections at the correct position
+        if (editDraft.value._sections) {
+            const existing = new Set(editDraft.value._sections.map(s => s.type));
+            for (let i = 0; i < DEFAULT_SECTION_ORDER.length; i++) {
+                const type = DEFAULT_SECTION_ORDER[i];
+                if (!existing.has(type)) {
+                    // Find the best insertion index: after the previous default section
+                    let insertIdx = editDraft.value._sections.length;
+                    for (let j = i - 1; j >= 0; j--) {
+                        const prevIdx = editDraft.value._sections.findIndex(s => s.type === DEFAULT_SECTION_ORDER[j]);
+                        if (prevIdx !== -1) { insertIdx = prevIdx + 1; break; }
+                    }
+                    editDraft.value._sections.splice(insertIdx, 0, { type, visible: false });
+                }
+            }
+        }
+
         // Ensure hero video_type is initialized
         if (!editDraft.value.hero.video_type) {
             editDraft.value.hero.video_type = editDraft.value.hero.vsl_url ? 'vsl' : 'vsl';
