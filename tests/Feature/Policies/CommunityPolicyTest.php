@@ -112,4 +112,105 @@ class CommunityPolicyTest extends TestCase
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
         $this->assertFalse($user->can('manageMember', $community));
     }
+
+    // ─── manage ──────────────────────────────────────────────────────────────
+
+    public function test_owner_can_manage(): void
+    {
+        $owner = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $this->assertTrue($owner->can('manage', $community));
+    }
+
+    public function test_super_admin_can_manage(): void
+    {
+        $admin = User::factory()->create(['is_super_admin' => true]);
+        $community = Community::factory()->create();
+        $this->assertTrue($admin->can('manage', $community));
+    }
+
+    public function test_admin_member_can_manage(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create();
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+        $this->assertTrue($user->can('manage', $community));
+    }
+
+    public function test_regular_member_cannot_manage(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create();
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+        $this->assertFalse($user->can('manage', $community));
+    }
+
+    public function test_moderator_cannot_manage(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create();
+        CommunityMember::factory()->moderator()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+        $this->assertFalse($user->can('manage', $community));
+    }
+
+    // ─── moderate ────────────────────────────────────────────────────────────
+
+    public function test_owner_can_moderate(): void
+    {
+        $owner = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $this->assertTrue($owner->can('moderate', $community));
+    }
+
+    public function test_super_admin_can_moderate(): void
+    {
+        $admin = User::factory()->create(['is_super_admin' => true]);
+        $community = Community::factory()->create();
+        $this->assertTrue($admin->can('moderate', $community));
+    }
+
+    public function test_admin_member_can_moderate(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create();
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+        $this->assertTrue($user->can('moderate', $community));
+    }
+
+    public function test_moderator_can_moderate(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create();
+        CommunityMember::factory()->moderator()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+        $this->assertTrue($user->can('moderate', $community));
+    }
+
+    public function test_regular_member_cannot_moderate(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create();
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+        $this->assertFalse($user->can('moderate', $community));
+    }
+
+    public function test_non_member_cannot_moderate(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create();
+        $this->assertFalse($user->can('moderate', $community));
+    }
+
+    public function test_non_member_cannot_view_analytics(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create();
+        $this->assertFalse($user->can('viewAnalytics', $community));
+    }
+
+    public function test_non_member_cannot_manage_member(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create();
+        $this->assertFalse($user->can('manageMember', $community));
+    }
 }

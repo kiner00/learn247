@@ -2,12 +2,14 @@
 
 namespace App\Actions\Auth;
 
+use App\Contracts\BadgeEvaluator;
 use App\Models\User;
-use App\Services\BadgeService;
 use Illuminate\Support\Facades\Hash;
 
 class RegisterUser
 {
+    public function __construct(private BadgeEvaluator $badges) {}
+
     public function execute(array $data): User
     {
         $user = User::create([
@@ -19,7 +21,7 @@ class RegisterUser
 
         $user->update(['username' => $this->generateUsername($data['first_name'], $data['last_name'], $user->id)]);
 
-        app(BadgeService::class)->evaluate($user);
+        $this->badges->evaluate($user);
 
         return $user;
     }

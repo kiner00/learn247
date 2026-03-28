@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Web;
 
+use App\Actions\Classroom\CreateLessonComment;
 use App\Http\Middleware\EnsureActiveMembership;
 use App\Models\Comment;
 use App\Models\Community;
@@ -159,6 +160,55 @@ class LessonCommentControllerTest extends TestCase
 
         $response->assertRedirect();
         $this->assertSoftDeleted('comments', ['id' => $comment->id]);
+    }
+
+    public function test_store_returns_error_when_action_throws(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $member    = User::factory()->create();
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+
+        $lesson = $this->createClassroomStructure($community);
+        $course = $lesson->module->course;
+
+        $mock = $this->mock(CreateLessonComment::class);
+        $mock->shouldReceive('execute')->once()->andThrow(new \RuntimeException('DB error'));
+
+        $response = $this->actingAs($member)
+            ->post("/communities/{$community->slug}/classroom/courses/{$course->id}/lessons/{$lesson->id}/comments", [
+                'content' => 'This will fail',
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error', 'Failed to post comment.');
+    }
+
+    public function test_destroy_returns_error_when_delete_throws(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $member    = User::factory()->create();
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+
+        $lesson  = $this->createClassroomStructure($community);
+        $comment = Comment::create([
+            'lesson_id'    => $lesson->id,
+            'community_id' => $community->id,
+            'user_id'      => $member->id,
+            'content'      => 'Will fail to delete',
+        ]);
+
+        Comment::deleting(function () {
+            throw new \RuntimeException('Forced DB error');
+        });
+
+        $response = $this->withoutMiddleware(EnsureActiveMembership::class)
+            ->actingAs($member)
+            ->delete("/lesson-comments/{$comment->id}");
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error', 'Failed to delete comment.');
     }
 
     public function test_other_member_cannot_delete_comment(): void

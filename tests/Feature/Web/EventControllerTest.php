@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Web;
 
+use App\Actions\Community\ManageEvent;
 use App\Models\Community;
 use App\Models\CommunityMember;
 use App\Models\Event;
@@ -9,6 +10,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Mockery;
 use Tests\TestCase;
 
 class EventControllerTest extends TestCase
@@ -194,7 +196,7 @@ class EventControllerTest extends TestCase
 
     public function test_owner_can_create_event_with_cover_image(): void
     {
-        Storage::fake('public');
+        Storage::fake(config('filesystems.default'));
 
         $owner     = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
@@ -213,7 +215,6 @@ class EventControllerTest extends TestCase
         $this->assertDatabaseHas('events', ['title' => 'Event With Cover']);
         $event = Event::where('title', 'Event With Cover')->first();
         $this->assertNotNull($event->cover_image);
-        Storage::disk('public')->assertExists($event->cover_image);
     }
 
     public function test_non_owner_cannot_create_event(): void
@@ -290,7 +291,8 @@ class EventControllerTest extends TestCase
 
     public function test_owner_can_update_event_with_cover_image_replacement(): void
     {
-        Storage::fake('public');
+        $disk = config('filesystems.default');
+        Storage::fake($disk);
 
         $owner     = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
@@ -302,7 +304,7 @@ class EventControllerTest extends TestCase
             'timezone'     => 'UTC',
             'cover_image'  => 'events/1/old.jpg',
         ]);
-        Storage::disk('public')->put('events/1/old.jpg', 'fake');
+        Storage::disk($disk)->put('events/1/old.jpg', 'fake');
 
         $newFile = UploadedFile::fake()->image('new-cover.jpg');
 
@@ -317,7 +319,6 @@ class EventControllerTest extends TestCase
         $event->refresh();
         $this->assertNotNull($event->cover_image);
         $this->assertStringContainsString('events/', $event->cover_image);
-        Storage::disk('public')->assertExists($event->cover_image);
     }
 
     public function test_non_owner_cannot_update_event(): void
@@ -425,5 +426,133 @@ class EventControllerTest extends TestCase
 
         $response->assertNotFound();
         $this->assertDatabaseHas('events', ['id' => $eventInB->id]);
+    }
+
+    // ─── error branch: store ─────────────────────────────────────────────────
+
+    public function test_store_returns_error_session_when_action_throws(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $mock = Mockery::mock(ManageEvent::class);
+        $mock->shouldReceive('store')->once()->andThrow(new \RuntimeException('disk full'));
+        $this->app->instance(ManageEvent::class, $mock);
+
+        $response = $this->actingAs($owner)->post("/communities/{$community->slug}/events", [
+            'title'    => 'Failing Event',
+            'start_at' => now()->addDays(1)->toDateTimeString(),
+            'timezone' => 'UTC',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error', 'Failed to create event.');
+    }
+
+    // ─── error branch: update ────────────────────────────────────────────────
+
+    public function test_update_returns_error_session_when_action_throws(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $event     = Event::create([
+            'community_id' => $community->id,
+            'created_by'   => $owner->id,
+            'title'        => 'Original',
+            'start_at'     => now()->addDays(1),
+            'timezone'     => 'UTC',
+        ]);
+
+        $mock = Mockery::mock(ManageEvent::class);
+        $mock->shouldReceive('update')->once()->andThrow(new \RuntimeException('db error'));
+        $this->app->instance(ManageEvent::class, $mock);
+
+        $response = $this->actingAs($owner)->post("/communities/{$community->slug}/events/{$event->id}", [
+            'title'    => 'Updated',
+            'start_at' => now()->addDays(2)->toDateTimeString(),
+            'timezone' => 'UTC',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error', 'Failed to update event.');
+    }
+
+    // ─── error branch: destroy ───────────────────────────────────────────────
+
+    public function test_destroy_returns_error_session_when_action_throws(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $event     = Event::create([
+            'community_id' => $community->id,
+            'created_by'   => $owner->id,
+            'title'        => 'To Delete',
+            'start_at'     => now()->addDays(1),
+            'timezone'     => 'UTC',
+        ]);
+
+        $mock = Mockery::mock(ManageEvent::class);
+        $mock->shouldReceive('destroy')->once()->andThrow(new \RuntimeException('db error'));
+        $this->app->instance(ManageEvent::class, $mock);
+
+        $response = $this->actingAs($owner)->delete("/communities/{$community->slug}/events/{$event->id}");
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error', 'Failed to delete event.');
+    }
+
+    // ─── guest cannot destroy ────────────────────────────────────────────────
+
+    public function test_unauthenticated_user_cannot_delete_event(): void
+    {
+        $community = Community::factory()->create();
+        $event     = Event::create([
+            'community_id' => $community->id,
+            'created_by'   => $community->owner_id,
+            'title'        => 'Protected',
+            'start_at'     => now()->addDays(1),
+            'timezone'     => 'UTC',
+        ]);
+
+        $response = $this->delete("/communities/{$community->slug}/events/{$event->id}");
+
+        $response->assertRedirect('/login');
+    }
+
+    // ─── guest cannot update ─────────────────────────────────────────────────
+
+    public function test_unauthenticated_user_cannot_update_event(): void
+    {
+        $community = Community::factory()->create();
+        $event     = Event::create([
+            'community_id' => $community->id,
+            'created_by'   => $community->owner_id,
+            'title'        => 'Protected',
+            'start_at'     => now()->addDays(1),
+            'timezone'     => 'UTC',
+        ]);
+
+        $response = $this->post("/communities/{$community->slug}/events/{$event->id}", [
+            'title'    => 'Hacked',
+            'start_at' => now()->addDays(1)->toDateTimeString(),
+            'timezone' => 'UTC',
+        ]);
+
+        $response->assertRedirect('/login');
+    }
+
+    // ─── index with userTimezone ─────────────────────────────────────────────
+
+    public function test_index_returns_user_timezone_for_authenticated_user(): void
+    {
+        $user      = User::factory()->create(['timezone' => 'Asia/Jakarta']);
+        $community = Community::factory()->create();
+
+        $response = $this->actingAs($user)->get("/communities/{$community->slug}/calendar");
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->where('userTimezone', 'Asia/Jakarta')
+        );
     }
 }

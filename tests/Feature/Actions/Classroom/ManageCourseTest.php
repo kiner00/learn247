@@ -19,7 +19,7 @@ class ManageCourseTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->action = new ManageCourse();
+        $this->action = app(ManageCourse::class);
     }
 
     public function test_store_creates_course_without_cover_image(): void

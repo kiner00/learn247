@@ -215,4 +215,77 @@ class XenditServiceTest extends TestCase
             return str_contains($request->url(), 'account_type=HOLDING');
         });
     }
+
+    // ─── getPayout ───────────────────────────────────────────────────────────
+
+    public function test_get_payout_returns_response(): void
+    {
+        Http::fake([
+            'https://api.xendit.co/v2/payouts/po_123' => Http::response(
+                ['id' => 'po_123', 'status' => 'SUCCEEDED'],
+                200
+            ),
+        ]);
+
+        config(['services.xendit.secret_key' => 'test_key', 'services.xendit.callback_token' => 'cb_token']);
+        $service = new XenditService();
+
+        $result = $service->getPayout('po_123');
+
+        $this->assertEquals('po_123', $result['id']);
+        $this->assertEquals('SUCCEEDED', $result['status']);
+    }
+
+    public function test_get_payout_throws_on_failure(): void
+    {
+        Http::fake([
+            'https://api.xendit.co/v2/payouts/po_bad' => Http::response(['error' => 'NOT_FOUND'], 404),
+        ]);
+
+        config(['services.xendit.secret_key' => 'test_key', 'services.xendit.callback_token' => 'cb_token']);
+        $service = new XenditService();
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Failed to fetch Xendit payout');
+        $service->getPayout('po_bad');
+    }
+
+    // ─── collectionFee edge cases ────────────────────────────────────────────
+
+    public function test_collection_fee_maya(): void
+    {
+        $this->assertEquals(round(1000 * 0.018, 2), XenditService::collectionFee('MAYA', 1000));
+        $this->assertEquals(round(1000 * 0.018, 2), XenditService::collectionFee('PAYMAYA', 1000));
+    }
+
+    public function test_collection_fee_grabpay_shopeepay(): void
+    {
+        $this->assertEquals(round(1000 * 0.020, 2), XenditService::collectionFee('GRABPAY', 1000));
+        $this->assertEquals(round(1000 * 0.020, 2), XenditService::collectionFee('SHOPEEPAY', 1000));
+    }
+
+    public function test_collection_fee_credit_card(): void
+    {
+        $this->assertEquals(round(1000 * 0.032 + 10, 2), XenditService::collectionFee('CREDIT_CARD', 1000));
+        $this->assertEquals(round(1000 * 0.032 + 10, 2), XenditService::collectionFee('VISA', 1000));
+    }
+
+    public function test_collection_fee_qrph(): void
+    {
+        // QRPH 1.4% min 15
+        $this->assertEquals(15.0, XenditService::collectionFee('QRPH', 500)); // 500*0.014=7, min 15
+        $this->assertEquals(round(2000 * 0.014, 2), XenditService::collectionFee('QRPH', 2000)); // 28 > 15
+    }
+
+    public function test_collection_fee_direct_debit(): void
+    {
+        // DD_BPI 1% min 25
+        $this->assertEquals(25.0, XenditService::collectionFee('DD_BPI', 1000)); // 10 < 25
+        $this->assertEquals(round(5000 * 0.010, 2), XenditService::collectionFee('BPI', 5000)); // 50 > 25
+    }
+
+    public function test_collection_fee_unknown_channel(): void
+    {
+        $this->assertEquals(0.0, XenditService::collectionFee('UNKNOWN_CHANNEL', 1000));
+    }
 }

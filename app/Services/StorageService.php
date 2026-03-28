@@ -2,10 +2,11 @@
 
 namespace App\Services;
 
+use App\Contracts\FileStorage;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
-class StorageService
+class StorageService implements FileStorage
 {
     /**
      * Store an uploaded file and return its public URL.

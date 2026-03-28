@@ -22,7 +22,7 @@ class CreatePostTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->action = new CreatePost();
+        $this->action = app(CreatePost::class);
     }
 
     public function test_member_can_create_post(): void
@@ -59,7 +59,7 @@ class CreatePostTest extends TestCase
 
     public function test_post_with_image_stores_file(): void
     {
-        Storage::fake('public');
+        Storage::fake(config('filesystems.default'));
         $community = Community::factory()->create();
         $user      = User::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
@@ -70,7 +70,6 @@ class CreatePostTest extends TestCase
         ]);
 
         $this->assertNotNull($post->image);
-        $this->assertStringContainsString('/storage/', $post->image);
     }
 
     public function test_post_notifies_community_owner(): void

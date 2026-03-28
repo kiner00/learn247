@@ -4,9 +4,9 @@ namespace App\Actions\Affiliate;
 
 use App\Models\Affiliate;
 use App\Models\Community;
-use App\Models\Subscription;
 use App\Models\User;
-use Illuminate\Support\Str;
+use App\Support\AffiliateCodeGenerator;
+use App\Support\AffiliateSubscriptionChecker;
 use Illuminate\Validation\ValidationException;
 
 class JoinAffiliate
@@ -22,13 +22,7 @@ class JoinAffiliate
             ]);
         }
 
-        $isSubscribed = Subscription::where('user_id', $user->id)
-            ->where('community_id', $community->id)
-            ->where('status', Subscription::STATUS_ACTIVE)
-            ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
-            ->exists();
-
-        if (! $isSubscribed) {
+        if (! AffiliateSubscriptionChecker::isActivelySubscribed($user->id, $community->id)) {
             throw ValidationException::withMessages([
                 'affiliate' => 'You must be subscribed to this community to become an affiliate.',
             ]);
@@ -40,15 +34,10 @@ class JoinAffiliate
             ]);
         }
 
-        // Generate a unique code (retry on collision)
-        do {
-            $code = Str::random(12);
-        } while (Affiliate::where('code', $code)->exists());
-
         return Affiliate::create([
             'community_id' => $community->id,
             'user_id'      => $user->id,
-            'code'         => $code,
+            'code'         => AffiliateCodeGenerator::generate(),
             'status'       => Affiliate::STATUS_ACTIVE,
         ]);
     }

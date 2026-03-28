@@ -6,6 +6,8 @@ use App\Models\CreatorSubscription;
 use App\Models\Setting;
 use App\Models\User;
 use App\Services\XenditService;
+use App\Support\InvoiceBuilder;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class StartCreatorPlanCheckout
@@ -37,37 +39,40 @@ class StartCreatorPlanCheckout
         $planLabel  = $plan === CreatorSubscription::PLAN_PRO ? 'Pro' : 'Basic';
         $externalId = "creator_plan_{$plan}_{$user->id}_" . time();
 
-        $invoice = $this->xendit->createInvoice([
-            'external_id' => $externalId,
-            'amount'      => $price,
-            'currency'    => 'PHP',
-            'description' => "Creator {$planLabel} Plan — Monthly",
-            'customer'    => ['given_names' => $user->name, 'email' => $user->email],
-            'customer_notification_preference' => [
-                'invoice_created' => ['email'],
-                'invoice_paid'    => ['email'],
-            ],
-            'success_redirect_url' => config('app.url') . '/creator/plan?success=1',
-            'failure_redirect_url' => config('app.url') . '/creator/plan?failed=1',
-            'items' => [[
-                'name'     => "Creator {$planLabel} Plan",
-                'quantity' => 1,
-                'price'    => $price,
-                'category' => 'Creator Subscription',
-            ]],
-        ]);
+        try {
+            $invoice = $this->xendit->createInvoice(
+                InvoiceBuilder::make()
+                    ->externalId($externalId)
+                    ->amount($price)
+                    ->currency('PHP')
+                    ->description("Creator {$planLabel} Plan — Monthly")
+                    ->customer($user)
+                    ->successUrl(config('app.url') . '/creator/plan?success=1')
+                    ->failureUrl(config('app.url') . '/creator/plan?failed=1')
+                    ->item("Creator {$planLabel} Plan", $price, 'Creator Subscription')
+                    ->toArray()
+            );
 
-        $creatorSubscription = CreatorSubscription::create([
-            'user_id'            => $user->id,
-            'plan'               => $plan,
-            'status'             => CreatorSubscription::STATUS_PENDING,
-            'xendit_id'          => $invoice['id'],
-            'xendit_invoice_url' => $invoice['invoice_url'],
-        ]);
+            $creatorSubscription = CreatorSubscription::create([
+                'user_id'            => $user->id,
+                'plan'               => $plan,
+                'status'             => CreatorSubscription::STATUS_PENDING,
+                'xendit_id'          => $invoice['id'],
+                'xendit_invoice_url' => $invoice['invoice_url'],
+            ]);
 
-        return [
-            'creator_subscription' => $creatorSubscription,
-            'checkout_url'         => $invoice['invoice_url'],
-        ];
+            return [
+                'creator_subscription' => $creatorSubscription,
+                'checkout_url'         => $invoice['invoice_url'],
+            ];
+        } catch (\Throwable $e) {
+            Log::error('StartCreatorPlanCheckout failed', [
+                'user_id' => $user->id,
+                'plan'    => $plan,
+                'error'   => $e->getMessage(),
+            ]);
+
+            throw $e;
+        }
     }
 }

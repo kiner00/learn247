@@ -259,4 +259,105 @@ class GuestCheckoutControllerTest extends TestCase
 
         $this->assertNotEquals($params1['token'], $params2['token']);
     }
+
+    // ─── processNoAffiliate ─────────────────────────────────────────────────
+
+    public function test_no_affiliate_valid_checkout(): void
+    {
+        Http::fake([
+            '*' => Http::response([
+                'id'          => 'inv_no_aff_123',
+                'invoice_url' => 'https://checkout.xendit.co/inv_no_aff_123',
+            ]),
+        ]);
+
+        $community = Community::factory()->paid()->create();
+
+        $response = $this->post(route('communities.guest.checkout', $community), $this->validPayload());
+
+        $response->assertRedirect('https://checkout.xendit.co/inv_no_aff_123');
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'juan@example.com',
+        ]);
+    }
+
+    public function test_no_affiliate_pending_deletion_community(): void
+    {
+        $community = Community::factory()->paid()->create(['deletion_requested_at' => now()]);
+
+        $response = $this->post(route('communities.guest.checkout', $community), $this->validPayload());
+
+        $response->assertSessionHasErrors('email');
+    }
+
+    public function test_no_affiliate_existing_user_with_active_subscription(): void
+    {
+        $community = Community::factory()->paid()->create();
+
+        $existingUser = User::factory()->create(['email' => 'exists@example.com']);
+
+        Subscription::factory()->active()->create([
+            'community_id' => $community->id,
+            'user_id'      => $existingUser->id,
+        ]);
+
+        $response = $this->post(route('communities.guest.checkout', $community), [
+            'first_name' => 'Existing',
+            'last_name'  => 'User',
+            'email'      => 'exists@example.com',
+            'phone'      => '09171234567',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasErrors('email');
+    }
+
+    public function test_no_affiliate_validation_fails_without_required_fields(): void
+    {
+        $community = Community::factory()->paid()->create();
+
+        $response = $this->post(route('communities.guest.checkout', $community), []);
+
+        $response->assertSessionHasErrors(['first_name', 'last_name', 'email', 'phone']);
+    }
+
+    public function test_no_affiliate_picks_up_ref_code_cookie(): void
+    {
+        Http::fake([
+            '*' => Http::response([
+                'id'          => 'inv_cookie_123',
+                'invoice_url' => 'https://checkout.xendit.co/inv_cookie_123',
+            ]),
+        ]);
+
+        $community = Community::factory()->paid()->create();
+
+        $response = $this->withUnencryptedCookie('ref_code', 'SOME-REF')
+            ->post(route('communities.guest.checkout', $community), $this->validPayload());
+
+        $response->assertRedirect('https://checkout.xendit.co/inv_cookie_123');
+    }
+
+    public function test_no_affiliate_existing_user_without_subscription_proceeds(): void
+    {
+        Http::fake([
+            '*' => Http::response([
+                'id'          => 'inv_exist_no_aff',
+                'invoice_url' => 'https://checkout.xendit.co/inv_exist_no_aff',
+            ]),
+        ]);
+
+        $community = Community::factory()->paid()->create();
+        User::factory()->create(['email' => 'returning@example.com']);
+
+        $response = $this->post(route('communities.guest.checkout', $community), [
+            'first_name' => 'Returning',
+            'last_name'  => 'User',
+            'email'      => 'returning@example.com',
+            'phone'      => '09171234567',
+        ]);
+
+        $response->assertRedirect('https://checkout.xendit.co/inv_exist_no_aff');
+    }
 }

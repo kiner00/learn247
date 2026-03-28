@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Api;
 
+use App\Actions\Classroom\CreateLessonComment;
 use App\Models\Comment;
 use App\Models\Community;
 use App\Models\CommunityMember;
@@ -112,6 +113,27 @@ class LessonCommentControllerTest extends TestCase
         ]);
     }
 
+    public function test_store_returns_500_when_action_throws(): void
+    {
+        $owner  = User::factory()->create();
+        $member = User::factory()->create();
+        [$community, $course, $lesson] = $this->createClassroomStructure($owner);
+        CommunityMember::factory()->create([
+            'community_id' => $community->id,
+            'user_id'      => $member->id,
+        ]);
+
+        $mock = $this->mock(CreateLessonComment::class);
+        $mock->shouldReceive('execute')->once()->andThrow(new \RuntimeException('DB error'));
+
+        $this->actingAs($member, 'sanctum')
+            ->postJson("/api/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/comments", [
+                'content' => 'This will fail',
+            ])
+            ->assertStatus(500)
+            ->assertJsonPath('message', 'Failed to post comment.');
+    }
+
     // ─── destroy ──────────────────────────────────────────────────────────────
 
     public function test_destroy_requires_authentication(): void
@@ -176,5 +198,26 @@ class LessonCommentControllerTest extends TestCase
             ->deleteJson("/api/lesson-comments/{$comment->id}")
             ->assertOk()
             ->assertJsonPath('deleted', $comment->id);
+    }
+
+    public function test_destroy_returns_500_when_delete_throws(): void
+    {
+        $user    = User::factory()->create();
+        $comment = Comment::create([
+            'lesson_id'    => CourseLesson::factory()->create()->id,
+            'community_id' => Community::factory()->create()->id,
+            'user_id'      => $user->id,
+            'content'      => 'Will fail to delete',
+        ]);
+
+        // Force an exception by hooking into the deleting event
+        Comment::deleting(function () {
+            throw new \RuntimeException('Forced DB error');
+        });
+
+        $this->actingAs($user, 'sanctum')
+            ->deleteJson("/api/lesson-comments/{$comment->id}")
+            ->assertStatus(500)
+            ->assertJsonPath('message', 'Failed to delete comment.');
     }
 }

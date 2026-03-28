@@ -63,7 +63,7 @@ class RequestOwnerPayoutTest extends TestCase
         $result = $action->execute($owner, $community, 100);
 
         $this->assertFalse($result['success']);
-        $this->assertStringContainsString('already have a pending payout', $result['message']);
+        $this->assertStringContainsString('already have a pending or approved payout', $result['message']);
     }
 
     public function test_zero_eligible_earnings_returns_failure(): void

@@ -2,13 +2,15 @@
 
 namespace App\Actions\Classroom;
 
+use App\Contracts\BadgeEvaluator;
 use App\Models\Quiz;
 use App\Models\QuizAttempt;
 use App\Models\User;
-use App\Services\BadgeService;
 
 class SubmitQuiz
 {
+    public function __construct(private BadgeEvaluator $badges) {}
+
     /**
      * @return array{score: int, passed: bool, total: int, correct: int, attempt: QuizAttempt}
      */
@@ -41,7 +43,7 @@ class SubmitQuiz
         ]);
 
         if ($passed) {
-            app(BadgeService::class)->evaluate($user, $communityId);
+            $this->badges->evaluate($user, $communityId);
         }
 
         return [

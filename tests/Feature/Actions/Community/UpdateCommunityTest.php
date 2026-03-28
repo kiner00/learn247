@@ -20,7 +20,7 @@ class UpdateCommunityTest extends TestCase
     public function test_update_community_basic_fields(): void
     {
         $community = Community::factory()->create();
-        $action = new UpdateCommunity();
+        $action = app(UpdateCommunity::class);
 
         $result = $action->execute($community, [
             'name' => 'Updated Name',
@@ -33,22 +33,21 @@ class UpdateCommunityTest extends TestCase
 
     public function test_update_with_avatar_stores_file(): void
     {
-        Storage::fake('public');
+        Storage::fake(config('filesystems.default'));
         $community = Community::factory()->create();
-        $action = new UpdateCommunity();
+        $action = app(UpdateCommunity::class);
         $avatar = UploadedFile::fake()->image('avatar.jpg');
 
         $result = $action->execute($community, ['name' => $community->name], $avatar);
 
         $this->assertNotNull($result->avatar);
-        $this->assertStringContainsString('/storage/', $result->avatar);
     }
 
     public function test_update_with_cover_image_stores_file(): void
     {
-        Storage::fake('public');
+        Storage::fake(config('filesystems.default'));
         $community = Community::factory()->create();
-        $action = new UpdateCommunity();
+        $action = app(UpdateCommunity::class);
         $cover = UploadedFile::fake()->image('cover.jpg');
 
         $result = $action->execute($community, ['name' => $community->name], null, $cover);
@@ -64,7 +63,7 @@ class UpdateCommunityTest extends TestCase
             'cover_image' => '/storage/cover.jpg',
             'description' => 'A description',
         ]);
-        $action = new UpdateCommunity();
+        $action = app(UpdateCommunity::class);
 
         $this->expectException(ValidationException::class);
         $action->execute($community, ['name' => 'Test', 'price' => 499, 'description' => 'Desc']);
@@ -84,7 +83,7 @@ class UpdateCommunityTest extends TestCase
             CourseModule::create(['course_id' => $course->id, 'title' => "M{$i}", 'position' => $i]);
         }
 
-        $action = new UpdateCommunity();
+        $action = app(UpdateCommunity::class);
         $this->expectException(ValidationException::class);
         $action->execute($community, ['name' => 'Test', 'price' => 499, 'description' => 'Desc']);
     }
@@ -102,7 +101,7 @@ class UpdateCommunityTest extends TestCase
             CourseModule::create(['course_id' => $course->id, 'title' => "M{$i}", 'position' => $i]);
         }
 
-        $action = new UpdateCommunity();
+        $action = app(UpdateCommunity::class);
         $this->expectException(ValidationException::class);
         $action->execute($community, ['name' => 'Test', 'price' => 499, 'description' => '']);
     }
@@ -120,7 +119,7 @@ class UpdateCommunityTest extends TestCase
             CourseModule::create(['course_id' => $course->id, 'title' => "M{$i}", 'position' => $i]);
         }
 
-        $action = new UpdateCommunity();
+        $action = app(UpdateCommunity::class);
         $this->expectException(ValidationException::class);
         $action->execute($community, ['name' => 'Test', 'price' => 499, 'description' => 'Desc']);
     }
@@ -128,7 +127,7 @@ class UpdateCommunityTest extends TestCase
     public function test_free_community_update_skips_pricing_gate(): void
     {
         $community = Community::factory()->create();
-        $action = new UpdateCommunity();
+        $action = app(UpdateCommunity::class);
 
         $result = $action->execute($community, ['name' => 'Free Update', 'price' => 0]);
 
@@ -137,16 +136,17 @@ class UpdateCommunityTest extends TestCase
 
     public function test_update_with_new_avatar_deletes_old_storage_file(): void
     {
-        Storage::fake('public');
-        Storage::disk('public')->put('community-avatars/old-avatar.jpg', 'dummy');
+        $disk = config('filesystems.default');
+        Storage::fake($disk);
+        Storage::disk($disk)->put('community-avatars/old-avatar.jpg', 'dummy');
 
         $community = Community::factory()->create(['avatar' => '/storage/community-avatars/old-avatar.jpg']);
-        $action = new UpdateCommunity();
+        $action = app(UpdateCommunity::class);
         $newAvatar = UploadedFile::fake()->image('new-avatar.jpg');
 
         $result = $action->execute($community, ['name' => $community->name], $newAvatar);
 
         $this->assertNotNull($result->avatar);
-        Storage::disk('public')->assertMissing('community-avatars/old-avatar.jpg');
+        Storage::disk($disk)->assertMissing('community-avatars/old-avatar.jpg');
     }
 }

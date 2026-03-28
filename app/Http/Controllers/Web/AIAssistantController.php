@@ -15,6 +15,11 @@ class AIAssistantController extends Controller
     {
         $user    = $request->user();
         $context = $contextQuery->execute($user);
+
+        if (empty($context['communities'])) {
+            return response()->json(['message' => "Hi {$user->name}! Join a community to get started.", 'conversation_id' => null]);
+        }
+
         $agent   = new CommunityAssistant($context);
         $prompt  = "The user just logged in. Introduce yourself as Curzzo, greet the user warmly by first name, then use your tools to check their communities and give ONE specific actionable recommendation (e.g. a pending lesson, a failed quiz to retake, or a badge to earn). Keep it to 2-3 sentences. No bullet points.";
 
@@ -35,6 +40,10 @@ class AIAssistantController extends Controller
 
         $user    = $request->user();
         $context = $contextQuery->execute($user);
+
+        if (empty($context['communities'])) {
+            return response()->json(['error' => 'You must be a member of a community to use the AI assistant.'], 403);
+        }
 
         if ($this->isImageRequest($request->message)) {
             $imageResponse = Image::of($request->message)->size('3:2')->generate('openai');

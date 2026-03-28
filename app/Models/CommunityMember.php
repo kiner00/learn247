@@ -21,11 +21,6 @@ class CommunityMember extends Model
 
     protected $fillable = ['community_id', 'user_id', 'role', 'membership_type', 'expires_at', 'points', 'joined_at', 'notif_prefs', 'chat_enabled', 'show_on_profile', 'is_blocked'];
 
-    protected $casts = [
-        'notif_prefs'  => 'array',
-        'chat_enabled' => 'boolean',
-    ];
-
     // Points per action
     public const POINTS_POST    = 10;
     public const POINTS_COMMENT = 5;

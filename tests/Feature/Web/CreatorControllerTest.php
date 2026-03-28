@@ -10,7 +10,9 @@ use App\Models\Payment;
 use App\Models\PayoutRequest;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Services\Analytics\CreatorAnalyticsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class CreatorControllerTest extends TestCase
@@ -274,5 +276,210 @@ class CreatorControllerTest extends TestCase
         $response = $this->get('/creator/dashboard');
 
         $response->assertRedirect('/login');
+    }
+
+    // ─── plan ──────────────────────────────────────────────────────────────────
+
+    public function test_user_can_view_plan_page(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get('/creator/plan');
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page->component('Creator/Plan')
+            ->has('basicPrice')
+            ->has('proPrice')
+            ->has('currentPlan')
+        );
+    }
+
+    public function test_plan_page_shows_custom_pricing(): void
+    {
+        $user = User::factory()->create();
+
+        \App\Models\Setting::set('creator_plan_basic_price', 299);
+        \App\Models\Setting::set('creator_plan_pro_price', 999);
+
+        $response = $this->actingAs($user)->get('/creator/plan');
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->where('basicPrice', 299)
+            ->where('proPrice', 999)
+        );
+    }
+
+    public function test_guest_cannot_view_plan_page(): void
+    {
+        $this->get('/creator/plan')->assertRedirect('/login');
+    }
+
+    // ─── planCheckout ─────────────────────────────────────────────────────────
+
+    public function test_user_can_start_plan_checkout(): void
+    {
+        Http::fake([
+            '*' => Http::response([
+                'id'          => 'inv_creator_123',
+                'invoice_url' => 'https://checkout.xendit.co/inv_creator_123',
+            ]),
+        ]);
+
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->postJson('/creator/plan/checkout', [
+            'plan' => 'basic',
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonStructure(['checkout_url']);
+    }
+
+    public function test_plan_checkout_validates_plan_field(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->postJson('/creator/plan/checkout', [
+            'plan' => 'invalid',
+        ]);
+
+        $response->assertUnprocessable();
+        $response->assertJsonValidationErrors('plan');
+    }
+
+    public function test_plan_checkout_requires_plan_field(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->postJson('/creator/plan/checkout', []);
+
+        $response->assertUnprocessable();
+        $response->assertJsonValidationErrors('plan');
+    }
+
+    public function test_guest_cannot_start_plan_checkout(): void
+    {
+        $this->postJson('/creator/plan/checkout', ['plan' => 'basic'])
+            ->assertUnauthorized();
+    }
+
+    public function test_plan_checkout_returns_500_when_xendit_fails(): void
+    {
+        Http::fake([
+            '*' => Http::response('Server Error', 500),
+        ]);
+
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->postJson('/creator/plan/checkout', [
+            'plan' => 'basic',
+        ]);
+
+        $response->assertStatus(500);
+        $response->assertJsonStructure(['error']);
+    }
+
+    // ─── dashboard with analytics for creator plan user ──────────────────────
+
+    public function test_dashboard_includes_analytics_for_basic_plan_user(): void
+    {
+        $owner = User::factory()->create();
+        Community::factory()->create(['owner_id' => $owner->id, 'price' => 100]);
+
+        \App\Models\CreatorSubscription::create([
+            'user_id'   => $owner->id,
+            'plan'      => 'basic',
+            'status'    => \App\Models\CreatorSubscription::STATUS_ACTIVE,
+            'xendit_id' => 'test',
+        ]);
+
+        $mockAnalytics = $this->mock(CreatorAnalyticsService::class);
+        $mockAnalytics->shouldReceive('build')
+            ->with($owner->id)
+            ->once()
+            ->andReturn([
+                'labels'        => [],
+                'revenue'       => [],
+                'newMembers'    => [],
+                'churn'         => [],
+                'retentionRate' => 100.0,
+                'mrr'           => 0,
+            ]);
+
+        $response = $this->actingAs($owner)->get('/creator/dashboard');
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page->component('Creator/Dashboard')
+            ->has('analytics')
+            ->where('currentPlan', 'basic')
+        );
+    }
+
+    public function test_dashboard_includes_analytics_for_pro_plan_user(): void
+    {
+        $owner = User::factory()->create();
+        Community::factory()->create(['owner_id' => $owner->id, 'price' => 100]);
+
+        \App\Models\CreatorSubscription::create([
+            'user_id'   => $owner->id,
+            'plan'      => 'pro',
+            'status'    => \App\Models\CreatorSubscription::STATUS_ACTIVE,
+            'xendit_id' => 'test_pro',
+        ]);
+
+        $mockAnalytics = $this->mock(CreatorAnalyticsService::class);
+        $mockAnalytics->shouldReceive('build')
+            ->with($owner->id)
+            ->once()
+            ->andReturn([
+                'labels'        => [],
+                'revenue'       => [],
+                'newMembers'    => [],
+                'churn'         => [],
+                'retentionRate' => 100.0,
+                'mrr'           => 0,
+            ]);
+
+        $response = $this->actingAs($owner)->get('/creator/dashboard');
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page->component('Creator/Dashboard')
+            ->has('analytics')
+            ->where('currentPlan', 'pro')
+        );
+    }
+
+    public function test_dashboard_does_not_include_analytics_for_free_plan_user(): void
+    {
+        $owner = User::factory()->create();
+        Community::factory()->create(['owner_id' => $owner->id, 'price' => 100]);
+
+        $response = $this->actingAs($owner)->get('/creator/dashboard');
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page->component('Creator/Dashboard')
+            ->where('analytics', null)
+            ->where('currentPlan', 'free')
+        );
+    }
+
+    public function test_dashboard_handles_exception_gracefully(): void
+    {
+        $owner = User::factory()->create();
+        Community::factory()->create(['owner_id' => $owner->id, 'price' => 100]);
+
+        $this->mock(\App\Queries\Creator\GetCreatorDashboard::class, function ($mock) {
+            $mock->shouldReceive('execute')->andThrow(new \RuntimeException('Database error'));
+        });
+
+        $response = $this->actingAs($owner)->get('/creator/dashboard');
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page->component('Creator/Dashboard')
+            ->where('communities', [])
+            ->where('requestHistory', [])
+            ->has('error')
+        );
     }
 }

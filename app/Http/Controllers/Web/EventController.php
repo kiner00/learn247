@@ -4,11 +4,14 @@ namespace App\Http\Controllers\Web;
 
 use App\Actions\Community\ManageEvent;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreEventRequest;
+use App\Http\Requests\UpdateEventRequest;
 use App\Models\Community;
 use App\Models\Event;
 use App\Queries\Community\GetCalendarEvents;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -32,45 +35,33 @@ class EventController extends Controller
         ]);
     }
 
-    public function store(Request $request, Community $community, ManageEvent $action): RedirectResponse
+    public function store(StoreEventRequest $request, Community $community, ManageEvent $action): RedirectResponse
     {
         $this->authorizeOwner($request, $community);
 
-        $data = $request->validate([
-            'title'           => 'required|string|max:255',
-            'description'     => 'nullable|string|max:5000',
-            'start_at'        => 'required|date',
-            'end_at'          => 'nullable|date|after:start_at',
-            'timezone'        => 'required|string|timezone',
-            'url'             => 'nullable|url|max:500',
-            'cover_image'     => 'nullable|image|max:10240',
-            'visibility'      => 'nullable|in:public,free,paid',
-        ]);
+        try {
+            $action->store($community, $request->user(), $request->validated(), $request->file('cover_image'));
 
-        $action->store($community, $request->user(), $data, $request->file('cover_image'));
-
-        return back()->with('success', 'Event created.');
+            return back()->with('success', 'Event created.');
+        } catch (\Throwable $e) {
+            Log::error('EventController@store failed', ['error' => $e->getMessage(), 'community_id' => $community->id]);
+            return back()->with('error', 'Failed to create event.');
+        }
     }
 
-    public function update(Request $request, Community $community, Event $event, ManageEvent $action): RedirectResponse
+    public function update(UpdateEventRequest $request, Community $community, Event $event, ManageEvent $action): RedirectResponse
     {
         $this->authorizeOwner($request, $community);
         abort_if($event->community_id !== $community->id, 404);
 
-        $data = $request->validate([
-            'title'           => 'required|string|max:255',
-            'description'     => 'nullable|string|max:5000',
-            'start_at'        => 'required|date',
-            'end_at'          => 'nullable|date|after:start_at',
-            'timezone'        => 'required|string|timezone',
-            'url'             => 'nullable|url|max:500',
-            'cover_image'     => 'nullable|image|max:10240',
-            'visibility'      => 'nullable|in:public,free,paid',
-        ]);
+        try {
+            $action->update($event, $request->validated(), $request->file('cover_image'));
 
-        $action->update($event, $data, $request->file('cover_image'));
-
-        return back()->with('success', 'Event updated.');
+            return back()->with('success', 'Event updated.');
+        } catch (\Throwable $e) {
+            Log::error('EventController@update failed', ['error' => $e->getMessage(), 'event_id' => $event->id]);
+            return back()->with('error', 'Failed to update event.');
+        }
     }
 
     public function destroy(Request $request, Community $community, Event $event, ManageEvent $action): RedirectResponse
@@ -78,9 +69,14 @@ class EventController extends Controller
         $this->authorizeOwner($request, $community);
         abort_if($event->community_id !== $community->id, 404);
 
-        $action->destroy($event);
+        try {
+            $action->destroy($event);
 
-        return back()->with('success', 'Event deleted.');
+            return back()->with('success', 'Event deleted.');
+        } catch (\Throwable $e) {
+            Log::error('EventController@destroy failed', ['error' => $e->getMessage(), 'event_id' => $event->id]);
+            return back()->with('error', 'Failed to delete event.');
+        }
     }
 
     private function authorizeOwner(Request $request, Community $community): void

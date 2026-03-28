@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Api;
 
+use App\Actions\Classroom\ManageQuiz;
 use App\Models\Community;
 use App\Models\Course;
 use App\Models\CourseLesson;
@@ -9,6 +10,7 @@ use App\Models\CourseModule;
 use App\Models\Quiz;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Mockery;
 use Tests\TestCase;
 
 class QuizControllerTest extends TestCase
@@ -202,5 +204,45 @@ class QuizControllerTest extends TestCase
             ->assertJsonPath('message', 'Quiz deleted.');
 
         $this->assertDatabaseMissing('quizzes', ['id' => $quiz->id]);
+    }
+
+    // ─── error branch: store ─────────────────────────────────────────────────
+
+    public function test_store_returns_500_when_action_throws(): void
+    {
+        $owner = User::factory()->create();
+        [$community, $course, $lesson] = $this->createClassroomStructure($owner);
+
+        $mock = Mockery::mock(ManageQuiz::class);
+        $mock->shouldReceive('store')->once()->andThrow(new \RuntimeException('db error'));
+        $this->app->instance(ManageQuiz::class, $mock);
+
+        $this->actingAs($owner, 'sanctum')
+            ->postJson(
+                "/api/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/quiz",
+                $this->quizPayload()
+            )
+            ->assertStatus(500)
+            ->assertJsonPath('message', 'Failed to save quiz.');
+    }
+
+    // ─── error branch: destroy ───────────────────────────────────────────────
+
+    public function test_destroy_returns_500_when_action_throws(): void
+    {
+        $owner = User::factory()->create();
+        [$community, $course, $lesson] = $this->createClassroomStructure($owner);
+        $quiz = Quiz::create(['lesson_id' => $lesson->id, 'title' => 'Failing', 'pass_score' => 50]);
+
+        $mock = Mockery::mock(ManageQuiz::class);
+        $mock->shouldReceive('destroy')->once()->andThrow(new \RuntimeException('db error'));
+        $this->app->instance(ManageQuiz::class, $mock);
+
+        $this->actingAs($owner, 'sanctum')
+            ->deleteJson(
+                "/api/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/quiz/{$quiz->id}"
+            )
+            ->assertStatus(500)
+            ->assertJsonPath('message', 'Failed to delete quiz.');
     }
 }

@@ -5,6 +5,7 @@ namespace App\Services\Payout;
 use App\Models\Community;
 use App\Models\OwnerPayout;
 use App\Services\XenditService;
+use App\Support\PayoutChannelMap;
 use RuntimeException;
 
 /**
@@ -41,7 +42,7 @@ class OwnerPayoutDispatcher
             throw new RuntimeException('Pending amount must exceed the ₱' . Community::PAYOUT_FEE . ' processing fee.');
         }
 
-        $channelCode = $owner->payout_method === 'gcash' ? 'PH_GCASH' : 'PH_PAYMAYA';
+        $channelCode = PayoutChannelMap::resolve($owner->payout_method);
         $referenceId = 'owner-' . $community->id . '-' . time();
 
         $result = $this->xendit->createPayout([
@@ -71,7 +72,7 @@ class OwnerPayoutDispatcher
     public function canDispatch(Community $community): bool
     {
         $owner = $community->owner;
-        return in_array($owner->payout_method, ['gcash', 'maya']) && $owner->payout_details;
+        return PayoutChannelMap::supports($owner->payout_method) && $owner->payout_details;
     }
 
     /**

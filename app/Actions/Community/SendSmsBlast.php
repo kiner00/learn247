@@ -2,12 +2,12 @@
 
 namespace App\Actions\Community;
 
+use App\Contracts\SmsProvider;
 use App\Models\Community;
-use App\Services\SmsService;
 
 class SendSmsBlast
 {
-    public function __construct(private SmsService $sms) {}
+    public function __construct(private SmsProvider $sms) {}
 
     /**
      * Resolve the recipient phone numbers for the given filter, then send the blast.

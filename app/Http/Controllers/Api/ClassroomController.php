@@ -76,7 +76,7 @@ class ClassroomController extends Controller
             ],
             'modules'     => $modules,
             'progress'    => $detail['progress'],
-            'certificate' => $detail['certificate'] ? ['uuid' => $detail['certificate']->uuid] : null,
+            'certificate' => null,
         ]);
     }
 
@@ -231,4 +231,5 @@ class ClassroomController extends Controller
 
         return response()->json(['message' => 'Lessons reordered.']);
     }
+
 }

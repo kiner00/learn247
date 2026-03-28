@@ -33,6 +33,37 @@ class CommunityPolicy
         return $user->id === $community->owner_id;
     }
 
+    /**
+     * Owner OR admin member OR super-admin — replaces canManage() in controllers.
+     */
+    public function manage(User $user, Community $community): bool
+    {
+        if ($user->id === $community->owner_id || $user->isSuperAdmin()) {
+            return true;
+        }
+
+        return CommunityMember::where('community_id', $community->id)
+            ->where('user_id', $user->id)
+            ->where('role', CommunityMember::ROLE_ADMIN)
+            ->exists();
+    }
+
+    /**
+     * Owner OR admin OR moderator — for content moderation.
+     */
+    public function moderate(User $user, Community $community): bool
+    {
+        if ($user->id === $community->owner_id || $user->isSuperAdmin()) {
+            return true;
+        }
+
+        $member = CommunityMember::where('community_id', $community->id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        return $member && $member->canModerate();
+    }
+
     public function viewAnalytics(User $user, Community $community): bool
     {
         if ($user->id === $community->owner_id) {

@@ -19,7 +19,7 @@ class ManageEventTest extends TestCase
     {
         $community = Community::factory()->create();
         $user      = User::factory()->create();
-        $action    = new ManageEvent();
+        $action    = app(ManageEvent::class);
 
         $event = $action->store($community, $user, [
             'title'       => 'Launch Party',
@@ -37,10 +37,10 @@ class ManageEventTest extends TestCase
 
     public function test_store_with_cover_image(): void
     {
-        Storage::fake('public');
+        Storage::fake(config('filesystems.default'));
         $community = Community::factory()->create();
         $user      = User::factory()->create();
-        $action    = new ManageEvent();
+        $action    = app(ManageEvent::class);
         $image     = UploadedFile::fake()->image('event-cover.jpg');
 
         $event = $action->store($community, $user, [
@@ -65,7 +65,7 @@ class ManageEventTest extends TestCase
             'timezone'     => 'UTC',
         ]);
 
-        $action   = new ManageEvent();
+        $action   = app(ManageEvent::class);
         $updated = $action->update($event, [
             'title'       => 'Updated Title',
             'description' => 'Updated desc',
@@ -76,7 +76,7 @@ class ManageEventTest extends TestCase
 
     public function test_update_with_cover_image_replaces_old(): void
     {
-        Storage::fake('public');
+        Storage::fake(config('filesystems.default'));
         $community = Community::factory()->create();
         $user      = User::factory()->create();
         $event     = Event::create([
@@ -88,7 +88,7 @@ class ManageEventTest extends TestCase
             'cover_image'  => 'events/old.jpg',
         ]);
 
-        $action    = new ManageEvent();
+        $action    = app(ManageEvent::class);
         $newImage  = UploadedFile::fake()->image('new-cover.jpg');
         $updated   = $action->update($event, ['title' => 'Still Covered'], $newImage);
 
@@ -107,7 +107,7 @@ class ManageEventTest extends TestCase
             'timezone'     => 'UTC',
         ]);
 
-        $action = new ManageEvent();
+        $action = app(ManageEvent::class);
         $action->destroy($event);
 
         $this->assertDatabaseMissing('events', ['id' => $event->id]);
@@ -115,8 +115,9 @@ class ManageEventTest extends TestCase
 
     public function test_destroy_deletes_cover_image_from_storage(): void
     {
-        Storage::fake('public');
-        Storage::disk('public')->put('events/cover.jpg', 'dummy');
+        $disk = config('filesystems.default');
+        Storage::fake($disk);
+        Storage::disk($disk)->put('events/cover.jpg', 'dummy');
 
         $community = Community::factory()->create();
         $user      = User::factory()->create();
@@ -129,10 +130,10 @@ class ManageEventTest extends TestCase
             'cover_image'  => 'events/cover.jpg',
         ]);
 
-        $action = new ManageEvent();
+        $action = app(ManageEvent::class);
         $action->destroy($event);
 
         $this->assertDatabaseMissing('events', ['id' => $event->id]);
-        Storage::disk('public')->assertMissing('events/cover.jpg');
+        Storage::disk($disk)->assertMissing('events/cover.jpg');
     }
 }

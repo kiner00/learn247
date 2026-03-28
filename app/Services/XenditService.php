@@ -2,10 +2,11 @@
 
 namespace App\Services;
 
+use App\Contracts\PaymentGateway;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class XenditService
+class XenditService implements PaymentGateway
 {
     private const BASE_URL = 'https://api.xendit.co';
 

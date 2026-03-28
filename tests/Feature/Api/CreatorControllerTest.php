@@ -10,6 +10,7 @@ use App\Models\Payment;
 use App\Models\PayoutRequest;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Queries\Creator\GetCreatorDashboard;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -170,5 +171,18 @@ class CreatorControllerTest extends TestCase
             ->getJson('/api/creator/dashboard')
             ->assertOk()
             ->assertJsonCount(0, 'communities');
+    }
+
+    public function test_dashboard_returns_500_when_query_throws(): void
+    {
+        $owner = User::factory()->create();
+
+        $mock = $this->mock(GetCreatorDashboard::class);
+        $mock->shouldReceive('execute')->once()->andThrow(new \RuntimeException('DB error'));
+
+        $this->actingAs($owner, 'sanctum')
+            ->getJson('/api/creator/dashboard')
+            ->assertStatus(500)
+            ->assertJsonPath('message', 'Failed to load dashboard data.');
     }
 }

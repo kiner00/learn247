@@ -261,6 +261,88 @@ class CourseAccessServiceTest extends TestCase
         $this->assertFalse($this->service->hasAccess($user, $community, $course));
     }
 
+    // ── MEMBER_ONCE courses ──────────────────────────────────────────────────
+
+    public function test_member_once_granted_with_active_subscription(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->create();
+        $course    = Course::factory()->create(['community_id' => $community->id, 'access_type' => Course::ACCESS_MEMBER_ONCE]);
+
+        Subscription::factory()->create([
+            'community_id' => $community->id,
+            'user_id'      => $user->id,
+            'status'       => Subscription::STATUS_ACTIVE,
+            'expires_at'   => now()->addMonth(),
+        ]);
+
+        $this->assertTrue($this->service->hasAccess($user, $community, $course));
+    }
+
+    public function test_member_once_granted_with_expired_subscription(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->create();
+        $course    = Course::factory()->create(['community_id' => $community->id, 'access_type' => Course::ACCESS_MEMBER_ONCE]);
+
+        Subscription::factory()->create([
+            'community_id' => $community->id,
+            'user_id'      => $user->id,
+            'status'       => Subscription::STATUS_EXPIRED,
+            'expires_at'   => now()->subDay(),
+        ]);
+
+        $this->assertTrue($this->service->hasAccess($user, $community, $course));
+    }
+
+    public function test_member_once_granted_with_cancelled_subscription(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->create();
+        $course    = Course::factory()->create(['community_id' => $community->id, 'access_type' => Course::ACCESS_MEMBER_ONCE]);
+
+        Subscription::factory()->create([
+            'community_id' => $community->id,
+            'user_id'      => $user->id,
+            'status'       => Subscription::STATUS_CANCELLED,
+            'expires_at'   => now()->subDay(),
+        ]);
+
+        $this->assertTrue($this->service->hasAccess($user, $community, $course));
+    }
+
+    public function test_member_once_denied_with_pending_subscription(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->create();
+        $course    = Course::factory()->create(['community_id' => $community->id, 'access_type' => Course::ACCESS_MEMBER_ONCE]);
+
+        Subscription::factory()->create([
+            'community_id' => $community->id,
+            'user_id'      => $user->id,
+            'status'       => Subscription::STATUS_PENDING,
+        ]);
+
+        $this->assertFalse($this->service->hasAccess($user, $community, $course));
+    }
+
+    public function test_member_once_denied_with_no_subscription(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->create();
+        $course    = Course::factory()->create(['community_id' => $community->id, 'access_type' => Course::ACCESS_MEMBER_ONCE]);
+
+        $this->assertFalse($this->service->hasAccess($user, $community, $course));
+    }
+
+    public function test_guest_denied_member_once_course(): void
+    {
+        $community = Community::factory()->create();
+        $course    = Course::factory()->create(['community_id' => $community->id, 'access_type' => Course::ACCESS_MEMBER_ONCE]);
+
+        $this->assertFalse($this->service->hasAccess(null, $community, $course));
+    }
+
     // ── Unknown access type ───────────────────────────────────────────────────
 
     public function test_unknown_access_type_denies_access(): void

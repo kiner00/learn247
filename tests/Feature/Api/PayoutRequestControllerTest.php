@@ -95,7 +95,7 @@ class PayoutRequestControllerTest extends TestCase
         $this->actingAs($owner, 'sanctum')
             ->postJson("/api/creator/payout-request/{$community->id}", ['amount' => 50])
             ->assertStatus(422)
-            ->assertJsonPath('message', 'You already have a pending payout request for this community.');
+            ->assertJsonPath('message', 'You already have a pending or approved payout request for this community.');
     }
 
     public function test_store_owner_creates_payout_request_successfully(): void

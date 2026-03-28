@@ -7,6 +7,8 @@ use App\Models\CommunityMember;
 use App\Models\Message;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class ChatControllerTest extends TestCase
@@ -306,5 +308,82 @@ class ChatControllerTest extends TestCase
             ->deleteJson("/communities/{$community->slug}/chat/{$msg->id}");
 
         $response->assertForbidden();
+    }
+
+    // ─── blocked member ───────────────────────────────────────────────────────
+
+    public function test_blocked_member_cannot_send_chat_message(): void
+    {
+        [$owner, $community, $member] = $this->createCommunityWithMember();
+
+        CommunityMember::where('community_id', $community->id)
+            ->where('user_id', $member->id)
+            ->update(['is_blocked' => true]);
+
+        $response = $this->actingAs($member)
+            ->postJson("/communities/{$community->slug}/chat", [
+                'content' => 'I am blocked',
+            ]);
+
+        $response->assertForbidden();
+        $response->assertJsonPath('error', 'You have been blocked from chatting in this community.');
+    }
+
+    // ─── media upload ─────────────────────────────────────────────────────────
+
+    public function test_member_can_send_image_media(): void
+    {
+        Storage::fake(config('filesystems.default'));
+
+        [$owner, $community, $member] = $this->createCommunityWithMember();
+
+        $response = $this->actingAs($member)
+            ->postJson("/communities/{$community->slug}/chat", [
+                'content' => 'Check this image',
+                'media'   => UploadedFile::fake()->image('photo.jpg'),
+            ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('message.media_type', 'image');
+        $this->assertNotNull($response->json('message.media_url'));
+    }
+
+    public function test_member_can_send_video_media(): void
+    {
+        Storage::fake(config('filesystems.default'));
+
+        [$owner, $community, $member] = $this->createCommunityWithMember();
+
+        $response = $this->actingAs($member)
+            ->postJson("/communities/{$community->slug}/chat", [
+                'content' => 'Check this video',
+                'media'   => UploadedFile::fake()->create('video.mp4', 1024, 'video/mp4'),
+            ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('message.media_type', 'video');
+        $this->assertNotNull($response->json('message.media_url'));
+    }
+
+    // ─── poll marks messages as read ──────────────────────────────────────────
+
+    public function test_poll_marks_messages_as_read(): void
+    {
+        [$owner, $community, $member] = $this->createCommunityWithMember();
+
+        Message::create([
+            'community_id' => $community->id,
+            'user_id'      => $owner->id,
+            'content'      => 'New message',
+        ]);
+
+        $this->actingAs($member)
+            ->getJson("/communities/{$community->slug}/chat/poll?after=0");
+
+        $this->assertNotNull(
+            CommunityMember::where('community_id', $community->id)
+                ->where('user_id', $member->id)
+                ->value('messages_last_read_at')
+        );
     }
 }

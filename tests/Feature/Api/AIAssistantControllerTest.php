@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Queries\AI\BuildAIContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Ai\Ai;
+use Laravel\Ai\Image;
 use Mockery;
 use Tests\TestCase;
 
@@ -19,6 +20,7 @@ class AIAssistantControllerTest extends TestCase
     private function fullContext(User $user, Community $community): array
     {
         return [
+            'id'          => $user->id,
             'name'        => $user->name,
             'email'       => $user->email,
             'communities' => [[
@@ -158,5 +160,64 @@ class AIAssistantControllerTest extends TestCase
             ])
             ->assertOk()
             ->assertJsonStructure(['message', 'conversation_id']);
+    }
+
+    /**
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function test_chat_returns_image_when_message_requests_image_generation(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->create();
+        CommunityMember::factory()->create([
+            'community_id' => $community->id,
+            'user_id'      => $user->id,
+        ]);
+
+        $mockContext = Mockery::mock(BuildAIContext::class);
+        $mockContext->shouldReceive('execute')->once()->andReturn($this->fullContext($user, $community));
+        $this->instance(BuildAIContext::class, $mockContext);
+
+        $fakeImg       = new \stdClass();
+        $fakeImg->mime  = 'image/png';
+        $fakeImg->image = base64_encode('fake-image-data');
+
+        $fakeResponse = Mockery::mock();
+        $fakeResponse->shouldReceive('firstImage')->andReturn($fakeImg);
+
+        $imageMock = Mockery::mock('alias:Laravel\Ai\Image');
+        $imageMock->shouldReceive('of')->andReturnSelf();
+        $imageMock->shouldReceive('size')->andReturnSelf();
+        $imageMock->shouldReceive('generate')->andReturn($fakeResponse);
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson('/api/ai/chat', ['message' => 'Generate an image of a cat'])
+            ->assertOk()
+            ->assertJsonPath('type', 'image')
+            ->assertJsonStructure(['type', 'message']);
+    }
+
+    public function test_chat_does_not_treat_normal_message_as_image_request(): void
+    {
+        Ai::fakeAgent(CommunityAssistant::class, ['Normal response.']);
+
+        $user      = User::factory()->create();
+        $community = Community::factory()->create();
+        CommunityMember::factory()->create([
+            'community_id' => $community->id,
+            'user_id'      => $user->id,
+        ]);
+
+        $mockContext = Mockery::mock(BuildAIContext::class);
+        $mockContext->shouldReceive('execute')->once()->andReturn($this->fullContext($user, $community));
+        $this->instance(BuildAIContext::class, $mockContext);
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson('/api/ai/chat', [
+                'message' => 'What lessons should I take next?',
+            ])
+            ->assertOk()
+            ->assertJsonPath('type', 'text');
     }
 }

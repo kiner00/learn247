@@ -7,6 +7,7 @@ use App\Models\Community;
 use App\Models\OwnerPayout;
 use App\Models\PayoutRequest;
 use App\Services\XenditService;
+use App\Support\PayoutChannelMap;
 
 /**
  * Approves a payout request: sends funds via Xendit, records OwnerPayout
@@ -33,11 +34,11 @@ class ApprovePayoutRequest
             $holderName    = $user->name;
         }
 
-        if (! in_array($payoutMethod, ['gcash', 'maya']) || ! $payoutDetails) {
+        if (! PayoutChannelMap::supports($payoutMethod) || ! $payoutDetails) {
             abort(422, 'User has no valid payout method on file.');
         }
 
-        $channelCode = $payoutMethod === 'gcash' ? 'PH_GCASH' : 'PH_PAYMAYA';
+        $channelCode = PayoutChannelMap::resolve($payoutMethod);
         $referenceId = 'req-' . $payoutRequest->id . '-' . time();
 
         $requestedAmount    = (float) $payoutRequest->amount;

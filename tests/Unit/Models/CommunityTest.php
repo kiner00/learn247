@@ -37,4 +37,31 @@ class CommunityTest extends TestCase
 
         $this->assertSame('slug', $community->getRouteKeyName());
     }
+
+    // ─── hasAffiliateProgram ──────────────────────────────────────────────
+
+    public function test_has_affiliate_program_returns_true_when_rate_is_positive(): void
+    {
+        $community = new Community();
+        $community->affiliate_commission_rate = 10;
+
+        $this->assertTrue($community->hasAffiliateProgram());
+    }
+
+    public function test_has_affiliate_program_returns_false_when_rate_is_null(): void
+    {
+        $community = new Community();
+        $community->affiliate_commission_rate = null;
+
+        $this->assertFalse($community->hasAffiliateProgram());
+    }
+
+    public function test_has_affiliate_program_returns_false_when_rate_is_zero(): void
+    {
+        $community = new Community();
+        $community->affiliate_commission_rate = 0;
+
+        $this->assertFalse($community->hasAffiliateProgram());
+    }
+
 }

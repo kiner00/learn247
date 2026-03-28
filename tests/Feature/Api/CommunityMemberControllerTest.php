@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Api;
 
+use App\Actions\Community\ChangeMemberRole;
+use App\Actions\Community\RemoveMember;
 use App\Models\Community;
 use App\Models\CommunityMember;
 use App\Models\User;
@@ -84,6 +86,41 @@ class CommunityMemberControllerTest extends TestCase
             'user_id'      => $member->id,
             'role'         => 'moderator',
         ]);
+    }
+
+    public function test_destroy_returns_500_when_action_throws(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+        $memberToRemove = User::factory()->create();
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $memberToRemove->id]);
+
+        $mock = $this->mock(RemoveMember::class);
+        $mock->shouldReceive('execute')->once()->andThrow(new \RuntimeException('DB error'));
+
+        $this->actingAs($owner, 'sanctum')
+            ->deleteJson("/api/communities/{$community->slug}/members/{$memberToRemove->id}")
+            ->assertStatus(500)
+            ->assertJsonPath('message', 'Failed to remove member.');
+    }
+
+    public function test_change_role_returns_500_when_action_throws(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $member    = User::factory()->create();
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+
+        $mock = $this->mock(ChangeMemberRole::class);
+        $mock->shouldReceive('execute')->once()->andThrow(new \RuntimeException('DB error'));
+
+        $this->actingAs($owner, 'sanctum')
+            ->patchJson("/api/communities/{$community->slug}/members/{$member->id}/role", [
+                'role' => 'moderator',
+            ])
+            ->assertStatus(500)
+            ->assertJsonPath('message', 'Failed to change role.');
     }
 
     public function test_unauthenticated_cannot_access(): void

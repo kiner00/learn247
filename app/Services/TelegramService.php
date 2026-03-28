@@ -2,10 +2,11 @@
 
 namespace App\Services;
 
+use App\Contracts\TelegramGateway;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class TelegramService
+class TelegramService implements TelegramGateway
 {
     private const API_BASE = 'https://api.telegram.org/bot';
 

@@ -2,11 +2,12 @@
 
 namespace App\Services;
 
+use App\Contracts\SmsProvider;
 use App\Models\Community;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class SmsService
+class SmsService implements SmsProvider
 {
     public const PROVIDER_SEMAPHORE = 'semaphore';
     public const PROVIDER_XTREME    = 'xtreme_sms';

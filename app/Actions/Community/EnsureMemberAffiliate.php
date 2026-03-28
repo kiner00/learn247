@@ -5,7 +5,7 @@ namespace App\Actions\Community;
 use App\Models\Affiliate;
 use App\Models\Community;
 use App\Models\Subscription;
-use Illuminate\Support\Str;
+use App\Support\AffiliateCodeGenerator;
 
 class EnsureMemberAffiliate
 {
@@ -31,14 +31,10 @@ class EnsureMemberAffiliate
             return null;
         }
 
-        do {
-            $code = Str::random(12);
-        } while (Affiliate::where('code', $code)->exists());
-
         return Affiliate::create([
             'community_id' => $community->id,
             'user_id'      => $userId,
-            'code'         => $code,
+            'code'         => AffiliateCodeGenerator::generate(),
             'status'       => Affiliate::STATUS_ACTIVE,
         ]);
     }

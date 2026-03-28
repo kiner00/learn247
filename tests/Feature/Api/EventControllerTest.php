@@ -2,11 +2,14 @@
 
 namespace Tests\Feature\Api;
 
+use App\Actions\Community\ManageEvent;
 use App\Models\Community;
 use App\Models\CommunityMember;
 use App\Models\Event;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
+use Mockery;
 use Tests\TestCase;
 
 class EventControllerTest extends TestCase
@@ -209,5 +212,235 @@ class EventControllerTest extends TestCase
                 'timezone' => 'UTC',
             ])
             ->assertNotFound();
+    }
+
+    // ─── delete event not belonging to community ─────────────────────────────
+
+    public function test_delete_event_not_belonging_to_community_returns_404(): void
+    {
+        $communityA = Community::factory()->create();
+        $communityB = Community::factory()->create(['owner_id' => $communityA->owner_id]);
+
+        $event = Event::create([
+            'community_id' => $communityB->id,
+            'created_by'   => $communityA->owner_id,
+            'title'        => 'Wrong Community Event',
+            'start_at'     => now()->addDay(),
+            'end_at'       => now()->addDay()->addHour(),
+        ]);
+
+        $this->actingAs($communityA->owner)
+            ->deleteJson("/api/communities/{$communityA->slug}/events/{$event->id}")
+            ->assertNotFound();
+
+        $this->assertDatabaseHas('events', ['id' => $event->id]);
+    }
+
+    // ─── error branch: store ─────────────────────────────────────────────────
+
+    public function test_store_returns_500_when_action_throws(): void
+    {
+        $community = Community::factory()->create();
+
+        $mock = Mockery::mock(ManageEvent::class);
+        $mock->shouldReceive('store')->once()->andThrow(new \RuntimeException('disk full'));
+        $this->app->instance(ManageEvent::class, $mock);
+
+        $this->actingAs($community->owner)
+            ->postJson("/api/communities/{$community->slug}/events", [
+                'title'    => 'Failing Event',
+                'start_at' => now()->addDay()->toIso8601String(),
+                'timezone' => 'UTC',
+            ])
+            ->assertStatus(500)
+            ->assertJsonPath('message', 'Failed to create event.');
+    }
+
+    // ─── error branch: update ────────────────────────────────────────────────
+
+    public function test_update_returns_500_when_action_throws(): void
+    {
+        $community = Community::factory()->create();
+        $event     = Event::create([
+            'community_id' => $community->id,
+            'created_by'   => $community->owner_id,
+            'title'        => 'Original',
+            'start_at'     => now()->addDay(),
+            'end_at'       => now()->addDay()->addHour(),
+        ]);
+
+        $mock = Mockery::mock(ManageEvent::class);
+        $mock->shouldReceive('update')->once()->andThrow(new \RuntimeException('db error'));
+        $this->app->instance(ManageEvent::class, $mock);
+
+        $this->actingAs($community->owner)
+            ->postJson("/api/communities/{$community->slug}/events/{$event->id}", [
+                'title'    => 'Updated',
+                'start_at' => now()->addDays(2)->toIso8601String(),
+                'timezone' => 'UTC',
+            ])
+            ->assertStatus(500)
+            ->assertJsonPath('message', 'Failed to update event.');
+    }
+
+    // ─── error branch: destroy ───────────────────────────────────────────────
+
+    public function test_destroy_returns_500_when_action_throws(): void
+    {
+        $community = Community::factory()->create();
+        $event     = Event::create([
+            'community_id' => $community->id,
+            'created_by'   => $community->owner_id,
+            'title'        => 'To Delete',
+            'start_at'     => now()->addDay(),
+            'end_at'       => now()->addDay()->addHour(),
+        ]);
+
+        $mock = Mockery::mock(ManageEvent::class);
+        $mock->shouldReceive('destroy')->once()->andThrow(new \RuntimeException('db error'));
+        $this->app->instance(ManageEvent::class, $mock);
+
+        $this->actingAs($community->owner)
+            ->deleteJson("/api/communities/{$community->slug}/events/{$event->id}")
+            ->assertStatus(500)
+            ->assertJsonPath('message', 'Failed to delete event.');
+    }
+
+    // ─── non-owner cannot update event ───────────────────────────────────────
+
+    public function test_non_owner_cannot_update_event(): void
+    {
+        $community = Community::factory()->create();
+        $nonOwner  = User::factory()->create();
+        $event     = Event::create([
+            'community_id' => $community->id,
+            'created_by'   => $community->owner_id,
+            'title'        => 'Protected',
+            'start_at'     => now()->addDay(),
+            'end_at'       => now()->addDay()->addHour(),
+        ]);
+
+        $this->actingAs($nonOwner)
+            ->postJson("/api/communities/{$community->slug}/events/{$event->id}", [
+                'title'    => 'Hacked',
+                'start_at' => now()->addDays(2)->toIso8601String(),
+                'timezone' => 'UTC',
+            ])
+            ->assertForbidden();
+    }
+
+    // ─── non-owner cannot delete event ───────────────────────────────────────
+
+    public function test_non_owner_cannot_delete_event(): void
+    {
+        $community = Community::factory()->create();
+        $nonOwner  = User::factory()->create();
+        $event     = Event::create([
+            'community_id' => $community->id,
+            'created_by'   => $community->owner_id,
+            'title'        => 'Protected',
+            'start_at'     => now()->addDay(),
+            'end_at'       => now()->addDay()->addHour(),
+        ]);
+
+        $this->actingAs($nonOwner)
+            ->deleteJson("/api/communities/{$community->slug}/events/{$event->id}")
+            ->assertForbidden();
+    }
+
+    // ─── index: event with cover_image and null end_at ───────────────────────
+
+    public function test_index_returns_events_with_cover_image_and_null_end_at(): void
+    {
+        Storage::fake(config('filesystems.default'));
+
+        $community = Community::factory()->create();
+        $owner     = $community->owner;
+
+        Event::create([
+            'community_id' => $community->id,
+            'created_by'   => $owner->id,
+            'title'        => 'Open-ended Event',
+            'start_at'     => now()->addDay(),
+            'end_at'       => null,
+            'timezone'     => 'UTC',
+            'cover_image'  => 'events/1/cover.jpg',
+            'visibility'   => 'public',
+        ]);
+
+        $this->actingAs($owner)
+            ->getJson("/api/communities/{$community->slug}/events")
+            ->assertOk()
+            ->assertJsonCount(1, 'events')
+            ->assertJsonPath('events.0.title', 'Open-ended Event')
+            ->assertJsonPath('events.0.end_at', null);
+    }
+
+    // ─── index: with explicit year/month params ──────────────────────────────
+
+    public function test_index_filters_by_year_and_month_params(): void
+    {
+        $community = Community::factory()->create();
+        $owner     = $community->owner;
+
+        // Create an event in January 2025
+        Event::create([
+            'community_id' => $community->id,
+            'created_by'   => $owner->id,
+            'title'        => 'Jan Event',
+            'start_at'     => '2025-01-15 10:00:00',
+            'end_at'       => '2025-01-15 12:00:00',
+            'timezone'     => 'UTC',
+            'visibility'   => 'public',
+        ]);
+
+        // Create an event in February 2025
+        Event::create([
+            'community_id' => $community->id,
+            'created_by'   => $owner->id,
+            'title'        => 'Feb Event',
+            'start_at'     => '2025-02-15 10:00:00',
+            'end_at'       => '2025-02-15 12:00:00',
+            'timezone'     => 'UTC',
+            'visibility'   => 'public',
+        ]);
+
+        $this->actingAs($owner)
+            ->getJson("/api/communities/{$community->slug}/events?year=2025&month=1")
+            ->assertOk()
+            ->assertJsonCount(1, 'events')
+            ->assertJsonPath('events.0.title', 'Jan Event')
+            ->assertJsonPath('year', 2025)
+            ->assertJsonPath('month', 1);
+    }
+
+    // ─── index: unauthenticated sees only public ─────────────────────────────
+
+    public function test_unauthenticated_index_sees_only_public_events(): void
+    {
+        $community = Community::factory()->create();
+
+        Event::create([
+            'community_id' => $community->id,
+            'created_by'   => $community->owner_id,
+            'title'        => 'Public Event',
+            'start_at'     => now()->addDay(),
+            'end_at'       => now()->addDay()->addHour(),
+            'visibility'   => 'public',
+        ]);
+
+        Event::create([
+            'community_id' => $community->id,
+            'created_by'   => $community->owner_id,
+            'title'        => 'Free Event',
+            'start_at'     => now()->addDay(),
+            'end_at'       => now()->addDay()->addHour(),
+            'visibility'   => 'free',
+        ]);
+
+        $this->getJson("/api/communities/{$community->slug}/events")
+            ->assertOk()
+            ->assertJsonCount(1, 'events')
+            ->assertJsonPath('events.0.title', 'Public Event');
     }
 }

@@ -4,11 +4,11 @@ namespace App\Actions\Classroom;
 
 use App\Models\CourseCertification;
 use App\Models\Community;
-use App\Services\StorageService;
+use App\Contracts\FileStorage;
 
 class ManageCertificationExam
 {
-    public function __construct(private StorageService $storage) {}
+    public function __construct(private FileStorage $storage) {}
 
     public function store(Community $community, array $data, $coverImageFile = null, ?CourseCertification $existing = null): CourseCertification
     {

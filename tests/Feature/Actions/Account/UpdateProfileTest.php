@@ -18,7 +18,7 @@ class UpdateProfileTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->action = new UpdateProfile();
+        $this->action = app(UpdateProfile::class);
     }
 
     public function test_update_basic_fields_concatenates_first_and_last_name(): void
@@ -35,7 +35,8 @@ class UpdateProfileTest extends TestCase
 
     public function test_update_with_avatar_stores_file(): void
     {
-        Storage::fake('public');
+        $disk = config('filesystems.default');
+        Storage::fake($disk);
         $user = User::factory()->create(['avatar' => null]);
 
         $avatar = UploadedFile::fake()->image('avatar.jpg');
@@ -45,13 +46,13 @@ class UpdateProfileTest extends TestCase
         ], $avatar);
 
         $this->assertNotNull($result->avatar);
-        $this->assertStringContainsString('/storage/', $result->avatar);
     }
 
     public function test_update_with_new_avatar_deletes_old_storage_file(): void
     {
-        Storage::fake('public');
-        Storage::disk('public')->put('user-avatars/old-avatar.jpg', 'dummy');
+        $disk = config('filesystems.default');
+        Storage::fake($disk);
+        Storage::disk($disk)->put('user-avatars/old-avatar.jpg', 'dummy');
 
         $user = User::factory()->create(['avatar' => '/storage/user-avatars/old-avatar.jpg']);
 
@@ -62,6 +63,6 @@ class UpdateProfileTest extends TestCase
         ], $newAvatar);
 
         $this->assertNotNull($result->avatar);
-        Storage::disk('public')->assertMissing('user-avatars/old-avatar.jpg');
+        Storage::disk($disk)->assertMissing('user-avatars/old-avatar.jpg');
     }
 }

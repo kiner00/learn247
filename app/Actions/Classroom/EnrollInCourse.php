@@ -8,6 +8,8 @@ use App\Models\CourseEnrollment;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Services\XenditService;
+use App\Support\InvoiceBuilder;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class EnrollInCourse
@@ -35,42 +37,45 @@ class EnrollInCourse
             throw ValidationException::withMessages(['course' => 'You already have access to this course.']);
         }
 
-        $isMonthly  = $course->access_type === Course::ACCESS_PAID_MONTHLY;
-        $externalId = "course_{$course->id}_{$user->id}_" . time();
-        $label      = $isMonthly ? "{$course->title} (Monthly)" : $course->title;
+        try {
+            $isMonthly  = $course->access_type === Course::ACCESS_PAID_MONTHLY;
+            $externalId = "course_{$course->id}_{$user->id}_" . time();
+            $label      = $isMonthly ? "{$course->title} (Monthly)" : $course->title;
 
-        $invoice = $this->xendit->createInvoice([
-            'external_id' => $externalId,
-            'amount'      => (float) $course->price,
-            'currency'    => $community->currency ?? 'PHP',
-            'description' => "Course: {$label}",
-            'customer'    => ['given_names' => $user->name, 'email' => $user->email],
-            'customer_notification_preference' => [
-                'invoice_created' => ['email'],
-                'invoice_paid'    => ['email'],
-            ],
-            'success_redirect_url' => $successRedirectUrl,
-            'failure_redirect_url' => route('communities.classroom.courses.show', [$community->slug, $course->id]),
-            'items' => [[
-                'name'     => $label,
-                'quantity' => 1,
-                'price'    => (float) $course->price,
-                'category' => 'Course',
-            ]],
-        ]);
+            $invoice = $this->xendit->createInvoice(
+                InvoiceBuilder::make()
+                    ->externalId($externalId)
+                    ->amount((float) $course->price)
+                    ->currency($community->currency ?? 'PHP')
+                    ->description("Course: {$label}")
+                    ->customer($user)
+                    ->successUrl($successRedirectUrl)
+                    ->failureUrl(route('communities.classroom.courses.show', [$community->slug, $course->id]))
+                    ->item($label, (float) $course->price, 'Course')
+                    ->toArray()
+            );
 
-        // Resolve affiliate from the user's active subscription in this community (if any)
-        $affiliateId = Subscription::where('user_id', $user->id)
-            ->where('community_id', $community->id)
-            ->whereNotNull('affiliate_id')
-            ->value('affiliate_id');
+            // Resolve affiliate from the user's active subscription in this community (if any)
+            $affiliateId = Subscription::where('user_id', $user->id)
+                ->where('community_id', $community->id)
+                ->whereNotNull('affiliate_id')
+                ->value('affiliate_id');
 
-        // Upsert pending enrollment
-        $enrollment = CourseEnrollment::updateOrCreate(
-            ['user_id' => $user->id, 'course_id' => $course->id],
-            ['affiliate_id' => $affiliateId, 'xendit_id' => $invoice['id'], 'status' => CourseEnrollment::STATUS_PENDING, 'paid_at' => null, 'expires_at' => null],
-        );
+            // Upsert pending enrollment
+            $enrollment = CourseEnrollment::updateOrCreate(
+                ['user_id' => $user->id, 'course_id' => $course->id],
+                ['affiliate_id' => $affiliateId, 'xendit_id' => $invoice['id'], 'status' => CourseEnrollment::STATUS_PENDING, 'paid_at' => null, 'expires_at' => null],
+            );
 
-        return ['enrollment' => $enrollment, 'checkout_url' => $invoice['invoice_url']];
+            return ['enrollment' => $enrollment, 'checkout_url' => $invoice['invoice_url']];
+        } catch (\Throwable $e) {
+            Log::error('EnrollInCourse failed', [
+                'user_id'   => $user->id,
+                'course_id' => $course->id,
+                'error'     => $e->getMessage(),
+            ]);
+
+            throw $e;
+        }
     }
 }

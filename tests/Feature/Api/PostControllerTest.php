@@ -2,14 +2,20 @@
 
 namespace Tests\Feature\Api;
 
+use App\Actions\Feed\CreatePost;
+use App\Actions\Feed\DeletePost;
 use App\Actions\Feed\TogglePin;
+use App\Actions\Feed\UpdatePost;
 use App\Http\Controllers\Api\PostController;
+use App\Http\Requests\UpdatePostRequest;
 use App\Models\Community;
 use App\Models\CommunityMember;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
+use Mockery;
 use Tests\TestCase;
 
 class PostControllerTest extends TestCase
@@ -196,5 +202,152 @@ class PostControllerTest extends TestCase
 
         $controller = app(PostController::class);
         $controller->togglePin($post, app(TogglePin::class));
+    }
+
+    // ─── update (controller-level, no route) ─────────────────────────────────
+
+    public function test_author_can_update_post_via_controller(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->create();
+        $post      = Post::factory()->create([
+            'community_id' => $community->id,
+            'user_id'      => $user->id,
+            'content'      => 'Original content',
+        ]);
+
+        $this->actingAs($user, 'sanctum');
+
+        $request = UpdatePostRequest::create("/api/posts/{$post->id}", 'PATCH', [
+            'content' => 'Updated API content',
+        ]);
+        $request->setUserResolver(fn () => $user);
+        $request->setContainer(app());
+        // Manually trigger validation so validated() returns data
+        $request->validateResolved();
+
+        $controller = app(PostController::class);
+        $response   = $controller->update($request, $post, app(UpdatePost::class));
+        $data       = json_decode($response->getContent(), true);
+
+        $this->assertEquals('Post updated.', $data['message']);
+        $this->assertEquals('Updated API content', $post->fresh()->content);
+    }
+
+    public function test_update_returns_500_when_action_throws(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->create();
+        $post      = Post::factory()->create([
+            'community_id' => $community->id,
+            'user_id'      => $user->id,
+        ]);
+
+        $this->actingAs($user, 'sanctum');
+
+        $mock = Mockery::mock(UpdatePost::class);
+        $mock->shouldReceive('execute')->once()->andThrow(new \RuntimeException('db error'));
+
+        $request = UpdatePostRequest::create("/api/posts/{$post->id}", 'PATCH', [
+            'content' => 'Updated content',
+        ]);
+        $request->setUserResolver(fn () => $user);
+        $request->setContainer(app());
+        $request->validateResolved();
+
+        $controller = app(PostController::class);
+        $response   = $controller->update($request, $post, $mock);
+
+        $this->assertEquals(500, $response->getStatusCode());
+        $data = json_decode($response->getContent(), true);
+        $this->assertEquals('Failed to update post.', $data['message']);
+    }
+
+    // ─── error branch: destroy ───────────────────────────────────────────────
+
+    public function test_destroy_returns_500_when_action_throws(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->create();
+        $post      = Post::factory()->create([
+            'community_id' => $community->id,
+            'user_id'      => $user->id,
+        ]);
+
+        $mock = Mockery::mock(DeletePost::class);
+        $mock->shouldReceive('execute')->once()->andThrow(new \RuntimeException('db error'));
+        $this->app->instance(DeletePost::class, $mock);
+
+        $this->actingAs($user)
+            ->deleteJson("/api/posts/{$post->id}")
+            ->assertStatus(500)
+            ->assertJsonPath('message', 'Failed to delete post.');
+    }
+
+    // ─── error branch: togglePin ─────────────────────────────────────────────
+
+    public function test_toggle_pin_returns_500_when_action_throws_runtime(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        CommunityMember::factory()->admin()->create([
+            'community_id' => $community->id,
+            'user_id'      => $owner->id,
+        ]);
+
+        $post = Post::factory()->create([
+            'community_id' => $community->id,
+            'user_id'      => $owner->id,
+            'is_pinned'    => false,
+        ]);
+
+        $this->actingAs($owner, 'sanctum');
+
+        $mock = Mockery::mock(TogglePin::class);
+        $mock->shouldReceive('execute')->once()->andThrow(new \RuntimeException('db error'));
+
+        $controller = app(PostController::class);
+        $response   = $controller->togglePin($post, $mock);
+
+        $this->assertEquals(500, $response->getStatusCode());
+        $data = json_decode($response->getContent(), true);
+        $this->assertEquals('Failed to toggle pin.', $data['message']);
+    }
+
+    // ─── store: with image ──────────────────────────────────────────────────
+
+    public function test_store_with_image_creates_post(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake(config('filesystems.default'));
+
+        $user      = User::factory()->create();
+        $community = Community::factory()->create(['price' => 0]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+
+        $file = \Illuminate\Http\UploadedFile::fake()->image('photo.jpg');
+
+        $response = $this->actingAs($user)->postJson('/api/posts', [
+            'community_id' => $community->id,
+            'content'      => 'Post with image',
+            'image'        => $file,
+        ]);
+
+        $response->assertStatus(201);
+        $this->assertDatabaseHas('posts', [
+            'community_id' => $community->id,
+            'user_id'      => $user->id,
+            'content'      => 'Post with image',
+        ]);
+    }
+
+    // ─── unauthenticated destroy ─────────────────────────────────────────────
+
+    public function test_unauthenticated_cannot_destroy_post(): void
+    {
+        $community = Community::factory()->create();
+        $post      = Post::factory()->create(['community_id' => $community->id]);
+
+        $this->deleteJson("/api/posts/{$post->id}")
+            ->assertUnauthorized();
     }
 }

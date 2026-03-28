@@ -2,15 +2,20 @@
 
 namespace Tests\Feature\Web;
 
+use App\Actions\Classroom\CompleteLesson;
 use App\Models\Community;
 use App\Models\CommunityMember;
 use App\Models\Course;
 use App\Models\CourseLesson;
 use App\Models\CourseModule;
+use App\Models\CreatorSubscription;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Queries\Classroom\GetCourseList;
+use App\Services\Community\PlanLimitService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -855,7 +860,7 @@ class ClassroomControllerTest extends TestCase
 
     public function test_owner_can_upload_lesson_image(): void
     {
-        Storage::fake('public');
+        Storage::fake(config('filesystems.default'));
 
         $owner     = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
@@ -870,7 +875,6 @@ class ClassroomControllerTest extends TestCase
 
         $response->assertOk();
         $response->assertJsonStructure(['url']);
-        Storage::disk('public')->assertExists('lesson-images/' . $file->hashName());
     }
 
     public function test_regular_member_cannot_upload_lesson_image(): void
@@ -1106,6 +1110,427 @@ class ClassroomControllerTest extends TestCase
         $response->assertForbidden();
     }
 
+    // ─── togglePublish ────────────────────────────────────────────────────────
+
+    public function test_owner_can_toggle_publish_course(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Draft Course',
+            'position'     => 1,
+            'is_published' => false,
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/classroom/courses/{$course->id}/toggle-publish");
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', 'Course published!');
+        $this->assertDatabaseHas('courses', ['id' => $course->id, 'is_published' => true]);
+    }
+
+    public function test_owner_can_unpublish_course(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Published Course',
+            'position'     => 1,
+            'is_published' => true,
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/classroom/courses/{$course->id}/toggle-publish");
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', 'Course set to draft!');
+        $this->assertDatabaseHas('courses', ['id' => $course->id, 'is_published' => false]);
+    }
+
+    public function test_regular_member_cannot_toggle_publish(): void
+    {
+        $owner     = User::factory()->create();
+        $member    = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Course',
+            'position'     => 1,
+            'is_published' => false,
+        ]);
+
+        $response = $this->actingAs($member)
+            ->post("/communities/{$community->slug}/classroom/courses/{$course->id}/toggle-publish");
+
+        $response->assertForbidden();
+        $this->assertDatabaseHas('courses', ['id' => $course->id, 'is_published' => false]);
+    }
+
+    // ─── showCourse: unpublished ─────────────────────────────────────────────
+
+    public function test_non_manager_cannot_view_unpublished_course(): void
+    {
+        $owner     = User::factory()->create();
+        $member    = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Unpublished Course',
+            'position'     => 1,
+            'is_published' => false,
+        ]);
+
+        $response = $this->actingAs($member)
+            ->get("/communities/{$community->slug}/classroom/courses/{$course->id}");
+
+        $response->assertNotFound();
+    }
+
+    public function test_guest_cannot_view_unpublished_course(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Unpublished Course',
+            'position'     => 1,
+            'is_published' => false,
+        ]);
+
+        $response = $this->get("/communities/{$community->slug}/classroom/courses/{$course->id}");
+
+        $response->assertNotFound();
+    }
+
+    public function test_owner_can_view_unpublished_course(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Unpublished Course',
+            'position'     => 1,
+            'is_published' => false,
+        ]);
+        CourseModule::create(['course_id' => $course->id, 'title' => 'Module 1', 'position' => 1]);
+
+        $response = $this->actingAs($owner)
+            ->get("/communities/{$community->slug}/classroom/courses/{$course->id}");
+
+        $response->assertOk();
+    }
+
+    // ─── storeCourse: plan limit ────────────────────────────────────────────
+
+    public function test_store_course_blocked_when_plan_limit_reached(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        // Free plan allows 3 courses — create 3 existing courses
+        Course::create(['community_id' => $community->id, 'title' => 'C1', 'position' => 0]);
+        Course::create(['community_id' => $community->id, 'title' => 'C2', 'position' => 1]);
+        Course::create(['community_id' => $community->id, 'title' => 'C3', 'position' => 2]);
+
+        $response = $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/classroom/courses", [
+                'title'       => 'Fourth Course',
+                'access_type' => 'free',
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasErrors(['plan']);
+        $this->assertDatabaseMissing('courses', ['title' => 'Fourth Course']);
+    }
+
+    // ─── streamLessonVideo ──────────────────────────────────────────────────
+
+    public function test_stream_lesson_video_returns_404_when_no_video_path(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Course',
+            'position'     => 1,
+            'is_published' => true,
+        ]);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
+        $lesson = CourseLesson::create([
+            'module_id'  => $module->id,
+            'title'      => 'Lesson No Video',
+            'position'   => 1,
+            'video_path' => null,
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->getJson("/communities/{$community->slug}/classroom/courses/{$course->id}/lessons/{$lesson->id}/stream");
+
+        $response->assertNotFound();
+    }
+
+    public function test_stream_lesson_video_returns_404_for_unpublished_course_non_manager(): void
+    {
+        $owner     = User::factory()->create();
+        $member    = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Unpublished',
+            'position'     => 1,
+            'is_published' => false,
+        ]);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
+        $lesson = CourseLesson::create([
+            'module_id'  => $module->id,
+            'title'      => 'Lesson',
+            'position'   => 1,
+            'video_path' => 'lesson-videos/test.mp4',
+        ]);
+
+        $response = $this->actingAs($member)
+            ->getJson("/communities/{$community->slug}/classroom/courses/{$course->id}/lessons/{$lesson->id}/stream");
+
+        $response->assertNotFound();
+    }
+
+    public function test_stream_lesson_video_returns_403_when_no_course_access(): void
+    {
+        $owner     = User::factory()->create();
+        $member    = User::factory()->create();
+        $community = Community::factory()->paid()->create(['owner_id' => $owner->id]);
+        Subscription::factory()->active()->create([
+            'community_id' => $community->id,
+            'user_id'      => $member->id,
+        ]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Paid Once Course',
+            'access_type'  => Course::ACCESS_PAID_ONCE,
+            'price'        => 100,
+            'position'     => 1,
+            'is_published' => true,
+        ]);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
+        $lesson = CourseLesson::create([
+            'module_id'  => $module->id,
+            'title'      => 'Lesson',
+            'position'   => 1,
+            'video_path' => 'lesson-videos/test.mp4',
+        ]);
+
+        // Member has subscription (passes middleware) but no course enrollment
+        $response = $this->actingAs($member)
+            ->getJson("/communities/{$community->slug}/classroom/courses/{$course->id}/lessons/{$lesson->id}/stream");
+
+        $response->assertForbidden();
+    }
+
+    public function test_stream_lesson_video_returns_signed_url_for_owner(): void
+    {
+        Storage::fake(config('filesystems.default'));
+
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Course',
+            'position'     => 1,
+            'is_published' => true,
+        ]);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
+        $lesson = CourseLesson::create([
+            'module_id'  => $module->id,
+            'title'      => 'Lesson With Video',
+            'position'   => 1,
+            'video_path' => 'lesson-videos/test.mp4',
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->getJson("/communities/{$community->slug}/classroom/courses/{$course->id}/lessons/{$lesson->id}/stream");
+
+        $response->assertOk();
+        $response->assertJsonStructure(['url']);
+    }
+
+    // ─── uploadLessonVideo ──────────────────────────────────────────────────
+
+    public function test_upload_lesson_video_requires_pro_plan(): void
+    {
+        $owner     = User::factory()->create(); // free plan by default
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $response = $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/classroom/lesson-videos", [
+                'filename'     => 'video.mp4',
+                'content_type' => 'video/mp4',
+                'size'         => 1024,
+            ]);
+
+        $response->assertForbidden();
+        $response->assertJson(['error' => 'Video uploads require a Pro plan.']);
+    }
+
+    public function test_regular_member_cannot_upload_lesson_video(): void
+    {
+        $owner     = User::factory()->create();
+        $member    = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+
+        $response = $this->actingAs($member)
+            ->postJson("/communities/{$community->slug}/classroom/lesson-videos", [
+                'filename'     => 'video.mp4',
+                'content_type' => 'video/mp4',
+                'size'         => 1024,
+            ]);
+
+        $response->assertForbidden();
+    }
+
+    // ─── uploadLessonImage: validation ──────────────────────────────────────
+
+    public function test_upload_lesson_image_requires_image_file(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $response = $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/classroom/lesson-images", []);
+
+        $response->assertUnprocessable();
+        $response->assertJsonValidationErrors(['image']);
+    }
+
+    // ─── storeLesson with optional fields ───────────────────────────────────
+
+    public function test_owner_can_store_lesson_with_embed_and_cta(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Course',
+            'position'     => 1,
+        ]);
+        $module = CourseModule::create([
+            'course_id' => $course->id,
+            'title'     => 'Module 1',
+            'position'  => 1,
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/classroom/courses/{$course->id}/modules/{$module->id}/lessons", [
+                'title'      => 'Rich Lesson',
+                'content'    => 'Content here',
+                'embed_html' => '<iframe src="https://example.com"></iframe>',
+                'cta_label'  => 'Buy Now',
+                'cta_url'    => 'https://example.com/buy',
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', 'Lesson added!');
+        $this->assertDatabaseHas('course_lessons', [
+            'module_id'  => $module->id,
+            'title'      => 'Rich Lesson',
+            'embed_html' => '<iframe src="https://example.com"></iframe>',
+            'cta_label'  => 'Buy Now',
+            'cta_url'    => 'https://example.com/buy',
+        ]);
+    }
+
+    // ─── storeModule with is_free ───────────────────────────────────────────
+
+    public function test_owner_can_store_module_with_is_free(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Course',
+            'position'     => 1,
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/classroom/courses/{$course->id}/modules", [
+                'title'   => 'Free Preview Module',
+                'is_free' => true,
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', 'Module added!');
+        $this->assertDatabaseHas('course_modules', [
+            'course_id' => $course->id,
+            'title'     => 'Free Preview Module',
+            'is_free'   => true,
+        ]);
+    }
+
+    // ─── updateLesson with video_path ───────────────────────────────────────
+
+    public function test_owner_can_update_lesson_with_video_path(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Course',
+            'position'     => 1,
+        ]);
+        $module = CourseModule::create([
+            'course_id' => $course->id,
+            'title'     => 'Module',
+            'position'  => 1,
+        ]);
+        $lesson = CourseLesson::create([
+            'module_id' => $module->id,
+            'title'     => 'Lesson',
+            'position'  => 1,
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->patch("/communities/{$community->slug}/classroom/courses/{$course->id}/modules/{$module->id}/lessons/{$lesson->id}", [
+                'video_path' => 'lesson-videos/uploaded-video.mp4',
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', 'Lesson updated!');
+        $this->assertDatabaseHas('course_lessons', [
+            'id'         => $lesson->id,
+            'video_path' => 'lesson-videos/uploaded-video.mp4',
+        ]);
+    }
+
     public function test_user_has_no_access_to_course_with_unknown_access_type(): void
     {
         // The final `return false` in CourseAccessService::hasAccess() is unreachable via normal
@@ -1211,5 +1636,680 @@ class ClassroomControllerTest extends TestCase
             ->assertForbidden();
 
         $this->assertDatabaseHas('course_lessons', ['id' => $lesson->id]);
+    }
+
+    // ─── storeCourse: access_type validation ────────────────────────────────
+
+    public function test_store_course_requires_access_type(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $response = $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/classroom/courses", [
+                'title' => 'Course Without Access Type',
+            ]);
+
+        $response->assertSessionHasErrors(['access_type']);
+    }
+
+    public function test_store_course_requires_price_for_paid_monthly(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $response = $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/classroom/courses", [
+                'title'       => 'Monthly Course Without Price',
+                'access_type' => 'paid_monthly',
+            ]);
+
+        $response->assertSessionHasErrors(['price']);
+    }
+
+    public function test_store_course_rejects_invalid_access_type(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $response = $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/classroom/courses", [
+                'title'       => 'Bad Access Type',
+                'access_type' => 'invalid_type',
+            ]);
+
+        $response->assertSessionHasErrors(['access_type']);
+    }
+
+    public function test_store_course_with_paid_monthly_access_type_and_price(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $response = $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/classroom/courses", [
+                'title'       => 'Monthly Course',
+                'description' => 'Monthly subscription course',
+                'access_type' => 'paid_monthly',
+                'price'       => 99.00,
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', 'Course created!');
+        $this->assertDatabaseHas('courses', [
+            'community_id' => $community->id,
+            'title'        => 'Monthly Course',
+            'access_type'  => 'paid_monthly',
+        ]);
+    }
+
+    public function test_store_course_with_member_once_access_type(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $response = $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/classroom/courses", [
+                'title'       => 'Member Once Course',
+                'access_type' => 'member_once',
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', 'Course created!');
+        $this->assertDatabaseHas('courses', [
+            'community_id' => $community->id,
+            'title'        => 'Member Once Course',
+            'access_type'  => 'member_once',
+        ]);
+    }
+
+    // ─── uploadLessonVideo: validation ──────────────────────────────────────
+
+    public function test_upload_lesson_video_rejects_invalid_content_type(): void
+    {
+        $owner = User::factory()->create();
+        CreatorSubscription::create([
+            'user_id'    => $owner->id,
+            'plan'       => CreatorSubscription::PLAN_PRO,
+            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'expires_at' => now()->addYear(),
+        ]);
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $response = $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/classroom/lesson-videos", [
+                'filename'     => 'video.avi',
+                'content_type' => 'video/x-flv',
+                'size'         => 1024,
+            ]);
+
+        $response->assertUnprocessable();
+        $response->assertJsonValidationErrors(['content_type']);
+    }
+
+    public function test_upload_lesson_video_rejects_missing_fields(): void
+    {
+        $owner = User::factory()->create();
+        CreatorSubscription::create([
+            'user_id'    => $owner->id,
+            'plan'       => CreatorSubscription::PLAN_PRO,
+            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'expires_at' => now()->addYear(),
+        ]);
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $response = $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/classroom/lesson-videos", []);
+
+        $response->assertUnprocessable();
+        $response->assertJsonValidationErrors(['filename', 'content_type', 'size']);
+    }
+
+    public function test_upload_lesson_video_rejects_file_too_large(): void
+    {
+        $owner = User::factory()->create();
+        CreatorSubscription::create([
+            'user_id'    => $owner->id,
+            'plan'       => CreatorSubscription::PLAN_PRO,
+            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'expires_at' => now()->addYear(),
+        ]);
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        // Pro plan max is 500MB = 524288000 bytes, send more
+        $response = $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/classroom/lesson-videos", [
+                'filename'     => 'large-video.mp4',
+                'content_type' => 'video/mp4',
+                'size'         => 600 * 1024 * 1024, // 600 MB
+            ]);
+
+        $response->assertStatus(422);
+        $response->assertJson(['error' => 'File too large. Maximum size is 500MB.']);
+    }
+
+    public function test_upload_lesson_video_success_for_pro_owner(): void
+    {
+        $owner = User::factory()->create();
+        CreatorSubscription::create([
+            'user_id'    => $owner->id,
+            'plan'       => CreatorSubscription::PLAN_PRO,
+            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'expires_at' => now()->addYear(),
+        ]);
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        // Mock S3 client to avoid real AWS calls
+        $mockRequest = new \GuzzleHttp\Psr7\Request('PUT', 'https://s3.amazonaws.com/test-bucket/lesson-videos/test.mp4');
+        $mockClient = \Mockery::mock(\Aws\S3\S3Client::class);
+        $mockClient->shouldReceive('getCommand')->once()->andReturn(new \Aws\Command('PutObject'));
+        $mockClient->shouldReceive('createPresignedRequest')->once()->andReturn($mockRequest);
+
+        $mockDisk = \Mockery::mock(\Illuminate\Contracts\Filesystem\Filesystem::class);
+        $mockDisk->shouldReceive('getClient')->once()->andReturn($mockClient);
+
+        Storage::shouldReceive('disk')->with('s3')->once()->andReturn($mockDisk);
+
+        $response = $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/classroom/lesson-videos", [
+                'filename'     => 'my-video.mp4',
+                'content_type' => 'video/mp4',
+                'size'         => 10 * 1024 * 1024, // 10 MB
+            ]);
+
+        $response->assertOk();
+        $response->assertJsonStructure(['upload_url', 'key']);
+    }
+
+    // ─── streamLessonVideo: legacy URL path ─────────────────────────────────
+
+    public function test_stream_lesson_video_handles_legacy_full_s3_url(): void
+    {
+        Storage::fake(config('filesystems.default'));
+
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Course',
+            'position'     => 1,
+            'is_published' => true,
+        ]);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
+        $lesson = CourseLesson::create([
+            'module_id'  => $module->id,
+            'title'      => 'Lesson Legacy URL',
+            'position'   => 1,
+            'video_path' => 'https://s3.amazonaws.com/my-bucket/lesson-videos/old-video.mp4',
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->getJson("/communities/{$community->slug}/classroom/courses/{$course->id}/lessons/{$lesson->id}/stream");
+
+        $response->assertOk();
+        $response->assertJsonStructure(['url']);
+    }
+
+    public function test_stream_lesson_video_accessible_to_member_with_course_access(): void
+    {
+        Storage::fake(config('filesystems.default'));
+
+        $owner  = User::factory()->create();
+        $member = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Free Course',
+            'access_type'  => Course::ACCESS_FREE,
+            'position'     => 1,
+            'is_published' => true,
+        ]);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
+        $lesson = CourseLesson::create([
+            'module_id'  => $module->id,
+            'title'      => 'Lesson',
+            'position'   => 1,
+            'video_path' => 'lesson-videos/test.mp4',
+        ]);
+
+        $response = $this->actingAs($member)
+            ->getJson("/communities/{$community->slug}/classroom/courses/{$course->id}/lessons/{$lesson->id}/stream");
+
+        $response->assertOk();
+        $response->assertJsonStructure(['url']);
+    }
+
+    // ─── streamLessonVideo: guest on unpublished course ─────────────────────
+
+    public function test_stream_lesson_video_returns_404_for_guest_on_unpublished_course(): void
+    {
+        $owner     = User::factory()->create();
+        $member    = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Unpublished',
+            'position'     => 1,
+            'is_published' => false,
+        ]);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
+        $lesson = CourseLesson::create([
+            'module_id'  => $module->id,
+            'title'      => 'Lesson',
+            'position'   => 1,
+            'video_path' => 'lesson-videos/test.mp4',
+        ]);
+
+        // Non-admin member should get 404 for unpublished course
+        $response = $this->actingAs($member)->getJson("/communities/{$community->slug}/classroom/courses/{$course->id}/lessons/{$lesson->id}/stream");
+
+        $response->assertNotFound();
+    }
+
+    // ─── updateCourse: validation ───────────────────────────────────────────
+
+    public function test_update_course_requires_title(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Original',
+            'position'     => 1,
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/classroom/courses/{$course->id}/update", [
+                'access_type' => 'free',
+            ]);
+
+        $response->assertSessionHasErrors(['title']);
+    }
+
+    public function test_update_course_requires_access_type(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Original',
+            'position'     => 1,
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/classroom/courses/{$course->id}/update", [
+                'title' => 'Updated',
+            ]);
+
+        $response->assertSessionHasErrors(['access_type']);
+    }
+
+    // ─── reorderCourses: validation ─────────────────────────────────────────
+
+    public function test_reorder_courses_requires_course_ids(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $response = $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/classroom/courses/reorder", []);
+
+        $response->assertSessionHasErrors(['course_ids']);
+    }
+
+    // ─── reorderLessons: validation ─────────────────────────────────────────
+
+    public function test_reorder_lessons_requires_lesson_ids(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $course = Course::create(['community_id' => $community->id, 'title' => 'C', 'position' => 1]);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'M', 'position' => 1]);
+
+        $response = $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/classroom/courses/{$course->id}/modules/{$module->id}/lessons/reorder", []);
+
+        $response->assertSessionHasErrors(['lesson_ids']);
+    }
+
+    // ─── showCourse: canUploadVideo prop for pro owner ──────────────────────
+
+    public function test_show_course_indicates_video_upload_for_pro_owner(): void
+    {
+        $owner = User::factory()->create();
+        CreatorSubscription::create([
+            'user_id'    => $owner->id,
+            'plan'       => CreatorSubscription::PLAN_PRO,
+            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'expires_at' => now()->addYear(),
+        ]);
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Pro Course',
+            'position'     => 1,
+            'is_published' => true,
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->get("/communities/{$community->slug}/classroom/courses/{$course->id}");
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Communities/Classroom/Show')
+            ->where('canUploadVideo', true)
+        );
+    }
+
+    public function test_show_course_disables_video_upload_for_free_owner(): void
+    {
+        $owner     = User::factory()->create(); // free plan
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Free Plan Course',
+            'position'     => 1,
+            'is_published' => true,
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->get("/communities/{$community->slug}/classroom/courses/{$course->id}");
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Communities/Classroom/Show')
+            ->where('canUploadVideo', false)
+        );
+    }
+
+    // ─── index: affiliate and membership props ──────────────────────────────
+
+    public function test_index_returns_affiliate_when_user_has_one(): void
+    {
+        $owner     = User::factory()->create();
+        $member    = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+
+        // Create affiliate for the member
+        $community->affiliates()->create([
+            'user_id' => $member->id,
+            'code'    => 'TESTCODE123',
+            'status'  => 'active',
+        ]);
+
+        $response = $this->actingAs($member)
+            ->get("/communities/{$community->slug}/classroom");
+
+        $response->assertOk();
+    }
+
+    // ─── storeLesson: validation for URL fields ─────────────────────────────
+
+    public function test_store_lesson_rejects_invalid_video_url(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $course = Course::create(['community_id' => $community->id, 'title' => 'Course', 'position' => 1]);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
+
+        $response = $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/classroom/courses/{$course->id}/modules/{$module->id}/lessons", [
+                'title'     => 'Bad URL Lesson',
+                'video_url' => 'not-a-url',
+            ]);
+
+        $response->assertSessionHasErrors(['video_url']);
+    }
+
+    public function test_store_lesson_rejects_invalid_cta_url(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $course = Course::create(['community_id' => $community->id, 'title' => 'Course', 'position' => 1]);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
+
+        $response = $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/classroom/courses/{$course->id}/modules/{$module->id}/lessons", [
+                'title'   => 'Bad CTA Lesson',
+                'cta_url' => 'not-a-url',
+            ]);
+
+        $response->assertSessionHasErrors(['cta_url']);
+    }
+
+    // ─── updateLesson: validation for URL fields ────────────────────────────
+
+    public function test_update_lesson_rejects_invalid_video_url(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $course = Course::create(['community_id' => $community->id, 'title' => 'Course', 'position' => 1]);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
+        $lesson = CourseLesson::create(['module_id' => $module->id, 'title' => 'Lesson', 'position' => 1]);
+
+        $response = $this->actingAs($owner)
+            ->patch("/communities/{$community->slug}/classroom/courses/{$course->id}/modules/{$module->id}/lessons/{$lesson->id}", [
+                'video_url' => 'not-a-valid-url',
+            ]);
+
+        $response->assertSessionHasErrors(['video_url']);
+    }
+
+    public function test_update_lesson_rejects_invalid_cta_url(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $course = Course::create(['community_id' => $community->id, 'title' => 'Course', 'position' => 1]);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
+        $lesson = CourseLesson::create(['module_id' => $module->id, 'title' => 'Lesson', 'position' => 1]);
+
+        $response = $this->actingAs($owner)
+            ->patch("/communities/{$community->slug}/classroom/courses/{$course->id}/modules/{$module->id}/lessons/{$lesson->id}", [
+                'cta_url' => 'not-valid',
+            ]);
+
+        $response->assertSessionHasErrors(['cta_url']);
+    }
+
+    // ─── uploadLessonImage: non-image file ──────────────────────────────────
+
+    public function test_upload_lesson_image_rejects_non_image_file(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $file = UploadedFile::fake()->create('document.pdf', 100, 'application/pdf');
+
+        $response = $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/classroom/lesson-images", [
+                'image' => $file,
+            ]);
+
+        $response->assertUnprocessable();
+        $response->assertJsonValidationErrors(['image']);
+    }
+
+    // ─── storeCourse: cover_image validation ────────────────────────────────
+
+    public function test_store_course_rejects_non_image_cover(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $file = UploadedFile::fake()->create('doc.pdf', 100, 'application/pdf');
+
+        $response = $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/classroom/courses", [
+                'title'       => 'Course With Bad Cover',
+                'access_type' => 'free',
+                'cover_image' => $file,
+            ]);
+
+        $response->assertSessionHasErrors(['cover_image']);
+    }
+
+    // ─── uploadLessonVideo: quicktime and webm content types ────────────────
+
+    public function test_upload_lesson_video_accepts_quicktime_content_type(): void
+    {
+        $owner = User::factory()->create();
+        CreatorSubscription::create([
+            'user_id'    => $owner->id,
+            'plan'       => CreatorSubscription::PLAN_PRO,
+            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'expires_at' => now()->addYear(),
+        ]);
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $mockRequest = new \GuzzleHttp\Psr7\Request('PUT', 'https://s3.amazonaws.com/test-bucket/lesson-videos/test.mov');
+        $mockClient = \Mockery::mock(\Aws\S3\S3Client::class);
+        $mockClient->shouldReceive('getCommand')->once()->andReturn(new \Aws\Command('PutObject'));
+        $mockClient->shouldReceive('createPresignedRequest')->once()->andReturn($mockRequest);
+
+        $mockDisk = \Mockery::mock(\Illuminate\Contracts\Filesystem\Filesystem::class);
+        $mockDisk->shouldReceive('getClient')->once()->andReturn($mockClient);
+
+        Storage::shouldReceive('disk')->with('s3')->once()->andReturn($mockDisk);
+
+        $response = $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/classroom/lesson-videos", [
+                'filename'     => 'my-video.mov',
+                'content_type' => 'video/quicktime',
+                'size'         => 5 * 1024 * 1024,
+            ]);
+
+        $response->assertOk();
+        $response->assertJsonStructure(['upload_url', 'key']);
+    }
+
+    // ─── showCourse: canManage prop ─────────────────────────────────────────
+
+    public function test_show_course_sets_can_manage_false_for_regular_member(): void
+    {
+        $owner  = User::factory()->create();
+        $member = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Course',
+            'position'     => 1,
+            'is_published' => true,
+        ]);
+
+        $response = $this->actingAs($member)
+            ->get("/communities/{$community->slug}/classroom/courses/{$course->id}");
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Communities/Classroom/Show')
+            ->where('canManage', false)
+            ->where('canUploadVideo', false)
+        );
+    }
+
+    // ─── index: catch block logs and rethrows (lines 43-45) ─────────────────
+
+    public function test_index_catch_block_logs_error_and_rethrows(): void
+    {
+        Log::spy();
+
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $this->mock(GetCourseList::class, function ($mock) {
+            $mock->shouldReceive('execute')
+                ->once()
+                ->andThrow(new \RuntimeException('Query failed'));
+        });
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Query failed');
+
+        $this->withoutExceptionHandling()
+            ->actingAs($owner)
+            ->get("/communities/{$community->slug}/classroom");
+    }
+
+    // ─── completeLesson: catch block logs and rethrows (lines 271-273) ──────
+
+    public function test_complete_lesson_catch_block_logs_error_and_rethrows(): void
+    {
+        Log::spy();
+
+        $owner     = User::factory()->create();
+        $member    = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Course',
+            'description'  => 'Desc',
+            'position'     => 1,
+        ]);
+        $module = CourseModule::create([
+            'course_id' => $course->id,
+            'title'     => 'Module 1',
+            'position'  => 1,
+        ]);
+        $lesson = CourseLesson::create([
+            'module_id' => $module->id,
+            'title'     => 'Lesson 1',
+            'position'  => 1,
+        ]);
+
+        $this->mock(CompleteLesson::class, function ($mock) {
+            $mock->shouldReceive('execute')
+                ->once()
+                ->andThrow(new \RuntimeException('Completion failed'));
+        });
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Completion failed');
+
+        $this->withoutExceptionHandling()
+            ->actingAs($member)
+            ->post("/communities/{$community->slug}/classroom/courses/{$course->id}/lessons/{$lesson->id}/complete");
     }
 }

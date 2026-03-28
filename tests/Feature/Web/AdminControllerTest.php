@@ -1304,4 +1304,328 @@ class AdminControllerTest extends TestCase
 
         $response->assertNotFound();
     }
+
+    // ── updateCreatorPlanPricing ─────────────────────────────────────────────
+
+    public function test_update_creator_plan_pricing_saves_prices(): void
+    {
+        $admin = $this->superAdmin();
+
+        $response = $this->actingAs($admin)->patch('/admin/creator-plan-pricing', [
+            'basic_price' => 299,
+            'pro_price'   => 999,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', 'Creator plan pricing updated.');
+        $this->assertDatabaseHas('settings', ['key' => 'creator_plan_basic_price', 'value' => '299']);
+        $this->assertDatabaseHas('settings', ['key' => 'creator_plan_pro_price', 'value' => '999']);
+    }
+
+    public function test_update_creator_plan_pricing_validates_basic_price_required(): void
+    {
+        $admin = $this->superAdmin();
+
+        $response = $this->actingAs($admin)->patch('/admin/creator-plan-pricing', [
+            'pro_price' => 999,
+        ]);
+
+        $response->assertSessionHasErrors('basic_price');
+    }
+
+    public function test_update_creator_plan_pricing_validates_pro_price_required(): void
+    {
+        $admin = $this->superAdmin();
+
+        $response = $this->actingAs($admin)->patch('/admin/creator-plan-pricing', [
+            'basic_price' => 299,
+        ]);
+
+        $response->assertSessionHasErrors('pro_price');
+    }
+
+    public function test_update_creator_plan_pricing_rejects_negative_values(): void
+    {
+        $admin = $this->superAdmin();
+
+        $response = $this->actingAs($admin)->patch('/admin/creator-plan-pricing', [
+            'basic_price' => -10,
+            'pro_price'   => 999,
+        ]);
+
+        $response->assertSessionHasErrors('basic_price');
+    }
+
+    // ── toggleFeatured ──────────────────────────────────────────────────────
+
+    public function test_toggle_featured_makes_community_featured(): void
+    {
+        $admin = $this->superAdmin();
+        $owner = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'is_featured' => false]);
+
+        $response = $this->actingAs($admin)->post("/admin/communities/{$community->slug}/toggle-featured");
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+        $this->assertDatabaseHas('communities', ['id' => $community->id, 'is_featured' => true]);
+    }
+
+    public function test_toggle_featured_makes_community_unfeatured(): void
+    {
+        $admin = $this->superAdmin();
+        $owner = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'is_featured' => true]);
+
+        $response = $this->actingAs($admin)->post("/admin/communities/{$community->slug}/toggle-featured");
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+        $this->assertDatabaseHas('communities', ['id' => $community->id, 'is_featured' => false]);
+    }
+
+    // ── creatorAnalytics ────────────────────────────────────────────────────
+
+    public function test_creator_analytics_page_renders(): void
+    {
+        $admin = $this->superAdmin();
+
+        $response = $this->actingAs($admin)->get('/admin/creator-analytics');
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page->component('Admin/CreatorAnalytics'));
+    }
+
+    public function test_creator_analytics_accepts_search_and_plan_filters(): void
+    {
+        $admin = $this->superAdmin();
+
+        $response = $this->actingAs($admin)->get('/admin/creator-analytics?search=test&plan=basic');
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page->component('Admin/CreatorAnalytics'));
+    }
+
+    // ── affiliateAnalytics ──────────────────────────────────────────────────
+
+    public function test_affiliate_analytics_page_renders(): void
+    {
+        $admin = $this->superAdmin();
+
+        $response = $this->actingAs($admin)->get('/admin/affiliate-analytics');
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page->component('Admin/AffiliateAnalytics'));
+    }
+
+    public function test_affiliate_analytics_accepts_search_and_status_filters(): void
+    {
+        $admin = $this->superAdmin();
+
+        $response = $this->actingAs($admin)->get('/admin/affiliate-analytics?search=test&status=active');
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page->component('Admin/AffiliateAnalytics'));
+    }
+
+    // ── markPayoutRequestPaid ───────────────────────────────────────────────
+
+    public function test_mark_payout_request_paid_for_owner_type(): void
+    {
+        $admin = $this->superAdmin();
+
+        $user = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $user->id]);
+        $payoutRequest = PayoutRequest::create([
+            'user_id'         => $user->id,
+            'type'            => PayoutRequest::TYPE_OWNER,
+            'community_id'    => $community->id,
+            'amount'          => 500,
+            'eligible_amount' => 500,
+            'status'          => PayoutRequest::STATUS_APPROVED,
+        ]);
+
+        $response = $this->actingAs($admin)->post("/admin/payout-requests/{$payoutRequest->id}/mark-paid");
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+        $this->assertDatabaseHas('payout_requests', [
+            'id'     => $payoutRequest->id,
+            'status' => PayoutRequest::STATUS_PAID,
+        ]);
+    }
+
+    public function test_mark_payout_request_paid_for_affiliate_type_settles_conversions(): void
+    {
+        $admin = $this->superAdmin();
+
+        $affiliateUser = User::factory()->create();
+        $community = Community::factory()->create(['price' => 500]);
+        $affiliate = Affiliate::create([
+            'community_id'   => $community->id,
+            'user_id'        => $affiliateUser->id,
+            'code'           => 'AFF-MARK',
+            'status'         => Affiliate::STATUS_ACTIVE,
+            'total_earned'   => 50,
+            'total_paid'     => 0,
+            'payout_method'  => 'gcash',
+            'payout_details' => '09171234567',
+        ]);
+        $conversion = $this->createAffiliateConversion($affiliate, $community);
+
+        $payoutRequest = PayoutRequest::create([
+            'user_id'         => $affiliateUser->id,
+            'type'            => PayoutRequest::TYPE_AFFILIATE,
+            'community_id'    => $community->id,
+            'affiliate_id'    => $affiliate->id,
+            'amount'          => 50,
+            'eligible_amount' => 50,
+            'status'          => PayoutRequest::STATUS_APPROVED,
+        ]);
+
+        $response = $this->actingAs($admin)->post("/admin/payout-requests/{$payoutRequest->id}/mark-paid");
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+        $this->assertDatabaseHas('payout_requests', [
+            'id'     => $payoutRequest->id,
+            'status' => PayoutRequest::STATUS_PAID,
+        ]);
+    }
+
+    public function test_mark_payout_request_paid_rejects_non_approved(): void
+    {
+        $admin = $this->superAdmin();
+
+        $user = User::factory()->create();
+        $payoutRequest = PayoutRequest::create([
+            'user_id'         => $user->id,
+            'type'            => PayoutRequest::TYPE_OWNER,
+            'amount'          => 500,
+            'eligible_amount' => 500,
+            'status'          => PayoutRequest::STATUS_PENDING,
+        ]);
+
+        $response = $this->actingAs($admin)->post("/admin/payout-requests/{$payoutRequest->id}/mark-paid");
+
+        $response->assertStatus(422);
+    }
+
+    public function test_mark_payout_request_paid_rejects_already_paid(): void
+    {
+        $admin = $this->superAdmin();
+
+        $user = User::factory()->create();
+        $payoutRequest = PayoutRequest::create([
+            'user_id'         => $user->id,
+            'type'            => PayoutRequest::TYPE_OWNER,
+            'amount'          => 500,
+            'eligible_amount' => 500,
+            'status'          => PayoutRequest::STATUS_PAID,
+        ]);
+
+        $response = $this->actingAs($admin)->post("/admin/payout-requests/{$payoutRequest->id}/mark-paid");
+
+        $response->assertStatus(422);
+    }
+
+    // ── globalAnnouncement ──────────────────────────────────────────────────
+
+    public function test_global_announcement_page_renders(): void
+    {
+        $admin = $this->superAdmin();
+
+        $response = $this->actingAs($admin)->get('/admin/announcements');
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page->component('Admin/GlobalAnnouncement'));
+    }
+
+    public function test_send_global_announcement_success(): void
+    {
+        Mail::fake();
+        $admin = $this->superAdmin();
+
+        // Create some active users to receive the announcement
+        User::factory()->count(3)->create(['is_active' => true]);
+
+        $response = $this->actingAs($admin)->post('/admin/announcements', [
+            'subject'  => 'Test Announcement',
+            'message'  => 'This is a test announcement body.',
+            'audience' => 'all',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+    }
+
+    public function test_send_global_announcement_validates_required_fields(): void
+    {
+        $admin = $this->superAdmin();
+
+        $response = $this->actingAs($admin)->post('/admin/announcements', []);
+
+        $response->assertSessionHasErrors(['subject', 'message', 'audience']);
+    }
+
+    public function test_send_global_announcement_validates_audience_values(): void
+    {
+        $admin = $this->superAdmin();
+
+        $response = $this->actingAs($admin)->post('/admin/announcements', [
+            'subject'  => 'Test',
+            'message'  => 'Body',
+            'audience' => 'invalid_audience',
+        ]);
+
+        $response->assertSessionHasErrors('audience');
+    }
+
+    public function test_send_global_announcement_to_affiliates(): void
+    {
+        Mail::fake();
+        $admin = $this->superAdmin();
+
+        $affiliateUser = User::factory()->create();
+        $community = Community::factory()->create();
+        Affiliate::create([
+            'community_id'   => $community->id,
+            'user_id'        => $affiliateUser->id,
+            'code'           => 'AFF-ANN',
+            'status'         => Affiliate::STATUS_ACTIVE,
+            'payout_method'  => 'gcash',
+            'payout_details' => '09171234567',
+        ]);
+
+        $response = $this->actingAs($admin)->post('/admin/announcements', [
+            'subject'  => 'Affiliate News',
+            'message'  => 'News for affiliates.',
+            'audience' => 'affiliates',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+        $this->assertStringContainsString('1 recipients', session('success'));
+    }
+
+    // ── dashboard includes creator plan pricing ─────────────────────────────
+
+    public function test_dashboard_includes_creator_plan_pricing(): void
+    {
+        $this->mockXendit();
+        $admin = $this->superAdmin();
+
+        Setting::set('creator_plan_basic_price', '399');
+        Setting::set('creator_plan_pro_price', '1599');
+
+        $response = $this->actingAs($admin)->get('/admin');
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Admin/Dashboard')
+            ->has('creatorPlanPricing')
+            ->where('creatorPlanPricing.basic_price', 399)
+            ->where('creatorPlanPricing.pro_price', 1599)
+        );
+    }
 }

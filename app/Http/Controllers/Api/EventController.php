@@ -4,18 +4,21 @@ namespace App\Http\Controllers\Api;
 
 use App\Actions\Community\ManageEvent;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreEventRequest;
+use App\Http\Requests\UpdateEventRequest;
 use App\Models\Community;
 use App\Models\CommunityMember;
 use App\Models\Event;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class EventController extends Controller
 {
     public function index(Request $request, Community $community): JsonResponse
     {
-        $user    = $request->user();
+        $user     = $request->user();
         $isMember = $user && CommunityMember::where('community_id', $community->id)->where('user_id', $user->id)->exists();
         $isOwner  = $user && $user->id === $community->owner_id;
 
@@ -30,59 +33,47 @@ class EventController extends Controller
         }
 
         $events = $eventsQuery->get()->map(fn (Event $e) => [
-            'id'              => $e->id,
-            'title'           => $e->title,
-            'description'     => $e->description,
-            'start_at'        => $e->start_at->toISOString(),
-            'end_at'          => $e->end_at?->toISOString(),
-            'timezone'        => $e->timezone,
-            'url'             => $e->url,
-            'cover_image'     => $e->cover_image ? Storage::url($e->cover_image) : null,
-            'visibility'      => $e->visibility,
+            'id'          => $e->id,
+            'title'       => $e->title,
+            'description' => $e->description,
+            'start_at'    => $e->start_at->toISOString(),
+            'end_at'      => $e->end_at?->toISOString(),
+            'timezone'    => $e->timezone,
+            'url'         => $e->url,
+            'cover_image' => $e->cover_image ? Storage::url($e->cover_image) : null,
+            'visibility'  => $e->visibility,
         ]);
 
         return response()->json(['events' => $events, 'year' => $year, 'month' => $month]);
     }
 
-    public function store(Request $request, Community $community, ManageEvent $action): JsonResponse
+    public function store(StoreEventRequest $request, Community $community, ManageEvent $action): JsonResponse
     {
         abort_unless($request->user()?->id === $community->owner_id, 403);
 
-        $data = $request->validate([
-            'title'           => 'required|string|max:255',
-            'description'     => 'nullable|string|max:5000',
-            'start_at'        => 'required|date',
-            'end_at'          => 'nullable|date|after:start_at',
-            'timezone'        => 'required|string|timezone',
-            'url'             => 'nullable|url|max:500',
-            'cover_image'     => 'nullable|image|max:10240',
-            'visibility'      => 'nullable|in:public,free,paid',
-        ]);
+        try {
+            $event = $action->store($community, $request->user(), $request->validated(), $request->file('cover_image'));
 
-        $event = $action->store($community, $request->user(), $data, $request->file('cover_image'));
-
-        return response()->json(['message' => 'Event created.', 'event_id' => $event->id], 201);
+            return response()->json(['message' => 'Event created.', 'event_id' => $event->id], 201);
+        } catch (\Throwable $e) {
+            Log::error('Api\EventController@store failed', ['error' => $e->getMessage(), 'community_id' => $community->id]);
+            return response()->json(['message' => 'Failed to create event.'], 500);
+        }
     }
 
-    public function update(Request $request, Community $community, Event $event, ManageEvent $action): JsonResponse
+    public function update(UpdateEventRequest $request, Community $community, Event $event, ManageEvent $action): JsonResponse
     {
         abort_unless($request->user()?->id === $community->owner_id, 403);
         abort_if($event->community_id !== $community->id, 404);
 
-        $data = $request->validate([
-            'title'           => 'required|string|max:255',
-            'description'     => 'nullable|string|max:5000',
-            'start_at'        => 'required|date',
-            'end_at'          => 'nullable|date|after:start_at',
-            'timezone'        => 'required|string|timezone',
-            'url'             => 'nullable|url|max:500',
-            'cover_image'     => 'nullable|image|max:10240',
-            'visibility'      => 'nullable|in:public,free,paid',
-        ]);
+        try {
+            $action->update($event, $request->validated(), $request->file('cover_image'));
 
-        $action->update($event, $data, $request->file('cover_image'));
-
-        return response()->json(['message' => 'Event updated.']);
+            return response()->json(['message' => 'Event updated.']);
+        } catch (\Throwable $e) {
+            Log::error('Api\EventController@update failed', ['error' => $e->getMessage(), 'event_id' => $event->id]);
+            return response()->json(['message' => 'Failed to update event.'], 500);
+        }
     }
 
     public function destroy(Request $request, Community $community, Event $event, ManageEvent $action): JsonResponse
@@ -90,8 +81,13 @@ class EventController extends Controller
         abort_unless($request->user()?->id === $community->owner_id, 403);
         abort_if($event->community_id !== $community->id, 404);
 
-        $action->destroy($event);
+        try {
+            $action->destroy($event);
 
-        return response()->json(['message' => 'Event deleted.']);
+            return response()->json(['message' => 'Event deleted.']);
+        } catch (\Throwable $e) {
+            Log::error('Api\EventController@destroy failed', ['error' => $e->getMessage(), 'event_id' => $event->id]);
+            return response()->json(['message' => 'Failed to delete event.'], 500);
+        }
     }
 }

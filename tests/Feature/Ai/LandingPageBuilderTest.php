@@ -123,4 +123,30 @@ class LandingPageBuilderTest extends TestCase
         $this->assertStringContainsString('Tech', $instructions);
         $this->assertStringContainsString('Master full-stack development.', $instructions);
     }
+
+    public function test_instructions_show_price_label_when_price_is_positive(): void
+    {
+        $agent = new LandingPageBuilder([
+            'name'     => 'Premium Club',
+            'price'    => 299,
+            'currency' => 'USD',
+        ]);
+
+        $instructions = $agent->instructions();
+
+        $this->assertStringContainsString('USD 299', $instructions);
+        $this->assertStringNotContainsString('Free', $instructions);
+    }
+
+    public function test_instructions_show_free_when_price_is_zero(): void
+    {
+        $agent = new LandingPageBuilder([
+            'name'  => 'Free Club',
+            'price' => 0,
+        ]);
+
+        $instructions = $agent->instructions();
+
+        $this->assertStringContainsString('Free', $instructions);
+    }
 }

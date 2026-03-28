@@ -20,7 +20,7 @@ class ManageLessonTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->action = new ManageLesson();
+        $this->action = app(ManageLesson::class);
     }
 
     public function test_store_creates_lesson_with_position(): void
@@ -65,8 +65,9 @@ class ManageLessonTest extends TestCase
 
     public function test_update_clears_video_path_when_video_url_provided(): void
     {
-        Storage::fake('public');
-        Storage::disk('public')->put('videos/old-video.mp4', 'dummy');
+        $disk = config('filesystems.default');
+        Storage::fake($disk);
+        Storage::disk($disk)->put('videos/old-video.mp4', 'dummy');
 
         $community = Community::factory()->create();
         $course = Course::create(['community_id' => $community->id, 'title' => 'C1', 'position' => 1]);
@@ -85,6 +86,76 @@ class ManageLessonTest extends TestCase
 
         $this->assertEquals('https://youtube.com/watch?v=abc', $updated->video_url);
         $this->assertNull($updated->video_path);
-        Storage::disk('public')->assertMissing('videos/old-video.mp4');
+        Storage::disk($disk)->assertMissing('videos/old-video.mp4');
+    }
+
+    public function test_update_replaces_old_video_path_with_new_one(): void
+    {
+        $disk = config('filesystems.default');
+        Storage::fake($disk);
+        Storage::disk($disk)->put('lesson-videos/old.mp4', 'old content');
+        Storage::disk($disk)->put('lesson-videos/new.mp4', 'new content');
+
+        $community = Community::factory()->create();
+        $course = Course::create(['community_id' => $community->id, 'title' => 'C1', 'position' => 1]);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'M1', 'position' => 1]);
+        $lesson = CourseLesson::create([
+            'module_id'  => $module->id,
+            'title'      => 'Video Lesson',
+            'video_path' => 'lesson-videos/old.mp4',
+            'position'   => 1,
+        ]);
+
+        $updated = $this->action->update($lesson, [
+            'video_path' => 'lesson-videos/new.mp4',
+        ]);
+
+        $this->assertEquals('lesson-videos/new.mp4', $updated->video_path);
+        Storage::disk($disk)->assertMissing('lesson-videos/old.mp4');
+        Storage::disk($disk)->assertExists('lesson-videos/new.mp4');
+    }
+
+    public function test_upload_video_stores_with_private_visibility(): void
+    {
+        $disk = config('filesystems.default');
+        Storage::fake($disk);
+
+        $video = \Illuminate\Http\UploadedFile::fake()->create('video.mp4', 1024, 'video/mp4');
+
+        $path = $this->action->uploadVideo($video);
+
+        $this->assertStringStartsWith('lesson-videos/', $path);
+        Storage::disk($disk)->assertExists($path);
+    }
+
+    public function test_upload_image_stores_and_returns_url(): void
+    {
+        $disk = config('filesystems.default');
+        Storage::fake($disk);
+
+        $image = \Illuminate\Http\UploadedFile::fake()->image('lesson.jpg');
+
+        $url = $this->action->uploadImage($image);
+
+        $this->assertNotEmpty($url);
+        $files = Storage::disk($disk)->allFiles('lesson-images');
+        $this->assertCount(1, $files);
+    }
+
+    public function test_reorder_updates_lesson_positions(): void
+    {
+        $community = Community::factory()->create();
+        $course = Course::create(['community_id' => $community->id, 'title' => 'C1', 'position' => 1]);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'M1', 'position' => 1]);
+        $l1 = CourseLesson::create(['module_id' => $module->id, 'title' => 'L1', 'position' => 1]);
+        $l2 = CourseLesson::create(['module_id' => $module->id, 'title' => 'L2', 'position' => 2]);
+        $l3 = CourseLesson::create(['module_id' => $module->id, 'title' => 'L3', 'position' => 3]);
+
+        // Reverse order
+        $this->action->reorder($module, [$l3->id, $l2->id, $l1->id]);
+
+        $this->assertEquals(0, $l3->fresh()->position);
+        $this->assertEquals(1, $l2->fresh()->position);
+        $this->assertEquals(2, $l1->fresh()->position);
     }
 }

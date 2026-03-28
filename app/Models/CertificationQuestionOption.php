@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CertificationQuestionOption extends Model
 {
+    use HasFactory;
+
     protected $fillable = ['question_id', 'label', 'is_correct'];
 
     protected function casts(): array

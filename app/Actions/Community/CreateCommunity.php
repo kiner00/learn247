@@ -7,6 +7,7 @@ use App\Models\Community;
 use App\Models\CommunityMember;
 use App\Models\User;
 use App\Services\StorageService;
+use App\Support\AffiliateCodeGenerator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 
@@ -48,14 +49,10 @@ class CreateCommunity
         ]);
 
         // Owner gets an affiliate/invite code automatically
-        do {
-            $code = Str::random(12);
-        } while (Affiliate::where('code', $code)->exists());
-
         Affiliate::create([
             'community_id' => $community->id,
             'user_id'      => $user->id,
-            'code'         => $code,
+            'code'         => AffiliateCodeGenerator::generate(),
             'status'       => Affiliate::STATUS_ACTIVE,
         ]);
 

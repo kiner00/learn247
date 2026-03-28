@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Web;
 
+use App\Actions\Classroom\ManageQuiz;
+use App\Actions\Classroom\SubmitQuiz;
 use App\Models\Community;
 use App\Models\CommunityMember;
 use App\Models\Course;
@@ -12,6 +14,7 @@ use App\Models\QuizQuestion;
 use App\Models\QuizQuestionOption;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Mockery;
 use Tests\TestCase;
 
 class QuizControllerTest extends TestCase
@@ -323,5 +326,160 @@ class QuizControllerTest extends TestCase
             ->post("/communities/{$community->slug}/classroom/courses/{$course->id}/lessons/{$lesson->id}/quiz", $this->quizPayload());
 
         $response->assertRedirect("/communities/{$community->slug}/about");
+    }
+
+    // ─── error branch: store ─────────────────────────────────────────────────
+
+    public function test_store_returns_error_session_when_action_throws(): void
+    {
+        $owner = User::factory()->create();
+        [$community, $course, $lesson] = $this->createCommunityWithLesson($owner);
+
+        $mock = Mockery::mock(ManageQuiz::class);
+        $mock->shouldReceive('store')->once()->andThrow(new \RuntimeException('db error'));
+        $this->app->instance(ManageQuiz::class, $mock);
+
+        $response = $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/classroom/courses/{$course->id}/lessons/{$lesson->id}/quiz", $this->quizPayload());
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error', 'Failed to save quiz.');
+    }
+
+    // ─── error branch: submit ────────────────────────────────────────────────
+
+    public function test_submit_returns_error_session_when_action_throws(): void
+    {
+        $owner  = User::factory()->create();
+        $member = User::factory()->create();
+        [$community, $course, $lesson] = $this->createCommunityWithLesson($owner);
+
+        CommunityMember::factory()->create([
+            'community_id' => $community->id,
+            'user_id'      => $member->id,
+        ]);
+
+        $quiz = Quiz::create([
+            'lesson_id'  => $lesson->id,
+            'title'      => 'Failing Quiz',
+            'pass_score' => 50,
+        ]);
+
+        $question = QuizQuestion::create([
+            'quiz_id'  => $quiz->id,
+            'question' => 'What is 1+1?',
+            'type'     => 'multiple_choice',
+            'position' => 0,
+        ]);
+
+        $option = QuizQuestionOption::create([
+            'question_id' => $question->id,
+            'label'       => '2',
+            'is_correct'  => true,
+        ]);
+
+        $mock = Mockery::mock(SubmitQuiz::class);
+        $mock->shouldReceive('execute')->once()->andThrow(new \RuntimeException('db error'));
+        $this->app->instance(SubmitQuiz::class, $mock);
+
+        $response = $this->actingAs($member)
+            ->post("/communities/{$community->slug}/classroom/courses/{$course->id}/lessons/{$lesson->id}/quiz/{$quiz->id}/submit", [
+                'answers' => [$question->id => $option->id],
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error', 'Failed to submit quiz.');
+    }
+
+    // ─── error branch: destroy ───────────────────────────────────────────────
+
+    public function test_destroy_returns_error_session_when_action_throws(): void
+    {
+        $owner = User::factory()->create();
+        [$community, $course, $lesson] = $this->createCommunityWithLesson($owner);
+
+        $quiz = Quiz::create([
+            'lesson_id'  => $lesson->id,
+            'title'      => 'Failing Quiz',
+            'pass_score' => 50,
+        ]);
+
+        $mock = Mockery::mock(ManageQuiz::class);
+        $mock->shouldReceive('destroy')->once()->andThrow(new \RuntimeException('db error'));
+        $this->app->instance(ManageQuiz::class, $mock);
+
+        $response = $this->actingAs($owner)
+            ->delete("/communities/{$community->slug}/classroom/courses/{$course->id}/lessons/{$lesson->id}/quiz/{$quiz->id}");
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error', 'Failed to delete quiz.');
+    }
+
+    // ─── guest cannot submit quiz ────────────────────────────────────────────
+
+    public function test_guest_cannot_submit_quiz(): void
+    {
+        $owner = User::factory()->create();
+        [$community, $course, $lesson] = $this->createCommunityWithLesson($owner);
+
+        $quiz = Quiz::create([
+            'lesson_id'  => $lesson->id,
+            'title'      => 'Protected Quiz',
+            'pass_score' => 50,
+        ]);
+
+        $response = $this->post(
+            "/communities/{$community->slug}/classroom/courses/{$course->id}/lessons/{$lesson->id}/quiz/{$quiz->id}/submit",
+            ['answers' => [1 => 1]]
+        );
+
+        $response->assertRedirect('/login');
+    }
+
+    // ─── guest cannot delete quiz ────────────────────────────────────────────
+
+    public function test_guest_cannot_delete_quiz(): void
+    {
+        $owner = User::factory()->create();
+        [$community, $course, $lesson] = $this->createCommunityWithLesson($owner);
+
+        $quiz = Quiz::create([
+            'lesson_id'  => $lesson->id,
+            'title'      => 'Protected Quiz',
+            'pass_score' => 50,
+        ]);
+
+        $response = $this->delete(
+            "/communities/{$community->slug}/classroom/courses/{$course->id}/lessons/{$lesson->id}/quiz/{$quiz->id}"
+        );
+
+        $response->assertRedirect('/login');
+    }
+
+    // ─── submit validates answers must be integers ───────────────────────────
+
+    public function test_submit_validates_answers_must_be_integers(): void
+    {
+        $owner  = User::factory()->create();
+        $member = User::factory()->create();
+        [$community, $course, $lesson] = $this->createCommunityWithLesson($owner);
+
+        CommunityMember::factory()->create([
+            'community_id' => $community->id,
+            'user_id'      => $member->id,
+        ]);
+
+        $quiz = Quiz::create([
+            'lesson_id'  => $lesson->id,
+            'title'      => 'Validate Quiz',
+            'pass_score' => 50,
+        ]);
+
+        $response = $this->actingAs($member)
+            ->post("/communities/{$community->slug}/classroom/courses/{$course->id}/lessons/{$lesson->id}/quiz/{$quiz->id}/submit", [
+                'answers' => ['not_an_integer'],
+            ]);
+
+        $response->assertSessionHasErrors('answers.0');
     }
 }

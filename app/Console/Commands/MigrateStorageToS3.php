@@ -122,36 +122,41 @@ class MigrateStorageToS3 extends Command
                 continue;
             }
 
+            $appUrl = rtrim(config('app.url'), '/');
+
             foreach ($config['columns'] as $column) {
                 if (!\Schema::hasColumn($table, $column)) {
                     continue;
                 }
 
-                // Update /storage/xxx paths to S3 URLs
-                $count = \DB::table($table)
-                    ->where($column, 'LIKE', '/storage/%')
-                    ->update([
-                        $column => \DB::raw("CONCAT('{$s3BaseUrl}/', SUBSTRING({$column}, 10))")
-                    ]);
-
-                if ($count > 0) {
-                    $this->line("  {$table}.{$column}: updated {$count} rows (/storage/... → S3)");
-                    $totalUpdated += $count;
-                }
-
-                // Update asset() style URLs: https://domain/storage/xxx
-                $appUrl = rtrim(config('app.url'), '/');
                 $oldPrefix = $appUrl . '/storage/';
 
-                $count2 = \DB::table($table)
-                    ->where($column, 'LIKE', $oldPrefix . '%')
-                    ->update([
-                        $column => \DB::raw("CONCAT('{$s3BaseUrl}/', SUBSTRING({$column}, " . (strlen($oldPrefix) + 1) . "))")
-                    ]);
+                // Update /storage/xxx and asset-style URLs to S3 URLs
+                $rows = \DB::table($table)
+                    ->where(function ($q) use ($column, $oldPrefix) {
+                        $q->where($column, 'LIKE', '/storage/%')
+                          ->orWhere($column, 'LIKE', $oldPrefix . '%');
+                    })
+                    ->get(['id', $column]);
 
-                if ($count2 > 0) {
-                    $this->line("  {$table}.{$column}: updated {$count2} rows (asset URL → S3)");
-                    $totalUpdated += $count2;
+                $count = 0;
+                foreach ($rows as $row) {
+                    $value = $row->{$column};
+                    if (str_starts_with($value, '/storage/')) {
+                        $newValue = $s3BaseUrl . '/' . substr($value, 9);
+                    } elseif (str_starts_with($value, $oldPrefix)) {
+                        $newValue = $s3BaseUrl . '/' . substr($value, strlen($oldPrefix));
+                    } else {
+                        continue;
+                    }
+
+                    \DB::table($table)->where('id', $row->id)->update([$column => $newValue]);
+                    $count++;
+                }
+
+                if ($count > 0) {
+                    $this->line("  {$table}.{$column}: updated {$count} rows → S3");
+                    $totalUpdated += $count;
                 }
             }
 

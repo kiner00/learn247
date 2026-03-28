@@ -7,6 +7,7 @@ use App\Models\AffiliateConversion;
 use App\Models\Badge;
 use App\Models\Certificate;
 use App\Models\Community;
+use App\Models\CourseCertification;
 use App\Models\CommunityMember;
 use App\Models\Course;
 use App\Models\CourseLesson;
@@ -31,7 +32,7 @@ class BadgeServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new BadgeService();
+        $this->service = app(BadgeService::class);
     }
 
     private function createBadge(array $attrs): Badge
@@ -519,13 +520,19 @@ class BadgeServiceTest extends TestCase
     {
         $owner     = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $course    = Course::create(['community_id' => $community->id, 'title' => 'C1']);
+
+        $certification = CourseCertification::create([
+            'community_id' => $community->id,
+            'title'        => 'Test Cert',
+            'cert_title'   => 'Test Certificate',
+            'pass_score'   => 70,
+        ]);
 
         Certificate::create([
-            'user_id'   => User::factory()->create()->id,
-            'course_id' => $course->id,
-            'uuid'      => fake()->uuid(),
-            'issued_at' => now(),
+            'user_id'          => User::factory()->create()->id,
+            'certification_id' => $certification->id,
+            'uuid'             => fake()->uuid(),
+            'issued_at'        => now(),
         ]);
 
         $this->createBadge([

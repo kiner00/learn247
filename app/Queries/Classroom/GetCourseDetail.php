@@ -2,7 +2,6 @@
 
 namespace App\Queries\Classroom;
 
-use App\Models\Certificate;
 use App\Models\Comment;
 use App\Models\Course;
 use App\Models\CourseEnrollment;
@@ -61,12 +60,10 @@ class GetCourseDetail
             ->groupBy('lesson_id')
             ->map(fn ($comments) => $comments->values());
 
-        $enrollment = $userId
-            ? CourseEnrollment::where('user_id', $userId)
-                ->where('course_id', $course->id)
-                ->orderByDesc('id')
-                ->first()
-            : null;
+        $enrollment = CourseEnrollment::where('user_id', $userId)
+            ->where('course_id', $course->id)
+            ->orderByDesc('id')
+            ->first();
 
         return [
             'completed_ids'   => $completedIds,

@@ -2,9 +2,14 @@
 
 namespace Tests\Feature\Web;
 
+use App\Actions\Community\ChangeMemberRole;
+use App\Actions\Community\ExtendMemberAccess;
+use App\Actions\Community\RemoveMember;
+use App\Actions\Community\ToggleMemberBlock;
 use App\Models\Community;
 use App\Models\CommunityMember;
 use App\Models\User;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -172,5 +177,391 @@ class CommunityMemberControllerTest extends TestCase
         $this->actingAs($owner)
             ->patch(route('communities.members.role', [$community, $member]), [])
             ->assertSessionHasErrors('role');
+    }
+
+    // ── toggleBlock ──────────────────────────────────────────────────────────
+
+    public function test_owner_can_block_member(): void
+    {
+        $owner = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $member = User::factory()->create();
+
+        CommunityMember::factory()->create([
+            'community_id' => $community->id,
+            'user_id'      => $member->id,
+            'role'         => CommunityMember::ROLE_MEMBER,
+            'is_blocked'   => false,
+        ]);
+
+        $this->actingAs($owner)
+            ->patch(route('communities.members.block', [$community, $member]))
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('community_members', [
+            'community_id' => $community->id,
+            'user_id'      => $member->id,
+            'is_blocked'   => true,
+        ]);
+    }
+
+    public function test_owner_can_unblock_member(): void
+    {
+        $owner = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $member = User::factory()->create();
+
+        CommunityMember::factory()->create([
+            'community_id' => $community->id,
+            'user_id'      => $member->id,
+            'role'         => CommunityMember::ROLE_MEMBER,
+            'is_blocked'   => true,
+        ]);
+
+        $this->actingAs($owner)
+            ->patch(route('communities.members.block', [$community, $member]))
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('community_members', [
+            'community_id' => $community->id,
+            'user_id'      => $member->id,
+            'is_blocked'   => false,
+        ]);
+    }
+
+    public function test_admin_can_toggle_block(): void
+    {
+        $owner = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $admin = User::factory()->create();
+        $member = User::factory()->create();
+
+        CommunityMember::factory()->admin()->create([
+            'community_id' => $community->id,
+            'user_id'      => $admin->id,
+        ]);
+        CommunityMember::factory()->create([
+            'community_id' => $community->id,
+            'user_id'      => $member->id,
+            'is_blocked'   => false,
+        ]);
+
+        $this->actingAs($admin)
+            ->patch(route('communities.members.block', [$community, $member]))
+            ->assertRedirect()
+            ->assertSessionHas('success');
+    }
+
+    public function test_regular_member_cannot_toggle_block(): void
+    {
+        $owner = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $actor = User::factory()->create();
+        $target = User::factory()->create();
+
+        CommunityMember::factory()->create([
+            'community_id' => $community->id,
+            'user_id'      => $actor->id,
+            'role'         => CommunityMember::ROLE_MEMBER,
+        ]);
+        CommunityMember::factory()->create([
+            'community_id' => $community->id,
+            'user_id'      => $target->id,
+        ]);
+
+        $this->actingAs($actor)
+            ->patch(route('communities.members.block', [$community, $target]))
+            ->assertForbidden();
+    }
+
+    public function test_cannot_block_community_owner(): void
+    {
+        $owner = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $admin = User::factory()->create();
+
+        CommunityMember::factory()->admin()->create([
+            'community_id' => $community->id,
+            'user_id'      => $admin->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->patch(route('communities.members.block', [$community, $owner]))
+            ->assertForbidden();
+    }
+
+    // ── extendAccess ─────────────────────────────────────────────────────────
+
+    public function test_owner_can_extend_member_access(): void
+    {
+        $owner = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $member = User::factory()->create();
+
+        CommunityMember::factory()->create([
+            'community_id'  => $community->id,
+            'user_id'       => $member->id,
+            'membership_type' => CommunityMember::MEMBERSHIP_FREE,
+            'expires_at'    => now()->subDay(),
+        ]);
+
+        $this->actingAs($owner)
+            ->patch(route('communities.members.extend-access', $community), [
+                'user_ids' => [$member->id],
+                'months'   => 3,
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+    }
+
+    public function test_non_owner_cannot_extend_access(): void
+    {
+        $owner = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $admin = User::factory()->create();
+        $member = User::factory()->create();
+
+        CommunityMember::factory()->admin()->create([
+            'community_id' => $community->id,
+            'user_id'      => $admin->id,
+        ]);
+        CommunityMember::factory()->create([
+            'community_id'  => $community->id,
+            'user_id'       => $member->id,
+            'membership_type' => CommunityMember::MEMBERSHIP_FREE,
+        ]);
+
+        $this->actingAs($admin)
+            ->patch(route('communities.members.extend-access', $community), [
+                'user_ids' => [$member->id],
+                'months'   => 3,
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_extend_access_validates_required_fields(): void
+    {
+        $owner = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $this->actingAs($owner)
+            ->patch(route('communities.members.extend-access', $community), [])
+            ->assertSessionHasErrors(['user_ids', 'months']);
+    }
+
+    public function test_extend_access_validates_months_min(): void
+    {
+        $owner = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $this->actingAs($owner)
+            ->patch(route('communities.members.extend-access', $community), [
+                'user_ids' => [1],
+                'months'   => 0,
+            ])
+            ->assertSessionHasErrors('months');
+    }
+
+    public function test_extend_access_validates_months_max(): void
+    {
+        $owner = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $this->actingAs($owner)
+            ->patch(route('communities.members.extend-access', $community), [
+                'user_ids' => [1],
+                'months'   => 121,
+            ])
+            ->assertSessionHasErrors('months');
+    }
+
+    public function test_extend_access_singular_message_for_one_member_one_month(): void
+    {
+        $owner = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $member = User::factory()->create();
+
+        CommunityMember::factory()->create([
+            'community_id'    => $community->id,
+            'user_id'         => $member->id,
+            'membership_type' => CommunityMember::MEMBERSHIP_FREE,
+            'expires_at'      => now()->subDay(),
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->patch(route('communities.members.extend-access', $community), [
+                'user_ids' => [$member->id],
+                'months'   => 1,
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', 'Extended access for 1 member by 1 month.');
+    }
+
+    public function test_moderator_can_remove_member(): void
+    {
+        $owner = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $moderator = User::factory()->create();
+        $member = User::factory()->create();
+
+        CommunityMember::factory()->moderator()->create([
+            'community_id' => $community->id,
+            'user_id'      => $moderator->id,
+        ]);
+        CommunityMember::factory()->create([
+            'community_id' => $community->id,
+            'user_id'      => $member->id,
+        ]);
+
+        $this->actingAs($moderator)
+            ->delete(route('communities.members.destroy', [$community, $member]))
+            ->assertRedirect()
+            ->assertSessionHas('success', 'Member removed.');
+    }
+
+    // ── destroy error catch path ─────────────────────────────────────────────
+
+    public function test_destroy_catches_generic_exception_and_returns_error(): void
+    {
+        $owner = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $member = User::factory()->create();
+
+        CommunityMember::factory()->admin()->create([
+            'community_id' => $community->id,
+            'user_id'      => $owner->id,
+        ]);
+        CommunityMember::factory()->create([
+            'community_id' => $community->id,
+            'user_id'      => $member->id,
+        ]);
+
+        // Mock the action to throw a generic exception (not AuthorizationException)
+        $this->mock(RemoveMember::class, function ($mock) {
+            $mock->shouldReceive('execute')
+                ->once()
+                ->andThrow(new \RuntimeException('DB connection lost'));
+        });
+
+        $this->actingAs($owner)
+            ->delete(route('communities.members.destroy', [$community, $member]))
+            ->assertRedirect()
+            ->assertSessionHas('error', 'Failed to remove member.');
+    }
+
+    // ── toggleBlock error catch path ─────────────────────────────────────────
+
+    public function test_toggle_block_catches_generic_exception_and_returns_error(): void
+    {
+        $owner = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $member = User::factory()->create();
+
+        CommunityMember::factory()->create([
+            'community_id' => $community->id,
+            'user_id'      => $member->id,
+            'is_blocked'   => false,
+        ]);
+
+        $this->mock(ToggleMemberBlock::class, function ($mock) {
+            $mock->shouldReceive('execute')
+                ->once()
+                ->andThrow(new \RuntimeException('Unexpected error'));
+        });
+
+        $this->actingAs($owner)
+            ->patch(route('communities.members.block', [$community, $member]))
+            ->assertRedirect()
+            ->assertSessionHas('error', 'Failed to toggle block status.');
+    }
+
+    // ── extendAccess error catch path ────────────────────────────────────────
+
+    public function test_extend_access_catches_generic_exception_and_returns_error(): void
+    {
+        $owner = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $member = User::factory()->create();
+
+        CommunityMember::factory()->create([
+            'community_id'    => $community->id,
+            'user_id'         => $member->id,
+            'membership_type' => CommunityMember::MEMBERSHIP_FREE,
+        ]);
+
+        $this->mock(ExtendMemberAccess::class, function ($mock) {
+            $mock->shouldReceive('execute')
+                ->once()
+                ->andThrow(new \RuntimeException('DB timeout'));
+        });
+
+        $this->actingAs($owner)
+            ->patch(route('communities.members.extend-access', $community), [
+                'user_ids' => [$member->id],
+                'months'   => 3,
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('error', 'Failed to extend access.');
+    }
+
+    // ── changeRole error catch path ──────────────────────────────────────────
+
+    public function test_change_role_catches_generic_exception_and_returns_error(): void
+    {
+        $owner = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $member = User::factory()->create();
+
+        CommunityMember::factory()->create([
+            'community_id' => $community->id,
+            'user_id'      => $member->id,
+            'role'         => CommunityMember::ROLE_MEMBER,
+        ]);
+
+        $this->mock(ChangeMemberRole::class, function ($mock) {
+            $mock->shouldReceive('execute')
+                ->once()
+                ->andThrow(new \RuntimeException('Permission check failed'));
+        });
+
+        $this->actingAs($owner)
+            ->patch(route('communities.members.role', [$community, $member]), ['role' => 'admin'])
+            ->assertRedirect()
+            ->assertSessionHas('error', 'Failed to change role.');
+    }
+
+    // ── extendAccess plural message ──────────────────────────────────────────
+
+    public function test_extend_access_plural_message_for_multiple_members(): void
+    {
+        $owner = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $member1 = User::factory()->create();
+        $member2 = User::factory()->create();
+
+        CommunityMember::factory()->create([
+            'community_id'    => $community->id,
+            'user_id'         => $member1->id,
+            'membership_type' => CommunityMember::MEMBERSHIP_FREE,
+            'expires_at'      => now()->subDay(),
+        ]);
+        CommunityMember::factory()->create([
+            'community_id'    => $community->id,
+            'user_id'         => $member2->id,
+            'membership_type' => CommunityMember::MEMBERSHIP_FREE,
+            'expires_at'      => now()->subDay(),
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->patch(route('communities.members.extend-access', $community), [
+                'user_ids' => [$member1->id, $member2->id],
+                'months'   => 3,
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', 'Extended access for 2 members by 3 months.');
     }
 }

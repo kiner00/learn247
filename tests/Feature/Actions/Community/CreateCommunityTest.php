@@ -20,7 +20,7 @@ class CreateCommunityTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->action = new CreateCommunity();
+        $this->action = app(CreateCommunity::class);
     }
 
     public function test_creates_community_with_provided_slug(): void
