@@ -197,7 +197,8 @@ class CommunityController extends Controller
             ],
         ]);
 
-        // Capture old value before the update so we can diff
+        // Capture old values before the update so we can diff
+        $oldSubdomain    = $community->subdomain;
         $oldCustomDomain = $community->custom_domain;
 
         $oldTelegramToken = $community->telegram_bot_token;
@@ -226,8 +227,23 @@ class CommunityController extends Controller
             $telegram->deleteWebhook($oldTelegramToken);
         }
 
+        // Sync subdomain with Ploi (only when it actually changed)
+        $freshCommunity  = $community->fresh();
+        $newSubdomain    = $freshCommunity->subdomain;
+        $appHost         = parse_url(config('app.url'), PHP_URL_HOST) ?? 'curzzo.com';
+        $baseDomain      = explode(':', $appHost)[0];
+
+        if ($oldSubdomain !== $newSubdomain) {
+            if ($oldSubdomain) {
+                \App\Jobs\RemoveCustomDomain::dispatch("{$oldSubdomain}.{$baseDomain}");
+            }
+            if ($newSubdomain) {
+                \App\Jobs\ProvisionCustomDomain::dispatch("{$newSubdomain}.{$baseDomain}");
+            }
+        }
+
         // Sync custom domain with Ploi (only when it actually changed)
-        $newCustomDomain = $community->fresh()->custom_domain;
+        $newCustomDomain = $freshCommunity->custom_domain;
 
         if ($oldCustomDomain !== $newCustomDomain) {
             if ($oldCustomDomain) {

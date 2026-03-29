@@ -1669,6 +1669,95 @@ class CommunityControllerTest extends TestCase
         Bus::assertDispatched(\App\Jobs\ProvisionCustomDomain::class);
     }
 
+    // ─── update: subdomain change dispatches jobs ─────────────────────────────
+
+    public function test_update_dispatches_provision_when_subdomain_set(): void
+    {
+        Bus::fake([
+            \App\Jobs\RemoveCustomDomain::class,
+            \App\Jobs\ProvisionCustomDomain::class,
+        ]);
+
+        $owner = User::factory()->create();
+        CreatorSubscription::create([
+            'user_id'    => $owner->id,
+            'plan'       => CreatorSubscription::PLAN_PRO,
+            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'expires_at' => now()->addYear(),
+        ]);
+
+        $community = Community::factory()->create([
+            'owner_id'  => $owner->id,
+            'subdomain' => null,
+        ]);
+
+        $this->actingAs($owner)->patch("/communities/{$community->slug}", [
+            'name'      => $community->name,
+            'subdomain' => 'testshop',
+        ]);
+
+        Bus::assertNotDispatched(\App\Jobs\RemoveCustomDomain::class);
+        Bus::assertDispatched(\App\Jobs\ProvisionCustomDomain::class, fn ($job) => str_contains($job->domain, 'testshop.'));
+    }
+
+    public function test_update_dispatches_remove_and_provision_when_subdomain_changes(): void
+    {
+        Bus::fake([
+            \App\Jobs\RemoveCustomDomain::class,
+            \App\Jobs\ProvisionCustomDomain::class,
+        ]);
+
+        $owner = User::factory()->create();
+        CreatorSubscription::create([
+            'user_id'    => $owner->id,
+            'plan'       => CreatorSubscription::PLAN_PRO,
+            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'expires_at' => now()->addYear(),
+        ]);
+
+        $community = Community::factory()->create([
+            'owner_id'  => $owner->id,
+            'subdomain' => 'oldshop',
+        ]);
+
+        $this->actingAs($owner)->patch("/communities/{$community->slug}", [
+            'name'      => $community->name,
+            'subdomain' => 'newshop',
+        ]);
+
+        Bus::assertDispatched(\App\Jobs\RemoveCustomDomain::class, fn ($job) => str_contains($job->domain, 'oldshop.'));
+        Bus::assertDispatched(\App\Jobs\ProvisionCustomDomain::class, fn ($job) => str_contains($job->domain, 'newshop.'));
+    }
+
+    public function test_update_dispatches_remove_when_subdomain_cleared(): void
+    {
+        Bus::fake([
+            \App\Jobs\RemoveCustomDomain::class,
+            \App\Jobs\ProvisionCustomDomain::class,
+        ]);
+
+        $owner = User::factory()->create();
+        CreatorSubscription::create([
+            'user_id'    => $owner->id,
+            'plan'       => CreatorSubscription::PLAN_PRO,
+            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'expires_at' => now()->addYear(),
+        ]);
+
+        $community = Community::factory()->create([
+            'owner_id'  => $owner->id,
+            'subdomain' => 'oldshop',
+        ]);
+
+        $this->actingAs($owner)->patch("/communities/{$community->slug}", [
+            'name'      => $community->name,
+            'subdomain' => null,
+        ]);
+
+        Bus::assertDispatched(\App\Jobs\RemoveCustomDomain::class, fn ($job) => str_contains($job->domain, 'oldshop.'));
+        Bus::assertNotDispatched(\App\Jobs\ProvisionCustomDomain::class);
+    }
+
     // ─── announce: success path with plan (lines 330-337) ────────────────────
 
     public function test_announce_succeeds_with_basic_plan(): void
