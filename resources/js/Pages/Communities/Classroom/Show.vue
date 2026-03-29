@@ -408,14 +408,31 @@
                         </span>
                     </div>
 
-                    <!-- Uploaded video (served via signed URL) -->
+                    <!-- Uploaded video (served via signed URL or HLS) -->
                     <div v-if="selectedLesson.video_path" class="bg-black">
                         <div v-if="videoStreamLoading" class="flex items-center justify-center h-64 text-white text-sm">
                             Loading video…
                         </div>
+
+                        <!-- Transcoding in progress -->
+                        <div v-else-if="isTranscoding" class="flex flex-col items-center justify-center h-64 text-white text-sm gap-3">
+                            <svg class="w-8 h-8 animate-spin text-indigo-400" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                            </svg>
+                            <div class="text-center">
+                                <p class="font-medium">Transcoding video…</p>
+                                <p class="text-xs text-gray-400 mt-1">{{ transcodePercent }}% complete</p>
+                                <div class="w-48 bg-gray-700 rounded-full h-1.5 mt-2">
+                                    <div class="bg-indigo-500 h-1.5 rounded-full transition-all duration-300" :style="{ width: transcodePercent + '%' }" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Video player (HLS or raw fallback) -->
                         <video
                             v-else-if="videoStreamUrl"
-                            :src="videoStreamUrl"
+                            ref="videoPlayerRef"
                             controls
                             class="w-full max-h-120 object-contain"
                             controlsList="nodownload nofullscreen"
@@ -795,10 +812,11 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue';
 import { Link, useForm, usePage, router } from '@inertiajs/vue3';
 import draggable from 'vuedraggable';
 import axios from 'axios';
+import Hls from 'hls.js';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import CommunityTabs from '@/Components/CommunityTabs.vue';
 import LessonEditor from '@/Components/LessonEditor.vue';
@@ -875,12 +893,43 @@ function selectLesson(lesson) {
     fetchVideoStreamUrl(lesson);
 }
 
-// ─── Secure video streaming via signed URLs ─────────────────────────────────
-const videoStreamUrl    = ref(null);
+// ─── Secure video streaming via signed URLs (HLS + raw fallback) ─────────────
+const videoStreamUrl     = ref(null);
+const videoStreamType    = ref(null); // 'hls' | 'raw'
 const videoStreamLoading = ref(false);
+const videoPlayerRef     = ref(null);
+const transcodePercent   = ref(0);
+const transcodeStatus    = ref(null);
+let hlsInstance          = null;
+let transcodePoller      = null;
+
+const isTranscoding = computed(() =>
+    selectedLesson.value?.video_path &&
+    (transcodeStatus.value === 'pending' || transcodeStatus.value === 'processing')
+);
+
+function destroyHls() {
+    if (hlsInstance) {
+        hlsInstance.destroy();
+        hlsInstance = null;
+    }
+}
+
+function stopTranscodePolling() {
+    if (transcodePoller) {
+        clearInterval(transcodePoller);
+        transcodePoller = null;
+    }
+}
 
 async function fetchVideoStreamUrl(lesson) {
-    videoStreamUrl.value = null;
+    videoStreamUrl.value  = null;
+    videoStreamType.value = null;
+    transcodeStatus.value = null;
+    transcodePercent.value = 0;
+    destroyHls();
+    stopTranscodePolling();
+
     if (!lesson?.video_path) return;
 
     videoStreamLoading.value = true;
@@ -888,13 +937,81 @@ async function fetchVideoStreamUrl(lesson) {
         const { data } = await axios.get(
             `/communities/${props.community.slug}/classroom/courses/${props.course.id}/lessons/${lesson.id}/stream`
         );
-        videoStreamUrl.value = data.url;
+
+        transcodeStatus.value = data.transcode_status;
+
+        // If transcoding is still in progress, poll for status
+        if (data.transcode_status === 'pending' || data.transcode_status === 'processing') {
+            videoStreamLoading.value = false;
+            startTranscodePolling(lesson);
+            return;
+        }
+
+        videoStreamUrl.value  = data.url;
+        videoStreamType.value = data.type || 'raw';
+
+        // Attach HLS.js or set src after DOM update
+        await nextTick();
+        attachVideoSource();
     } catch {
         videoStreamUrl.value = null;
     } finally {
         videoStreamLoading.value = false;
     }
 }
+
+function attachVideoSource() {
+    const videoEl = videoPlayerRef.value;
+    if (!videoEl || !videoStreamUrl.value) return;
+
+    if (videoStreamType.value === 'hls' && Hls.isSupported()) {
+        destroyHls();
+        hlsInstance = new Hls();
+        hlsInstance.loadSource(videoStreamUrl.value);
+        hlsInstance.attachMedia(videoEl);
+    } else if (videoStreamType.value === 'hls' && videoEl.canPlayType('application/vnd.apple.mpegurl')) {
+        // Safari has native HLS support
+        videoEl.src = videoStreamUrl.value;
+    } else {
+        // Raw video fallback
+        videoEl.src = videoStreamUrl.value;
+    }
+}
+
+function startTranscodePolling(lesson) {
+    stopTranscodePolling();
+
+    const poll = async () => {
+        try {
+            const { data } = await axios.get(
+                `/communities/${props.community.slug}/classroom/courses/${props.course.id}/lessons/${lesson.id}/transcode-status`
+            );
+            transcodeStatus.value  = data.status;
+            transcodePercent.value = data.percent;
+
+            if (data.status === 'completed') {
+                stopTranscodePolling();
+                // Reload to get the HLS stream URL
+                fetchVideoStreamUrl(lesson);
+            } else if (data.status === 'failed') {
+                stopTranscodePolling();
+                // Fallback: try loading raw video
+                fetchVideoStreamUrl(lesson);
+            }
+        } catch {
+            // Silently retry on next interval
+        }
+    };
+
+    poll(); // Immediate first check
+    transcodePoller = setInterval(poll, 3000);
+}
+
+// Clean up on unmount
+onBeforeUnmount(() => {
+    destroyHls();
+    stopTranscodePolling();
+});
 
 // Fetch signed URL for the initially selected lesson
 if (selectedLesson.value?.video_path) {
@@ -1066,12 +1183,18 @@ async function handleVideoUpload(e) {
             },
         });
 
-        // Step 3: Save the S3 key on the lesson
+        // Step 3: Save the S3 key on the lesson (triggers transcoding on backend)
         const lesson = selectedLesson.value;
         await axios.post(
             `/communities/${props.community.slug}/classroom/courses/${props.course.id}/modules/${lesson.module_id}/lessons/${lesson.id}`,
             { video_path: data.key, video_url: '', _method: 'PATCH' }
         );
+
+        // Update local state and start polling for transcoding progress
+        lesson.video_path = data.key;
+        transcodeStatus.value  = 'pending';
+        transcodePercent.value = 0;
+        startTranscodePolling(lesson);
 
         router.reload({ only: ['course'] });
     } catch (err) {

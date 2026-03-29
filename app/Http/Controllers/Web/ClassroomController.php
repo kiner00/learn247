@@ -383,11 +383,28 @@ class ClassroomController extends Controller
                 abort(404, 'No video for this lesson.');
             }
 
+            // Prefer HLS if transcoding is complete
+            if ($lesson->video_hls_path && $lesson->video_transcode_status === 'completed') {
+                // Return the proxy base URL — HLS.js will fetch playlist/segments through our proxy
+                $proxyBase = route('communities.classroom.lessons.hls', [
+                    'community' => $community,
+                    'course'    => $course,
+                    'lesson'    => $lesson,
+                    'file'      => 'master.m3u8',
+                ]);
+
+                return response()->json([
+                    'url'              => $proxyBase,
+                    'type'             => 'hls',
+                    'transcode_status' => $lesson->video_transcode_status,
+                ]);
+            }
+
+            // Fallback to raw video
             $path = $lesson->video_path;
 
             // Handle legacy full S3 URLs stored before the migration to private keys
             if (str_starts_with($path, 'http')) {
-                $bucket = config('filesystems.disks.s3.bucket');
                 $parsed = parse_url($path);
                 $path   = ltrim($parsed['path'] ?? '', '/');
             }
@@ -395,11 +412,97 @@ class ClassroomController extends Controller
             // Generate a temporary signed URL (expires in 2 hours)
             $url = Storage::temporaryUrl($path, now()->addHours(2));
 
-            return response()->json(['url' => $url]);
+            return response()->json([
+                'url'  => $url,
+                'type' => 'raw',
+                'transcode_status' => $lesson->video_transcode_status,
+            ]);
         } catch (\Throwable $e) {
             Log::error('ClassroomController@streamLessonVideo failed', ['error' => $e->getMessage(), 'community' => $community->id]);
             throw $e;
         }
+    }
+
+    public function hlsFile(Request $request, Community $community, Course $course, CourseLesson $lesson, string $file, CourseAccessService $access)
+    {
+        $user      = $request->user();
+        $canManage = $user?->can('manage', $community) ?? false;
+
+        if (! $course->is_published && ! $canManage) {
+            abort(404);
+        }
+
+        if (! $canManage && ! $access->hasAccess($user, $community, $course)) {
+            abort(403);
+        }
+
+        if (! $lesson->video_hls_path || $lesson->video_transcode_status !== 'completed') {
+            abort(404);
+        }
+
+        // Only allow .m3u8 and .ts files
+        $ext = pathinfo($file, PATHINFO_EXTENSION);
+        if (! in_array($ext, ['m3u8', 'ts'])) {
+            abort(400, 'Invalid HLS file type.');
+        }
+
+        $hlsPrefix = dirname($lesson->video_hls_path);
+        $s3Key     = $hlsPrefix . '/' . $file;
+
+        // Prevent path traversal
+        if (! str_starts_with(realpath(dirname($s3Key) . '/') ?: $s3Key, $hlsPrefix)) {
+            abort(403);
+        }
+
+        if (! Storage::exists($s3Key)) {
+            abort(404);
+        }
+
+        $contentType = match ($ext) {
+            'm3u8'  => 'application/vnd.apple.mpegurl',
+            'ts'    => 'video/MP2T',
+            default => 'application/octet-stream',
+        };
+
+        // For .m3u8 playlists, rewrite relative paths to go through our proxy
+        if ($ext === 'm3u8') {
+            $content  = Storage::get($s3Key);
+            $proxyDir = dirname($file);
+            $prefix   = $proxyDir !== '.' ? $proxyDir . '/' : '';
+
+            // Rewrite relative .ts and .m3u8 references to proxy URLs
+            $content = preg_replace_callback(
+                '/^(?!#)(.+\.(ts|m3u8))$/m',
+                function ($matches) use ($community, $course, $lesson, $prefix) {
+                    $refFile = $prefix . $matches[1];
+                    return route('communities.classroom.lessons.hls', [
+                        'community' => $community,
+                        'course'    => $course,
+                        'lesson'    => $lesson,
+                        'file'      => $refFile,
+                    ]);
+                },
+                $content
+            );
+
+            return response($content, 200, [
+                'Content-Type'  => $contentType,
+                'Cache-Control' => 'public, max-age=3600',
+            ]);
+        }
+
+        // For .ts segments, redirect to a signed S3 URL
+        $url = Storage::temporaryUrl($s3Key, now()->addHours(2));
+
+        return redirect($url);
+    }
+
+    public function transcodeStatus(Request $request, Community $community, Course $course, CourseLesson $lesson): JsonResponse
+    {
+        return response()->json([
+            'status'  => $lesson->video_transcode_status,
+            'percent' => $lesson->video_transcode_percent,
+        ]);
     }
 
     public function reorderLessons(Request $request, Community $community, Course $course, CourseModule $module, ManageLesson $action): RedirectResponse

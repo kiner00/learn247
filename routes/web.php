@@ -241,6 +241,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/communities/{community}/classroom/lesson-images', [ClassroomController::class, 'uploadLessonImage'])->name('communities.classroom.lesson-images');
         Route::post('/communities/{community}/classroom/lesson-videos', [ClassroomController::class, 'uploadLessonVideo'])->name('communities.classroom.lesson-videos');
         Route::get('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/stream', [ClassroomController::class, 'streamLessonVideo'])->name('communities.classroom.lessons.stream');
+        Route::get('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/transcode-status', [ClassroomController::class, 'transcodeStatus'])->name('communities.classroom.lessons.transcode-status');
+        Route::get('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/hls/{file}', [ClassroomController::class, 'hlsFile'])->where('file', '.*')->name('communities.classroom.lessons.hls');
 
         // Lesson comments
         Route::post('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/comments', [LessonCommentController::class, 'store'])->name('lesson.comments.store');
