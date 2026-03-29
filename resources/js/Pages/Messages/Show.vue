@@ -115,7 +115,7 @@
 
 <script setup>
 import { ref, nextTick, onMounted, onBeforeUnmount } from 'vue';
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
@@ -129,8 +129,6 @@ const content    = ref('');
 const sending    = ref(false);
 const messagesEl = ref(null);
 const inputEl    = ref(null);
-
-const lastId = () => messages.value.at(-1)?.id ?? 0;
 
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
 
@@ -194,27 +192,35 @@ async function send() {
     }
 }
 
-let pollTimer = null;
+// ── Real-time (Echo / Reverb) ─────────────────────────────────────────────────
+const authUser = usePage().props.auth?.user;
+let echoChannel = null;
 
-async function poll() {
-    try {
-        const res = await axios.get(`/messages/${props.partner.username ?? props.partner.id}/poll`, {
-            params: { after: lastId() },
-        });
-        if (res.data.messages.length) {
-            const atBottom = messagesEl.value
-                ? messagesEl.value.scrollHeight - messagesEl.value.scrollTop - messagesEl.value.clientHeight < 100
-                : true;
-            messages.value.push(...res.data.messages);
-            if (atBottom) scrollToBottom(true);
-        }
-    } catch { /* ignore */ }
+function onIncomingDm(e) {
+    // Only show messages from the current conversation partner
+    if (e.sender_id !== props.partner.id) return;
+    if (messages.value.some(m => m.id === e.message.id)) return;
+
+    const atBottom = messagesEl.value
+        ? messagesEl.value.scrollHeight - messagesEl.value.scrollTop - messagesEl.value.clientHeight < 100
+        : true;
+    messages.value.push(e.message);
+    if (atBottom) scrollToBottom(true);
 }
 
 onMounted(() => {
     scrollToBottom();
-    pollTimer = setInterval(poll, 3000);
+
+    if (authUser) {
+        echoChannel = window.Echo.private(`dm.${authUser.id}`)
+            .listen('DirectMessageSent', onIncomingDm);
+    }
 });
 
-onBeforeUnmount(() => clearInterval(pollTimer));
+onBeforeUnmount(() => {
+    if (echoChannel) {
+        echoChannel.stopListening('DirectMessageSent');
+        window.Echo.leave(`dm.${authUser.id}`);
+    }
+});
 </script>

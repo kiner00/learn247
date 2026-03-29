@@ -2,6 +2,7 @@
 
 namespace App\Actions\Chat;
 
+use App\Events\ChatMessageSent;
 use App\Models\Community;
 use App\Models\Message;
 use App\Models\User;
@@ -43,6 +44,22 @@ class SendChatMessage
             }
         }
 
-        return $message->load('user:id,name,username,avatar');
+        $message->load('user:id,name,username,avatar');
+
+        ChatMessageSent::dispatch($community->id, [
+            'id'              => $message->id,
+            'content'         => $message->content,
+            'created_at'      => $message->created_at,
+            'telegram_author' => null,
+            'media_url'       => $message->media_url,
+            'media_type'      => $message->media_type,
+            'user'            => [
+                'id'       => $message->user->id,
+                'name'     => $message->user->name,
+                'username' => $message->user->username,
+            ],
+        ]);
+
+        return $message;
     }
 }

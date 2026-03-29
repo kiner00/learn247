@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Events\ChatMessageSent;
 use App\Http\Controllers\Controller;
 use App\Models\Community;
 use App\Models\Message;
@@ -74,13 +75,23 @@ class TelegramWebhookController extends Controller
             $authorName = $fromUser['username'] ?? 'Telegram';
         }
 
-        Message::create([
+        $message = Message::create([
             'community_id'    => $community->id,
             'user_id'         => $community->owner_id,
             'content'         => $text ?? '',
             'telegram_author' => $authorName,
             'media_url'       => $mediaUrl,
             'media_type'      => $mediaType,
+        ]);
+
+        ChatMessageSent::dispatch($community->id, [
+            'id'              => $message->id,
+            'content'         => $message->content,
+            'created_at'      => $message->created_at,
+            'telegram_author' => $message->telegram_author,
+            'media_url'       => $message->media_url,
+            'media_type'      => $message->media_type,
+            'user'            => null,
         ]);
 
         return response('', 200);

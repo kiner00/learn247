@@ -248,8 +248,6 @@ function clearMedia() {
     if (fileInputEl.value) fileInputEl.value.value = '';
 }
 
-const lastMessageId = computed(() => messages.value.at(-1)?.id ?? 0);
-
 const inviteUrl = computed(() =>
     props.affiliate?.code
         ? `${window.location.origin}/ref/${props.affiliate.code}`
@@ -340,33 +338,38 @@ async function send() {
     }
 }
 
-// ── Polling ────────────────────────────────────────────────────────────────────
-let pollTimer = null;
+// ── Real-time (Echo / Reverb) ─────────────────────────────────────────────────
+let echoChannel = null;
 
-async function poll() {
-    try {
-        const res = await axios.get(`/communities/${props.community.slug}/chat/poll`, {
-            params: { after: lastMessageId.value },
-        });
-        if (res.data.messages.length) {
-            const existingIds = new Set(messages.value.map(m => m.id));
-            const newMessages = res.data.messages.filter(m => !existingIds.has(m.id));
-            if (newMessages.length) {
-                const atBottom = messagesEl.value
-                    ? messagesEl.value.scrollHeight - messagesEl.value.scrollTop - messagesEl.value.clientHeight < 100
-                    : true;
-                messages.value.push(...newMessages);
-                if (atBottom) scrollToBottom(true);
-            }
-        }
-    } catch { /* ignore poll errors */ }
+function onIncomingMessage(e) {
+    const msg = e.message;
+    if (messages.value.some(m => m.id === msg.id)) return;
+
+    const atBottom = messagesEl.value
+        ? messagesEl.value.scrollHeight - messagesEl.value.scrollTop - messagesEl.value.clientHeight < 100
+        : true;
+    messages.value.push(msg);
+    if (atBottom) scrollToBottom(true);
+}
+
+function onDeletedMessage(e) {
+    messages.value = messages.value.filter(m => m.id !== e.message_id);
 }
 
 // ── Lifecycle ──────────────────────────────────────────────────────────────────
 onMounted(() => {
     scrollToBottom();
-    pollTimer = setInterval(poll, 3000);
+
+    echoChannel = window.Echo.join(`community.${props.community.id}.chat`)
+        .listen('ChatMessageSent', onIncomingMessage)
+        .listen('ChatMessageDeleted', onDeletedMessage);
 });
 
-onBeforeUnmount(() => clearInterval(pollTimer));
+onBeforeUnmount(() => {
+    if (echoChannel) {
+        echoChannel.stopListening('ChatMessageSent');
+        echoChannel.stopListening('ChatMessageDeleted');
+        window.Echo.leave(`community.${props.community.id}.chat`);
+    }
+});
 </script>
