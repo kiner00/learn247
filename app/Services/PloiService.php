@@ -27,7 +27,7 @@ class PloiService
     public function addTenant(string $domain): Response
     {
         return $this->client()
-            ->post($this->siteUrl('tenants'), ['tenants' => $domain])
+            ->post($this->siteUrl('tenants'), ['tenants' => [$domain]])
             ->throw();
     }
 
