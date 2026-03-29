@@ -45,10 +45,25 @@ class ResolveCustomDomain
 
         // Rewrite the URI so existing /communities/{slug}/... routes handle it.
         // Skip rewriting if Inertia's client-side router already sent the full path.
+        // Skip auth routes — they are defined at root level, not under /communities/{slug}.
         $path   = $request->getPathInfo();
         $prefix = '/communities/' . $community->slug;
 
-        if (! str_starts_with($path, $prefix)) {
+        $authPaths = [
+            '/login', '/register', '/logout',
+            '/forgot-password', '/reset-password',
+            '/set-password', '/email/verify',
+        ];
+
+        $isAuthPath = false;
+        foreach ($authPaths as $authPath) {
+            if ($path === $authPath || str_starts_with($path, $authPath . '/')) {
+                $isAuthPath = true;
+                break;
+            }
+        }
+
+        if (! $isAuthPath && ! str_starts_with($path, $prefix)) {
             $newUri = $prefix . ($path === '/' ? '' : $path);
             if ($qs = $request->getQueryString()) {
                 $newUri .= '?' . $qs;
