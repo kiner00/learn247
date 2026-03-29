@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\CommunityMember;
 use App\Models\LessonCompletion;
+use App\Support\CacheKeys;
 
 class LessonCompletionObserver
 {
@@ -20,5 +21,7 @@ class LessonCompletionObserver
             ->first();
 
         $member?->awardPoints(CommunityMember::POINTS_LESSON);
+
+        CacheKeys::flushLeaderboard($communityId);
     }
 }

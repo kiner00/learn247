@@ -3,6 +3,7 @@
 namespace App\Actions\Affiliate;
 
 use App\Models\AffiliateConversion;
+use App\Support\CacheKeys;
 
 class MarkAffiliateConversionPaid
 {
@@ -14,5 +15,8 @@ class MarkAffiliateConversionPaid
         ]);
 
         $conversion->affiliate->increment('total_paid', (float) $conversion->commission_amount);
+
+        CacheKeys::flushCommunity($conversion->affiliate->community_id);
+        CacheKeys::flushAdmin();
     }
 }

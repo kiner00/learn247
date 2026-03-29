@@ -3,6 +3,7 @@
 namespace App\Actions\Admin;
 
 use App\Models\PayoutRequest;
+use App\Support\CacheKeys;
 
 class RejectPayoutRequest
 {
@@ -15,5 +16,8 @@ class RejectPayoutRequest
             'rejection_reason' => $reason,
             'processed_at'     => now(),
         ]);
+
+        CacheKeys::flushAdmin();
+        CacheKeys::flushCreator($payoutRequest->user_id);
     }
 }

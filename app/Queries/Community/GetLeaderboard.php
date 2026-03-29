@@ -8,7 +8,9 @@ use App\Models\CommunityLevelPerk;
 use App\Models\CommunityMember;
 use App\Models\Post;
 use App\Models\User;
+use App\Support\CacheKeys;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 class GetLeaderboard
 {
@@ -25,73 +27,94 @@ class GetLeaderboard
         $nextThresh = $thresholds[$myLevel] ?? null;
         $ptsToNext  = $nextThresh !== null ? $nextThresh - $myPoints : null;
 
-        $allTime = CommunityMember::where('community_id', $community->id)
-            ->with('user:id,name,username,avatar')
-            ->orderByDesc('points')
-            ->take(10)
-            ->get()
-            ->map(fn ($m) => [
-                'user_id'  => $m->user_id,
-                'name'     => $m->user?->name ?? 'Unknown',
-                'username' => $m->user?->username,
-                'avatar'   => $m->user?->avatar,
-                'points'   => $m->points,
-                'level'    => CommunityMember::computeLevel($m->points),
-            ])->values();
+        $shared = Cache::remember(
+            CacheKeys::leaderboard($community->id),
+            CacheKeys::TTL_LEADERBOARD,
+            function () use ($community) {
+                $allTime = CommunityMember::where('community_id', $community->id)
+                    ->with('user:id,name,username,avatar')
+                    ->orderByDesc('points')
+                    ->take(10)
+                    ->get()
+                    ->map(fn ($m) => [
+                        'user_id'  => $m->user_id,
+                        'name'     => $m->user?->name ?? 'Unknown',
+                        'username' => $m->user?->username,
+                        'avatar'   => $m->user?->avatar,
+                        'points'   => $m->points,
+                        'level'    => CommunityMember::computeLevel($m->points),
+                    ])->values();
 
-        $perks = CommunityLevelPerk::where('community_id', $community->id)
-            ->pluck('description', 'level');
+                $perks = CommunityLevelPerk::where('community_id', $community->id)
+                    ->pluck('description', 'level');
 
-        return [
-            'my_points'           => $myPoints,
-            'my_level'            => $myLevel,
-            'points_to_next'      => $ptsToNext,
-            'leaderboard'         => $allTime,
-            'leaderboard_30_days' => $this->periodLeaderboard($community, 30),
-            'leaderboard_7_days'  => $this->periodLeaderboard($community, 7),
-            'level_perks'         => $perks,
-        ];
+                return [
+                    'leaderboard'         => $allTime,
+                    'leaderboard_30_days' => $this->periodLeaderboard($community, 30),
+                    'leaderboard_7_days'  => $this->periodLeaderboard($community, 7),
+                    'level_perks'         => $perks,
+                ];
+            }
+        );
+
+        return array_merge([
+            'my_points'      => $myPoints,
+            'my_level'       => $myLevel,
+            'points_to_next' => $ptsToNext,
+        ], $shared);
     }
 
     public function levelDistribution(Community $community): array
     {
-        $totalMembers = $community->members()->count();
-        $thresholds   = CommunityMember::LEVEL_THRESHOLDS;
-        $levelCounts  = array_fill(1, count($thresholds), 0);
+        return Cache::remember(
+            CacheKeys::leaderboardDistribution($community->id),
+            CacheKeys::TTL_LEADERBOARD,
+            function () use ($community) {
+                $totalMembers = $community->members()->count();
+                $thresholds   = CommunityMember::LEVEL_THRESHOLDS;
+                $levelCounts  = array_fill(1, count($thresholds), 0);
 
-        CommunityMember::where('community_id', $community->id)
-            ->pluck('points')
-            ->each(function ($pts) use (&$levelCounts) {
-                $level = CommunityMember::computeLevel($pts);
-                $levelCounts[$level] = ($levelCounts[$level] ?? 0) + 1;
-            });
+                CommunityMember::where('community_id', $community->id)
+                    ->pluck('points')
+                    ->each(function ($pts) use (&$levelCounts) {
+                        $level = CommunityMember::computeLevel($pts);
+                        $levelCounts[$level] = ($levelCounts[$level] ?? 0) + 1;
+                    });
 
-        $perks = CommunityLevelPerk::where('community_id', $community->id)->pluck('description', 'level');
+                $perks = CommunityLevelPerk::where('community_id', $community->id)->pluck('description', 'level');
 
-        return collect(range(1, count($thresholds)))->map(fn ($l) => [
-            'level'     => $l,
-            'count'     => $levelCounts[$l] ?? 0,
-            'percent'   => $totalMembers > 0 ? round(($levelCounts[$l] ?? 0) / $totalMembers * 100) : 0,
-            'perk'      => $perks[$l] ?? null,
-            'threshold' => $thresholds[$l - 1],
-        ])->all();
+                return collect(range(1, count($thresholds)))->map(fn ($l) => [
+                    'level'     => $l,
+                    'count'     => $levelCounts[$l] ?? 0,
+                    'percent'   => $totalMembers > 0 ? round(($levelCounts[$l] ?? 0) / $totalMembers * 100) : 0,
+                    'perk'      => $perks[$l] ?? null,
+                    'threshold' => $thresholds[$l - 1],
+                ])->all();
+            }
+        );
     }
 
     public function topMembers(Community $community, int $limit = 5): array
     {
-        return CommunityMember::where('community_id', $community->id)
-            ->with('user:id,name,username,avatar')
-            ->orderByDesc('points')
-            ->take($limit)
-            ->get()
-            ->map(fn ($m) => [
-                'user_id'  => $m->user_id,
-                'name'     => $m->user?->name,
-                'username' => $m->user?->username,
-                'avatar'   => $m->user?->avatar,
-                'points'   => $m->points,
-                'level'    => CommunityMember::computeLevel($m->points),
-            ])->all();
+        return Cache::remember(
+            CacheKeys::leaderboardTopMembers($community->id, $limit),
+            CacheKeys::TTL_LEADERBOARD,
+            function () use ($community, $limit) {
+                return CommunityMember::where('community_id', $community->id)
+                    ->with('user:id,name,username,avatar')
+                    ->orderByDesc('points')
+                    ->take($limit)
+                    ->get()
+                    ->map(fn ($m) => [
+                        'user_id'  => $m->user_id,
+                        'name'     => $m->user?->name,
+                        'username' => $m->user?->username,
+                        'avatar'   => $m->user?->avatar,
+                        'points'   => $m->points,
+                        'level'    => CommunityMember::computeLevel($m->points),
+                    ])->all();
+            }
+        );
     }
 
     private function periodLeaderboard(Community $community, int $days): array

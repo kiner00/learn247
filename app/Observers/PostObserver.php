@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\CommunityMember;
 use App\Models\Post;
+use App\Support\CacheKeys;
 
 class PostObserver
 {
@@ -30,5 +31,7 @@ class PostObserver
         } else {
             $member->deductPoints(abs($pts));
         }
+
+        CacheKeys::flushLeaderboard($post->community_id);
     }
 }

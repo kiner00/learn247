@@ -9,6 +9,8 @@ use App\Models\Subscription;
 use App\Models\User;
 use App\Queries\Payout\CalculateEligibility;
 use App\Services\Payout\OwnerEarningsCalculator;
+use App\Support\CacheKeys;
+use Illuminate\Support\Facades\Cache;
 
 class GetCreatorDashboard
 {
@@ -19,35 +21,41 @@ class GetCreatorDashboard
 
     public function execute(User $user): array
     {
-        $communities = Community::where('owner_id', $user->id)
-            ->where('price', '>', 0)
-            ->withCount('members')
-            ->get()
-            ->map(fn (Community $community) => $this->buildCommunityData($community));
+        return Cache::remember(
+            CacheKeys::creatorDashboard($user->id),
+            CacheKeys::TTL_ANALYTICS,
+            function () use ($user) {
+                $communities = Community::where('owner_id', $user->id)
+                    ->where('price', '>', 0)
+                    ->withCount('members')
+                    ->get()
+                    ->map(fn (Community $community) => $this->buildCommunityData($community));
 
-        $requestHistory = PayoutRequest::where('user_id', $user->id)
-            ->where('type', PayoutRequest::TYPE_OWNER)
-            ->with('community:id,name')
-            ->latest()
-            ->take(20)
-            ->get()
-            ->map(fn ($r) => [
-                'id'               => $r->id,
-                'community_name'   => $r->community?->name,
-                'amount'           => (float) $r->amount,
-                'status'           => $r->status,
-                'rejection_reason' => $r->rejection_reason,
-                'requested_at'     => $r->created_at->toDateString(),
-                'processed_at'     => $r->processed_at?->toDateString(),
-            ]);
+                $requestHistory = PayoutRequest::where('user_id', $user->id)
+                    ->where('type', PayoutRequest::TYPE_OWNER)
+                    ->with('community:id,name')
+                    ->latest()
+                    ->take(20)
+                    ->get()
+                    ->map(fn ($r) => [
+                        'id'               => $r->id,
+                        'community_name'   => $r->community?->name,
+                        'amount'           => (float) $r->amount,
+                        'status'           => $r->status,
+                        'rejection_reason' => $r->rejection_reason,
+                        'requested_at'     => $r->created_at->toDateString(),
+                        'processed_at'     => $r->processed_at?->toDateString(),
+                    ]);
 
-        return [
-            'communities'    => $communities,
-            'requestHistory' => $requestHistory,
-            'payoutMethod'   => $user->payout_method,
-            'payoutDetails'  => $user->payout_details,
-            'payoutFee'      => Community::PAYOUT_FEE,
-        ];
+                return [
+                    'communities'    => $communities,
+                    'requestHistory' => $requestHistory,
+                    'payoutMethod'   => $user->payout_method,
+                    'payoutDetails'  => $user->payout_details,
+                    'payoutFee'      => Community::PAYOUT_FEE,
+                ];
+            }
+        );
     }
 
     private function buildCommunityData(Community $community): array

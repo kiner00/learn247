@@ -10,6 +10,8 @@ use App\Models\Payment;
 use App\Models\PayoutRequest;
 use App\Queries\Payout\CalculateEligibility;
 use App\Services\Payout\OwnerEarningsCalculator;
+use App\Support\CacheKeys;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Builds all data needed for the Admin Payouts page.
@@ -24,26 +26,32 @@ class GetPayoutsDashboard
 
     public function execute(): array
     {
-        $owners         = $this->buildOwners();
-        $affiliates     = $this->buildAffiliates();
-        $payoutRequests = $this->buildPayoutRequests();
+        return Cache::remember(
+            CacheKeys::adminPayouts(),
+            CacheKeys::TTL_ADMIN_DASHBOARD,
+            function () {
+                $owners         = $this->buildOwners();
+                $affiliates     = $this->buildAffiliates();
+                $payoutRequests = $this->buildPayoutRequests();
 
-        $totalPlatformFee = round(
-            Community::with('owner')->get()->sum(function ($c) {
-                $gross = (float) Payment::where('community_id', $c->id)->where('status', Payment::STATUS_PAID)->sum('amount');
-                return $gross * $c->platformFeeRate();
-            }),
-            2
+                $totalPlatformFee = round(
+                    Community::with('owner')->get()->sum(function ($c) {
+                        $gross = (float) Payment::where('community_id', $c->id)->where('status', Payment::STATUS_PAID)->sum('amount');
+                        return $gross * $c->platformFeeRate();
+                    }),
+                    2
+                );
+
+                $stats = [
+                    'owners_pending'          => $owners->sum('total_pending'),
+                    'affiliates_pending'      => $affiliates->sum('pending'),
+                    'payout_requests_pending' => PayoutRequest::where('status', PayoutRequest::STATUS_PENDING)->count(),
+                    'platform_fee_collected'  => $totalPlatformFee,
+                ];
+
+                return compact('owners', 'affiliates', 'payoutRequests', 'stats');
+            }
         );
-
-        $stats = [
-            'owners_pending'          => $owners->sum('total_pending'),
-            'affiliates_pending'      => $affiliates->sum('pending'),
-            'payout_requests_pending' => PayoutRequest::where('status', PayoutRequest::STATUS_PENDING)->count(),
-            'platform_fee_collected'  => $totalPlatformFee,
-        ];
-
-        return compact('owners', 'affiliates', 'payoutRequests', 'stats');
     }
 
     private function buildOwners(): \Illuminate\Support\Collection

@@ -12,6 +12,7 @@ use App\Models\Payment;
 use App\Models\Subscription;
 use App\Services\XenditService;
 use App\Support\AffiliateCodeGenerator;
+use App\Support\CacheKeys;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -177,6 +178,14 @@ class HandleSubscriptionPaid implements WebhookHandler
                     }
                 }
             });
+
+            // Flush cached analytics after successful payment processing
+            if ($subscription->community) {
+                CacheKeys::flushPayment(
+                    $subscription->community_id,
+                    $subscription->community->owner_id
+                );
+            }
 
             // Send emails outside transaction so mail errors never roll back payment
             if ($chaChing) {

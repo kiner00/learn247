@@ -5,6 +5,7 @@ namespace App\Actions\Payout;
 use App\Models\Affiliate;
 use App\Models\PayoutRequest;
 use App\Queries\Payout\CalculateEligibility;
+use App\Support\CacheKeys;
 
 class RequestAffiliatePayout
 {
@@ -51,6 +52,9 @@ class RequestAffiliatePayout
             'eligible_amount' => $eligibleNow,
             'status'          => PayoutRequest::STATUS_PENDING,
         ]);
+
+        CacheKeys::flushCommunity($affiliate->community_id);
+        CacheKeys::flushAdmin();
 
         return ['success' => true, 'message' => 'Payout request submitted. The admin will review and process it shortly.'];
     }

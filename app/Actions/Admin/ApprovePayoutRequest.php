@@ -7,6 +7,7 @@ use App\Models\Community;
 use App\Models\OwnerPayout;
 use App\Models\PayoutRequest;
 use App\Services\XenditService;
+use App\Support\CacheKeys;
 use App\Support\PayoutChannelMap;
 
 /**
@@ -76,5 +77,7 @@ class ApprovePayoutRequest
             'xendit_reference' => $result['id'] ?? $referenceId,
             'processed_at'     => now(),
         ]);
+
+        CacheKeys::flushPayment($payoutRequest->community_id, $user->id);
     }
 }

@@ -6,6 +6,7 @@ use App\Models\Community;
 use App\Models\PayoutRequest;
 use App\Models\User;
 use App\Queries\Payout\CalculateEligibility;
+use App\Support\CacheKeys;
 
 class RequestOwnerPayout
 {
@@ -51,6 +52,9 @@ class RequestOwnerPayout
             'eligible_amount' => $eligibleNow,
             'status'          => PayoutRequest::STATUS_PENDING,
         ]);
+
+        CacheKeys::flushCreator($owner->id);
+        CacheKeys::flushAdmin();
 
         return ['success' => true, 'message' => 'Payout request submitted. The admin will review and process it shortly.'];
     }
