@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Certificate;
 use App\Models\Community;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -30,7 +31,7 @@ class CertificateController extends Controller
                 'community_name' => $community->name,
                 'community_slug' => $community->slug,
                 'description'    => $cert->description,
-                'cover_image'    => $cert->cover_image ? asset('storage/' . $cert->cover_image) : null,
+                'cover_image'    => $cert->cover_image ? Storage::url($cert->cover_image) : null,
             ],
         ]);
     }

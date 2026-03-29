@@ -213,28 +213,7 @@
                         </div>
                     </div>
 
-                    <!-- Exam result (just submitted) -->
-                    <div v-if="examResult && examResult.certification_id === cert.id" class="px-6 pb-4">
-                        <div class="p-5 rounded-xl border shadow-sm"
-                            :class="examResult.passed ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'">
-                            <p class="font-black text-lg" :class="examResult.passed ? 'text-green-800' : 'text-red-800'">
-                                {{ examResult.passed ? 'Congratulations! You passed!' : 'Not quite \u2014 keep studying!' }}
-                            </p>
-                            <p class="text-sm mt-1" :class="examResult.passed ? 'text-green-700' : 'text-red-700'">
-                                Score: {{ examResult.score }}% ({{ examResult.correct }}/{{ examResult.total }} correct)
-                            </p>
-                            <div v-if="examResult.passed && examResult.certificate_uuid" class="mt-3">
-                                <a :href="`/certificates/${examResult.certificate_uuid}`" target="_blank"
-                                    class="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-500 text-white text-sm font-bold rounded-xl hover:bg-amber-600 transition-colors">
-                                    View Your Certificate
-                                </a>
-                            </div>
-                            <button v-if="!examResult.passed" @click="retakeExam(cert)"
-                                class="mt-3 text-sm text-indigo-600 font-semibold hover:text-indigo-800">
-                                Retake Exam
-                            </button>
-                        </div>
-                    </div>
+                    <!-- Exam result is now shown in the modal below -->
 
                     <!-- Take exam (student, not passed or retaking) -->
                     <div v-if="!isOwner && takingExamId === cert.id" class="border-t border-gray-100">
@@ -271,7 +250,7 @@
                     </div>
 
                     <!-- Take exam button (student, not currently taking) -->
-                    <div v-if="!isOwner && takingExamId !== cert.id && (!examResult || examResult.certification_id !== cert.id || !examResult.passed)"
+                    <div v-if="!isOwner && takingExamId !== cert.id"
                         class="px-6 pb-5">
                         <template v-if="!attempts[cert.id]?.passed">
                             <!-- Paid cert: not yet purchased -->
@@ -281,7 +260,7 @@
                                 :disabled="checkoutLoading === cert.id"
                                 class="px-5 py-2.5 bg-amber-500 text-white text-sm font-bold rounded-xl hover:bg-amber-600 disabled:opacity-50 transition-colors"
                             >
-                                {{ checkoutLoading === cert.id ? 'Redirecting...' : `Pay ₱${Number(cert.price).toLocaleString()} & Take Exam` }}
+                                {{ checkoutLoading === cert.id ? 'Redirecting...' : 'Take Exam' }}
                             </button>
                             <!-- Free or already purchased -->
                             <button
@@ -348,6 +327,37 @@
             </div>
         </div>
     </AppLayout>
+
+    <!-- Exam result modal -->
+    <Teleport to="body">
+        <div v-if="examResult" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div class="absolute inset-0 bg-black/50" @click="examResult = null"></div>
+            <div class="relative bg-white rounded-2xl shadow-xl max-w-md w-full p-8 text-center">
+                <div class="text-5xl mb-4">{{ examResult.passed ? '🎉' : '😔' }}</div>
+                <h2 class="text-xl font-black" :class="examResult.passed ? 'text-green-800' : 'text-red-800'">
+                    {{ examResult.passed ? 'Congratulations! You passed!' : 'Not quite — keep studying!' }}
+                </h2>
+                <p class="text-sm mt-2" :class="examResult.passed ? 'text-green-700' : 'text-red-700'">
+                    Score: {{ examResult.score }}% ({{ examResult.correct }}/{{ examResult.total }} correct)
+                </p>
+                <div class="mt-6 flex flex-col gap-3">
+                    <a v-if="examResult.passed && examResult.certificate_uuid"
+                        :href="`/certificates/${examResult.certificate_uuid}`" target="_blank"
+                        class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-amber-500 text-white text-sm font-bold rounded-xl hover:bg-amber-600 transition-colors">
+                        View Your Certificate
+                    </a>
+                    <button v-if="!examResult.passed" @click="retakeExam(certifications.find(c => c.id === examResult.certification_id))"
+                        class="px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors">
+                        Retake Exam
+                    </button>
+                    <button @click="examResult = null"
+                        class="text-sm text-gray-500 hover:text-gray-700 font-medium">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </Teleport>
 </template>
 
 <script setup>

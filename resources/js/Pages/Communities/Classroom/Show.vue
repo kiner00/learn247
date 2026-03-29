@@ -1054,8 +1054,10 @@ async function handleVideoUpload(e) {
             size: file.size,
         });
 
-        // Step 2: Upload directly to S3 using presigned URL
-        await axios.put(data.upload_url, file, {
+        // Step 2: Upload directly to S3 using a clean axios instance
+        // (global axios adds X-XSRF-TOKEN / withCredentials which break presigned URLs)
+        const { default: rawAxios } = await import('axios');
+        await rawAxios.create().put(data.upload_url, file, {
             headers: {
                 'Content-Type': file.type,
             },

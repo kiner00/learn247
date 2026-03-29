@@ -1146,9 +1146,9 @@
                     {{ lp?.certifications_headline || 'Get Certified' }}
                 </h2>
                 <p class="text-center text-gray-500 mb-12">Pass the exam and earn your certificate.</p>
-                <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="flex flex-wrap justify-center gap-6">
                     <div v-for="cert in props.certifications" :key="cert.id"
-                        class="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm flex flex-col">
+                        class="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm flex flex-col w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)]">
                         <div class="aspect-video bg-amber-50 overflow-hidden">
                             <img v-if="cert.cover_image" :src="cert.cover_image" class="w-full h-full object-cover" />
                             <div v-else class="w-full h-full flex items-center justify-center text-4xl">🏆</div>
