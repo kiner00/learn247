@@ -36,7 +36,9 @@ class AuthController extends Controller
             return redirect()->route('password.setup');
         }
 
-        return redirect()->intended('/communities')->with('show_ai_greeting', true);
+        $default = request()->attributes->has('domain_community') ? '/' : '/communities';
+
+        return redirect()->intended($default)->with('show_ai_greeting', true);
     }
 
     public function showRegister(Request $request): Response
@@ -55,7 +57,9 @@ class AuthController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
-        return redirect()->intended('/communities')->with('success', 'Welcome to Curzzo!');
+        $default = request()->attributes->has('domain_community') ? '/' : '/communities';
+
+        return redirect()->intended($default)->with('success', 'Welcome to Curzzo!');
     }
 
     public function logout(Request $request): RedirectResponse

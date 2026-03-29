@@ -25,6 +25,8 @@ class SetPasswordController extends Controller
 
         $action->execute($request->user(), $request->password);
 
-        return redirect('/communities')->with('success', 'Password updated! Welcome to Curzzo.');
+        $default = request()->attributes->has('domain_community') ? '/' : '/communities';
+
+        return redirect($default)->with('success', 'Password updated! Welcome to Curzzo.');
     }
 }
