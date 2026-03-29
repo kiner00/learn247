@@ -211,7 +211,7 @@ function onIncomingDm(e) {
 onMounted(() => {
     scrollToBottom();
 
-    if (authUser) {
+    if (authUser && window.Echo) {
         echoChannel = window.Echo.private(`dm.${authUser.id}`)
             .listen('DirectMessageSent', onIncomingDm);
     }

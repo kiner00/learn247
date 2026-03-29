@@ -360,9 +360,11 @@ function onDeletedMessage(e) {
 onMounted(() => {
     scrollToBottom();
 
-    echoChannel = window.Echo.join(`community.${props.community.id}.chat`)
-        .listen('ChatMessageSent', onIncomingMessage)
-        .listen('ChatMessageDeleted', onDeletedMessage);
+    if (window.Echo) {
+        echoChannel = window.Echo.join(`community.${props.community.id}.chat`)
+            .listen('ChatMessageSent', onIncomingMessage)
+            .listen('ChatMessageDeleted', onDeletedMessage);
+    }
 });
 
 onBeforeUnmount(() => {
