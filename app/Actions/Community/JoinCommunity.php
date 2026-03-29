@@ -6,6 +6,7 @@ use App\Models\Community;
 use App\Models\CommunityMember;
 use App\Models\Notification;
 use App\Models\User;
+use App\Support\CacheKeys;
 use Illuminate\Validation\ValidationException;
 
 class JoinCommunity
@@ -44,6 +45,8 @@ class JoinCommunity
             'role'         => CommunityMember::ROLE_MEMBER,
             'joined_at'    => now(),
         ]);
+
+        CacheKeys::flushUserMembership($user->id);
 
         $this->notifyOwner($user, $community);
         $this->checkMilestones($community, $beforeCount, $beforeCount + 1);

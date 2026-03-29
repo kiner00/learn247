@@ -23,6 +23,11 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\HandleInertiaRequests::class,
         ]);
 
+        // Rate limit all API routes: 120 requests/min per user
+        $middleware->api(append: [
+            \Illuminate\Routing\Middleware\ThrottleRequests::class.':120,1',
+        ]);
+
         $middleware->alias([
             'active.member' => \App\Http\Middleware\EnsureActiveMembership::class,
         ]);

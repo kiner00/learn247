@@ -23,6 +23,7 @@ use App\Services\Community\PlanLimitService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 class CommunityController extends Controller
@@ -36,9 +37,13 @@ class CommunityController extends Controller
         );
 
         if ($userId = $request->user()?->id) {
-            $memberIds = CommunityMember::where('user_id', $userId)
-                ->pluck('community_id')
-                ->flip();
+            $memberIds = Cache::remember(
+                "user:{$userId}:community_ids",
+                120, // 2 minutes
+                fn () => CommunityMember::where('user_id', $userId)
+                    ->pluck('community_id')
+                    ->flip()
+            );
 
             $communities->each(function (Community $c) use ($memberIds) {
                 $c->is_member = $memberIds->has($c->id);

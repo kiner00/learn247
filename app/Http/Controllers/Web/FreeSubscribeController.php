@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Community;
 use App\Models\CommunityMember;
+use App\Support\CacheKeys;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -30,6 +31,8 @@ class FreeSubscribeController extends Controller
             'membership_type' => CommunityMember::MEMBERSHIP_FREE,
             'joined_at'       => now(),
         ]);
+
+        CacheKeys::flushUserMembership($user->id);
 
         return redirect()->route('communities.classroom', $community)
             ->with('success', 'You\'ve subscribed for free! Enjoy the courses.');

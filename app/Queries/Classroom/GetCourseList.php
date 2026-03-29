@@ -51,13 +51,24 @@ class GetCourseList
             $query->where('is_published', true);
         }
 
-        return $query->get()->map(function ($course) use ($userId, $isOwner, $isMember, $isPaidMember, $paidEnrollmentIds, $wasEverMember) {
+        $courses = $query->get();
+
+        // Batch-load all lesson completions in a single query instead of one per course
+        $allLessonIds = $courses->flatMap(fn ($c) => $c->modules->flatMap(fn ($m) => $m->lessons->pluck('id')));
+        $completedLessonIds = ($userId && $allLessonIds->isNotEmpty())
+            ? LessonCompletion::where('user_id', $userId)
+                ->whereIn('lesson_id', $allLessonIds)
+                ->pluck('lesson_id')
+                ->flip()
+            : collect();
+
+        return $courses->map(function ($course) use ($userId, $isOwner, $isMember, $isPaidMember, $paidEnrollmentIds, $wasEverMember, $completedLessonIds) {
             $hasAccess = $this->resolveAccess($course, $isOwner, $isMember, $isPaidMember, $paidEnrollmentIds, $wasEverMember);
 
             $lessonIds = $course->modules->flatMap(fn ($m) => $m->lessons->pluck('id'));
             $total     = $lessonIds->count();
             $completed = ($hasAccess && $userId && $total > 0)
-                ? LessonCompletion::where('user_id', $userId)->whereIn('lesson_id', $lessonIds)->count()
+                ? $lessonIds->filter(fn ($id) => $completedLessonIds->has($id))->count()
                 : 0;
 
             return [

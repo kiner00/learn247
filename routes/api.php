@@ -27,11 +27,11 @@ use App\Http\Controllers\Api\XenditWebhookController;
 use Illuminate\Support\Facades\Route;
 
 // ─── Webhooks (no auth) ────────────────────────────────────────────────────
-Route::post('/xendit/webhook', XenditWebhookController::class);
+Route::post('/xendit/webhook', XenditWebhookController::class)->middleware('throttle:60,1');
 
 // ─── Auth (public) ─────────────────────────────────────────────────────────
-Route::post('/auth/login',    [AuthController::class, 'login']);
-Route::post('/auth/register', [AuthController::class, 'register']);
+Route::post('/auth/login',    [AuthController::class, 'login'])->middleware('throttle:5,1');
+Route::post('/auth/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
 
 // ─── Communities (public read) ─────────────────────────────────────────────
 Route::get('/communities',                       [CommunityController::class, 'index']);
@@ -73,7 +73,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/posts/{post}',                  [FeedController::class, 'show']);
 
     // ─── Posts ─────────────────────────────────────────────────────────────
-    Route::post('/posts',          [PostController::class, 'store']);
+    Route::post('/posts',          [PostController::class, 'store'])->middleware('throttle:10,1');
     Route::delete('/posts/{post}', [PostController::class, 'destroy']);
 
     // ─── Likes & reactions ─────────────────────────────────────────────────
@@ -82,7 +82,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/comments/{comment}/like', [LikeController::class, 'toggleComment']);
 
     // ─── Comments ──────────────────────────────────────────────────────────
-    Route::post('/posts/{post}/comments',    [CommentController::class, 'store']);
+    Route::post('/posts/{post}/comments',    [CommentController::class, 'store'])->middleware('throttle:20,1');
     Route::delete('/comments/{comment}',     [CommentController::class, 'destroy']);
 
     // ─── Classroom ─────────────────────────────────────────────────────────
@@ -148,7 +148,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ─── Community chat ────────────────────────────────────────────────────
     Route::get('/communities/{community}/chat',              [ChatController::class, 'index']);
-    Route::post('/communities/{community}/chat',             [ChatController::class, 'store']);
+    Route::post('/communities/{community}/chat',             [ChatController::class, 'store'])->middleware('throttle:30,1');
     Route::get('/communities/{community}/chat/poll',         [ChatController::class, 'poll']);
     Route::delete('/communities/{community}/chat/{message}', [ChatController::class, 'destroy']);
 
@@ -156,7 +156,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/messages',                      [DirectMessageController::class, 'index']);
     Route::get('/messages/search',               [DirectMessageController::class, 'search']);
     Route::get('/messages/{user}',               [DirectMessageController::class, 'show']);
-    Route::post('/messages/{user}',              [DirectMessageController::class, 'store']);
+    Route::post('/messages/{user}',              [DirectMessageController::class, 'store'])->middleware('throttle:30,1');
     Route::get('/messages/{user}/poll',           [DirectMessageController::class, 'poll']);
     Route::delete('/direct-messages/{directMessage}', [DirectMessageController::class, 'destroy']);
 
@@ -174,6 +174,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/affiliates/payout-request/all',              [PayoutRequestController::class, 'storeAffiliateAll']);
 
     // ─── AI Assistant ──────────────────────────────────────────────────────
-    Route::post('/ai/chat',  [AIAssistantController::class, 'chat']);
-    Route::post('/ai/greet', [AIAssistantController::class, 'greet']);
+    Route::post('/ai/chat',  [AIAssistantController::class, 'chat'])->middleware('throttle:15,1');
+    Route::post('/ai/greet', [AIAssistantController::class, 'greet'])->middleware('throttle:15,1');
 });

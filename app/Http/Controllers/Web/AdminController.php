@@ -90,7 +90,7 @@ class AdminController extends Controller
     public function batchPayOwners(OwnerPayoutDispatcher $dispatcher): RedirectResponse
     {
         $result = $dispatcher->batchDispatch(
-            Community::with('owner')->where('price', '>', 0)->get()
+            Community::with('owner')->where('price', '>', 0)
         );
 
         return back()->with($result['errors'] ? 'error' : 'success', $result['message']);

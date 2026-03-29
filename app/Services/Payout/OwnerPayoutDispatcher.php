@@ -81,14 +81,17 @@ class OwnerPayoutDispatcher
      *
      * @return array{paid: int, errors: string[], message: string}
      */
-    public function batchDispatch(\Illuminate\Support\Collection $communities, string $label = 'community owner(s)'): array
+    /**
+     * @param  \Illuminate\Support\Collection|\Illuminate\Database\Eloquent\Builder  $communities
+     */
+    public function batchDispatch($communities, string $label = 'community owner(s)'): array
     {
         $paid   = 0;
         $errors = [];
 
-        foreach ($communities as $community) {
+        $process = function ($community) use (&$paid, &$errors) {
             if (! $this->canDispatch($community)) {
-                continue;
+                return;
             }
             try {
                 $this->dispatch($community);
@@ -98,6 +101,15 @@ class OwnerPayoutDispatcher
                     $errors[] = "{$community->name}: " . $e->getMessage();
                 }
             }
+        };
+
+        // Support both Collection and Builder — use chunking for large sets
+        if ($communities instanceof \Illuminate\Database\Eloquent\Builder) {
+            $communities->chunk(50, function ($chunk) use ($process) {
+                $chunk->each($process);
+            });
+        } else {
+            $communities->each($process);
         }
 
         $message = "Paid {$paid} {$label}.";

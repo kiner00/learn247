@@ -109,4 +109,9 @@ class CacheKeys
         self::flushCreator($ownerId);
         self::flushAdmin();
     }
+
+    public static function flushUserMembership(int $userId): void
+    {
+        Cache::forget("user:{$userId}:community_ids");
+    }
 }
