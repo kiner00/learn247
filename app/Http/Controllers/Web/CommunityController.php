@@ -446,7 +446,6 @@ class CommunityController extends Controller
     public function landing(Request $request, Community $community, GetInvitedByAffiliate $invitedByQuery): Response|\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
     {
         $community->load('owner')->loadCount('members');
-        $community->load(['courses' => fn ($q) => $q->where('is_published', true)->where('access_type', 'inclusive')]);
 
         $membership = auth()->id() ? $community->members()->where('user_id', auth()->id())->first() : null;
         $ownerIsPro = in_array($community->owner?->creatorPlan(), ['basic', 'pro']);
@@ -471,7 +470,15 @@ class CommunityController extends Controller
             ? $community->affiliates()->where('code', $refCode)->first()
             : (auth()->id() ? $community->affiliates()->where('user_id', auth()->id())->first() : null);
 
-        $courses = $community->courses->values();
+        // Load all published courses; let the owner pick which ones appear on the LP
+        $allPublished = $community->courses()->where('is_published', true)->get();
+        $selectedIds  = $community->landing_page['included_courses_selected'] ?? null;
+        // For visitors: show only selected courses (or fall back to inclusive if nothing selected yet)
+        $courses = $selectedIds !== null
+            ? $allPublished->whereIn('id', $selectedIds)->values()
+            : $allPublished->where('access_type', 'inclusive')->values();
+        // Owner also gets the full list so they can toggle checkboxes
+        $allCourses = $isOwner ? $allPublished->values() : [];
         $certifications = $community->certifications()
             ->withCount('questions')
             ->get()
@@ -485,7 +492,7 @@ class CommunityController extends Controller
                 'questions_count' => $c->questions_count,
             ]);
         $inertia = Inertia::render('Communities/Landing', compact(
-            'community', 'affiliate', 'invitedBy', 'membership', 'ownerIsPro', 'isOwner', 'courses', 'certifications'
+            'community', 'affiliate', 'invitedBy', 'membership', 'ownerIsPro', 'isOwner', 'courses', 'allCourses', 'certifications'
         ));
 
         // Persist ?ref= query param as a cookie so it carries through to checkout
@@ -570,6 +577,8 @@ class CommunityController extends Controller
             'included_courses_bg_color'           => 'nullable|string|max:20',
             'included_courses_btn_bg'             => 'nullable|string|max:20',
             'included_courses_btn_text'           => 'nullable|string|max:20',
+            'included_courses_selected'           => 'nullable|array',
+            'included_courses_selected.*'         => 'integer',
             // Certifications
             'certifications_headline'             => 'nullable|string|max:200',
             // Guarantee
@@ -589,12 +598,16 @@ class CommunityController extends Controller
 
         // Merge into existing landing page so unreferenced sections are preserved
         $current = $community->landing_page ?? [];
-        // Handle _sections separately (full replace, not deep merge)
+        // Handle flat arrays separately (full replace, not deep merge)
         $sections = $data['_sections'] ?? null;
-        unset($data['_sections']);
+        $selectedCourses = array_key_exists('included_courses_selected', $data) ? $data['included_courses_selected'] : null;
+        unset($data['_sections'], $data['included_courses_selected']);
         $merged = array_replace_recursive($current, $data);
         if ($sections !== null) {
             $merged['_sections'] = $sections;
+        }
+        if ($selectedCourses !== null) {
+            $merged['included_courses_selected'] = $selectedCourses;
         }
 
         $community->update(['landing_page' => $merged]);

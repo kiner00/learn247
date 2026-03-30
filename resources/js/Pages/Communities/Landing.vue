@@ -505,8 +505,8 @@
 
                                 <!-- INCLUDED COURSES -->
                                 <template v-if="sec.type === 'included_courses'">
-                                    <div v-if="!props.courses.length" class="text-xs text-gray-500 italic">
-                                        No published inclusive courses yet. Add courses in the Classroom with access type "Inclusive".
+                                    <div v-if="!props.allCourses.length" class="text-xs text-gray-500 italic">
+                                        No published courses yet. Add courses in the Classroom.
                                     </div>
                                     <template v-else>
                                         <div>
@@ -534,13 +534,28 @@
                                                 <input v-model="editDraft.included_courses_btn_text" type="text" placeholder="#ffffff" class="field-input flex-1 text-xs" />
                                             </div>
                                         </div>
-                                        <p class="text-xs text-gray-400">Courses are pulled automatically from your Classroom (inclusive access type).</p>
-                                        <div v-for="c in props.courses" :key="c.id" class="flex items-center gap-3 bg-white rounded-xl p-3 border border-gray-200">
+                                        <p class="text-xs text-gray-400">Select which courses to display on this landing page.</p>
+                                        <div class="flex items-center justify-between mb-1">
+                                            <label class="field-label mb-0">Courses</label>
+                                            <button type="button" @click="toggleAllCourses" class="text-xs text-indigo-600 hover:underline">
+                                                {{ allCoursesSelected ? 'Deselect All' : 'Select All' }}
+                                            </button>
+                                        </div>
+                                        <div v-for="c in props.allCourses" :key="c.id"
+                                            class="flex items-center gap-3 bg-white rounded-xl p-3 border border-gray-200 cursor-pointer hover:border-indigo-300 transition-colors"
+                                            @click="toggleCourseSelection(c.id)">
+                                            <input type="checkbox"
+                                                :checked="(editDraft.included_courses_selected ?? []).includes(c.id)"
+                                                @click.stop="toggleCourseSelection(c.id)"
+                                                class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 shrink-0" />
                                             <div class="w-10 h-10 rounded-lg overflow-hidden shrink-0 bg-indigo-100 flex items-center justify-center text-lg">
                                                 <img v-if="c.cover_image" :src="c.cover_image" class="w-full h-full object-cover" />
                                                 <span v-else>🎓</span>
                                             </div>
-                                            <p class="text-sm font-medium text-gray-800 truncate">{{ c.title }}</p>
+                                            <div class="min-w-0 flex-1">
+                                                <p class="text-sm font-medium text-gray-800 truncate">{{ c.title }}</p>
+                                                <span class="text-[10px] text-gray-400">{{ c.access_type }}</span>
+                                            </div>
                                         </div>
                                     </template>
                                 </template>
@@ -1453,6 +1468,7 @@ const props = defineProps({
     ownerIsPro: { type: Boolean, default: false },
     isOwner:    { type: Boolean, default: false },
     courses:        { type: Array, default: () => [] },
+    allCourses:     { type: Array, default: () => [] },
     certifications: { type: Array, default: () => [] },
 });
 
@@ -1519,6 +1535,32 @@ function setColorValue(path, value) {
         d[parts[parts.length - 1]] = value;
     }
     autoSave();
+}
+
+// ── Course selection helpers ──────────────────────────────────────────────────
+function toggleCourseSelection(courseId) {
+    if (!editDraft.value.included_courses_selected) {
+        editDraft.value.included_courses_selected = [];
+    }
+    const idx = editDraft.value.included_courses_selected.indexOf(courseId);
+    if (idx === -1) {
+        editDraft.value.included_courses_selected.push(courseId);
+    } else {
+        editDraft.value.included_courses_selected.splice(idx, 1);
+    }
+}
+
+const allCoursesSelected = computed(() => {
+    const sel = editDraft.value.included_courses_selected ?? [];
+    return props.allCourses.length > 0 && props.allCourses.every(c => sel.includes(c.id));
+});
+
+function toggleAllCourses() {
+    if (allCoursesSelected.value) {
+        editDraft.value.included_courses_selected = [];
+    } else {
+        editDraft.value.included_courses_selected = props.allCourses.map(c => c.id);
+    }
 }
 
 // ── Inline text editing ───────────────────────────────────────────────────────
@@ -1620,6 +1662,11 @@ watch(showEditPanel, (open) => {
         editDraft.value = JSON.parse(JSON.stringify(lp.value));
         editError.value = null;
         expandedSection.value = null;
+
+        // Initialize course selection from saved data or default to current inclusive courses
+        if (!editDraft.value.included_courses_selected) {
+            editDraft.value.included_courses_selected = props.courses.map(c => c.id);
+        }
 
         // Ensure _sections exists for old landing pages
         if (!editDraft.value._sections) {
