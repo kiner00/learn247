@@ -14,6 +14,8 @@ class HorizonServiceProvider extends HorizonApplicationServiceProvider
 
     protected function authorization(): void
     {
-        Horizon::auth(fn () => true);
+        Horizon::auth(function ($request) {
+            return (bool) $request->user()?->is_super_admin;
+        });
     }
 }
