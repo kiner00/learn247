@@ -14,14 +14,6 @@ class HorizonServiceProvider extends HorizonApplicationServiceProvider
 
     protected function authorization(): void
     {
-        Horizon::auth(function ($request) {
-            // Temporary: key-based access while debugging Octane session issue
-            if ($request->query('key') === 'curzzo-horizon-2026') {
-                return true;
-            }
-
-            // Normal: super admin check
-            return (bool) $request->user()?->is_super_admin;
-        });
+        Horizon::auth(fn () => true);
     }
 }
