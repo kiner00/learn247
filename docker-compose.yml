@@ -1,10 +1,10 @@
 services:
 
-  # ── PHP-FPM Application ────────────────────────────────────────────────────
+  # ── Octane (FrankenPHP) Application ─────────────────────────────────────────
   app:
     build:
       context: .
-      dockerfile: docker/Dockerfile
+      dockerfile: docker/Dockerfile.octane
     container_name: curzzo_app
     restart: unless-stopped
     working_dir: /var/www
@@ -78,7 +78,7 @@ services:
   queue:
     build:
       context: .
-      dockerfile: docker/Dockerfile
+      dockerfile: docker/Dockerfile.octane
     container_name: curzzo_queue
     restart: unless-stopped
     working_dir: /var/www

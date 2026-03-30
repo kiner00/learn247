@@ -23,3 +23,7 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 /coverage-report
+
+**/caddy
+frankenphp
+frankenphp-worker.php

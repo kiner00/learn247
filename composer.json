@@ -11,6 +11,7 @@
         "laravel/ai": "^0.2.6",
         "laravel/framework": "^12.0",
         "laravel/mcp": "^0.6.4",
+        "laravel/octane": "^2.17",
         "laravel/pulse": "^1.6",
         "laravel/reverb": "^1.9",
         "laravel/sanctum": "^4.3",
