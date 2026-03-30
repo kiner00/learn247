@@ -25,7 +25,7 @@ class CommunityPolicy
 
     public function update(User $user, Community $community): bool
     {
-        return $user->id === $community->owner_id;
+        return $user->id === $community->owner_id || $user->isSuperAdmin();
     }
 
     public function delete(User $user, Community $community): bool
