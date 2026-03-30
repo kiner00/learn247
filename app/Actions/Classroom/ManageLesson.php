@@ -44,16 +44,11 @@ class ManageLesson
         // Reset HLS fields when a new video is being uploaded
         if ($videoPathChanged) {
             $data['video_hls_path']          = null;
-            $data['video_transcode_status']  = 'pending';
+            $data['video_transcode_status']  = null;
             $data['video_transcode_percent'] = 0;
         }
 
         $lesson->update($data);
-
-        // Dispatch transcoding job for new video uploads
-        if ($videoPathChanged) {
-            TranscodeVideoToHls::dispatch($lesson)->onQueue('video-transcoding');
-        }
 
         return $lesson;
     }
