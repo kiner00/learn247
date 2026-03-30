@@ -214,7 +214,7 @@ return [
             'connection' => 'redis',
             'queue' => ['video-transcoding'],
             'balance' => 'simple',
-            'maxProcesses' => 2,
+            'maxProcesses' => 1,
             'maxTime' => 0,
             'maxJobs' => 0,
             'memory' => 512,
@@ -232,7 +232,7 @@ return [
                 'balanceCooldown' => 3,
             ],
             'video-transcoding' => [
-                'maxProcesses' => 2,
+                'maxProcesses' => 1,
             ],
         ],
 
