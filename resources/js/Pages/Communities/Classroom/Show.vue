@@ -433,6 +433,7 @@
                         <video
                             v-else-if="videoStreamUrl"
                             ref="videoPlayerRef"
+                            :src="videoStreamType !== 'hls' ? videoStreamUrl : undefined"
                             controls
                             class="w-full max-h-120 object-contain"
                             controlsList="nodownload nofullscreen"
