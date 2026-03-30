@@ -12,7 +12,6 @@ use App\Models\Event;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 
 class EventController extends Controller
 {
@@ -40,7 +39,7 @@ class EventController extends Controller
             'end_at'      => $e->end_at?->toISOString(),
             'timezone'    => $e->timezone,
             'url'         => $e->url,
-            'cover_image' => $e->cover_image ? Storage::url($e->cover_image) : null,
+            'cover_image' => $e->cover_image ?: null,
             'visibility'  => $e->visibility,
         ]);
 

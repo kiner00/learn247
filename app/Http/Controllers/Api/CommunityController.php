@@ -24,7 +24,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Storage;
 
 class CommunityController extends Controller
 {
@@ -134,7 +133,7 @@ class CommunityController extends Controller
             ->map(fn ($m) => ['name' => $m->user?->name, 'avatar' => $m->user?->avatar])
             ->filter(fn ($m) => $m['name'])->values();
 
-        $gallery = collect($community->gallery_images ?? [])->map(fn ($path) => Storage::url($path));
+        $gallery = collect($community->gallery_images ?? [])->values();
 
         return response()->json([
             'community'      => new CommunityResource($community),

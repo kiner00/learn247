@@ -33,7 +33,6 @@ use App\Queries\Feed\GetCommunityFeed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -481,7 +480,7 @@ class CommunityController extends Controller
                 'title'      => $c->title,
                 'cert_title' => $c->cert_title,
                 'description'=> $c->description,
-                'cover_image'=> $c->cover_image ? Storage::url($c->cover_image) : null,
+                'cover_image'=> $c->cover_image ?: null,
                 'price'      => (float) ($c->price ?? 0),
                 'questions_count' => $c->questions_count,
             ]);

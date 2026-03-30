@@ -15,7 +15,6 @@ use App\Models\CourseCertification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -41,7 +40,7 @@ class CertificationExamController extends Controller
                         'title'                     => $cert->title,
                         'cert_title'                => $cert->cert_title,
                         'description'               => $cert->description,
-                        'cover_image'               => $cert->cover_image ? Storage::url($cert->cover_image) : null,
+                        'cover_image'               => $cert->cover_image ?: null,
                         'pass_score'                => $cert->pass_score,
                         'randomize_questions'       => $cert->randomize_questions,
                         'price'                     => (float) ($cert->price ?? 0),
