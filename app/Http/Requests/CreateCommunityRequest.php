@@ -32,7 +32,13 @@ class CreateCommunityRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         if (! $this->slug && $this->name) {
-            $this->merge(['slug' => Str::slug($this->name)]);
+            $base = Str::slug($this->name);
+            $slug = $base;
+            $i = 1;
+            while (\App\Models\Community::where('slug', $slug)->exists()) {
+                $slug = $base . '-' . $i++;
+            }
+            $this->merge(['slug' => $slug]);
         }
     }
 }
