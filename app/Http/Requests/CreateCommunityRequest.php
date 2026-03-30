@@ -20,7 +20,7 @@ class CreateCommunityRequest extends FormRequest
             'description' => 'nullable|string|max:2000',
             'category'    => 'nullable|string|in:Tech,Business,Design,Health,Education,Finance,Other',
             'avatar'      => 'nullable|image|max:10240',
-            'cover_image' => 'required|image|max:10240',
+            'cover_image' => 'nullable|image|max:10240',
             'is_private'               => 'boolean',
             'price'                    => 'nullable|numeric|min:0',
             'currency'                 => 'nullable|string|in:PHP,USD',
