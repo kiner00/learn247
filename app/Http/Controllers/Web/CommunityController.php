@@ -56,6 +56,13 @@ class CommunityController extends Controller
 
     public function store(CreateCommunityRequest $request, CreateCommunity $action, PlanLimitService $planLimit): RedirectResponse
     {
+        \Log::info('Community create attempt', [
+            'user'   => $request->user()->id,
+            'data'   => $request->except(['avatar', 'cover_image']),
+            'avatar' => $request->hasFile('avatar') ? 'yes' : 'no',
+            'cover'  => $request->hasFile('cover_image') ? 'yes' : 'no',
+        ]);
+
         $user = $request->user();
 
         if (! $planLimit->canCreateCommunity($user)) {
