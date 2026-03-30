@@ -1865,9 +1865,10 @@ async function handleSectionVideoUpload(sectionType, e) {
             return;
         }
 
-        // Step 2: Upload directly to S3
+        // Step 2: Upload directly to S3 — must set withCredentials: false to avoid CORS rejection
         const { default: rawAxios } = await import('axios');
-        await rawAxios.create().put(data.upload_url, file, {
+        const s3Client = rawAxios.create({ withCredentials: false });
+        await s3Client.put(data.upload_url, file, {
             headers: { 'Content-Type': file.type },
             onUploadProgress: (evt) => {
                 sectionVideoProgress.value = Math.round((evt.loaded / evt.total) * 100);

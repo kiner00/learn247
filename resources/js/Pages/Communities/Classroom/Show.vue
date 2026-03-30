@@ -1171,13 +1171,12 @@ async function handleVideoUpload(e) {
             size: file.size,
         });
 
-        // Step 2: Upload directly to S3 using a clean axios instance
-        // (global axios adds X-XSRF-TOKEN / withCredentials which break presigned URLs)
+        // Step 2: Upload directly to S3 — must avoid withCredentials (global axios sets it to true,
+        // which makes browsers reject S3's Access-Control-Allow-Origin: * response)
         const { default: rawAxios } = await import('axios');
-        await rawAxios.create().put(data.upload_url, file, {
-            headers: {
-                'Content-Type': file.type,
-            },
+        const s3Client = rawAxios.create({ withCredentials: false });
+        await s3Client.put(data.upload_url, file, {
+            headers: { 'Content-Type': file.type },
             onUploadProgress: (e) => {
                 videoUploadProgress.value = Math.round((e.loaded / e.total) * 100);
             },
