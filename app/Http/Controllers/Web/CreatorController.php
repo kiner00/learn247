@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Actions\Billing\StartCreatorPlanCheckout;
+use App\Actions\Coupon\RedeemCoupon;
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use App\Queries\Creator\GetCreatorDashboard;
@@ -38,6 +39,19 @@ class CreatorController extends Controller
         } catch (\Throwable $e) {
             Log::error('CreatorController@planCheckout failed', ['error' => $e->getMessage(), 'user_id' => $user->id]);
             return response()->json(['error' => 'Failed to start checkout.'], 500);
+        }
+    }
+
+    public function redeemCoupon(Request $request, RedeemCoupon $action)
+    {
+        $code = $request->validate(['code' => 'required|string|max:32'])['code'];
+
+        try {
+            $sub = $action->execute(Auth::user(), $code);
+
+            return back()->with('success', "Coupon redeemed! You now have the {$sub->plan} plan until {$sub->expires_at->format('M d, Y')}.");
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            return back()->withErrors(['code' => $e->getMessage()]);
         }
     }
 

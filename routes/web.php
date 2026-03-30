@@ -119,6 +119,11 @@ Route::middleware(['auth', EnsureSuperAdmin::class])->prefix('admin')->group(fun
     Route::get('/email-templates/{key}/edit', [AdminController::class, 'editEmailTemplate'])->name('admin.email-templates.edit');
     Route::put('/email-templates/{key}', [AdminController::class, 'updateEmailTemplate'])->name('admin.email-templates.update');
     Route::post('/email-templates/{key}/preview', [AdminController::class, 'previewEmailTemplate'])->name('admin.email-templates.preview');
+    // Coupons
+    Route::get('/coupons', [AdminController::class, 'coupons'])->name('admin.coupons');
+    Route::post('/coupons', [AdminController::class, 'storeCoupon'])->name('admin.coupons.store');
+    Route::post('/coupons/{coupon}/toggle', [AdminController::class, 'toggleCoupon'])->name('admin.coupons.toggle');
+    Route::delete('/coupons/{coupon}', [AdminController::class, 'deleteCoupon'])->name('admin.coupons.destroy');
 });
 
 // ─── User Profile shortlink ─────────────────────────────────────────────────
@@ -291,6 +296,7 @@ Route::middleware('auth')->group(function () {
     // ─── Creator Dashboard ────────────────────────────────────────────────────
     Route::get('/creator/plan', [CreatorController::class, 'plan'])->name('creator.plan');
     Route::post('/creator/plan/checkout', [CreatorController::class, 'planCheckout'])->name('creator.plan.checkout');
+    Route::post('/creator/plan/redeem-coupon', [CreatorController::class, 'redeemCoupon'])->name('creator.plan.redeem-coupon');
     Route::get('/creator/dashboard', [CreatorController::class, 'dashboard'])->name('creator.dashboard');
     Route::post('/creator/payout-request/{community:id}', [PayoutRequestController::class, 'storeOwner'])->name('creator.payout-request.store');
 

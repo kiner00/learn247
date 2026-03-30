@@ -2,6 +2,7 @@
 import AppLayout from '@/Layouts/AppLayout.vue';
 import axios from 'axios';
 import { ref, onMounted } from 'vue';
+import { useForm, usePage } from '@inertiajs/vue3';
 
 const props = defineProps({
     basicPrice:  { type: Number, default: 499 },
@@ -12,11 +13,26 @@ const props = defineProps({
 const notice = ref(null);
 const processing = ref(false);
 
+const page = usePage();
+
 onMounted(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('success') === '1') notice.value = 'success';
     if (params.get('failed')  === '1') notice.value = 'failed';
+    if (page.props.flash?.success) notice.value = 'coupon';
 });
+
+const couponForm = useForm({ code: '' });
+
+function redeemCoupon() {
+    couponForm.post('/creator/plan/redeem-coupon', {
+        preserveScroll: true,
+        onSuccess: () => {
+            couponForm.reset();
+            notice.value = 'coupon';
+        },
+    });
+}
 
 async function subscribe(plan) {
     processing.value = true;
@@ -72,10 +88,41 @@ const planLabel = { free: 'Free', basic: 'Basic', pro: 'Pro' };
                 <p class="text-sm font-medium text-red-700">Payment was not completed. Please try again or contact support.</p>
             </div>
 
+            <!-- Coupon redeemed notice -->
+            <div v-if="notice === 'coupon'" class="mb-6 bg-green-50 border border-green-200 rounded-2xl px-5 py-4 flex items-center gap-3">
+                <span class="text-xl">🎟️</span>
+                <div>
+                    <p class="text-sm font-bold text-green-800">{{ $page.props.flash?.success || 'Coupon redeemed successfully!' }}</p>
+                </div>
+            </div>
+
             <!-- Current plan banner -->
             <div v-if="currentPlan !== 'free'" class="mb-6 bg-indigo-50 border border-indigo-200 rounded-2xl px-5 py-4 flex items-center gap-3">
                 <span class="text-xl">⭐</span>
                 <p class="text-sm font-bold text-indigo-800">You're on the <span class="capitalize">{{ currentPlan }}</span> plan. All your features are active.</p>
+            </div>
+
+            <!-- Coupon input -->
+            <div v-if="currentPlan !== 'pro'" class="mb-6 bg-white border border-gray-200 rounded-2xl px-5 py-4 shadow-sm">
+                <p class="text-sm font-bold text-gray-900 mb-2">Have a coupon code?</p>
+                <form @submit.prevent="redeemCoupon" class="flex items-start gap-3">
+                    <div class="flex-1 max-w-xs">
+                        <input
+                            v-model="couponForm.code"
+                            type="text"
+                            placeholder="Enter coupon code"
+                            class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm uppercase focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                        />
+                        <p v-if="couponForm.errors.code" class="text-xs text-red-500 mt-1">{{ couponForm.errors.code }}</p>
+                    </div>
+                    <button
+                        type="submit"
+                        :disabled="couponForm.processing || !couponForm.code"
+                        class="px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                    >
+                        {{ couponForm.processing ? 'Redeeming...' : 'Redeem' }}
+                    </button>
+                </form>
             </div>
 
             <!-- Pricing cards -->
