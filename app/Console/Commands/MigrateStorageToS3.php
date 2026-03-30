@@ -110,6 +110,7 @@ class MigrateStorageToS3 extends Command
             ['table' => 'posts',       'columns' => ['image']],
             ['table' => 'events',      'columns' => ['cover_image']],
             ['table' => 'course_certifications', 'columns' => ['cover_image']],
+            ['table' => 'certificates', 'columns' => ['cover_image']],
         ];
 
         $totalUpdated = 0;
