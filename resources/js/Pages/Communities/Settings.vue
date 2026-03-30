@@ -190,7 +190,7 @@
                                 {{ coverPreview || community.cover_image ? 'Change banner' : 'Upload banner' }}
                                 <input ref="coverInput" type="file" accept="image/*" class="hidden" @change="onCoverChange" />
                             </label>
-                            <p class="mt-1 text-xs text-gray-400">JPG, PNG, WebP — max 5 MB &nbsp;·&nbsp; <span class="font-medium text-gray-500">Recommended: 1920 × 1080 px</span></p>
+                            <p class="mt-1 text-xs text-gray-400">JPG, PNG, WebP — max 15 MB &nbsp;·&nbsp; <span class="font-medium text-gray-500">Recommended: 1920 × 1080 px</span></p>
                             <p v-if="imageForm.errors.cover_image" class="mt-1 text-xs text-red-600">{{ imageForm.errors.cover_image }}</p>
                         </div>
 
@@ -215,7 +215,7 @@
                                 {{ avatarPreview || community.avatar ? 'Change avatar' : 'Upload avatar' }}
                                 <input ref="avatarInput" type="file" accept="image/*" class="hidden" @change="onAvatarChange" />
                             </label>
-                            <p class="mt-1 text-xs text-gray-400">Shown as your community icon. JPG, PNG, WebP — max 5 MB &nbsp;·&nbsp; <span class="font-medium text-gray-500">Recommended: 200 × 200 px</span></p>
+                            <p class="mt-1 text-xs text-gray-400">Shown as your community icon. JPG, PNG, WebP — max 10 MB &nbsp;·&nbsp; <span class="font-medium text-gray-500">Recommended: 200 × 200 px</span></p>
                             <p v-if="imageForm.errors.avatar" class="mt-1 text-xs text-red-600">{{ imageForm.errors.avatar }}</p>
                         </div>
                     </div>
@@ -1073,6 +1073,12 @@ const imageForm = useForm({
 function onCoverChange(e) {
     const file = e.target.files[0];
     if (!file) return;
+    if (file.size > 15 * 1024 * 1024) {
+        imageForm.errors.cover_image = 'The banner must not be larger than 15 MB.';
+        if (coverInput.value) coverInput.value.value = '';
+        return;
+    }
+    imageForm.errors.cover_image = null;
     imageForm.cover_image = file;
     coverPreview.value = URL.createObjectURL(file);
 }
@@ -1086,6 +1092,12 @@ function removeCover() {
 function onAvatarChange(e) {
     const file = e.target.files[0];
     if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+        imageForm.errors.avatar = 'The avatar must not be larger than 10 MB.';
+        if (avatarInput.value) avatarInput.value.value = '';
+        return;
+    }
+    imageForm.errors.avatar = null;
     imageForm.avatar = file;
     avatarPreview.value = URL.createObjectURL(file);
 }

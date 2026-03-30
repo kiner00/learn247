@@ -180,7 +180,7 @@ class CommunityController extends Controller
             'description'              => ['nullable', 'string', 'max:2000'],
             'category'                 => ['nullable', 'string', 'in:Tech,Business,Design,Health,Education,Finance,Other'],
             'avatar'      => ['nullable', 'image', 'max:10240'],
-            'cover_image' => ['nullable', 'image', 'max:10240'],
+            'cover_image' => ['nullable', 'image', 'max:15360'],
             'price'                    => ['nullable', 'numeric', 'min:0'],
             'currency'                 => ['nullable', 'string', 'in:PHP,USD'],
             'billing_type'             => ['nullable', 'string', 'in:monthly,one_time'],
