@@ -30,7 +30,7 @@ class CommunityPolicy
 
     public function delete(User $user, Community $community): bool
     {
-        return $user->id === $community->owner_id;
+        return $user->id === $community->owner_id || $user->isSuperAdmin();
     }
 
     /**

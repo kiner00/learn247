@@ -72,7 +72,9 @@ class HandleInertiaRequests extends Middleware
                 'communities' => $request->user()
                     ? $request->user()->communityMemberships()
                         ->with('community:id,name,slug,avatar')
+                        ->whereHas('community')
                         ->get()
+                        ->filter(fn ($m) => $m->community !== null)
                         ->map(fn ($m) => [
                             'id'     => $m->community->id,
                             'name'   => $m->community->name,
