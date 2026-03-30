@@ -33,6 +33,15 @@ class ManageLesson
             $data['video_transcode_percent'] = 0;
         }
 
+        // When explicitly removing the video (video_path sent as empty)
+        if (array_key_exists('video_path', $data) && empty($data['video_path']) && $lesson->video_path) {
+            $this->deleteVideoFiles($lesson);
+            $data['video_path']              = null;
+            $data['video_hls_path']          = null;
+            $data['video_transcode_status']  = null;
+            $data['video_transcode_percent'] = 0;
+        }
+
         // When uploading a new video, clear old uploaded video and external URL
         if (!empty($data['video_path']) && $lesson->video_path && $data['video_path'] !== $lesson->video_path) {
             $this->deleteVideoFiles($lesson);

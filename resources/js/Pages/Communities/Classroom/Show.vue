@@ -496,13 +496,27 @@
                                     Upload Video
                                     <span class="ml-1 px-1.5 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-bold rounded-full uppercase">Pro</span>
                                 </p>
+                                <!-- Current uploaded video indicator -->
+                                <div v-if="selectedLesson.video_path && !videoUploading" class="flex items-center gap-2 mb-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
+                                    <svg class="w-4 h-4 text-green-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                    </svg>
+                                    <span class="text-xs text-green-700 flex-1">Video uploaded</span>
+                                    <button
+                                        type="button"
+                                        @click="deleteVideo"
+                                        class="text-xs text-red-500 hover:text-red-700 font-medium"
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
                                 <div class="flex items-center gap-3">
                                     <label class="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 transition-colors">
                                         <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                                         </svg>
                                         <span class="text-xs text-gray-500">
-                                            {{ videoUploading ? `Uploading... ${videoUploadProgress}%` : 'Choose video file (MP4, WebM, MOV — max 500MB)' }}
+                                            {{ videoUploading ? `Uploading... ${videoUploadProgress}%` : selectedLesson.video_path ? 'Replace video (MP4, WebM, MOV — max 500MB)' : 'Choose video file (MP4, WebM, MOV — max 500MB)' }}
                                         </span>
                                         <input
                                             type="file"
@@ -513,7 +527,15 @@
                                         />
                                     </label>
                                 </div>
+                                <!-- Upload progress bar -->
+                                <div v-if="videoUploading" class="mt-2">
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-indigo-600 h-2 rounded-full transition-all duration-300" :style="{ width: videoUploadProgress + '%' }" />
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">{{ videoUploadProgress }}% uploaded</p>
+                                </div>
                                 <p v-if="videoUploadError" class="text-xs text-red-500 mt-1">{{ videoUploadError }}</p>
+                                <p v-if="videoUploadSuccess" class="text-xs text-green-600 mt-1">Video uploaded successfully!</p>
                             </div>
                             <div>
                                 <p class="text-xs text-gray-500 mb-1.5 font-medium">Embed Code <span class="text-gray-400">(paste iframe / script embeds here)</span></p>
@@ -1155,6 +1177,7 @@ function saveContent() {
 const videoUploading = ref(false);
 const videoUploadProgress = ref(0);
 const videoUploadError = ref('');
+const videoUploadSuccess = ref(false);
 
 async function handleVideoUpload(e) {
     const file = e.target.files[0];
@@ -1163,6 +1186,7 @@ async function handleVideoUpload(e) {
     videoUploading.value = true;
     videoUploadProgress.value = 0;
     videoUploadError.value = '';
+    videoUploadSuccess.value = false;
 
     try {
         // Step 1: Get presigned upload URL from server
@@ -1190,11 +1214,13 @@ async function handleVideoUpload(e) {
             { video_path: data.key, video_url: '', _method: 'PATCH' }
         );
 
-        // Update local state and start polling for transcoding progress
+        // Update local state and refresh the video player
         lesson.video_path = data.key;
-        transcodeStatus.value  = 'pending';
-        transcodePercent.value = 0;
-        startTranscodePolling(lesson);
+        lesson.video_url  = '';
+        await fetchVideoStreamUrl(lesson);
+
+        videoUploadSuccess.value = true;
+        setTimeout(() => (videoUploadSuccess.value = false), 5000);
 
         router.reload({ only: ['course'] });
     } catch (err) {
@@ -1216,6 +1242,27 @@ async function handleVideoUpload(e) {
     } finally {
         videoUploading.value = false;
         e.target.value = '';
+    }
+}
+
+// ─── Delete video ────────────────────────────────────────────────────────────
+async function deleteVideo() {
+    if (!confirm('Remove this video? This cannot be undone.')) return;
+    const lesson = selectedLesson.value;
+    try {
+        await axios.patch(
+            `/communities/${props.community.slug}/classroom/courses/${props.course.id}/modules/${lesson.module_id}/lessons/${lesson.id}`,
+            { video_path: '', video_url: '' }
+        );
+        lesson.video_path = null;
+        lesson.video_url  = null;
+        videoStreamUrl.value  = null;
+        videoStreamType.value = null;
+        destroyHls();
+        stopTranscodePolling();
+        router.reload({ only: ['course'] });
+    } catch (err) {
+        console.error('Failed to delete video:', err);
     }
 }
 
