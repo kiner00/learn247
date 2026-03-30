@@ -1198,7 +1198,21 @@ async function handleVideoUpload(e) {
 
         router.reload({ only: ['course'] });
     } catch (err) {
-        videoUploadError.value = err.response?.data?.error || err.response?.data?.message || 'Upload failed. Please try again.';
+        // Step 1/3 return JSON; Step 2 (S3 PUT) may return XML or a network error
+        if (err.response?.data?.error) {
+            videoUploadError.value = err.response.data.error;
+        } else if (err.response?.data?.message) {
+            videoUploadError.value = err.response.data.message;
+        } else if (typeof err.response?.data === 'string' && err.response.data.includes('<Message>')) {
+            // S3 XML error
+            const match = err.response.data.match(/<Message>([^<]+)<\/Message>/);
+            videoUploadError.value = match ? `S3: ${match[1]}` : 'Upload to storage failed. Please try again.';
+        } else if (err.message) {
+            videoUploadError.value = err.message;
+        } else {
+            videoUploadError.value = 'Upload failed. Please try again.';
+        }
+        console.error('Video upload error:', err);
     } finally {
         videoUploading.value = false;
         e.target.value = '';
