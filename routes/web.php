@@ -212,6 +212,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/communities/{community}/ai-landing', [CommunityController::class, 'generateLandingPage'])->name('communities.ai-landing');
     Route::post('/communities/{community}/ai-landing/section', [CommunityController::class, 'regenerateSection'])->name('communities.ai-landing.section');
     Route::post('/communities/{community}/landing-page/upload-image', [CommunityController::class, 'uploadSectionImage'])->name('communities.landing-page.upload-image');
+    Route::post('/communities/{community}/landing-page/upload-video', [CommunityController::class, 'uploadSectionVideo'])->name('communities.landing-page.upload-video');
     Route::patch('/communities/{community}/landing-page', [CommunityController::class, 'updateLandingPage'])->name('communities.landing-page.update');
 
     // Member management (admin only — enforced by Action)

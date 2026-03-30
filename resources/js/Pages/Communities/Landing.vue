@@ -382,9 +382,35 @@
                                 <!-- VIDEO (generic handler for all 3 video sections) -->
                                 <template v-if="sec.type === 'video_creator' || sec.type === 'video_testimonials' || sec.type === 'video_courses'">
                                     <div v-if="!editDraft[sec.type]" class="text-xs text-gray-500">
-                                        <button @click="editDraft[sec.type] = { embed_html: '' }" class="text-indigo-600 font-medium hover:underline">+ Initialize section</button>
+                                        <button @click="editDraft[sec.type] = { embed_html: '', video_url: '' }" class="text-indigo-600 font-medium hover:underline">+ Initialize section</button>
                                     </div>
                                     <template v-else>
+                                        <div>
+                                            <label class="field-label">Video URL <span class="text-gray-400 font-normal">(YouTube, Vimeo, or Google Drive link)</span></label>
+                                            <input v-model="editDraft[sec.type].video_url" type="url" placeholder="https://youtube.com/watch?v=..." class="field-input" />
+                                        </div>
+                                        <div v-if="canUploadSectionVideo">
+                                            <p class="text-xs text-gray-500 mb-1.5 font-medium">
+                                                Upload Video
+                                                <span class="ml-1 px-1.5 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-bold rounded-full uppercase">Pro</span>
+                                            </p>
+                                            <label class="flex items-center justify-center gap-2 px-3 py-2.5 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 transition-colors">
+                                                <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                                </svg>
+                                                <span class="text-xs text-gray-500">
+                                                    {{ sectionVideoUploading === sec.type ? `Uploading... ${sectionVideoProgress}%` : 'Choose video file (MP4, WebM, MOV — max 500MB)' }}
+                                                </span>
+                                                <input
+                                                    type="file"
+                                                    accept="video/mp4,video/webm,video/quicktime"
+                                                    class="hidden"
+                                                    :disabled="sectionVideoUploading === sec.type"
+                                                    @change="handleSectionVideoUpload(sec.type, $event)"
+                                                />
+                                            </label>
+                                            <p v-if="sectionVideoError" class="text-xs text-red-500 mt-1">{{ sectionVideoError }}</p>
+                                        </div>
                                         <div>
                                             <label class="field-label">Embed Code <span class="text-gray-400 font-normal">(paste YouTube / Vimeo iframe or any embed script)</span></label>
                                             <textarea v-model="editDraft[sec.type].embed_html" rows="5" placeholder='<iframe src="https://www.youtube.com/embed/..." ...></iframe>' class="field-input font-mono resize-none" />
@@ -1013,9 +1039,14 @@
         </section>
 
         <!-- ── VIDEO AFTER CREATOR ── -->
-        <section v-if="isVisible('video_creator') && lp.video_creator?.embed_html" class="py-16 bg-white">
+        <section v-if="isVisible('video_creator') && (lp.video_creator?.embed_html || lp.video_creator?.video_url)" class="py-16 bg-white">
             <div class="max-w-3xl mx-auto px-6">
-                <SafeHtmlRenderer :html="lp.video_creator.embed_html" />
+                <SafeHtmlRenderer v-if="lp.video_creator.embed_html" :html="lp.video_creator.embed_html" />
+                <div v-else-if="lp.video_creator.video_url" class="aspect-video rounded-2xl overflow-hidden shadow-2xl">
+                    <video v-if="lp.video_creator.video_url.includes('.mp4') || lp.video_creator.video_url.includes('.webm') || lp.video_creator.video_url.includes('.mov')"
+                        :src="lp.video_creator.video_url" controls class="w-full h-full object-cover" />
+                    <iframe v-else :src="normalizeVideoUrl(lp.video_creator.video_url)" class="w-full h-full" frameborder="0" allowfullscreen allow="autoplay; encrypted-media" />
+                </div>
             </div>
         </section>
 
@@ -1061,9 +1092,14 @@
         </section>
 
         <!-- ── VIDEO AFTER TESTIMONIALS ── -->
-        <section v-if="isVisible('video_testimonials') && lp.video_testimonials?.embed_html" class="py-16 bg-white">
+        <section v-if="isVisible('video_testimonials') && (lp.video_testimonials?.embed_html || lp.video_testimonials?.video_url)" class="py-16 bg-white">
             <div class="max-w-3xl mx-auto px-6">
-                <SafeHtmlRenderer :html="lp.video_testimonials.embed_html" />
+                <SafeHtmlRenderer v-if="lp.video_testimonials.embed_html" :html="lp.video_testimonials.embed_html" />
+                <div v-else-if="lp.video_testimonials.video_url" class="aspect-video rounded-2xl overflow-hidden shadow-2xl">
+                    <video v-if="lp.video_testimonials.video_url.includes('.mp4') || lp.video_testimonials.video_url.includes('.webm') || lp.video_testimonials.video_url.includes('.mov')"
+                        :src="lp.video_testimonials.video_url" controls class="w-full h-full object-cover" />
+                    <iframe v-else :src="normalizeVideoUrl(lp.video_testimonials.video_url)" class="w-full h-full" frameborder="0" allowfullscreen allow="autoplay; encrypted-media" />
+                </div>
             </div>
         </section>
 
@@ -1145,8 +1181,13 @@
                     </div>
                 </div>
                 <!-- Video embed (configured via Video After Courses section) -->
-                <div v-if="isVisible('video_courses') && lp.video_courses?.embed_html" class="mt-12 max-w-3xl mx-auto">
-                    <SafeHtmlRenderer :html="lp.video_courses.embed_html" />
+                <div v-if="isVisible('video_courses') && (lp.video_courses?.embed_html || lp.video_courses?.video_url)" class="mt-12 max-w-3xl mx-auto">
+                    <SafeHtmlRenderer v-if="lp.video_courses.embed_html" :html="lp.video_courses.embed_html" />
+                    <div v-else-if="lp.video_courses.video_url" class="aspect-video rounded-2xl overflow-hidden shadow-2xl">
+                        <video v-if="lp.video_courses.video_url.includes('.mp4') || lp.video_courses.video_url.includes('.webm') || lp.video_courses.video_url.includes('.mov')"
+                            :src="lp.video_courses.video_url" controls class="w-full h-full object-cover" />
+                        <iframe v-else :src="normalizeVideoUrl(lp.video_courses.video_url)" class="w-full h-full" frameborder="0" allowfullscreen allow="autoplay; encrypted-media" />
+                    </div>
                 </div>
             </div>
         </section>
@@ -1419,7 +1460,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
 import SafeHtmlRenderer from '@/Components/SafeHtmlRenderer.vue';
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { usePixel } from '@/composables/usePixel';
 import { useTiktokPixel } from '@/composables/useTiktokPixel';
 import { useGoogleAnalytics } from '@/composables/useGoogleAnalytics';
@@ -1487,6 +1528,11 @@ const expandedSection = ref(null);
 const regenLoading   = ref(null);
 const uploadLoading  = ref(null);
 const showAddSection  = ref(false);
+
+const canUploadSectionVideo = computed(() => {
+    const user = usePage().props.auth?.user;
+    return props.ownerIsPro || user?.is_super_admin;
+});
 
 // ── Inline color picker ──────────────────────────────────────────────────────
 const colorPopover = ref({ visible: false, top: 0, left: 0, fields: [] });
@@ -1786,6 +1832,62 @@ async function uploadImage(section, event) {
     } finally {
         uploadLoading.value = null;
         event.target.value = '';
+    }
+}
+
+// ── Section video upload (Pro) ────────────────────────────────────────────
+const sectionVideoUploading = ref(null);
+const sectionVideoProgress  = ref(0);
+const sectionVideoError     = ref('');
+
+async function handleSectionVideoUpload(sectionType, e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    sectionVideoUploading.value = sectionType;
+    sectionVideoProgress.value  = 0;
+    sectionVideoError.value     = '';
+
+    try {
+        // Step 1: Get presigned upload URL
+        const res = await fetch(`/communities/${props.community.slug}/landing-page/upload-video`, {
+            method: 'POST',
+            headers: jsonHeaders(),
+            body: JSON.stringify({
+                filename: file.name,
+                content_type: file.type,
+                size: file.size,
+            }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            sectionVideoError.value = data.error ?? data.message ?? 'Failed to get upload URL.';
+            return;
+        }
+
+        // Step 2: Upload directly to S3
+        const { default: rawAxios } = await import('axios');
+        await rawAxios.create().put(data.upload_url, file, {
+            headers: { 'Content-Type': file.type },
+            onUploadProgress: (evt) => {
+                sectionVideoProgress.value = Math.round((evt.loaded / evt.total) * 100);
+            },
+        });
+
+        // Step 3: Store the S3 URL in the section draft
+        if (!editDraft.value[sectionType]) editDraft.value[sectionType] = {};
+        editDraft.value[sectionType].video_url = data.url;
+    } catch (err) {
+        if (typeof err.response?.data === 'string' && err.response.data.includes('<Message>')) {
+            const match = err.response.data.match(/<Message>([^<]+)<\/Message>/);
+            sectionVideoError.value = match ? `S3: ${match[1]}` : 'Upload to storage failed.';
+        } else {
+            sectionVideoError.value = err.message || 'Upload failed. Please try again.';
+        }
+        console.error('Landing video upload error:', err);
+    } finally {
+        sectionVideoUploading.value = null;
+        e.target.value = '';
     }
 }
 

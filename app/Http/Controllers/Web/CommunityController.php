@@ -33,6 +33,8 @@ use App\Queries\Feed\GetCommunityFeed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -570,8 +572,11 @@ class CommunityController extends Controller
             'offer_stack.cta_label'               => 'nullable|string|max:50',
             // Video sections (after creator, after testimonials, after courses)
             'video_creator.embed_html'            => 'nullable|string|max:5000',
+            'video_creator.video_url'             => 'nullable|string|max:500',
             'video_testimonials.embed_html'       => 'nullable|string|max:5000',
+            'video_testimonials.video_url'        => 'nullable|string|max:500',
             'video_courses.embed_html'            => 'nullable|string|max:5000',
+            'video_courses.video_url'             => 'nullable|string|max:500',
             // Included courses
             'included_courses_headline'           => 'nullable|string|max:200',
             'included_courses_bg_color'           => 'nullable|string|max:20',
@@ -681,5 +686,50 @@ class CommunityController extends Controller
         $url = app(StorageService::class)->upload($request->file('image'), 'landing-images');
 
         return response()->json(['url' => $url]);
+    }
+
+    public function uploadSectionVideo(Request $request, Community $community, PlanLimitService $planLimit): \Illuminate\Http\JsonResponse
+    {
+        $user = $request->user();
+
+        if ($community->owner_id !== $user->id && ! $user->is_super_admin) {
+            abort(403);
+        }
+
+        $owner = $community->owner;
+        if (! $user->is_super_admin && ! $planLimit->canUploadVideo($owner)) {
+            return response()->json(['error' => 'Video uploads require a Pro plan.'], 403);
+        }
+
+        $request->validate([
+            'filename'     => ['required', 'string', 'max:255'],
+            'content_type' => ['required', 'string', 'in:video/mp4,video/quicktime,video/webm,video/x-msvideo'],
+            'size'         => ['required', 'integer', 'min:1'],
+        ]);
+
+        $maxBytes = $planLimit->maxVideoSizeMb($owner->creatorPlan()) * 1024 * 1024;
+        if (! $user->is_super_admin && $request->size > $maxBytes) {
+            return response()->json([
+                'error' => 'File too large. Maximum size is ' . $planLimit->maxVideoSizeMb($owner->creatorPlan()) . 'MB.',
+            ], 422);
+        }
+
+        $extension = pathinfo($request->filename, PATHINFO_EXTENSION) ?: 'mp4';
+        $key       = 'landing-videos/' . Str::uuid() . '.' . $extension;
+
+        $client  = Storage::disk('s3')->getClient();
+        $command = $client->getCommand('PutObject', [
+            'Bucket'      => config('filesystems.disks.s3.bucket'),
+            'Key'         => $key,
+            'ContentType' => $request->content_type,
+        ]);
+
+        $presigned = $client->createPresignedRequest($command, '+30 minutes');
+
+        return response()->json([
+            'upload_url' => (string) $presigned->getUri(),
+            'key'        => $key,
+            'url'        => Storage::disk('s3')->url($key),
+        ]);
     }
 }
