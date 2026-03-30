@@ -36,6 +36,12 @@ class TranscodeVideoToHls implements ShouldQueue
 
         $s3Key = $lesson->video_path;
 
+        if (! $s3Key) {
+            Log::warning('TranscodeVideoToHls: video_path is null, skipping', ['lesson_id' => $lesson->id]);
+            $lesson->update(['video_transcode_status' => 'failed', 'video_transcode_percent' => 0]);
+            return;
+        }
+
         // Handle legacy full URLs
         if (str_starts_with($s3Key, 'http')) {
             $parsed = parse_url($s3Key);
