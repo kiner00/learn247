@@ -46,13 +46,22 @@ class AIAssistantController extends Controller
         }
 
         if ($this->isImageRequest($request->message)) {
-            $imageResponse = Image::of($request->message)->size('3:2')->generate('openai');
-            $img           = $imageResponse->firstImage();
+            try {
+                $imageResponse = Image::of($request->message)->size('3:2')->generate();
+                $img           = $imageResponse->firstImage();
 
-            return response()->json([
-                'type'    => 'image',
-                'message' => "data:{$img->mime};base64,{$img->image}",
-            ]);
+                return response()->json([
+                    'type'    => 'image',
+                    'message' => "data:{$img->mime};base64,{$img->image}",
+                ]);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('AI image generation failed', ['error' => $e->getMessage()]);
+
+                return response()->json([
+                    'type'    => 'text',
+                    'message' => "Sorry, I couldn't generate that image right now. Please try again later.",
+                ]);
+            }
         }
 
         $agent = new CommunityAssistant($context);

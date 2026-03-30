@@ -77,12 +77,13 @@
                             <div class="flex items-center gap-4">
                                 <div class="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center text-xl font-bold text-indigo-600 shrink-0 overflow-hidden">
                                     <img
-                                        v-if="avatarPreview || props.profileUser?.avatar"
+                                        v-if="(avatarPreview || props.profileUser?.avatar) && !avatarBroken"
                                         :src="avatarPreview || props.profileUser?.avatar"
                                         class="w-full h-full object-cover"
                                         alt="Avatar"
+                                        @error="avatarBroken = true"
                                     />
-                                    <span v-else>{{ props.profileUser?.name?.charAt(0)?.toUpperCase() }}</span>
+                                    <span v-else>{{ props.profileUser?.first_name?.charAt(0)?.toUpperCase() || '?' }}</span>
                                 </div>
                                 <div>
                                     <label class="cursor-pointer">
@@ -730,6 +731,7 @@ function copyLink() {
 
 // ── Profile form ──────────────────────────────────────────────────────────────
 const avatarPreview = ref(null);
+const avatarBroken  = ref(false);
 
 const socialFields = [
     { key: 'website',   label: 'Website',   placeholder: 'https://yourwebsite.com' },
