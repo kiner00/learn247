@@ -60,7 +60,7 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Certificate Cover Image <span class="text-gray-400 font-normal">(optional, recommended: 1200×400)</span></label>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Certificate Cover Image <span class="text-gray-400 font-normal">(optional, recommended: 1200×800)</span></label>
                         <div v-if="coverPreview" class="mb-2 flex items-start gap-3">
                             <img :src="coverPreview" alt="Cover preview" class="h-24 rounded-xl object-cover border border-gray-100" />
                             <button @click="removeCover" type="button" class="text-xs text-red-400 hover:text-red-600">Remove</button>

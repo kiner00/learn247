@@ -506,11 +506,14 @@ class CommunityController extends Controller
 
         $data = $request->validate([
             'hero.headline'           => 'required|string|max:500',
+            'hero.pre_headline'       => 'nullable|string|max:300',
             'hero.subheadline'        => 'required|string|max:500',
             'hero.cta_label'          => 'required|string|max:50',
             'hero.vsl_url'            => 'nullable|url|max:500',
             'hero.video_type'         => 'nullable|string|in:vsl,embed',
             'hero.embed_html'        => 'nullable|string|max:5000',
+            'hero.headline_font_size' => 'nullable|integer|min:24|max:80',
+            'hero.subheadline_font_size' => 'nullable|integer|min:12|max:40',
             'hero.btn_bg'                         => 'nullable|string|max:20',
             'hero.btn_text'                       => 'nullable|string|max:20',
             'social_proof.stat_label' => 'nullable|string|max:100',
@@ -558,10 +561,17 @@ class CommunityController extends Controller
             'offer_stack.btn_bg'                  => 'nullable|string|max:20',
             'offer_stack.btn_text'                => 'nullable|string|max:20',
             'offer_stack.cta_label'               => 'nullable|string|max:50',
+            // Video sections (after creator, after testimonials, after courses)
+            'video_creator.embed_html'            => 'nullable|string|max:5000',
+            'video_testimonials.embed_html'       => 'nullable|string|max:5000',
+            'video_courses.embed_html'            => 'nullable|string|max:5000',
             // Included courses
+            'included_courses_headline'           => 'nullable|string|max:200',
             'included_courses_bg_color'           => 'nullable|string|max:20',
             'included_courses_btn_bg'             => 'nullable|string|max:20',
             'included_courses_btn_text'           => 'nullable|string|max:20',
+            // Certifications
+            'certifications_headline'             => 'nullable|string|max:200',
             // Guarantee
             'guarantee.headline'                  => 'nullable|string|max:100',
             'guarantee.days'                      => 'nullable|integer|min:1|max:365',

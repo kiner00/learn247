@@ -1129,13 +1129,10 @@
                         </div>
                     </div>
                 </div>
-            </div>
-        </section>
-
-        <!-- ── VIDEO AFTER COURSES ── -->
-        <section v-if="isVisible('video_courses') && lp.video_courses?.embed_html" class="py-16 bg-white">
-            <div class="max-w-3xl mx-auto px-6">
-                <SafeHtmlRenderer :html="lp.video_courses.embed_html" />
+                <!-- Video embed (configured via Video After Courses section) -->
+                <div v-if="isVisible('video_courses') && lp.video_courses?.embed_html" class="mt-12 max-w-3xl mx-auto">
+                    <SafeHtmlRenderer :html="lp.video_courses.embed_html" />
+                </div>
             </div>
         </section>
 
