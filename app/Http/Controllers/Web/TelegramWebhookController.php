@@ -70,18 +70,27 @@ class TelegramWebhookController extends Controller
             return response('', 200);
         }
 
+        // Deduplicate: Telegram retries webhooks, so ignore already-processed messages
+        $telegramMessageId = $chatMessage['message_id'] ?? null;
+        if ($telegramMessageId && Message::where('community_id', $community->id)
+                ->where('telegram_message_id', $telegramMessageId)
+                ->exists()) {
+            return response('', 200);
+        }
+
         $authorName = trim(($fromUser['first_name'] ?? '') . ' ' . ($fromUser['last_name'] ?? ''));
         if (empty($authorName)) {
             $authorName = $fromUser['username'] ?? 'Telegram';
         }
 
         $message = Message::create([
-            'community_id'    => $community->id,
-            'user_id'         => $community->owner_id,
-            'content'         => $text ?? '',
-            'telegram_author' => $authorName,
-            'media_url'       => $mediaUrl,
-            'media_type'      => $mediaType,
+            'community_id'       => $community->id,
+            'user_id'            => $community->owner_id,
+            'content'            => $text ?? '',
+            'telegram_author'    => $authorName,
+            'telegram_message_id' => $telegramMessageId,
+            'media_url'          => $mediaUrl,
+            'media_type'         => $mediaType,
         ]);
 
         ChatMessageSent::dispatch($community->id, [
