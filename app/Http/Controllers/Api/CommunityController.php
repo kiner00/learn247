@@ -97,7 +97,7 @@ class CommunityController extends Controller
             'name'                     => ['required', 'string', 'max:255'],
             'description'              => ['nullable', 'string', 'max:2000'],
             'category'                 => ['nullable', 'string', 'in:Tech,Business,Design,Health,Education,Finance,Other'],
-            'avatar'                   => ['nullable', 'image', 'max:10240'],
+            'avatar'                   => ['nullable', 'image', 'max:15360'],
             'cover_image'              => ['nullable', 'image', 'max:15360'],
             'price'                    => ['nullable', 'numeric', 'min:0'],
             'currency'                 => ['nullable', 'string', 'in:PHP,USD'],
@@ -198,7 +198,7 @@ class CommunityController extends Controller
     public function addGalleryImage(Request $request, Community $community, ManageGallery $action): JsonResponse
     {
         abort_unless($request->user()->id === $community->owner_id, 403);
-        $request->validate(['image' => ['required', 'image', 'max:10240']]);
+        $request->validate(['image' => ['required', 'image', 'max:15360']]);
 
         $action->addImage($community, $request->file('image'));
 

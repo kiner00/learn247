@@ -215,7 +215,7 @@
                                 {{ avatarPreview || community.avatar ? 'Change avatar' : 'Upload avatar' }}
                                 <input ref="avatarInput" type="file" accept="image/*" class="hidden" @change="onAvatarChange" />
                             </label>
-                            <p class="mt-1 text-xs text-gray-400">Shown as your community icon. JPG, PNG, WebP — max 10 MB &nbsp;·&nbsp; <span class="font-medium text-gray-500">Recommended: 200 × 200 px</span></p>
+                            <p class="mt-1 text-xs text-gray-400">Shown as your community icon. JPG, PNG, WebP — max 15 MB &nbsp;·&nbsp; <span class="font-medium text-gray-500">Recommended: 200 × 200 px</span></p>
                             <p v-if="imageForm.errors.avatar" class="mt-1 text-xs text-red-600">{{ imageForm.errors.avatar }}</p>
                         </div>
                     </div>
@@ -270,7 +270,8 @@
                             {{ galleryUploading ? 'Uploading...' : 'Add image' }}
                         </button>
                     </div>
-                    <p class="mt-1 text-xs text-gray-400">JPG, PNG, WebP — max 5 MB · {{ community.gallery_images?.length ?? 0 }}/8 images &nbsp;·&nbsp; <span class="font-medium text-gray-500">Recommended: 1200 × 800 px</span></p>
+                    <p class="mt-1 text-xs text-gray-400">JPG, PNG, WebP — max 15 MB · {{ community.gallery_images?.length ?? 0 }}/8 images &nbsp;·&nbsp; <span class="font-medium text-gray-500">Recommended: 1200 × 800 px</span></p>
+                    <p v-if="galleryForm.errors.image" class="mt-1 text-xs text-red-600">{{ galleryForm.errors.image }}</p>
                 </form>
                 <p v-else class="text-xs text-amber-600">Maximum 8 images reached. Remove one to add more.</p>
             </div>
@@ -1092,8 +1093,8 @@ function removeCover() {
 function onAvatarChange(e) {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.size > 10 * 1024 * 1024) {
-        imageForm.errors.avatar = 'The avatar must not be larger than 10 MB.';
+    if (file.size > 15 * 1024 * 1024) {
+        imageForm.errors.avatar = 'The avatar must not be larger than 15 MB.';
         if (avatarInput.value) avatarInput.value.value = '';
         return;
     }
@@ -1316,8 +1317,16 @@ const galleryUploading = ref(false);
 const galleryForm      = useForm({ image: null });
 
 function onGalleryFileChange(e) {
-    galleryFile.value = e.target.files[0] ?? null;
-    galleryForm.image = galleryFile.value;
+    const file = e.target.files[0] ?? null;
+    if (file && file.size > 15 * 1024 * 1024) {
+        galleryForm.errors.image = 'The image must not be larger than 15 MB.';
+        galleryFile.value = null;
+        galleryForm.image = null;
+        return;
+    }
+    galleryForm.errors.image = null;
+    galleryFile.value = file;
+    galleryForm.image = file;
 }
 
 function uploadGalleryImage() {
