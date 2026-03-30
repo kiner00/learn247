@@ -2,24 +2,26 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\Facades\Gate;
 use Laravel\Horizon\Horizon;
 use Laravel\Horizon\HorizonApplicationServiceProvider;
 
 class HorizonServiceProvider extends HorizonApplicationServiceProvider
 {
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
-        parent::boot();
+        $this->authorization();
     }
 
-    protected function gate(): void
+    protected function authorization(): void
     {
-        Gate::define('viewHorizon', function ($user = null) {
-            return request()->query('key') === 'curzzo-horizon-2026';
+        Horizon::auth(function ($request) {
+            // Temporary: key-based access while debugging Octane session issue
+            if ($request->query('key') === 'curzzo-horizon-2026') {
+                return true;
+            }
+
+            // Normal: super admin check
+            return (bool) $request->user()?->is_super_admin;
         });
     }
 }
