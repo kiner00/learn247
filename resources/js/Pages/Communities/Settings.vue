@@ -24,6 +24,12 @@
             <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
                 <h2 class="text-base font-semibold text-gray-900 mb-5">General</h2>
                 <form @submit.prevent="save">
+                    <div v-if="form.hasErrors" class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3">
+                        <p class="text-sm font-medium text-red-800">Please fix the following errors:</p>
+                        <ul class="mt-1 list-disc list-inside text-xs text-red-700">
+                            <li v-for="(msg, field) in form.errors" :key="field">{{ msg }}</li>
+                        </ul>
+                    </div>
                     <div class="space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1.5">Community name <span class="text-red-500">*</span></label>

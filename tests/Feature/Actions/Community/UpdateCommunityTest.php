@@ -134,6 +134,16 @@ class UpdateCommunityTest extends TestCase
         $this->assertEquals('Free Update', $result->name);
     }
 
+    public function test_already_paid_community_can_update_name_without_pricing_gate(): void
+    {
+        $community = Community::factory()->create(['price' => 499]);
+        $action = app(UpdateCommunity::class);
+
+        $result = $action->execute($community, ['name' => 'Renamed Paid Community', 'price' => 499]);
+
+        $this->assertEquals('Renamed Paid Community', $result->name);
+    }
+
     public function test_update_with_new_avatar_deletes_old_storage_file(): void
     {
         $disk = config('filesystems.default');

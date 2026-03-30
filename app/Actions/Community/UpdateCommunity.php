@@ -16,7 +16,10 @@ class UpdateCommunity
      */
     public function execute(Community $community, array $data, ?UploadedFile $avatar = null, ?UploadedFile $coverImage = null): Community
     {
-        if (isset($data['price']) && (float) $data['price'] > 0) {
+        $newPrice = isset($data['price']) ? (float) $data['price'] : null;
+        $oldPrice = (float) $community->price;
+
+        if ($newPrice !== null && $newPrice > 0 && $oldPrice <= 0) {
             $this->validatePricingGate($community, $data, $coverImage);
         }
 
