@@ -813,6 +813,9 @@
                                 {{ createForm.processing ? 'Creating...' : 'Create community' }}
                             </button>
                         </div>
+                        <div v-if="Object.keys(createForm.errors).length" class="mt-3 p-3 bg-red-50 rounded-lg">
+                            <p v-for="(error, field) in createForm.errors" :key="field" class="text-xs text-red-600">{{ field }}: {{ error }}</p>
+                        </div>
                     </form>
                 </div>
             </div>
