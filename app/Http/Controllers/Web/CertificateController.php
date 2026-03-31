@@ -19,18 +19,30 @@ class CertificateController extends Controller
         $community = Community::select('id', 'name', 'slug', 'avatar')
             ->findOrFail($cert->certification->community_id);
 
+        $certTitle   = $cert->cert_title ?: $cert->certification->cert_title;
+        $coverImage  = $cert->certification->cover_image ?: $cert->cover_image ?: null;
+        $studentName = $cert->user->name;
+        $description = $cert->description ?: "{$studentName} has earned the {$certTitle} certificate.";
+
+        Inertia::share('ogMeta', [
+            'title'       => "{$studentName} — {$certTitle}",
+            'description' => $description,
+            'image'       => $coverImage,
+            'url'         => url("/certificates/{$uuid}"),
+        ]);
+
         return Inertia::render('Certificate/Show', [
             'certificate' => [
                 'uuid'           => $cert->uuid,
                 'issued_at'      => $cert->issued_at->format('F j, Y'),
-                'student_name'   => $cert->user->name,
+                'student_name'   => $studentName,
                 'student_avatar' => $cert->user->avatar,
-                'cert_title'     => $cert->cert_title ?: $cert->certification->cert_title,
+                'cert_title'     => $certTitle,
                 'exam_title'     => $cert->certification->title,
                 'community_name' => $community->name,
                 'community_slug' => $community->slug,
                 'description'    => $cert->description,
-                'cover_image'    => $cert->certification->cover_image ?: $cert->cover_image ?: null,
+                'cover_image'    => $coverImage,
                 'community_logo' => $community->avatar ?: null,
             ],
         ]);
