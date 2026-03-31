@@ -13,7 +13,7 @@ class CertificateController extends Controller
     public function show(string $uuid): Response
     {
         $cert = Certificate::where('uuid', $uuid)
-            ->with(['user:id,name,avatar', 'certification:id,title,cert_title,community_id'])
+            ->with(['user:id,name,avatar', 'certification:id,title,cert_title,community_id,cover_image'])
             ->firstOrFail();
 
         $community = Community::select('id', 'name', 'slug', 'avatar')
@@ -30,7 +30,7 @@ class CertificateController extends Controller
                 'community_name' => $community->name,
                 'community_slug' => $community->slug,
                 'description'    => $cert->description,
-                'cover_image'    => $cert->cover_image ?: null,
+                'cover_image'    => $cert->cover_image ?: $cert->certification->cover_image ?: null,
             ],
         ]);
     }
