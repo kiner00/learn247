@@ -123,5 +123,12 @@ function shareToCommunity() {
     body { background: white; }
     .print\:hidden { display: none !important; }
     .print\:shadow-none { box-shadow: none !important; }
+
+    /* Force browsers to print background colors & gradients */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
 }
 </style>
