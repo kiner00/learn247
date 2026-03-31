@@ -6,14 +6,13 @@
     <meta name="csrf-token" content="{{ csrf_token() }}" />
     <title inertia>{{ config('app.name', 'Learn247') }}</title>
     <link rel="icon" type="image/png" href="/brand/ICON/CURZZO LOGO WHIT BG ROUND.png" />
-    @php $og = isset($page['props']['ogMeta']) ? $page['props']['ogMeta'] : null; @endphp
-    @if($og)
+    @if(isset($ogMeta))
         <meta property="og:type" content="website" />
-        <meta property="og:title" content="{{ $og['title'] }}" />
-        <meta property="og:description" content="{{ $og['description'] }}" />
-        <meta property="og:url" content="{{ $og['url'] }}" />
-        @if($og['image'])
-            <meta property="og:image" content="{{ $og['image'] }}" />
+        <meta property="og:title" content="{{ $ogMeta['title'] }}" />
+        <meta property="og:description" content="{{ $ogMeta['description'] }}" />
+        <meta property="og:url" content="{{ $ogMeta['url'] }}" />
+        @if($ogMeta['image'])
+            <meta property="og:image" content="{{ $ogMeta['image'] }}" />
         @endif
     @endif
     @vite(['resources/css/app.css', 'resources/js/app.js'])

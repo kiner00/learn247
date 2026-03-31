@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Certificate;
 use App\Models\Community;
+use Illuminate\Support\Facades\View;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -24,7 +25,7 @@ class CertificateController extends Controller
         $studentName = $cert->user->name;
         $description = $cert->description ?: "{$studentName} has earned the {$certTitle} certificate.";
 
-        Inertia::share('ogMeta', [
+        View::share('ogMeta', [
             'title'       => "{$studentName} — {$certTitle}",
             'description' => $description,
             'image'       => $coverImage,
