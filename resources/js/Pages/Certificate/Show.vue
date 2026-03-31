@@ -13,7 +13,8 @@
                         <p class="text-indigo-200 text-xs font-semibold uppercase tracking-widest mb-1">Certificate of Completion</p>
                         <h1 class="text-white text-xl font-black">{{ certificate.exam_title }}</h1>
                     </div>
-                    <img :src="'/brand/logo-new.png'" alt="Curzzo" class="h-10 object-contain brightness-0 invert" />
+                    <img v-if="certificate.community_logo" :src="certificate.community_logo" :alt="certificate.community_name" class="h-14 w-14 rounded-full object-cover border-2 border-white/30" />
+                    <img v-else :src="'/brand/logo-new.png'" alt="Curzzo" class="h-10 object-contain brightness-0 invert" />
                 </div>
 
                 <!-- Cover image (optional) -->

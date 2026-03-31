@@ -31,6 +31,7 @@ class CertificateController extends Controller
                 'community_slug' => $community->slug,
                 'description'    => $cert->description,
                 'cover_image'    => $cert->certification->cover_image ?: $cert->cover_image ?: null,
+                'community_logo' => $community->avatar ?: null,
             ],
         ]);
     }
