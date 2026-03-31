@@ -17,8 +17,8 @@
                 </div>
 
                 <!-- Cover image (optional) -->
-                <div v-if="certificate.cover_image" class="w-full" style="aspect-ratio:16/6;">
-                    <img :src="certificate.cover_image" alt="Certificate cover" class="w-full h-full object-cover" />
+                <div v-if="certificate.cover_image && !coverImageBroken" class="w-full" style="aspect-ratio:16/6;">
+                    <img :src="certificate.cover_image" alt="Certificate cover" class="w-full h-full object-cover" @error="coverImageBroken = true" />
                 </div>
 
                 <!-- Body -->
@@ -95,8 +95,10 @@
 
 <script setup>
 import { Head } from '@inertiajs/vue3';
+import { ref } from 'vue';
 
 const props = defineProps({ certificate: Object });
+const coverImageBroken = ref(false);
 
 function print() {
     window.print();
