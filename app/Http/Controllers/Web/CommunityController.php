@@ -181,6 +181,8 @@ class CommunityController extends Controller
             'category'                 => ['nullable', 'string', 'in:Tech,Business,Design,Health,Education,Finance,Other'],
             'avatar'      => ['nullable', 'image', 'max:15360'],
             'cover_image' => ['nullable', 'image', 'max:15360'],
+            'remove_cover_image' => ['sometimes', 'boolean'],
+            'remove_avatar'      => ['sometimes', 'boolean'],
             'price'                    => ['nullable', 'numeric', 'min:0'],
             'currency'                 => ['nullable', 'string', 'in:PHP,USD'],
             'billing_type'             => ['nullable', 'string', 'in:monthly,one_time'],

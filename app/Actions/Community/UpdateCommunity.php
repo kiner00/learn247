@@ -16,6 +16,10 @@ class UpdateCommunity
      */
     public function execute(Community $community, array $data, ?UploadedFile $avatar = null, ?UploadedFile $coverImage = null): Community
     {
+        $removeCover  = !empty($data['remove_cover_image']);
+        $removeAvatar = !empty($data['remove_avatar']);
+        unset($data['remove_cover_image'], $data['remove_avatar']);
+
         $newPrice = isset($data['price']) ? (float) $data['price'] : null;
         $oldPrice = (float) $community->price;
 
@@ -26,6 +30,9 @@ class UpdateCommunity
         if ($coverImage) {
             $this->storage->delete($community->cover_image);
             $data['cover_image'] = $this->storage->upload($coverImage, 'community-covers');
+        } elseif ($removeCover) {
+            $this->storage->delete($community->cover_image);
+            $data['cover_image'] = null;
         } else {
             unset($data['cover_image']);
         }
@@ -33,6 +40,9 @@ class UpdateCommunity
         if ($avatar) {
             $this->storage->delete($community->avatar);
             $data['avatar'] = $this->storage->upload($avatar, 'community-avatars');
+        } elseif ($removeAvatar) {
+            $this->storage->delete($community->avatar);
+            $data['avatar'] = null;
         } else {
             unset($data['avatar']);
         }
