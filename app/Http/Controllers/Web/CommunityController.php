@@ -549,6 +549,7 @@ class CommunityController extends Controller
             'creator.bio'             => 'nullable|string|max:500',
             'creator.name'            => 'nullable|string|max:80',
             'creator.photo'           => 'nullable|url|max:500',
+            'creator.bg_color'        => 'nullable|string|max:20',
             'testimonials_type'       => 'nullable|string|in:manual,embed',
             'testimonials_embed_html' => 'nullable|string|max:5000',
             'testimonials'            => 'nullable|array|max:6',

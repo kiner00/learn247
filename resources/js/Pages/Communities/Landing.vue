@@ -383,6 +383,13 @@
                                             <label class="field-label">Bio</label>
                                             <textarea v-model="editDraft.creator.bio" rows="4" class="field-input resize-none" />
                                         </div>
+                                        <div>
+                                            <label class="field-label">Card Background Color</label>
+                                            <div class="flex items-center gap-2">
+                                                <input type="color" v-model="editDraft.creator.bg_color" class="w-8 h-8 rounded cursor-pointer border border-gray-200 p-0.5" />
+                                                <input v-model="editDraft.creator.bg_color" type="text" placeholder="#1e1b4b" class="field-input flex-1 text-xs" />
+                                            </div>
+                                        </div>
                                     </template>
                                 </template>
 
@@ -1016,16 +1023,17 @@
         <!-- ── CREATOR / AUTHORITY ── -->
         <section v-if="isVisible('creator') && lp.creator" class="py-24 bg-white">
             <div class="max-w-3xl mx-auto px-6">
-                <div class="flex flex-col sm:flex-row items-center gap-10 bg-linear-to-br from-slate-900 to-indigo-950 rounded-3xl p-10 text-white">
+                <div class="flex flex-col sm:flex-row items-center gap-10 rounded-3xl p-10 text-white"
+                     :style="{ backgroundColor: lp.creator.bg_color || '#1e1b4b' }">
                     <div class="shrink-0 text-center">
-                        <div class="w-28 h-28 rounded-2xl overflow-hidden mx-auto mb-3 ring-4 ring-indigo-500/40">
+                        <div class="w-28 h-28 rounded-2xl overflow-hidden mx-auto mb-3 ring-4 ring-white/20">
                             <img v-if="lp.creator.photo || community.owner?.avatar" :src="lp.creator.photo || community.owner.avatar" class="w-full h-full object-cover" />
-                            <div v-else class="w-full h-full bg-indigo-700 flex items-center justify-center text-3xl font-black text-white">
+                            <div v-else class="w-full h-full bg-white/20 flex items-center justify-center text-3xl font-black text-white">
                                 {{ (lp.creator.name || community.owner?.name)?.charAt(0) ?? '?' }}
                             </div>
                         </div>
                         <p class="font-bold text-white text-sm">{{ lp.creator.name || community.owner?.name }}</p>
-                        <p class="text-indigo-300 text-xs mt-0.5">Creator</p>
+                        <p class="text-white/60 text-xs mt-0.5">Creator</p>
                     </div>
                     <div>
                         <h2 v-html="lp.creator.headline"
