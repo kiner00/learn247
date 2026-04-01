@@ -18,8 +18,8 @@
                 </div>
 
                 <!-- Cover image (optional) -->
-                <div v-if="certificate.cover_image && !coverImageBroken" class="w-full" style="aspect-ratio:16/6;">
-                    <img :src="certificate.cover_image" alt="Certificate cover" class="w-full h-full object-cover" @error="coverImageBroken = true" />
+                <div v-if="certificate.cover_image && !coverImageBroken" class="w-full">
+                    <img :src="certificate.cover_image" alt="Certificate cover" class="w-full h-auto object-contain" @error="coverImageBroken = true" />
                 </div>
 
                 <!-- Body -->
