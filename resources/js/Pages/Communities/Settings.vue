@@ -190,7 +190,7 @@
                                 {{ coverPreview || community.cover_image ? 'Change banner' : 'Upload banner' }}
                                 <input ref="coverInput" type="file" accept="image/*" class="hidden" @change="onCoverChange" />
                             </label>
-                            <p class="mt-1 text-xs text-gray-400">JPG, PNG, WebP — max 15 MB &nbsp;·&nbsp; <span class="font-medium text-gray-500">Recommended: 1920 × 1080 px</span></p>
+                            <p class="mt-1 text-xs text-gray-400">JPG, PNG, WebP — max 15 MB &nbsp;·&nbsp; <span class="font-medium text-gray-500">Recommended: {{ IMAGE_DIMENSIONS.BANNER.width }} × {{ IMAGE_DIMENSIONS.BANNER.height }} px</span></p>
                             <p v-if="imageForm.errors.cover_image" class="mt-1 text-xs text-red-600">{{ imageForm.errors.cover_image }}</p>
                         </div>
 
@@ -215,7 +215,7 @@
                                 {{ avatarPreview || community.avatar ? 'Change avatar' : 'Upload avatar' }}
                                 <input ref="avatarInput" type="file" accept="image/*" class="hidden" @change="onAvatarChange" />
                             </label>
-                            <p class="mt-1 text-xs text-gray-400">Shown as your community icon. JPG, PNG, WebP — max 15 MB &nbsp;·&nbsp; <span class="font-medium text-gray-500">Recommended: 200 × 200 px</span></p>
+                            <p class="mt-1 text-xs text-gray-400">Shown as your community icon. JPG, PNG, WebP — max 15 MB &nbsp;·&nbsp; <span class="font-medium text-gray-500">Recommended: {{ IMAGE_DIMENSIONS.AVATAR.width }} × {{ IMAGE_DIMENSIONS.AVATAR.height }} px</span></p>
                             <p v-if="imageForm.errors.avatar" class="mt-1 text-xs text-red-600">{{ imageForm.errors.avatar }}</p>
                         </div>
                     </div>
@@ -1019,6 +1019,7 @@ const platformFeeRate = computed(() => {
     return 0.098;
 });
 import AppLayout from '@/Layouts/AppLayout.vue';
+import { IMAGE_DIMENSIONS } from '@/constants';
 
 const CATEGORIES = ['Tech', 'Business', 'Design', 'Health', 'Education', 'Finance', 'Other'];
 

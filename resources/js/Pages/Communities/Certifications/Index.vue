@@ -71,7 +71,7 @@
 
                     <!-- Community Logo -->
                     <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Community Logo <span class="text-gray-400 font-normal">(shown on certificate, square, min 200×200)</span></label>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Community Logo <span class="text-gray-400 font-normal">(shown on certificate, square, min {{ IMAGE_DIMENSIONS.AVATAR.width }}×{{ IMAGE_DIMENSIONS.AVATAR.height }})</span></label>
                         <div class="flex items-center gap-3">
                             <div class="w-14 h-14 rounded-xl overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center shrink-0">
                                 <img v-if="community.avatar" :src="community.avatar" class="w-full h-full object-cover" />
@@ -365,6 +365,7 @@ import { ref, computed } from 'vue';
 import { useForm, usePage, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import CommunityTabs from '@/Components/CommunityTabs.vue';
+import { IMAGE_DIMENSIONS } from '@/constants';
 
 const props = defineProps({
     community:          Object,

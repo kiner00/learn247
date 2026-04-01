@@ -646,7 +646,7 @@
                                 <!-- Banner / Cover -->
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                                        Banner image <span class="text-red-500">*</span> <span class="text-gray-400 font-normal">(recommended: 1200×400)</span>
+                                        Banner image <span class="text-red-500">*</span> <span class="text-gray-400 font-normal">(recommended: {{ IMAGE_DIMENSIONS.BANNER.width }}×{{ IMAGE_DIMENSIONS.BANNER.height }})</span>
                                     </label>
                                     <div
                                         class="relative w-full aspect-3/1 rounded-xl overflow-hidden border-2 border-dashed border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 flex items-center justify-center cursor-pointer group hover:border-indigo-400 transition-colors"
@@ -675,7 +675,7 @@
                                 <!-- Avatar -->
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                                        Community avatar <span class="text-gray-400 font-normal">(square, min 200×200)</span>
+                                        Community avatar <span class="text-gray-400 font-normal">(square, min {{ IMAGE_DIMENSIONS.AVATAR.width }}×{{ IMAGE_DIMENSIONS.AVATAR.height }})</span>
                                     </label>
                                     <div class="flex items-center gap-4">
                                         <div
@@ -957,6 +957,7 @@ import { useCreateModal } from '@/composables/useCreateModal';
 import { usePixel } from '@/composables/usePixel';
 import { useTiktokPixel } from '@/composables/useTiktokPixel';
 import { useGoogleAnalytics } from '@/composables/useGoogleAnalytics';
+import { IMAGE_DIMENSIONS } from '@/constants';
 
 const curzzoIcon = '/brand/ICON/CURZZO LOGO WHIT BG ROUND.png';
 
