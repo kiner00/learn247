@@ -3,6 +3,8 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
+use Inertia\Inertia;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -41,5 +43,26 @@ return Application::configure(basePath: dirname(__DIR__))
         }
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->respond(function (\Symfony\Component\HttpFoundation\Response $response, Throwable $e, \Illuminate\Http\Request $request) {
+            $status = $response->getStatusCode();
+
+            if (! app()->environment('local') && in_array($status, [500, 503, 404, 403, 419])) {
+                $titles = [
+                    500 => 'Something went wrong',
+                    503 => 'Under maintenance',
+                    404 => 'Page not found',
+                    403 => 'Access denied',
+                    419 => 'Session expired',
+                ];
+
+                return Inertia::render('Error', [
+                    'status'  => $status,
+                    'title'   => $titles[$status] ?? 'Error',
+                ])
+                    ->toResponse($request)
+                    ->setStatusCode($status);
+            }
+
+            return $response;
+        });
     })->create();
