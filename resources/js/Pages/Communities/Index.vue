@@ -253,7 +253,7 @@
                 <div class="p-4 flex flex-col flex-1">
                     <!-- Logo + name row -->
                     <div
-                        class="flex items-center gap-3 -mt-6 mb-2 relative z-10"
+                        class="flex items-end gap-3 -mt-6 mb-2 relative z-10"
                     >
                         <div
                             class="w-10 h-10 rounded-xl shrink-0 overflow-hidden border-2 border-white bg-white flex items-center justify-center font-bold text-indigo-600 text-base"
