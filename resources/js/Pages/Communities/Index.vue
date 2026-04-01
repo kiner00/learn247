@@ -169,6 +169,9 @@
                         <p class="font-bold text-gray-900 text-sm truncate">
                             {{ c.name }}
                         </p>
+                        <p v-if="c.owner?.name" class="text-[11px] text-gray-400 truncate">
+                            by {{ c.owner.name }}
+                        </p>
                         <p class="text-xs text-gray-500 mt-0.5 line-clamp-2">
                             {{ c.description ?? "A great community." }}
                         </p>
@@ -270,11 +273,16 @@
                                 community.name.charAt(0).toUpperCase()
                             }}</span>
                         </div>
-                        <h2
-                            class="font-bold text-gray-900 text-sm leading-tight truncate group-hover:text-indigo-600 transition-colors"
-                        >
-                            {{ community.name }}
-                        </h2>
+                        <div class="min-w-0">
+                            <h2
+                                class="font-bold text-gray-900 text-sm leading-tight truncate group-hover:text-indigo-600 transition-colors"
+                            >
+                                {{ community.name }}
+                            </h2>
+                            <p v-if="community.owner?.name" class="text-[11px] text-gray-400 truncate">
+                                by {{ community.owner.name }}
+                            </p>
+                        </div>
                     </div>
 
                     <p
