@@ -1032,7 +1032,13 @@
                                 {{ (lp.creator.name || community.owner?.name)?.charAt(0) ?? '?' }}
                             </div>
                         </div>
-                        <p class="font-bold text-white text-sm">{{ lp.creator.name || community.owner?.name }}</p>
+                        <p v-html="lp.creator.name || community.owner?.name"
+                            :contenteditable="inlineMode ? 'true' : 'false'"
+                            @focus="inlineMode && onElFocus($event, 'creator.name')"
+                            @blur="inlineMode && saveFromEl($event, 'creator.name')"
+                            @keydown.enter.prevent
+                            :class="['font-bold text-white text-sm', inlineMode ? editableClass : '']"
+                        />
                         <p class="text-white/60 text-xs mt-0.5">Creator</p>
                     </div>
                     <div>
