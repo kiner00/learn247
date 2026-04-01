@@ -35,7 +35,7 @@ class GetPayoutsDashboard
                 $payoutRequests = $this->buildPayoutRequests();
 
                 $totalPlatformFee = round(
-                    Community::with('owner')->get()->sum(function ($c) {
+                    Community::with('owner')->whereHas('owner')->get()->sum(function ($c) {
                         $gross = (float) Payment::where('community_id', $c->id)->where('status', Payment::STATUS_PAID)->sum('amount');
                         return $gross * $c->platformFeeRate();
                     }),
@@ -58,6 +58,7 @@ class GetPayoutsDashboard
     {
         return Community::with('owner')
             ->where('price', '>', 0)
+            ->whereHas('owner')
             ->get()
             ->groupBy('owner_id')
             ->map(function ($communities) {
@@ -102,6 +103,8 @@ class GetPayoutsDashboard
     private function buildAffiliates(): \Illuminate\Support\Collection
     {
         return Affiliate::with(['user', 'community'])
+            ->whereHas('user')
+            ->whereHas('community')
             ->get()
             ->map(fn ($a) => [
                 'id'             => $a->id,
@@ -122,6 +125,7 @@ class GetPayoutsDashboard
     private function buildPayoutRequests(): \Illuminate\Support\Collection
     {
         return PayoutRequest::with(['user', 'community'])
+            ->whereHas('user')
             ->latest()
             ->get()
             ->map(fn ($r) => [
