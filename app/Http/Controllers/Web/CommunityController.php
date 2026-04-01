@@ -548,7 +548,7 @@ class CommunityController extends Controller
             'creator.headline'        => 'nullable|string|max:80',
             'creator.bio'             => 'nullable|string|max:500',
             'creator.name'            => 'nullable|string|max:80',
-            'creator.photo'           => 'nullable|url|max:500',
+            'creator.photo'           => 'nullable|url|max:2048',
             'creator.bg_color'        => 'nullable|string|max:20',
             'testimonials_type'       => 'nullable|string|in:manual,embed',
             'testimonials_embed_html' => 'nullable|string|max:5000',
@@ -562,11 +562,11 @@ class CommunityController extends Controller
             'cta_section.headline'    => 'nullable|string|max:120',
             'cta_section.subtext'     => 'nullable|string|max:150',
             'cta_section.cta_label'   => 'nullable|string|max:50',
-            'cta_section.bg_image'    => 'nullable|url|max:500',
+            'cta_section.bg_image'    => 'nullable|url|max:2048',
             'cta_section.btn_bg'                  => 'nullable|string|max:20',
             'cta_section.btn_text'                => 'nullable|string|max:20',
             // Hero bg image
-            'hero.bg_image'                       => 'nullable|url|max:500',
+            'hero.bg_image'                       => 'nullable|url|max:2048',
             // Offer stack
             'offer_stack.headline'                => 'nullable|string|max:120',
             'offer_stack.items'                   => 'nullable|array|max:8',
