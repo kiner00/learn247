@@ -283,6 +283,13 @@
                                             <input v-model="editDraft.social_proof.trust_line" type="text" class="field-input" />
                                         </div>
                                         <div>
+                                            <label class="field-label">Background Color</label>
+                                            <div class="flex items-center gap-2">
+                                                <input type="color" v-model="editDraft.social_proof.bg_color" class="w-8 h-8 rounded cursor-pointer border border-gray-200 p-0.5" />
+                                                <input v-model="editDraft.social_proof.bg_color" type="text" placeholder="#4f46e5" class="field-input flex-1 text-xs" />
+                                            </div>
+                                        </div>
+                                        <div>
                                             <label class="flex items-center gap-2 cursor-pointer">
                                                 <input type="checkbox" v-model="editDraft.social_proof.hide_avatars" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
                                                 <span class="field-label !mb-0">Hide avatar circles</span>
@@ -913,28 +920,29 @@
         </section>
 
         <!-- ── SOCIAL PROOF BAR ── -->
-        <section v-if="isVisible('social_proof') && lp.social_proof" class="bg-indigo-600 text-white py-5">
+        <section v-if="isVisible('social_proof') && lp.social_proof" class="text-white py-5"
+            :style="{ backgroundColor: lp.social_proof.bg_color || '#4f46e5' }">
             <div class="max-w-4xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-center gap-4 text-center sm:text-left">
                 <div class="flex items-center gap-3">
                     <div v-if="!lp.social_proof.hide_avatars" class="flex -space-x-2">
                         <div v-for="i in 4" :key="i"
-                            class="w-8 h-8 rounded-full bg-indigo-400 border-2 border-indigo-600 overflow-hidden flex items-center justify-center text-xs font-bold text-white"
-                            :style="`background-color: hsl(${i * 60}, 70%, 60%)`">
+                            class="w-8 h-8 rounded-full border-2 overflow-hidden flex items-center justify-center text-xs font-bold text-white"
+                            :style="`background-color: hsl(${i * 60}, 70%, 60%); border-color: ${lp.social_proof.bg_color || '#4f46e5'}`">
                             {{ String.fromCharCode(64 + i) }}
                         </div>
                     </div>
                     <div>
                         <span class="font-black text-xl">{{ formatCount(community.members_count) }}</span>
-                        <span class="text-indigo-200 ml-1.5">{{ lp.social_proof.stat_label }}</span>
+                        <span class="ml-1.5 text-white/70">{{ lp.social_proof.stat_label }}</span>
                     </div>
                 </div>
-                <div class="hidden sm:block w-px h-6 bg-indigo-400/40"></div>
+                <div class="hidden sm:block w-px h-6 bg-white/20"></div>
                 <p v-html="lp.social_proof.trust_line"
                     :contenteditable="inlineMode ? 'true' : 'false'"
                     @focus="inlineMode && onElFocus($event, 'social_proof.trust_line')"
                     @blur="inlineMode && saveFromEl($event, 'social_proof.trust_line')"
                     @keydown.enter.prevent
-                    :class="['text-indigo-100 text-sm font-medium', inlineMode ? editableClass : '']"
+                    :class="['text-white/80 text-sm font-medium', inlineMode ? editableClass : '']"
                 />
             </div>
         </section>
