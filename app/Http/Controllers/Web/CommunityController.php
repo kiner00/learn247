@@ -558,7 +558,7 @@ class CommunityController extends Controller
             'testimonials.*.quote'    => 'nullable|string|max:300',
             'faq'                     => 'nullable|array|max:10',
             'faq.*.question'          => 'nullable|string|max:200',
-            'faq.*.answer'            => 'nullable|string|max:300',
+            'faq.*.answer'            => 'nullable|string|max:1000',
             'cta_section.headline'    => 'nullable|string|max:120',
             'cta_section.subtext'     => 'nullable|string|max:150',
             'cta_section.cta_label'   => 'nullable|string|max:50',
