@@ -408,7 +408,8 @@ async function loadConversations() {
         } else {
             conversationList.value = dmUsers;
         }
-    } catch {
+    } catch (err) {
+        console.error('Failed to load conversations:', err?.response?.data ?? err);
         conversationList.value = props.isOwner ? [...props.chatbotUsers] : [];
     }
 }
@@ -547,7 +548,10 @@ async function sendPersonalMessage() {
         if (data.message.id > personalLastMsgId) personalLastMsgId = data.message.id;
         scrollPersonalToBottom(true);
         loadConversations();
-    } catch { personalInput.value = text; }
+    } catch (err) {
+        console.error('Failed to send DM:', err?.response?.data ?? err);
+        personalInput.value = text;
+    }
     finally { personalSending.value = false; }
 }
 
@@ -573,6 +577,9 @@ function onDeletedMessage(e) { groupMessages.value = groupMessages.value.filter(
 
 onMounted(() => {
     scrollToBottom();
+
+    // Preload DM conversations so they're ready when switching to Personal tab
+    loadConversations();
 
     // Handle deep-link from Members page (?tab=personal&user=123)
     const urlParams = new URLSearchParams(window.location.search);
