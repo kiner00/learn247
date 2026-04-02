@@ -402,7 +402,12 @@ async function loadConversations() {
                 if (!allIds.has(cu.id)) dmUsers.push(cu);
             }
         }
-        conversationList.value = dmUsers;
+        // For non-owners, filter out the creator (they have the pinned "Talk to creator" entry)
+        if (!props.isOwner) {
+            conversationList.value = dmUsers.filter(u => u.id !== props.community.owner_id);
+        } else {
+            conversationList.value = dmUsers;
+        }
     } catch {
         conversationList.value = props.isOwner ? [...props.chatbotUsers] : [];
     }
@@ -570,12 +575,17 @@ onMounted(() => {
         activeTab.value = 'personal';
         loadConversations().then(() => {
             if (props.selectedChatUser) {
-                // Add to conversation list if not already there
-                if (!conversationList.value.some(x => x.id === props.selectedChatUser.id)) {
-                    conversationList.value.unshift({ ...props.selectedChatUser, message_count: 0, last_message_at: null });
+                // If chatting with the creator, use the chatbot instead of DM
+                if (!props.isOwner && props.selectedChatUser.id === props.community.owner_id) {
+                    selectCreatorChat();
+                } else {
+                    // Add to conversation list if not already there
+                    if (!conversationList.value.some(x => x.id === props.selectedChatUser.id)) {
+                        conversationList.value.unshift({ ...props.selectedChatUser, message_count: 0, last_message_at: null });
+                    }
+                    const u = conversationList.value.find(x => x.id === props.selectedChatUser.id);
+                    selectMemberChat(u);
                 }
-                const u = conversationList.value.find(x => x.id === props.selectedChatUser.id);
-                selectMemberChat(u);
             }
         });
     }
