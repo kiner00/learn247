@@ -1,9 +1,26 @@
 <template>
     <AppLayout :title="title">
-        <div class="flex gap-0 items-start -mx-4 sm:-mx-6 lg:-mx-8">
+        <!-- Mobile nav (horizontal scroll) -->
+        <div class="md:hidden overflow-x-auto -mx-4 sm:-mx-6 px-4 sm:px-6 pb-4">
+            <div class="flex gap-1.5">
+                <Link
+                    v-for="item in navItems"
+                    :key="item.href"
+                    :href="item.href"
+                    class="px-3 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-colors shrink-0"
+                    :class="isActive(item.href)
+                        ? 'bg-indigo-600 text-white'
+                        : 'text-gray-600 bg-gray-100 hover:bg-gray-200'"
+                >
+                    {{ item.label }}
+                </Link>
+            </div>
+        </div>
 
-            <!-- Sidebar nav -->
-            <div class="w-48 shrink-0 py-2 px-2 sticky top-20">
+        <div class="flex gap-0 items-start md:-mx-4 lg:-mx-8">
+
+            <!-- Sidebar nav (desktop only) -->
+            <div class="hidden md:block w-48 shrink-0 py-2 px-2 sticky top-20">
                 <p class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wide">Admin</p>
                 <nav class="space-y-0.5">
                     <Link
@@ -21,7 +38,7 @@
             </div>
 
             <!-- Main content -->
-            <div class="flex-1 min-w-0 py-2 pr-4 sm:pr-6 lg:pr-8">
+            <div class="flex-1 min-w-0 py-2 md:pr-4 lg:pr-8">
                 <slot />
             </div>
         </div>

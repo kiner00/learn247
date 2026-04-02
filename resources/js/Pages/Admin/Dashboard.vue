@@ -6,20 +6,20 @@
         </div>
 
         <!-- Stat cards -->
-        <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-8">
             <div
                 v-for="stat in statCards"
                 :key="stat.label"
-                class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm"
+                class="bg-white border border-gray-200 rounded-2xl p-3.5 sm:p-5 shadow-sm"
             >
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" :class="stat.iconBg">
-                        <span class="text-lg">{{ stat.icon }}</span>
+                <div class="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+                    <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center shrink-0" :class="stat.iconBg">
+                        <span class="text-base sm:text-lg">{{ stat.icon }}</span>
                     </div>
-                    <p class="text-xs font-medium text-gray-500">{{ stat.label }}</p>
+                    <p class="text-[11px] sm:text-xs font-medium text-gray-500 leading-tight">{{ stat.label }}</p>
                 </div>
-                <p class="text-2xl font-black text-gray-900" :title="stat.fullValue">{{ stat.value }}</p>
-                <p v-if="stat.sub" class="text-xs text-gray-400 mt-0.5">{{ stat.sub }}</p>
+                <p class="text-xl sm:text-2xl font-black text-gray-900" :title="stat.fullValue">{{ stat.value }}</p>
+                <p v-if="stat.sub" class="text-[10px] sm:text-xs text-gray-400 mt-0.5">{{ stat.sub }}</p>
             </div>
         </div>
 
@@ -30,21 +30,21 @@
                 <p class="text-xs text-gray-400 mt-0.5">Based on all collected payments</p>
             </div>
 
-            <div class="grid grid-cols-2 lg:grid-cols-3 gap-px bg-gray-100">
-                <div class="bg-white px-5 py-4">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-px bg-gray-100">
+                <div class="bg-white px-4 sm:px-5 py-3 sm:py-4">
                     <p class="text-xs font-medium text-gray-500 mb-1">Gross Revenue</p>
-                    <p class="text-xl font-black text-gray-900">₱{{ fmt(revenue.gross) }}</p>
-                    <p class="text-xs text-gray-400 mt-0.5">Total collected across all communities</p>
+                    <p class="text-lg sm:text-xl font-black text-gray-900">₱{{ fmt(revenue.gross) }}</p>
+                    <p class="text-[10px] sm:text-xs text-gray-400 mt-0.5">Total collected across all communities</p>
                 </div>
-                <div class="bg-white px-5 py-4">
-                    <p class="text-xs font-medium text-gray-500 mb-1">Platform Fees (varies by plan)</p>
-                    <p class="text-xl font-black text-indigo-600">₱{{ fmt(revenue.platform_fee) }}</p>
-                    <p class="text-xs text-gray-400 mt-0.5">Platform income</p>
+                <div class="bg-white px-4 sm:px-5 py-3 sm:py-4">
+                    <p class="text-xs font-medium text-gray-500 mb-1">Platform Fees</p>
+                    <p class="text-lg sm:text-xl font-black text-indigo-600">₱{{ fmt(revenue.platform_fee) }}</p>
+                    <p class="text-[10px] sm:text-xs text-gray-400 mt-0.5">Platform income</p>
                 </div>
-                <div class="bg-white px-5 py-4 col-span-2 lg:col-span-1">
+                <div class="bg-white px-4 sm:px-5 py-3 sm:py-4">
                     <p class="text-xs font-medium text-gray-500 mb-1">Creator Net Income</p>
-                    <p class="text-xl font-black text-green-600">₱{{ fmt(revenue.creator_net) }}</p>
-                    <p class="text-xs text-gray-400 mt-0.5">After fees & affiliate commissions</p>
+                    <p class="text-lg sm:text-xl font-black text-green-600">₱{{ fmt(revenue.creator_net) }}</p>
+                    <p class="text-[10px] sm:text-xs text-gray-400 mt-0.5">After fees & affiliate commissions</p>
                 </div>
             </div>
 
@@ -52,17 +52,17 @@
                 <p class="text-xs font-semibold text-indigo-700">Affiliate Commissions</p>
             </div>
             <div class="grid grid-cols-3 gap-px bg-gray-100">
-                <div class="bg-white px-5 py-4">
-                    <p class="text-xs font-medium text-gray-500 mb-1">Total Earned</p>
-                    <p class="text-lg font-black text-indigo-600">₱{{ fmt(revenue.affiliate_commission_total) }}</p>
+                <div class="bg-white px-3 sm:px-5 py-3 sm:py-4">
+                    <p class="text-[10px] sm:text-xs font-medium text-gray-500 mb-1">Total Earned</p>
+                    <p class="text-sm sm:text-lg font-black text-indigo-600">₱{{ fmt(revenue.affiliate_commission_total) }}</p>
                 </div>
-                <div class="bg-white px-5 py-4">
-                    <p class="text-xs font-medium text-gray-500 mb-1">Paid Out</p>
-                    <p class="text-lg font-black text-green-600">₱{{ fmt(revenue.affiliate_commission_paid) }}</p>
+                <div class="bg-white px-3 sm:px-5 py-3 sm:py-4">
+                    <p class="text-[10px] sm:text-xs font-medium text-gray-500 mb-1">Paid Out</p>
+                    <p class="text-sm sm:text-lg font-black text-green-600">₱{{ fmt(revenue.affiliate_commission_paid) }}</p>
                 </div>
-                <div class="bg-white px-5 py-4">
-                    <p class="text-xs font-medium text-gray-500 mb-1">Pending Payout</p>
-                    <p class="text-lg font-black text-amber-500">₱{{ fmt(revenue.affiliate_commission_pending) }}</p>
+                <div class="bg-white px-3 sm:px-5 py-3 sm:py-4">
+                    <p class="text-[10px] sm:text-xs font-medium text-gray-500 mb-1">Pending</p>
+                    <p class="text-sm sm:text-lg font-black text-amber-500">₱{{ fmt(revenue.affiliate_commission_pending) }}</p>
                 </div>
             </div>
         </div>
@@ -72,7 +72,7 @@
                 <h2 class="text-sm font-bold text-gray-900">Creator Plan Pricing</h2>
                 <p class="text-xs text-gray-400 mt-0.5">Set the monthly price for Basic and Pro plans shown on the creator upgrade page</p>
             </div>
-            <form @submit.prevent="savePlanPricing" class="px-5 py-4 flex flex-wrap items-end gap-4">
+            <form @submit.prevent="savePlanPricing" class="px-4 sm:px-5 py-4 flex flex-wrap items-end gap-3 sm:gap-4">
                 <div>
                     <label class="block text-xs font-medium text-gray-600 mb-1">Basic Plan (₱/mo)</label>
                     <input
@@ -104,58 +104,90 @@
 
             <!-- Recent Communities -->
             <div class="lg:col-span-2 bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-                <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                <div class="px-4 sm:px-5 py-4 border-b border-gray-100 flex items-center justify-between">
                     <h2 class="text-sm font-bold text-gray-900">Recent Communities</h2>
                     <Link href="/communities" class="text-xs text-indigo-600 hover:underline">View all</Link>
                 </div>
-                <table class="w-full text-sm">
-                    <thead>
-                        <tr class="border-b border-gray-100 bg-gray-50">
-                            <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Community</th>
-                            <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Category</th>
-                            <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Members</th>
-                            <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Price</th>
-                            <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Created</th>
-                            <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Feature</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        <tr v-for="c in recentCommunities" :key="c.id" class="hover:bg-gray-50 transition-colors">
-                            <td class="px-5 py-3">
-                                <div>
-                                    <Link :href="`/communities/${c.slug}`" class="font-medium text-gray-900 hover:text-indigo-600 transition-colors text-sm">
-                                        {{ c.name }}
-                                    </Link>
-                                    <p class="text-xs text-gray-400">by {{ c.owner?.name ?? '—' }}</p>
-                                </div>
-                            </td>
-                            <td class="px-5 py-3">
-                                <span v-if="c.category" class="text-xs font-medium px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
-                                    {{ c.category }}
-                                </span>
-                                <span v-else class="text-xs text-gray-400">—</span>
-                            </td>
-                            <td class="px-5 py-3 text-gray-600 text-xs font-medium">{{ c.members_count }}</td>
-                            <td class="px-5 py-3">
-                                <span class="text-xs font-medium" :class="c.price > 0 ? 'text-amber-600' : 'text-green-600'">
-                                    {{ c.price > 0 ? `₱${Number(c.price).toLocaleString()}` : 'Free' }}
-                                </span>
-                            </td>
-                            <td class="px-5 py-3 text-gray-400 text-xs">{{ c.created_at }}</td>
-                            <td class="px-5 py-3">
-                                <button
-                                    @click="toggleFeatured(c.slug)"
-                                    class="text-xs font-semibold px-2 py-0.5 rounded-full border transition-colors"
-                                    :class="c.is_featured
-                                        ? 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200'
-                                        : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200'"
-                                >
-                                    {{ c.is_featured ? '⭐ Unfeature' : 'Feature' }}
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                <!-- Mobile: card layout -->
+                <div class="sm:hidden divide-y divide-gray-100">
+                    <div v-for="c in recentCommunities" :key="c.id" class="px-4 py-3 space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <Link :href="`/communities/${c.slug}`" class="font-medium text-gray-900 hover:text-indigo-600 text-sm">
+                                    {{ c.name }}
+                                </Link>
+                                <p class="text-xs text-gray-400">by {{ c.owner?.name ?? '—' }}</p>
+                            </div>
+                            <button
+                                @click="toggleFeatured(c.slug)"
+                                class="text-xs font-semibold px-2 py-0.5 rounded-full border transition-colors shrink-0 ml-2"
+                                :class="c.is_featured
+                                    ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                                    : 'bg-gray-50 text-gray-500 border-gray-200'"
+                            >
+                                {{ c.is_featured ? '⭐' : 'Feature' }}
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-3 text-xs">
+                            <span v-if="c.category" class="font-medium px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">{{ c.category }}</span>
+                            <span class="text-gray-500">{{ c.members_count }} members</span>
+                            <span :class="c.price > 0 ? 'text-amber-600 font-medium' : 'text-green-600'">
+                                {{ c.price > 0 ? `₱${Number(c.price).toLocaleString()}` : 'Free' }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Desktop: table layout -->
+                <div class="hidden sm:block overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-100 bg-gray-50">
+                                <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Community</th>
+                                <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Category</th>
+                                <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Members</th>
+                                <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Price</th>
+                                <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Created</th>
+                                <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Feature</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            <tr v-for="c in recentCommunities" :key="c.id" class="hover:bg-gray-50 transition-colors">
+                                <td class="px-5 py-3">
+                                    <div>
+                                        <Link :href="`/communities/${c.slug}`" class="font-medium text-gray-900 hover:text-indigo-600 transition-colors text-sm">
+                                            {{ c.name }}
+                                        </Link>
+                                        <p class="text-xs text-gray-400">by {{ c.owner?.name ?? '—' }}</p>
+                                    </div>
+                                </td>
+                                <td class="px-5 py-3">
+                                    <span v-if="c.category" class="text-xs font-medium px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
+                                        {{ c.category }}
+                                    </span>
+                                    <span v-else class="text-xs text-gray-400">—</span>
+                                </td>
+                                <td class="px-5 py-3 text-gray-600 text-xs font-medium">{{ c.members_count }}</td>
+                                <td class="px-5 py-3">
+                                    <span class="text-xs font-medium" :class="c.price > 0 ? 'text-amber-600' : 'text-green-600'">
+                                        {{ c.price > 0 ? `₱${Number(c.price).toLocaleString()}` : 'Free' }}
+                                    </span>
+                                </td>
+                                <td class="px-5 py-3 text-gray-400 text-xs">{{ c.created_at }}</td>
+                                <td class="px-5 py-3">
+                                    <button
+                                        @click="toggleFeatured(c.slug)"
+                                        class="text-xs font-semibold px-2 py-0.5 rounded-full border transition-colors"
+                                        :class="c.is_featured
+                                            ? 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200'
+                                            : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200'"
+                                    >
+                                        {{ c.is_featured ? '⭐ Unfeature' : 'Feature' }}
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- Right column -->
@@ -204,11 +236,9 @@
 
         <!-- Recent Payments -->
         <div class="mt-6 bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-            <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-                <div>
-                    <h2 class="text-sm font-bold text-gray-900">Recent Payments</h2>
-                    <p class="text-xs text-gray-400 mt-0.5">Last 20 webhook-processed payments — use Xendit ID to verify</p>
-                </div>
+            <div class="px-4 sm:px-5 py-4 border-b border-gray-100">
+                <h2 class="text-sm font-bold text-gray-900">Recent Payments</h2>
+                <p class="text-[10px] sm:text-xs text-gray-400 mt-0.5">Last 20 webhook-processed payments</p>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
@@ -270,6 +300,7 @@
                     <p class="text-xs text-gray-400">Users who paid via affiliate link but haven't logged in yet</p>
                 </div>
             </div>
+            <div class="overflow-x-auto">
             <table class="w-full text-left">
                 <thead class="border-b border-gray-100 bg-gray-50">
                     <tr class="text-xs font-semibold text-gray-400 uppercase tracking-wide">
@@ -306,6 +337,7 @@
                     </tr>
                 </tbody>
             </table>
+            </div>
             <!-- Pagination -->
             <div v-if="pendingOnboarding.last_page > 1" class="px-5 py-3 border-t border-gray-100 flex justify-center gap-1">
                 <Link
