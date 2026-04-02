@@ -115,7 +115,7 @@
 
             <!-- ── Right: Content area ────────────────────────────────────── -->
             <div
-                class="flex-1 min-w-0 flex flex-col bg-white border border-gray-200 md:rounded-r-2xl rounded-2xl md:rounded-l-none overflow-hidden shadow-sm"
+                class="w-full md:w-auto md:flex-1 min-w-0 flex flex-col bg-white border border-gray-200 rounded-2xl md:rounded-l-none md:rounded-r-2xl overflow-hidden shadow-sm"
                 :class="{ 'hidden md:flex': activeTab === 'personal' && !personalSelectedId }"
             >
 
@@ -179,8 +179,8 @@
                     </div>
                 </template>
 
-                <!-- ═══ Personal tab ═══ -->
-                <template v-else-if="activeTab === 'personal'">
+                <!-- ═══ Personal / Talk tab ═══ -->
+                <template v-else-if="activeTab === 'personal' || activeTab === 'talk'">
                     <div v-if="!personalSelectedId" class="flex-1 flex items-center justify-center text-center px-6">
                         <div>
                             <div class="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-3">
@@ -298,17 +298,25 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
 const activeTab = ref('community');
+const creatorName = computed(() => props.community.owner?.name ?? props.community.name);
 const tabs = computed(() => {
     const t = [
         { key: 'community', label: 'Community' },
         { key: 'personal',  label: 'Personal' },
     ];
-    if (props.isOwner) t.push({ key: 'assistant', label: 'AI Assistant' });
+    if (props.isOwner) {
+        t.push({ key: 'assistant', label: 'AI Assistant' });
+    } else {
+        t.push({ key: 'talk', label: `Talk to ${creatorName.value}` });
+    }
     return t;
 });
 
 function switchTab(key) {
     activeTab.value = key;
+    if (key === 'talk') {
+        selectCreatorChat();
+    }
     if (key === 'personal' && !props.isOwner && !personalSelectedId.value) {
         selectCreatorChat();
     }
