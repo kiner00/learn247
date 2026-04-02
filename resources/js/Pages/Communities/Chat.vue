@@ -305,12 +305,16 @@ const tabs = computed(() => {
 
 function switchTab(key) {
     activeTab.value = key;
-    if (key === 'personal') {
+    if (key === 'community') {
+        scrollToBottom();
+    } else if (key === 'personal') {
         loadConversations();
+        if (personalSelectedId.value) {
+            scrollPersonalToBottom();
+        } else if (!props.isOwner) {
+            selectCreatorChat();
+        }
     } else if (key === 'talk') {
-        selectCreatorChat();
-    }
-    if (key === 'personal' && !props.isOwner && !personalSelectedId.value) {
         selectCreatorChat();
     }
 }
