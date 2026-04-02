@@ -226,11 +226,15 @@ class AdminController extends Controller
 
     public function toggleKyc(User $user): RedirectResponse
     {
+        $wasVerified = $user->isKycVerified();
+
         $user->update([
-            'kyc_verified_at' => $user->isKycVerified() ? null : now(),
+            'kyc_verified_at'     => $wasVerified ? null : now(),
+            'kyc_status'          => $wasVerified ? User::KYC_NONE : User::KYC_APPROVED,
+            'kyc_rejected_reason' => null,
         ]);
 
-        $status = $user->isKycVerified() ? 'verified' : 'unverified';
+        $status = $wasVerified ? 'unverified' : 'verified';
 
         return back()->with('success', "User {$user->name} is now KYC {$status}.");
     }
