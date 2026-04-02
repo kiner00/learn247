@@ -395,7 +395,7 @@ function scrollPersonalToBottom(smooth = false) {
 async function loadConversations() {
     try {
         const { data } = await axios.get(`/communities/${props.community.slug}/dm/conversations`);
-        const dmUsers = data.conversations || [];
+        let dmUsers = data.conversations || [];
         if (props.isOwner) {
             const allIds = new Set(dmUsers.map(u => u.id));
             for (const cu of props.chatbotUsers) {
@@ -404,13 +404,22 @@ async function loadConversations() {
         }
         // For non-owners, filter out the creator (they have the pinned "Talk to creator" entry)
         if (!props.isOwner) {
-            conversationList.value = dmUsers.filter(u => u.id !== props.community.owner_id);
-        } else {
-            conversationList.value = dmUsers;
+            dmUsers = dmUsers.filter(u => u.id !== props.community.owner_id);
         }
+        // Preserve any currently selected user that isn't in the API results
+        if (personalSelectedId.value && personalSelectedId.value !== 'creator') {
+            if (!dmUsers.some(u => u.id === personalSelectedId.value)) {
+                const existing = conversationList.value.find(u => u.id === personalSelectedId.value);
+                if (existing) dmUsers.unshift(existing);
+            }
+        }
+        conversationList.value = dmUsers;
     } catch (err) {
         console.error('Failed to load conversations:', err?.response?.data ?? err);
-        conversationList.value = props.isOwner ? [...props.chatbotUsers] : [];
+        // Don't wipe the list if we already have conversations
+        if (!conversationList.value.length) {
+            conversationList.value = props.isOwner ? [...props.chatbotUsers] : [];
+        }
     }
 }
 
