@@ -20,12 +20,12 @@ class GenerateSingleGalleryImage implements ShouldQueue
     public function __construct(
         public Community $community,
         public int $promptIndex,
+        public int $total = 1,
     ) {}
 
     public function handle(): void
     {
         $cacheKey = "gallery-generating:{$this->community->id}";
-        Cache::put($cacheKey, ['status' => 'generating', 'progress' => 0, 'total' => 1], 300);
 
         $communityName = $this->community->name;
         $category      = $this->community->category ?? 'online learning';
@@ -59,6 +59,10 @@ class GenerateSingleGalleryImage implements ShouldQueue
 
         $prompt = $prompts[$this->promptIndex] ?? $prompts[0];
 
+        // Calculate which image number we're on (1-based for display)
+        $generated = $this->promptIndex - (8 - $this->total);
+        Cache::put($cacheKey, ['status' => 'generating', 'progress' => $generated, 'total' => $this->total], 600);
+
         try {
             $imageResponse = Image::of($prompt)->size('3:2')->generate();
             $img           = $imageResponse->firstImage();
@@ -71,7 +75,16 @@ class GenerateSingleGalleryImage implements ShouldQueue
             $gallery[] = $url;
             $this->community->update(['gallery_images' => $gallery]);
 
-            Cache::put($cacheKey, ['status' => 'completed', 'progress' => 1, 'total' => 1], 300);
+            $newProgress = $generated + 1;
+
+            // If there are more images to generate, dispatch the next one
+            $nextIndex = $this->promptIndex + 1;
+            if ($nextIndex < 8 && $newProgress < $this->total) {
+                Cache::put($cacheKey, ['status' => 'generating', 'progress' => $newProgress, 'total' => $this->total], 600);
+                self::dispatch($this->community, $nextIndex, $this->total);
+            } else {
+                Cache::put($cacheKey, ['status' => 'completed', 'progress' => $this->total, 'total' => $this->total], 300);
+            }
         } catch (\Throwable $e) {
             Log::error("Single gallery image generation failed", [
                 'community'   => $this->community->id,
@@ -80,17 +93,23 @@ class GenerateSingleGalleryImage implements ShouldQueue
             ]);
 
             Cache::put($cacheKey, [
-                'status' => 'failed',
-                'error'  => 'Image generation failed. Please try again.',
+                'status'   => 'failed',
+                'error'    => 'Image generation failed. Please try again.',
+                'progress' => $generated,
+                'total'    => $this->total,
             ], 300);
         }
     }
 
     public function failed(\Throwable $exception): void
     {
+        $generated = $this->promptIndex - (8 - $this->total);
+
         Cache::put("gallery-generating:{$this->community->id}", [
-            'status' => 'failed',
-            'error'  => 'Image generation failed. Please try again.',
+            'status'   => 'failed',
+            'error'    => 'Image generation failed. Please try again.',
+            'progress' => $generated,
+            'total'    => $this->total,
         ], 300);
 
         Log::error('GenerateSingleGalleryImage job failed', [

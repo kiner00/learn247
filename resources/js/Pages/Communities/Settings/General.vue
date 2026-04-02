@@ -151,7 +151,10 @@ function removeGalleryImage(index) {
 // ─── AI Gallery Generation (one at a time) ──────────────────────────────────
 const aiGalleryGenerating = ref(false);
 const aiGalleryError      = ref(null);
+const aiGalleryProgress   = ref(0);
+const aiGalleryTotal      = ref(0);
 let aiGalleryPollTimer    = null;
+let lastSeenProgress      = -1;
 
 const galleryLabels = [
     'Welcome Image', 'The "Why"', 'The Classroom', 'The Calendar',
@@ -163,6 +166,8 @@ const galleryLabels = [
         const { data } = await axios.get(`/communities/${props.community.slug}/gallery/ai-status`);
         if (data.status === 'generating') {
             aiGalleryGenerating.value = true;
+            aiGalleryProgress.value   = data.progress ?? 0;
+            aiGalleryTotal.value      = data.total ?? 1;
             pollAiGalleryStatus();
         }
     } catch {}
@@ -176,11 +181,12 @@ async function startAiGalleryGeneration() {
 
     aiGalleryGenerating.value = true;
     aiGalleryError.value      = null;
+    aiGalleryProgress.value   = 0;
+    aiGalleryTotal.value      = 8 - count;
+    lastSeenProgress          = -1;
 
     try {
-        await axios.post(`/communities/${props.community.slug}/gallery/ai-generate`, {
-            prompt_index: count,
-        });
+        await axios.post(`/communities/${props.community.slug}/gallery/ai-generate`);
         pollAiGalleryStatus();
     } catch (e) {
         aiGalleryGenerating.value = false;
@@ -192,7 +198,16 @@ function pollAiGalleryStatus() {
     aiGalleryPollTimer = setInterval(async () => {
         try {
             const { data } = await axios.get(`/communities/${props.community.slug}/gallery/ai-status`);
-            if (data.status === 'completed') {
+
+            if (data.status === 'generating') {
+                aiGalleryProgress.value = data.progress ?? 0;
+                aiGalleryTotal.value    = data.total ?? 1;
+                // Reload page data when a new image was generated so it appears in the gallery
+                if (data.progress > lastSeenProgress && data.progress > 0) {
+                    lastSeenProgress = data.progress;
+                    router.reload({ only: ['community'], preserveScroll: true });
+                }
+            } else if (data.status === 'completed') {
                 clearInterval(aiGalleryPollTimer);
                 aiGalleryGenerating.value = false;
                 router.reload({ only: ['community'], preserveScroll: true });
@@ -200,6 +215,10 @@ function pollAiGalleryStatus() {
                 clearInterval(aiGalleryPollTimer);
                 aiGalleryGenerating.value = false;
                 aiGalleryError.value = data.error || 'Generation failed.';
+                // Still reload to show any images that were generated before the failure
+                if (data.progress > 0) {
+                    router.reload({ only: ['community'], preserveScroll: true });
+                }
             }
         } catch {
             clearInterval(aiGalleryPollTimer);
@@ -689,9 +708,12 @@ function saveBrand() {
 
             <!-- AI generation progress -->
             <div v-if="aiGalleryGenerating" class="mb-4 p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 mb-2">
                     <svg class="w-4 h-4 text-indigo-600 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
-                    <span class="text-sm font-medium text-indigo-700">Generating image... This takes ~10-20 seconds.</span>
+                    <span class="text-sm font-medium text-indigo-700">Generating image {{ aiGalleryProgress + 1 }} of {{ aiGalleryTotal }}... ~10-20s per image.</span>
+                </div>
+                <div class="w-full bg-indigo-200 rounded-full h-1.5">
+                    <div class="bg-indigo-600 h-1.5 rounded-full transition-all duration-500" :style="{ width: (aiGalleryTotal > 0 ? (aiGalleryProgress / aiGalleryTotal) * 100 : 0) + '%' }"></div>
                 </div>
             </div>
 

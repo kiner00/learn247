@@ -328,10 +328,10 @@ class CommunityController extends Controller
             return response()->json(['error' => 'Image generation is already in progress.'], 409);
         }
 
-        Cache::put($cacheKey, ['status' => 'generating', 'progress' => 0, 'total' => 1], 300);
+        $remaining = 8 - $galleryCount;
+        Cache::put($cacheKey, ['status' => 'generating', 'progress' => 0, 'total' => $remaining], 300);
 
-        $promptIndex = $request->input('prompt_index', $galleryCount);
-        GenerateSingleGalleryImage::dispatch($community, min($promptIndex, 7));
+        GenerateSingleGalleryImage::dispatch($community, $galleryCount, $remaining);
 
         return response()->json(['message' => 'Image generation started.'], 202);
     }
