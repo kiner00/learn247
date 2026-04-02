@@ -54,15 +54,21 @@
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div>
                         <p class="text-xs font-medium text-gray-500 mb-1.5">Government ID</p>
-                        <a :href="u.kyc_id_document" target="_blank" class="block">
-                            <img :src="u.kyc_id_document" class="w-full h-48 object-cover rounded-xl border border-gray-200 hover:opacity-90 transition-opacity" />
-                        </a>
+                        <div
+                            class="cursor-pointer rounded-xl border border-gray-200 bg-gray-50 overflow-hidden hover:border-indigo-300 transition-colors"
+                            @click="openLightbox(u.kyc_id_document)"
+                        >
+                            <img :src="u.kyc_id_document" class="w-full h-48 object-contain" />
+                        </div>
                     </div>
                     <div>
                         <p class="text-xs font-medium text-gray-500 mb-1.5">Selfie with ID</p>
-                        <a :href="u.kyc_selfie" target="_blank" class="block">
-                            <img :src="u.kyc_selfie" class="w-full h-48 object-cover rounded-xl border border-gray-200 hover:opacity-90 transition-opacity" />
-                        </a>
+                        <div
+                            class="cursor-pointer rounded-xl border border-gray-200 bg-gray-50 overflow-hidden hover:border-indigo-300 transition-colors"
+                            @click="openLightbox(u.kyc_selfie)"
+                        >
+                            <img :src="u.kyc_selfie" class="w-full h-48 object-contain" />
+                        </div>
                     </div>
                 </div>
 
@@ -111,6 +117,14 @@
             />
         </div>
 
+        <!-- Lightbox modal -->
+        <div v-if="lightboxSrc" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 cursor-pointer" @click="lightboxSrc = null">
+            <button @click="lightboxSrc = null" class="absolute top-4 right-4 text-white/80 hover:text-white transition-colors">
+                <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            <img :src="lightboxSrc" class="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl" @click.stop />
+        </div>
+
         <!-- Reject modal -->
         <div v-if="rejectTarget" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click.self="rejectTarget = null">
             <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
@@ -157,6 +171,11 @@ const statusTabs = [
 const processing   = ref(null);
 const rejectTarget = ref(null);
 const rejectReason = ref('');
+const lightboxSrc  = ref(null);
+
+function openLightbox(src) {
+    lightboxSrc.value = src;
+}
 
 function approve(user) {
     processing.value = user.id;
