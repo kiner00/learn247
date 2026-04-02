@@ -2,9 +2,60 @@
     <AppLayout :title="`${community.name} · Chat`" :community="community">
         <CommunityTabs :community="community" active-tab="chat" />
 
-        <div class="flex gap-0" style="height: calc(100vh - 220px);">
-            <!-- ── Left: Tabs + Conversation list ─────────────────────────── -->
-            <div class="flex shrink-0">
+        <!-- Mobile tabs (horizontal) -->
+        <div class="flex gap-1.5 mb-3 lg:hidden">
+            <button
+                v-for="tab in tabs"
+                :key="tab.key"
+                @click="switchTab(tab.key)"
+                class="px-3.5 py-2 text-xs font-semibold rounded-lg whitespace-nowrap transition-colors"
+                :class="activeTab === tab.key ? 'bg-indigo-600 text-white' : 'text-gray-600 bg-gray-100 hover:bg-gray-200'"
+            >{{ tab.label }}</button>
+        </div>
+
+        <div class="flex gap-0 rounded-2xl overflow-hidden h-[calc(100vh-280px)] lg:h-[calc(100vh-220px)]">
+
+            <!-- ── Mobile: Conversation list (full width, no chat selected) ── -->
+            <div
+                v-if="activeTab === 'personal' && !personalSelectedId"
+                class="w-full bg-white border border-gray-200 overflow-y-auto lg:hidden"
+            >
+                <button
+                    v-if="!isOwner"
+                    @click="selectCreatorChat()"
+                    class="w-full flex items-center gap-3 px-4 py-3.5 border-b border-gray-100 hover:bg-gray-50 transition-colors text-left"
+                >
+                    <div class="relative shrink-0">
+                        <img v-if="community.owner?.avatar" :src="community.owner.avatar" class="w-12 h-12 rounded-full object-cover" />
+                        <div v-else class="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-base font-bold text-indigo-600">{{ community.owner?.name?.charAt(0)?.toUpperCase() }}</div>
+                        <span class="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-green-400 border-2 border-white rounded-full"></span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold text-gray-900">{{ community.owner?.name }}</p>
+                        <p class="text-xs text-gray-400">Talk to creator</p>
+                    </div>
+                </button>
+                <template v-if="isOwner">
+                    <div v-if="!conversationList.length" class="p-6 text-center"><p class="text-sm text-gray-400">No conversations yet.</p></div>
+                    <button
+                        v-for="u in conversationList"
+                        :key="u.id"
+                        @click="selectMemberChat(u)"
+                        class="w-full flex items-center gap-3 px-4 py-3.5 border-b border-gray-50 hover:bg-gray-50 transition-colors text-left"
+                    >
+                        <img v-if="u.avatar" :src="u.avatar" class="w-12 h-12 rounded-full object-cover shrink-0" />
+                        <div v-else class="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-base font-bold text-indigo-600 shrink-0">{{ u.name?.charAt(0)?.toUpperCase() }}</div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900">{{ u.name }}</p>
+                            <p class="text-xs text-gray-400">{{ Math.floor(u.message_count / 2) }} messages</p>
+                        </div>
+                        <span class="text-xs text-gray-300">{{ formatRelativeTime(u.last_chat_at) }}</span>
+                    </button>
+                </template>
+            </div>
+
+            <!-- ── Left: Tabs + Conversation list (desktop) ───────────────── -->
+            <div class="hidden lg:flex shrink-0">
                 <!-- Tab buttons -->
                 <div class="flex flex-col gap-1 p-2 border-r border-gray-200 bg-gray-50 rounded-l-2xl">
                     <button
@@ -63,7 +114,10 @@
             </div>
 
             <!-- ── Right: Content area ────────────────────────────────────── -->
-            <div class="flex-1 min-w-0 flex flex-col bg-white border border-gray-200 rounded-r-2xl overflow-hidden shadow-sm">
+            <div
+                class="flex-1 min-w-0 flex flex-col bg-white border border-gray-200 lg:rounded-r-2xl rounded-2xl lg:rounded-l-none overflow-hidden shadow-sm"
+                :class="{ 'hidden lg:flex': activeTab === 'personal' && !personalSelectedId }"
+            >
 
                 <!-- ═══ Community tab ═══ -->
                 <template v-if="activeTab === 'community'">
@@ -139,6 +193,9 @@
                     <template v-else>
                         <!-- Chat header -->
                         <div class="px-4 py-3 border-b border-gray-100 flex items-center gap-2.5 shrink-0">
+                            <button @click="personalSelectedId = null; stopPersonalPolling()" class="lg:hidden shrink-0 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 -ml-1">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                            </button>
                             <img v-if="personalHeaderAvatar" :src="personalHeaderAvatar" class="w-9 h-9 rounded-full object-cover" />
                             <div v-else class="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-sm font-bold text-indigo-600">{{ personalHeaderName?.charAt(0)?.toUpperCase() }}</div>
                             <div>
