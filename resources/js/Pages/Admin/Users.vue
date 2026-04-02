@@ -1,11 +1,8 @@
 <template>
-    <AppLayout title="User Management">
-        <div class="mb-6 flex items-center justify-between">
-            <div>
-                <h1 class="text-2xl font-black text-gray-900">User Management</h1>
-                <p class="text-sm text-gray-500 mt-0.5">{{ users.total.toLocaleString() }} users total</p>
-            </div>
-            <Link href="/admin" class="text-sm text-indigo-600 hover:underline">← Dashboard</Link>
+    <AdminLayout title="User Management">
+        <div class="mb-6">
+            <h1 class="text-2xl font-black text-gray-900">User Management</h1>
+            <p class="text-sm text-gray-500 mt-0.5">{{ users.total.toLocaleString() }} users total</p>
         </div>
 
         <!-- Search -->
@@ -98,13 +95,13 @@
                 />
             </div>
         </div>
-    </AppLayout>
+    </AdminLayout>
 </template>
 
 <script setup>
 import { ref } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 
 const props = defineProps({
     users:   { type: Object, default: () => ({ data: [], total: 0, last_page: 1, links: [] }) },
