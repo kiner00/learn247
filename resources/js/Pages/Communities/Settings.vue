@@ -1404,6 +1404,7 @@ function removeGalleryImage(index) {
 const aiGalleryGenerating = ref(false);
 const aiGalleryProgress   = ref(0);
 const aiGalleryError      = ref(null);
+let aiGalleryPollTimer    = null;
 
 const galleryLabels = [
     'Welcome Image',
@@ -1416,29 +1417,56 @@ const galleryLabels = [
     'Final CTA',
 ];
 
+// Check if generation is already in progress on page load
+(async function checkAiGalleryStatus() {
+    try {
+        const { data } = await axios.get(`/communities/${props.community.slug}/gallery/ai-status`);
+        if (data.status === 'generating') {
+            aiGalleryGenerating.value = true;
+            aiGalleryProgress.value   = data.progress || 0;
+            pollAiGalleryStatus();
+        }
+    } catch {}
+})();
+
 async function startAiGalleryGeneration() {
-    if (!props.isPro) return;
+    if (!props.isPro || aiGalleryGenerating.value) return;
     if (!confirm('This will replace your current gallery with 8 AI-generated images. Continue?')) return;
 
     aiGalleryGenerating.value = true;
     aiGalleryProgress.value   = 0;
     aiGalleryError.value      = null;
 
-    for (let i = 0; i < 8; i++) {
-        try {
-            await axios.post(`/communities/${props.community.slug}/gallery/ai-generate`, {
-                index: i,
-                clear: i === 0,
-            });
-            aiGalleryProgress.value = i + 1;
-        } catch (e) {
-            aiGalleryError.value = `Failed on image ${i + 1} (${galleryLabels[i]}): ${e.response?.data?.error || 'Unknown error'}`;
-            break;
-        }
+    try {
+        await axios.post(`/communities/${props.community.slug}/gallery/ai-generate`);
+        pollAiGalleryStatus();
+    } catch (e) {
+        aiGalleryGenerating.value = false;
+        aiGalleryError.value = e.response?.data?.error || 'Failed to start generation.';
     }
+}
 
-    aiGalleryGenerating.value = false;
-    router.reload({ only: ['community'], preserveScroll: true });
+function pollAiGalleryStatus() {
+    aiGalleryPollTimer = setInterval(async () => {
+        try {
+            const { data } = await axios.get(`/communities/${props.community.slug}/gallery/ai-status`);
+            aiGalleryProgress.value = data.progress || 0;
+
+            if (data.status === 'completed') {
+                clearInterval(aiGalleryPollTimer);
+                aiGalleryGenerating.value = false;
+                router.reload({ only: ['community'], preserveScroll: true });
+            } else if (data.status === 'failed') {
+                clearInterval(aiGalleryPollTimer);
+                aiGalleryGenerating.value = false;
+                aiGalleryError.value = data.error || 'Generation failed.';
+            }
+        } catch {
+            clearInterval(aiGalleryPollTimer);
+            aiGalleryGenerating.value = false;
+            aiGalleryError.value = 'Failed to check status.';
+        }
+    }, 4000);
 }
 
 function deleteCommunity() {

@@ -30,13 +30,13 @@ use App\Queries\Community\GetInvitedByAffiliate;
 use App\Queries\Community\GetLeaderboard;
 use App\Queries\Community\ListCommunities;
 use App\Queries\Feed\GetCommunityFeed;
+use App\Jobs\GenerateGalleryImages;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Cookie;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Laravel\Ai\Image;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -291,7 +291,7 @@ class CommunityController extends Controller
         return back()->with('success', 'Image removed!');
     }
 
-    public function aiGenerateGalleryImage(Request $request, Community $community): JsonResponse
+    public function aiGenerateGallery(Request $request, Community $community): JsonResponse
     {
         $this->authorize('update', $community);
 
@@ -299,57 +299,28 @@ class CommunityController extends Controller
             return response()->json(['error' => 'AI Gallery generation requires a PRO plan.'], 403);
         }
 
-        $request->validate([
-            'index' => ['required', 'integer', 'min:0', 'max:7'],
-            'clear' => ['sometimes', 'boolean'],
-        ]);
+        $cacheKey = "gallery-generating:{$community->id}";
+        $status   = Cache::get($cacheKey);
 
-        $index         = (int) $request->index;
-        $communityName = $community->name;
-        $category      = $community->category ?? 'online learning';
-
-        $prompts = [
-            "A clean, professional welcome banner graphic that says 'Welcome to {$communityName}'. Modern design with gradient background, bold typography, and subtle decorative elements. Digital marketing style, 1200x800 resolution.",
-            "An infographic slide titled 'Why Join {$communityName}?' listing the top 3 benefits of joining this {$category} community. Clean layout with icons, modern flat design, professional color scheme. 1200x800 resolution.",
-            "A realistic screenshot mockup of an online course platform dashboard showing a list of courses with progress bars, thumbnails, and lesson counts. Clean UI design with sidebar navigation. Represents the classroom of {$communityName}. 1200x800 resolution.",
-            "A realistic screenshot mockup of a calendar view showing upcoming live sessions, webinars, and events for an online community called {$communityName}. Modern UI with colorful event cards and time slots. 1200x800 resolution.",
-            "A professional certificate mockup with ornate border design, showing a 'Certificate of Completion' from {$communityName}. Elegant typography, gold accents, placeholder name field, and official seal. 1200x800 resolution.",
-            "A screenshot mockup of a community leaderboard showing top active members with avatars, points, badges, and rankings. Social proof display for {$communityName}. Gamification UI design, modern and engaging. 1200x800 resolution.",
-            "A mobile phone mockup showing the {$communityName} community app on a smartphone screen. Clean responsive design with course cards, navigation bar, and profile section. The phone is angled slightly with a clean background. 1200x800 resolution.",
-            "A compelling 'Join Now' call-to-action graphic for {$communityName}. Bold typography, vibrant gradient background, a prominent sign-up button, and an arrow pointing toward the button. Urgency and excitement in the design. 1200x800 resolution.",
-        ];
-
-        // On first image, clear existing gallery
-        if ($request->boolean('clear')) {
-            $storage = app(StorageService::class);
-            foreach ($community->gallery_images ?? [] as $oldUrl) {
-                $storage->delete($oldUrl);
-            }
-            $community->update(['gallery_images' => []]);
+        if ($status && $status['status'] === 'generating') {
+            return response()->json(['error' => 'Gallery generation is already in progress.'], 409);
         }
 
-        try {
-            $imageResponse = Image::of($prompts[$index])->size('3:2')->generate();
-            $img           = $imageResponse->firstImage();
+        Cache::put($cacheKey, ['status' => 'generating', 'progress' => 0, 'total' => 8], 900);
 
-            $filename = 'community-gallery/' . $community->id . '_' . ($index + 1) . '_' . time() . '.png';
-            Storage::put($filename, base64_decode($img->image));
-            $url = Storage::url($filename);
+        GenerateGalleryImages::dispatch($community);
 
-            $gallery   = $community->fresh()->gallery_images ?? [];
-            $gallery[] = $url;
-            $community->update(['gallery_images' => $gallery]);
+        return response()->json(['message' => 'Gallery generation started.'], 202);
+    }
 
-            return response()->json(['url' => $url, 'index' => $index, 'total' => count($gallery)]);
-        } catch (\Throwable $e) {
-            Log::error("AI gallery image generation failed", [
-                'community' => $community->id,
-                'index'     => $index,
-                'error'     => $e->getMessage(),
-            ]);
+    public function aiGalleryStatus(Request $request, Community $community): JsonResponse
+    {
+        $this->authorize('update', $community);
 
-            return response()->json(['error' => 'Failed to generate image. Please try again.'], 500);
-        }
+        $cacheKey = "gallery-generating:{$community->id}";
+        $status   = Cache::get($cacheKey, ['status' => 'idle']);
+
+        return response()->json($status);
     }
 
     public function updateLevelPerks(Request $request, Community $community, UpdateLevelPerks $action): RedirectResponse
