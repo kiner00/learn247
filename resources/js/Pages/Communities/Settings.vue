@@ -266,12 +266,12 @@
                 <div v-if="aiGalleryGenerating" class="mb-4 p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
                     <div class="flex items-center gap-2 mb-2">
                         <svg class="w-4 h-4 text-indigo-600 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
-                        <span class="text-sm font-medium text-indigo-700">Generating gallery images with AI...</span>
+                        <span class="text-sm font-medium text-indigo-700">Generating: {{ galleryLabels[aiGalleryProgress] || 'Finishing up...' }}</span>
                     </div>
                     <div class="w-full bg-indigo-100 rounded-full h-1.5">
                         <div class="bg-indigo-600 h-1.5 rounded-full transition-all duration-500" :style="{ width: (aiGalleryProgress / 8 * 100) + '%' }"></div>
                     </div>
-                    <p class="text-xs text-indigo-500 mt-1">{{ aiGalleryProgress }} of 8 images generated. This may take a few minutes.</p>
+                    <p class="text-xs text-indigo-500 mt-1">{{ aiGalleryProgress }} of 8 images generated. Each image takes ~10-20 seconds.</p>
                 </div>
 
                 <!-- AI generation error -->
@@ -1404,7 +1404,17 @@ function removeGalleryImage(index) {
 const aiGalleryGenerating = ref(false);
 const aiGalleryProgress   = ref(0);
 const aiGalleryError      = ref(null);
-let aiGalleryPollTimer    = null;
+
+const galleryLabels = [
+    'Welcome Image',
+    'The "Why"',
+    'The Classroom',
+    'The Calendar',
+    'Certification Preview',
+    'Social Proof',
+    'The Mobile View',
+    'Final CTA',
+];
 
 async function startAiGalleryGeneration() {
     if (!props.isPro) return;
@@ -1414,36 +1424,21 @@ async function startAiGalleryGeneration() {
     aiGalleryProgress.value   = 0;
     aiGalleryError.value      = null;
 
-    try {
-        await axios.post(`/communities/${props.community.slug}/gallery/ai-generate`);
-        pollAiGalleryStatus();
-    } catch (e) {
-        aiGalleryGenerating.value = false;
-        aiGalleryError.value = e.response?.data?.error || 'Failed to start generation.';
-    }
-}
-
-function pollAiGalleryStatus() {
-    aiGalleryPollTimer = setInterval(async () => {
+    for (let i = 0; i < 8; i++) {
         try {
-            const { data } = await axios.get(`/communities/${props.community.slug}/gallery/ai-status`);
-            aiGalleryProgress.value = data.progress || 0;
-
-            if (data.status === 'completed') {
-                clearInterval(aiGalleryPollTimer);
-                aiGalleryGenerating.value = false;
-                router.reload({ only: ['community'], preserveScroll: true });
-            } else if (data.status === 'failed') {
-                clearInterval(aiGalleryPollTimer);
-                aiGalleryGenerating.value = false;
-                aiGalleryError.value = data.error || 'Generation failed.';
-            }
-        } catch {
-            clearInterval(aiGalleryPollTimer);
-            aiGalleryGenerating.value = false;
-            aiGalleryError.value = 'Failed to check status.';
+            await axios.post(`/communities/${props.community.slug}/gallery/ai-generate`, {
+                index: i,
+                clear: i === 0,
+            });
+            aiGalleryProgress.value = i + 1;
+        } catch (e) {
+            aiGalleryError.value = `Failed on image ${i + 1} (${galleryLabels[i]}): ${e.response?.data?.error || 'Unknown error'}`;
+            break;
         }
-    }, 5000);
+    }
+
+    aiGalleryGenerating.value = false;
+    router.reload({ only: ['community'], preserveScroll: true });
 }
 
 function deleteCommunity() {
