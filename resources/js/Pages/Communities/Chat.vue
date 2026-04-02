@@ -35,23 +35,20 @@
                         <p class="text-xs text-gray-400">Talk to creator</p>
                     </div>
                 </button>
-                <template v-if="isOwner">
-                    <div v-if="!conversationList.length" class="p-6 text-center"><p class="text-sm text-gray-400">No conversations yet.</p></div>
-                    <button
-                        v-for="u in conversationList"
-                        :key="u.id"
-                        @click="selectMemberChat(u)"
-                        class="w-full flex items-center gap-3 px-4 py-3.5 border-b border-gray-50 hover:bg-gray-50 transition-colors text-left"
-                    >
-                        <img v-if="u.avatar" :src="u.avatar" class="w-12 h-12 rounded-full object-cover shrink-0" />
-                        <div v-else class="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-base font-bold text-indigo-600 shrink-0">{{ u.name?.charAt(0)?.toUpperCase() }}</div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-medium text-gray-900">{{ u.name }}</p>
-                            <p class="text-xs text-gray-400">{{ Math.floor(u.message_count / 2) }} messages</p>
-                        </div>
-                        <span class="text-xs text-gray-300">{{ formatRelativeTime(u.last_chat_at) }}</span>
-                    </button>
-                </template>
+                <button
+                    v-for="u in conversationList"
+                    :key="u.id"
+                    @click="selectMemberChat(u)"
+                    class="w-full flex items-center gap-3 px-4 py-3.5 border-b border-gray-50 hover:bg-gray-50 transition-colors text-left"
+                >
+                    <img v-if="u.avatar" :src="u.avatar" class="w-12 h-12 rounded-full object-cover shrink-0" />
+                    <div v-else class="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-base font-bold text-indigo-600 shrink-0">{{ u.name?.charAt(0)?.toUpperCase() }}</div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-gray-900">{{ u.name }}</p>
+                        <p v-if="u.message_count" class="text-xs text-gray-400">{{ Math.ceil(u.message_count / 2) }} messages</p>
+                    </div>
+                    <span v-if="u.last_message_at" class="text-xs text-gray-300">{{ formatRelativeTime(u.last_message_at) }}</span>
+                </button>
             </div>
 
             <!-- ── Left: Tabs + Conversation list (desktop) ───────────────── -->
@@ -87,29 +84,24 @@
                         </div>
                     </button>
 
-                    <!-- Member conversations (creator view) -->
-                    <template v-if="isOwner">
-                        <div v-if="!conversationList.length" class="p-4 text-center">
-                            <p class="text-xs text-gray-400">No conversations yet.</p>
+                    <!-- Conversations -->
+                    <button
+                        v-for="u in conversationList"
+                        :key="u.id"
+                        @click="selectMemberChat(u)"
+                        class="w-full flex items-center gap-2.5 px-3 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors text-left"
+                        :class="personalSelectedId === u.id ? 'bg-indigo-50' : ''"
+                    >
+                        <div class="relative shrink-0">
+                            <img v-if="u.avatar" :src="u.avatar" class="w-10 h-10 rounded-full object-cover" />
+                            <div v-else class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-sm font-bold text-indigo-600">{{ u.name?.charAt(0)?.toUpperCase() }}</div>
                         </div>
-                        <button
-                            v-for="u in conversationList"
-                            :key="u.id"
-                            @click="selectMemberChat(u)"
-                            class="w-full flex items-center gap-2.5 px-3 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors text-left"
-                            :class="personalSelectedId === u.id ? 'bg-indigo-50' : ''"
-                        >
-                            <div class="relative shrink-0">
-                                <img v-if="u.avatar" :src="u.avatar" class="w-10 h-10 rounded-full object-cover" />
-                                <div v-else class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-sm font-bold text-indigo-600">{{ u.name?.charAt(0)?.toUpperCase() }}</div>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-sm font-medium text-gray-900 truncate">{{ u.name }}</p>
-                                <p class="text-xs text-gray-400 truncate">{{ Math.floor(u.message_count / 2) }} messages</p>
-                            </div>
-                            <span class="text-xs text-gray-300 shrink-0">{{ formatRelativeTime(u.last_chat_at) }}</span>
-                        </button>
-                    </template>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900 truncate">{{ u.name }}</p>
+                            <p class="text-xs text-gray-400 truncate">{{ u.message_count ? `${Math.ceil(u.message_count / 2)} messages` : '' }}</p>
+                        </div>
+                        <span v-if="u.last_message_at" class="text-xs text-gray-300 shrink-0">{{ formatRelativeTime(u.last_message_at) }}</span>
+                    </button>
                 </div>
             </div>
 
