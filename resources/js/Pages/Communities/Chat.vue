@@ -387,7 +387,11 @@ function isMineMsg(msg) {
 }
 
 function scrollPersonalToBottom(smooth = false) {
-    nextTick(() => personalChatEl.value?.scrollTo({ top: personalChatEl.value?.scrollHeight, behavior: smooth ? 'smooth' : 'instant' }));
+    nextTick(() => {
+        setTimeout(() => {
+            personalChatEl.value?.scrollTo({ top: personalChatEl.value?.scrollHeight, behavior: smooth ? 'smooth' : 'instant' });
+        }, 50);
+    });
 }
 
 async function loadConversations() {
