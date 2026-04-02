@@ -578,8 +578,12 @@ onMounted(() => {
         activeTab.value = 'personal';
         loadConversations().then(() => {
             if (props.selectedChatUser) {
+                // Add to conversation list if not already there
+                if (!conversationList.value.some(x => x.id === props.selectedChatUser.id)) {
+                    conversationList.value.unshift({ ...props.selectedChatUser, message_count: 0, last_message_at: null });
+                }
                 const u = conversationList.value.find(x => x.id === props.selectedChatUser.id);
-                selectMemberChat(u ?? { ...props.selectedChatUser, message_count: 0 });
+                selectMemberChat(u);
             }
         });
     }
