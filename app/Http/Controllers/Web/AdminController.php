@@ -224,6 +224,17 @@ class AdminController extends Controller
         return back()->with('success', "User {$user->name} has been " . ($user->is_active ? 'enabled' : 'disabled') . ".");
     }
 
+    public function toggleKyc(User $user): RedirectResponse
+    {
+        $user->update([
+            'kyc_verified_at' => $user->isKycVerified() ? null : now(),
+        ]);
+
+        $status = $user->isKycVerified() ? 'verified' : 'unverified';
+
+        return back()->with('success', "User {$user->name} is now KYC {$status}.");
+    }
+
     // ── Posts ─────────────────────────────────────────────────────────────────
 
     public function trashedPosts(Request $request, ListTrashedPosts $query): Response

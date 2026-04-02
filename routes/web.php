@@ -107,6 +107,7 @@ Route::middleware(['auth', EnsureSuperAdmin::class])->prefix('admin')->group(fun
     // User management
     Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
     Route::patch('/users/{user}/toggle-status', [AdminController::class, 'toggleUserStatus'])->name('admin.users.toggle');
+    Route::patch('/users/{user}/toggle-kyc', [AdminController::class, 'toggleKyc'])->name('admin.users.toggle-kyc');
     // Soft delete recovery
     Route::get('/posts/trashed', [AdminController::class, 'trashedPosts'])->name('admin.posts.trashed');
     Route::post('/posts/{postId}/restore', [AdminController::class, 'restorePost'])->name('admin.posts.restore');
