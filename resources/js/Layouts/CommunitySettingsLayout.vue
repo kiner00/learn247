@@ -14,6 +14,7 @@ const navItems = computed(() => [
     { href: `${base.value}/general`,        label: 'General' },
     { href: `${base.value}/affiliate`,      label: 'Affiliate' },
     { href: `${base.value}/ai-tools`,       label: 'AI Tools' },
+    { href: `${base.value}/chat-history`,  label: 'Chat History' },
     { href: `${base.value}/announcements`,  label: 'Announcements' },
     { href: `${base.value}/level-perks`,    label: 'Level Perks' },
     { href: `${base.value}/invite-members`, label: 'Invite Members' },

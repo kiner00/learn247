@@ -246,6 +246,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/communities/{community}/settings/domain',         [CommunitySettingsController::class, 'domain'])->name('communities.settings.domain');
         Route::get('/communities/{community}/settings/sms',            [CommunitySettingsController::class, 'sms'])->name('communities.settings.sms');
         Route::get('/communities/{community}/settings/danger-zone',    [CommunitySettingsController::class, 'dangerZone'])->name('communities.settings.danger-zone');
+        Route::get('/communities/{community}/settings/chat-history',          [CommunitySettingsController::class, 'chatHistory'])->name('communities.settings.chat-history');
+        Route::get('/communities/{community}/settings/chat-history/{userId}', [CommunitySettingsController::class, 'chatHistoryUser'])->name('communities.settings.chat-history.user');
         Route::get('/communities/{community}/analytics', [CommunityController::class, 'analytics'])->name('communities.analytics');
 
         // Posts (community-scoped)

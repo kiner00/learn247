@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Models\ChatbotMessage;
 use App\Models\Community;
 use App\Models\CommunityLevelPerk;
 use App\Services\Community\PlanLimitService;
@@ -89,5 +90,69 @@ class CommunitySettingsController extends Controller
     public function dangerZone(Community $community): Response
     {
         return Inertia::render('Communities/Settings/DangerZone', $this->baseProps($community));
+    }
+
+    public function chatHistory(Community $community): Response
+    {
+        $this->authorize('update', $community);
+        $community->load('owner:id,name,avatar');
+
+        // Get unique users who chatted, with their latest message time
+        $users = ChatbotMessage::where('community_id', $community->id)
+            ->selectRaw('user_id, MAX(created_at) as last_chat_at, COUNT(*) as message_count')
+            ->groupBy('user_id')
+            ->orderByDesc('last_chat_at')
+            ->with('user:id,name,avatar')
+            ->get()
+            ->map(fn ($row) => [
+                'id'            => $row->user_id,
+                'name'          => $row->user->name,
+                'avatar'        => $row->user->avatar,
+                'last_chat_at'  => $row->last_chat_at,
+                'message_count' => $row->message_count,
+            ]);
+
+        return Inertia::render('Communities/Settings/ChatHistory', array_merge(
+            $this->baseProps($community),
+            ['chatUsers' => $users]
+        ));
+    }
+
+    public function chatHistoryUser(Community $community, int $userId): Response
+    {
+        $this->authorize('update', $community);
+        $community->load('owner:id,name,avatar');
+
+        $messages = ChatbotMessage::where('community_id', $community->id)
+            ->where('user_id', $userId)
+            ->orderBy('created_at')
+            ->select('id', 'role', 'content', 'conversation_id', 'created_at')
+            ->get();
+
+        $user = \App\Models\User::select('id', 'name', 'avatar')->findOrFail($userId);
+
+        // Get user list for sidebar
+        $users = ChatbotMessage::where('community_id', $community->id)
+            ->selectRaw('user_id, MAX(created_at) as last_chat_at, COUNT(*) as message_count')
+            ->groupBy('user_id')
+            ->orderByDesc('last_chat_at')
+            ->with('user:id,name,avatar')
+            ->get()
+            ->map(fn ($row) => [
+                'id'            => $row->user_id,
+                'name'          => $row->user->name,
+                'avatar'        => $row->user->avatar,
+                'last_chat_at'  => $row->last_chat_at,
+                'message_count' => $row->message_count,
+            ]);
+
+        return Inertia::render('Communities/Settings/ChatHistory', array_merge(
+            $this->baseProps($community),
+            [
+                'chatUsers'      => $users,
+                'selectedUser'   => $user,
+                'chatMessages'   => $messages,
+            ]
+        ));
     }
 }
