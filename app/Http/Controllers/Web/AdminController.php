@@ -282,6 +282,11 @@ class AdminController extends Controller
             'kyc_rejected_reason' => null,
         ]);
 
+        \Illuminate\Support\Facades\Mail::to($user)->queue(new \App\Mail\KycResultMail(
+            user: $user,
+            approved: true,
+        ));
+
         return back()->with('success', "KYC approved for {$user->name}.");
     }
 
@@ -296,6 +301,12 @@ class AdminController extends Controller
             'kyc_verified_at'     => null,
             'kyc_rejected_reason' => $data['reason'],
         ]);
+
+        \Illuminate\Support\Facades\Mail::to($user)->queue(new \App\Mail\KycResultMail(
+            user: $user,
+            approved: false,
+            reason: $data['reason'],
+        ));
 
         return back()->with('success', "KYC rejected for {$user->name}.");
     }

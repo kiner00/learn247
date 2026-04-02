@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Ai\Agents\KycVerifier;
+use App\Mail\KycResultMail;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Laravel\Ai\Files\RemoteImage;
 
 class KycVerificationService
@@ -84,6 +86,12 @@ class KycVerificationService
         }
 
         $user->save();
+
+        Mail::to($user)->queue(new KycResultMail(
+            user: $user,
+            approved: (bool) ($result['approved'] ?? false),
+            reason: $result['reason'] ?? null,
+        ));
 
         return $result;
     }
