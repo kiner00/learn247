@@ -432,6 +432,11 @@ async function selectMemberChat(u) {
     personalSelectedId.value = u.id;
     personalInput.value = '';
     personalMessages.value = [];
+
+    // Ensure user appears in conversation list
+    if (!conversationList.value.some(x => x.id === u.id)) {
+        conversationList.value.unshift(u);
+    }
     personalLastMsgId = 0;
 
     // Owner viewing chatbot conversations
