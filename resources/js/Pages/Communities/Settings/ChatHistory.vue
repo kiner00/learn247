@@ -1,6 +1,7 @@
 <script setup>
-import { computed } from 'vue';
-import { Link, usePage } from '@inertiajs/vue3';
+import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue';
+import { Link } from '@inertiajs/vue3';
+import axios from 'axios';
 import CommunitySettingsLayout from '@/Layouts/CommunitySettingsLayout.vue';
 
 const props = defineProps({
@@ -10,10 +11,101 @@ const props = defineProps({
     chatMessages: { type: Array, default: () => [] },
 });
 
-const page = usePage();
-const creator = computed(() => props.community.owner ?? {});
 const base = computed(() => `/communities/${props.community.slug}/settings/chat-history`);
+const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
 
+// ── Reply state ──────────────────────────────────────────────────────────────
+const replyInput  = ref('');
+const sending     = ref(false);
+const localMessages = ref([...props.chatMessages]);
+const chatViewEl  = ref(null);
+
+watch(() => props.chatMessages, (val) => {
+    localMessages.value = [...val];
+    scrollChatToBottom();
+});
+
+watch(() => props.selectedUser, () => {
+    replyInput.value = '';
+});
+
+function scrollChatToBottom() {
+    nextTick(() => {
+        if (chatViewEl.value) {
+            chatViewEl.value.scrollTo({ top: chatViewEl.value.scrollHeight, behavior: 'smooth' });
+        }
+    });
+}
+
+async function sendReply() {
+    const text = replyInput.value.trim();
+    if (!text || sending.value || !props.selectedUser) return;
+
+    sending.value = true;
+    replyInput.value = '';
+
+    try {
+        const res = await axios.post(`/communities/${props.community.slug}/chatbot/reply`, {
+            user_id: props.selectedUser.id,
+            message: text,
+        }, {
+            headers: { 'X-CSRF-TOKEN': csrfToken },
+        });
+
+        localMessages.value.push(res.data.message);
+        scrollChatToBottom();
+    } catch {
+        replyInput.value = text;
+    } finally {
+        sending.value = false;
+    }
+}
+
+// ── Polling for new member messages ──────────────────────────────────────────
+let pollTimer = null;
+
+function startPolling() {
+    stopPolling();
+    if (!props.selectedUser) return;
+
+    pollTimer = setInterval(async () => {
+        if (!props.selectedUser) return;
+        const lastId = localMessages.value.length
+            ? Math.max(...localMessages.value.map(m => m.id || 0))
+            : 0;
+
+        try {
+            const { data } = await axios.get(`/communities/${props.community.slug}/chatbot/poll`, {
+                params: { after: lastId, user_id: props.selectedUser.id },
+            });
+
+            if (data.messages?.length) {
+                for (const msg of data.messages) {
+                    if (!localMessages.value.some(m => m.id === msg.id)) {
+                        localMessages.value.push(msg);
+                    }
+                }
+                scrollChatToBottom();
+            }
+        } catch { /* ignore */ }
+    }, 5000);
+}
+
+function stopPolling() {
+    if (pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+    }
+}
+
+watch(() => props.selectedUser, (u) => {
+    if (u) startPolling();
+    else stopPolling();
+}, { immediate: true });
+
+onBeforeUnmount(() => stopPolling());
+
+// ── Formatting ───────────────────────────────────────────────────────────────
 function formatTime(dateStr) {
     if (!dateStr) return '';
     const d = new Date(dateStr);
@@ -36,7 +128,7 @@ function formatFullTime(dateStr) {
         <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
             <div class="px-5 py-4 border-b border-gray-100">
                 <h2 class="text-base font-semibold text-gray-900">Chat History</h2>
-                <p class="text-sm text-gray-500 mt-0.5">View conversations members have had with your chat assistant.</p>
+                <p class="text-sm text-gray-500 mt-0.5">View and reply to member conversations.</p>
             </div>
 
             <div class="flex" style="height: 520px;">
@@ -108,8 +200,8 @@ function formatFullTime(dateStr) {
                         </div>
 
                         <!-- Messages -->
-                        <div class="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-                            <div v-for="msg in chatMessages" :key="msg.id" class="flex gap-2.5" :class="msg.role === 'user' ? 'justify-end' : ''">
+                        <div ref="chatViewEl" class="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+                            <div v-for="msg in localMessages" :key="msg.id" class="flex gap-2.5" :class="msg.role === 'user' ? 'justify-end' : ''">
                                 <!-- Creator avatar (your replies) -->
                                 <div v-if="msg.role === 'creator'" class="shrink-0 mt-0.5">
                                     <img
@@ -140,6 +232,29 @@ function formatFullTime(dateStr) {
                                     </p>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- Reply input -->
+                        <div class="px-3 py-3 border-t border-gray-100 shrink-0">
+                            <form @submit.prevent="sendReply" class="flex items-end gap-2">
+                                <textarea
+                                    v-model="replyInput"
+                                    rows="1"
+                                    :placeholder="`Reply to ${selectedUser.name}...`"
+                                    class="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none bg-gray-50"
+                                    style="max-height: 80px; overflow-y: auto;"
+                                    @keydown.enter.exact.prevent="sendReply"
+                                ></textarea>
+                                <button
+                                    type="submit"
+                                    :disabled="!replyInput.trim() || sending"
+                                    class="shrink-0 w-8 h-8 flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white rounded-xl transition-colors"
+                                >
+                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                                    </svg>
+                                </button>
+                            </form>
                         </div>
                     </template>
                 </div>

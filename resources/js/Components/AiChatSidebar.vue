@@ -36,7 +36,7 @@
         <!-- Messages -->
         <div ref="chatEl" class="flex-1 overflow-y-auto px-4 py-4 space-y-4">
             <!-- Welcome state -->
-            <div v-if="!messages.length && !loading" class="flex flex-col items-center justify-center h-full text-center px-2">
+            <div v-if="!messages.length && !loading && !initialLoading" class="flex flex-col items-center justify-center h-full text-center px-2">
                 <img
                     v-if="creatorAvatar"
                     :src="creatorAvatar"
@@ -54,7 +54,7 @@
             </div>
 
             <!-- Chat messages -->
-            <div v-for="(msg, i) in messages" :key="i" class="flex gap-2.5" :class="msg.role === 'user' ? 'justify-end' : ''">
+            <div v-for="(msg, i) in messages" :key="msg.id ?? `local-${i}`" class="flex gap-2.5" :class="msg.role === 'user' ? 'justify-end' : ''">
                 <!-- Creator avatar -->
                 <div v-if="msg.role === 'creator'" class="shrink-0 mt-0.5">
                     <img
@@ -135,7 +135,7 @@
 </template>
 
 <script setup>
-import { ref, nextTick } from 'vue';
+import { ref, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import axios from 'axios';
 
 const props = defineProps({
@@ -148,9 +148,12 @@ const props = defineProps({
 const messages       = ref([]);
 const input          = ref('');
 const loading        = ref(false);
+const initialLoading = ref(true);
 const conversationId = ref(null);
 const chatEl         = ref(null);
 const inputEl        = ref(null);
+let   pollTimer      = null;
+let   lastMessageId  = 0;
 
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
 
@@ -159,10 +162,10 @@ function autoResize(e) {
     e.target.style.height = Math.min(e.target.scrollHeight, 80) + 'px';
 }
 
-function scrollToBottom() {
+function scrollToBottom(smooth = true) {
     nextTick(() => {
         if (chatEl.value) {
-            chatEl.value.scrollTo({ top: chatEl.value.scrollHeight, behavior: 'smooth' });
+            chatEl.value.scrollTo({ top: chatEl.value.scrollHeight, behavior: smooth ? 'smooth' : 'instant' });
         }
     });
 }
@@ -170,8 +173,42 @@ function scrollToBottom() {
 function clearChat() {
     messages.value = [];
     conversationId.value = null;
+    lastMessageId = 0;
 }
 
+// ── Load previous messages ───────────────────────────────────────────────────
+async function loadHistory() {
+    try {
+        const { data } = await axios.get(`/communities/${props.communitySlug}/chatbot/history`);
+        if (data.messages?.length) {
+            messages.value = data.messages;
+            lastMessageId = Math.max(...data.messages.map(m => m.id || 0));
+            scrollToBottom(false);
+        }
+    } catch { /* ignore */ }
+    initialLoading.value = false;
+}
+
+// ── Poll for new creator replies ─────────────────────────────────────────────
+async function pollNewMessages() {
+    if (!lastMessageId) return;
+    try {
+        const { data } = await axios.get(`/communities/${props.communitySlug}/chatbot/poll`, {
+            params: { after: lastMessageId },
+        });
+        if (data.messages?.length) {
+            for (const msg of data.messages) {
+                if (!messages.value.some(m => m.id === msg.id)) {
+                    messages.value.push(msg);
+                    if (msg.id > lastMessageId) lastMessageId = msg.id;
+                }
+            }
+            scrollToBottom();
+        }
+    } catch { /* ignore */ }
+}
+
+// ── Send message ─────────────────────────────────────────────────────────────
 async function sendMessage() {
     const text = input.value.trim();
     if (!text || loading.value) return;
@@ -192,6 +229,13 @@ async function sendMessage() {
 
         conversationId.value = res.data.conversation_id;
         messages.value.push({ role: 'creator', text: res.data.message });
+
+        // Reload to get proper IDs for polling
+        const { data } = await axios.get(`/communities/${props.communitySlug}/chatbot/history`);
+        if (data.messages?.length) {
+            messages.value = data.messages;
+            lastMessageId = Math.max(...data.messages.map(m => m.id || 0));
+        }
     } catch (err) {
         messages.value.push({
             role: 'creator',
@@ -204,4 +248,14 @@ async function sendMessage() {
         scrollToBottom();
     }
 }
+
+// ── Lifecycle ────────────────────────────────────────────────────────────────
+onMounted(() => {
+    loadHistory();
+    pollTimer = setInterval(pollNewMessages, 5000);
+});
+
+onBeforeUnmount(() => {
+    if (pollTimer) clearInterval(pollTimer);
+});
 </script>

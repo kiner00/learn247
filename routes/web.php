@@ -295,7 +295,10 @@ Route::middleware('auth')->group(function () {
         Route::post('/communities/{community}/chat', [ChatController::class, 'store'])->name('communities.chat.store');
         Route::get('/communities/{community}/chat/poll', [ChatController::class, 'poll'])->name('communities.chat.poll');
         Route::delete('/communities/{community}/chat/{message}', [ChatController::class, 'destroy'])->name('communities.chat.destroy');
-        Route::post('/communities/{community}/chatbot', [CommunityChatbotController::class, 'chat'])->name('communities.chatbot.chat');
+        Route::post('/communities/{community}/chatbot',         [CommunityChatbotController::class, 'chat'])->name('communities.chatbot.chat');
+        Route::post('/communities/{community}/chatbot/reply',  [CommunityChatbotController::class, 'reply'])->name('communities.chatbot.reply');
+        Route::get('/communities/{community}/chatbot/poll',    [CommunityChatbotController::class, 'poll'])->name('communities.chatbot.poll');
+        Route::get('/communities/{community}/chatbot/history', [CommunityChatbotController::class, 'history'])->name('communities.chatbot.history');
 
         // ─── Leaderboard ──────────────────────────────────────────────────────
         Route::get('/communities/{community}/leaderboard', [LeaderboardController::class, 'show'])->name('communities.leaderboard');
