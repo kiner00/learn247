@@ -235,6 +235,65 @@ class AdminController extends Controller
         return back()->with('success', "User {$user->name} is now KYC {$status}.");
     }
 
+    public function kycReviews(Request $request): Response
+    {
+        $status = $request->input('status', 'submitted');
+
+        $users = User::where('kyc_status', $status)
+            ->latest('kyc_submitted_at')
+            ->paginate(20)
+            ->withQueryString()
+            ->through(fn ($u) => [
+                'id'              => $u->id,
+                'name'            => $u->name,
+                'email'           => $u->email,
+                'username'        => $u->username,
+                'kyc_status'      => $u->kyc_status,
+                'kyc_id_document' => $u->kyc_id_document,
+                'kyc_selfie'      => $u->kyc_selfie,
+                'submitted_at'    => $u->kyc_submitted_at?->diffForHumans(),
+                'rejected_reason' => $u->kyc_rejected_reason,
+            ]);
+
+        $counts = [
+            'submitted' => User::where('kyc_status', User::KYC_SUBMITTED)->count(),
+            'approved'  => User::where('kyc_status', User::KYC_APPROVED)->count(),
+            'rejected'  => User::where('kyc_status', User::KYC_REJECTED)->count(),
+        ];
+
+        return Inertia::render('Admin/KycReviews', [
+            'users'   => $users,
+            'filters' => ['status' => $status],
+            'counts'  => $counts,
+        ]);
+    }
+
+    public function approveKyc(User $user): RedirectResponse
+    {
+        $user->update([
+            'kyc_status'          => User::KYC_APPROVED,
+            'kyc_verified_at'     => now(),
+            'kyc_rejected_reason' => null,
+        ]);
+
+        return back()->with('success', "KYC approved for {$user->name}.");
+    }
+
+    public function rejectKyc(User $user, Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'reason' => ['required', 'string', 'max:500'],
+        ]);
+
+        $user->update([
+            'kyc_status'          => User::KYC_REJECTED,
+            'kyc_verified_at'     => null,
+            'kyc_rejected_reason' => $data['reason'],
+        ]);
+
+        return back()->with('success', "KYC rejected for {$user->name}.");
+    }
+
     // ── Posts ─────────────────────────────────────────────────────────────────
 
     public function trashedPosts(Request $request, ListTrashedPosts $query): Response

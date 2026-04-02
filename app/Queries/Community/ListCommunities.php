@@ -3,6 +3,7 @@
 namespace App\Queries\Community;
 
 use App\Models\Community;
+use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class ListCommunities
@@ -13,7 +14,7 @@ class ListCommunities
 
         return Community::with('owner')
             ->withCount('members')
-            ->whereHas('owner', fn ($q) => $q->whereNotNull('kyc_verified_at'))
+            ->whereHas('owner', fn ($q) => $q->where('kyc_status', User::KYC_APPROVED)->orWhereNotNull('kyc_verified_at'))
             ->when($search, fn ($q) => $q->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('description', 'like', "%{$search}%");

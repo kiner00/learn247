@@ -3,6 +3,7 @@
 namespace App\Queries\Community;
 
 use App\Models\Community;
+use App\Models\User;
 use Illuminate\Support\Collection;
 
 class GetFeaturedCommunities
@@ -10,7 +11,7 @@ class GetFeaturedCommunities
     public function execute(): Collection
     {
         return Community::where('is_featured', true)
-            ->whereHas('owner', fn ($q) => $q->whereNotNull('kyc_verified_at'))
+            ->whereHas('owner', fn ($q) => $q->where('kyc_status', User::KYC_APPROVED)->orWhereNotNull('kyc_verified_at'))
             ->with('owner:id,name')
             ->withCount('members')
             ->latest()

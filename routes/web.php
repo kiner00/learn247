@@ -108,6 +108,9 @@ Route::middleware(['auth', EnsureSuperAdmin::class])->prefix('admin')->group(fun
     Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
     Route::patch('/users/{user}/toggle-status', [AdminController::class, 'toggleUserStatus'])->name('admin.users.toggle');
     Route::patch('/users/{user}/toggle-kyc', [AdminController::class, 'toggleKyc'])->name('admin.users.toggle-kyc');
+    Route::get('/kyc-reviews', [AdminController::class, 'kycReviews'])->name('admin.kyc-reviews');
+    Route::patch('/kyc-reviews/{user}/approve', [AdminController::class, 'approveKyc'])->name('admin.kyc.approve');
+    Route::patch('/kyc-reviews/{user}/reject', [AdminController::class, 'rejectKyc'])->name('admin.kyc.reject');
     // Soft delete recovery
     Route::get('/posts/trashed', [AdminController::class, 'trashedPosts'])->name('admin.posts.trashed');
     Route::post('/posts/{postId}/restore', [AdminController::class, 'restorePost'])->name('admin.posts.restore');
@@ -162,6 +165,7 @@ Route::middleware('auth')->prefix('account')->group(function () {
     Route::patch('/settings/theme', [AccountSettingsController::class, 'updateTheme'])->name('account.settings.theme');
     Route::patch('/settings/payout', [AccountSettingsController::class, 'updatePayout'])->name('account.settings.payout');
     Route::patch('/settings/crypto', [AccountSettingsController::class, 'updateCrypto'])->name('account.settings.crypto');
+    Route::post('/settings/kyc', [AccountSettingsController::class, 'submitKyc'])->name('account.settings.kyc');
 });
 
 // ─── Communities ───────────────────────────────────────────────────────────────

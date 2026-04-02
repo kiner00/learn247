@@ -18,6 +18,10 @@
                     class="px-3.5 py-2 text-sm font-medium text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
                     👤 Users
                 </Link>
+                <Link href="/admin/kyc-reviews"
+                    class="px-3.5 py-2 text-sm font-medium text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+                    🪪 KYC Reviews
+                </Link>
                 <Link href="/admin/posts/trashed"
                     class="px-3.5 py-2 text-sm font-medium text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
                     🗑️ Trashed Posts
