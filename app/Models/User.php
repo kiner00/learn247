@@ -19,6 +19,7 @@ class User extends Authenticatable
         'avatar', 'location', 'social_links', 'hide_from_search',
         'payout_method', 'payout_details', 'bank_name',
         'crypto_wallet', 'crz_token_balance',
+        'kyc_verified_at',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -36,12 +37,18 @@ class User extends Authenticatable
             'social_links'           => 'array',
             'hide_from_search'       => 'boolean',
             'crz_token_balance'      => 'decimal:8',
+            'kyc_verified_at'        => 'datetime',
         ];
     }
 
     public function isSuperAdmin(): bool
     {
         return (bool) $this->is_super_admin;
+    }
+
+    public function isKycVerified(): bool
+    {
+        return $this->kyc_verified_at !== null;
     }
 
     public function ownedCommunities(): HasMany

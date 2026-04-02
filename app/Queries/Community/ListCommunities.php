@@ -13,6 +13,7 @@ class ListCommunities
 
         return Community::with('owner')
             ->withCount('members')
+            ->whereHas('owner', fn ($q) => $q->whereNotNull('kyc_verified_at'))
             ->when($search, fn ($q) => $q->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('description', 'like', "%{$search}%");

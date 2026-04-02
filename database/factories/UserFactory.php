@@ -41,4 +41,11 @@ class UserFactory extends Factory
             'email_verified_at' => null,
         ]);
     }
+
+    public function kycVerified(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'kyc_verified_at' => now(),
+        ]);
+    }
 }

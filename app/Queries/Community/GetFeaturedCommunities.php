@@ -10,6 +10,7 @@ class GetFeaturedCommunities
     public function execute(): Collection
     {
         return Community::where('is_featured', true)
+            ->whereHas('owner', fn ($q) => $q->whereNotNull('kyc_verified_at'))
             ->with('owner:id,name')
             ->withCount('members')
             ->latest()

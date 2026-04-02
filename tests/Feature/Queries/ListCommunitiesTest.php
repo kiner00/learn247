@@ -118,4 +118,19 @@ class ListCommunitiesTest extends TestCase
         $this->assertCount(5, $result->items());
         $this->assertSame(20, $result->total());
     }
+
+    public function test_only_shows_communities_with_kyc_verified_owners(): void
+    {
+        $verifiedOwner   = User::factory()->kycVerified()->create();
+        $unverifiedOwner = User::factory()->create();
+
+        Community::factory()->create(['owner_id' => $verifiedOwner->id]);
+        Community::factory()->create(['owner_id' => $unverifiedOwner->id]);
+
+        $query  = new ListCommunities();
+        $result = $query->execute('', '', 'latest');
+
+        $this->assertCount(1, $result->items());
+        $this->assertSame($verifiedOwner->id, $result->items()[0]->owner_id);
+    }
 }
