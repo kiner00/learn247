@@ -23,6 +23,7 @@ class Community extends Model
         'telegram_bot_token', 'telegram_chat_id',
         'sms_provider', 'sms_api_key', 'sms_api_secret', 'sms_sender_name', 'sms_device_url',
         'deletion_requested_at', 'is_featured', 'landing_page', 'ai_chatbot_instructions',
+        'brand_context',
     ];
 
     protected function casts(): array
@@ -34,6 +35,7 @@ class Community extends Model
             'affiliate_commission_rate' => 'integer',
             'gallery_images'            => 'array',
             'landing_page'              => 'array',
+            'brand_context'             => 'array',
             'deletion_requested_at'     => 'datetime',
         ];
     }

@@ -215,6 +215,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/communities/{community}/gallery/{index}', [CommunityController::class, 'removeGalleryImage'])->name('communities.gallery.remove');
     Route::post('/communities/{community}/gallery/ai-generate', [CommunityController::class, 'aiGenerateGallery'])->name('communities.gallery.ai-generate');
     Route::get('/communities/{community}/gallery/ai-status', [CommunityController::class, 'aiGalleryStatus'])->name('communities.gallery.ai-status');
+    Route::put('/communities/{community}/gallery/reorder', [CommunityController::class, 'reorderGallery'])->name('communities.gallery.reorder');
     Route::delete('/communities/{community}', [CommunityController::class, 'destroy'])->name('communities.destroy');
     Route::post('/communities/{community}/cancel-deletion', [CommunityController::class, 'cancelDeletion'])->name('communities.cancel-deletion');
     Route::post('/communities/{community}/announce', [CommunityController::class, 'announce'])->name('communities.announce');

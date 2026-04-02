@@ -30,7 +30,7 @@ use App\Queries\Community\GetInvitedByAffiliate;
 use App\Queries\Community\GetLeaderboard;
 use App\Queries\Community\ListCommunities;
 use App\Queries\Feed\GetCommunityFeed;
-use App\Jobs\GenerateGalleryImages;
+use App\Jobs\GenerateSingleGalleryImage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -198,6 +198,22 @@ class CommunityController extends Controller
             'telegram_chat_id'          => $isPro ? ['nullable', 'string', 'max:50'] : ['prohibited'],
             'telegram_clear'            => $isPro ? ['sometimes', 'boolean'] : ['prohibited'],
             'ai_chatbot_instructions'   => ['nullable', 'string', 'max:2000'],
+            // Brand Source of Truth
+            'brand_context'                           => ['nullable', 'array'],
+            'brand_context.brand_personality'          => ['nullable', 'string', 'max:500'],
+            'brand_context.target_audience'            => ['nullable', 'string', 'max:1000'],
+            'brand_context.tone_of_voice'              => ['nullable', 'string', 'in:first_person,we,formal'],
+            'brand_context.value_proposition'          => ['nullable', 'string', 'max:500'],
+            'brand_context.primary_keywords'           => ['nullable', 'string', 'max:500'],
+            'brand_context.big_problem'                => ['nullable', 'string', 'max:1000'],
+            'brand_context.color_primary'              => ['nullable', 'string', 'max:7', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'brand_context.color_secondary'            => ['nullable', 'string', 'max:7', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'brand_context.color_accent'               => ['nullable', 'string', 'max:7', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'brand_context.visual_style'               => ['nullable', 'string', 'max:500'],
+            'brand_context.logo_rules'                 => ['nullable', 'string', 'max:500'],
+            'brand_context.cta_goal'                   => ['nullable', 'string', 'max:300'],
+            'brand_context.offer_details'              => ['nullable', 'string', 'max:500'],
+            'brand_context.social_share_description'   => ['nullable', 'string', 'max:300'],
             // Domain fields
             'subdomain'    => [
                 'nullable', 'string', 'max:63',
@@ -300,18 +316,47 @@ class CommunityController extends Controller
             return response()->json(['error' => 'AI Gallery generation requires a PRO plan.'], 403);
         }
 
+        $galleryCount = count($community->gallery_images ?? []);
+        if ($galleryCount >= 8) {
+            return response()->json(['error' => 'Gallery is full (8 images). Remove one to generate more.'], 422);
+        }
+
         $cacheKey = "gallery-generating:{$community->id}";
         $status   = Cache::get($cacheKey);
 
         if ($status && $status['status'] === 'generating') {
-            return response()->json(['error' => 'Gallery generation is already in progress.'], 409);
+            return response()->json(['error' => 'Image generation is already in progress.'], 409);
         }
 
-        Cache::put($cacheKey, ['status' => 'generating', 'progress' => 0, 'total' => 8], 900);
+        Cache::put($cacheKey, ['status' => 'generating', 'progress' => 0, 'total' => 1], 300);
 
-        GenerateGalleryImages::dispatch($community);
+        $promptIndex = $request->input('prompt_index', $galleryCount);
+        GenerateSingleGalleryImage::dispatch($community, min($promptIndex, 7));
 
-        return response()->json(['message' => 'Gallery generation started.'], 202);
+        return response()->json(['message' => 'Image generation started.'], 202);
+    }
+
+    public function reorderGallery(Request $request, Community $community): JsonResponse
+    {
+        $this->authorize('update', $community);
+
+        $request->validate([
+            'order' => ['required', 'array'],
+            'order.*' => ['integer', 'min:0'],
+        ]);
+
+        $gallery  = $community->gallery_images ?? [];
+        $order    = $request->input('order');
+
+        // Validate that the order array contains valid indices
+        if (count($order) !== count($gallery) || array_diff($order, array_keys($gallery))) {
+            return response()->json(['error' => 'Invalid order.'], 422);
+        }
+
+        $reordered = array_map(fn ($i) => $gallery[$i], $order);
+        $community->update(['gallery_images' => $reordered]);
+
+        return response()->json(['message' => 'Gallery reordered.']);
     }
 
     public function aiGalleryStatus(Request $request, Community $community): JsonResponse
