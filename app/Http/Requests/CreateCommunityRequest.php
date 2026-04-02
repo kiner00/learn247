@@ -14,6 +14,22 @@ class CreateCommunityRequest extends FormRequest
 
     public function rules(): array
     {
+        if ($this->hasFile('cover_image')) {
+            $file = $this->file('cover_image');
+            \Log::info('Cover image upload debug', [
+                'isValid'       => $file->isValid(),
+                'error'         => $file->getError(),
+                'errorMessage'  => $file->getErrorMessage(),
+                'size'          => $file->getSize(),
+                'mimeType'      => $file->getMimeType(),
+                'clientOriginal'=> $file->getClientOriginalName(),
+                'tmpPath'       => $file->getPathname(),
+                'tmpExists'     => file_exists($file->getPathname()),
+            ]);
+        } else {
+            \Log::info('Cover image upload debug: no file received');
+        }
+
         return [
             'name'        => 'required|string|max:100',
             'slug'        => 'nullable|string|max:100|unique:communities,slug|regex:/^[a-z0-9-]+$/',
