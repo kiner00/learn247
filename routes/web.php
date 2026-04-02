@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Community;
 use App\Http\Controllers\Web\AdminController;
 use App\Http\Controllers\Web\AffiliateController;
 use App\Http\Controllers\Web\BadgeController;
@@ -9,11 +10,13 @@ use App\Http\Controllers\Web\PayoutRequestController;
 use App\Http\Controllers\Web\AuthController;
 use App\Http\Controllers\Web\CertificateController;
 use App\Http\Controllers\Web\ChatController;
+use App\Http\Controllers\Web\CommunityChatbotController;
 use App\Http\Controllers\Web\ClassroomController;
 use App\Http\Controllers\Web\DirectMessageController;
 use App\Http\Controllers\Web\CommentController;
 use App\Http\Controllers\Web\CommunityController;
 use App\Http\Controllers\Web\CommunityInviteController;
+use App\Http\Controllers\Web\CommunitySettingsController;
 use App\Http\Controllers\Web\EventController;
 use App\Http\Controllers\Web\CommunityMemberController;
 use App\Http\Controllers\Web\AccountSettingsController;
@@ -232,7 +235,17 @@ Route::middleware('auth')->group(function () {
     // Gated: active membership required
     Route::middleware(EnsureActiveMembership::class)->group(function () {
         Route::get('/communities/{community}/members', [CommunityController::class, 'members'])->name('communities.members');
-        Route::get('/communities/{community}/settings', [CommunityController::class, 'settings'])->name('communities.settings');
+        Route::get('/communities/{community}/settings', fn (Community $community) => redirect()->route('communities.settings.general', $community))->name('communities.settings');
+        Route::get('/communities/{community}/settings/general',        [CommunitySettingsController::class, 'general'])->name('communities.settings.general');
+        Route::get('/communities/{community}/settings/affiliate',      [CommunitySettingsController::class, 'affiliate'])->name('communities.settings.affiliate');
+        Route::get('/communities/{community}/settings/ai-tools',       [CommunitySettingsController::class, 'aiTools'])->name('communities.settings.ai-tools');
+        Route::get('/communities/{community}/settings/announcements',  [CommunitySettingsController::class, 'announcements'])->name('communities.settings.announcements');
+        Route::get('/communities/{community}/settings/level-perks',    [CommunitySettingsController::class, 'levelPerks'])->name('communities.settings.level-perks');
+        Route::get('/communities/{community}/settings/invite-members', [CommunitySettingsController::class, 'inviteMembers'])->name('communities.settings.invite-members');
+        Route::get('/communities/{community}/settings/integrations',   [CommunitySettingsController::class, 'integrations'])->name('communities.settings.integrations');
+        Route::get('/communities/{community}/settings/domain',         [CommunitySettingsController::class, 'domain'])->name('communities.settings.domain');
+        Route::get('/communities/{community}/settings/sms',            [CommunitySettingsController::class, 'sms'])->name('communities.settings.sms');
+        Route::get('/communities/{community}/settings/danger-zone',    [CommunitySettingsController::class, 'dangerZone'])->name('communities.settings.danger-zone');
         Route::get('/communities/{community}/analytics', [CommunityController::class, 'analytics'])->name('communities.analytics');
 
         // Posts (community-scoped)
@@ -280,6 +293,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/communities/{community}/chat', [ChatController::class, 'store'])->name('communities.chat.store');
         Route::get('/communities/{community}/chat/poll', [ChatController::class, 'poll'])->name('communities.chat.poll');
         Route::delete('/communities/{community}/chat/{message}', [ChatController::class, 'destroy'])->name('communities.chat.destroy');
+        Route::post('/communities/{community}/chatbot', [CommunityChatbotController::class, 'chat'])->name('communities.chatbot.chat');
 
         // ─── Leaderboard ──────────────────────────────────────────────────────
         Route::get('/communities/{community}/leaderboard', [LeaderboardController::class, 'show'])->name('communities.leaderboard');
