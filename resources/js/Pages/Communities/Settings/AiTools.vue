@@ -135,28 +135,28 @@ function applyAiCopy() {
                 <p v-if="aiError" class="mt-3 text-sm text-red-600">{{ aiError }}</p>
             </div>
         </div>
-        <!-- ── AI Chatbot Instructions ─────────────────────────────────── -->
+        <!-- ── Creator Chat Assistant ──────────────────────────────────── -->
         <div class="bg-white border border-gray-200 rounded-2xl p-6 mt-6">
             <div class="flex items-center gap-2 mb-1">
-                <h2 class="text-base font-semibold text-gray-900">🤖 AI Chatbot</h2>
+                <h2 class="text-base font-semibold text-gray-900">💬 Creator Chat Assistant</h2>
             </div>
             <p class="text-sm text-gray-500 mb-5">
-                Your community has an AI chatbot that members can use to ask questions about your courses, lessons, and posts.
-                Customize its behavior by setting instructions below.
+                Members can chat with "you" on the Chat page. Set instructions to define how you respond — your tone, expertise, and rules.
+                The assistant has access to your community's courses, lessons, and posts.
             </p>
 
             <form @submit.prevent="saveChatbot" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Chatbot Instructions</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Your Instructions</label>
                     <textarea
                         v-model="chatbotForm.ai_chatbot_instructions"
                         rows="6"
-                        placeholder="e.g. You are a marketing coach. Always be encouraging and give actionable advice. When someone asks about pricing, explain the value of investing in their skills. Focus on faceless marketing strategies."
+                        placeholder="e.g. I'm Coach Francis, a faceless marketing expert. I always encourage my members and give actionable advice. When someone asks about pricing, I explain the value of investing in their skills. I focus on faceless marketing strategies and never recommend showing your face on camera."
                         class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
                     />
                     <p class="mt-1.5 text-xs text-gray-400">
-                        Tell the AI how to behave, what topics to focus on, what tone to use, and any specific rules.
-                        The AI automatically has access to your community's courses, lessons, and posts.
+                        Write as yourself. Define your personality, expertise, tone, and any rules for how you'd respond to members.
+                        The assistant uses your community content to give accurate answers.
                     </p>
                 </div>
 

@@ -2,14 +2,24 @@
     <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm flex flex-col" style="height: 480px;">
         <!-- Header -->
         <div class="px-4 py-3 border-b border-gray-100 flex items-center gap-2.5 shrink-0">
-            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-                <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714a2.25 2.25 0 00.659 1.591L19 14.5M14.25 3.104c.251.023.501.05.75.082M19 14.5l-2.47 2.47a2.25 2.25 0 01-1.591.659H9.061a2.25 2.25 0 01-1.591-.659L5 14.5m14 0V17a2.25 2.25 0 01-2.25 2.25H7.25A2.25 2.25 0 015 17v-2.5" />
-                </svg>
+            <img
+                v-if="creatorAvatar"
+                :src="creatorAvatar"
+                :alt="creatorName"
+                class="w-9 h-9 rounded-full object-cover"
+            />
+            <div
+                v-else
+                class="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-sm font-bold text-indigo-600"
+            >
+                {{ creatorName?.charAt(0)?.toUpperCase() }}
             </div>
             <div class="flex-1 min-w-0">
-                <p class="text-sm font-semibold text-gray-900 truncate">Chat with AI</p>
-                <p class="text-xs text-gray-400 truncate">Ask about {{ communityName }}</p>
+                <p class="text-sm font-semibold text-gray-900 truncate">{{ creatorName }}</p>
+                <div class="flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span>
+                    <p class="text-xs text-gray-400">Online</p>
+                </div>
             </div>
             <button
                 v-if="messages.length"
@@ -25,24 +35,40 @@
 
         <!-- Messages -->
         <div ref="chatEl" class="flex-1 overflow-y-auto px-4 py-4 space-y-4">
-            <!-- Welcome message -->
+            <!-- Welcome state -->
             <div v-if="!messages.length && !loading" class="flex flex-col items-center justify-center h-full text-center px-2">
-                <div class="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center mb-3">
-                    <svg class="w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
-                    </svg>
+                <img
+                    v-if="creatorAvatar"
+                    :src="creatorAvatar"
+                    :alt="creatorName"
+                    class="w-14 h-14 rounded-full object-cover mb-3"
+                />
+                <div
+                    v-else
+                    class="w-14 h-14 rounded-full bg-indigo-100 flex items-center justify-center text-lg font-bold text-indigo-600 mb-3"
+                >
+                    {{ creatorName?.charAt(0)?.toUpperCase() }}
                 </div>
-                <p class="text-sm font-medium text-gray-700 mb-1">AI Assistant</p>
-                <p class="text-xs text-gray-400 leading-relaxed">Ask me anything about this community, its courses, lessons, or posts.</p>
+                <p class="text-sm font-medium text-gray-700 mb-1">Chat with {{ creatorName }}</p>
+                <p class="text-xs text-gray-400 leading-relaxed">Ask me anything about {{ communityName }}!</p>
             </div>
 
             <!-- Chat messages -->
             <div v-for="(msg, i) in messages" :key="i" class="flex gap-2.5" :class="msg.role === 'user' ? 'justify-end' : ''">
-                <!-- AI avatar -->
-                <div v-if="msg.role === 'ai'" class="shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mt-0.5">
-                    <svg class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
-                    </svg>
+                <!-- Creator avatar -->
+                <div v-if="msg.role === 'creator'" class="shrink-0 mt-0.5">
+                    <img
+                        v-if="creatorAvatar"
+                        :src="creatorAvatar"
+                        :alt="creatorName"
+                        class="w-7 h-7 rounded-full object-cover"
+                    />
+                    <div
+                        v-else
+                        class="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600"
+                    >
+                        {{ creatorName?.charAt(0)?.toUpperCase() }}
+                    </div>
                 </div>
 
                 <div
@@ -55,16 +81,24 @@
                 </div>
             </div>
 
-            <!-- Loading indicator -->
+            <!-- Typing indicator -->
             <div v-if="loading" class="flex gap-2.5">
-                <div class="shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mt-0.5">
-                    <svg class="w-3.5 h-3.5 text-white animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
+                <div class="shrink-0 mt-0.5">
+                    <img
+                        v-if="creatorAvatar"
+                        :src="creatorAvatar"
+                        :alt="creatorName"
+                        class="w-7 h-7 rounded-full object-cover"
+                    />
+                    <div
+                        v-else
+                        class="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600"
+                    >
+                        {{ creatorName?.charAt(0)?.toUpperCase() }}
+                    </div>
                 </div>
                 <div class="bg-gray-100 px-3 py-2 rounded-2xl rounded-bl-md">
-                    <div class="flex gap-1">
+                    <div class="flex gap-1 items-center">
                         <span class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0ms"></span>
                         <span class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 150ms"></span>
                         <span class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 300ms"></span>
@@ -80,7 +114,7 @@
                     v-model="input"
                     ref="inputEl"
                     rows="1"
-                    placeholder="Ask something..."
+                    :placeholder="`Message ${creatorName}...`"
                     class="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none bg-gray-50"
                     style="max-height: 80px; overflow-y: auto;"
                     @keydown.enter.exact.prevent="sendMessage"
@@ -107,6 +141,8 @@ import axios from 'axios';
 const props = defineProps({
     communitySlug: { type: String, required: true },
     communityName: { type: String, required: true },
+    creatorName:   { type: String, required: true },
+    creatorAvatar: { type: String, default: null },
 });
 
 const messages       = ref([]);
@@ -155,13 +191,13 @@ async function sendMessage() {
         });
 
         conversationId.value = res.data.conversation_id;
-        messages.value.push({ role: 'ai', text: res.data.message });
+        messages.value.push({ role: 'creator', text: res.data.message });
     } catch (err) {
         messages.value.push({
-            role: 'ai',
+            role: 'creator',
             text: err.response?.status === 429
-                ? 'Too many messages. Please wait a moment and try again.'
-                : 'Sorry, something went wrong. Please try again.',
+                ? 'Hey, slow down a bit! Send me another message in a moment.'
+                : 'Sorry, something went wrong. Try again in a bit!',
         });
     } finally {
         loading.value = false;

@@ -184,8 +184,6 @@
 
             <!-- ── Right sidebar ────────────────────────────────────────────── -->
             <div class="space-y-4">
-                <AiChatSidebar :community-slug="community.slug" :community-name="community.name" />
-
                 <CommunitySidebarCard :community="community">
                     <button
                         v-if="$page.props.auth?.user"
@@ -195,6 +193,13 @@
                         Invite People
                     </button>
                 </CommunitySidebarCard>
+
+                <AiChatSidebar
+                    :community-slug="community.slug"
+                    :community-name="community.name"
+                    :creator-name="community.owner?.name ?? community.name"
+                    :creator-avatar="community.owner?.avatar"
+                />
             </div>
         </div>
 

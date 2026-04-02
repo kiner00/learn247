@@ -27,7 +27,7 @@ class ChatController extends Controller
             $query->markAsRead($community, $userId);
         }
 
-        $community->loadCount('members');
+        $community->loadCount('members')->load('owner:id,name,avatar');
         $affiliate = $userId ? $community->affiliates()->where('user_id', $userId)->first() : null;
 
         $telegramConnected = (bool) ($community->telegram_bot_token && $community->telegram_chat_id);
