@@ -5,8 +5,11 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Community;
 use App\Models\CommunityDirectMessage;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CommunityDmController extends Controller
 {
@@ -17,30 +20,51 @@ class CommunityDmController extends Controller
     {
         $userId = $request->user()->id;
 
-        $users = CommunityDirectMessage::where('community_id', $community->id)
-            ->where(fn ($q) => $q->where('sender_id', $userId)->orWhere('receiver_id', $userId))
-            ->selectRaw("
-                CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END as other_user_id,
-                MAX(created_at) as last_message_at,
-                COUNT(*) as message_count
-            ", [$userId])
-            ->groupByRaw("CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END", [$userId])
-            ->orderByDesc('last_message_at')
+        // Get all unique user IDs this user has chatted with
+        $sentTo = CommunityDirectMessage::where('community_id', $community->id)
+            ->where('sender_id', $userId)
+            ->distinct()
+            ->pluck('receiver_id');
+
+        $receivedFrom = CommunityDirectMessage::where('community_id', $community->id)
+            ->where('receiver_id', $userId)
+            ->distinct()
+            ->pluck('sender_id');
+
+        $otherUserIds = $sentTo->merge($receivedFrom)->unique()->values();
+
+        if ($otherUserIds->isEmpty()) {
+            return response()->json(['conversations' => []]);
+        }
+
+        $users = User::whereIn('id', $otherUserIds)
+            ->select('id', 'name', 'avatar')
             ->get();
 
-        $userIds = $users->pluck('other_user_id');
-        $userMap = \App\Models\User::whereIn('id', $userIds)
-            ->select('id', 'name', 'avatar')
-            ->get()
-            ->keyBy('id');
+        $result = $users->map(function ($user) use ($community, $userId) {
+            $count = CommunityDirectMessage::where('community_id', $community->id)
+                ->where(fn ($q) => $q
+                    ->where(fn ($q2) => $q2->where('sender_id', $userId)->where('receiver_id', $user->id))
+                    ->orWhere(fn ($q2) => $q2->where('sender_id', $user->id)->where('receiver_id', $userId))
+                )
+                ->count();
 
-        $result = $users->map(fn ($row) => [
-            'id'              => $row->other_user_id,
-            'name'            => $userMap[$row->other_user_id]->name ?? 'Unknown',
-            'avatar'          => $userMap[$row->other_user_id]->avatar ?? null,
-            'last_message_at' => $row->last_message_at,
-            'message_count'   => $row->message_count,
-        ])->values();
+            $lastMessage = CommunityDirectMessage::where('community_id', $community->id)
+                ->where(fn ($q) => $q
+                    ->where(fn ($q2) => $q2->where('sender_id', $userId)->where('receiver_id', $user->id))
+                    ->orWhere(fn ($q2) => $q2->where('sender_id', $user->id)->where('receiver_id', $userId))
+                )
+                ->latest()
+                ->value('created_at');
+
+            return [
+                'id'              => $user->id,
+                'name'            => $user->name,
+                'avatar'          => $user->avatar,
+                'last_message_at' => $lastMessage,
+                'message_count'   => $count,
+            ];
+        })->sortByDesc('last_message_at')->values();
 
         return response()->json(['conversations' => $result]);
     }
@@ -88,6 +112,8 @@ class CommunityDmController extends Controller
             'receiver_id'  => $request->receiver_id,
             'content'      => $request->content,
         ]);
+
+        Log::info('DM sent', ['id' => $message->id, 'community' => $community->id, 'from' => $request->user()->id, 'to' => $request->receiver_id]);
 
         return response()->json([
             'message' => [
