@@ -40,7 +40,7 @@ class CommunityAnalyticsService
 
                 // ── Subscriber list ───────────────────────────────────────────────────
                 $subscribers = Subscription::where('community_id', $community->id)
-                    ->with(['user', 'payments' => fn ($q) => $q->where('status', Payment::STATUS_PAID)->orderByDesc('paid_at')->limit(1)])
+                    ->with(['user', 'affiliate.user', 'payments' => fn ($q) => $q->where('status', Payment::STATUS_PAID)->orderByDesc('paid_at')->limit(1)])
                     ->latest()
                     ->get()
                     ->map(fn ($s) => [
@@ -52,6 +52,7 @@ class CommunityAnalyticsService
                         'amount_paid' => $s->payments->first()?->amount !== null
                             ? (float) $s->payments->first()->amount
                             : null,
+                        'referrer'    => $s->affiliate?->user?->name,
                     ]);
 
                 // ── Revenue breakdown ─────────────────────────────────────────────────

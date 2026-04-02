@@ -215,6 +215,7 @@
                     <thead>
                         <tr class="border-b border-gray-100 bg-gray-50">
                             <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Member</th>
+                            <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Referrer</th>
                             <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
                             <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Expires</th>
                             <th class="text-left px-5 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Subscribed</th>
@@ -229,6 +230,7 @@
                                     <p class="text-xs text-gray-400">{{ s.user?.email ?? '' }}</p>
                                 </div>
                             </td>
+                            <td class="px-5 py-3 text-xs text-gray-500">{{ s.referrer ?? '—' }}</td>
                             <td class="px-5 py-3">
                                 <span
                                     class="text-xs font-medium px-2 py-0.5 rounded-full"
