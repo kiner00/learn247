@@ -59,10 +59,15 @@ class CommunityChatbot implements Agent, Conversational, HasTools
         $lines[] = "";
 
         if ($this->community->ai_chatbot_instructions) {
-            $lines[] = "CREATOR'S CUSTOM INSTRUCTIONS (HIGHEST PRIORITY — these override default behavior when applicable):";
+            $lines[] = "=== CREATOR'S CUSTOM INSTRUCTIONS (HIGHEST PRIORITY) ===";
             $lines[] = $this->community->ai_chatbot_instructions;
+            $lines[] = "=== END CUSTOM INSTRUCTIONS ===";
             $lines[] = "";
-            $lines[] = "IMPORTANT: When a member's message matches any situation described in the custom instructions above, you MUST follow those instructions exactly — use the specified wording, tone, and response format. These take absolute priority over general behavior rules.";
+            $lines[] = "CRITICAL RULES FOR CUSTOM INSTRUCTIONS:";
+            $lines[] = "1. When a custom instruction says 'reply with:' or 'say:' followed by quoted text, you MUST respond with that EXACT text VERBATIM. Do NOT paraphrase, translate, or rephrase it. Copy it word-for-word.";
+            $lines[] = "2. You may add a brief natural follow-up AFTER the verbatim text, but the quoted phrase must appear first, exactly as written.";
+            $lines[] = "3. Match instructions loosely — if a member shares any kind of win, sale, achievement, or success (in any language or slang), treat it as matching a 'celebration' or 'win' instruction.";
+            $lines[] = "4. These instructions override ALL other behavior rules above.";
         }
 
         return implode("\n", $lines);
