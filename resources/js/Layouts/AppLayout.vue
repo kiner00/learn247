@@ -146,9 +146,26 @@
                     <div class="flex items-center gap-2">
                         <template v-if="$page.props.auth?.user">
 
-                            <!-- Direct messages dropdown -->
+                            <!-- Direct messages / Community chat -->
                             <div class="relative" ref="dmRef">
+                                <Link
+                                    v-if="props.community"
+                                    :href="`/communities/${props.community.slug}/chat?tab=personal`"
+                                    class="relative flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-500 dark:text-gray-400"
+                                    title="Messages"
+                                >
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                                    </svg>
+                                    <span
+                                        v-if="$page.props.unread_dms > 0"
+                                        class="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none"
+                                    >
+                                        {{ $page.props.unread_dms > 99 ? '99+' : $page.props.unread_dms }}
+                                    </span>
+                                </Link>
                                 <button
+                                    v-else
                                     @click="toggleDm"
                                     class="relative flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-500 dark:text-gray-400"
                                     title="Messages"
