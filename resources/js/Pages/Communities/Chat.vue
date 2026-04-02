@@ -3,7 +3,7 @@
         <CommunityTabs :community="community" active-tab="chat" />
 
         <!-- Mobile tabs (horizontal) -->
-        <div class="flex gap-1.5 mb-3 lg:hidden">
+        <div class="flex gap-1.5 mb-3 md:hidden">
             <button
                 v-for="tab in tabs"
                 :key="tab.key"
@@ -13,12 +13,12 @@
             >{{ tab.label }}</button>
         </div>
 
-        <div class="flex gap-0 rounded-2xl overflow-hidden h-[calc(100vh-280px)] lg:h-[calc(100vh-220px)]">
+        <div class="flex gap-0 rounded-2xl overflow-hidden h-[calc(100vh-280px)] md:h-[calc(100vh-220px)]">
 
             <!-- ── Mobile: Conversation list (full width, no chat selected) ── -->
             <div
                 v-if="activeTab === 'personal' && !personalSelectedId"
-                class="w-full bg-white border border-gray-200 overflow-y-auto lg:hidden"
+                class="w-full bg-white border border-gray-200 overflow-y-auto md:hidden"
             >
                 <button
                     v-if="!isOwner"
@@ -55,7 +55,7 @@
             </div>
 
             <!-- ── Left: Tabs + Conversation list (desktop) ───────────────── -->
-            <div class="hidden lg:flex shrink-0">
+            <div class="hidden md:flex shrink-0">
                 <!-- Tab buttons -->
                 <div class="flex flex-col gap-1 p-2 border-r border-gray-200 bg-gray-50 rounded-l-2xl">
                     <button
@@ -115,8 +115,8 @@
 
             <!-- ── Right: Content area ────────────────────────────────────── -->
             <div
-                class="flex-1 min-w-0 flex flex-col bg-white border border-gray-200 lg:rounded-r-2xl rounded-2xl lg:rounded-l-none overflow-hidden shadow-sm"
-                :class="{ 'hidden lg:flex': activeTab === 'personal' && !personalSelectedId }"
+                class="flex-1 min-w-0 flex flex-col bg-white border border-gray-200 md:rounded-r-2xl rounded-2xl md:rounded-l-none overflow-hidden shadow-sm"
+                :class="{ 'hidden md:flex': activeTab === 'personal' && !personalSelectedId }"
             >
 
                 <!-- ═══ Community tab ═══ -->
@@ -193,7 +193,7 @@
                     <template v-else>
                         <!-- Chat header -->
                         <div class="px-4 py-3 border-b border-gray-100 flex items-center gap-2.5 shrink-0">
-                            <button @click="personalSelectedId = null; stopPersonalPolling()" class="lg:hidden shrink-0 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 -ml-1">
+                            <button @click="personalSelectedId = null; stopPersonalPolling()" class="md:hidden shrink-0 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 -ml-1">
                                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                             </button>
                             <img v-if="personalHeaderAvatar" :src="personalHeaderAvatar" class="w-9 h-9 rounded-full object-cover" />
