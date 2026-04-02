@@ -66,42 +66,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Appearance -->
-        <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm mb-8">
-            <div class="px-5 py-4 border-b border-gray-100">
-                <h2 class="text-sm font-bold text-gray-900">Appearance</h2>
-                <p class="text-xs text-gray-400 mt-0.5">Choose the app color theme shown to all users</p>
-            </div>
-            <div class="px-5 py-4 flex items-center gap-3">
-                <button
-                    @click="setTheme('green')"
-                    :class="[
-                        'flex items-center gap-2.5 px-4 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all',
-                        currentTheme === 'green'
-                            ? 'border-green-500 bg-green-50 text-green-700'
-                            : 'border-gray-200 bg-white text-gray-600 hover:border-green-300'
-                    ]"
-                >
-                    <img :src="'/brand/logo-green.png'" alt="Green" class="h-5 w-auto" />
-                    Green
-                </button>
-                <button
-                    @click="setTheme('yellow')"
-                    :class="[
-                        'flex items-center gap-2.5 px-4 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all',
-                        currentTheme === 'yellow'
-                            ? 'border-yellow-400 bg-yellow-50 text-yellow-700'
-                            : 'border-gray-200 bg-white text-gray-600 hover:border-yellow-300'
-                    ]"
-                >
-                    <img :src="'/brand/logo-yellow.png'" alt="Yellow" class="h-5 w-auto" />
-                    Yellow
-                </button>
-                <span v-if="themeForm.recentlySuccessful" class="text-xs text-green-600 font-medium">Saved!</span>
-            </div>
-        </div>
-
         <!-- Creator Plan Pricing -->
         <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm mb-8">
             <div class="px-5 py-4 border-b border-gray-100">
@@ -440,10 +404,6 @@ const statCards = computed(() => [
 ]);
 
 const page = usePage();
-const currentTheme = computed(() => page.props.app_theme ?? 'green');
-
-const themeForm = useForm({ app_theme: currentTheme.value });
-
 const planForm = useForm({
     basic_price: props.creatorPlanPricing.basic_price,
     pro_price:   props.creatorPlanPricing.pro_price,
@@ -451,11 +411,6 @@ const planForm = useForm({
 
 function savePlanPricing() {
     planForm.patch('/admin/creator-plan-pricing', { preserveScroll: true });
-}
-
-function setTheme(theme) {
-    themeForm.app_theme = theme;
-    themeForm.patch('/admin/settings');
 }
 
 const maxCategoryTotal = computed(() =>
