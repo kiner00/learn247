@@ -30,8 +30,11 @@ use App\Queries\Community\GetInvitedByAffiliate;
 use App\Queries\Community\GetLeaderboard;
 use App\Queries\Community\ListCommunities;
 use App\Queries\Feed\GetCommunityFeed;
+use App\Jobs\GenerateGalleryImages;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -286,6 +289,38 @@ class CommunityController extends Controller
         $action->removeImage($community, $index);
 
         return back()->with('success', 'Image removed!');
+    }
+
+    public function aiGenerateGallery(Request $request, Community $community): JsonResponse
+    {
+        $this->authorize('update', $community);
+
+        if ($request->user()->creatorPlan() !== 'pro') {
+            return response()->json(['error' => 'AI Gallery generation requires a PRO plan.'], 403);
+        }
+
+        $cacheKey = "gallery-generating:{$community->id}";
+        $status   = Cache::get($cacheKey);
+
+        if ($status && $status['status'] === 'generating') {
+            return response()->json(['error' => 'Gallery generation is already in progress.'], 409);
+        }
+
+        Cache::put($cacheKey, ['status' => 'generating', 'progress' => 0, 'total' => 8], 900);
+
+        GenerateGalleryImages::dispatch($community);
+
+        return response()->json(['message' => 'Gallery generation started.'], 202);
+    }
+
+    public function aiGalleryStatus(Request $request, Community $community): JsonResponse
+    {
+        $this->authorize('update', $community);
+
+        $cacheKey = "gallery-generating:{$community->id}";
+        $status   = Cache::get($cacheKey, ['status' => 'idle']);
+
+        return response()->json($status);
     }
 
     public function updateLevelPerks(Request $request, Community $community, UpdateLevelPerks $action): RedirectResponse

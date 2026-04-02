@@ -209,6 +209,8 @@ Route::middleware('auth')->group(function () {
     Route::patch('/communities/{community}/level-perks', [CommunityController::class, 'updateLevelPerks'])->name('communities.level-perks');
     Route::post('/communities/{community}/gallery', [CommunityController::class, 'addGalleryImage'])->name('communities.gallery.add');
     Route::delete('/communities/{community}/gallery/{index}', [CommunityController::class, 'removeGalleryImage'])->name('communities.gallery.remove');
+    Route::post('/communities/{community}/gallery/ai-generate', [CommunityController::class, 'aiGenerateGallery'])->name('communities.gallery.ai-generate');
+    Route::get('/communities/{community}/gallery/ai-status', [CommunityController::class, 'aiGalleryStatus'])->name('communities.gallery.ai-status');
     Route::delete('/communities/{community}', [CommunityController::class, 'destroy'])->name('communities.destroy');
     Route::post('/communities/{community}/cancel-deletion', [CommunityController::class, 'cancelDeletion'])->name('communities.cancel-deletion');
     Route::post('/communities/{community}/announce', [CommunityController::class, 'announce'])->name('communities.announce');

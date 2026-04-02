@@ -173,7 +173,7 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1.5">Banner Image</label>
                             <div
-                                v-if="coverPreview || community.cover_image"
+                                v-if="coverPreview || (community.cover_image && !coverRemoved)"
                                 class="relative mb-2 h-32 rounded-xl overflow-hidden border border-gray-200 group"
                             >
                                 <img :src="coverPreview || community.cover_image" class="w-full h-full object-cover" alt="Banner preview" />
@@ -187,7 +187,7 @@
                             </div>
                             <label class="flex items-center gap-2 w-fit cursor-pointer px-3.5 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
                                 <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                                {{ coverPreview || community.cover_image ? 'Change banner' : 'Upload banner' }}
+                                {{ coverPreview || (community.cover_image && !coverRemoved) ? 'Change banner' : 'Upload banner' }}
                                 <input ref="coverInput" type="file" accept="image/*" class="hidden" @change="onCoverChange" />
                             </label>
                             <p class="mt-1 text-xs text-gray-400">JPG, PNG, WebP — max 15 MB &nbsp;·&nbsp; <span class="font-medium text-gray-500">Recommended: {{ IMAGE_DIMENSIONS.BANNER.width }} × {{ IMAGE_DIMENSIONS.BANNER.height }} px</span></p>
@@ -198,7 +198,7 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1.5">Community Avatar</label>
                             <div
-                                v-if="avatarPreview || community.avatar"
+                                v-if="avatarPreview || (community.avatar && !avatarRemoved)"
                                 class="relative mb-2 w-20 h-20 rounded-full overflow-hidden border border-gray-200 group"
                             >
                                 <img :src="avatarPreview || community.avatar" class="w-full h-full object-cover" alt="Avatar preview" />
@@ -212,7 +212,7 @@
                             </div>
                             <label class="flex items-center gap-2 w-fit cursor-pointer px-3.5 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
                                 <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                                {{ avatarPreview || community.avatar ? 'Change avatar' : 'Upload avatar' }}
+                                {{ avatarPreview || (community.avatar && !avatarRemoved) ? 'Change avatar' : 'Upload avatar' }}
                                 <input ref="avatarInput" type="file" accept="image/*" class="hidden" @change="onAvatarChange" />
                             </label>
                             <p class="mt-1 text-xs text-gray-400">Shown as your community icon. JPG, PNG, WebP — max 15 MB &nbsp;·&nbsp; <span class="font-medium text-gray-500">Recommended: {{ IMAGE_DIMENSIONS.AVATAR.width }} × {{ IMAGE_DIMENSIONS.AVATAR.height }} px</span></p>
@@ -235,8 +235,47 @@
 
             <!-- Gallery Images -->
             <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
-                <h2 class="text-base font-semibold text-gray-900 mb-1">Gallery</h2>
+                <div class="flex items-center justify-between mb-1">
+                    <h2 class="text-base font-semibold text-gray-900">Gallery</h2>
+                    <button
+                        v-if="isPro"
+                        type="button"
+                        :disabled="aiGalleryGenerating"
+                        @click="startAiGalleryGeneration"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors"
+                        :class="aiGalleryGenerating
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 shadow-sm'"
+                    >
+                        <svg class="w-3.5 h-3.5" :class="{ 'animate-spin': aiGalleryGenerating }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path v-if="!aiGalleryGenerating" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
+                            <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                        </svg>
+                        <template v-if="aiGalleryGenerating">Generating {{ aiGalleryProgress }}/8...</template>
+                        <template v-else>AI Generate All</template>
+                    </button>
+                    <span v-else class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-gray-400 bg-gray-50 border border-gray-200 rounded-lg cursor-default" title="Upgrade to PRO to use AI gallery generation">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
+                        AI Generate All
+                        <span class="text-[10px] font-bold text-amber-500 ml-0.5">PRO</span>
+                    </span>
+                </div>
                 <p class="text-sm text-gray-500 mb-4">Add up to 8 images shown as a thumbnail strip on your About page.</p>
+
+                <!-- AI generation progress bar -->
+                <div v-if="aiGalleryGenerating" class="mb-4 p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
+                    <div class="flex items-center gap-2 mb-2">
+                        <svg class="w-4 h-4 text-indigo-600 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                        <span class="text-sm font-medium text-indigo-700">Generating gallery images with AI...</span>
+                    </div>
+                    <div class="w-full bg-indigo-100 rounded-full h-1.5">
+                        <div class="bg-indigo-600 h-1.5 rounded-full transition-all duration-500" :style="{ width: (aiGalleryProgress / 8 * 100) + '%' }"></div>
+                    </div>
+                    <p class="text-xs text-indigo-500 mt-1">{{ aiGalleryProgress }} of 8 images generated. This may take a few minutes.</p>
+                </div>
+
+                <!-- AI generation error -->
+                <p v-if="aiGalleryError" class="mb-3 text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{{ aiGalleryError }}</p>
 
                 <!-- Existing gallery -->
                 <div v-if="community.gallery_images?.length" class="flex flex-wrap gap-2 mb-4">
@@ -1042,8 +1081,10 @@ const perksSaving    = ref(false);
 const announceSent   = ref(false);
 const coverPreview  = ref(null);
 const coverInput    = ref(null);
+const coverRemoved  = ref(false);
 const avatarPreview = ref(null);
 const avatarInput   = ref(null);
+const avatarRemoved = ref(false);
 
 // Invite members
 const inviteTab        = ref('single');
@@ -1070,6 +1111,8 @@ const imageForm = useForm({
     name:        props.community.name,  // required by validator
     cover_image: null,
     avatar:      null,
+    remove_cover_image: false,
+    remove_avatar:      false,
 });
 
 function onCoverChange(e) {
@@ -1082,12 +1125,16 @@ function onCoverChange(e) {
     }
     imageForm.errors.cover_image = null;
     imageForm.cover_image = file;
+    imageForm.remove_cover_image = false;
     coverPreview.value = URL.createObjectURL(file);
+    coverRemoved.value = false;
 }
 
 function removeCover() {
     imageForm.cover_image = null;
+    imageForm.remove_cover_image = true;
     coverPreview.value = null;
+    coverRemoved.value = true;
     if (coverInput.value) coverInput.value.value = '';
 }
 
@@ -1101,12 +1148,16 @@ function onAvatarChange(e) {
     }
     imageForm.errors.avatar = null;
     imageForm.avatar = file;
+    imageForm.remove_avatar = false;
     avatarPreview.value = URL.createObjectURL(file);
+    avatarRemoved.value = false;
 }
 
 function removeAvatar() {
     imageForm.avatar = null;
+    imageForm.remove_avatar = true;
     avatarPreview.value = null;
+    avatarRemoved.value = true;
     if (avatarInput.value) avatarInput.value.value = '';
 }
 
@@ -1115,7 +1166,9 @@ function saveImages() {
         .post(`/communities/${props.community.slug}`, {
             onSuccess: () => {
                 coverPreview.value = null;
+                coverRemoved.value = false;
                 avatarPreview.value = null;
+                avatarRemoved.value = false;
                 imagesSaved.value = true;
                 setTimeout(() => (imagesSaved.value = false), 3000);
             },
@@ -1345,6 +1398,52 @@ function uploadGalleryImage() {
 
 function removeGalleryImage(index) {
     router.delete(`/communities/${props.community.slug}/gallery/${index}`, { preserveScroll: true });
+}
+
+// ─── AI Gallery Generation ───────────────────────────────────────────────────
+const aiGalleryGenerating = ref(false);
+const aiGalleryProgress   = ref(0);
+const aiGalleryError      = ref(null);
+let aiGalleryPollTimer    = null;
+
+async function startAiGalleryGeneration() {
+    if (!props.isPro) return;
+    if (!confirm('This will replace your current gallery with 8 AI-generated images. Continue?')) return;
+
+    aiGalleryGenerating.value = true;
+    aiGalleryProgress.value   = 0;
+    aiGalleryError.value      = null;
+
+    try {
+        await axios.post(`/communities/${props.community.slug}/gallery/ai-generate`);
+        pollAiGalleryStatus();
+    } catch (e) {
+        aiGalleryGenerating.value = false;
+        aiGalleryError.value = e.response?.data?.error || 'Failed to start generation.';
+    }
+}
+
+function pollAiGalleryStatus() {
+    aiGalleryPollTimer = setInterval(async () => {
+        try {
+            const { data } = await axios.get(`/communities/${props.community.slug}/gallery/ai-status`);
+            aiGalleryProgress.value = data.progress || 0;
+
+            if (data.status === 'completed') {
+                clearInterval(aiGalleryPollTimer);
+                aiGalleryGenerating.value = false;
+                router.reload({ only: ['community'], preserveScroll: true });
+            } else if (data.status === 'failed') {
+                clearInterval(aiGalleryPollTimer);
+                aiGalleryGenerating.value = false;
+                aiGalleryError.value = data.error || 'Generation failed.';
+            }
+        } catch {
+            clearInterval(aiGalleryPollTimer);
+            aiGalleryGenerating.value = false;
+            aiGalleryError.value = 'Failed to check status.';
+        }
+    }, 5000);
 }
 
 function deleteCommunity() {
