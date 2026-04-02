@@ -52,8 +52,22 @@ class ChatController extends Controller
                 ]);
         }
 
+        // If linking to a specific user's chat (from Members page)
+        $selectedChatUser = null;
+        if ($isOwner && request()->query('user')) {
+            $targetUserId = (int) request()->query('user');
+            $targetUser = \App\Models\User::select('id', 'name', 'avatar')->find($targetUserId);
+            if ($targetUser) {
+                $selectedChatUser = [
+                    'id'     => $targetUser->id,
+                    'name'   => $targetUser->name,
+                    'avatar' => $targetUser->avatar,
+                ];
+            }
+        }
+
         return Inertia::render('Communities/Chat', compact(
-            'community', 'messages', 'affiliate', 'telegramConnected', 'isOwner', 'chatbotUsers'
+            'community', 'messages', 'affiliate', 'telegramConnected', 'isOwner', 'chatbotUsers', 'selectedChatUser'
         ));
     }
 

@@ -291,6 +291,7 @@ const props = defineProps({
     telegramConnected: { type: Boolean, default: false },
     isOwner:           { type: Boolean, default: false },
     chatbotUsers:      { type: Array, default: () => [] },
+    selectedChatUser:  { type: Object, default: null },
 });
 
 const page      = usePage();
@@ -502,6 +503,17 @@ function onDeletedMessage(e) { groupMessages.value = groupMessages.value.filter(
 
 onMounted(() => {
     scrollToBottom();
+
+    // Handle deep-link from Members page (?tab=personal&user=123)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('tab') === 'personal') {
+        activeTab.value = 'personal';
+        if (props.isOwner && props.selectedChatUser) {
+            const u = conversationList.value.find(x => x.id === props.selectedChatUser.id);
+            selectMemberChat(u ?? { ...props.selectedChatUser, message_count: 0 });
+        }
+    }
+
     if (window.Echo) {
         echoChannel = window.Echo.join(`community.${props.community.id}.chat`)
             .listen('ChatMessageSent', onIncomingMessage)
