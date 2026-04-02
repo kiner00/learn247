@@ -151,6 +151,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/communities/{community}/chat',             [ChatController::class, 'store'])->middleware('throttle:30,1');
     Route::get('/communities/{community}/chat/poll',         [ChatController::class, 'poll']);
     Route::delete('/communities/{community}/chat/{message}', [ChatController::class, 'destroy']);
+    Route::post('/communities/{community}/chatbot',          [\App\Http\Controllers\Web\CommunityChatbotController::class, 'chat'])->middleware('throttle:20,1');
 
     // ─── Direct messages ───────────────────────────────────────────────────
     Route::get('/messages',                      [DirectMessageController::class, 'index']);

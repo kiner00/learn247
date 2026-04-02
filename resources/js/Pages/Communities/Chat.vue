@@ -183,7 +183,9 @@
             </div>
 
             <!-- ── Right sidebar ────────────────────────────────────────────── -->
-            <div>
+            <div class="space-y-4">
+                <AiChatSidebar :community-slug="community.slug" :community-name="community.name" />
+
                 <CommunitySidebarCard :community="community">
                     <button
                         v-if="$page.props.auth?.user"
@@ -213,6 +215,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import CommunityTabs from '@/Components/CommunityTabs.vue';
 import CommunitySidebarCard from '@/Components/CommunitySidebarCard.vue';
 import InviteModal from '@/Components/InviteModal.vue';
+import AiChatSidebar from '@/Components/AiChatSidebar.vue';
 
 const props = defineProps({
     community:         Object,

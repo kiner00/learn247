@@ -22,7 +22,7 @@ class Community extends Model
         'facebook_pixel_id', 'tiktok_pixel_id', 'google_analytics_id',
         'telegram_bot_token', 'telegram_chat_id',
         'sms_provider', 'sms_api_key', 'sms_api_secret', 'sms_sender_name', 'sms_device_url',
-        'deletion_requested_at', 'is_featured', 'landing_page',
+        'deletion_requested_at', 'is_featured', 'landing_page', 'ai_chatbot_instructions',
     ];
 
     protected function casts(): array
