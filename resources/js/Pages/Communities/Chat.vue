@@ -299,8 +299,6 @@ const tabs = computed(() => {
     ];
     if (props.isOwner) {
         t.push({ key: 'assistant', label: 'AI Assistant' });
-    } else {
-        t.push({ key: 'talk', label: `Talk to ${creatorName.value}` });
     }
     return t;
 });
