@@ -183,18 +183,21 @@
             </div>
 
             <!-- ── Right sidebar ────────────────────────────────────────────── -->
-            <div class="space-y-4">
-                <CommunitySidebarCard :community="community">
-                    <button
-                        v-if="$page.props.auth?.user"
-                        @click="showInviteModal = true"
-                        class="w-full py-2 text-sm font-semibold border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                    >
-                        Invite People
-                    </button>
-                </CommunitySidebarCard>
+            <div class="flex flex-col gap-4" style="height: calc(100vh - 220px);">
+                <div class="shrink-0">
+                    <CommunitySidebarCard :community="community">
+                        <button
+                            v-if="$page.props.auth?.user"
+                            @click="showInviteModal = true"
+                            class="w-full py-2 text-sm font-semibold border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        >
+                            Invite People
+                        </button>
+                    </CommunitySidebarCard>
+                </div>
 
                 <AiChatSidebar
+                    class="flex-1 min-h-0"
                     :community-slug="community.slug"
                     :community-name="community.name"
                     :creator-name="community.owner?.name ?? community.name"

@@ -1,5 +1,5 @@
 <template>
-    <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm flex flex-col" style="height: 480px;">
+    <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm flex flex-col h-full">
         <!-- Header -->
         <div class="px-4 py-3 border-b border-gray-100 flex items-center gap-2.5 shrink-0">
             <img
