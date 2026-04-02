@@ -37,19 +37,22 @@ class ChatController extends Controller
         // For creator: load chatbot conversation users
         $chatbotUsers = [];
         if ($isOwner) {
-            $chatbotUsers = ChatbotMessage::where('community_id', $community->id)
+            $rows = ChatbotMessage::where('community_id', $community->id)
                 ->selectRaw('user_id, MAX(created_at) as last_chat_at, COUNT(*) as message_count')
                 ->groupBy('user_id')
                 ->orderByDesc('last_chat_at')
-                ->with('user:id,name,avatar')
-                ->get()
-                ->map(fn ($row) => [
-                    'id'            => $row->user_id,
-                    'name'          => $row->user->name,
-                    'avatar'        => $row->user->avatar,
-                    'last_chat_at'  => $row->last_chat_at,
-                    'message_count' => $row->message_count,
-                ]);
+                ->get();
+
+            $userIds  = $rows->pluck('user_id');
+            $userMap  = \App\Models\User::whereIn('id', $userIds)->select('id', 'name', 'avatar')->get()->keyBy('id');
+
+            $chatbotUsers = $rows->map(fn ($row) => [
+                'id'            => $row->user_id,
+                'name'          => $userMap[$row->user_id]->name ?? 'Unknown',
+                'avatar'        => $userMap[$row->user_id]->avatar ?? null,
+                'last_chat_at'  => $row->last_chat_at,
+                'message_count' => $row->message_count,
+            ])->values();
         }
 
         // If linking to a specific user's chat (from Members page)

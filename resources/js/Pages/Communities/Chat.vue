@@ -503,7 +503,10 @@ function stopPersonalPolling() { if (personalPollTimer) { clearInterval(personal
 
 async function sendPersonalMessage() {
     const text = personalInput.value.trim();
-    if (!text || personalSending.value || personalLoading.value) return;
+    if (!text || personalSending.value || personalLoading.value) {
+        console.log('Send blocked:', { text: !!text, sending: personalSending.value, loading: personalLoading.value, type: personalChatType.value });
+        return;
+    }
 
     // Owner replying to chatbot conversation
     if (personalChatType.value === 'chatbot') {
@@ -516,7 +519,10 @@ async function sendPersonalMessage() {
             personalMessages.value.push(data.message);
             if (data.message.id > personalLastMsgId) personalLastMsgId = data.message.id;
             scrollPersonalToBottom(true);
-        } catch { personalInput.value = text; }
+        } catch (err) {
+            console.error('Failed to send chatbot reply:', err?.response?.status, err?.response?.data ?? err);
+            personalInput.value = text;
+        }
         finally { personalSending.value = false; }
         return;
     }
