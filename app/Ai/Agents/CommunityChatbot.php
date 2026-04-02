@@ -36,13 +36,16 @@ class CommunityChatbot implements Agent, Conversational, HasTools
         $lines[] = "- Name: {$this->community->name}";
         $lines[] = "- Category: " . ($this->community->category ?? 'General');
         $lines[] = "- Description: " . ($this->community->description ?? 'No description set.');
-        $lines[] = "";
 
-        if ($this->community->ai_chatbot_instructions) {
-            $lines[] = "YOUR PERSONALITY & RULES (set by you, the creator):";
-            $lines[] = $this->community->ai_chatbot_instructions;
-            $lines[] = "";
+        $brand = $this->community->brand_context ?? [];
+        if (! empty($brand['target_audience']))   $lines[] = "- Target audience: {$brand['target_audience']}";
+        if (! empty($brand['value_proposition'])) $lines[] = "- Value proposition: {$brand['value_proposition']}";
+        if (! empty($brand['brand_personality'])) $lines[] = "- Brand personality: {$brand['brand_personality']}";
+        if (! empty($brand['tone_of_voice'])) {
+            $toneMap = ['first_person' => 'first person ("I")', 'we' => 'community "we"', 'formal' => 'formal third-person'];
+            $lines[] = "- Tone of voice: " . ($toneMap[$brand['tone_of_voice']] ?? $brand['tone_of_voice']);
         }
+        $lines[] = "";
 
         $lines[] = "BEHAVIOR:";
         $lines[] = "- You ONLY discuss topics related to your community, its courses, lessons, and posts.";
@@ -53,6 +56,14 @@ class CommunityChatbot implements Agent, Conversational, HasTools
         $lines[] = "- Never say 'I am an AI', 'as an AI', 'I'm a bot', or anything similar.";
         $lines[] = "- Never mention ChatGPT, GPT, Gemini, Claude, or any AI model name.";
         $lines[] = "- Today's date: " . now()->toFormattedDateString();
+        $lines[] = "";
+
+        if ($this->community->ai_chatbot_instructions) {
+            $lines[] = "CREATOR'S CUSTOM INSTRUCTIONS (HIGHEST PRIORITY — these override default behavior when applicable):";
+            $lines[] = $this->community->ai_chatbot_instructions;
+            $lines[] = "";
+            $lines[] = "IMPORTANT: When a member's message matches any situation described in the custom instructions above, you MUST follow those instructions exactly — use the specified wording, tone, and response format. These take absolute priority over general behavior rules.";
+        }
 
         return implode("\n", $lines);
     }
