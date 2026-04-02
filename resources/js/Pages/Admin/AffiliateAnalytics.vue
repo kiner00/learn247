@@ -1,18 +1,8 @@
 <template>
-    <AppLayout title="Affiliate Analytics">
-        <div class="mb-6 flex items-start justify-between">
-            <div>
-                <h1 class="text-2xl font-black text-gray-900">Affiliate Analytics</h1>
-                <p class="text-sm text-gray-500 mt-0.5">Conversions, commissions & payouts per affiliate</p>
-            </div>
-            <div class="flex items-center gap-2">
-                <Link href="/admin/creator-analytics" class="px-3.5 py-2 text-sm font-medium text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
-                    📊 Creator Analytics
-                </Link>
-                <Link href="/admin" class="px-3.5 py-2 text-sm font-medium text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
-                    ← Dashboard
-                </Link>
-            </div>
+    <AdminLayout title="Affiliate Analytics">
+        <div class="mb-6">
+            <h1 class="text-2xl font-black text-gray-900">Affiliate Analytics</h1>
+            <p class="text-sm text-gray-500 mt-0.5">Conversions, commissions & payouts per affiliate</p>
         </div>
 
         <!-- Summary Totals -->
@@ -182,13 +172,13 @@
             </div>
         </div>
 
-    </AppLayout>
+    </AdminLayout>
 </template>
 
 <script setup>
 import { computed, ref } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 
 const props = defineProps({
     affiliates: { type: Array, default: () => [] },

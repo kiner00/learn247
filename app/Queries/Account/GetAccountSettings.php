@@ -69,6 +69,13 @@ class GetAccountSettings
             'bankName'      => $user->bank_name,
             'cryptoWallet'  => $user->crypto_wallet,
             'crzBalance'    => (float) $user->crz_token_balance,
+            'kyc'           => [
+                'status'          => $user->kyc_status ?? 'none',
+                'id_document'     => $user->kyc_id_document,
+                'selfie'          => $user->kyc_selfie,
+                'submitted_at'    => $user->kyc_submitted_at?->toDateTimeString(),
+                'rejected_reason' => $user->kyc_rejected_reason,
+            ],
         ];
     }
 }

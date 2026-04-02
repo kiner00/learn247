@@ -1,12 +1,9 @@
 <template>
-    <AppLayout :title="`Edit: ${template.name}`">
+    <AdminLayout :title="`Edit: ${template.name}`">
         <!-- Header -->
-        <div class="mb-6 flex items-center justify-between">
-            <div>
-                <h1 class="text-2xl font-black text-gray-900">{{ template.name }}</h1>
-                <p class="text-sm text-gray-400 mt-0.5 font-mono">{{ template.key }}</p>
-            </div>
-            <Link href="/admin/email-templates" class="text-sm text-indigo-600 hover:underline">← All Templates</Link>
+        <div class="mb-6">
+            <h1 class="text-2xl font-black text-gray-900">{{ template.name }}</h1>
+            <p class="text-sm text-gray-400 mt-0.5 font-mono">{{ template.key }}</p>
         </div>
 
         <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
@@ -204,12 +201,12 @@
                 </div>
             </div>
         </div>
-    </AppLayout>
+    </AdminLayout>
 </template>
 
 <script setup>
 import { ref, watch, onMounted, onBeforeUnmount, computed } from 'vue'
-import AppLayout from '@/Layouts/AppLayout.vue'
+import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Link } from '@inertiajs/vue3'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'

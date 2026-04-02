@@ -1,11 +1,8 @@
 <template>
-    <AppLayout title="Email Templates">
-        <div class="mb-6 flex items-center justify-between">
-            <div>
-                <h1 class="text-2xl font-black text-gray-900">Email Templates</h1>
-                <p class="text-sm text-gray-500 mt-0.5">Customize the emails sent to your members</p>
-            </div>
-            <Link href="/admin" class="text-sm text-indigo-600 hover:underline">← Dashboard</Link>
+    <AdminLayout title="Email Templates">
+        <div class="mb-6">
+            <h1 class="text-2xl font-black text-gray-900">Email Templates</h1>
+            <p class="text-sm text-gray-500 mt-0.5">Customize the emails sent to your members</p>
         </div>
 
         <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
@@ -38,11 +35,11 @@
                 </tbody>
             </table>
         </div>
-    </AppLayout>
+    </AdminLayout>
 </template>
 
 <script setup>
-import AppLayout from '@/Layouts/AppLayout.vue'
+import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Link } from '@inertiajs/vue3'
 
 const props = defineProps({

@@ -1,11 +1,8 @@
 <template>
-    <AppLayout title="User Management">
-        <div class="mb-6 flex items-center justify-between">
-            <div>
-                <h1 class="text-2xl font-black text-gray-900">User Management</h1>
-                <p class="text-sm text-gray-500 mt-0.5">{{ users.total.toLocaleString() }} users total</p>
-            </div>
-            <Link href="/admin" class="text-sm text-indigo-600 hover:underline">← Dashboard</Link>
+    <AdminLayout title="User Management">
+        <div class="mb-6">
+            <h1 class="text-2xl font-black text-gray-900">User Management</h1>
+            <p class="text-sm text-gray-500 mt-0.5">{{ users.total.toLocaleString() }} users total</p>
         </div>
 
         <!-- Search -->
@@ -28,6 +25,7 @@
                         <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Username</th>
                         <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Communities</th>
                         <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Joined</th>
+                        <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">KYC</th>
                         <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
                         <th class="px-5 py-3"></th>
                     </tr>
@@ -49,6 +47,18 @@
                         <td class="px-5 py-3 text-xs text-gray-600 font-medium">{{ u.memberships }}</td>
                         <td class="px-5 py-3 text-xs text-gray-400">{{ u.created_at }}</td>
                         <td class="px-5 py-3">
+                            <button
+                                @click="toggleKyc(u)"
+                                :disabled="togglingKyc === u.id"
+                                class="text-xs font-bold px-2 py-0.5 rounded-full cursor-pointer transition-colors"
+                                :class="u.kyc_verified
+                                    ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'"
+                            >
+                                {{ togglingKyc === u.id ? '...' : (u.kyc_verified ? 'Verified' : 'Unverified') }}
+                            </button>
+                        </td>
+                        <td class="px-5 py-3">
                             <span v-if="u.is_super_admin" class="text-xs font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">Super Admin</span>
                             <span v-else-if="u.is_active" class="text-xs font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700">Active</span>
                             <span v-else class="text-xs font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700">Disabled</span>
@@ -64,7 +74,7 @@
                         </td>
                     </tr>
                     <tr v-if="!users.data.length">
-                        <td colspan="6" class="px-5 py-10 text-center text-sm text-gray-400">No users found</td>
+                        <td colspan="7" class="px-5 py-10 text-center text-sm text-gray-400">No users found</td>
                     </tr>
                 </tbody>
             </table>
@@ -85,13 +95,13 @@
                 />
             </div>
         </div>
-    </AppLayout>
+    </AdminLayout>
 </template>
 
 <script setup>
 import { ref } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 
 const props = defineProps({
     users:   { type: Object, default: () => ({ data: [], total: 0, last_page: 1, links: [] }) },
@@ -100,6 +110,7 @@ const props = defineProps({
 
 const search  = ref(props.filters.search ?? '');
 const toggling = ref(null);
+const togglingKyc = ref(null);
 
 let timer;
 function onSearch() {
@@ -114,6 +125,14 @@ function toggleStatus(user) {
     router.patch(`/admin/users/${user.id}/toggle-status`, {}, {
         preserveScroll: true,
         onFinish: () => { toggling.value = null; },
+    });
+}
+
+function toggleKyc(user) {
+    togglingKyc.value = user.id;
+    router.patch(`/admin/users/${user.id}/toggle-kyc`, {}, {
+        preserveScroll: true,
+        onFinish: () => { togglingKyc.value = null; },
     });
 }
 </script>

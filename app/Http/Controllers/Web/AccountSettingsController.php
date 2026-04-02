@@ -8,6 +8,7 @@ use App\Actions\Account\UpdateCommunityChat;
 use App\Actions\Account\UpdateCommunityNotificationPrefs;
 use App\Actions\Account\UpdateCrypto;
 use App\Actions\Account\UpdateEmail;
+use App\Models\User;
 use App\Actions\Account\UpdateMembershipVisibility;
 use App\Actions\Account\UpdateNotificationPrefs;
 use App\Actions\Account\UpdatePassword;
@@ -158,5 +159,36 @@ class AccountSettingsController extends Controller
         $action->execute($request->user(), $data['crypto_wallet'] ?? null);
 
         return back()->with('success', 'Crypto wallet saved!');
+    }
+
+    public function submitKyc(Request $request, \App\Services\StorageService $storage): RedirectResponse
+    {
+        $user = $request->user();
+
+        if ($user->kyc_status === User::KYC_SUBMITTED) {
+            return back()->withErrors(['kyc' => 'Your KYC is already under review.']);
+        }
+
+        if ($user->kyc_status === User::KYC_APPROVED) {
+            return back()->withErrors(['kyc' => 'Your KYC is already approved.']);
+        }
+
+        $request->validate([
+            'id_document' => ['required', 'image', 'max:10240'],
+            'selfie'      => ['required', 'image', 'max:10240'],
+        ]);
+
+        $idUrl     = $storage->upload($request->file('id_document'), 'kyc-documents');
+        $selfieUrl = $storage->upload($request->file('selfie'), 'kyc-documents');
+
+        $user->update([
+            'kyc_status'          => User::KYC_SUBMITTED,
+            'kyc_id_document'     => $idUrl,
+            'kyc_selfie'          => $selfieUrl,
+            'kyc_submitted_at'    => now(),
+            'kyc_rejected_reason' => null,
+        ]);
+
+        return back()->with('success', 'KYC documents submitted! We\'ll review them shortly.');
     }
 }

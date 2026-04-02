@@ -1,44 +1,12 @@
 <template>
-    <AppLayout title="Admin Dashboard">
-        <div class="mb-6 flex items-start justify-between">
-            <div>
-                <h1 class="text-2xl font-black text-gray-900">Admin Dashboard</h1>
-                <p class="text-sm text-gray-500 mt-0.5">Platform overview</p>
-            </div>
-            <div class="flex items-center gap-2">
-                <Link href="/admin/creator-analytics"
-                    class="px-3.5 py-2 text-sm font-medium text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
-                    📊 Creator Analytics
-                </Link>
-                <Link href="/admin/affiliate-analytics"
-                    class="px-3.5 py-2 text-sm font-medium text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
-                    🔗 Affiliate Analytics
-                </Link>
-                <Link href="/admin/users"
-                    class="px-3.5 py-2 text-sm font-medium text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
-                    👤 Users
-                </Link>
-                <Link href="/admin/posts/trashed"
-                    class="px-3.5 py-2 text-sm font-medium text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
-                    🗑️ Trashed Posts
-                </Link>
-                <Link href="/admin/coupons"
-                    class="px-3.5 py-2 text-sm font-medium text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
-                    🎟️ Coupons
-                </Link>
-                <Link href="/admin/announcements"
-                    class="px-3.5 py-2 text-sm font-medium text-white bg-indigo-600 border border-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors">
-                    📢 Announcement
-                </Link>
-                <Link href="/admin/email-templates"
-                    class="px-3.5 py-2 text-sm font-medium text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
-                    ✉️ Email Templates
-                </Link>
-            </div>
+    <AdminLayout title="Admin Dashboard">
+        <div class="mb-6">
+            <h1 class="text-2xl font-black text-gray-900">Dashboard</h1>
+            <p class="text-sm text-gray-500 mt-0.5">Platform overview</p>
         </div>
 
         <!-- Stat cards -->
-        <div class="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
+        <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
             <div
                 v-for="stat in statCards"
                 :key="stat.label"
@@ -50,7 +18,7 @@
                     </div>
                     <p class="text-xs font-medium text-gray-500">{{ stat.label }}</p>
                 </div>
-                <p class="text-2xl font-black text-gray-900">{{ stat.value }}</p>
+                <p class="text-2xl font-black text-gray-900" :title="stat.fullValue">{{ stat.value }}</p>
                 <p v-if="stat.sub" class="text-xs text-gray-400 mt-0.5">{{ stat.sub }}</p>
             </div>
         </div>
@@ -391,13 +359,13 @@
             </div>
         </div>
 
-    </AppLayout>
+    </AdminLayout>
 </template>
 
 <script setup>
 import { computed, ref } from 'vue';
 import { Link, useForm, usePage, router } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 
 const props = defineProps({
     stats:               Object,
@@ -426,42 +394,48 @@ function resend(userId) {
 
 const statCards = computed(() => [
     {
-        label:  'Total Users',
-        value:  props.stats.total_users.toLocaleString(),
-        icon:   '👤',
-        iconBg: 'bg-blue-50',
+        label:     'Total Users',
+        value:     compact(props.stats.total_users),
+        fullValue: props.stats.total_users.toLocaleString(),
+        icon:      '👤',
+        iconBg:    'bg-blue-50',
     },
     {
-        label:  'Communities',
-        value:  props.stats.total_communities.toLocaleString(),
-        icon:   '🏘️',
-        iconBg: 'bg-indigo-50',
+        label:     'Communities',
+        value:     compact(props.stats.total_communities),
+        fullValue: props.stats.total_communities.toLocaleString(),
+        icon:      '🏘️',
+        iconBg:    'bg-indigo-50',
     },
     {
-        label:  'Memberships',
-        value:  props.stats.total_members.toLocaleString(),
-        icon:   '🤝',
-        iconBg: 'bg-purple-50',
+        label:     'Memberships',
+        value:     compact(props.stats.total_members),
+        fullValue: props.stats.total_members.toLocaleString(),
+        icon:      '🤝',
+        iconBg:    'bg-purple-50',
     },
     {
-        label:  'Paid Subs',
-        value:  props.stats.active_subscriptions.toLocaleString(),
-        icon:   '💳',
-        iconBg: 'bg-amber-50',
+        label:     'Paid Subs',
+        value:     compact(props.stats.active_subscriptions),
+        fullValue: props.stats.active_subscriptions.toLocaleString(),
+        icon:      '💳',
+        iconBg:    'bg-amber-50',
     },
     {
-        label:  'Monthly Revenue',
-        value:  `₱${Number(props.stats.monthly_revenue).toLocaleString()}`,
-        icon:   '💰',
-        iconBg: 'bg-green-50',
-        sub:    'from active subscriptions',
+        label:     'Monthly Revenue',
+        value:     compact(props.stats.monthly_revenue, '₱'),
+        fullValue: `₱${fmt(props.stats.monthly_revenue)}`,
+        icon:      '💰',
+        iconBg:    'bg-green-50',
+        sub:       'from active subscriptions',
     },
     {
-        label:  'Xendit Balance',
-        value:  `₱${fmt(props.xenditBalance ?? 0)}`,
-        icon:   '🏦',
-        iconBg: 'bg-teal-50',
-        sub:    'available cash balance',
+        label:     'Xendit Balance',
+        value:     compact(props.xenditBalance ?? 0, '₱'),
+        fullValue: `₱${fmt(props.xenditBalance ?? 0)}`,
+        icon:      '🏦',
+        iconBg:    'bg-teal-50',
+        sub:       'available cash balance',
     },
 ]);
 
@@ -490,5 +464,13 @@ const maxCategoryTotal = computed(() =>
 
 function fmt(val) {
     return Number(val ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function compact(val, prefix = '') {
+    const n = Number(val ?? 0);
+    if (n >= 1_000_000_000) return `${prefix}${(n / 1_000_000_000).toFixed(2)}B`;
+    if (n >= 1_000_000)     return `${prefix}${(n / 1_000_000).toFixed(2)}M`;
+    if (n >= 10_000)        return `${prefix}${(n / 1_000).toFixed(1)}K`;
+    return `${prefix}${n.toLocaleString()}`;
 }
 </script>

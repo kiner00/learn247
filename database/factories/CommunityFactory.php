@@ -15,7 +15,7 @@ class CommunityFactory extends Factory
         return [
             'name'        => ucwords($name),
             'slug'        => Str::slug($name),
-            'owner_id'    => User::factory(),
+            'owner_id'    => User::factory()->kycVerified(),
             'description' => fake()->paragraph(),
             'avatar'      => null,
             'is_private'  => false,

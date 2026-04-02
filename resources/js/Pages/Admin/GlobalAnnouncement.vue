@@ -1,6 +1,6 @@
 <script setup>
-import AppLayout from '@/Layouts/AppLayout.vue';
-import { useForm, usePage, Link } from '@inertiajs/vue3';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
+import { useForm, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
 const page = usePage();
@@ -25,15 +25,11 @@ function send() {
 </script>
 
 <template>
-    <AppLayout title="Global Announcement">
+    <AdminLayout title="Global Announcement">
         <div class="max-w-2xl mx-auto">
 
             <!-- Header -->
-            <div class="flex items-center gap-3 mb-6">
-                <Link href="/admin" class="text-gray-400 hover:text-gray-600 transition-colors">
-                    ← Admin
-                </Link>
-                <span class="text-gray-300">/</span>
+            <div class="mb-6">
                 <h1 class="text-xl font-black text-gray-900">Global Announcement</h1>
             </div>
 
@@ -107,5 +103,5 @@ function send() {
 
             </div>
         </div>
-    </AppLayout>
+    </AdminLayout>
 </template>

@@ -25,6 +25,7 @@ class ListUsers
                 'username'       => $u->username,
                 'is_active'      => (bool) $u->is_active,
                 'is_super_admin' => (bool) $u->is_super_admin,
+                'kyc_verified'   => $u->kyc_verified_at !== null,
                 'memberships'    => $u->community_memberships_count,
                 'created_at'     => $u->created_at?->toDateString(),
             ]);

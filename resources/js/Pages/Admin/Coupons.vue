@@ -1,11 +1,8 @@
 <template>
-    <AppLayout title="Coupons">
-        <div class="mb-6 flex items-center justify-between">
-            <div>
-                <h1 class="text-2xl font-black text-gray-900">Coupon Management</h1>
-                <p class="text-sm text-gray-500 mt-0.5">Create and manage creator plan coupons</p>
-            </div>
-            <Link href="/admin" class="text-sm text-indigo-600 hover:underline">&larr; Dashboard</Link>
+    <AdminLayout title="Coupons">
+        <div class="mb-6">
+            <h1 class="text-2xl font-black text-gray-900">Coupon Management</h1>
+            <p class="text-sm text-gray-500 mt-0.5">Create and manage creator plan coupons</p>
         </div>
 
         <!-- Create coupon form -->
@@ -127,12 +124,12 @@
                 </tbody>
             </table>
         </div>
-    </AppLayout>
+    </AdminLayout>
 </template>
 
 <script setup>
 import { Link, useForm, router } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 
 defineProps({
     coupons: { type: Array, default: () => [] },
