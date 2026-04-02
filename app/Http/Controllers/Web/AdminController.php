@@ -257,6 +257,8 @@ class AdminController extends Controller
                 'kyc_selfie'      => $u->kyc_selfie,
                 'submitted_at'    => $u->kyc_submitted_at?->diffForHumans(),
                 'rejected_reason' => $u->kyc_rejected_reason,
+                'ai_result'       => $u->kyc_ai_result,
+                'ai_rejections'   => $u->kyc_ai_rejections ?? 0,
             ]);
 
         $counts = [

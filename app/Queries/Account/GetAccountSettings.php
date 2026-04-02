@@ -75,6 +75,7 @@ class GetAccountSettings
                 'selfie'          => $user->kyc_selfie,
                 'submitted_at'    => $user->kyc_submitted_at?->toDateTimeString(),
                 'rejected_reason' => $user->kyc_rejected_reason,
+                'ai_rejections'   => $user->kyc_ai_rejections ?? 0,
             ],
         ];
     }

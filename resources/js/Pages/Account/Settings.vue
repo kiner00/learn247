@@ -303,7 +303,20 @@
                                     <span class="text-sm font-semibold text-red-800">Verification was rejected</span>
                                 </div>
                                 <p v-if="props.kyc?.rejected_reason" class="text-sm text-red-700 mt-1">Reason: {{ props.kyc.rejected_reason }}</p>
-                                <p class="text-sm text-red-700 mt-1">Please re-submit your documents below.</p>
+                                <p v-if="props.kyc?.ai_rejections >= 3" class="text-sm text-red-700 mt-1">Automatic verification has been unable to verify your documents. You can request a manual review by our team.</p>
+                                <p v-else class="text-sm text-red-700 mt-1">Please re-submit your documents below.</p>
+                            </div>
+
+                            <!-- Manual review button (after 3 AI rejections) -->
+                            <div v-if="props.kyc?.status === 'rejected' && props.kyc?.ai_rejections >= 3" class="max-w-lg">
+                                <button
+                                    @click="requestManualReview"
+                                    :disabled="manualReviewRequesting"
+                                    class="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold rounded-lg tracking-wide transition-colors disabled:opacity-50 mb-4"
+                                >
+                                    {{ manualReviewRequesting ? 'Requesting...' : 'REQUEST MANUAL REVIEW' }}
+                                </button>
+                                <p class="text-xs text-gray-400 text-center">Or you can try re-submitting with clearer photos below.</p>
                             </div>
 
                             <!-- Upload form -->
@@ -835,6 +848,15 @@ function onSelfieChange(e) {
 
 function submitKyc() {
     kycForm.post('/account/settings/kyc', { preserveScroll: true });
+}
+
+const manualReviewRequesting = ref(false);
+function requestManualReview() {
+    manualReviewRequesting.value = true;
+    router.post('/account/settings/kyc/manual-review', {}, {
+        preserveScroll: true,
+        onFinish: () => { manualReviewRequesting.value = false; },
+    });
 }
 
 // ── Affiliate ──────────────────────────────────────────────────────────────────

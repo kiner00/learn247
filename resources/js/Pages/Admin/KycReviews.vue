@@ -70,8 +70,24 @@
                 </div>
 
                 <!-- Rejection reason (if rejected) -->
+                <!-- Rejection reason -->
                 <div v-if="u.kyc_status === 'rejected' && u.rejected_reason" class="mb-4 rounded-lg bg-red-50 border border-red-100 px-3 py-2">
                     <p class="text-xs text-red-700"><span class="font-semibold">Rejected:</span> {{ u.rejected_reason }}</p>
+                </div>
+
+                <!-- AI verification result -->
+                <div v-if="u.ai_result" class="mb-4 rounded-lg border px-3 py-2" :class="u.ai_result.approved ? 'bg-green-50 border-green-100' : 'bg-amber-50 border-amber-100'">
+                    <p class="text-xs font-semibold" :class="u.ai_result.approved ? 'text-green-700' : 'text-amber-700'">
+                        AI Verdict: {{ u.ai_result.approved ? 'Approved' : 'Rejected' }}
+                        <span class="font-normal ml-1">({{ u.ai_result.confidence }} confidence)</span>
+                        <span v-if="u.ai_rejections > 0" class="font-normal ml-1">· {{ u.ai_rejections }} AI rejection(s)</span>
+                    </p>
+                    <p class="text-xs mt-0.5" :class="u.ai_result.approved ? 'text-green-600' : 'text-amber-600'">{{ u.ai_result.reason }}</p>
+                    <div v-if="u.ai_result.checks" class="flex gap-3 mt-1.5">
+                        <span v-for="(val, key) in u.ai_result.checks" :key="key" class="text-xs" :class="val ? 'text-green-600' : 'text-red-600'">
+                            {{ val ? '&#10003;' : '&#10007;' }} {{ key.replace(/_/g, ' ') }}
+                        </span>
+                    </div>
                 </div>
 
                 <!-- Actions -->

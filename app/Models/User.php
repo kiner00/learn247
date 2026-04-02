@@ -25,7 +25,7 @@ class User extends Authenticatable
         'payout_method', 'payout_details', 'bank_name',
         'crypto_wallet', 'crz_token_balance',
         'kyc_verified_at', 'kyc_status', 'kyc_id_document', 'kyc_selfie',
-        'kyc_submitted_at', 'kyc_rejected_reason',
+        'kyc_submitted_at', 'kyc_rejected_reason', 'kyc_ai_result', 'kyc_ai_rejections',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -45,6 +45,8 @@ class User extends Authenticatable
             'crz_token_balance'      => 'decimal:8',
             'kyc_verified_at'        => 'datetime',
             'kyc_submitted_at'       => 'datetime',
+            'kyc_ai_result'          => 'array',
+            'kyc_ai_rejections'      => 'integer',
         ];
     }
 

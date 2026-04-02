@@ -189,6 +189,30 @@ class AccountSettingsController extends Controller
             'kyc_rejected_reason' => null,
         ]);
 
+        // Dispatch AI verification in the background
+        \App\Jobs\VerifyKycDocuments::dispatch($user);
+
         return back()->with('success', 'KYC documents submitted! We\'ll review them shortly.');
+    }
+
+    public function requestManualKycReview(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        if (($user->kyc_ai_rejections ?? 0) < 3) {
+            return back()->withErrors(['kyc' => 'Please re-submit your documents first.']);
+        }
+
+        if ($user->kyc_status === User::KYC_SUBMITTED) {
+            return back()->withErrors(['kyc' => 'Your KYC is already under review.']);
+        }
+
+        $user->update([
+            'kyc_status'          => User::KYC_SUBMITTED,
+            'kyc_submitted_at'    => now(),
+            'kyc_rejected_reason' => null,
+        ]);
+
+        return back()->with('success', 'Your documents have been sent for manual review by our team.');
     }
 }
