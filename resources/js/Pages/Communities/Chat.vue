@@ -2,10 +2,10 @@
     <AppLayout :title="`${community.name} · Chat`" :community="community">
         <CommunityTabs :community="community" active-tab="chat" />
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-            <!-- ── Chat column ─────────────────────────────────────────────── -->
-            <div class="lg:col-span-2 flex flex-col" style="height: calc(100vh - 220px);">
+            <!-- ── Group chat column ──────────────────────────────────────── -->
+            <div class="flex flex-col" style="height: calc(100vh - 220px);">
                 <div class="bg-white border border-gray-200 rounded-2xl flex flex-col overflow-hidden h-full shadow-sm">
 
                     <!-- Header -->
@@ -182,22 +182,10 @@
                 </div>
             </div>
 
-            <!-- ── Right sidebar ────────────────────────────────────────────── -->
-            <div class="flex flex-col gap-4" style="height: calc(100vh - 220px);">
-                <div class="shrink-0">
-                    <CommunitySidebarCard :community="community">
-                        <button
-                            v-if="$page.props.auth?.user"
-                            @click="showInviteModal = true"
-                            class="w-full py-2 text-sm font-semibold border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                        >
-                            Invite People
-                        </button>
-                    </CommunitySidebarCard>
-                </div>
-
+            <!-- ── Creator chat column ─────────────────────────────────────── -->
+            <div style="height: calc(100vh - 220px);">
                 <AiChatSidebar
-                    class="flex-1 min-h-0"
+                    class="h-full"
                     :community-slug="community.slug"
                     :community-name="community.name"
                     :creator-name="community.owner?.name ?? community.name"
@@ -206,12 +194,6 @@
             </div>
         </div>
 
-        <InviteModal
-            :show="showInviteModal"
-            :community-name="community.name"
-            :invite-url="inviteUrl"
-            @close="showInviteModal = false"
-        />
     </AppLayout>
 </template>
 
@@ -221,8 +203,6 @@ import { usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import CommunityTabs from '@/Components/CommunityTabs.vue';
-import CommunitySidebarCard from '@/Components/CommunitySidebarCard.vue';
-import InviteModal from '@/Components/InviteModal.vue';
 import AiChatSidebar from '@/Components/AiChatSidebar.vue';
 
 const props = defineProps({
@@ -244,7 +224,6 @@ const inputEl         = ref(null);
 const fileInputEl     = ref(null);
 const mediaFile       = ref(null);
 const mediaPreviewUrl = ref(null);
-const showInviteModal = ref(false);
 
 function onFileSelected(e) {
     const file = e.target.files[0];
@@ -259,11 +238,6 @@ function clearMedia() {
     if (fileInputEl.value) fileInputEl.value.value = '';
 }
 
-const inviteUrl = computed(() =>
-    props.affiliate?.code
-        ? `${window.location.origin}/ref/${props.affiliate.code}`
-        : `${window.location.origin}/communities/${props.community.slug}`
-);
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 const avatarColors = [
