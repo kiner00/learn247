@@ -6,6 +6,7 @@ use App\Actions\Chat\DeleteChatMessage;
 use App\Actions\Chat\SendChatMessage;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SendMessageRequest;
+use App\Models\ChatbotMessage;
 use App\Models\Community;
 use App\Models\CommunityMember;
 use App\Models\Message;
@@ -31,8 +32,29 @@ class ChatController extends Controller
         $affiliate = $userId ? $community->affiliates()->where('user_id', $userId)->first() : null;
 
         $telegramConnected = (bool) ($community->telegram_bot_token && $community->telegram_chat_id);
+        $isOwner = $userId && $userId === $community->owner_id;
 
-        return Inertia::render('Communities/Chat', compact('community', 'messages', 'affiliate', 'telegramConnected'));
+        // For creator: load chatbot conversation users
+        $chatbotUsers = [];
+        if ($isOwner) {
+            $chatbotUsers = ChatbotMessage::where('community_id', $community->id)
+                ->selectRaw('user_id, MAX(created_at) as last_chat_at, COUNT(*) as message_count')
+                ->groupBy('user_id')
+                ->orderByDesc('last_chat_at')
+                ->with('user:id,name,avatar')
+                ->get()
+                ->map(fn ($row) => [
+                    'id'            => $row->user_id,
+                    'name'          => $row->user->name,
+                    'avatar'        => $row->user->avatar,
+                    'last_chat_at'  => $row->last_chat_at,
+                    'message_count' => $row->message_count,
+                ]);
+        }
+
+        return Inertia::render('Communities/Chat', compact(
+            'community', 'messages', 'affiliate', 'telegramConnected', 'isOwner', 'chatbotUsers'
+        ));
     }
 
     public function store(SendMessageRequest $request, Community $community, SendChatMessage $action): JsonResponse
