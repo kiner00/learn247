@@ -161,7 +161,7 @@
                             <div class="flex items-center gap-2 mt-2 flex-wrap">
                                 <Link
                                     v-if="$page.props.auth?.user && member.user?.id !== $page.props.auth.user.id && member.user?.username"
-                                    :href="isOwner ? `/communities/${community.slug}/chat?tab=personal&user=${member.user.id}` : `/messages/${member.user.username}`"
+                                    :href="`/communities/${community.slug}/chat?tab=personal&user=${member.user.id}`"
                                     class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-gray-200 rounded-full text-gray-500 hover:border-indigo-300 hover:text-indigo-600 transition-colors"
                                 >
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

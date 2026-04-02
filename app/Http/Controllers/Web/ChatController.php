@@ -54,7 +54,7 @@ class ChatController extends Controller
 
         // If linking to a specific user's chat (from Members page)
         $selectedChatUser = null;
-        if ($isOwner && request()->query('user')) {
+        if (request()->query('user')) {
             $targetUserId = (int) request()->query('user');
             $targetUser = \App\Models\User::select('id', 'name', 'avatar')->find($targetUserId);
             if ($targetUser) {

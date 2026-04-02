@@ -214,23 +214,23 @@
                                 <p class="text-xs text-gray-400 leading-relaxed">{{ personalSelectedId === 'creator' ? `Ask me anything about ${community.name}!` : 'View the conversation' }}</p>
                             </div>
 
-                            <div v-for="msg in personalMessages" :key="msg.id" class="flex gap-2.5" :class="msg.role === 'user' ? 'justify-end' : ''">
-                                <div v-if="msg.role === 'creator'" class="shrink-0 mt-0.5">
-                                    <img v-if="community.owner?.avatar" :src="community.owner.avatar" class="w-7 h-7 rounded-full object-cover" />
-                                    <div v-else class="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600">{{ community.owner?.name?.charAt(0)?.toUpperCase() }}</div>
+                            <div v-for="msg in personalMessages" :key="msg.id" class="flex gap-2.5" :class="isMineMsg(msg) ? 'justify-end' : ''">
+                                <div v-if="!isMineMsg(msg)" class="shrink-0 mt-0.5">
+                                    <img v-if="personalHeaderAvatar" :src="personalHeaderAvatar" class="w-7 h-7 rounded-full object-cover" />
+                                    <div v-else class="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600">{{ personalHeaderName?.charAt(0)?.toUpperCase() }}</div>
                                 </div>
                                 <div class="max-w-[75%]">
-                                    <div class="px-3 py-2 rounded-2xl text-sm leading-relaxed" :class="msg.role === 'user' ? 'bg-indigo-600 text-white rounded-br-md' : 'bg-gray-100 text-gray-700 rounded-bl-md'">
+                                    <div class="px-3 py-2 rounded-2xl text-sm leading-relaxed" :class="isMineMsg(msg) ? 'bg-indigo-600 text-white rounded-br-md' : 'bg-gray-100 text-gray-700 rounded-bl-md'">
                                         <p class="whitespace-pre-wrap break-words">{{ msg.content ?? msg.text }}</p>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Typing indicator -->
+                            <!-- Typing indicator (chatbot only) -->
                             <div v-if="personalLoading" class="flex gap-2.5">
                                 <div class="shrink-0 mt-0.5">
-                                    <img v-if="community.owner?.avatar" :src="community.owner.avatar" class="w-7 h-7 rounded-full object-cover" />
-                                    <div v-else class="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600">{{ community.owner?.name?.charAt(0)?.toUpperCase() }}</div>
+                                    <img v-if="personalHeaderAvatar" :src="personalHeaderAvatar" class="w-7 h-7 rounded-full object-cover" />
+                                    <div v-else class="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600">{{ personalHeaderName?.charAt(0)?.toUpperCase() }}</div>
                                 </div>
                                 <div class="bg-gray-100 px-3 py-2 rounded-2xl rounded-bl-md">
                                     <div class="flex gap-1 items-center">
@@ -315,7 +315,9 @@ const tabs = computed(() => {
 
 function switchTab(key) {
     activeTab.value = key;
-    if (key === 'talk') {
+    if (key === 'personal') {
+        loadConversations();
+    } else if (key === 'talk') {
         selectCreatorChat();
     }
     if (key === 'personal' && !props.isOwner && !personalSelectedId.value) {
@@ -364,8 +366,9 @@ async function send() {
 }
 
 // ── Personal tab ──────────────────────────────────────────────────────────────
-const conversationList   = ref([...props.chatbotUsers]);
+const conversationList   = ref([]);
 const personalSelectedId = ref(null);
+const personalChatType   = ref(null); // 'dm', 'chatbot', or 'creator-chatbot'
 const personalMessages   = ref([]);
 const personalInput      = ref('');
 const personalSending    = ref(false);
@@ -378,20 +381,44 @@ let   personalLastMsgId  = 0;
 const personalHeaderName = computed(() => {
     if (personalSelectedId.value === 'creator') return props.community.owner?.name;
     const u = conversationList.value.find(x => x.id === personalSelectedId.value);
-    return u?.name ?? '';
+    return u?.name ?? props.selectedChatUser?.name ?? '';
 });
 const personalHeaderAvatar = computed(() => {
     if (personalSelectedId.value === 'creator') return props.community.owner?.avatar;
     const u = conversationList.value.find(x => x.id === personalSelectedId.value);
-    return u?.avatar ?? null;
+    return u?.avatar ?? props.selectedChatUser?.avatar ?? null;
 });
+
+function isMineMsg(msg) {
+    if (personalChatType.value === 'dm') return msg.is_mine;
+    if (personalChatType.value === 'creator-chatbot') return msg.role === 'user';
+    if (personalChatType.value === 'chatbot') return msg.role === 'user';
+    return false;
+}
 
 function scrollPersonalToBottom(smooth = false) {
     nextTick(() => personalChatEl.value?.scrollTo({ top: personalChatEl.value?.scrollHeight, behavior: smooth ? 'smooth' : 'instant' }));
 }
 
+async function loadConversations() {
+    try {
+        const { data } = await axios.get(`/communities/${props.community.slug}/dm/conversations`);
+        const dmUsers = data.conversations || [];
+        if (props.isOwner) {
+            const allIds = new Set(dmUsers.map(u => u.id));
+            for (const cu of props.chatbotUsers) {
+                if (!allIds.has(cu.id)) dmUsers.push(cu);
+            }
+        }
+        conversationList.value = dmUsers;
+    } catch {
+        conversationList.value = props.isOwner ? [...props.chatbotUsers] : [];
+    }
+}
+
 async function selectCreatorChat() {
     personalSelectedId.value = 'creator';
+    personalChatType.value = 'creator-chatbot';
     personalInput.value = '';
     personalMessages.value = [];
     personalConvId = null;
@@ -408,8 +435,25 @@ async function selectMemberChat(u) {
     personalSelectedId.value = u.id;
     personalInput.value = '';
     personalMessages.value = [];
+    personalLastMsgId = 0;
+
+    // Owner viewing chatbot conversations
+    if (props.isOwner && props.chatbotUsers.some(cu => cu.id === u.id)) {
+        personalChatType.value = 'chatbot';
+        try {
+            const { data } = await axios.get(`/communities/${props.community.slug}/chatbot/poll`, { params: { after: 0, user_id: u.id } });
+            personalMessages.value = data.messages || [];
+            personalLastMsgId = personalMessages.value.length ? Math.max(...personalMessages.value.map(m => m.id || 0)) : 0;
+            scrollPersonalToBottom();
+        } catch {}
+        startPersonalPolling();
+        return;
+    }
+
+    // DM conversation
+    personalChatType.value = 'dm';
     try {
-        const { data } = await axios.get(`/communities/${props.community.slug}/chatbot/poll`, { params: { after: 0, user_id: u.id } });
+        const { data } = await axios.get(`/communities/${props.community.slug}/dm/${u.id}/messages`);
         personalMessages.value = data.messages || [];
         personalLastMsgId = personalMessages.value.length ? Math.max(...personalMessages.value.map(m => m.id || 0)) : 0;
         scrollPersonalToBottom();
@@ -421,12 +465,20 @@ function startPersonalPolling() {
     stopPersonalPolling();
     personalPollTimer = setInterval(async () => {
         if (!personalSelectedId.value) return;
-        const params = { after: personalLastMsgId };
-        if (props.isOwner && personalSelectedId.value !== 'creator') params.user_id = personalSelectedId.value;
         try {
-            const { data } = await axios.get(`/communities/${props.community.slug}/chatbot/poll`, { params });
-            if (data.messages?.length) {
-                for (const msg of data.messages) {
+            let newMessages = [];
+            if (personalChatType.value === 'dm') {
+                const { data } = await axios.get(`/communities/${props.community.slug}/dm/${personalSelectedId.value}/poll`, { params: { after: personalLastMsgId } });
+                newMessages = data.messages || [];
+            } else if (personalChatType.value === 'chatbot') {
+                const { data } = await axios.get(`/communities/${props.community.slug}/chatbot/poll`, { params: { after: personalLastMsgId, user_id: personalSelectedId.value } });
+                newMessages = data.messages || [];
+            } else if (personalChatType.value === 'creator-chatbot') {
+                const { data } = await axios.get(`/communities/${props.community.slug}/chatbot/poll`, { params: { after: personalLastMsgId } });
+                newMessages = data.messages || [];
+            }
+            if (newMessages.length) {
+                for (const msg of newMessages) {
                     if (!personalMessages.value.some(m => m.id === msg.id)) {
                         personalMessages.value.push(msg);
                         if (msg.id > personalLastMsgId) personalLastMsgId = msg.id;
@@ -443,8 +495,8 @@ async function sendPersonalMessage() {
     const text = personalInput.value.trim();
     if (!text || personalSending.value || personalLoading.value) return;
 
-    // Creator replying to a member
-    if (props.isOwner && personalSelectedId.value !== 'creator') {
+    // Owner replying to chatbot conversation
+    if (personalChatType.value === 'chatbot') {
         personalSending.value = true;
         personalInput.value = '';
         try {
@@ -459,26 +511,42 @@ async function sendPersonalMessage() {
         return;
     }
 
-    // Member chatting with creator (AI)
-    personalMessages.value.push({ role: 'user', text, content: text });
+    // Member chatting with creator (AI chatbot)
+    if (personalChatType.value === 'creator-chatbot') {
+        personalMessages.value.push({ role: 'user', text, content: text });
+        personalInput.value = '';
+        personalLoading.value = true;
+        scrollPersonalToBottom(true);
+        try {
+            const res = await axios.post(`/communities/${props.community.slug}/chatbot`, {
+                message: text, conversation_id: personalConvId,
+            }, { headers: { 'X-CSRF-TOKEN': csrfToken } });
+            personalConvId = res.data.conversation_id;
+            personalMessages.value.push({ role: 'creator', text: res.data.message, content: res.data.message });
+            const { data } = await axios.get(`/communities/${props.community.slug}/chatbot/history`);
+            if (data.messages?.length) {
+                personalMessages.value = data.messages;
+                personalLastMsgId = Math.max(...data.messages.map(m => m.id || 0));
+            }
+        } catch {
+            personalMessages.value.push({ role: 'creator', text: 'Sorry, something went wrong. Try again in a bit!', content: 'Sorry, something went wrong. Try again in a bit!' });
+        } finally { personalLoading.value = false; scrollPersonalToBottom(true); }
+        return;
+    }
+
+    // DM conversation
+    personalSending.value = true;
     personalInput.value = '';
-    personalLoading.value = true;
-    scrollPersonalToBottom(true);
     try {
-        const res = await axios.post(`/communities/${props.community.slug}/chatbot`, {
-            message: text, conversation_id: personalConvId,
+        const { data } = await axios.post(`/communities/${props.community.slug}/dm/send`, {
+            receiver_id: personalSelectedId.value, content: text,
         }, { headers: { 'X-CSRF-TOKEN': csrfToken } });
-        personalConvId = res.data.conversation_id;
-        personalMessages.value.push({ role: 'creator', text: res.data.message, content: res.data.message });
-        // Reload to get proper IDs
-        const { data } = await axios.get(`/communities/${props.community.slug}/chatbot/history`);
-        if (data.messages?.length) {
-            personalMessages.value = data.messages;
-            personalLastMsgId = Math.max(...data.messages.map(m => m.id || 0));
-        }
-    } catch {
-        personalMessages.value.push({ role: 'creator', text: 'Sorry, something went wrong. Try again in a bit!', content: 'Sorry, something went wrong. Try again in a bit!' });
-    } finally { personalLoading.value = false; scrollPersonalToBottom(true); }
+        personalMessages.value.push(data.message);
+        if (data.message.id > personalLastMsgId) personalLastMsgId = data.message.id;
+        scrollPersonalToBottom(true);
+        loadConversations();
+    } catch { personalInput.value = text; }
+    finally { personalSending.value = false; }
 }
 
 // ── AI Assistant tab ──────────────────────────────────────────────────────────
@@ -508,10 +576,12 @@ onMounted(() => {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('tab') === 'personal') {
         activeTab.value = 'personal';
-        if (props.isOwner && props.selectedChatUser) {
-            const u = conversationList.value.find(x => x.id === props.selectedChatUser.id);
-            selectMemberChat(u ?? { ...props.selectedChatUser, message_count: 0 });
-        }
+        loadConversations().then(() => {
+            if (props.selectedChatUser) {
+                const u = conversationList.value.find(x => x.id === props.selectedChatUser.id);
+                selectMemberChat(u ?? { ...props.selectedChatUser, message_count: 0 });
+            }
+        });
     }
 
     if (window.Echo) {

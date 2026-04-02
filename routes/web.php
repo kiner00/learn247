@@ -11,6 +11,7 @@ use App\Http\Controllers\Web\AuthController;
 use App\Http\Controllers\Web\CertificateController;
 use App\Http\Controllers\Web\ChatController;
 use App\Http\Controllers\Web\CommunityChatbotController;
+use App\Http\Controllers\Web\CommunityDmController;
 use App\Http\Controllers\Web\ClassroomController;
 use App\Http\Controllers\Web\DirectMessageController;
 use App\Http\Controllers\Web\CommentController;
@@ -299,6 +300,12 @@ Route::middleware('auth')->group(function () {
         Route::post('/communities/{community}/chatbot/reply',  [CommunityChatbotController::class, 'reply'])->name('communities.chatbot.reply');
         Route::get('/communities/{community}/chatbot/poll',    [CommunityChatbotController::class, 'poll'])->name('communities.chatbot.poll');
         Route::get('/communities/{community}/chatbot/history', [CommunityChatbotController::class, 'history'])->name('communities.chatbot.history');
+
+        // ─── Community DMs ───────────────────────────────────────────────────
+        Route::get('/communities/{community}/dm/conversations',       [CommunityDmController::class, 'conversations'])->name('communities.dm.conversations');
+        Route::get('/communities/{community}/dm/{userId}/messages',   [CommunityDmController::class, 'messages'])->name('communities.dm.messages');
+        Route::get('/communities/{community}/dm/{userId}/poll',       [CommunityDmController::class, 'poll'])->name('communities.dm.poll');
+        Route::post('/communities/{community}/dm/send',               [CommunityDmController::class, 'send'])->name('communities.dm.send');
 
         // ─── Leaderboard ──────────────────────────────────────────────────────
         Route::get('/communities/{community}/leaderboard', [LeaderboardController::class, 'show'])->name('communities.leaderboard');
