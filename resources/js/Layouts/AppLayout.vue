@@ -668,7 +668,8 @@
                                         </button>
                                         <input ref="coverInputC" type="file" accept="image/*" class="hidden" @change="onCreateCoverChange" />
                                     </div>
-                                    <p v-if="coverRatioError" class="mt-1 text-xs text-red-600">{{ coverRatioError }}</p>
+                                    <p v-if="coverSizeError" class="mt-1 text-xs text-red-600">{{ coverSizeError }}</p>
+                                    <p v-else-if="coverRatioError" class="mt-1 text-xs text-red-600">{{ coverRatioError }}</p>
                                     <p v-else-if="!coverPreviewC && createStep === 2 && createForm.errors.cover_image" class="mt-1 text-xs text-red-600">{{ createForm.errors.cover_image }}</p>
                                 </div>
 
@@ -699,6 +700,7 @@
                                             </button>
                                         </div>
                                     </div>
+                                    <p v-if="avatarSizeError" class="mt-1.5 text-xs text-red-600">{{ avatarSizeError }}</p>
                                 </div>
                             </template>
 
@@ -798,7 +800,7 @@
                             <button
                                 v-if="createStep < 3"
                                 type="button"
-                                :disabled="(createStep === 1 && !createForm.name.trim()) || (createStep === 2 && (!createForm.cover_image || coverRatioError))"
+                                :disabled="(createStep === 1 && !createForm.name.trim()) || (createStep === 2 && (!createForm.cover_image || coverRatioError || coverSizeError || avatarSizeError))"
                                 class="flex-1 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                 @click="createStep++"
                             >
@@ -1115,6 +1117,9 @@ const avatarPreviewC  = ref(null);
 const coverInputC     = ref(null);
 const avatarInputC    = ref(null);
 const coverRatioError = ref(null);
+const coverSizeError  = ref(null);
+const avatarSizeError = ref(null);
+const MAX_FILE_SIZE   = 15 * 1024 * 1024; // 15 MB
 
 const createForm = useForm({
     name:                      '',
@@ -1150,6 +1155,12 @@ function onCreateCoverChange(e) {
     const file = e.target.files[0];
     if (!file) return;
     coverRatioError.value = null;
+    coverSizeError.value  = null;
+    if (file.size > MAX_FILE_SIZE) {
+        coverSizeError.value = 'Banner image must be under 15 MB.';
+        coverInputC.value.value = '';
+        return;
+    }
     createForm.cover_image = file;
     coverPreviewC.value = URL.createObjectURL(file);
 }
@@ -1157,6 +1168,12 @@ function onCreateCoverChange(e) {
 function onCreateAvatarChange(e) {
     const file = e.target.files[0];
     if (!file) return;
+    avatarSizeError.value = null;
+    if (file.size > MAX_FILE_SIZE) {
+        avatarSizeError.value = 'Avatar must be under 15 MB.';
+        avatarInputC.value.value = '';
+        return;
+    }
     createForm.avatar = file;
     avatarPreviewC.value = URL.createObjectURL(file);
 }
