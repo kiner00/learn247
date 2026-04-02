@@ -558,7 +558,7 @@
             <div
                 v-if="showCreateModal"
                 class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-                @click.self="closeAndResetCreate()"
+                @click.self="closeCreateModal()"
             >
                 <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
 
@@ -566,7 +566,7 @@
                     <div class="px-6 pt-6 pb-4 border-b border-gray-100 dark:border-gray-700">
                         <div class="flex items-center justify-between mb-4">
                             <h2 class="text-lg font-bold text-gray-900 dark:text-gray-100">Create a Community</h2>
-                            <button @click="closeAndResetCreate()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                            <button @click="closeCreateModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
                                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                                 </svg>
