@@ -9,7 +9,7 @@
                     <div class="flex items-center gap-1">
                         <!-- Community context (when inside a community) -->
                         <template v-if="props.community">
-                            <Link :href="`/communities/${props.community.slug}`" class="flex items-center gap-2 px-1 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                            <Link :href="communityPath()" class="flex items-center gap-2 px-1 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                                 <div class="w-7 h-7 rounded-lg bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600 overflow-hidden shrink-0">
                                     <img v-if="props.community.avatar" :src="props.community.avatar" :alt="props.community.name" class="w-full h-full object-cover"/>
                                     <span v-else>{{ props.community.name.charAt(0).toUpperCase() }}</span>
@@ -150,7 +150,7 @@
                             <div class="relative" ref="dmRef">
                                 <Link
                                     v-if="props.community"
-                                    :href="`/communities/${props.community.slug}/chat?tab=personal`"
+                                    :href="communityPath('/chat?tab=personal')"
                                     class="relative flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-500 dark:text-gray-400"
                                     title="Messages"
                                 >
@@ -973,6 +973,7 @@
 import { ref, computed, watch, watchEffect, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { Link, usePage, useForm, router } from '@inertiajs/vue3';
 import { useCreateModal } from '@/composables/useCreateModal';
+import { useCommunityUrl } from '@/composables/useCommunityUrl';
 import { usePixel } from '@/composables/usePixel';
 import { useTiktokPixel } from '@/composables/useTiktokPixel';
 import { useGoogleAnalytics } from '@/composables/useGoogleAnalytics';
@@ -986,6 +987,7 @@ const props = defineProps({
 });
 
 const page = usePage();
+const { communityPath, isOnDomain } = useCommunityUrl(props.community?.slug);
 
 // ─── Dark mode ─────────────────────────────────────────────────────────────────
 

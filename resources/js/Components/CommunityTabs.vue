@@ -41,6 +41,7 @@
 <script setup>
 import { computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
+import { useCommunityUrl } from '@/composables/useCommunityUrl';
 
 const page = usePage();
 
@@ -50,6 +51,7 @@ const props = defineProps({
 });
 
 const slug = computed(() => props.community.slug);
+const { communityPath } = useCommunityUrl(slug.value);
 const isOwner = computed(() => props.community.owner_id === page.props.auth?.user?.id);
 const kycStatus = computed(() => page.props.auth?.user?.kyc_status ?? 'none');
 
@@ -81,13 +83,13 @@ const bannerIconClass = computed(() => {
 });
 
 const tabs = computed(() => [
-    { name: 'community',   label: 'Community',    href: `/communities/${slug.value}` },
-    { name: 'classroom',       label: 'Classroom',       href: `/communities/${slug.value}/classroom` },
-    { name: 'certifications',  label: 'Certifications',  href: `/communities/${slug.value}/certifications` },
-    { name: 'calendar',        label: 'Calendar',        href: `/communities/${slug.value}/calendar` },
-    { name: 'members',     label: 'Members',      href: `/communities/${slug.value}/members` },
-    { name: 'chat',        label: 'Chat',         href: `/communities/${slug.value}/chat` },
-    { name: 'leaderboard', label: 'Leaderboards', href: `/communities/${slug.value}/leaderboard` },
-    { name: 'about',       label: 'About',        href: `/communities/${slug.value}/about` },
+    { name: 'community',      label: 'Community',      href: communityPath() },
+    { name: 'classroom',      label: 'Classroom',      href: communityPath('/classroom') },
+    { name: 'certifications', label: 'Certifications', href: communityPath('/certifications') },
+    { name: 'calendar',       label: 'Calendar',       href: communityPath('/calendar') },
+    { name: 'members',        label: 'Members',        href: communityPath('/members') },
+    { name: 'chat',           label: 'Chat',           href: communityPath('/chat') },
+    { name: 'leaderboard',    label: 'Leaderboards',   href: communityPath('/leaderboard') },
+    { name: 'about',          label: 'About',          href: communityPath('/about') },
 ]);
 </script>

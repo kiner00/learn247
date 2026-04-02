@@ -2,13 +2,15 @@
 import { computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import { useCommunityUrl } from '@/composables/useCommunityUrl';
 
 const props = defineProps({
     community: { type: Object, required: true },
 });
 
 const page = usePage();
-const base = computed(() => `/communities/${props.community.slug}/settings`);
+const { communityPath } = useCommunityUrl(props.community.slug);
+const base = computed(() => communityPath('/settings'));
 
 const navItems = computed(() => [
     { href: `${base.value}/general`,        label: 'General' },
@@ -24,15 +26,18 @@ const navItems = computed(() => [
 ]);
 
 function isActive(href) {
+    // On custom domains page.url won't have the /communities/{slug} prefix,
+    // but our href values already use communityPath so they match.
     return page.url.startsWith(href);
 }
+
 </script>
 
 <template>
     <AppLayout :title="`${community.name} · Settings`">
         <!-- Breadcrumb -->
         <div class="flex items-center gap-2 text-sm text-gray-500 mb-6">
-            <Link :href="`/communities/${community.slug}`" class="hover:text-indigo-600 transition-colors">
+            <Link :href="communityPath()" class="hover:text-indigo-600 transition-colors">
                 {{ community.name }}
             </Link>
             <span>/</span>
@@ -42,7 +47,7 @@ function isActive(href) {
         <div class="flex items-center justify-between mb-8">
             <h1 class="text-2xl font-bold text-gray-900">Community Settings</h1>
             <Link
-                :href="`/communities/${community.slug}/analytics`"
+                :href="communityPath('/analytics')"
                 class="flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors"
             >
                 <span>📊</span> Analytics

@@ -283,6 +283,7 @@ import InviteModal from '@/Components/InviteModal.vue';
 import { usePixel } from '@/composables/usePixel';
 import { useTiktokPixel } from '@/composables/useTiktokPixel';
 import { useGoogleAnalytics } from '@/composables/useGoogleAnalytics';
+import { useCommunityUrl } from '@/composables/useCommunityUrl';
 
 const props = defineProps({
     community:     Object,
@@ -294,6 +295,7 @@ const props = defineProps({
     isOwner:       { type: Boolean, default: false },
 });
 
+const { communityPath } = useCommunityUrl(props.community.slug);
 const showInviteModal = ref(false);
 const showJoinModal   = ref(false);
 
@@ -340,7 +342,7 @@ const activeBannerImg = ref(
 const inviteUrl = computed(() =>
     props.affiliate?.code
         ? `${window.location.origin}/ref/${props.affiliate.code}`
-        : `${window.location.origin}/communities/${props.community.slug}`
+        : `${window.location.origin}${communityPath()}`
 );
 
 const joinForm = useForm({

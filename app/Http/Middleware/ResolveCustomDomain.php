@@ -64,6 +64,9 @@ class ResolveCustomDomain
         }
 
         if (! $isAuthPath && ! str_starts_with($path, $prefix)) {
+            // Preserve the original URI so Inertia can return the clean custom-domain URL
+            $request->attributes->set('original_uri', $request->getRequestUri());
+
             $newUri = $prefix . ($path === '/' ? '' : $path);
             if ($qs = $request->getQueryString()) {
                 $newUri .= '?' . $qs;

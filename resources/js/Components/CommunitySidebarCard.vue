@@ -1,10 +1,20 @@
 <script setup>
-defineProps({
+import { usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
+
+const props = defineProps({
     community:    { type: Object,  required: true },
     membersCount: { type: Number,  default: null },
     adminCount:   { type: Number,  default: 0 },
     isMember:     { type: Boolean, default: true },
 });
+
+const dc = usePage().props.domain_community;
+const displayUrl = computed(() =>
+    dc && dc.slug === props.community.slug
+        ? props.community.custom_domain || `${props.community.subdomain ? props.community.subdomain + '.' : ''}curzzo.com`
+        : `curzzo.com/communities/${props.community.slug}`
+);
 </script>
 
 <template>
@@ -22,7 +32,7 @@ defineProps({
 
         <div class="p-4">
             <h3 class="font-bold text-gray-900 dark:text-gray-100 text-base mb-0.5">{{ community.name }}</h3>
-            <p class="text-xs text-gray-400 mb-2">curzzo.com/communities/{{ community.slug }}</p>
+            <p class="text-xs text-gray-400 mb-2">{{ displayUrl }}</p>
             <p v-if="community.description" class="text-sm text-gray-500 dark:text-gray-400 mb-4 leading-relaxed line-clamp-3">
                 {{ community.description }}
             </p>

@@ -48,6 +48,33 @@ class HandleInertiaRequests extends Middleware
     }
 
     /**
+     * When the request arrives on a custom domain, the ResolveCustomDomain
+     * middleware rewrites the URI to /communities/{slug}/…  We strip that
+     * prefix from the Inertia response URL so the browser address bar stays clean.
+     */
+    public function urlResolver()
+    {
+        $dc = request()->attributes->get('domain_community');
+
+        if (! $dc) {
+            return null;
+        }
+
+        $prefix = '/communities/' . $dc->slug;
+
+        return function () use ($prefix) {
+            $uri = request()->getRequestUri();
+
+            if (str_starts_with($uri, $prefix)) {
+                $clean = substr($uri, strlen($prefix));
+                return $clean === '' || $clean === false ? '/' : $clean;
+            }
+
+            return $uri;
+        };
+    }
+
+    /**
      * Define the props that are shared by default.
      *
      * @see https://inertiajs.com/shared-data

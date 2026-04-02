@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import CommunitySettingsLayout from '@/Layouts/CommunitySettingsLayout.vue';
+import { useCommunityUrl } from '@/composables/useCommunityUrl';
 
 const props = defineProps({
     community:  Object,
@@ -10,6 +11,7 @@ const props = defineProps({
     serverIp:   { type: String, default: '' },
 });
 
+const { communityPath } = useCommunityUrl(props.community.slug);
 const domainSaved = ref(false);
 
 const domainForm = useForm({
@@ -20,7 +22,7 @@ const domainForm = useForm({
 
 function saveDomain() {
     domainForm.transform(data => ({ ...data, _method: 'PATCH' }))
-        .post(`/communities/${props.community.slug}`, {
+        .post(communityPath(), {
             onSuccess: () => {
                 domainSaved.value = true;
                 setTimeout(() => (domainSaved.value = false), 3000);
