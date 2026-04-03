@@ -494,11 +494,11 @@ function getLpVideoEl(container, id) {
     return container.querySelector(`video[data-lp-course-id="${id}"]`);
 }
 
-function playLpVideo(video) {
-    video.muted = false;
+function playLpVideo(video, course) {
+    const wantSound = course?.preview_video_sound;
+    video.muted = !wantSound;
     video.currentTime = 0;
     video.play().then(() => { video.style.opacity = '1'; }).catch(() => {
-        // Autoplay with sound blocked — fallback to muted
         video.muted = true;
         video.play().then(() => { video.style.opacity = '1'; }).catch(() => {});
     });
@@ -516,7 +516,7 @@ function onCourseHover(e, course) {
     const container = e.currentTarget;
     lpHoverTimer = setTimeout(() => {
         const video = getLpVideoEl(container, course.id);
-        if (video) playLpVideo(video);
+        if (video) playLpVideo(video, course);
     }, 500);
 }
 
@@ -532,7 +532,7 @@ function onCourseTouchStart(e, course) {
     const container = e.currentTarget;
     lpTouchTimer = setTimeout(() => {
         const video = getLpVideoEl(container, course.id);
-        if (video) playLpVideo(video);
+        if (video) playLpVideo(video, course);
     }, 400);
 }
 

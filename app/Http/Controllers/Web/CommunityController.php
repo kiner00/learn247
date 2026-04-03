@@ -574,7 +574,8 @@ class CommunityController extends Controller
             'title'         => $c->title,
             'description'   => $c->description,
             'cover_image'   => $c->cover_image,
-            'preview_video' => $c->preview_video,
+            'preview_video'       => $c->preview_video,
+            'preview_video_sound' => (bool) $c->preview_video_sound,
             'access_type'   => $c->access_type,
             'price'         => $c->price,
         ]);

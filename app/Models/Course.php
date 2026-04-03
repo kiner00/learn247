@@ -18,13 +18,14 @@ class Course extends Model
     public const ACCESS_PAID_MONTHLY = 'paid_monthly';
     public const ACCESS_MEMBER_ONCE  = 'member_once';
 
-    protected $fillable = ['community_id', 'title', 'description', 'cover_image', 'preview_video', 'preview_play_count', 'preview_watch_seconds', 'position', 'access_type', 'price', 'affiliate_commission_rate', 'is_published'];
+    protected $fillable = ['community_id', 'title', 'description', 'cover_image', 'preview_video', 'preview_play_count', 'preview_watch_seconds', 'preview_video_sound', 'position', 'access_type', 'price', 'affiliate_commission_rate', 'is_published'];
 
     protected function casts(): array
     {
         return [
-            'price'        => 'decimal:2',
-            'is_published' => 'boolean',
+            'price'               => 'decimal:2',
+            'is_published'        => 'boolean',
+            'preview_video_sound' => 'boolean',
         ];
     }
 

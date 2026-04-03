@@ -168,6 +168,10 @@
                         <input ref="videoInput" type="file" accept="video/mp4,video/quicktime,video/webm" class="hidden" @change="onVideoChange" />
                     </label>
                     <p class="text-xs text-gray-400 mt-1">MP4 recommended, 1280 x 720 px, max 500 MB. Plays on hover.</p>
+                    <label v-if="videoPreview || courseForm.preview_video" class="flex items-center gap-2 mt-2 cursor-pointer">
+                        <input type="checkbox" v-model="courseForm.preview_video_sound" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                        <span class="text-xs text-gray-600">Enable sound on preview</span>
+                    </label>
                 </div>
 
                 <div class="flex gap-2 justify-end">
@@ -511,6 +515,10 @@
                                 <input ref="editVideoInput" type="file" accept="video/mp4,video/quicktime,video/webm" class="hidden" @change="onEditVideoChange" />
                             </label>
                             <p class="text-xs text-gray-400 mt-1">MP4 recommended, 1280 × 720 px, max 500 MB. Plays on hover.</p>
+                            <label v-if="editVideoPreview || editingCourse?.preview_video" class="flex items-center gap-2 mt-2 cursor-pointer">
+                                <input type="checkbox" v-model="editForm.preview_video_sound" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                                <span class="text-xs text-gray-600">Enable sound on preview</span>
+                            </label>
                         </div>
 
                         <div class="flex gap-2 justify-end">
@@ -614,7 +622,7 @@ const inviteUrl = computed(() =>
         : `${window.location.origin}/communities/${props.community.slug}`
 );
 
-const courseForm = useForm({ title: '', description: '', cover_image: null, preview_video: null, access_type: 'inclusive', price: '', affiliate_commission_rate: '' });
+const courseForm = useForm({ title: '', description: '', cover_image: null, preview_video: null, preview_video_sound: false, access_type: 'inclusive', price: '', affiliate_commission_rate: '' });
 
 function onCoverChange(e) {
     const file = e.target.files?.[0];
@@ -692,7 +700,7 @@ const editVideoInput         = ref(null);
 const editVideoUploading     = ref(false);
 const editVideoUploadProgress = ref(0);
 const editVideoUploadError   = ref('');
-const editForm         = useForm({ title: '', description: '', cover_image: null, preview_video: null, remove_preview_video: false, access_type: 'inclusive', price: '', affiliate_commission_rate: '' });
+const editForm         = useForm({ title: '', description: '', cover_image: null, preview_video: null, preview_video_sound: false, remove_preview_video: false, access_type: 'inclusive', price: '', affiliate_commission_rate: '' });
 
 function openEdit(course) {
     editingCourse.value    = course;
@@ -702,6 +710,7 @@ function openEdit(course) {
     editForm.description   = course.description ?? '';
     editForm.cover_image   = null;
     editForm.preview_video        = null;
+    editForm.preview_video_sound  = course.preview_video_sound ?? false;
     editForm.remove_preview_video = false;
     editForm.access_type              = course.access_type ?? 'inclusive';
     editForm.price                    = course.price ?? '';
@@ -790,8 +799,14 @@ function getVideoEl(container, courseId) {
     return container.querySelector(`video[data-course-id="${courseId}"]`);
 }
 
+function findCourse(courseId) {
+    return props.courses.find(c => c.id === courseId);
+}
+
 function startVideo(video, courseId) {
-    video.muted = false;
+    const course = findCourse(courseId);
+    const wantSound = course?.preview_video_sound;
+    video.muted = !wantSound;
     video.currentTime = 0;
     video.play().then(() => {
         video.style.opacity = '1';
