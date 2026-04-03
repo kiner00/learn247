@@ -272,7 +272,7 @@
 
 <script setup>
 import { ref, computed, nextTick, onMounted, onBeforeUnmount } from 'vue';
-import { usePage } from '@inertiajs/vue3';
+import { usePage, router } from '@inertiajs/vue3';
 import axios from 'axios';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import CommunityTabs from '@/Components/CommunityTabs.vue';
@@ -583,18 +583,25 @@ const aiSaving = ref(false);
 const aiSaved  = ref(false);
 const aiError  = ref('');
 
-async function saveAiInstructions() {
+function saveAiInstructions() {
     aiSaving.value = true;
     aiError.value  = '';
-    try {
-        await axios.patch(`/communities/${props.community.slug}`, { name: props.community.name, ai_chatbot_instructions: aiInstructions.value });
-        aiSaved.value = true;
-        setTimeout(() => (aiSaved.value = false), 4000);
-    } catch (err) {
-        console.error('Failed to save AI instructions:', err?.response?.data ?? err);
-        aiError.value = err?.response?.data?.message ?? 'Failed to save. Please try again.';
-    }
-    finally { aiSaving.value = false; }
+    router.post(`/communities/${props.community.slug}`, {
+        _method: 'PATCH',
+        name: props.community.name,
+        ai_chatbot_instructions: aiInstructions.value,
+    }, {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+            aiSaved.value = true;
+            setTimeout(() => (aiSaved.value = false), 4000);
+        },
+        onError: () => {
+            aiError.value = 'Failed to save. Please try again.';
+        },
+        onFinish: () => { aiSaving.value = false; },
+    });
 }
 
 // ── Echo / Reverb ─────────────────────────────────────────────────────────────
