@@ -28,8 +28,8 @@
                             </Link>
                         </template>
 
-                        <!-- Dropdown toggle (always visible) -->
-                        <div class="relative" ref="switcherRef">
+                        <!-- Dropdown toggle (hidden on custom domain) -->
+                        <div v-if="!isOnDomain" class="relative" ref="switcherRef">
                         <button
                             @click="switcherOpen = !switcherOpen"
                             class="flex items-center justify-center w-7 h-7 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
@@ -146,8 +146,8 @@
                     <div class="flex items-center gap-2">
                         <template v-if="$page.props.auth?.user">
 
-                            <!-- Direct messages / Community chat -->
-                            <div class="relative" ref="dmRef">
+                            <!-- Direct messages / Community chat (hidden on custom domain) -->
+                            <div v-if="!isOnDomain" class="relative" ref="dmRef">
                                 <Link
                                     v-if="props.community"
                                     :href="communityPath('/chat?tab=personal')"
@@ -278,8 +278,8 @@
                                 </Transition>
                             </div>
 
-                            <!-- Notification bell -->
-                            <div class="relative" ref="notifRef">
+                            <!-- Notification bell (hidden on custom domain) -->
+                            <div v-if="!isOnDomain" class="relative" ref="notifRef">
                                 <button
                                     @click="toggleNotifications"
                                     class="relative flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-500 dark:text-gray-400"
@@ -391,7 +391,8 @@
                                             <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ $page.props.auth.user.email }}</p>
                                         </div>
 
-                                        <!-- Primary actions -->
+                                        <!-- Primary actions (hidden on custom domain) -->
+                                        <template v-if="!isOnDomain">
                                         <div class="p-1.5 border-b border-gray-100 dark:border-gray-700">
                                             <Link
                                                 href="/profile"
@@ -471,6 +472,7 @@
                                                 Discover communities
                                             </Link>
                                         </div>
+                                        </template>
 
                                         <!-- Log out -->
                                         <div class="p-1.5">
