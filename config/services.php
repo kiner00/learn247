@@ -47,4 +47,11 @@ return [
         'site_id'   => env('PLOI_SITE_ID'),
     ],
 
+    'mediaconvert' => [
+        'endpoint' => env('AWS_MEDIACONVERT_ENDPOINT'),
+        'role_arn' => env('AWS_MEDIACONVERT_ROLE_ARN'),
+        'region'   => env('AWS_DEFAULT_REGION', 'us-east-1'),
+        'queue'    => env('AWS_MEDIACONVERT_QUEUE', 'Default'),
+    ],
+
 ];

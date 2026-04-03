@@ -453,7 +453,7 @@ class ClassroomController extends Controller
                     'community' => $community,
                     'course'    => $course,
                     'lesson'    => $lesson,
-                    'file'      => 'master.m3u8',
+                    'file'      => basename($lesson->video_hls_path),
                 ]);
 
                 return response()->json([
