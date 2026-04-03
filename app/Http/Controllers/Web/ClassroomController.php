@@ -99,6 +99,18 @@ class ClassroomController extends Controller
         }
     }
 
+    public function trackPreviewPlay(Request $request, Community $community, Course $course): JsonResponse
+    {
+        $data = $request->validate([
+            'seconds' => ['required', 'integer', 'min:1', 'max:600'],
+        ]);
+
+        $course->increment('preview_play_count');
+        $course->increment('preview_watch_seconds', $data['seconds']);
+
+        return response()->json(['ok' => true]);
+    }
+
     public function reorderCourses(Request $request, Community $community, ManageCourse $action): RedirectResponse
     {
         try {

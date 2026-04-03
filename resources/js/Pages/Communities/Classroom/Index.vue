@@ -230,6 +230,19 @@
                                         </span>
                                     </div>
                                     <p class="text-sm text-gray-500 line-clamp-2 leading-relaxed flex-1">{{ course.description ?? '' }}</p>
+                                    <div v-if="course.preview_video && course.preview_play_count > 0" class="flex items-center gap-3 mt-2 pt-2 border-t border-gray-100">
+                                        <span class="text-[11px] text-gray-400 flex items-center gap-1">
+                                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                            {{ course.preview_play_count }} plays
+                                        </span>
+                                        <span class="text-[11px] text-gray-400 flex items-center gap-1">
+                                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                            {{ formatWatchTime(course.preview_watch_seconds) }}
+                                        </span>
+                                        <span v-if="course.preview_play_count > 0" class="text-[11px] text-gray-400">
+                                            ~{{ Math.round(course.preview_watch_seconds / course.preview_play_count) }}s avg
+                                        </span>
+                                    </div>
                                 </div>
                             </Link>
                             <!-- Owner actions -->
@@ -763,9 +776,33 @@ function deleteCourse(course) {
 // ── Hover / tap-to-play preview video ────────────────────────────────────────
 let touchTimer = null;
 let hoverTimer = null;
+const playStartTimes = {};
 
 function getVideoEl(container, courseId) {
     return container.querySelector(`video[data-course-id="${courseId}"]`);
+}
+
+function startVideo(video, courseId) {
+    video.currentTime = 0;
+    video.play().then(() => {
+        video.style.opacity = '1';
+        playStartTimes[courseId] = Date.now();
+    }).catch(() => {});
+}
+
+function stopVideoAndTrack(video, courseId) {
+    video.style.opacity = '0';
+    video.pause();
+    video.currentTime = 0;
+
+    const startTime = playStartTimes[courseId];
+    if (startTime) {
+        const seconds = Math.round((Date.now() - startTime) / 1000);
+        delete playStartTimes[courseId];
+        if (seconds >= 1) {
+            axios.post(`/communities/${props.community.slug}/classroom/courses/${courseId}/preview-play`, { seconds }).catch(() => {});
+        }
+    }
 }
 
 function onCardHover(e, course) {
@@ -774,8 +811,7 @@ function onCardHover(e, course) {
     hoverTimer = setTimeout(() => {
         const video = getVideoEl(container, course.id);
         if (!video) return;
-        video.currentTime = 0;
-        video.play().then(() => { video.style.opacity = '1'; }).catch(() => {});
+        startVideo(video, course.id);
     }, 500);
 }
 
@@ -784,9 +820,7 @@ function onCardLeave(e, course) {
     if (!course.preview_video) return;
     const video = getVideoEl(e.currentTarget, course.id);
     if (!video) return;
-    video.style.opacity = '0';
-    video.pause();
-    video.currentTime = 0;
+    stopVideoAndTrack(video, course.id);
 }
 
 function onCardTouchStart(e, course) {
@@ -795,8 +829,7 @@ function onCardTouchStart(e, course) {
     touchTimer = setTimeout(() => {
         const video = getVideoEl(container, course.id);
         if (!video) return;
-        video.currentTime = 0;
-        video.play().then(() => { video.style.opacity = '1'; }).catch(() => {});
+        startVideo(video, course.id);
     }, 400);
 }
 
@@ -804,9 +837,15 @@ function onCardTouchEnd(course) {
     clearTimeout(touchTimer);
     if (!course.preview_video) return;
     document.querySelectorAll(`video[data-course-id="${course.id}"]`).forEach(v => {
-        v.style.opacity = '0';
-        v.pause();
-        v.currentTime = 0;
+        stopVideoAndTrack(v, course.id);
     });
+}
+
+function formatWatchTime(seconds) {
+    if (seconds < 60) return `${seconds}s`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    return `${h}h ${m}m`;
 }
 </script>

@@ -185,6 +185,7 @@ Route::get('/communities/{community}/calendar', [EventController::class, 'index'
 // ─── Classroom (public read) ───────────────────────────────────────────────
 Route::get('/communities/{community}/classroom', [ClassroomController::class, 'index'])->name('communities.classroom');
 Route::get('/communities/{community}/classroom/courses/{course}', [ClassroomController::class, 'showCourse'])->name('communities.classroom.courses.show');
+Route::post('/communities/{community}/classroom/courses/{course}/preview-play', [ClassroomController::class, 'trackPreviewPlay'])->name('communities.classroom.courses.preview-play');
 
 Route::middleware('auth')->group(function () {
     Route::post('/communities', [CommunityController::class, 'store'])->name('communities.store');

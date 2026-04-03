@@ -71,7 +71,7 @@ class GetCourseList
                 ? $lessonIds->filter(fn ($id) => $completedLessonIds->has($id))->count()
                 : 0;
 
-            return [
+            $result = [
                 'id'          => $course->id,
                 'title'       => $course->title,
                 'description' => $course->description,
@@ -87,6 +87,13 @@ class GetCourseList
                 'progress'    => $total > 0 && $hasAccess ? round($completed / $total * 100) : 0,
                 'has_access'  => $hasAccess,
             ];
+
+            if ($isOwner) {
+                $result['preview_play_count']    = $course->preview_play_count ?? 0;
+                $result['preview_watch_seconds'] = $course->preview_watch_seconds ?? 0;
+            }
+
+            return $result;
         });
     }
 
