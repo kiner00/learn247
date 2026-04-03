@@ -554,7 +554,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onBeforeUnmount } from 'vue';
 import { Link, useForm, usePage, router } from '@inertiajs/vue3';
 
 import axios from 'axios';
@@ -872,6 +872,17 @@ function onCardTouchEnd(course) {
         stopVideoAndTrack(v, course.id);
     });
 }
+
+onBeforeUnmount(() => {
+    document.querySelectorAll('video[data-course-id]').forEach(video => {
+        video.pause();
+        video.currentTime = 0;
+        video.muted = true;
+        video.style.opacity = '0';
+    });
+    clearTimeout(hoverTimer);
+    clearTimeout(touchTimer);
+});
 
 function formatWatchTime(seconds) {
     if (seconds < 60) return `${seconds}s`;

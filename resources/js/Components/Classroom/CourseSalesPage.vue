@@ -139,7 +139,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onBeforeUnmount } from 'vue';
 import { Link } from '@inertiajs/vue3';
 
 defineProps({
@@ -161,4 +161,12 @@ function toggleMute() {
     heroVideoRef.value.muted = !heroVideoRef.value.muted;
     isMuted.value = heroVideoRef.value.muted;
 }
+
+onBeforeUnmount(() => {
+    if (heroVideoRef.value) {
+        heroVideoRef.value.pause();
+        heroVideoRef.value.currentTime = 0;
+        heroVideoRef.value.muted = true;
+    }
+});
 </script>
