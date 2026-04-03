@@ -260,6 +260,7 @@
                             <div class="flex items-center gap-3 mt-4">
                                 <button @click="saveAiInstructions" :disabled="aiSaving" class="px-5 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-colors">{{ aiSaving ? 'Saving...' : 'Save Instructions' }}</button>
                                 <p v-if="aiSaved" class="text-sm text-green-600 font-medium">Saved!</p>
+                                <p v-if="aiError" class="text-sm text-red-600 font-medium">{{ aiError }}</p>
                             </div>
                         </div>
                     </div>
@@ -580,14 +581,19 @@ async function sendPersonalMessage() {
 const aiInstructions = ref(props.community.ai_chatbot_instructions ?? '');
 const aiSaving = ref(false);
 const aiSaved  = ref(false);
+const aiError  = ref('');
 
 async function saveAiInstructions() {
     aiSaving.value = true;
+    aiError.value  = '';
     try {
-        await axios.patch(`/communities/${props.community.slug}`, { name: props.community.name, ai_chatbot_instructions: aiInstructions.value }, { headers: { 'X-CSRF-TOKEN': csrfToken } });
+        await axios.patch(`/communities/${props.community.slug}`, { name: props.community.name, ai_chatbot_instructions: aiInstructions.value });
         aiSaved.value = true;
         setTimeout(() => (aiSaved.value = false), 4000);
-    } catch {}
+    } catch (err) {
+        console.error('Failed to save AI instructions:', err?.response?.data ?? err);
+        aiError.value = err?.response?.data?.message ?? 'Failed to save. Please try again.';
+    }
     finally { aiSaving.value = false; }
 }
 
