@@ -288,7 +288,6 @@ const props = defineProps({
 });
 
 const page      = usePage();
-const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
 const activeTab = ref('community');
@@ -340,7 +339,7 @@ function formatRelativeTime(d) { if (!d) return ''; const diff = Math.floor((Dat
 function autoResize(e) { e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px'; }
 function scrollToBottom(smooth = false) { nextTick(() => { messagesEl.value?.scrollTo({ top: messagesEl.value.scrollHeight, behavior: smooth ? 'smooth' : 'instant' }); }); }
 function canDelete(msg) { const u = page.props.auth?.user; return u && (msg.user?.id === u.id || u.is_super_admin); }
-async function deleteMessage(msg) { if (!confirm('Delete this message?')) return; try { await axios.delete(`/communities/${props.community.slug}/chat/${msg.id}`, { headers: { 'X-CSRF-TOKEN': csrfToken } }); groupMessages.value = groupMessages.value.filter(m => m.id !== msg.id); } catch {} }
+async function deleteMessage(msg) { if (!confirm('Delete this message?')) return; try { await axios.delete(`/communities/${props.community.slug}/chat/${msg.id}`); groupMessages.value = groupMessages.value.filter(m => m.id !== msg.id); } catch {} }
 
 async function send() {
     const text = groupContent.value.trim();
@@ -353,7 +352,7 @@ async function send() {
         const fd = new FormData();
         if (savedText) fd.append('content', savedText);
         if (savedFile) fd.append('media', savedFile);
-        const res = await axios.post(`/communities/${props.community.slug}/chat`, fd, { headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'multipart/form-data' } });
+        const res = await axios.post(`/communities/${props.community.slug}/chat`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
         groupMessages.value.push(res.data.message);
         scrollToBottom(true);
     } catch { groupContent.value = savedText; }
@@ -524,7 +523,7 @@ async function sendPersonalMessage() {
         try {
             const { data } = await axios.post(`/communities/${props.community.slug}/chatbot/reply`, {
                 user_id: personalSelectedId.value, message: text,
-            }, { headers: { 'X-CSRF-TOKEN': csrfToken } });
+            });
             personalMessages.value.push(data.message);
             if (data.message.id > personalLastMsgId) personalLastMsgId = data.message.id;
             scrollPersonalToBottom(true);
@@ -545,7 +544,7 @@ async function sendPersonalMessage() {
         try {
             const res = await axios.post(`/communities/${props.community.slug}/chatbot`, {
                 message: text, conversation_id: personalConvId,
-            }, { headers: { 'X-CSRF-TOKEN': csrfToken } });
+            });
             personalConvId = res.data.conversation_id;
             personalMessages.value.push({ role: 'creator', text: res.data.message, content: res.data.message });
             const { data } = await axios.get(`/communities/${props.community.slug}/chatbot/history`);
@@ -565,7 +564,7 @@ async function sendPersonalMessage() {
     try {
         const { data } = await axios.post(`/communities/${props.community.slug}/dm/send`, {
             receiver_id: personalSelectedId.value, content: text,
-        }, { headers: { 'X-CSRF-TOKEN': csrfToken } });
+        });
         personalMessages.value.push(data.message);
         if (data.message.id > personalLastMsgId) personalLastMsgId = data.message.id;
         scrollPersonalToBottom(true);

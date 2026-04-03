@@ -4,15 +4,26 @@ window.axios = axios;
 window.axios.defaults.withCredentials = true;
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
-// Pick up the XSRF-TOKEN cookie that Laravel sets and send it as a header
-const token = document.cookie
-    .split('; ')
-    .find((row) => row.startsWith('XSRF-TOKEN='))
-    ?.split('=')[1];
+// Read fresh XSRF-TOKEN cookie before every request (prevents stale-token 419s)
+window.axios.interceptors.request.use((config) => {
+    const token = document.cookie
+        .split('; ')
+        .find((row) => row.startsWith('XSRF-TOKEN='))
+        ?.split('=')[1];
+    if (token) {
+        config.headers['X-XSRF-TOKEN'] = decodeURIComponent(token);
+    }
+    return config;
+});
 
-if (token) {
-    window.axios.defaults.headers.common['X-XSRF-TOKEN'] = decodeURIComponent(token);
-}
+// Retry once on 419 (CSRF token mismatch) — covers session-refreshed tokens
+window.axios.interceptors.response.use(undefined, (error) => {
+    if (error.response?.status === 419 && !error.config.__retried) {
+        error.config.__retried = true;
+        return window.axios.request(error.config);
+    }
+    return Promise.reject(error);
+});
 
 /**
  * Laravel Echo — real-time WebSocket client via Reverb

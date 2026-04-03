@@ -155,7 +155,7 @@ const inputEl        = ref(null);
 let   pollTimer      = null;
 let   lastMessageId  = 0;
 
-const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+
 
 function autoResize(e) {
     e.target.style.height = 'auto';
@@ -223,8 +223,6 @@ async function sendMessage() {
         const res = await axios.post(`/communities/${props.communitySlug}/chatbot`, {
             message: text,
             conversation_id: conversationId.value,
-        }, {
-            headers: { 'X-CSRF-TOKEN': csrfToken },
         });
 
         conversationId.value = res.data.conversation_id;

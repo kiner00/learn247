@@ -130,8 +130,6 @@ const sending    = ref(false);
 const messagesEl = ref(null);
 const inputEl    = ref(null);
 
-const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-
 const avatarColors = [
     'bg-indigo-100 text-indigo-600', 'bg-violet-100 text-violet-600',
     'bg-pink-100 text-pink-600', 'bg-emerald-100 text-emerald-600',
@@ -164,9 +162,7 @@ function scrollToBottom(smooth = false) {
 async function deleteMessage(msg) {
     if (!confirm('Delete this message?')) return;
     try {
-        await axios.delete(`/direct-messages/${msg.id}`, {
-            headers: { 'X-CSRF-TOKEN': csrfToken },
-        });
+        await axios.delete(`/direct-messages/${msg.id}`);
         messages.value = messages.value.filter(m => m.id !== msg.id);
     } catch { /* ignore */ }
 }
@@ -180,9 +176,7 @@ async function send() {
     if (inputEl.value) inputEl.value.style.height = 'auto';
 
     try {
-        const res = await axios.post(`/messages/${props.partner.username ?? props.partner.id}`, { content: text }, {
-            headers: { 'X-CSRF-TOKEN': csrfToken },
-        });
+        const res = await axios.post(`/messages/${props.partner.username ?? props.partner.id}`, { content: text });
         messages.value.push(res.data.message);
         scrollToBottom(true);
     } catch {

@@ -12,7 +12,6 @@ const props = defineProps({
 });
 
 const base = computed(() => `/communities/${props.community.slug}/settings/chat-history`);
-const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
 
 // ── Reply state ──────────────────────────────────────────────────────────────
 const replyInput  = ref('');
@@ -48,8 +47,6 @@ async function sendReply() {
         const res = await axios.post(`/communities/${props.community.slug}/chatbot/reply`, {
             user_id: props.selectedUser.id,
             message: text,
-        }, {
-            headers: { 'X-CSRF-TOKEN': csrfToken },
         });
 
         localMessages.value.push(res.data.message);
