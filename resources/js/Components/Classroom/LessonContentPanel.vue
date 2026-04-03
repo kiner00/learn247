@@ -62,7 +62,24 @@
                 controlsList="nodownload nofullscreen"
                 disablePictureInPicture
                 oncontextmenu="return false;"
+                @play="$emit('video-play')"
+                @pause="$emit('video-pause')"
+                @ended="$emit('video-pause')"
             />
+            <!-- Video analytics (owner only) -->
+            <div v-if="isOwner && videoPlayCount > 0" class="px-4 py-2 bg-gray-900 flex items-center gap-4">
+                <span class="text-[11px] text-gray-400 flex items-center gap-1">
+                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    {{ videoPlayCount }} plays
+                </span>
+                <span class="text-[11px] text-gray-400 flex items-center gap-1">
+                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    {{ formatTime(videoWatchSeconds) }}
+                </span>
+                <span class="text-[11px] text-gray-400">
+                    ~{{ formatTime(Math.round(videoWatchSeconds / videoPlayCount)) }} avg
+                </span>
+            </div>
         </div>
 
         <!-- YouTube / external URL -->
@@ -263,9 +280,12 @@ const props = defineProps({
     videoUploadProgress: { type: Number, default: 0 },
     videoUploadError:    { type: String, default: '' },
     videoUploadSuccess:  { type: Boolean, default: false },
+    // Video analytics (owner only)
+    videoPlayCount:      { type: Number, default: 0 },
+    videoWatchSeconds:   { type: Number, default: 0 },
 });
 
-defineEmits(['mark-complete', 'save-content', 'delete-video', 'video-upload']);
+defineEmits(['mark-complete', 'save-content', 'delete-video', 'video-upload', 'video-play', 'video-pause']);
 
 const editingLesson = ref(false);
 const videoPlayerRef = ref(null);
@@ -288,6 +308,14 @@ function embedUrl(url) {
     url = url.replace(/vimeo\.com\/(\d+)/, 'player.vimeo.com/video/$1');
     url = url.replace(/drive\.google\.com\/file\/d\/([^/]+)\/view/, 'drive.google.com/file/d/$1/preview');
     return url.split('&')[0];
+}
+
+function formatTime(seconds) {
+    if (seconds < 60) return `${seconds}s`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    return `${h}h ${m}m`;
 }
 
 defineExpose({ editingLesson, videoPlayerRef });

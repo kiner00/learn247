@@ -104,10 +104,14 @@
                     :video-upload-progress="videoUploadProgress"
                     :video-upload-error="videoUploadError"
                     :video-upload-success="videoUploadSuccess"
+                    :video-play-count="selectedLesson?.video_play_count ?? 0"
+                    :video-watch-seconds="selectedLesson?.video_watch_seconds ?? 0"
                     @mark-complete="markComplete"
                     @save-content="saveContent"
                     @delete-video="deleteVideo"
                     @video-upload="handleVideoUpload"
+                    @video-play="onLessonVideoPlay"
+                    @video-pause="onLessonVideoPause"
                 />
 
                 <!-- Quiz section -->
@@ -223,6 +227,7 @@ watch(() => props.course, (updatedCourse) => {
 }, { deep: true });
 
 function selectLesson(lesson) {
+    onLessonVideoPause(); // Track watch time for previous lesson
     selectedLesson.value = lesson;
     if (contentPanelRef.value) contentPanelRef.value.editingLesson = false;
     quizResult.value = null;
@@ -344,8 +349,28 @@ function startTranscodePolling(lesson) {
     transcodePoller = setInterval(poll, 3000);
 }
 
+// ─── Lesson video analytics ──────────────────────────────────────────────────
+let lessonVideoPlayStart = null;
+
+function onLessonVideoPlay() {
+    lessonVideoPlayStart = Date.now();
+}
+
+function onLessonVideoPause() {
+    if (!lessonVideoPlayStart || !selectedLesson.value) return;
+    const seconds = Math.round((Date.now() - lessonVideoPlayStart) / 1000);
+    lessonVideoPlayStart = null;
+    if (seconds >= 1) {
+        axios.post(
+            `/communities/${props.community.slug}/classroom/courses/${props.course.id}/lessons/${selectedLesson.value.id}/video-play`,
+            { seconds }
+        ).catch(() => {});
+    }
+}
+
 // Clean up on unmount
 onBeforeUnmount(() => {
+    onLessonVideoPause();
     destroyHls();
     stopTranscodePolling();
 });

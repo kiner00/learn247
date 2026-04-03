@@ -12,7 +12,7 @@ class CourseLesson extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['module_id', 'title', 'content', 'embed_html', 'video_url', 'video_path', 'video_hls_path', 'video_transcode_status', 'video_transcode_percent', 'position', 'cta_label', 'cta_url'];
+    protected $fillable = ['module_id', 'title', 'content', 'embed_html', 'video_url', 'video_path', 'video_hls_path', 'video_transcode_status', 'video_transcode_percent', 'video_play_count', 'video_watch_seconds', 'position', 'cta_label', 'cta_url'];
 
     protected function casts(): array
     {

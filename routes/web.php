@@ -276,6 +276,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/stream', [ClassroomController::class, 'streamLessonVideo'])->name('communities.classroom.lessons.stream');
         Route::get('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/transcode-status', [ClassroomController::class, 'transcodeStatus'])->name('communities.classroom.lessons.transcode-status');
         Route::get('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/hls/{file}', [ClassroomController::class, 'hlsFile'])->where('file', '.*')->name('communities.classroom.lessons.hls');
+        Route::post('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/video-play', [ClassroomController::class, 'trackLessonVideoPlay'])->name('communities.classroom.lessons.video-play');
 
         // Lesson comments
         Route::post('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/comments', [LessonCommentController::class, 'store'])->name('lesson.comments.store');

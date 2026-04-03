@@ -566,6 +566,18 @@ class ClassroomController extends Controller
         ]);
     }
 
+    public function trackLessonVideoPlay(Request $request, Community $community, Course $course, CourseLesson $lesson): JsonResponse
+    {
+        $data = $request->validate([
+            'seconds' => ['required', 'integer', 'min:1', 'max:36000'],
+        ]);
+
+        $lesson->increment('video_play_count');
+        $lesson->increment('video_watch_seconds', $data['seconds']);
+
+        return response()->json(['ok' => true]);
+    }
+
     public function reorderLessons(Request $request, Community $community, Course $course, CourseModule $module, ManageLesson $action): RedirectResponse
     {
         try {
