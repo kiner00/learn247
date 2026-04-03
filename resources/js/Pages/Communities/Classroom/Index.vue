@@ -160,7 +160,7 @@
                         {{ videoPreview ? 'Change video' : 'Upload preview' }}
                         <input ref="videoInput" type="file" accept="video/mp4,video/quicktime,video/webm" class="hidden" @change="onVideoChange" />
                     </label>
-                    <p class="text-xs text-gray-400 mt-1">MP4 recommended, 1280 x 720 px, max 100 MB. Plays on hover.</p>
+                    <p class="text-xs text-gray-400 mt-1">MP4 recommended, 1280 x 720 px, max 20 MB. Plays on hover.</p>
                 </div>
 
                 <div class="flex gap-2 justify-end">
@@ -475,7 +475,7 @@
                                 {{ (editVideoPreview || editingCourse.preview_video) ? 'Change video' : 'Upload preview' }}
                                 <input ref="editVideoInput" type="file" accept="video/mp4,video/quicktime,video/webm" class="hidden" @change="onEditVideoChange" />
                             </label>
-                            <p class="text-xs text-gray-400 mt-1">MP4 recommended, 1280 × 720 px, max 100 MB. Plays on hover.</p>
+                            <p class="text-xs text-gray-400 mt-1">MP4 recommended, 1280 × 720 px, max 20 MB. Plays on hover.</p>
                         </div>
 
                         <div class="flex gap-2 justify-end">
@@ -592,6 +592,11 @@ function removeCover() {
 function onVideoChange(e) {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 20 * 1024 * 1024) {
+        alert('Video must be under 20 MB. Please use a shorter or compressed clip.');
+        e.target.value = '';
+        return;
+    }
     courseForm.preview_video = file;
     videoPreview.value = URL.createObjectURL(file);
 }
@@ -648,6 +653,11 @@ function onEditCoverChange(e) {
 function onEditVideoChange(e) {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 20 * 1024 * 1024) {
+        alert('Video must be under 20 MB. Please use a shorter or compressed clip.');
+        e.target.value = '';
+        return;
+    }
     editForm.preview_video        = file;
     editForm.remove_preview_video = false;
     editVideoPreview.value = URL.createObjectURL(file);
