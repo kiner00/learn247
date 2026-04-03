@@ -58,14 +58,15 @@ class ClassroomController extends Controller
             }
 
             $data = $request->validate([
-                'title'       => ['required', 'string', 'max:255'],
-                'description' => ['nullable', 'string', 'max:2000'],
-                'cover_image' => ['nullable', 'image', 'max:10240'],
-                'access_type' => ['required', 'in:free,inclusive,paid_once,paid_monthly,member_once'],
-                'price'       => ['nullable', 'numeric', 'min:0', 'required_if:access_type,paid_once', 'required_if:access_type,paid_monthly'],
+                'title'         => ['required', 'string', 'max:255'],
+                'description'   => ['nullable', 'string', 'max:2000'],
+                'cover_image'   => ['nullable', 'image', 'max:10240'],
+                'preview_video' => ['nullable', 'file', 'mimetypes:video/mp4,video/quicktime,video/webm', 'max:51200'],
+                'access_type'   => ['required', 'in:free,inclusive,paid_once,paid_monthly,member_once'],
+                'price'         => ['nullable', 'numeric', 'min:0', 'required_if:access_type,paid_once', 'required_if:access_type,paid_monthly'],
             ]);
 
-            $action->store($community, $data, $request->file('cover_image'));
+            $action->store($community, $data, $request->file('cover_image'), $request->file('preview_video'));
 
             return back()->with('success', 'Course created!');
         } catch (\Throwable $e) {
@@ -80,14 +81,16 @@ class ClassroomController extends Controller
             $this->authorize('manage', $community);
 
             $data = $request->validate([
-                'title'       => ['required', 'string', 'max:255'],
-                'description' => ['nullable', 'string', 'max:2000'],
-                'cover_image' => ['nullable', 'image', 'max:10240'],
-                'access_type' => ['required', 'in:free,inclusive,paid_once,paid_monthly,member_once'],
-                'price'       => ['nullable', 'numeric', 'min:0', 'required_if:access_type,paid_once', 'required_if:access_type,paid_monthly'],
+                'title'                => ['required', 'string', 'max:255'],
+                'description'          => ['nullable', 'string', 'max:2000'],
+                'cover_image'          => ['nullable', 'image', 'max:10240'],
+                'preview_video'        => ['nullable', 'file', 'mimetypes:video/mp4,video/quicktime,video/webm', 'max:51200'],
+                'remove_preview_video' => ['nullable', 'boolean'],
+                'access_type'          => ['required', 'in:free,inclusive,paid_once,paid_monthly,member_once'],
+                'price'                => ['nullable', 'numeric', 'min:0', 'required_if:access_type,paid_once', 'required_if:access_type,paid_monthly'],
             ]);
 
-            $action->update($course, $data, $request->file('cover_image'));
+            $action->update($course, $data, $request->file('cover_image'), $request->file('preview_video'));
 
             return back()->with('success', 'Course updated!');
         } catch (\Throwable $e) {

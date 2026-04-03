@@ -147,6 +147,22 @@
                     <p class="text-xs text-gray-400 mt-1">Recommended: 1280 x 720 px</p>
                 </div>
 
+                <!-- Preview video -->
+                <div class="mb-3">
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Preview video <span class="text-gray-400 font-normal">(optional)</span></label>
+                    <div v-if="videoPreview" class="relative mb-2 aspect-video rounded-lg overflow-hidden border border-gray-200 bg-black">
+                        <video :src="videoPreview" class="w-full h-full object-cover" muted playsinline />
+                        <button type="button" @click="removeVideo"
+                            class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center text-xs hover:bg-black/70">x</button>
+                    </div>
+                    <label class="flex items-center gap-2 w-fit cursor-pointer px-3 py-1.5 border border-gray-300 rounded-lg text-xs text-gray-600 hover:bg-gray-50 transition-colors">
+                        <svg class="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                        {{ videoPreview ? 'Change video' : 'Upload preview' }}
+                        <input ref="videoInput" type="file" accept="video/mp4,video/quicktime,video/webm" class="hidden" @change="onVideoChange" />
+                    </label>
+                    <p class="text-xs text-gray-400 mt-1">MP4 recommended, 1280 x 720 px, max 50 MB. Plays on hover.</p>
+                </div>
+
                 <div class="flex gap-2 justify-end">
                     <button type="button" @click="showForm = false; removeCover()" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">Cancel</button>
                     <button type="submit" :disabled="courseForm.processing"
@@ -176,7 +192,16 @@
                                 :href="`/communities/${community.slug}/classroom/courses/${course.id}`"
                                 class="flex flex-col h-full bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100"
                             >
-                                <div class="relative aspect-video bg-gray-900 overflow-hidden shrink-0">
+                                <div class="relative aspect-video bg-gray-900 overflow-hidden shrink-0"
+                                    @mouseenter="onCardHover($event, course)"
+                                    @mouseleave="onCardLeave($event, course)"
+                                    @touchstart.passive="onCardTouchStart($event, course)"
+                                    @touchend.passive="onCardTouchEnd(course)">
+                                    <video v-if="course.preview_video"
+                                        :data-course-id="course.id"
+                                        :src="course.preview_video"
+                                        class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-300 z-[1]"
+                                        muted loop playsinline preload="none" />
                                     <img v-if="course.cover_image" :src="course.cover_image" :alt="course.title"
                                         class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                                     <div v-else class="w-full h-full bg-gradient-to-br from-indigo-600 to-purple-700 flex items-center justify-center">
@@ -254,7 +279,16 @@
                                     :href="`/communities/${community.slug}/classroom/courses/${course.id}`"
                                     class="flex flex-col h-full bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100"
                                 >
-                                    <div class="relative aspect-video bg-gray-900 overflow-hidden">
+                                    <div class="relative aspect-video bg-gray-900 overflow-hidden"
+                                        @mouseenter="onCardHover($event, course)"
+                                        @mouseleave="onCardLeave($event, course)"
+                                        @touchstart.passive="onCardTouchStart($event, course)"
+                                        @touchend.passive="onCardTouchEnd(course)">
+                                        <video v-if="course.preview_video"
+                                            :data-course-id="course.id"
+                                            :src="course.preview_video"
+                                            class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-300 z-[1]"
+                                            muted loop playsinline preload="none" />
                                         <img v-if="course.cover_image" :src="course.cover_image" :alt="course.title"
                                             :class="['w-full h-full object-cover transition-transform duration-300',
                                                 course.has_access ? 'group-hover:scale-105' : 'blur-[1.5px]']" />
@@ -428,6 +462,22 @@
                             <p class="text-xs text-gray-400">Recommended: 1280 × 720 px</p>
                         </div>
 
+                        <!-- Preview video -->
+                        <div class="mb-4">
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Preview video</label>
+                            <div v-if="editVideoPreview || editingCourse.preview_video" class="relative mb-2 aspect-video rounded-lg overflow-hidden border border-gray-200 bg-black">
+                                <video :src="editVideoPreview || editingCourse.preview_video" class="w-full h-full object-cover" muted playsinline />
+                                <button type="button" @click="removeEditVideo"
+                                    class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center text-xs hover:bg-black/70">x</button>
+                            </div>
+                            <label class="flex items-center gap-2 w-fit cursor-pointer px-3 py-1.5 border border-gray-300 rounded-lg text-xs text-gray-600 hover:bg-gray-50 transition-colors">
+                                <svg class="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                {{ (editVideoPreview || editingCourse.preview_video) ? 'Change video' : 'Upload preview' }}
+                                <input ref="editVideoInput" type="file" accept="video/mp4,video/quicktime,video/webm" class="hidden" @change="onEditVideoChange" />
+                            </label>
+                            <p class="text-xs text-gray-400 mt-1">MP4 recommended, 1280 × 720 px, max 50 MB. Plays on hover.</p>
+                        </div>
+
                         <div class="flex gap-2 justify-end">
                             <button type="button" @click="editingCourse = null; editCoverPreview = null"
                                 class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">Cancel</button>
@@ -512,6 +562,8 @@ const showForm        = ref(false);
 const showInviteModal = ref(false);
 const coverPreview    = ref(null);
 const coverInput      = ref(null);
+const videoPreview    = ref(null);
+const videoInput      = ref(null);
 
 const isPaidType = (type) => type === 'paid_once' || type === 'paid_monthly';
 const selectPaidIfNeeded = (form) => { if (!isPaidType(form.access_type)) form.access_type = 'paid_once'; };
@@ -522,7 +574,7 @@ const inviteUrl = computed(() =>
         : `${window.location.origin}/communities/${props.community.slug}`
 );
 
-const courseForm = useForm({ title: '', description: '', cover_image: null, access_type: 'inclusive', price: '', affiliate_commission_rate: '' });
+const courseForm = useForm({ title: '', description: '', cover_image: null, preview_video: null, access_type: 'inclusive', price: '', affiliate_commission_rate: '' });
 
 function onCoverChange(e) {
     const file = e.target.files?.[0];
@@ -537,6 +589,19 @@ function removeCover() {
     if (coverInput.value) coverInput.value.value = '';
 }
 
+function onVideoChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    courseForm.preview_video = file;
+    videoPreview.value = URL.createObjectURL(file);
+}
+
+function removeVideo() {
+    courseForm.preview_video = null;
+    videoPreview.value = null;
+    if (videoInput.value) videoInput.value.value = '';
+}
+
 function createCourse() {
     courseForm.post(`/communities/${props.community.slug}/classroom/courses`, {
         forceFormData: true,
@@ -545,6 +610,7 @@ function createCourse() {
             courseForm.access_type = 'inclusive';
             courseForm.affiliate_commission_rate = '';
             removeCover();
+            removeVideo();
             showForm.value = false;
         },
     });
@@ -554,14 +620,19 @@ function createCourse() {
 const editingCourse    = ref(null);
 const editCoverPreview = ref(null);
 const editCoverInput   = ref(null);
-const editForm         = useForm({ title: '', description: '', cover_image: null, access_type: 'inclusive', price: '', affiliate_commission_rate: '' });
+const editVideoPreview = ref(null);
+const editVideoInput   = ref(null);
+const editForm         = useForm({ title: '', description: '', cover_image: null, preview_video: null, remove_preview_video: false, access_type: 'inclusive', price: '', affiliate_commission_rate: '' });
 
 function openEdit(course) {
     editingCourse.value    = course;
     editCoverPreview.value = null;
+    editVideoPreview.value = null;
     editForm.title         = course.title;
     editForm.description   = course.description ?? '';
     editForm.cover_image   = null;
+    editForm.preview_video        = null;
+    editForm.remove_preview_video = false;
     editForm.access_type              = course.access_type ?? 'inclusive';
     editForm.price                    = course.price ?? '';
     editForm.affiliate_commission_rate = course.affiliate_commission_rate ?? '';
@@ -574,6 +645,23 @@ function onEditCoverChange(e) {
     editCoverPreview.value = URL.createObjectURL(file);
 }
 
+function onEditVideoChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    editForm.preview_video        = file;
+    editForm.remove_preview_video = false;
+    editVideoPreview.value = URL.createObjectURL(file);
+}
+
+function removeEditVideo() {
+    editForm.preview_video        = null;
+    editForm.remove_preview_video = true;
+    editVideoPreview.value = null;
+    if (editVideoInput.value) editVideoInput.value.value = '';
+    // Clear the existing video from the local course object so the UI hides it
+    if (editingCourse.value) editingCourse.value = { ...editingCourse.value, preview_video: null };
+}
+
 function submitEdit() {
     editForm.post(
         `/communities/${props.community.slug}/classroom/courses/${editingCourse.value.id}/update`,
@@ -582,6 +670,7 @@ function submitEdit() {
             onSuccess: () => {
                 editingCourse.value    = null;
                 editCoverPreview.value = null;
+                editVideoPreview.value = null;
             },
         }
     );
@@ -594,5 +683,55 @@ function togglePublish(course) {
 function deleteCourse(course) {
     if (!confirm(`Delete "${course.title}"? This will permanently remove all modules, lessons, quizzes, and certificates.`)) return;
     router.delete(`/communities/${props.community.slug}/classroom/courses/${course.id}`);
+}
+
+// ── Hover / tap-to-play preview video ────────────────────────────────────────
+let touchTimer = null;
+let hoverTimer = null;
+
+function getVideoEl(container, courseId) {
+    return container.querySelector(`video[data-course-id="${courseId}"]`);
+}
+
+function onCardHover(e, course) {
+    if (!course.preview_video) return;
+    const container = e.currentTarget;
+    hoverTimer = setTimeout(() => {
+        const video = getVideoEl(container, course.id);
+        if (!video) return;
+        video.currentTime = 0;
+        video.play().then(() => { video.style.opacity = '1'; }).catch(() => {});
+    }, 500);
+}
+
+function onCardLeave(e, course) {
+    clearTimeout(hoverTimer);
+    if (!course.preview_video) return;
+    const video = getVideoEl(e.currentTarget, course.id);
+    if (!video) return;
+    video.style.opacity = '0';
+    video.pause();
+    video.currentTime = 0;
+}
+
+function onCardTouchStart(e, course) {
+    if (!course.preview_video) return;
+    const container = e.currentTarget;
+    touchTimer = setTimeout(() => {
+        const video = getVideoEl(container, course.id);
+        if (!video) return;
+        video.currentTime = 0;
+        video.play().then(() => { video.style.opacity = '1'; }).catch(() => {});
+    }, 400);
+}
+
+function onCardTouchEnd(course) {
+    clearTimeout(touchTimer);
+    if (!course.preview_video) return;
+    document.querySelectorAll(`video[data-course-id="${course.id}"]`).forEach(v => {
+        v.style.opacity = '0';
+        v.pause();
+        v.currentTime = 0;
+    });
 }
 </script>
