@@ -53,6 +53,7 @@ class ResolveCustomDomain
             '/login', '/register', '/logout',
             '/forgot-password', '/reset-password',
             '/set-password', '/email/verify',
+            '/certificates',
         ];
 
         $isAuthPath = false;
