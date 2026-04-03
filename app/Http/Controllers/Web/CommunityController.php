@@ -566,9 +566,18 @@ class CommunityController extends Controller
         $allPublished = $community->courses()->where('is_published', true)->get();
         $selectedIds  = $community->landing_page['included_courses_selected'] ?? null;
         // For visitors: show only selected courses (or fall back to inclusive if nothing selected yet)
-        $courses = $selectedIds !== null
+        $filtered = $selectedIds !== null
             ? $allPublished->whereIn('id', $selectedIds)->values()
             : $allPublished->where('access_type', 'inclusive')->values();
+        $courses = $filtered->map(fn ($c) => [
+            'id'            => $c->id,
+            'title'         => $c->title,
+            'description'   => $c->description,
+            'cover_image'   => $c->cover_image,
+            'preview_video' => $c->preview_video,
+            'access_type'   => $c->access_type,
+            'price'         => $c->price,
+        ]);
         // Owner also gets the full list so they can toggle checkboxes
         $allCourses = $isOwner ? $allPublished->values() : [];
         $certifications = $community->certifications()
