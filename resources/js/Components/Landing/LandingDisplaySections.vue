@@ -269,9 +269,14 @@
                             :data-lp-course-id="course.id"
                             :src="course.preview_video"
                             class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-300 z-[1]"
-                            muted loop playsinline preload="none" />
+                            loop playsinline preload="none" />
                         <img v-if="course.cover_image" :src="course.cover_image" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                         <div v-else class="w-full h-full flex items-center justify-center text-4xl">🎓</div>
+                        <!-- Tap to preview (mobile hint) -->
+                        <div v-if="course.preview_video" class="absolute bottom-2 left-2 z-[2] flex items-center gap-1 px-2 py-1 bg-black/50 text-white text-[10px] font-medium rounded-full backdrop-blur-sm pointer-events-none sm:hidden">
+                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                            Tap to preview
+                        </div>
                     </div>
                     <div class="p-5 flex flex-col flex-1">
                         <h3 class="font-bold text-gray-900 text-base mb-1">{{ course.title }}</h3>
@@ -489,14 +494,29 @@ function getLpVideoEl(container, id) {
     return container.querySelector(`video[data-lp-course-id="${id}"]`);
 }
 
+function playLpVideo(video) {
+    video.muted = false;
+    video.currentTime = 0;
+    video.play().then(() => { video.style.opacity = '1'; }).catch(() => {
+        // Autoplay with sound blocked — fallback to muted
+        video.muted = true;
+        video.play().then(() => { video.style.opacity = '1'; }).catch(() => {});
+    });
+}
+
+function stopLpVideo(video) {
+    video.style.opacity = '0';
+    video.pause();
+    video.muted = true;
+    video.currentTime = 0;
+}
+
 function onCourseHover(e, course) {
     if (!course.preview_video) return;
     const container = e.currentTarget;
     lpHoverTimer = setTimeout(() => {
         const video = getLpVideoEl(container, course.id);
-        if (!video) return;
-        video.currentTime = 0;
-        video.play().then(() => { video.style.opacity = '1'; }).catch(() => {});
+        if (video) playLpVideo(video);
     }, 500);
 }
 
@@ -504,10 +524,7 @@ function onCourseLeave(e, course) {
     clearTimeout(lpHoverTimer);
     if (!course.preview_video) return;
     const video = getLpVideoEl(e.currentTarget, course.id);
-    if (!video) return;
-    video.style.opacity = '0';
-    video.pause();
-    video.currentTime = 0;
+    if (video) stopLpVideo(video);
 }
 
 function onCourseTouchStart(e, course) {
@@ -515,19 +532,13 @@ function onCourseTouchStart(e, course) {
     const container = e.currentTarget;
     lpTouchTimer = setTimeout(() => {
         const video = getLpVideoEl(container, course.id);
-        if (!video) return;
-        video.currentTime = 0;
-        video.play().then(() => { video.style.opacity = '1'; }).catch(() => {});
+        if (video) playLpVideo(video);
     }, 400);
 }
 
 function onCourseTouchEnd(course) {
     clearTimeout(lpTouchTimer);
     if (!course.preview_video) return;
-    document.querySelectorAll(`video[data-lp-course-id="${course.id}"]`).forEach(v => {
-        v.style.opacity = '0';
-        v.pause();
-        v.currentTime = 0;
-    });
+    document.querySelectorAll(`video[data-lp-course-id="${course.id}"]`).forEach(v => stopLpVideo(v));
 }
 </script>

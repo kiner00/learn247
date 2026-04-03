@@ -208,11 +208,15 @@
                                         :data-course-id="course.id"
                                         :src="course.preview_video"
                                         class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-300 z-[1]"
-                                        muted loop playsinline preload="none" />
+                                        loop playsinline preload="none" />
                                     <img v-if="course.cover_image" :src="course.cover_image" :alt="course.title"
                                         class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                                     <div v-else class="w-full h-full bg-gradient-to-br from-indigo-600 to-purple-700 flex items-center justify-center">
                                         <span class="text-4xl font-black text-white/20 select-none">{{ course.title.charAt(0).toUpperCase() }}</span>
+                                    </div>
+                                    <div v-if="course.preview_video" class="absolute bottom-2 left-2 z-[2] flex items-center gap-1 px-2 py-1 bg-black/50 text-white text-[10px] font-medium rounded-full backdrop-blur-sm pointer-events-none sm:hidden">
+                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                        Tap to preview
                                     </div>
                                     <div v-if="course.total > 0 && course.completed > 0"
                                         class="absolute top-2.5 right-2.5 px-2 py-0.5 bg-black/60 text-white text-xs font-semibold rounded-full backdrop-blur-sm">
@@ -308,13 +312,17 @@
                                             :data-course-id="course.id"
                                             :src="course.preview_video"
                                             class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-300 z-[1]"
-                                            muted loop playsinline preload="none" />
+                                            loop playsinline preload="none" />
                                         <img v-if="course.cover_image" :src="course.cover_image" :alt="course.title"
                                             :class="['w-full h-full object-cover transition-transform duration-300',
                                                 course.has_access ? 'group-hover:scale-105' : 'blur-[1.5px]']" />
                                         <div v-else
                                             :class="['w-full h-full bg-gradient-to-br from-indigo-600 to-purple-700 flex items-center justify-center', !course.has_access && 'opacity-80']">
                                             <span class="text-4xl font-black text-white/20 select-none">{{ course.title.charAt(0).toUpperCase() }}</span>
+                                        </div>
+                                        <div v-if="course.preview_video" class="absolute bottom-2 left-2 z-[2] flex items-center gap-1 px-2 py-1 bg-black/50 text-white text-[10px] font-medium rounded-full backdrop-blur-sm pointer-events-none sm:hidden">
+                                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                            Tap to preview
                                         </div>
                                         <!-- Lock overlay -->
                                         <div v-if="!course.has_access"
@@ -783,16 +791,25 @@ function getVideoEl(container, courseId) {
 }
 
 function startVideo(video, courseId) {
+    video.muted = false;
     video.currentTime = 0;
     video.play().then(() => {
         video.style.opacity = '1';
         playStartTimes[courseId] = Date.now();
-    }).catch(() => {});
+    }).catch(() => {
+        // Autoplay with sound blocked — fallback to muted
+        video.muted = true;
+        video.play().then(() => {
+            video.style.opacity = '1';
+            playStartTimes[courseId] = Date.now();
+        }).catch(() => {});
+    });
 }
 
 function stopVideoAndTrack(video, courseId) {
     video.style.opacity = '0';
     video.pause();
+    video.muted = true;
     video.currentTime = 0;
 
     const startTime = playStartTimes[courseId];
