@@ -103,7 +103,7 @@ class CommunityController extends Controller
             'currency'                 => ['nullable', 'string', 'in:PHP,USD'],
             'is_private'               => ['boolean'],
             'affiliate_commission_rate' => ['nullable', 'integer', 'min:0', 'max:85'],
-            'ai_chatbot_instructions'  => ['nullable', 'string', 'max:2000'],
+            'ai_chatbot_instructions'  => ['nullable', 'string', 'max:10000'],
         ]);
 
         $action->execute($community, $data, $request->file('avatar'), $request->file('cover_image'));

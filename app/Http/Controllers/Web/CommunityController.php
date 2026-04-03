@@ -197,7 +197,7 @@ class CommunityController extends Controller
             'telegram_bot_token'        => $isPro ? ['nullable', 'string', 'max:100'] : ['prohibited'],
             'telegram_chat_id'          => $isPro ? ['nullable', 'string', 'max:50'] : ['prohibited'],
             'telegram_clear'            => $isPro ? ['sometimes', 'boolean'] : ['prohibited'],
-            'ai_chatbot_instructions'   => ['nullable', 'string', 'max:2000'],
+            'ai_chatbot_instructions'   => ['nullable', 'string', 'max:10000'],
             // Brand Source of Truth
             'brand_context'                           => ['nullable', 'array'],
             'brand_context.brand_personality'          => ['nullable', 'string', 'max:500'],

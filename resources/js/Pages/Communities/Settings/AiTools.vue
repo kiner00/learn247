@@ -169,6 +169,9 @@ function applyAiCopy() {
                         {{ chatbotForm.processing ? 'Saving...' : 'Save Instructions' }}
                     </button>
                     <p v-if="chatbotSaved" class="text-sm text-green-600 font-medium">Saved!</p>
+                    <p v-if="chatbotForm.errors.ai_chatbot_instructions" class="text-sm text-red-500 font-medium">
+                        {{ chatbotForm.errors.ai_chatbot_instructions }}
+                    </p>
                 </div>
             </form>
         </div>
