@@ -69,7 +69,7 @@ class CheckMediaConvertStatus implements ShouldQueue
         ]);
     }
 
-    private function handleError(array $result): void
+    private function handleError($result): void
     {
         $errorMessage = $result['Job']['ErrorMessage'] ?? 'Unknown error';
 
@@ -85,7 +85,7 @@ class CheckMediaConvertStatus implements ShouldQueue
         ]);
     }
 
-    private function handleProgressing(array $result): void
+    private function handleProgressing($result): void
     {
         $percent = $result['Job']['JobPercentComplete'] ?? 0;
 
