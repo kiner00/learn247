@@ -259,9 +259,18 @@
             <p class="text-center text-gray-500 mb-12">All courses below are unlocked the moment you join.</p>
             <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div v-for="course in courses" :key="course.id"
-                    class="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm flex flex-col">
-                    <div class="aspect-video bg-indigo-100 overflow-hidden">
-                        <img v-if="course.cover_image" :src="course.cover_image" class="w-full h-full object-cover" />
+                    class="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm flex flex-col group">
+                    <div class="aspect-video bg-indigo-100 overflow-hidden relative"
+                        @mouseenter="onCourseHover($event, course)"
+                        @mouseleave="onCourseLeave($event, course)"
+                        @touchstart.passive="onCourseTouchStart($event, course)"
+                        @touchend.passive="onCourseTouchEnd(course)">
+                        <video v-if="course.preview_video"
+                            :data-lp-course-id="course.id"
+                            :src="course.preview_video"
+                            class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-300 z-[1]"
+                            muted loop playsinline preload="none" />
+                        <img v-if="course.cover_image" :src="course.cover_image" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                         <div v-else class="w-full h-full flex items-center justify-center text-4xl">🎓</div>
                     </div>
                     <div class="p-5 flex flex-col flex-1">
@@ -470,5 +479,55 @@ function formatCount(n) {
     if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
     if (n >= 1_000)     return (n / 1_000).toFixed(1).replace(/\.0$/, '') + 'k';
     return String(n ?? 0);
+}
+
+// ── Preview video hover/tap-to-play ──────────────────────────────────────────
+let lpHoverTimer = null;
+let lpTouchTimer = null;
+
+function getLpVideoEl(container, id) {
+    return container.querySelector(`video[data-lp-course-id="${id}"]`);
+}
+
+function onCourseHover(e, course) {
+    if (!course.preview_video) return;
+    const container = e.currentTarget;
+    lpHoverTimer = setTimeout(() => {
+        const video = getLpVideoEl(container, course.id);
+        if (!video) return;
+        video.currentTime = 0;
+        video.play().then(() => { video.style.opacity = '1'; }).catch(() => {});
+    }, 500);
+}
+
+function onCourseLeave(e, course) {
+    clearTimeout(lpHoverTimer);
+    if (!course.preview_video) return;
+    const video = getLpVideoEl(e.currentTarget, course.id);
+    if (!video) return;
+    video.style.opacity = '0';
+    video.pause();
+    video.currentTime = 0;
+}
+
+function onCourseTouchStart(e, course) {
+    if (!course.preview_video) return;
+    const container = e.currentTarget;
+    lpTouchTimer = setTimeout(() => {
+        const video = getLpVideoEl(container, course.id);
+        if (!video) return;
+        video.currentTime = 0;
+        video.play().then(() => { video.style.opacity = '1'; }).catch(() => {});
+    }, 400);
+}
+
+function onCourseTouchEnd(course) {
+    clearTimeout(lpTouchTimer);
+    if (!course.preview_video) return;
+    document.querySelectorAll(`video[data-lp-course-id="${course.id}"]`).forEach(v => {
+        v.style.opacity = '0';
+        v.pause();
+        v.currentTime = 0;
+    });
 }
 </script>

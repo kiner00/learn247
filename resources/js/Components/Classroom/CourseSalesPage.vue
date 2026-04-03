@@ -4,21 +4,52 @@
 
         <!-- Hero: cover + title + CTA -->
         <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm mb-4">
-            <!-- Cover image -->
-            <div class="relative w-full bg-gray-900" style="aspect-ratio:16/7;">
-                <img
-                    v-if="course.cover_image"
-                    :src="course.cover_image"
-                    :alt="course.title"
-                    class="w-full h-full object-cover opacity-90"
-                />
-                <div v-else class="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-600 to-purple-700">
-                    <svg class="w-16 h-16 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                    </svg>
-                </div>
+            <!-- Hero: preview video or cover image -->
+            <div class="relative w-full bg-gray-900" :style="course.preview_video ? 'aspect-ratio:16/9' : 'aspect-ratio:16/7'">
+                <!-- Preview video (auto-plays muted, click to unmute) -->
+                <template v-if="course.preview_video">
+                    <video
+                        ref="heroVideoRef"
+                        :src="course.preview_video"
+                        :poster="course.cover_image || undefined"
+                        class="w-full h-full object-cover"
+                        muted
+                        autoplay
+                        loop
+                        playsinline
+                        @click="toggleMute"
+                    />
+                    <!-- Mute/unmute indicator -->
+                    <button
+                        @click="toggleMute"
+                        class="absolute bottom-3 left-3 w-8 h-8 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-colors z-10"
+                        :title="isMuted ? 'Unmute' : 'Mute'"
+                    >
+                        <svg v-if="isMuted" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
+                        </svg>
+                        <svg v-else class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                        </svg>
+                    </button>
+                </template>
+                <!-- Cover image fallback -->
+                <template v-else>
+                    <img
+                        v-if="course.cover_image"
+                        :src="course.cover_image"
+                        :alt="course.title"
+                        class="w-full h-full object-cover opacity-90"
+                    />
+                    <div v-else class="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-600 to-purple-700">
+                        <svg class="w-16 h-16 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                        </svg>
+                    </div>
+                </template>
                 <!-- Price badge overlay -->
-                <div class="absolute top-3 right-3">
+                <div class="absolute top-3 right-3 z-10">
                     <span class="px-3 py-1.5 bg-indigo-600 text-white text-sm font-black rounded-xl shadow-lg">
                         {{ course.access_type === 'paid_once' ? `₱${Number(course.price).toLocaleString()}` : course.access_type === 'paid_monthly' ? `₱${Number(course.price).toLocaleString()}/mo` : 'Members Only' }}
                     </span>
@@ -108,6 +139,7 @@
 </template>
 
 <script setup>
+import { ref } from 'vue';
 import { Link } from '@inertiajs/vue3';
 
 defineProps({
@@ -120,4 +152,13 @@ defineProps({
 });
 
 defineEmits(['enroll']);
+
+const heroVideoRef = ref(null);
+const isMuted = ref(true);
+
+function toggleMute() {
+    if (!heroVideoRef.value) return;
+    heroVideoRef.value.muted = !heroVideoRef.value.muted;
+    isMuted.value = heroVideoRef.value.muted;
+}
 </script>
