@@ -61,7 +61,7 @@ class ClassroomController extends Controller
                 'title'         => ['required', 'string', 'max:255'],
                 'description'   => ['nullable', 'string', 'max:2000'],
                 'cover_image'   => ['nullable', 'image', 'max:10240'],
-                'preview_video' => ['nullable', 'file', 'mimetypes:video/mp4,video/quicktime,video/webm', 'max:51200'],
+                'preview_video' => ['nullable', 'file', 'mimetypes:video/mp4,video/quicktime,video/webm', 'max:102400'],
                 'access_type'   => ['required', 'in:free,inclusive,paid_once,paid_monthly,member_once'],
                 'price'         => ['nullable', 'numeric', 'min:0', 'required_if:access_type,paid_once', 'required_if:access_type,paid_monthly'],
             ]);

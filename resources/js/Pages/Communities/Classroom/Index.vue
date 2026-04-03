@@ -160,7 +160,7 @@
                         {{ videoPreview ? 'Change video' : 'Upload preview' }}
                         <input ref="videoInput" type="file" accept="video/mp4,video/quicktime,video/webm" class="hidden" @change="onVideoChange" />
                     </label>
-                    <p class="text-xs text-gray-400 mt-1">MP4 recommended, 1280 x 720 px, max 50 MB. Plays on hover.</p>
+                    <p class="text-xs text-gray-400 mt-1">MP4 recommended, 1280 x 720 px, max 100 MB. Plays on hover.</p>
                 </div>
 
                 <div class="flex gap-2 justify-end">
@@ -475,7 +475,7 @@
                                 {{ (editVideoPreview || editingCourse.preview_video) ? 'Change video' : 'Upload preview' }}
                                 <input ref="editVideoInput" type="file" accept="video/mp4,video/quicktime,video/webm" class="hidden" @change="onEditVideoChange" />
                             </label>
-                            <p class="text-xs text-gray-400 mt-1">MP4 recommended, 1280 × 720 px, max 50 MB. Plays on hover.</p>
+                            <p class="text-xs text-gray-400 mt-1">MP4 recommended, 1280 × 720 px, max 100 MB. Plays on hover.</p>
                         </div>
 
                         <div class="flex gap-2 justify-end">
