@@ -61,12 +61,12 @@ class ClassroomController extends Controller
                 'title'         => ['required', 'string', 'max:255'],
                 'description'   => ['nullable', 'string', 'max:2000'],
                 'cover_image'   => ['nullable', 'image', 'max:10240'],
-                'preview_video' => ['nullable', 'file', 'mimetypes:video/mp4,video/quicktime,video/webm', 'max:102400'],
+                'preview_video' => ['nullable', 'string', 'max:1000'],
                 'access_type'   => ['required', 'in:free,inclusive,paid_once,paid_monthly,member_once'],
                 'price'         => ['nullable', 'numeric', 'min:0', 'required_if:access_type,paid_once', 'required_if:access_type,paid_monthly'],
             ]);
 
-            $action->store($community, $data, $request->file('cover_image'), $request->file('preview_video'));
+            $action->store($community, $data, $request->file('cover_image'));
 
             return back()->with('success', 'Course created!');
         } catch (\Throwable $e) {
@@ -84,13 +84,13 @@ class ClassroomController extends Controller
                 'title'                => ['required', 'string', 'max:255'],
                 'description'          => ['nullable', 'string', 'max:2000'],
                 'cover_image'          => ['nullable', 'image', 'max:10240'],
-                'preview_video'        => ['nullable', 'file', 'mimetypes:video/mp4,video/quicktime,video/webm', 'max:51200'],
+                'preview_video'        => ['nullable', 'string', 'max:1000'],
                 'remove_preview_video' => ['nullable', 'boolean'],
                 'access_type'          => ['required', 'in:free,inclusive,paid_once,paid_monthly,member_once'],
                 'price'                => ['nullable', 'numeric', 'min:0', 'required_if:access_type,paid_once', 'required_if:access_type,paid_monthly'],
             ]);
 
-            $action->update($course, $data, $request->file('cover_image'), $request->file('preview_video'));
+            $action->update($course, $data, $request->file('cover_image'));
 
             return back()->with('success', 'Course updated!');
         } catch (\Throwable $e) {
@@ -362,6 +362,52 @@ class ClassroomController extends Controller
             ]);
         } catch (\Throwable $e) {
             Log::error('ClassroomController@uploadLessonVideo failed', ['error' => $e->getMessage(), 'community' => $community->id]);
+            throw $e;
+        }
+    }
+
+    public function uploadPreviewVideo(Request $request, Community $community, PlanLimitService $planLimit): JsonResponse
+    {
+        try {
+            $this->authorize('manage', $community);
+
+            $owner = $community->owner;
+            if (! $planLimit->canUploadVideo($owner)) {
+                return response()->json(['error' => 'Preview video uploads require a Pro plan.'], 403);
+            }
+
+            $request->validate([
+                'filename'     => ['required', 'string', 'max:255'],
+                'content_type' => ['required', 'string', 'in:video/mp4,video/quicktime,video/webm'],
+                'size'         => ['required', 'integer', 'min:1'],
+            ]);
+
+            $maxBytes = $planLimit->maxVideoSizeMb($owner->creatorPlan()) * 1024 * 1024;
+
+            if ($request->size > $maxBytes) {
+                return response()->json([
+                    'error' => 'File too large. Maximum size is ' . $planLimit->maxVideoSizeMb($owner->creatorPlan()) . 'MB.',
+                ], 422);
+            }
+
+            $extension = pathinfo($request->filename, PATHINFO_EXTENSION) ?: 'mp4';
+            $key       = 'course-previews/' . \Illuminate\Support\Str::uuid() . '.' . $extension;
+
+            $client  = Storage::disk('s3')->getClient();
+            $command = $client->getCommand('PutObject', [
+                'Bucket'      => config('filesystems.disks.s3.bucket'),
+                'Key'         => $key,
+                'ContentType' => $request->content_type,
+            ]);
+
+            $presigned = $client->createPresignedRequest($command, '+30 minutes');
+
+            return response()->json([
+                'upload_url' => (string) $presigned->getUri(),
+                'key'        => $key,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('ClassroomController@uploadPreviewVideo failed', ['error' => $e->getMessage(), 'community' => $community->id]);
             throw $e;
         }
     }

@@ -271,6 +271,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('/communities/{community}/classroom/courses/{course}/modules/{module}/lessons/{lesson}', [ClassroomController::class, 'destroyLesson'])->name('communities.classroom.lessons.destroy');
         Route::post('/communities/{community}/classroom/lesson-images', [ClassroomController::class, 'uploadLessonImage'])->name('communities.classroom.lesson-images');
         Route::post('/communities/{community}/classroom/lesson-videos', [ClassroomController::class, 'uploadLessonVideo'])->name('communities.classroom.lesson-videos');
+        Route::post('/communities/{community}/classroom/preview-videos', [ClassroomController::class, 'uploadPreviewVideo'])->name('communities.classroom.preview-videos');
         Route::get('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/stream', [ClassroomController::class, 'streamLessonVideo'])->name('communities.classroom.lessons.stream');
         Route::get('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/transcode-status', [ClassroomController::class, 'transcodeStatus'])->name('communities.classroom.lessons.transcode-status');
         Route::get('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/hls/{file}', [ClassroomController::class, 'hlsFile'])->where('file', '.*')->name('communities.classroom.lessons.hls');

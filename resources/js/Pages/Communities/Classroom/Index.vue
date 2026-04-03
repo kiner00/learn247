@@ -147,20 +147,27 @@
                     <p class="text-xs text-gray-400 mt-1">Recommended: 1280 x 720 px</p>
                 </div>
 
-                <!-- Preview video -->
-                <div class="mb-3">
+                <!-- Preview video (Pro only) -->
+                <div v-if="isPro" class="mb-3">
                     <label class="block text-xs font-medium text-gray-600 mb-1">Preview video <span class="text-gray-400 font-normal">(optional)</span></label>
                     <div v-if="videoPreview" class="relative mb-2 aspect-video rounded-lg overflow-hidden border border-gray-200 bg-black">
                         <video :src="videoPreview" class="w-full h-full object-cover" muted playsinline />
                         <button type="button" @click="removeVideo"
                             class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center text-xs hover:bg-black/70">x</button>
                     </div>
-                    <label class="flex items-center gap-2 w-fit cursor-pointer px-3 py-1.5 border border-gray-300 rounded-lg text-xs text-gray-600 hover:bg-gray-50 transition-colors">
+                    <div v-if="videoUploading" class="mb-2">
+                        <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div class="h-full bg-indigo-500 rounded-full transition-all" :style="{ width: `${videoUploadProgress}%` }" />
+                        </div>
+                        <p class="text-xs text-gray-400 mt-1">Uploading... {{ videoUploadProgress }}%</p>
+                    </div>
+                    <p v-if="videoUploadError" class="text-xs text-red-500 mb-1">{{ videoUploadError }}</p>
+                    <label v-if="!videoUploading" class="flex items-center gap-2 w-fit cursor-pointer px-3 py-1.5 border border-gray-300 rounded-lg text-xs text-gray-600 hover:bg-gray-50 transition-colors">
                         <svg class="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                         {{ videoPreview ? 'Change video' : 'Upload preview' }}
                         <input ref="videoInput" type="file" accept="video/mp4,video/quicktime,video/webm" class="hidden" @change="onVideoChange" />
                     </label>
-                    <p class="text-xs text-gray-400 mt-1">MP4 recommended, 1280 x 720 px, max 100 MB. Plays on hover.</p>
+                    <p class="text-xs text-gray-400 mt-1">MP4 recommended, 1280 x 720 px, max 500 MB. Plays on hover.</p>
                 </div>
 
                 <div class="flex gap-2 justify-end">
@@ -462,20 +469,27 @@
                             <p class="text-xs text-gray-400">Recommended: 1280 × 720 px</p>
                         </div>
 
-                        <!-- Preview video -->
-                        <div class="mb-4">
+                        <!-- Preview video (Pro only) -->
+                        <div v-if="isPro" class="mb-4">
                             <label class="block text-xs font-medium text-gray-600 mb-1">Preview video</label>
                             <div v-if="editVideoPreview || editingCourse.preview_video" class="relative mb-2 aspect-video rounded-lg overflow-hidden border border-gray-200 bg-black">
                                 <video :src="editVideoPreview || editingCourse.preview_video" class="w-full h-full object-cover" muted playsinline />
                                 <button type="button" @click="removeEditVideo"
                                     class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center text-xs hover:bg-black/70">x</button>
                             </div>
-                            <label class="flex items-center gap-2 w-fit cursor-pointer px-3 py-1.5 border border-gray-300 rounded-lg text-xs text-gray-600 hover:bg-gray-50 transition-colors">
+                            <div v-if="editVideoUploading" class="mb-2">
+                                <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                    <div class="h-full bg-indigo-500 rounded-full transition-all" :style="{ width: `${editVideoUploadProgress}%` }" />
+                                </div>
+                                <p class="text-xs text-gray-400 mt-1">Uploading... {{ editVideoUploadProgress }}%</p>
+                            </div>
+                            <p v-if="editVideoUploadError" class="text-xs text-red-500 mb-1">{{ editVideoUploadError }}</p>
+                            <label v-if="!editVideoUploading" class="flex items-center gap-2 w-fit cursor-pointer px-3 py-1.5 border border-gray-300 rounded-lg text-xs text-gray-600 hover:bg-gray-50 transition-colors">
                                 <svg class="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                                 {{ (editVideoPreview || editingCourse.preview_video) ? 'Change video' : 'Upload preview' }}
                                 <input ref="editVideoInput" type="file" accept="video/mp4,video/quicktime,video/webm" class="hidden" @change="onEditVideoChange" />
                             </label>
-                            <p class="text-xs text-gray-400 mt-1">MP4 recommended, 1280 × 720 px, max 100 MB. Plays on hover.</p>
+                            <p class="text-xs text-gray-400 mt-1">MP4 recommended, 1280 × 720 px, max 500 MB. Plays on hover.</p>
                         </div>
 
                         <div class="flex gap-2 justify-end">
@@ -514,6 +528,7 @@
 import { ref, computed, watch } from 'vue';
 import { Link, useForm, usePage, router } from '@inertiajs/vue3';
 
+import axios from 'axios';
 import draggable from 'vuedraggable';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import CommunityTabs from '@/Components/CommunityTabs.vue';
@@ -530,7 +545,8 @@ const props = defineProps({
 
 const page      = usePage();
 const isOwner   = props.canManage;
-const isMember = computed(() => !!props.membership);
+const isMember  = computed(() => !!props.membership);
+const isPro     = computed(() => props.ownerPlan === 'pro');
 
 
 // null = unlimited — based on community owner's plan
@@ -562,8 +578,11 @@ const showForm        = ref(false);
 const showInviteModal = ref(false);
 const coverPreview    = ref(null);
 const coverInput      = ref(null);
-const videoPreview    = ref(null);
-const videoInput      = ref(null);
+const videoPreview       = ref(null);
+const videoInput         = ref(null);
+const videoUploading     = ref(false);
+const videoUploadProgress = ref(0);
+const videoUploadError   = ref('');
 
 const isPaidType = (type) => type === 'paid_once' || type === 'paid_monthly';
 const selectPaidIfNeeded = (form) => { if (!isPaidType(form.access_type)) form.access_type = 'paid_once'; };
@@ -589,21 +608,43 @@ function removeCover() {
     if (coverInput.value) coverInput.value.value = '';
 }
 
-function onVideoChange(e) {
+async function onVideoChange(e) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 100 * 1024 * 1024) {
-        alert('Video must be under 100 MB. Please use a shorter or compressed clip.');
+
+    videoUploading.value = true;
+    videoUploadProgress.value = 0;
+    videoUploadError.value = '';
+
+    try {
+        const { data } = await axios.post(`/communities/${props.community.slug}/classroom/preview-videos`, {
+            filename: file.name,
+            content_type: file.type,
+            size: file.size,
+        });
+
+        const { default: rawAxios } = await import('axios');
+        const s3Client = rawAxios.create({ withCredentials: false });
+        await s3Client.put(data.upload_url, file, {
+            headers: { 'Content-Type': file.type },
+            onUploadProgress: (p) => { videoUploadProgress.value = Math.round((p.loaded / p.total) * 100); },
+        });
+
+        courseForm.preview_video = data.key;
+        videoPreview.value = URL.createObjectURL(file);
+    } catch (err) {
+        videoUploadError.value = err.response?.data?.error || err.response?.data?.message || 'Upload failed. Please try again.';
+        console.error('Preview video upload error:', err);
+    } finally {
+        videoUploading.value = false;
         e.target.value = '';
-        return;
     }
-    courseForm.preview_video = file;
-    videoPreview.value = URL.createObjectURL(file);
 }
 
 function removeVideo() {
     courseForm.preview_video = null;
     videoPreview.value = null;
+    videoUploadError.value = '';
     if (videoInput.value) videoInput.value.value = '';
 }
 
@@ -625,8 +666,11 @@ function createCourse() {
 const editingCourse    = ref(null);
 const editCoverPreview = ref(null);
 const editCoverInput   = ref(null);
-const editVideoPreview = ref(null);
-const editVideoInput   = ref(null);
+const editVideoPreview       = ref(null);
+const editVideoInput         = ref(null);
+const editVideoUploading     = ref(false);
+const editVideoUploadProgress = ref(0);
+const editVideoUploadError   = ref('');
 const editForm         = useForm({ title: '', description: '', cover_image: null, preview_video: null, remove_preview_video: false, access_type: 'inclusive', price: '', affiliate_commission_rate: '' });
 
 function openEdit(course) {
@@ -650,25 +694,46 @@ function onEditCoverChange(e) {
     editCoverPreview.value = URL.createObjectURL(file);
 }
 
-function onEditVideoChange(e) {
+async function onEditVideoChange(e) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 100 * 1024 * 1024) {
-        alert('Video must be under 100 MB. Please use a shorter or compressed clip.');
+
+    editVideoUploading.value = true;
+    editVideoUploadProgress.value = 0;
+    editVideoUploadError.value = '';
+
+    try {
+        const { data } = await axios.post(`/communities/${props.community.slug}/classroom/preview-videos`, {
+            filename: file.name,
+            content_type: file.type,
+            size: file.size,
+        });
+
+        const { default: rawAxios } = await import('axios');
+        const s3Client = rawAxios.create({ withCredentials: false });
+        await s3Client.put(data.upload_url, file, {
+            headers: { 'Content-Type': file.type },
+            onUploadProgress: (p) => { editVideoUploadProgress.value = Math.round((p.loaded / p.total) * 100); },
+        });
+
+        editForm.preview_video        = data.key;
+        editForm.remove_preview_video = false;
+        editVideoPreview.value = URL.createObjectURL(file);
+    } catch (err) {
+        editVideoUploadError.value = err.response?.data?.error || err.response?.data?.message || 'Upload failed. Please try again.';
+        console.error('Preview video upload error:', err);
+    } finally {
+        editVideoUploading.value = false;
         e.target.value = '';
-        return;
     }
-    editForm.preview_video        = file;
-    editForm.remove_preview_video = false;
-    editVideoPreview.value = URL.createObjectURL(file);
 }
 
 function removeEditVideo() {
     editForm.preview_video        = null;
     editForm.remove_preview_video = true;
     editVideoPreview.value = null;
+    editVideoUploadError.value = '';
     if (editVideoInput.value) editVideoInput.value.value = '';
-    // Clear the existing video from the local course object so the UI hides it
     if (editingCourse.value) editingCourse.value = { ...editingCourse.value, preview_video: null };
 }
 
