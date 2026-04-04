@@ -628,6 +628,7 @@ class CommunityController extends Controller
             'social_proof.stat_label' => 'nullable|string|max:100',
             'social_proof.trust_line' => 'nullable|string|max:100',
             'social_proof.bg_color'   => 'nullable|string|max:20',
+            'social_proof.hide_avatars' => 'nullable|boolean',
             'benefits.headline'       => 'nullable|string|max:100',
             'benefits.items'          => 'nullable|array|max:6',
             'benefits.items.*.icon'   => 'nullable|string|max:10',

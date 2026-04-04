@@ -4,7 +4,7 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- ── Posts feed ──────────────────────────────────────────────── -->
-            <div class="lg:col-span-2 space-y-4">
+            <div class="lg:col-span-2 space-y-4 order-2 lg:order-1">
                 <!-- Compose box -->
                 <PostComposer
                     v-if="isMember"
@@ -61,7 +61,7 @@
             </div>
 
             <!-- ── Sidebar ──────────────────────────────────────────────────── -->
-            <div class="space-y-4">
+            <div class="space-y-4 order-1 lg:order-2">
                 <!-- Community card -->
                 <CommunitySidebarCard
                     :community="community"
