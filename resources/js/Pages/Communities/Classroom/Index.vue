@@ -297,12 +297,13 @@
             <!-- Non-owner: grouped sections (Free → Included → Paid) -->
             <template v-else>
                 <template v-for="(group, label) in groupedCourses" :key="label">
-                    <div v-if="group.length" class="mb-8">
-                        <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                    <div v-if="group.courses.length" class="mb-8">
+                        <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 flex items-center gap-2">
                             <span>{{ label }}</span><span class="flex-1 h-px bg-gray-100"></span>
                         </h2>
+                        <p class="text-[11px] text-gray-400 mb-3">{{ group.desc }}</p>
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                            <div v-for="course in group" :key="course.id" class="relative group h-full">
+                            <div v-for="course in group.courses" :key="course.id" class="relative group h-full">
                                 <Link
                                     :href="`/communities/${community.slug}/classroom/courses/${course.id}`"
                                     class="flex flex-col h-full bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100"
@@ -591,10 +592,10 @@ const localCourses = ref([...props.courses]);
 watch(() => props.courses, (val) => { localCourses.value = [...val]; });
 
 const groupedCourses = computed(() => ({
-    'Free':      props.courses.filter(c => c.access_type === 'free'),
-    'Included':  props.courses.filter(c => c.access_type === 'inclusive'),
-    'One-Time':  props.courses.filter(c => c.access_type === 'member_once'),
-    'Paid':      props.courses.filter(c => c.access_type === 'paid_once' || c.access_type === 'paid_monthly'),
+    'Free':      { courses: props.courses.filter(c => c.access_type === 'free'),      desc: 'No subscription needed — anyone can access these courses' },
+    'Included':  { courses: props.courses.filter(c => c.access_type === 'inclusive'),  desc: 'Included with your community membership' },
+    'One-Time':  { courses: props.courses.filter(c => c.access_type === 'member_once'), desc: 'One-time purchase — accessible even after your membership ends' },
+    'Paid':      { courses: props.courses.filter(c => c.access_type === 'paid_once' || c.access_type === 'paid_monthly'), desc: 'Sold separately — requires a one-time or monthly payment' },
 }));
 
 function onCourseReorder() {
