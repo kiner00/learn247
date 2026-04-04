@@ -697,6 +697,16 @@ class CommunityController extends Controller
             'price_justification.options'               => 'nullable|array|max:5',
             'price_justification.options.*.label'       => 'nullable|string|max:80',
             'price_justification.options.*.description' => 'nullable|string|max:300',
+            // Custom sections
+            'custom_sections'                        => 'nullable|array',
+            'custom_sections.*'                      => 'nullable|array',
+            'custom_sections.*.title'                => 'nullable|string|max:200',
+            'custom_sections.*.text'                 => 'nullable|string|max:5000',
+            'custom_sections.*.image_url'            => 'nullable|url|max:2048',
+            'custom_sections.*.video_url'            => 'nullable|string|max:500',
+            'custom_sections.*.embed_html'           => 'nullable|string|max:5000',
+            'custom_sections.*.bg_color'             => 'nullable|string|max:20',
+            'custom_sections.*.text_color'           => 'nullable|string|max:20',
             // Section visibility/ordering metadata
             '_sections'               => 'nullable|array',
             '_sections.*.type'        => 'nullable|string|max:50',
@@ -708,13 +718,17 @@ class CommunityController extends Controller
         // Handle flat arrays separately (full replace, not deep merge)
         $sections = $data['_sections'] ?? null;
         $selectedCourses = array_key_exists('included_courses_selected', $data) ? $data['included_courses_selected'] : null;
-        unset($data['_sections'], $data['included_courses_selected']);
+        $customSections = array_key_exists('custom_sections', $data) ? $data['custom_sections'] : null;
+        unset($data['_sections'], $data['included_courses_selected'], $data['custom_sections']);
         $merged = array_replace_recursive($current, $data);
         if ($sections !== null) {
             $merged['_sections'] = $sections;
         }
         if ($selectedCourses !== null) {
             $merged['included_courses_selected'] = $selectedCourses;
+        }
+        if ($customSections !== null) {
+            $merged['custom_sections'] = $customSections;
         }
 
         $community->update(['landing_page' => $merged]);

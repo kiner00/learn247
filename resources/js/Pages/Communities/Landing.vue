@@ -99,11 +99,14 @@
         :all-courses-selected="allCoursesSelected"
         :SECTION_DEFS="SECTION_DEFS"
         :DEFAULT_SECTION_ORDER="DEFAULT_SECTION_ORDER"
+        :get-section-def="getSectionDef"
         @close="showEditPanel = false"
         @save="saveEdits"
         @regen-section="regenSection"
         @upload-image="uploadImage"
+        @upload-custom-image="uploadCustomImage"
         @section-video-upload="handleSectionVideoUpload"
+        @custom-video-upload="handleCustomVideoUpload"
         @toggle-course-selection="toggleCourseSelection"
         @toggle-all-courses="toggleAllCourses"
     />
@@ -173,6 +176,14 @@
             @cta="handleCta"
         />
 
+        <!-- Custom sections after hero -->
+        <template v-for="cs in customSectionsAfter('hero')" :key="cs.type">
+            <LandingCustomSection v-if="lp.custom_sections?.[cs.type]"
+                :section-id="cs.type" :data="lp.custom_sections[cs.type]"
+                :inline-mode="inlineMode" :editable-class="editableClass" :normalize-video-url="normalizeVideoUrl"
+                @el-focus="(e) => onElFocus(e)" @el-blur="(e, path) => saveFromEl(e, path)" />
+        </template>
+
         <!-- All other display sections -->
         <LandingDisplaySections
             :lp="lp"
@@ -186,6 +197,7 @@
             :editable-class="editableClass"
             :normalize-video-url="normalizeVideoUrl"
             :is-visible="isVisible"
+            :get-section-def="getSectionDef"
             @open-color-popover="openColorPopover"
             @el-focus="onElFocus"
             @el-blur="saveFromEl"
@@ -217,6 +229,7 @@ import LandingEditorPanel from '@/Components/Landing/LandingEditorPanel.vue';
 import LandingHeroSection from '@/Components/Landing/LandingHeroSection.vue';
 import LandingDisplaySections from '@/Components/Landing/LandingDisplaySections.vue';
 import LandingJoinModal from '@/Components/Landing/LandingJoinModal.vue';
+import LandingCustomSection from '@/Components/Landing/LandingCustomSection.vue';
 
 function xsrfToken() {
     return decodeURIComponent(
@@ -246,6 +259,16 @@ const SECTION_DEFS = {
     faq:                  { label: 'FAQ',                  icon: '❓' },
     cta_section:          { label: 'Final CTA',            icon: '🚀', required: true },
 };
+
+// Helper to get section label/icon (handles custom sections)
+function getSectionDef(type) {
+    if (SECTION_DEFS[type]) return SECTION_DEFS[type];
+    if (type.startsWith('custom_')) {
+        const data = (lp.value?.custom_sections ?? {})[type] ?? (editDraft.value?.custom_sections ?? {})[type];
+        return { label: data?.title || 'Custom Section', icon: '🧩' };
+    }
+    return { label: type, icon: '📄' };
+}
 
 const DEFAULT_SECTION_ORDER = [
     'hero', 'social_proof', 'benefits', 'for_you', 'creator', 'video_creator',
@@ -436,6 +459,24 @@ watch(inlineMode, (on) => {
     }
 });
 
+// ── Custom sections positioning ──────────────────────────────────────────────
+function customSectionsAfter(afterType) {
+    const sections = lp.value?._sections ?? [];
+    const result = [];
+    let found = false;
+    for (const sec of sections) {
+        if (sec.type === afterType) { found = true; continue; }
+        if (found) {
+            if (sec.type.startsWith('custom_') && sec.visible) {
+                result.push(sec);
+            } else {
+                break;
+            }
+        }
+    }
+    return result;
+}
+
 // ── Section visibility helpers ────────────────────────────────────────────────
 function isVisible(type) {
     if (!lp.value) return false;
@@ -553,6 +594,76 @@ async function uploadImage(section, event) {
     } finally {
         uploadLoading.value = null;
         event.target.value = '';
+    }
+}
+
+// ── Custom section image upload ──────────────────────────────────────────────
+async function uploadCustomImage(sectionId, event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    uploadLoading.value = sectionId;
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+        const res = await fetch(`/communities/${props.community.slug}/landing-page/upload-image`, {
+            method: 'POST',
+            headers: { 'Accept': 'application/json', 'X-XSRF-TOKEN': xsrfToken() },
+            body: formData,
+        });
+        const data = await res.json();
+        if (!res.ok) { alert(data.message ?? 'Upload failed.'); return; }
+
+        if (!editDraft.value.custom_sections) editDraft.value.custom_sections = {};
+        if (!editDraft.value.custom_sections[sectionId]) editDraft.value.custom_sections[sectionId] = {};
+        editDraft.value.custom_sections[sectionId].image_url = data.url;
+    } catch (e) {
+        alert(e?.message ?? 'Upload failed.');
+    } finally {
+        uploadLoading.value = null;
+        event.target.value = '';
+    }
+}
+
+// ── Custom section video upload ──────────────────────────────────────────────
+async function handleCustomVideoUpload(sectionId, e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    sectionVideoUploading.value = sectionId;
+    sectionVideoProgress.value  = 0;
+    sectionVideoError.value     = '';
+
+    try {
+        const res = await fetch(`/communities/${props.community.slug}/landing-page/upload-video`, {
+            method: 'POST',
+            headers: jsonHeaders(),
+            body: JSON.stringify({ filename: file.name, content_type: file.type, size: file.size }),
+        });
+        const data = await res.json();
+        if (!res.ok) { sectionVideoError.value = data.error ?? data.message ?? 'Failed to get upload URL.'; return; }
+
+        const { default: rawAxios } = await import('axios');
+        const s3Client = rawAxios.create({ withCredentials: false });
+        await s3Client.put(data.upload_url, file, {
+            headers: { 'Content-Type': file.type },
+            onUploadProgress: (evt) => { sectionVideoProgress.value = Math.round((evt.loaded / evt.total) * 100); },
+        });
+
+        if (!editDraft.value.custom_sections) editDraft.value.custom_sections = {};
+        if (!editDraft.value.custom_sections[sectionId]) editDraft.value.custom_sections[sectionId] = {};
+        editDraft.value.custom_sections[sectionId].video_url = data.url;
+    } catch (err) {
+        if (typeof err.response?.data === 'string' && err.response.data.includes('<Message>')) {
+            const match = err.response.data.match(/<Message>([^<]+)<\/Message>/);
+            sectionVideoError.value = match ? `S3: ${match[1]}` : 'Upload to storage failed.';
+        } else {
+            sectionVideoError.value = err.message || 'Upload failed. Please try again.';
+        }
+    } finally {
+        sectionVideoUploading.value = null;
+        e.target.value = '';
     }
 }
 

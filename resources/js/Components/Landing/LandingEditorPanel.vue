@@ -35,16 +35,30 @@
                                     <svg v-else class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
                                 </button>
 
+                                <!-- Move up/down buttons -->
+                                <div class="flex flex-col gap-0.5 shrink-0">
+                                    <button v-if="idx > 0 && !SECTION_DEFS[sec.type]?.required"
+                                        @click.stop="moveSection(idx, -1)" title="Move up"
+                                        class="w-5 h-3.5 flex items-center justify-center text-gray-300 hover:text-gray-600 transition">
+                                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>
+                                    </button>
+                                    <button v-if="idx < editDraft._sections.length - 1 && !SECTION_DEFS[sec.type]?.required"
+                                        @click.stop="moveSection(idx, 1)" title="Move down"
+                                        class="w-5 h-3.5 flex items-center justify-center text-gray-300 hover:text-gray-600 transition">
+                                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                                    </button>
+                                </div>
+
                                 <!-- Section name (click to expand) -->
                                 <button @click="expandedSection = expandedSection === sec.type ? null : sec.type" class="flex-1 text-left">
                                     <span class="text-sm font-medium text-gray-800">
-                                        {{ SECTION_DEFS[sec.type]?.icon }} {{ SECTION_DEFS[sec.type]?.label }}
+                                        {{ getSectionDef(sec.type)?.icon ?? '📄' }} {{ getSectionDef(sec.type)?.label ?? sec.type }}
                                     </span>
                                     <span v-if="!sec.visible" class="ml-2 text-xs text-gray-400 font-normal">hidden</span>
                                 </button>
 
-                                <!-- AI Regen button -->
-                                <button
+                                <!-- AI Regen button (not for custom sections) -->
+                                <button v-if="!sec.type.startsWith('custom_')"
                                     @click.stop="$emit('regenSection', sec.type)"
                                     :disabled="regenLoading === sec.type"
                                     class="flex items-center gap-1 px-2 py-1 rounded-md bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-xs font-semibold transition disabled:opacity-40 shrink-0">
@@ -567,6 +581,76 @@
                                     </template>
                                 </template>
 
+                                <!-- CUSTOM SECTION -->
+                                <template v-if="sec.type.startsWith('custom_')">
+                                    <div class="space-y-3">
+                                        <div>
+                                            <label class="field-label">Section Title</label>
+                                            <input v-model="getCustomData(sec.type).title" type="text" placeholder="Your section heading" class="field-input" />
+                                        </div>
+                                        <div>
+                                            <label class="field-label">Text Content</label>
+                                            <textarea v-model="getCustomData(sec.type).text" rows="4" placeholder="Add your text content here..." class="field-input resize-none" />
+                                        </div>
+                                        <div>
+                                            <label class="field-label">Image</label>
+                                            <div class="flex items-center gap-2">
+                                                <input v-model="getCustomData(sec.type).image_url" type="url" placeholder="https://... or upload below" class="field-input flex-1" />
+                                            </div>
+                                            <label class="mt-2 flex items-center gap-2 cursor-pointer text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+                                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                                {{ uploadLoading === sec.type ? 'Uploading...' : 'Upload image' }}
+                                                <input type="file" accept="image/*" class="sr-only" @change="$emit('uploadCustomImage', sec.type, $event)" />
+                                            </label>
+                                        </div>
+                                        <div>
+                                            <label class="field-label">Video URL <span class="text-gray-400 font-normal">(YouTube, Vimeo, or direct link)</span></label>
+                                            <input v-model="getCustomData(sec.type).video_url" type="url" placeholder="https://youtube.com/watch?v=..." class="field-input" />
+                                        </div>
+                                        <div v-if="canUploadSectionVideo">
+                                            <p class="text-xs text-gray-500 mb-1.5 font-medium">
+                                                Upload Video
+                                                <span class="ml-1 px-1.5 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-bold rounded-full uppercase">Pro</span>
+                                            </p>
+                                            <label class="flex items-center justify-center gap-2 px-3 py-2.5 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 transition-colors">
+                                                <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                                </svg>
+                                                <span class="text-xs text-gray-500">
+                                                    {{ sectionVideoUploading === sec.type ? `Uploading... ${sectionVideoProgress}%` : 'Choose video file (MP4, WebM, MOV)' }}
+                                                </span>
+                                                <input type="file" accept="video/mp4,video/webm,video/quicktime" class="hidden"
+                                                    :disabled="sectionVideoUploading === sec.type"
+                                                    @change="$emit('customVideoUpload', sec.type, $event)" />
+                                            </label>
+                                            <p v-if="sectionVideoError && sectionVideoUploading === null" class="text-xs text-red-500 mt-1">{{ sectionVideoError }}</p>
+                                        </div>
+                                        <div>
+                                            <label class="field-label">Embed Code <span class="text-gray-400 font-normal">(iframe / script)</span></label>
+                                            <textarea v-model="getCustomData(sec.type).embed_html" rows="4" placeholder='<iframe src="..." ...></iframe>' class="field-input font-mono resize-none" />
+                                        </div>
+                                        <div class="pt-2 border-t border-gray-200 mt-1">
+                                            <label class="field-label mb-2">Colors</label>
+                                            <div class="grid grid-cols-2 gap-2">
+                                                <div>
+                                                    <label class="text-[10px] text-gray-400 font-medium">Background</label>
+                                                    <div class="flex items-center gap-2">
+                                                        <input type="color" v-model="getCustomData(sec.type).bg_color" class="w-8 h-8 rounded cursor-pointer border border-gray-200 p-0.5" />
+                                                        <input v-model="getCustomData(sec.type).bg_color" type="text" placeholder="#ffffff" class="field-input flex-1 text-xs" />
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label class="text-[10px] text-gray-400 font-medium">Text Color</label>
+                                                    <div class="flex items-center gap-2">
+                                                        <input type="color" v-model="getCustomData(sec.type).text_color" class="w-8 h-8 rounded cursor-pointer border border-gray-200 p-0.5" />
+                                                        <input v-model="getCustomData(sec.type).text_color" type="text" placeholder="#111827" class="field-input flex-1 text-xs" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+
                                 <template v-if="sec.type === 'cta_section'">
                                     <div v-if="!editDraft.cta_section" class="text-xs text-gray-500">
                                         <button @click="editDraft.cta_section = { headline: '', subtext: '', cta_label: '' }" class="text-indigo-600 font-medium hover:underline">+ Initialize section</button>
@@ -632,8 +716,8 @@
                             </span>
                             <svg class="w-4 h-4 text-gray-400 transition-transform" :class="showAddSection ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                         </button>
-                        <div v-if="showAddSection" class="px-5 pb-4">
-                            <div v-if="availableSectionsToAdd.length > 0" class="flex flex-wrap gap-2">
+                        <div v-if="showAddSection" class="px-5 pb-4 space-y-3">
+                            <div class="flex flex-wrap gap-2">
                                 <button
                                     v-for="type in availableSectionsToAdd" :key="type"
                                     @click="addSection(type)"
@@ -641,8 +725,14 @@
                                     <span>{{ SECTION_DEFS[type]?.icon }}</span>
                                     {{ SECTION_DEFS[type]?.label }}
                                 </button>
+                                <button
+                                    @click="addCustomSection"
+                                    class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg border border-emerald-200 hover:border-emerald-300 transition">
+                                    <span>🧩</span>
+                                    Custom Section
+                                </button>
                             </div>
-                            <p v-else class="text-xs text-gray-400">All sections are already added. Remove a section above to re-add it.</p>
+                            <p v-if="availableSectionsToAdd.length === 0" class="text-xs text-gray-400">All standard sections are added. You can still add unlimited custom sections.</p>
                         </div>
                     </div>
 
@@ -673,10 +763,12 @@ const props = defineProps({
     allCoursesSelected: { type: Boolean, default: false },
     SECTION_DEFS: { type: Object, required: true },
     DEFAULT_SECTION_ORDER: { type: Array, required: true },
+    getSectionDef: { type: Function, required: true },
 });
 
 const emit = defineEmits([
-    'close', 'save', 'regenSection', 'uploadImage', 'sectionVideoUpload',
+    'close', 'save', 'regenSection', 'uploadImage', 'uploadCustomImage',
+    'sectionVideoUpload', 'customVideoUpload',
     'toggleCourseSelection', 'toggleAllCourses',
 ]);
 
@@ -705,6 +797,45 @@ function removeSection(type) {
     if (!props.editDraft._sections) return;
     props.editDraft._sections = props.editDraft._sections.filter(s => s.type !== type);
     if (expandedSection.value === type) expandedSection.value = null;
+    // Clean up custom section data
+    if (type.startsWith('custom_') && props.editDraft.custom_sections) {
+        delete props.editDraft.custom_sections[type];
+    }
+}
+
+function addCustomSection() {
+    if (!props.editDraft._sections) return;
+    const id = 'custom_' + Math.random().toString(36).slice(2, 10);
+    const ctaIdx = props.editDraft._sections.findIndex(s => s.type === 'cta_section');
+    const newSec = { type: id, visible: true };
+    if (ctaIdx !== -1) {
+        props.editDraft._sections.splice(ctaIdx, 0, newSec);
+    } else {
+        props.editDraft._sections.push(newSec);
+    }
+    // Initialize custom section data
+    if (!props.editDraft.custom_sections) props.editDraft.custom_sections = {};
+    props.editDraft.custom_sections[id] = { title: '', text: '', image_url: '', video_url: '', embed_html: '', bg_color: '', text_color: '' };
+    expandedSection.value = id;
+}
+
+function getCustomData(sectionId) {
+    if (!props.editDraft.custom_sections) props.editDraft.custom_sections = {};
+    if (!props.editDraft.custom_sections[sectionId]) {
+        props.editDraft.custom_sections[sectionId] = { title: '', text: '', image_url: '', video_url: '', embed_html: '', bg_color: '', text_color: '' };
+    }
+    return props.editDraft.custom_sections[sectionId];
+}
+
+function moveSection(idx, direction) {
+    const sections = props.editDraft._sections;
+    const newIdx = idx + direction;
+    if (newIdx < 0 || newIdx >= sections.length) return;
+    // Don't allow moving past required sections (hero stays first, cta stays last)
+    const target = sections[newIdx];
+    if (props.SECTION_DEFS[target.type]?.required) return;
+    // Swap
+    [sections[idx], sections[newIdx]] = [sections[newIdx], sections[idx]];
 }
 </script>
 

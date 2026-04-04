@@ -1,4 +1,12 @@
 <template>
+    <!-- Custom sections at the very start (before any standard section) -->
+    <template v-for="cs in customSectionsAtStart()" :key="cs.type">
+        <LandingCustomSection v-if="lp.custom_sections?.[cs.type]"
+            :section-id="cs.type" :data="lp.custom_sections[cs.type]"
+            :inline-mode="inlineMode" :editable-class="editableClass" :normalize-video-url="normalizeVideoUrl"
+            @el-focus="(...a) => $emit('elFocus', ...a)" @el-blur="(...a) => $emit('elBlur', ...a)" />
+    </template>
+
     <!-- ── SOCIAL PROOF BAR ── -->
     <section v-if="isVisible('social_proof') && lp.social_proof" class="text-white py-5"
         :style="{ backgroundColor: lp.social_proof.bg_color || '#4f46e5' }">
@@ -26,6 +34,9 @@
             />
         </div>
     </section>
+    <template v-for="cs in customSectionsAfter('social_proof')" :key="cs.type">
+        <LandingCustomSection v-if="lp.custom_sections?.[cs.type]" :section-id="cs.type" :data="lp.custom_sections[cs.type]" :inline-mode="inlineMode" :editable-class="editableClass" :normalize-video-url="normalizeVideoUrl" @el-focus="(...a) => $emit('elFocus', ...a)" @el-blur="(...a) => $emit('elBlur', ...a)" />
+    </template>
 
     <!-- ── BENEFITS ── -->
     <section v-if="isVisible('benefits') && lp.benefits" class="py-24 bg-white">
@@ -62,6 +73,9 @@
             </div>
         </div>
     </section>
+    <template v-for="cs in customSectionsAfter('benefits')" :key="cs.type">
+        <LandingCustomSection v-if="lp.custom_sections?.[cs.type]" :section-id="cs.type" :data="lp.custom_sections[cs.type]" :inline-mode="inlineMode" :editable-class="editableClass" :normalize-video-url="normalizeVideoUrl" @el-focus="(...a) => $emit('elFocus', ...a)" @el-blur="(...a) => $emit('elBlur', ...a)" />
+    </template>
 
     <!-- ── FOR YOU ── -->
     <section v-if="isVisible('for_you') && lp.for_you" class="py-20 bg-linear-to-br from-indigo-50 to-white">
@@ -92,6 +106,9 @@
             </div>
         </div>
     </section>
+    <template v-for="cs in customSectionsAfter('for_you')" :key="cs.type">
+        <LandingCustomSection v-if="lp.custom_sections?.[cs.type]" :section-id="cs.type" :data="lp.custom_sections[cs.type]" :inline-mode="inlineMode" :editable-class="editableClass" :normalize-video-url="normalizeVideoUrl" @el-focus="(...a) => $emit('elFocus', ...a)" @el-blur="(...a) => $emit('elBlur', ...a)" />
+    </template>
 
     <!-- ── CREATOR / AUTHORITY ── -->
     <section v-if="isVisible('creator') && lp.creator" class="py-24 bg-white">
@@ -132,6 +149,9 @@
             </div>
         </div>
     </section>
+    <template v-for="cs in customSectionsAfter('creator')" :key="cs.type">
+        <LandingCustomSection v-if="lp.custom_sections?.[cs.type]" :section-id="cs.type" :data="lp.custom_sections[cs.type]" :inline-mode="inlineMode" :editable-class="editableClass" :normalize-video-url="normalizeVideoUrl" @el-focus="(...a) => $emit('elFocus', ...a)" @el-blur="(...a) => $emit('elBlur', ...a)" />
+    </template>
 
     <!-- ── VIDEO AFTER CREATOR ── -->
     <section v-if="isVisible('video_creator') && (lp.video_creator?.embed_html || lp.video_creator?.video_url)" class="py-16 bg-white">
@@ -144,6 +164,9 @@
             </div>
         </div>
     </section>
+    <template v-for="cs in customSectionsAfter('video_creator')" :key="cs.type">
+        <LandingCustomSection v-if="lp.custom_sections?.[cs.type]" :section-id="cs.type" :data="lp.custom_sections[cs.type]" :inline-mode="inlineMode" :editable-class="editableClass" :normalize-video-url="normalizeVideoUrl" @el-focus="(...a) => $emit('elFocus', ...a)" @el-blur="(...a) => $emit('elBlur', ...a)" />
+    </template>
 
     <!-- ── TESTIMONIALS ── -->
     <!-- Embed testimonials -->
@@ -185,6 +208,9 @@
             </div>
         </div>
     </section>
+    <template v-for="cs in customSectionsAfter('testimonials')" :key="cs.type">
+        <LandingCustomSection v-if="lp.custom_sections?.[cs.type]" :section-id="cs.type" :data="lp.custom_sections[cs.type]" :inline-mode="inlineMode" :editable-class="editableClass" :normalize-video-url="normalizeVideoUrl" @el-focus="(...a) => $emit('elFocus', ...a)" @el-blur="(...a) => $emit('elBlur', ...a)" />
+    </template>
 
     <!-- ── VIDEO AFTER TESTIMONIALS ── -->
     <section v-if="isVisible('video_testimonials') && (lp.video_testimonials?.embed_html || lp.video_testimonials?.video_url)" class="py-16 bg-white">
@@ -197,6 +223,9 @@
             </div>
         </div>
     </section>
+    <template v-for="cs in customSectionsAfter('video_testimonials')" :key="cs.type">
+        <LandingCustomSection v-if="lp.custom_sections?.[cs.type]" :section-id="cs.type" :data="lp.custom_sections[cs.type]" :inline-mode="inlineMode" :editable-class="editableClass" :normalize-video-url="normalizeVideoUrl" @el-focus="(...a) => $emit('elFocus', ...a)" @el-blur="(...a) => $emit('elBlur', ...a)" />
+    </template>
 
     <!-- ── OFFER STACK ── -->
     <section v-if="isVisible('offer_stack') && lp.offer_stack" class="py-24 text-white relative"
@@ -238,6 +267,9 @@
             </button>
         </div>
     </section>
+    <template v-for="cs in customSectionsAfter('offer_stack')" :key="cs.type">
+        <LandingCustomSection v-if="lp.custom_sections?.[cs.type]" :section-id="cs.type" :data="lp.custom_sections[cs.type]" :inline-mode="inlineMode" :editable-class="editableClass" :normalize-video-url="normalizeVideoUrl" @el-focus="(...a) => $emit('elFocus', ...a)" @el-blur="(...a) => $emit('elBlur', ...a)" />
+    </template>
 
     <!-- ── INCLUDED COURSES ── -->
     <section v-if="isVisible('included_courses') && courses.length" class="py-24 relative"
@@ -300,6 +332,9 @@
             </div>
         </div>
     </section>
+    <template v-for="cs in customSectionsAfter('included_courses')" :key="cs.type">
+        <LandingCustomSection v-if="lp.custom_sections?.[cs.type]" :section-id="cs.type" :data="lp.custom_sections[cs.type]" :inline-mode="inlineMode" :editable-class="editableClass" :normalize-video-url="normalizeVideoUrl" @el-focus="(...a) => $emit('elFocus', ...a)" @el-blur="(...a) => $emit('elBlur', ...a)" />
+    </template>
 
     <!-- ── CERTIFICATIONS ── -->
     <section v-if="isVisible('certifications') && certifications.length" class="py-24 bg-white">
@@ -331,6 +366,9 @@
             </div>
         </div>
     </section>
+    <template v-for="cs in customSectionsAfter('certifications')" :key="cs.type">
+        <LandingCustomSection v-if="lp.custom_sections?.[cs.type]" :section-id="cs.type" :data="lp.custom_sections[cs.type]" :inline-mode="inlineMode" :editable-class="editableClass" :normalize-video-url="normalizeVideoUrl" @el-focus="(...a) => $emit('elFocus', ...a)" @el-blur="(...a) => $emit('elBlur', ...a)" />
+    </template>
 
     <!-- ── PRICE JUSTIFICATION ── -->
     <section v-if="isVisible('price_justification') && lp.price_justification" class="py-20 relative"
@@ -354,6 +392,9 @@
             </div>
         </div>
     </section>
+    <template v-for="cs in customSectionsAfter('price_justification')" :key="cs.type">
+        <LandingCustomSection v-if="lp.custom_sections?.[cs.type]" :section-id="cs.type" :data="lp.custom_sections[cs.type]" :inline-mode="inlineMode" :editable-class="editableClass" :normalize-video-url="normalizeVideoUrl" @el-focus="(...a) => $emit('elFocus', ...a)" @el-blur="(...a) => $emit('elBlur', ...a)" />
+    </template>
 
     <!-- ── GUARANTEE ── -->
     <section v-if="isVisible('guarantee') && lp.guarantee" class="py-16 bg-emerald-50">
@@ -367,6 +408,9 @@
             </div>
         </div>
     </section>
+    <template v-for="cs in customSectionsAfter('guarantee')" :key="cs.type">
+        <LandingCustomSection v-if="lp.custom_sections?.[cs.type]" :section-id="cs.type" :data="lp.custom_sections[cs.type]" :inline-mode="inlineMode" :editable-class="editableClass" :normalize-video-url="normalizeVideoUrl" @el-focus="(...a) => $emit('elFocus', ...a)" @el-blur="(...a) => $emit('elBlur', ...a)" />
+    </template>
 
     <!-- ── FAQ ── -->
     <section v-if="isVisible('faq') && lp.faq?.length" class="py-24 bg-white">
@@ -395,6 +439,9 @@
             </div>
         </div>
     </section>
+    <template v-for="cs in customSectionsAfter('faq')" :key="cs.type">
+        <LandingCustomSection v-if="lp.custom_sections?.[cs.type]" :section-id="cs.type" :data="lp.custom_sections[cs.type]" :inline-mode="inlineMode" :editable-class="editableClass" :normalize-video-url="normalizeVideoUrl" @el-focus="(...a) => $emit('elFocus', ...a)" @el-blur="(...a) => $emit('elBlur', ...a)" />
+    </template>
 
     <!-- ── FINAL CTA ── -->
     <section v-if="isVisible('cta_section')" class="py-24 text-white text-center relative overflow-hidden"
@@ -459,10 +506,11 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import SafeHtmlRenderer from '@/Components/SafeHtmlRenderer.vue';
+import LandingCustomSection from '@/Components/Landing/LandingCustomSection.vue';
 
-defineProps({
+const props = defineProps({
     lp: { type: Object, required: true },
     community: { type: Object, required: true },
     courses: { type: Array, default: () => [] },
@@ -474,11 +522,44 @@ defineProps({
     editableClass: { type: String, default: '' },
     normalizeVideoUrl: { type: Function, required: true },
     isVisible: { type: Function, required: true },
+    getSectionDef: { type: Function, default: () => ({}) },
 });
 
 defineEmits(['openColorPopover', 'elFocus', 'elBlur', 'cta']);
 
 const openFaqIdx = ref(null);
+
+// Returns custom sections that should render after a given standard section
+function customSectionsAfter(afterType) {
+    const sections = props.lp?._sections ?? [];
+    const result = [];
+    let found = false;
+    for (const sec of sections) {
+        if (sec.type === afterType) { found = true; continue; }
+        if (found) {
+            if (sec.type.startsWith('custom_') && sec.visible) {
+                result.push(sec);
+            } else {
+                break; // hit next standard section, stop
+            }
+        }
+    }
+    return result;
+}
+
+// Custom sections that appear before any standard section (at the very top)
+function customSectionsAtStart() {
+    const sections = props.lp?._sections ?? [];
+    const result = [];
+    for (const sec of sections) {
+        if (sec.type.startsWith('custom_') && sec.visible) {
+            result.push(sec);
+        } else {
+            break; // hit first standard section
+        }
+    }
+    return result;
+}
 
 function formatCount(n) {
     if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
