@@ -13,16 +13,19 @@ class CourseAccessService
 {
     public function hasAccess(?User $user, Community $community, Course $course): bool
     {
-        if ($course->access_type === Course::ACCESS_FREE) {
-            return true; // free courses are public — no auth required
-        }
-
         if (! $user) {
             return false;
         }
 
         if ($user->id === $community->owner_id || $user->isSuperAdmin()) {
             return true;
+        }
+
+        if ($course->access_type === Course::ACCESS_FREE) {
+            // Free courses require membership — "free" means no extra payment, not public
+            return CommunityMember::where('community_id', $community->id)
+                ->where('user_id', $user->id)
+                ->exists();
         }
 
         if ($course->access_type === Course::ACCESS_INCLUSIVE) {
