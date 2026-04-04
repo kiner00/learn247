@@ -147,7 +147,7 @@
                                 >
                                     {{ member.role }}
                                 </span>
-                                <template v-if="member.membership_type === 'free'">
+                                <template v-if="isOwner && member.membership_type === 'free'">
                                     <span class="text-gray-200">·</span>
                                     <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Free</span>
                                     <span v-if="member.expires_at" class="text-gray-400">
