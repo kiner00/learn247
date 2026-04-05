@@ -83,10 +83,10 @@
                     <div class="shrink-0 flex flex-col items-center gap-2 md:items-end">
                         <template v-if="course.access_type === 'paid_once' || course.access_type === 'paid_monthly'">
                             <div v-if="!authUserId">
-                                <Link :href="`/login`"
-                                    class="inline-block px-8 py-3 bg-indigo-600 text-white text-base font-black rounded-2xl hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200">
-                                    Sign in to enroll
-                                </Link>
+                                <button @click="showAuthModal = true"
+                                    class="px-8 py-3 bg-indigo-600 text-white text-base font-black rounded-2xl hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200">
+                                    Sign up to enroll
+                                </button>
                             </div>
                             <div v-else-if="enrollment?.status === 'pending'" class="flex items-center gap-2">
                                 <span class="text-xs text-amber-600 font-medium">Payment pending...</span>
@@ -104,7 +104,11 @@
                             </div>
                         </template>
                         <template v-else>
-                            <Link :href="`/communities/${community.slug}/about`"
+                            <button v-if="!authUserId" @click="showAuthModal = true"
+                                class="px-8 py-3 bg-indigo-600 text-white text-base font-black rounded-2xl hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200">
+                                Sign up to access
+                            </button>
+                            <Link v-else :href="`/communities/${community.slug}/about`"
                                 class="px-8 py-3 bg-indigo-600 text-white text-base font-black rounded-2xl hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200">
                                 Join Community to Unlock
                             </Link>
@@ -135,12 +139,14 @@
                 </div>
             </div>
         </div>
+        <AuthModal :show="showAuthModal" @close="showAuthModal = false" />
     </div>
 </template>
 
 <script setup>
 import { ref, onBeforeUnmount } from 'vue';
 import { Link } from '@inertiajs/vue3';
+import AuthModal from '@/Components/AuthModal.vue';
 
 defineProps({
     community:       { type: Object, required: true },
@@ -153,6 +159,7 @@ defineProps({
 
 defineEmits(['enroll']);
 
+const showAuthModal = ref(false);
 const heroVideoRef = ref(null);
 const isMuted = ref(true);
 
