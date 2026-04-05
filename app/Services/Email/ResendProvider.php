@@ -27,15 +27,34 @@ class ResendProvider implements EmailProvider
             return false;
         }
 
-        // Use a lightweight HTTP call to check the key.
-        // Fetching a non-existent email returns 404 (valid key) vs 401/403 (invalid key).
+        // Attempt a dummy send — Resend returns different errors for valid vs invalid keys:
+        // - Invalid key → 401 with message "API key is invalid"
+        // - Valid send-only key → 403 with domain verification error (key works, just restricted)
+        // - Valid full-access key → 422 or 403 validation error (key works)
         try {
             $response = Http::withToken($apiKey)
                 ->acceptJson()
-                ->get('https://api.resend.com/emails/test_validation_check');
+                ->post('https://api.resend.com/emails', [
+                    'from'    => 'test@resend.dev',
+                    'to'      => ['validation-check@example.com'],
+                    'subject' => 'key validation',
+                    'html'    => '<p>test</p>',
+                ]);
 
-            // 401/403 = bad key, 404/422 = key is valid (resource not found is expected)
-            return $response->status() !== 401 && $response->status() !== 403;
+            // 401 with "API key is invalid" = bad key
+            if ($response->status() === 401) {
+                $name = $response->json('name');
+                $message = $response->json('message');
+
+                // "restricted_api_key" on non-send endpoints means key is valid but limited
+                // "API key is invalid" means truly invalid
+                return $name === 'restricted_api_key' || ! str_contains($message ?? '', 'invalid');
+            }
+
+            // 403 = valid key but domain not verified (expected for validation)
+            // 422 = valid key but validation error (also expected)
+            // 200 = valid key and email sent (unlikely with test data but still valid)
+            return true;
         } catch (\Exception) {
             return false;
         }
