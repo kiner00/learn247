@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import EmailNav from '@/Components/EmailNav.vue';
 import { useCommunityUrl } from '@/composables/useCommunityUrl';
 
 const props = defineProps({
@@ -65,14 +66,7 @@ function displayStatus(send) {
 <template>
     <AppLayout :title="`${community.name} · Email History`">
         <div class="max-w-5xl mx-auto px-4 py-8">
-            <!-- Breadcrumb -->
-            <div class="flex items-center gap-2 text-sm text-gray-500 mb-6">
-                <Link :href="communityPath()" class="hover:text-indigo-600">{{ community.name }}</Link>
-                <span>/</span>
-                <Link :href="communityPath('/email-campaigns')" class="hover:text-indigo-600">Email</Link>
-                <span>/</span>
-                <span>History</span>
-            </div>
+            <EmailNav :community="community" active="history" />
 
             <h1 class="text-2xl font-bold text-gray-900 mb-6">Send History</h1>
 
@@ -202,18 +196,6 @@ function displayStatus(send) {
                 <p class="text-xs text-gray-500">Send a broadcast or activate a sequence to see history here.</p>
             </div>
 
-            <!-- Navigation -->
-            <div class="mt-6 flex gap-4">
-                <Link :href="communityPath('/email-campaigns')" class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
-                    ← Campaigns
-                </Link>
-                <Link :href="communityPath('/email-sequences')" class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
-                    Sequences
-                </Link>
-                <Link :href="communityPath('/email-analytics')" class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
-                    Analytics
-                </Link>
-            </div>
         </div>
     </AppLayout>
 </template>

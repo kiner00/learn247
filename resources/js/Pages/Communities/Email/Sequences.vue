@@ -1,6 +1,7 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import EmailNav from '@/Components/EmailNav.vue';
 import { useCommunityUrl } from '@/composables/useCommunityUrl';
 
 const props = defineProps({
@@ -34,15 +35,10 @@ function formatDate(date) {
 <template>
     <AppLayout :title="`${community.name} · Email Sequences`">
         <div class="max-w-4xl mx-auto px-4 py-8">
+            <EmailNav :community="community" active="sequences" />
+
             <div class="flex items-center justify-between mb-6">
                 <div>
-                    <div class="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                        <Link :href="communityPath()" class="hover:text-indigo-600">{{ community.name }}</Link>
-                        <span>/</span>
-                        <Link :href="communityPath('/email-campaigns')" class="hover:text-indigo-600">Email</Link>
-                        <span>/</span>
-                        <span>Sequences</span>
-                    </div>
                     <h1 class="text-2xl font-bold text-gray-900">Email Sequences</h1>
                     <p class="text-sm text-gray-500 mt-1">Automated drip campaigns triggered by member actions.</p>
                 </div>
@@ -112,17 +108,6 @@ function formatDate(date) {
                 </table>
             </div>
 
-            <!-- Navigation -->
-            <div class="mt-6 flex gap-3">
-                <Link :href="communityPath('/email-campaigns')"
-                    class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
-                    ← Broadcast Campaigns
-                </Link>
-                <Link :href="communityPath('/email-analytics')"
-                    class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
-                    Email Analytics →
-                </Link>
-            </div>
         </div>
     </AppLayout>
 </template>

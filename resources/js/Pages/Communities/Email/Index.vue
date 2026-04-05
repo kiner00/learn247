@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import EmailNav from '@/Components/EmailNav.vue';
 import { useCommunityUrl } from '@/composables/useCommunityUrl';
 
 const props = defineProps({
@@ -32,16 +33,11 @@ function formatDate(date) {
 <template>
     <AppLayout :title="`${community.name} · Email Campaigns`">
         <div class="max-w-4xl mx-auto px-4 py-8">
+            <EmailNav :community="community" active="campaigns" />
+
             <!-- Header -->
             <div class="flex items-center justify-between mb-6">
                 <div>
-                    <div class="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                        <Link :href="communityPath()" class="hover:text-indigo-600 transition-colors">
-                            {{ community.name }}
-                        </Link>
-                        <span>/</span>
-                        <span>Email Campaigns</span>
-                    </div>
                     <h1 class="text-2xl font-bold text-gray-900">Email Campaigns</h1>
                 </div>
                 <Link
@@ -110,21 +106,6 @@ function formatDate(date) {
                 </table>
             </div>
 
-            <!-- Navigation to other email sections -->
-            <div class="mt-6 flex gap-4">
-                <Link :href="communityPath('/email-sequences')"
-                    class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
-                    Sequences →
-                </Link>
-                <Link :href="communityPath('/email-history')"
-                    class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
-                    Send History →
-                </Link>
-                <Link :href="communityPath('/email-analytics')"
-                    class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
-                    Analytics →
-                </Link>
-            </div>
         </div>
     </AppLayout>
 </template>

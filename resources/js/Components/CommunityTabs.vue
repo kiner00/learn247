@@ -82,7 +82,7 @@ const bannerIconClass = computed(() => {
     }
 });
 
-const tabs = computed(() => [
+const baseTabs = [
     { name: 'community',      label: 'Community',      href: communityPath() },
     { name: 'classroom',      label: 'Classroom',      href: communityPath('/classroom') },
     { name: 'certifications', label: 'Certifications', href: communityPath('/certifications') },
@@ -91,5 +91,16 @@ const tabs = computed(() => [
     { name: 'chat',           label: 'Chat',           href: communityPath('/chat') },
     { name: 'leaderboard',    label: 'Leaderboards',   href: communityPath('/leaderboard') },
     { name: 'about',          label: 'About',          href: communityPath('/about') },
-]);
+];
+
+const tabs = computed(() => {
+    const list = [...baseTabs];
+
+    // Owner-only tabs
+    if (isOwner.value) {
+        list.push({ name: 'email', label: 'Email', href: communityPath('/email-campaigns') });
+    }
+
+    return list;
+});
 </script>
