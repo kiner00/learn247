@@ -304,10 +304,11 @@
                         <p class="text-[11px] text-gray-400 mb-3">{{ group.desc }}</p>
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                             <div v-for="course in group.courses" :key="course.id" class="relative group h-full">
-                                <Link
-                                    :href="`/communities/${community.slug}/classroom/courses/${course.id}`"
-                                    class="flex flex-col h-full bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100"
-                                    @click="onCourseClick($event, course)"
+                                <component
+                                    :is="!authUser && !course.has_access ? 'div' : Link"
+                                    :href="!authUser && !course.has_access ? undefined : `/communities/${community.slug}/classroom/courses/${course.id}`"
+                                    class="flex flex-col h-full bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100 cursor-pointer"
+                                    @click="!authUser && !course.has_access ? (showAuthModal = true) : null"
                                 >
                                     <div class="relative aspect-video bg-gray-900 overflow-hidden"
                                         @mouseenter="onCardHover($event, course)"
@@ -381,7 +382,7 @@
                                             </span>
                                         </div>
                                     </div>
-                                </Link>
+                                </component>
                             </div>
                         </div>
                     </div>
@@ -588,12 +589,6 @@ const isMember  = computed(() => !!props.membership);
 const authUser  = computed(() => page.props.auth?.user);
 const showAuthModal = ref(false);
 
-function onCourseClick(e, course) {
-    if (!authUser.value && !course.has_access) {
-        e.preventDefault();
-        showAuthModal.value = true;
-    }
-}
 const isPro     = computed(() => props.ownerPlan === 'pro');
 
 
