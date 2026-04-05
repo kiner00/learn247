@@ -613,19 +613,40 @@ class CommunityController extends Controller
             'test_email' => ['required', 'email', 'max:255'],
         ]);
 
+        $fromName = $community->resend_from_name ?? $community->name;
+
+        // For Resend: use onboarding@resend.dev as sandbox sender if domain not verified
         $fromEmail = $community->resend_from_email ?? 'onboarding@resend.dev';
-        $fromName  = $community->resend_from_name ?? $community->name;
+        $isResend  = ($community->email_provider ?? 'resend') === 'resend';
 
         try {
             $provider = EmailProviderFactory::make($community);
-            $provider->sendEmail($community, [
-                'from'    => "{$fromName} <{$fromEmail}>",
-                'to'      => [$data['test_email']],
-                'subject' => "Test email from {$community->name}",
-                'html'    => "<p>This is a test email from <strong>{$community->name}</strong> via Curzzo. Your email integration is working!</p>",
-            ]);
 
-            return back()->with('success', "Test email sent to {$data['test_email']}.");
+            // Try with configured from email first
+            try {
+                $provider->sendEmail($community, [
+                    'from'    => "{$fromName} <{$fromEmail}>",
+                    'to'      => [$data['test_email']],
+                    'subject' => "Test email from {$community->name}",
+                    'html'    => "<p>This is a test email from <strong>{$community->name}</strong> via Curzzo. Your email integration is working!</p>",
+                ]);
+
+                return back()->with('success', "Test email sent to {$data['test_email']}.");
+            } catch (\Exception $e) {
+                // If domain not verified on Resend, retry with sandbox sender
+                if ($isResend && str_contains($e->getMessage(), 'not verified')) {
+                    $provider->sendEmail($community, [
+                        'from'    => "Curzzo <onboarding@resend.dev>",
+                        'to'      => [$data['test_email']],
+                        'subject' => "[Test] Email from {$community->name}",
+                        'html'    => "<p>This is a test email from <strong>{$community->name}</strong> via Curzzo.</p><p style='color:#666;font-size:13px;'>Sent from Resend sandbox (onboarding@resend.dev) because your domain is not yet verified. Verify your domain at <a href='https://resend.com/domains'>resend.com/domains</a> to send from your own address.</p>",
+                    ]);
+
+                    return back()->with('success', "Test sent via Resend sandbox to {$data['test_email']}. Verify your domain at resend.com/domains to use your own from address.");
+                }
+
+                throw $e;
+            }
         } catch (\Exception $e) {
             return back()->withErrors(['resend_test' => 'Test failed: ' . $e->getMessage()]);
         }
