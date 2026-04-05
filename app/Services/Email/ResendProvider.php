@@ -4,6 +4,7 @@ namespace App\Services\Email;
 
 use App\Contracts\EmailProvider;
 use App\Models\Community;
+use Illuminate\Support\Facades\Http;
 use Resend;
 
 class ResendProvider implements EmailProvider
@@ -20,10 +21,21 @@ class ResendProvider implements EmailProvider
 
     public function validateApiKey(Community $community): bool
     {
-        try {
-            $this->client($community)->domains->list();
+        $apiKey = $community->resend_api_key;
 
-            return true;
+        if (! $apiKey) {
+            return false;
+        }
+
+        // Use a lightweight HTTP call to check the key.
+        // Fetching a non-existent email returns 404 (valid key) vs 401/403 (invalid key).
+        try {
+            $response = Http::withToken($apiKey)
+                ->acceptJson()
+                ->get('https://api.resend.com/emails/test_validation_check');
+
+            // 401/403 = bad key, 404/422 = key is valid (resource not found is expected)
+            return $response->status() !== 401 && $response->status() !== 403;
         } catch (\Exception) {
             return false;
         }
