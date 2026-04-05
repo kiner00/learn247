@@ -7,6 +7,7 @@ use App\Models\ChatbotMessage;
 use App\Models\Community;
 use App\Models\CommunityLevelPerk;
 use App\Services\Community\PlanLimitService;
+use App\Services\Email\EmailProviderFactory;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -92,11 +93,13 @@ class CommunitySettingsController extends Controller
         return Inertia::render('Communities/Settings/Email', array_merge(
             $this->baseProps($community),
             [
-                'hasResendKey'      => (bool) $community->resend_api_key,
-                'resendFromEmail'   => $community->resend_from_email,
-                'resendFromName'    => $community->resend_from_name,
-                'resendDomainId'    => $community->resend_domain_id,
-                'resendDomainStatus' => $community->resend_domain_status,
+                'hasApiKey'         => (bool) $community->resend_api_key,
+                'emailProvider'     => $community->email_provider ?? '',
+                'fromEmail'         => $community->resend_from_email,
+                'fromName'          => $community->resend_from_name,
+                'domainId'          => $community->resend_domain_id,
+                'domainStatus'      => $community->resend_domain_status,
+                'providers'         => EmailProviderFactory::all(),
             ]
         ));
     }

@@ -16,7 +16,7 @@ use App\Services\TelegramService;
 use App\Services\Community\MembershipAccessService;
 use App\Services\Community\PlanLimitService;
 use App\Contracts\SmsProvider;
-use App\Services\Community\ResendService;
+use App\Services\Email\EmailProviderFactory;
 use App\Services\StorageService;
 use App\Actions\Community\UpdateCommunity;
 use App\Actions\Community\UpdateLevelPerks;
@@ -492,23 +492,27 @@ class CommunityController extends Controller
     {
         $this->authorize('update', $community);
 
+        $providerIds = array_keys(EmailProviderFactory::PROVIDERS);
+
         $data = $request->validate([
+            'email_provider'    => ['nullable', 'string', 'in:' . implode(',', $providerIds)],
             'resend_api_key'    => ['nullable', 'string', 'max:500'],
             'resend_from_email' => ['nullable', 'email', 'max:255'],
             'resend_from_name'  => ['nullable', 'string', 'max:255'],
         ]);
 
         // Validate the API key if provided
-        if (! empty($data['resend_api_key'])) {
+        if (! empty($data['resend_api_key']) && ! empty($data['email_provider'])) {
             $community->resend_api_key = $data['resend_api_key'];
+            $community->email_provider = $data['email_provider'];
 
             try {
-                $resend = new ResendService($community);
-                if (! $resend->validateApiKey()) {
-                    return back()->withErrors(['resend_api_key' => 'Invalid Resend API key.']);
+                $provider = EmailProviderFactory::make($community);
+                if (! $provider->validateApiKey($community)) {
+                    return back()->withErrors(['resend_api_key' => 'Invalid API key for ' . ($data['email_provider'] ?? 'provider') . '.']);
                 }
-            } catch (\Exception) {
-                return back()->withErrors(['resend_api_key' => 'Could not validate the API key.']);
+            } catch (\Exception $e) {
+                return back()->withErrors(['resend_api_key' => 'Could not validate the API key: ' . $e->getMessage()]);
             }
         }
 
@@ -530,12 +534,12 @@ class CommunityController extends Controller
         ]);
 
         try {
-            $resend = new ResendService($community);
-            $domain = $resend->addDomain($data['domain']);
+            $provider = EmailProviderFactory::make($community);
+            $domain = $provider->addDomain($community, $data['domain']);
 
             $community->update([
-                'resend_domain_id'     => $domain->id,
-                'resend_domain_status' => $domain->status ?? 'pending',
+                'resend_domain_id'     => $domain['id'],
+                'resend_domain_status' => $domain['status'] ?? 'pending',
             ]);
 
             return back()->with('success', 'Domain added. Please configure the DNS records shown below, then click Verify.');
@@ -553,14 +557,14 @@ class CommunityController extends Controller
         }
 
         try {
-            $resend = new ResendService($community);
-            $domain = $resend->verifyDomain($community->resend_domain_id);
+            $provider = EmailProviderFactory::make($community);
+            $domain = $provider->verifyDomain($community, $community->resend_domain_id);
 
             $community->update([
-                'resend_domain_status' => $domain->status ?? 'pending',
+                'resend_domain_status' => $domain['status'] ?? 'pending',
             ]);
 
-            $status = $domain->status ?? 'pending';
+            $status = $domain['status'] ?? 'pending';
 
             return $status === 'verified'
                 ? back()->with('success', 'Domain verified successfully!')
@@ -579,18 +583,18 @@ class CommunityController extends Controller
         }
 
         try {
-            $resend = new ResendService($community);
-            $domain = $resend->getDomain($community->resend_domain_id);
+            $provider = EmailProviderFactory::make($community);
+            $domain = $provider->getDomain($community, $community->resend_domain_id);
 
             $community->update([
-                'resend_domain_status' => $domain->status ?? 'pending',
+                'resend_domain_status' => $domain['status'] ?? 'pending',
             ]);
 
             return response()->json([
-                'id'      => $domain->id,
-                'name'    => $domain->name,
-                'status'  => $domain->status,
-                'records' => $domain->records ?? [],
+                'id'      => $domain['id'],
+                'name'    => $domain['name'],
+                'status'  => $domain['status'],
+                'records' => $domain['records'] ?? [],
             ]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
@@ -613,8 +617,8 @@ class CommunityController extends Controller
         $fromName  = $community->resend_from_name ?? $community->name;
 
         try {
-            $resend = new ResendService($community);
-            $resend->sendEmail([
+            $provider = EmailProviderFactory::make($community);
+            $provider->sendEmail($community, [
                 'from'    => "{$fromName} <{$fromEmail}>",
                 'to'      => [$data['test_email']],
                 'subject' => "Test email from {$community->name}",

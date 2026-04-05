@@ -5,7 +5,7 @@ namespace App\Jobs;
 use App\Models\CommunityMember;
 use App\Models\EmailBroadcast;
 use App\Models\EmailSend;
-use App\Services\Community\ResendService;
+use App\Services\Email\EmailProviderFactory;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -32,7 +32,7 @@ class SendEmailBroadcastBatch implements ShouldQueue
         $community = $broadcast->community;
 
         try {
-            $resend = new ResendService($community);
+            $provider = EmailProviderFactory::make($community);
         } catch (\RuntimeException $e) {
             Log::error("SendEmailBroadcastBatch: {$e->getMessage()}", [
                 'broadcast_id' => $broadcast->id,
@@ -92,18 +92,18 @@ class SendEmailBroadcastBatch implements ShouldQueue
             return;
         }
 
-        // Send in chunks of 100 (Resend batch API limit)
+        // Send in chunks of 100 (batch API limit)
         foreach (array_chunk($emailPayloads, 100) as $batchIndex => $batch) {
             try {
-                $result = $resend->sendBatch($batch);
+                $results = $provider->sendBatch($community, $batch);
 
                 // Map returned email IDs to send records
                 $offset = $batchIndex * 100;
-                foreach ($result->data ?? [] as $j => $email) {
+                foreach ($results as $j => $email) {
                     $idx = $offset + $j;
                     if (isset($sendRecords[$idx])) {
                         $sendRecords[$idx]->update([
-                            'resend_email_id' => $email->id ?? null,
+                            'resend_email_id' => $email['id'] ?? null,
                             'status'          => 'sent',
                         ]);
                     }

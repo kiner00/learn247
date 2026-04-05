@@ -6,7 +6,7 @@ use App\Models\EmailSend;
 use App\Models\EmailSequenceEnrollment;
 use App\Models\EmailSequenceStep;
 use App\Models\EmailUnsubscribe;
-use App\Services\Community\ResendService;
+use App\Services\Email\EmailProviderFactory;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -62,7 +62,7 @@ class SendSequenceStepEmail implements ShouldQueue
 
         // Send the email
         try {
-            $resend = new ResendService($community);
+            $provider = EmailProviderFactory::make($community);
         } catch (\RuntimeException $e) {
             Log::error("SendSequenceStepEmail: {$e->getMessage()}", ['enrollment_id' => $enrollment->id]);
 
@@ -88,7 +88,7 @@ class SendSequenceStepEmail implements ShouldQueue
         $fromName  = $step->from_name ?? $community->resend_from_name ?? $community->name;
 
         try {
-            $result = $resend->sendEmail([
+            $result = $provider->sendEmail($community, [
                 'from'    => "{$fromName} <{$fromEmail}>",
                 'to'      => [$user->email],
                 'subject' => $step->subject,
@@ -100,7 +100,7 @@ class SendSequenceStepEmail implements ShouldQueue
                 'broadcast_id'        => null,
                 'community_id'        => $community->id,
                 'community_member_id' => $member->id,
-                'resend_email_id'     => $result->id ?? null,
+                'resend_email_id'     => $result['id'] ?? null,
                 'status'              => 'sent',
             ]);
         } catch (\Exception $e) {
