@@ -307,6 +307,7 @@
                                 <Link
                                     :href="`/communities/${community.slug}/classroom/courses/${course.id}`"
                                     class="flex flex-col h-full bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100"
+                                    @click="onCourseClick($event, course)"
                                 >
                                     <div class="relative aspect-video bg-gray-900 overflow-hidden"
                                         @mouseenter="onCardHover($event, course)"
@@ -551,6 +552,7 @@
             :invite-url="inviteUrl"
             @close="showInviteModal = false"
         />
+        <AuthModal :show="showAuthModal" @close="showAuthModal = false" />
     </AppLayout>
 </template>
 
@@ -563,6 +565,7 @@ import draggable from 'vuedraggable';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import CommunityTabs from '@/Components/CommunityTabs.vue';
 import InviteModal from '@/Components/InviteModal.vue';
+import AuthModal from '@/Components/AuthModal.vue';
 
 const props = defineProps({
     community:     Object,
@@ -576,6 +579,15 @@ const props = defineProps({
 const page      = usePage();
 const isOwner   = props.canManage;
 const isMember  = computed(() => !!props.membership);
+const authUser  = computed(() => page.props.auth?.user);
+const showAuthModal = ref(false);
+
+function onCourseClick(e, course) {
+    if (!authUser.value && !course.has_access) {
+        e.preventDefault();
+        showAuthModal.value = true;
+    }
+}
 const isPro     = computed(() => props.ownerPlan === 'pro');
 
 
