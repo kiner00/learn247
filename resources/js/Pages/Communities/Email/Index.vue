@@ -114,11 +114,15 @@ function formatDate(date) {
             <div class="mt-6 flex gap-4">
                 <Link :href="communityPath('/email-sequences')"
                     class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
-                    Email Sequences →
+                    Sequences →
+                </Link>
+                <Link :href="communityPath('/email-history')"
+                    class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+                    Send History →
                 </Link>
                 <Link :href="communityPath('/email-analytics')"
                     class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
-                    Email Analytics →
+                    Analytics →
                 </Link>
             </div>
         </div>

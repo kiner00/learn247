@@ -43,6 +43,7 @@ use App\Http\Controllers\Web\TelegramWebhookController;
 use App\Http\Controllers\Web\EmailCampaignController;
 use App\Http\Controllers\Web\EmailSequenceController;
 use App\Http\Controllers\Web\EmailAnalyticsController;
+use App\Http\Controllers\Web\EmailHistoryController;
 use App\Http\Controllers\Web\TagController;
 use App\Http\Controllers\Web\ResendWebhookController;
 use App\Http\Controllers\Web\EmailUnsubscribeController;
@@ -288,8 +289,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/communities/{community}/email-sequences/{sequence}/pause', [EmailSequenceController::class, 'pause'])->name('communities.email-sequences.pause');
         Route::delete('/communities/{community}/email-sequences/{sequence}', [EmailSequenceController::class, 'destroy'])->name('communities.email-sequences.destroy');
 
-        // ─── Email Analytics ─────────────────────────────────────────────────
+        // ─── Email Analytics & History ────────────────────────────────────────
         Route::get('/communities/{community}/email-analytics', [EmailAnalyticsController::class, 'index'])->name('communities.email-analytics');
+        Route::get('/communities/{community}/email-history', [EmailHistoryController::class, 'index'])->name('communities.email-history');
         Route::get('/communities/{community}/settings/danger-zone',    [CommunitySettingsController::class, 'dangerZone'])->name('communities.settings.danger-zone');
         Route::get('/communities/{community}/settings/chat-history',          [CommunitySettingsController::class, 'chatHistory'])->name('communities.settings.chat-history');
         Route::get('/communities/{community}/settings/chat-history/{userId}', [CommunitySettingsController::class, 'chatHistoryUser'])->name('communities.settings.chat-history.user');
