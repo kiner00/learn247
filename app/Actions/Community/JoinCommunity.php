@@ -2,6 +2,7 @@
 
 namespace App\Actions\Community;
 
+use App\Events\MemberJoined;
 use App\Models\Community;
 use App\Models\CommunityMember;
 use App\Models\Notification;
@@ -50,6 +51,8 @@ class JoinCommunity
 
         $this->notifyOwner($user, $community);
         $this->checkMilestones($community, $beforeCount, $beforeCount + 1);
+
+        MemberJoined::dispatch($member);
 
         return $member;
     }

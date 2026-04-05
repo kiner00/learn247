@@ -67,6 +67,16 @@ class PlanLimitService
         return in_array($user->creatorPlan(), ['basic', 'pro']);
     }
 
+    public function canUseEmail(User $user): bool
+    {
+        return in_array($user->creatorPlan(), ['basic', 'pro']);
+    }
+
+    public function canUseBYOK(User $user): bool
+    {
+        return $user->creatorPlan() === 'pro';
+    }
+
     public function canUploadVideo(User $user): bool
     {
         return $user->creatorPlan() === 'pro';

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Events\MemberJoined;
 use App\Http\Controllers\Controller;
 use App\Models\Community;
 use App\Models\CommunityMember;
@@ -24,7 +25,7 @@ class FreeSubscribeController extends Controller
             return redirect()->route('communities.classroom', $community);
         }
 
-        CommunityMember::create([
+        $member = CommunityMember::create([
             'community_id'    => $community->id,
             'user_id'         => $user->id,
             'role'            => CommunityMember::ROLE_MEMBER,
@@ -33,6 +34,8 @@ class FreeSubscribeController extends Controller
         ]);
 
         CacheKeys::flushUserMembership($user->id);
+
+        MemberJoined::dispatch($member);
 
         return redirect()->route('communities.classroom', $community)
             ->with('success', 'You\'ve subscribed for free! Enjoy the courses.');

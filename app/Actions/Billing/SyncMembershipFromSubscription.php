@@ -2,6 +2,7 @@
 
 namespace App\Actions\Billing;
 
+use App\Events\MemberJoined;
 use App\Models\Affiliate;
 use App\Models\CommunityMember;
 use App\Models\Subscription;
@@ -20,10 +21,14 @@ class SyncMembershipFromSubscription
         $userId      = $subscription->user_id;
 
         if ($subscription->isActive()) {
-            CommunityMember::firstOrCreate(
+            $member = CommunityMember::firstOrCreate(
                 ['community_id' => $communityId, 'user_id' => $userId],
-                ['role' => CommunityMember::ROLE_MEMBER, 'joined_at' => now()]
+                ['role' => CommunityMember::ROLE_MEMBER, 'membership_type' => 'paid', 'joined_at' => now()]
             );
+
+            if ($member->wasRecentlyCreated) {
+                MemberJoined::dispatch($member);
+            }
 
             // Reactivate affiliate if they were previously suspended
             Affiliate::where('community_id', $communityId)

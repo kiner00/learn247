@@ -7,6 +7,9 @@ use App\Actions\Auth\IssueGuestPassword;
 use App\Actions\Billing\SendChaChing;
 use App\Actions\Billing\SyncMembershipFromSubscription;
 use App\Contracts\WebhookHandler;
+use App\Events\SubscriptionPaid as SubscriptionPaidEvent;
+use App\Models\CartEvent;
+use App\Models\CommunityMember;
 use App\Models\Affiliate;
 use App\Models\Payment;
 use App\Models\Subscription;
@@ -205,6 +208,23 @@ class HandleSubscriptionPaid implements WebhookHandler
                     $guestMailData['password'],
                     $guestMailData['community'],
                 );
+            }
+
+            // Dispatch SubscriptionPaid event for email sequences
+            if ($subscription->isActive() && $subscription->community) {
+                $member = CommunityMember::where('community_id', $subscription->community_id)
+                    ->where('user_id', $subscription->user_id)
+                    ->first();
+
+                if ($member) {
+                    SubscriptionPaidEvent::dispatch($member, $subscription);
+                }
+
+                // Mark any cart events as completed
+                CartEvent::where('community_id', $subscription->community_id)
+                    ->where('user_id', $subscription->user_id)
+                    ->where('event_type', CartEvent::TYPE_CHECKOUT_STARTED)
+                    ->update(['event_type' => CartEvent::TYPE_PAYMENT_COMPLETED]);
             }
         } catch (\Throwable $e) {
             Log::error('HandleSubscriptionPaid failed', [

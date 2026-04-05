@@ -16,6 +16,7 @@ use App\Services\TelegramService;
 use App\Services\Community\MembershipAccessService;
 use App\Services\Community\PlanLimitService;
 use App\Contracts\SmsProvider;
+use App\Services\Community\ResendService;
 use App\Services\StorageService;
 use App\Actions\Community\UpdateCommunity;
 use App\Actions\Community\UpdateLevelPerks;
@@ -484,6 +485,149 @@ class CommunityController extends Controller
 
         return back()->withErrors(['sms_test' => 'Test failed: ' . ($result['errors'][0] ?? 'Unknown error.')]);
     }
+
+    // ─── Resend Email Config ─────────────────────────────────────────────────
+
+    public function updateResendConfig(Request $request, Community $community): RedirectResponse
+    {
+        $this->authorize('update', $community);
+
+        $data = $request->validate([
+            'resend_api_key'    => ['nullable', 'string', 'max:500'],
+            'resend_from_email' => ['nullable', 'email', 'max:255'],
+            'resend_from_name'  => ['nullable', 'string', 'max:255'],
+        ]);
+
+        // Validate the API key if provided
+        if (! empty($data['resend_api_key'])) {
+            $community->resend_api_key = $data['resend_api_key'];
+
+            try {
+                $resend = new ResendService($community);
+                if (! $resend->validateApiKey()) {
+                    return back()->withErrors(['resend_api_key' => 'Invalid Resend API key.']);
+                }
+            } catch (\Exception) {
+                return back()->withErrors(['resend_api_key' => 'Could not validate the API key.']);
+            }
+        }
+
+        $community->update($data);
+
+        return back()->with('success', 'Email settings saved.');
+    }
+
+    public function resendAddDomain(Request $request, Community $community): RedirectResponse
+    {
+        $this->authorize('update', $community);
+
+        if (! $community->resend_api_key) {
+            return back()->withErrors(['resend_domain' => 'Save your Resend API key first.']);
+        }
+
+        $data = $request->validate([
+            'domain' => ['required', 'string', 'max:255'],
+        ]);
+
+        try {
+            $resend = new ResendService($community);
+            $domain = $resend->addDomain($data['domain']);
+
+            $community->update([
+                'resend_domain_id'     => $domain->id,
+                'resend_domain_status' => $domain->status ?? 'pending',
+            ]);
+
+            return back()->with('success', 'Domain added. Please configure the DNS records shown below, then click Verify.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['resend_domain' => 'Failed to add domain: ' . $e->getMessage()]);
+        }
+    }
+
+    public function resendVerifyDomain(Request $request, Community $community): RedirectResponse
+    {
+        $this->authorize('update', $community);
+
+        if (! $community->resend_api_key || ! $community->resend_domain_id) {
+            return back()->withErrors(['resend_domain' => 'No domain to verify.']);
+        }
+
+        try {
+            $resend = new ResendService($community);
+            $domain = $resend->verifyDomain($community->resend_domain_id);
+
+            $community->update([
+                'resend_domain_status' => $domain->status ?? 'pending',
+            ]);
+
+            $status = $domain->status ?? 'pending';
+
+            return $status === 'verified'
+                ? back()->with('success', 'Domain verified successfully!')
+                : back()->with('success', "Domain status: {$status}. DNS propagation may take a few minutes.");
+        } catch (\Exception $e) {
+            return back()->withErrors(['resend_domain' => 'Verification failed: ' . $e->getMessage()]);
+        }
+    }
+
+    public function resendGetDomain(Request $request, Community $community)
+    {
+        $this->authorize('update', $community);
+
+        if (! $community->resend_api_key || ! $community->resend_domain_id) {
+            return response()->json(['error' => 'No domain configured.'], 422);
+        }
+
+        try {
+            $resend = new ResendService($community);
+            $domain = $resend->getDomain($community->resend_domain_id);
+
+            $community->update([
+                'resend_domain_status' => $domain->status ?? 'pending',
+            ]);
+
+            return response()->json([
+                'id'      => $domain->id,
+                'name'    => $domain->name,
+                'status'  => $domain->status,
+                'records' => $domain->records ?? [],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function resendTestEmail(Request $request, Community $community): RedirectResponse
+    {
+        $this->authorize('update', $community);
+
+        if (! $community->resend_api_key) {
+            return back()->withErrors(['resend_test' => 'Save your Resend API key first.']);
+        }
+
+        $data = $request->validate([
+            'test_email' => ['required', 'email', 'max:255'],
+        ]);
+
+        $fromEmail = $community->resend_from_email ?? 'onboarding@resend.dev';
+        $fromName  = $community->resend_from_name ?? $community->name;
+
+        try {
+            $resend = new ResendService($community);
+            $resend->sendEmail([
+                'from'    => "{$fromName} <{$fromEmail}>",
+                'to'      => [$data['test_email']],
+                'subject' => "Test email from {$community->name}",
+                'html'    => "<p>This is a test email from <strong>{$community->name}</strong> via Curzzo. Your email integration is working!</p>",
+            ]);
+
+            return back()->with('success', "Test email sent to {$data['test_email']}.");
+        } catch (\Exception $e) {
+            return back()->withErrors(['resend_test' => 'Test failed: ' . $e->getMessage()]);
+        }
+    }
+
+    // ─── SMS Blast ───────────────────────────────────────────────────────────
 
     public function sendSmsBlast(Request $request, Community $community, SendSmsBlast $action): RedirectResponse
     {

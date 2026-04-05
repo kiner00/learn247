@@ -22,6 +22,7 @@ const navItems = computed(() => [
     { href: `${base.value}/integrations`,   label: 'Integrations' },
     { href: `${base.value}/domain`,         label: 'Domain' },
     { href: `${base.value}/sms`,            label: 'SMS' },
+    { href: `${base.value}/email`,          label: 'Email' },
     { href: `${base.value}/danger-zone`,    label: 'Danger Zone' },
 ]);
 

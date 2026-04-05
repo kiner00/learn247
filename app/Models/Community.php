@@ -22,6 +22,8 @@ class Community extends Model
         'facebook_pixel_id', 'tiktok_pixel_id', 'google_analytics_id',
         'telegram_bot_token', 'telegram_chat_id',
         'sms_provider', 'sms_api_key', 'sms_api_secret', 'sms_sender_name', 'sms_device_url',
+        'resend_api_key', 'resend_from_email', 'resend_from_name',
+        'resend_domain_id', 'resend_domain_status',
         'deletion_requested_at', 'is_featured', 'landing_page', 'ai_chatbot_instructions',
         'brand_context',
     ];
@@ -36,6 +38,7 @@ class Community extends Model
             'gallery_images'            => 'array',
             'landing_page'              => 'array',
             'brand_context'             => 'array',
+            'resend_api_key'            => 'encrypted',
             'deletion_requested_at'     => 'datetime',
         ];
     }
@@ -105,6 +108,31 @@ class Community extends Model
     public function certifications(): HasMany
     {
         return $this->hasMany(CourseCertification::class);
+    }
+
+    public function tags(): HasMany
+    {
+        return $this->hasMany(Tag::class);
+    }
+
+    public function emailCampaigns(): HasMany
+    {
+        return $this->hasMany(EmailCampaign::class);
+    }
+
+    public function emailUnsubscribes(): HasMany
+    {
+        return $this->hasMany(EmailUnsubscribe::class);
+    }
+
+    public function emailSequences(): HasMany
+    {
+        return $this->hasMany(EmailSequence::class);
+    }
+
+    public function cartEvents(): HasMany
+    {
+        return $this->hasMany(CartEvent::class);
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────

@@ -40,6 +40,12 @@ use App\Http\Controllers\Web\SubscriptionController;
 use App\Http\Middleware\EnsureActiveMembership;
 use App\Http\Controllers\XenditWebhookController;
 use App\Http\Controllers\Web\TelegramWebhookController;
+use App\Http\Controllers\Web\EmailCampaignController;
+use App\Http\Controllers\Web\EmailSequenceController;
+use App\Http\Controllers\Web\EmailAnalyticsController;
+use App\Http\Controllers\Web\TagController;
+use App\Http\Controllers\Web\ResendWebhookController;
+use App\Http\Controllers\Web\EmailUnsubscribeController;
 use App\Http\Middleware\EnsureSuperAdmin;
 use Illuminate\Support\Facades\Route;
 
@@ -223,6 +229,20 @@ Route::middleware('auth')->group(function () {
     Route::post('/communities/{community}/sms-config', [CommunityController::class, 'updateSmsConfig'])->name('communities.sms-config');
     Route::post('/communities/{community}/sms-test', [CommunityController::class, 'testSms'])->name('communities.sms-test');
     Route::post('/communities/{community}/sms-blast', [CommunityController::class, 'sendSmsBlast'])->name('communities.sms-blast');
+
+    // ─── Resend Email Config ─────────────────────────────────────────────────
+    Route::post('/communities/{community}/resend-config', [CommunityController::class, 'updateResendConfig'])->name('communities.resend-config');
+    Route::post('/communities/{community}/resend-add-domain', [CommunityController::class, 'resendAddDomain'])->name('communities.resend-add-domain');
+    Route::post('/communities/{community}/resend-verify-domain', [CommunityController::class, 'resendVerifyDomain'])->name('communities.resend-verify-domain');
+    Route::get('/communities/{community}/resend-domain-info', [CommunityController::class, 'resendGetDomain'])->name('communities.resend-domain-info');
+    Route::post('/communities/{community}/resend-test', [CommunityController::class, 'resendTestEmail'])->name('communities.resend-test');
+
+    // ─── Tags ────────────────────────────────────────────────────────────────
+    Route::get('/communities/{community}/tags', [TagController::class, 'index'])->name('communities.tags.index');
+    Route::post('/communities/{community}/tags', [TagController::class, 'store'])->name('communities.tags.store');
+    Route::patch('/communities/{community}/tags/{tag}', [TagController::class, 'update'])->name('communities.tags.update');
+    Route::delete('/communities/{community}/tags/{tag}', [TagController::class, 'destroy'])->name('communities.tags.destroy');
+    Route::post('/communities/{community}/tags/assign', [TagController::class, 'assign'])->name('communities.tags.assign');
     Route::post('/communities/{community}/ai-landing', [CommunityController::class, 'generateLandingPage'])->name('communities.ai-landing');
     Route::post('/communities/{community}/ai-landing/section', [CommunityController::class, 'regenerateSection'])->name('communities.ai-landing.section');
     Route::post('/communities/{community}/landing-page/upload-image', [CommunityController::class, 'uploadSectionImage'])->name('communities.landing-page.upload-image');
@@ -248,6 +268,28 @@ Route::middleware('auth')->group(function () {
         Route::get('/communities/{community}/settings/integrations',   [CommunitySettingsController::class, 'integrations'])->name('communities.settings.integrations');
         Route::get('/communities/{community}/settings/domain',         [CommunitySettingsController::class, 'domain'])->name('communities.settings.domain');
         Route::get('/communities/{community}/settings/sms',            [CommunitySettingsController::class, 'sms'])->name('communities.settings.sms');
+        Route::get('/communities/{community}/settings/email',          [CommunitySettingsController::class, 'email'])->name('communities.settings.email');
+
+        // ─── Email Campaigns ─────────────────────────────────────────────────
+        Route::get('/communities/{community}/email-campaigns',              [EmailCampaignController::class, 'index'])->name('communities.email-campaigns.index');
+        Route::get('/communities/{community}/email-campaigns/create',       [EmailCampaignController::class, 'create'])->name('communities.email-campaigns.create');
+        Route::post('/communities/{community}/email-campaigns',             [EmailCampaignController::class, 'store'])->name('communities.email-campaigns.store');
+        Route::get('/communities/{community}/email-campaigns/{campaign}',   [EmailCampaignController::class, 'show'])->name('communities.email-campaigns.show');
+        Route::patch('/communities/{community}/email-campaigns/{campaign}', [EmailCampaignController::class, 'update'])->name('communities.email-campaigns.update');
+        Route::post('/communities/{community}/email-campaigns/{campaign}/send', [EmailCampaignController::class, 'send'])->name('communities.email-campaigns.send');
+        Route::delete('/communities/{community}/email-campaigns/{campaign}', [EmailCampaignController::class, 'destroy'])->name('communities.email-campaigns.destroy');
+
+        // ─── Email Sequences ─────────────────────────────────────────────────
+        Route::get('/communities/{community}/email-sequences',              [EmailSequenceController::class, 'index'])->name('communities.email-sequences.index');
+        Route::get('/communities/{community}/email-sequences/create',       [EmailSequenceController::class, 'create'])->name('communities.email-sequences.create');
+        Route::post('/communities/{community}/email-sequences',             [EmailSequenceController::class, 'store'])->name('communities.email-sequences.store');
+        Route::get('/communities/{community}/email-sequences/{sequence}',   [EmailSequenceController::class, 'show'])->name('communities.email-sequences.show');
+        Route::post('/communities/{community}/email-sequences/{sequence}/activate', [EmailSequenceController::class, 'activate'])->name('communities.email-sequences.activate');
+        Route::post('/communities/{community}/email-sequences/{sequence}/pause', [EmailSequenceController::class, 'pause'])->name('communities.email-sequences.pause');
+        Route::delete('/communities/{community}/email-sequences/{sequence}', [EmailSequenceController::class, 'destroy'])->name('communities.email-sequences.destroy');
+
+        // ─── Email Analytics ─────────────────────────────────────────────────
+        Route::get('/communities/{community}/email-analytics', [EmailAnalyticsController::class, 'index'])->name('communities.email-analytics');
         Route::get('/communities/{community}/settings/danger-zone',    [CommunitySettingsController::class, 'dangerZone'])->name('communities.settings.danger-zone');
         Route::get('/communities/{community}/settings/chat-history',          [CommunitySettingsController::class, 'chatHistory'])->name('communities.settings.chat-history');
         Route::get('/communities/{community}/settings/chat-history/{userId}', [CommunitySettingsController::class, 'chatHistoryUser'])->name('communities.settings.chat-history.user');
@@ -361,3 +403,11 @@ Route::post('/webhooks/xendit/payouts', [XenditWebhookController::class, 'payout
 
 // ─── Telegram Webhooks (no auth, no CSRF) ──────────────────────────────────
 Route::post('/webhooks/telegram/{slug}', TelegramWebhookController::class)->name('webhooks.telegram');
+
+// ─── Resend Webhooks (no auth, no CSRF — covered by webhooks/* exclusion) ──
+Route::post('/webhooks/resend', ResendWebhookController::class)->name('webhooks.resend');
+
+// ─── Email Unsubscribe (signed URL, no auth) ──────────────────────────────
+Route::get('/email/unsubscribe/{community}/{member}', [EmailUnsubscribeController::class, 'unsubscribe'])
+    ->name('email.unsubscribe')
+    ->middleware('signed');

@@ -18,6 +18,8 @@ use App\Services\Sms\SmsDispatcher;
 use App\Services\StorageService;
 use App\Services\TelegramService;
 use App\Services\XenditService;
+use App\Listeners\EnrollInEmailSequence;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -37,5 +39,7 @@ class AppServiceProvider extends ServiceProvider
         Post::observe(PostObserver::class);
         Comment::observe(CommentObserver::class);
         LessonCompletion::observe(LessonCompletionObserver::class);
+
+        Event::subscribe(EnrollInEmailSequence::class);
     }
 }

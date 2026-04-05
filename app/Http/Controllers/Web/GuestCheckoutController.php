@@ -6,6 +6,7 @@ use App\Actions\Auth\GuestCheckout;
 use App\Actions\Billing\StartSubscriptionCheckout;
 use App\Http\Controllers\Controller;
 use App\Models\Affiliate;
+use App\Models\CartEvent;
 use App\Models\Community;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -46,6 +47,16 @@ class GuestCheckoutController extends Controller
 
         $result = $action->execute($user, $community, $code, successRedirectUrl: $callbackUrl);
 
+        // Track cart event for abandonment detection
+        CartEvent::create([
+            'community_id'   => $community->id,
+            'user_id'        => $user->id,
+            'email'          => $user->email,
+            'event_type'     => CartEvent::TYPE_CHECKOUT_STARTED,
+            'reference_type' => 'subscription',
+            'metadata'       => ['affiliate_code' => $code, 'amount' => $community->price],
+        ]);
+
         return Inertia::location($result['checkout_url']);
     }
 
@@ -73,6 +84,16 @@ class GuestCheckoutController extends Controller
 
         $callbackUrl = self::buildCallbackUrl($user->id, $community->slug);
         $result = $action->execute($user, $community, $refCode, successRedirectUrl: $callbackUrl);
+
+        // Track cart event for abandonment detection
+        CartEvent::create([
+            'community_id'   => $community->id,
+            'user_id'        => $user->id,
+            'email'          => $user->email,
+            'event_type'     => CartEvent::TYPE_CHECKOUT_STARTED,
+            'reference_type' => 'subscription',
+            'metadata'       => ['amount' => $community->price],
+        ]);
 
         return Inertia::location($result['checkout_url']);
     }

@@ -87,6 +87,20 @@ class CommunitySettingsController extends Controller
         return Inertia::render('Communities/Settings/Sms', $this->baseProps($community));
     }
 
+    public function email(Community $community): Response
+    {
+        return Inertia::render('Communities/Settings/Email', array_merge(
+            $this->baseProps($community),
+            [
+                'hasResendKey'      => (bool) $community->resend_api_key,
+                'resendFromEmail'   => $community->resend_from_email,
+                'resendFromName'    => $community->resend_from_name,
+                'resendDomainId'    => $community->resend_domain_id,
+                'resendDomainStatus' => $community->resend_domain_status,
+            ]
+        ));
+    }
+
     public function dangerZone(Community $community): Response
     {
         return Inertia::render('Communities/Settings/DangerZone', $this->baseProps($community));
