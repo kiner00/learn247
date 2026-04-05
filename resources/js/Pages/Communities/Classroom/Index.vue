@@ -367,12 +367,18 @@
                                             </div>
                                             <span class="text-xs text-gray-400 shrink-0">{{ course.progress }}%</span>
                                         </div>
-                                        <div v-else class="text-xs text-gray-400">
-                                            <span v-if="course.access_type === 'paid_once'">One-time purchase to unlock</span>
-                                            <span v-else-if="course.access_type === 'paid_monthly'">Monthly subscription to unlock</span>
-                                            <span v-else-if="course.access_type === 'member_once'">Available to past & current members</span>
-                                            <span v-else-if="course.access_type === 'free'">Sign up to gain access</span>
-                                            <span v-else-if="course.access_type === 'inclusive'">Join the community to unlock</span>
+                                        <div v-else>
+                                            <span v-if="course.access_type === 'free' && !authUser"
+                                                class="inline-block w-full text-center px-4 py-2 bg-indigo-600 text-white text-xs font-semibold rounded-lg hover:bg-indigo-700 transition-colors">
+                                                Sign up to access
+                                            </span>
+                                            <span v-else class="text-xs text-gray-400">
+                                                <template v-if="course.access_type === 'paid_once'">One-time purchase to unlock</template>
+                                                <template v-else-if="course.access_type === 'paid_monthly'">Monthly subscription to unlock</template>
+                                                <template v-else-if="course.access_type === 'member_once'">Available to past & current members</template>
+                                                <template v-else-if="course.access_type === 'free'">Join the community to unlock</template>
+                                                <template v-else-if="course.access_type === 'inclusive'">Join the community to unlock</template>
+                                            </span>
                                         </div>
                                     </div>
                                 </Link>
