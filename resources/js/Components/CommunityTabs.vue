@@ -52,7 +52,7 @@ const props = defineProps({
 
 const slug = computed(() => props.community.slug);
 const { communityPath } = useCommunityUrl(slug.value);
-const isOwner = computed(() => props.community.owner_id === page.props.auth?.user?.id);
+const isOwner = computed(() => !!page.props.auth?.user?.id && props.community.owner_id === page.props.auth.user.id);
 const kycStatus = computed(() => page.props.auth?.user?.kyc_status ?? 'none');
 
 const bannerMessage = computed(() => {
