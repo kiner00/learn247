@@ -9,6 +9,7 @@ const props = defineProps({
     emailProvider: String,
     fromEmail: String,
     fromName: String,
+    replyTo: String,
     domainId: String,
     domainStatus: String,
     providers: Array,
@@ -32,6 +33,7 @@ const form = useForm({
     resend_api_key: '',
     resend_from_email: props.fromEmail ?? '',
     resend_from_name: props.fromName ?? '',
+    resend_reply_to: props.replyTo ?? '',
 });
 
 const selectedProvider = computed(() =>
@@ -205,6 +207,18 @@ onMounted(() => {
                                 :placeholder="community.name"
                                 class="w-full max-w-md px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                             />
+                        </div>
+
+                        <!-- Reply-To -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Reply-To Email</label>
+                            <input
+                                v-model="form.resend_reply_to"
+                                type="email"
+                                placeholder="you@gmail.com"
+                                class="w-full max-w-md px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            />
+                            <p class="mt-1 text-xs text-gray-400">When members reply to your emails, replies go to this address. Set this to your personal or support email.</p>
                         </div>
                     </template>
 

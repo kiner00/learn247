@@ -499,6 +499,7 @@ class CommunityController extends Controller
             'resend_api_key'    => ['nullable', 'string', 'max:500'],
             'resend_from_email' => ['nullable', 'email', 'max:255'],
             'resend_from_name'  => ['nullable', 'string', 'max:255'],
+            'resend_reply_to'   => ['nullable', 'email', 'max:255'],
         ]);
 
         // Validate the API key if provided
@@ -623,12 +624,15 @@ class CommunityController extends Controller
             $provider = EmailProviderFactory::make($community);
 
             // Try with configured from email first
+            $replyTo = $community->resend_reply_to ? [$community->resend_reply_to] : [];
+
             try {
                 $provider->sendEmail($community, [
-                    'from'    => "{$fromName} <{$fromEmail}>",
-                    'to'      => [$data['test_email']],
-                    'subject' => "Test email from {$community->name}",
-                    'html'    => "<p>This is a test email from <strong>{$community->name}</strong> via Curzzo. Your email integration is working!</p>",
+                    'from'     => "{$fromName} <{$fromEmail}>",
+                    'to'       => [$data['test_email']],
+                    'subject'  => "Test email from {$community->name}",
+                    'html'     => "<p>This is a test email from <strong>{$community->name}</strong> via Curzzo. Your email integration is working!</p>",
+                    'reply_to' => $replyTo,
                 ]);
 
                 return back()->with('success', "Test email sent to {$data['test_email']}.");

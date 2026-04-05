@@ -22,7 +22,7 @@ class Community extends Model
         'facebook_pixel_id', 'tiktok_pixel_id', 'google_analytics_id',
         'telegram_bot_token', 'telegram_chat_id',
         'sms_provider', 'sms_api_key', 'sms_api_secret', 'sms_sender_name', 'sms_device_url',
-        'resend_api_key', 'email_provider', 'resend_from_email', 'resend_from_name',
+        'resend_api_key', 'email_provider', 'resend_from_email', 'resend_from_name', 'resend_reply_to',
         'resend_domain_id', 'resend_domain_status',
         'deletion_requested_at', 'is_featured', 'landing_page', 'ai_chatbot_instructions',
         'brand_context',

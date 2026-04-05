@@ -77,7 +77,7 @@ class SendEmailBroadcastBatch implements ShouldQueue
                 'to'      => [$member->user->email],
                 'subject' => $broadcast->subject,
                 'html'    => $html,
-                'reply_to' => $broadcast->reply_to ? [$broadcast->reply_to] : [],
+                'reply_to' => $broadcast->reply_to ? [$broadcast->reply_to] : ($community->resend_reply_to ? [$community->resend_reply_to] : []),
             ];
 
             $sendRecords[] = EmailSend::create([

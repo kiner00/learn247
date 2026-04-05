@@ -97,6 +97,7 @@ class CommunitySettingsController extends Controller
                 'emailProvider'     => $community->email_provider ?? '',
                 'fromEmail'         => $community->resend_from_email,
                 'fromName'          => $community->resend_from_name,
+                'replyTo'           => $community->resend_reply_to,
                 'domainId'          => $community->resend_domain_id,
                 'domainStatus'      => $community->resend_domain_status,
                 'providers'         => EmailProviderFactory::all(),

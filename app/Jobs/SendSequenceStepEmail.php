@@ -89,10 +89,11 @@ class SendSequenceStepEmail implements ShouldQueue
 
         try {
             $result = $provider->sendEmail($community, [
-                'from'    => "{$fromName} <{$fromEmail}>",
-                'to'      => [$user->email],
-                'subject' => $step->subject,
-                'html'    => $html,
+                'from'     => "{$fromName} <{$fromEmail}>",
+                'to'       => [$user->email],
+                'subject'  => $step->subject,
+                'html'     => $html,
+                'reply_to' => $community->resend_reply_to ? [$community->resend_reply_to] : [],
             ]);
 
             // Track the send
