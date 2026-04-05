@@ -2,6 +2,7 @@
 
 namespace App\Services\Analytics;
 
+use App\Models\AffiliateConversion;
 use App\Models\Community;
 use App\Models\Payment;
 use App\Models\Subscription;
@@ -76,7 +77,30 @@ class CreatorAnalyticsService
                     ->join('communities', 'subscriptions.community_id', '=', 'communities.id')
                     ->sum('communities.price');
 
-                return compact('labels', 'revenue', 'newMembers', 'churn', 'retentionRate', 'mrr');
+                // Daily sales (last 30 days) — creator payments + affiliate commissions
+                $thirtyDaysAgo = Carbon::now()->subDays(29)->startOfDay();
+                $days = collect(range(29, 0))->map(fn ($i) => Carbon::now()->subDays($i));
+                $dailyLabels = $days->map(fn ($d) => $d->format('M j'))->values()->toArray();
+
+                $dailyRevenueRaw = Payment::whereIn('community_id', $communityIds)
+                    ->where('status', Payment::STATUS_PAID)
+                    ->where('paid_at', '>=', $thirtyDaysAgo)
+                    ->selectRaw("DATE(paid_at) as day, SUM(amount) as total")
+                    ->groupBy('day')
+                    ->pluck('total', 'day');
+
+                $dailyAffiliateRaw = AffiliateConversion::whereHas('affiliate', fn ($q) => $q->whereIn('community_id', $communityIds))
+                    ->where('created_at', '>=', $thirtyDaysAgo)
+                    ->selectRaw("DATE(created_at) as day, SUM(commission_amount) as total")
+                    ->groupBy('day')
+                    ->pluck('total', 'day');
+
+                $dailySales = $days->map(fn ($d) => [
+                    'revenue'    => (float) ($dailyRevenueRaw[$d->format('Y-m-d')] ?? 0),
+                    'commission' => (float) ($dailyAffiliateRaw[$d->format('Y-m-d')] ?? 0),
+                ])->values()->toArray();
+
+                return compact('labels', 'revenue', 'newMembers', 'churn', 'retentionRate', 'mrr', 'dailyLabels', 'dailySales');
             }
         );
     }

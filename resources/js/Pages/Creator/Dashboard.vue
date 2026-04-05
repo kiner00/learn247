@@ -79,6 +79,25 @@
                     <canvas ref="memberChart" height="200"></canvas>
                 </div>
             </div>
+
+            <!-- Daily Sales (30 days) -->
+            <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <p class="text-sm font-bold text-gray-900">Daily Sales (Last 30 Days)</p>
+                        <p class="text-xs text-gray-400 mt-0.5">Creator revenue and affiliate commissions</p>
+                    </div>
+                    <div class="flex items-center gap-4 text-xs">
+                        <span class="flex items-center gap-1.5">
+                            <span class="w-3 h-3 rounded-sm bg-indigo-500 inline-block"></span> Revenue
+                        </span>
+                        <span class="flex items-center gap-1.5">
+                            <span class="w-3 h-3 rounded-sm bg-orange-400 inline-block"></span> Affiliate Commissions
+                        </span>
+                    </div>
+                </div>
+                <canvas ref="dailySalesChart" height="120"></canvas>
+            </div>
         </div>
 
         <!-- Analytics locked (non-Pro) -->
@@ -340,8 +359,9 @@ const props = defineProps({
     payoutFee:      { type: Number, default: 15 },
 })
 
-const revenueChart = ref(null)
-const memberChart  = ref(null)
+const revenueChart    = ref(null)
+const memberChart     = ref(null)
+const dailySalesChart = ref(null)
 
 onMounted(() => {
     if (!['basic', 'pro'].includes(props.currentPlan) || !props.analytics) return
@@ -396,6 +416,50 @@ onMounted(() => {
             scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
         },
     })
+
+    // Daily Sales chart
+    const { dailyLabels, dailySales } = props.analytics
+    if (dailyLabels && dailySales) {
+        new Chart(dailySalesChart.value, {
+            type: 'bar',
+            data: {
+                labels: dailyLabels,
+                datasets: [
+                    {
+                        label: 'Revenue (₱)',
+                        data: dailySales.map(d => d.revenue),
+                        backgroundColor: 'rgba(99, 102, 241, 0.7)',
+                        borderRadius: 4,
+                    },
+                    {
+                        label: 'Affiliate Commissions (₱)',
+                        data: dailySales.map(d => d.commission),
+                        backgroundColor: 'rgba(251, 146, 60, 0.7)',
+                        borderRadius: 4,
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: {
+                        stacked: true,
+                        ticks: {
+                            maxRotation: 45,
+                            autoSkip: true,
+                            maxTicksLimit: 15,
+                        },
+                    },
+                    y: {
+                        beginAtZero: true,
+                        stacked: true,
+                        ticks: { callback: (v) => `₱${Number(v).toLocaleString()}` },
+                    },
+                },
+            },
+        })
+    }
 })
 
 const requestAmounts = reactive({})
