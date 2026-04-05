@@ -340,7 +340,7 @@
                                             <span v-if="course.access_type === 'paid_once'" class="text-white text-xs font-bold bg-indigo-600 px-3 py-1 rounded-full">₱{{ Number(course.price).toLocaleString() }}</span>
                                             <span v-else-if="course.access_type === 'paid_monthly'" class="text-white text-xs font-bold bg-indigo-600 px-3 py-1 rounded-full">₱{{ Number(course.price).toLocaleString() }}/mo</span>
                                             <span v-else-if="course.access_type === 'member_once'" class="text-white text-xs font-semibold bg-purple-600/80 px-3 py-1 rounded-full">For past members</span>
-                                            <span v-else-if="course.access_type === 'free'" class="text-white text-xs font-semibold bg-green-600/80 px-3 py-1 rounded-full">Subscribe for Free</span>
+                                            <span v-else-if="course.access_type === 'free'" class="text-white text-xs font-semibold bg-green-600/80 px-3 py-1 rounded-full">Sign up to access</span>
                                             <span v-else class="text-white text-xs font-semibold bg-black/40 px-3 py-1 rounded-full">Members only</span>
                                         </div>
                                         <!-- Progress badge -->
@@ -370,7 +370,7 @@
                                             <span v-if="course.access_type === 'paid_once'">One-time purchase to unlock</span>
                                             <span v-else-if="course.access_type === 'paid_monthly'">Monthly subscription to unlock</span>
                                             <span v-else-if="course.access_type === 'member_once'">Available to past & current members</span>
-                                            <span v-else-if="course.access_type === 'free'">Subscribe for free to unlock</span>
+                                            <span v-else-if="course.access_type === 'free'">Sign up to gain access</span>
                                             <span v-else-if="course.access_type === 'inclusive'">Join the community to unlock</span>
                                         </div>
                                     </div>
@@ -592,7 +592,7 @@ const localCourses = ref([...props.courses]);
 watch(() => props.courses, (val) => { localCourses.value = [...val]; });
 
 const groupedCourses = computed(() => ({
-    'Free':      { courses: props.courses.filter(c => c.access_type === 'free'),      desc: 'No subscription needed — anyone can access these courses' },
+    'Free':      { courses: props.courses.filter(c => c.access_type === 'free'),      desc: 'Free for community members — sign up to access' },
     'Included':  { courses: props.courses.filter(c => c.access_type === 'inclusive'),  desc: 'Included with your community membership' },
     'One-Time':  { courses: props.courses.filter(c => c.access_type === 'member_once'), desc: 'One-time purchase — accessible even after your membership ends' },
     'Paid':      { courses: props.courses.filter(c => c.access_type === 'paid_once' || c.access_type === 'paid_monthly'), desc: 'Sold separately — requires a one-time or monthly payment' },
