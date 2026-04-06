@@ -9,6 +9,8 @@ use App\Models\EmailBroadcast;
 use App\Models\EmailCampaign;
 use App\Models\Tag;
 use App\Services\Community\PlanLimitService;
+use App\Services\StorageService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -216,5 +218,16 @@ class EmailCampaignController extends Controller
 
         return redirect()->route('communities.email-campaigns.index', $community)
             ->with('success', 'Campaign deleted.');
+    }
+
+    public function uploadImage(Request $request, Community $community): JsonResponse
+    {
+        $this->authorize('update', $community);
+
+        $request->validate(['image' => 'required|image|max:10240']);
+
+        $url = app(StorageService::class)->upload($request->file('image'), 'email-images');
+
+        return response()->json(['url' => $url]);
     }
 }

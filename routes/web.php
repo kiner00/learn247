@@ -279,6 +279,7 @@ Route::middleware('auth')->group(function () {
         Route::patch('/communities/{community}/email-campaigns/{campaign}', [EmailCampaignController::class, 'update'])->name('communities.email-campaigns.update');
         Route::post('/communities/{community}/email-campaigns/{campaign}/send', [EmailCampaignController::class, 'send'])->name('communities.email-campaigns.send');
         Route::delete('/communities/{community}/email-campaigns/{campaign}', [EmailCampaignController::class, 'destroy'])->name('communities.email-campaigns.destroy');
+        Route::post('/communities/{community}/email-campaigns/upload-image', [EmailCampaignController::class, 'uploadImage'])->name('communities.email-campaigns.upload-image');
 
         // ─── Email Sequences ─────────────────────────────────────────────────
         Route::get('/communities/{community}/email-sequences',              [EmailSequenceController::class, 'index'])->name('communities.email-sequences.index');

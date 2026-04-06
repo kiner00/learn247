@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useForm, router } from '@inertiajs/vue3';
 import CommunitySettingsLayout from '@/Layouts/CommunitySettingsLayout.vue';
+import axios from 'axios';
 
 const props = defineProps({
     community: Object,
@@ -139,7 +140,92 @@ async function fetchDomainRecords() {
 
 onMounted(() => {
     if (props.domainId) fetchDomainRecords();
+    fetchTags();
 });
+
+// ─── Tags ────────────────────────────────────────────────────────────────
+const tags = ref([]);
+const loadingTags = ref(false);
+const showTagForm = ref(false);
+const editingTag = ref(null);
+const tagForm = ref({ name: '', color: '#6366f1' });
+const tagError = ref('');
+const tagSuccess = ref('');
+const savingTag = ref(false);
+
+const presetColors = ['#6366f1', '#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#64748b'];
+
+async function fetchTags() {
+    loadingTags.value = true;
+    try {
+        const res = await axios.get(`/communities/${props.community.slug}/tags`);
+        tags.value = res.data;
+    } catch {
+        // silent
+    } finally {
+        loadingTags.value = false;
+    }
+}
+
+function openCreateTag() {
+    editingTag.value = null;
+    tagForm.value = { name: '', color: '#6366f1' };
+    showTagForm.value = true;
+    tagError.value = '';
+}
+
+function openEditTag(tag) {
+    editingTag.value = tag;
+    tagForm.value = { name: tag.name, color: tag.color || '#6366f1' };
+    showTagForm.value = true;
+    tagError.value = '';
+}
+
+function cancelTagForm() {
+    showTagForm.value = false;
+    editingTag.value = null;
+    tagError.value = '';
+}
+
+function saveTag() {
+    savingTag.value = true;
+    tagError.value = '';
+    tagSuccess.value = '';
+
+    const url = editingTag.value
+        ? `/communities/${props.community.slug}/tags/${editingTag.value.id}`
+        : `/communities/${props.community.slug}/tags`;
+
+    const method = editingTag.value ? 'patch' : 'post';
+
+    router[method](url, tagForm.value, {
+        preserveScroll: true,
+        onSuccess: () => {
+            tagSuccess.value = editingTag.value ? 'Tag updated.' : 'Tag created.';
+            setTimeout(() => (tagSuccess.value = ''), 3000);
+            showTagForm.value = false;
+            editingTag.value = null;
+            fetchTags();
+        },
+        onError: (errors) => {
+            tagError.value = errors.name || 'Failed to save tag.';
+        },
+        onFinish: () => { savingTag.value = false; },
+    });
+}
+
+function deleteTag(tag) {
+    if (!confirm(`Delete tag "${tag.name}"? Members will be untagged.`)) return;
+
+    router.delete(`/communities/${props.community.slug}/tags/${tag.id}`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            tagSuccess.value = 'Tag deleted.';
+            setTimeout(() => (tagSuccess.value = ''), 3000);
+            fetchTags();
+        },
+    });
+}
 </script>
 
 <template>
@@ -348,6 +434,75 @@ onMounted(() => {
                 </div>
                 <p v-if="testSuccess" class="mt-2 text-sm text-green-600">{{ testSuccess }}</p>
                 <p v-if="testError" class="mt-2 text-sm text-red-600">{{ testError }}</p>
+            </div>
+
+            <!-- Tags Section -->
+            <div class="bg-white border border-gray-200 rounded-2xl p-6">
+                <div class="flex items-center justify-between mb-1">
+                    <h2 class="text-base font-semibold text-gray-900">Audience Tags</h2>
+                    <button @click="openCreateTag"
+                        class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+                        + New Tag
+                    </button>
+                </div>
+                <p class="text-sm text-gray-500 mb-5">
+                    Create tags to segment your audience and target specific members in email campaigns.
+                </p>
+
+                <!-- Tag form (create/edit) -->
+                <div v-if="showTagForm" class="mb-5 p-4 bg-gray-50 rounded-xl space-y-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tag Name</label>
+                        <input v-model="tagForm.name" type="text" maxlength="100" required
+                            placeholder="e.g. VIP, Interested, Trial"
+                            class="w-full max-w-sm px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Color</label>
+                        <div class="flex items-center gap-2">
+                            <button v-for="c in presetColors" :key="c" type="button"
+                                @click="tagForm.color = c"
+                                class="w-6 h-6 rounded-full border-2 transition-all"
+                                :class="tagForm.color === c ? 'border-gray-800 scale-110' : 'border-transparent hover:scale-105'"
+                                :style="{ backgroundColor: c }" />
+                            <input v-model="tagForm.color" type="color"
+                                class="w-6 h-6 rounded border-0 cursor-pointer p-0" title="Custom color" />
+                        </div>
+                    </div>
+                    <p v-if="tagError" class="text-xs text-red-600">{{ tagError }}</p>
+                    <div class="flex items-center gap-2 pt-1">
+                        <button @click="saveTag" :disabled="savingTag || !tagForm.name.trim()"
+                            class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50">
+                            {{ savingTag ? 'Saving...' : (editingTag ? 'Update Tag' : 'Create Tag') }}
+                        </button>
+                        <button @click="cancelTagForm" type="button"
+                            class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">Cancel</button>
+                    </div>
+                </div>
+
+                <!-- Tags list -->
+                <div v-if="loadingTags" class="text-sm text-gray-400">Loading tags...</div>
+                <div v-else-if="tags.length === 0 && !showTagForm" class="text-sm text-gray-400">
+                    No tags yet. Create your first tag to start segmenting your audience.
+                </div>
+                <div v-else class="space-y-2">
+                    <div v-for="tag in tags" :key="tag.id"
+                        class="flex items-center justify-between py-2.5 px-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-3 h-3 rounded-full flex-shrink-0" :style="{ backgroundColor: tag.color || '#6366f1' }" />
+                            <span class="text-sm font-medium text-gray-800">{{ tag.name }}</span>
+                            <span class="text-xs text-gray-400">{{ tag.members_count ?? 0 }} member{{ (tag.members_count ?? 0) === 1 ? '' : 's' }}</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <button @click="openEditTag(tag)"
+                                class="px-2 py-1 text-xs text-gray-500 hover:text-indigo-600 transition-colors">Edit</button>
+                            <button @click="deleteTag(tag)"
+                                class="px-2 py-1 text-xs text-gray-500 hover:text-red-600 transition-colors">Delete</button>
+                        </div>
+                    </div>
+                </div>
+
+                <p v-if="tagSuccess" class="mt-3 text-sm text-green-600">{{ tagSuccess }}</p>
             </div>
         </div>
     </CommunitySettingsLayout>

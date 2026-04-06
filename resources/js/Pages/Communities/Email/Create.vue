@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue';
 import { Link, useForm } from '@inertiajs/vue3';
 import CommunitySettingsLayout from '@/Layouts/CommunitySettingsLayout.vue';
+import EmailEditor from '@/Components/EmailEditor.vue';
 import { useCommunityUrl } from '@/composables/useCommunityUrl';
 
 const props = defineProps({
@@ -10,7 +11,6 @@ const props = defineProps({
 });
 
 const { communityPath } = useCommunityUrl(props.community.slug);
-const showPreview = ref(false);
 
 const form = useForm({
     name: '',
@@ -37,15 +37,6 @@ function toggleTag(tagId) {
     }
 }
 
-const variablesList = [
-    { key: '{{user_name}}', label: 'Member name' },
-    { key: '{{user_email}}', label: 'Member email' },
-    { key: '{{community_name}}', label: 'Community name' },
-];
-
-function insertVariable(variable) {
-    form.html_body += variable;
-}
 </script>
 
 <template>
@@ -71,33 +62,14 @@ function insertVariable(variable) {
                         <p v-if="form.errors.subject" class="mt-1 text-xs text-red-600">{{ form.errors.subject }}</p>
                     </div>
 
-                    <!-- Variables -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Insert Variable</label>
-                        <div class="flex flex-wrap gap-2">
-                            <button v-for="v in variablesList" :key="v.key" type="button"
-                                @click="insertVariable(v.key)"
-                                class="px-3 py-1.5 text-xs font-mono bg-gray-100 text-gray-700 rounded-lg hover:bg-indigo-100 hover:text-indigo-700 transition-colors">
-                                {{ v.key }}
-                            </button>
-                        </div>
-                    </div>
-
                     <!-- Body -->
                     <div>
-                        <div class="flex items-center justify-between mb-1.5">
-                            <label class="text-sm font-medium text-gray-700">Email Body (HTML)</label>
-                            <button type="button" @click="showPreview = !showPreview"
-                                class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
-                                {{ showPreview ? 'Edit' : 'Preview' }}
-                            </button>
-                        </div>
-                        <textarea v-if="!showPreview" v-model="form.html_body" rows="12" required
-                            placeholder="<p>Hi {{user_name}},</p><p>We have exciting news...</p>"
-                            class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-y" />
-                        <div v-else class="border border-gray-300 rounded-lg p-4 min-h-[200px] bg-white">
-                            <div v-html="form.html_body" class="prose prose-sm max-w-none"></div>
-                        </div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Email Body</label>
+                        <EmailEditor
+                            v-model="form.html_body"
+                            :upload-url="communityPath('/email-campaigns/upload-image')"
+                            placeholder="Hi {{user_name}}, We have exciting news..."
+                        />
                         <p v-if="form.errors.html_body" class="mt-1 text-xs text-red-600">{{ form.errors.html_body }}</p>
                     </div>
 
