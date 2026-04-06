@@ -1,6 +1,6 @@
 <script setup>
 import { Link, router } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue';
+import CommunitySettingsLayout from '@/Layouts/CommunitySettingsLayout.vue';
 import { useCommunityUrl } from '@/composables/useCommunityUrl';
 
 const props = defineProps({
@@ -13,10 +13,16 @@ const { communityPath } = useCommunityUrl(props.community.slug);
 
 const triggerLabels = {
     'member.joined': 'Member Joined',
+    'free.subscribed': 'Free Subscriber',
     'subscription.paid': 'Subscription Paid',
+    'subscription.cancelled': 'Subscription Cancelled',
     'course.enrolled': 'Course Enrolled',
+    'course.completed': 'Course Completed',
     'cart.abandoned': 'Cart Abandoned',
     'tag.added': 'Tag Added',
+    'member.inactive': 'Member Inactive',
+    'certification.earned': 'Certification Earned',
+    'member.first_post': 'First Post',
 };
 
 const statusColors = {
@@ -50,17 +56,7 @@ function delayLabel(hours) {
 </script>
 
 <template>
-    <AppLayout :title="`${community.name} · ${sequence.campaign?.name}`">
-        <div class="max-w-4xl mx-auto px-4 py-8">
-            <!-- Breadcrumb -->
-            <div class="flex items-center gap-2 text-sm text-gray-500 mb-6">
-                <Link :href="communityPath()" class="hover:text-indigo-600">{{ community.name }}</Link>
-                <span>/</span>
-                <Link :href="communityPath('/email-sequences')" class="hover:text-indigo-600">Sequences</Link>
-                <span>/</span>
-                <span>{{ sequence.campaign?.name }}</span>
-            </div>
-
+    <CommunitySettingsLayout :community="community">
             <!-- Header -->
             <div class="flex items-center justify-between mb-6">
                 <div>
@@ -132,6 +128,5 @@ function delayLabel(hours) {
                 </div>
                 <p v-else class="text-sm text-gray-400">No steps configured.</p>
             </div>
-        </div>
-    </AppLayout>
+    </CommunitySettingsLayout>
 </template>

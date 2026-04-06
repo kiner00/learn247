@@ -1,8 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue';
-import EmailNav from '@/Components/EmailNav.vue';
+import CommunitySettingsLayout from '@/Layouts/CommunitySettingsLayout.vue';
 import { useCommunityUrl } from '@/composables/useCommunityUrl';
 
 const props = defineProps({
@@ -64,9 +63,7 @@ function displayStatus(send) {
 </script>
 
 <template>
-    <AppLayout :title="`${community.name} · Email History`">
-        <div class="max-w-5xl mx-auto px-4 py-8">
-            <EmailNav :community="community" active="history" />
+    <CommunitySettingsLayout :community="community">
 
             <h1 class="text-2xl font-bold text-gray-900 mb-6">Send History</h1>
 
@@ -196,6 +193,5 @@ function displayStatus(send) {
                 <p class="text-xs text-gray-500">Send a broadcast or activate a sequence to see history here.</p>
             </div>
 
-        </div>
-    </AppLayout>
+    </CommunitySettingsLayout>
 </template>

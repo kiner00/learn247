@@ -1,6 +1,6 @@
 <script setup>
 import { Link, router } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue';
+import CommunitySettingsLayout from '@/Layouts/CommunitySettingsLayout.vue';
 import { useCommunityUrl } from '@/composables/useCommunityUrl';
 
 const props = defineProps({
@@ -47,17 +47,7 @@ function pct(value, total) {
 </script>
 
 <template>
-    <AppLayout :title="`${community.name} · ${campaign.name}`">
-        <div class="max-w-4xl mx-auto px-4 py-8">
-            <!-- Breadcrumb -->
-            <div class="flex items-center gap-2 text-sm text-gray-500 mb-6">
-                <Link :href="communityPath()" class="hover:text-indigo-600 transition-colors">{{ community.name }}</Link>
-                <span>/</span>
-                <Link :href="communityPath('/email-campaigns')" class="hover:text-indigo-600 transition-colors">Email Campaigns</Link>
-                <span>/</span>
-                <span>{{ campaign.name }}</span>
-            </div>
-
+    <CommunitySettingsLayout :community="community">
             <!-- Header -->
             <div class="flex items-center justify-between mb-6">
                 <div>
@@ -138,6 +128,5 @@ function pct(value, total) {
             <div v-else class="bg-white border border-gray-200 rounded-2xl p-12 text-center">
                 <p class="text-sm text-gray-500">No broadcast created for this campaign yet.</p>
             </div>
-        </div>
-    </AppLayout>
+    </CommunitySettingsLayout>
 </template>

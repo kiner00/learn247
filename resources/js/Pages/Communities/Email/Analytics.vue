@@ -1,8 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue';
-import EmailNav from '@/Components/EmailNav.vue';
+import CommunitySettingsLayout from '@/Layouts/CommunitySettingsLayout.vue';
 import { useCommunityUrl } from '@/composables/useCommunityUrl';
 import { Chart, registerables } from 'chart.js';
 
@@ -87,9 +86,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <AppLayout :title="`${community.name} · Email Analytics`">
-        <div class="max-w-5xl mx-auto px-4 py-8">
-            <EmailNav :community="community" active="analytics" />
+    <CommunitySettingsLayout :community="community">
 
             <div class="flex items-center justify-between mb-6">
                 <h1 class="text-2xl font-bold text-gray-900">Email Analytics</h1>
@@ -145,6 +142,5 @@ onMounted(() => {
                 </div>
             </div>
 
-        </div>
-    </AppLayout>
+    </CommunitySettingsLayout>
 </template>

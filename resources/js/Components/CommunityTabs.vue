@@ -94,13 +94,6 @@ const baseTabs = [
 ];
 
 const tabs = computed(() => {
-    const list = [...baseTabs];
-
-    // Owner-only tabs
-    if (isOwner.value) {
-        list.push({ name: 'email', label: 'Email', href: communityPath('/email-campaigns') });
-    }
-
-    return list;
+    return [...baseTabs];
 });
 </script>

@@ -12,6 +12,8 @@ const page = usePage();
 const { communityPath } = useCommunityUrl(props.community.slug);
 const base = computed(() => communityPath('/settings'));
 
+const emailBase = computed(() => communityPath('/email'));
+
 const navItems = computed(() => [
     { href: `${base.value}/general`,        label: 'General' },
     { href: `${base.value}/affiliate`,      label: 'Affiliate' },
@@ -22,14 +24,26 @@ const navItems = computed(() => [
     { href: `${base.value}/integrations`,   label: 'Integrations' },
     { href: `${base.value}/domain`,         label: 'Domain' },
     { href: `${base.value}/sms`,            label: 'SMS' },
-    { href: `${base.value}/email`,          label: 'Email' },
+    { href: `${base.value}/email`,          label: 'Email', children: [
+        { href: `${emailBase.value}-campaigns`,  label: 'Campaigns' },
+        { href: `${emailBase.value}-sequences`,  label: 'Sequences' },
+        { href: `${emailBase.value}-history`,     label: 'Send History' },
+        { href: `${emailBase.value}-analytics`,   label: 'Analytics' },
+    ]},
     { href: `${base.value}/danger-zone`,    label: 'Danger Zone' },
 ]);
 
 function isActive(href) {
-    // On custom domains page.url won't have the /communities/{slug} prefix,
-    // but our href values already use communityPath so they match.
     return page.url.startsWith(href);
+}
+
+function isEmailSectionActive() {
+    const url = page.url;
+    return url.startsWith(communityPath('/settings/email'))
+        || url.startsWith(communityPath('/email-campaigns'))
+        || url.startsWith(communityPath('/email-sequences'))
+        || url.startsWith(communityPath('/email-history'))
+        || url.startsWith(communityPath('/email-analytics'));
 }
 
 </script>
@@ -59,22 +73,35 @@ function isActive(href) {
             <!-- Sidebar nav -->
             <div class="w-44 shrink-0 sticky top-20">
                 <nav class="space-y-0.5">
-                    <Link
-                        v-for="item in navItems"
-                        :key="item.href"
-                        :href="item.href"
-                        class="w-full flex items-center text-left px-3 py-2 text-sm rounded-xl font-medium transition-colors"
-                        :class="isActive(item.href)
-                            ? 'bg-indigo-50 text-indigo-700'
-                            : 'text-gray-600 hover:bg-gray-100'"
-                    >
-                        {{ item.label }}
-                    </Link>
+                    <template v-for="item in navItems" :key="item.href">
+                        <Link
+                            :href="item.href"
+                            class="w-full flex items-center text-left px-3 py-2 text-sm rounded-xl font-medium transition-colors"
+                            :class="(item.children ? isEmailSectionActive() : isActive(item.href))
+                                ? 'bg-indigo-50 text-indigo-700'
+                                : 'text-gray-600 hover:bg-gray-100'"
+                        >
+                            {{ item.label }}
+                        </Link>
+                        <template v-if="item.children && isEmailSectionActive()">
+                            <Link
+                                v-for="child in item.children"
+                                :key="child.href"
+                                :href="child.href"
+                                class="w-full flex items-center text-left pl-6 pr-3 py-1.5 text-sm rounded-xl font-medium transition-colors"
+                                :class="isActive(child.href)
+                                    ? 'text-indigo-600'
+                                    : 'text-gray-400 hover:text-gray-600'"
+                            >
+                                {{ child.label }}
+                            </Link>
+                        </template>
+                    </template>
                 </nav>
             </div>
 
             <!-- Main content -->
-            <div class="flex-1 min-w-0 max-w-2xl">
+            <div class="flex-1 min-w-0" :class="isEmailSectionActive() ? 'max-w-4xl' : 'max-w-2xl'">
                 <slot />
             </div>
         </div>

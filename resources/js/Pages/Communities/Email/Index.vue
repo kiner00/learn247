@@ -1,8 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue';
-import EmailNav from '@/Components/EmailNav.vue';
+import CommunitySettingsLayout from '@/Layouts/CommunitySettingsLayout.vue';
 import { useCommunityUrl } from '@/composables/useCommunityUrl';
 
 const props = defineProps({
@@ -31,10 +30,7 @@ function formatDate(date) {
 </script>
 
 <template>
-    <AppLayout :title="`${community.name} · Email Campaigns`">
-        <div class="max-w-4xl mx-auto px-4 py-8">
-            <EmailNav :community="community" active="campaigns" />
-
+    <CommunitySettingsLayout :community="community">
             <!-- Header -->
             <div class="flex items-center justify-between mb-6">
                 <div>
@@ -106,6 +102,5 @@ function formatDate(date) {
                 </table>
             </div>
 
-        </div>
-    </AppLayout>
+    </CommunitySettingsLayout>
 </template>

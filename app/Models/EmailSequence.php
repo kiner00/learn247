@@ -12,18 +12,30 @@ class EmailSequence extends Model
     use HasFactory;
 
     // Trigger events
-    public const TRIGGER_MEMBER_JOINED     = 'member.joined';
-    public const TRIGGER_SUBSCRIPTION_PAID = 'subscription.paid';
-    public const TRIGGER_COURSE_ENROLLED   = 'course.enrolled';
-    public const TRIGGER_CART_ABANDONED    = 'cart.abandoned';
-    public const TRIGGER_TAG_ADDED        = 'tag.added';
+    public const TRIGGER_MEMBER_JOINED          = 'member.joined';
+    public const TRIGGER_FREE_SUBSCRIBED        = 'free.subscribed';
+    public const TRIGGER_SUBSCRIPTION_PAID      = 'subscription.paid';
+    public const TRIGGER_SUBSCRIPTION_CANCELLED = 'subscription.cancelled';
+    public const TRIGGER_COURSE_ENROLLED        = 'course.enrolled';
+    public const TRIGGER_COURSE_COMPLETED       = 'course.completed';
+    public const TRIGGER_CART_ABANDONED         = 'cart.abandoned';
+    public const TRIGGER_TAG_ADDED             = 'tag.added';
+    public const TRIGGER_MEMBER_INACTIVE        = 'member.inactive';
+    public const TRIGGER_CERTIFICATION_EARNED   = 'certification.earned';
+    public const TRIGGER_FIRST_POST             = 'member.first_post';
 
     public const TRIGGERS = [
         self::TRIGGER_MEMBER_JOINED,
+        self::TRIGGER_FREE_SUBSCRIBED,
         self::TRIGGER_SUBSCRIPTION_PAID,
+        self::TRIGGER_SUBSCRIPTION_CANCELLED,
         self::TRIGGER_COURSE_ENROLLED,
+        self::TRIGGER_COURSE_COMPLETED,
         self::TRIGGER_CART_ABANDONED,
         self::TRIGGER_TAG_ADDED,
+        self::TRIGGER_MEMBER_INACTIVE,
+        self::TRIGGER_CERTIFICATION_EARNED,
+        self::TRIGGER_FIRST_POST,
     ];
 
     public const STATUS_DRAFT  = 'draft';

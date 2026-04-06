@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import { Link, useForm } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue';
+import CommunitySettingsLayout from '@/Layouts/CommunitySettingsLayout.vue';
 import { useCommunityUrl } from '@/composables/useCommunityUrl';
 
 const props = defineProps({
@@ -15,18 +15,30 @@ const { communityPath } = useCommunityUrl(props.community.slug);
 
 const triggerLabels = {
     'member.joined': 'Member Joined',
+    'free.subscribed': 'Free Subscriber',
     'subscription.paid': 'Subscription Paid',
+    'subscription.cancelled': 'Subscription Cancelled',
     'course.enrolled': 'Course Enrolled',
+    'course.completed': 'Course Completed',
     'cart.abandoned': 'Cart Abandoned',
     'tag.added': 'Tag Added',
+    'member.inactive': 'Member Inactive',
+    'certification.earned': 'Certification Earned',
+    'member.first_post': 'First Post',
 };
 
 const triggerDescriptions = {
     'member.joined': 'Triggered when a new member joins your community (free or paid).',
+    'free.subscribed': 'Triggered when someone subscribes to your community for free.',
     'subscription.paid': 'Triggered when a member completes a paid subscription.',
+    'subscription.cancelled': 'Triggered when a member cancels their paid subscription. Great for win-back campaigns.',
     'course.enrolled': 'Triggered when a member enrolls in a specific course.',
+    'course.completed': 'Triggered when a member completes a course. Great for upselling the next course.',
     'cart.abandoned': 'Triggered when someone starts checkout but doesn\'t complete payment.',
     'tag.added': 'Triggered when a specific tag is added to a member.',
+    'member.inactive': 'Triggered when a member hasn\'t logged in for a number of days. Great for re-engagement.',
+    'certification.earned': 'Triggered when a member earns a certification. Great for congratulations and sharing.',
+    'member.first_post': 'Triggered when a member creates their first post or comment.',
 };
 
 const form = useForm({
@@ -64,16 +76,7 @@ function delayLabel(hours) {
 </script>
 
 <template>
-    <AppLayout :title="`${community.name} · Create Sequence`">
-        <div class="max-w-3xl mx-auto px-4 py-8">
-            <div class="flex items-center gap-2 text-sm text-gray-500 mb-6">
-                <Link :href="communityPath()" class="hover:text-indigo-600">{{ community.name }}</Link>
-                <span>/</span>
-                <Link :href="communityPath('/email-sequences')" class="hover:text-indigo-600">Sequences</Link>
-                <span>/</span>
-                <span>Create</span>
-            </div>
-
+    <CommunitySettingsLayout :community="community">
             <h1 class="text-2xl font-bold text-gray-900 mb-6">Create Email Sequence</h1>
 
             <form @submit.prevent="submit" class="space-y-6">
@@ -128,6 +131,27 @@ function delayLabel(hours) {
                             <option value="">Any tag</option>
                             <option v-for="tag in tags" :key="tag.id" :value="tag.id">{{ tag.name }}</option>
                         </select>
+                    </div>
+
+                    <!-- Trigger filter: course for course.completed -->
+                    <div v-if="form.trigger_event === 'course.completed' && courses.length > 0">
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Specific Course</label>
+                        <select v-model="form.trigger_filter.course_id"
+                            class="w-full max-w-md px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm bg-white">
+                            <option value="">Any course</option>
+                            <option v-for="c in courses" :key="c.id" :value="c.id">{{ c.title }}</option>
+                        </select>
+                    </div>
+
+                    <!-- Trigger filter: inactive days for member.inactive -->
+                    <div v-if="form.trigger_event === 'member.inactive'">
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Inactive for (days)</label>
+                        <div class="flex items-center gap-3">
+                            <input v-model.number="form.trigger_filter.inactive_days" type="number" min="1" max="365"
+                                placeholder="7"
+                                class="w-24 px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                            <span class="text-xs text-gray-400">days without logging in</span>
+                        </div>
                     </div>
                 </div>
 
@@ -192,6 +216,5 @@ function delayLabel(hours) {
                 </div>
                 <p v-if="form.errors.resend" class="text-sm text-red-600">{{ form.errors.resend }}</p>
             </form>
-        </div>
-    </AppLayout>
+    </CommunitySettingsLayout>
 </template>

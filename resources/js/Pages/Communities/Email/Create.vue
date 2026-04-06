@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { Link, useForm } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue';
+import CommunitySettingsLayout from '@/Layouts/CommunitySettingsLayout.vue';
 import { useCommunityUrl } from '@/composables/useCommunityUrl';
 
 const props = defineProps({
@@ -49,17 +49,7 @@ function insertVariable(variable) {
 </script>
 
 <template>
-    <AppLayout :title="`${community.name} · Create Campaign`">
-        <div class="max-w-3xl mx-auto px-4 py-8">
-            <!-- Breadcrumb -->
-            <div class="flex items-center gap-2 text-sm text-gray-500 mb-6">
-                <Link :href="communityPath()" class="hover:text-indigo-600 transition-colors">{{ community.name }}</Link>
-                <span>/</span>
-                <Link :href="communityPath('/email-campaigns')" class="hover:text-indigo-600 transition-colors">Email Campaigns</Link>
-                <span>/</span>
-                <span>Create</span>
-            </div>
-
+    <CommunitySettingsLayout :community="community">
             <h1 class="text-2xl font-bold text-gray-900 mb-6">Create Campaign</h1>
 
             <form @submit.prevent="submit" class="space-y-6">
@@ -181,6 +171,5 @@ function insertVariable(variable) {
 
                 <p v-if="form.errors.resend" class="text-sm text-red-600">{{ form.errors.resend }}</p>
             </form>
-        </div>
-    </AppLayout>
+    </CommunitySettingsLayout>
 </template>

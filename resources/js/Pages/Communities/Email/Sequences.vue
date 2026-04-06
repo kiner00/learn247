@@ -1,7 +1,6 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue';
-import EmailNav from '@/Components/EmailNav.vue';
+import CommunitySettingsLayout from '@/Layouts/CommunitySettingsLayout.vue';
 import { useCommunityUrl } from '@/composables/useCommunityUrl';
 
 const props = defineProps({
@@ -14,10 +13,16 @@ const { communityPath } = useCommunityUrl(props.community.slug);
 
 const triggerLabels = {
     'member.joined': 'Member Joined',
+    'free.subscribed': 'Free Subscriber',
     'subscription.paid': 'Subscription Paid',
+    'subscription.cancelled': 'Subscription Cancelled',
     'course.enrolled': 'Course Enrolled',
+    'course.completed': 'Course Completed',
     'cart.abandoned': 'Cart Abandoned',
     'tag.added': 'Tag Added',
+    'member.inactive': 'Member Inactive',
+    'certification.earned': 'Certification Earned',
+    'member.first_post': 'First Post',
 };
 
 const statusColors = {
@@ -33,9 +38,7 @@ function formatDate(date) {
 </script>
 
 <template>
-    <AppLayout :title="`${community.name} · Email Sequences`">
-        <div class="max-w-4xl mx-auto px-4 py-8">
-            <EmailNav :community="community" active="sequences" />
+    <CommunitySettingsLayout :community="community">
 
             <div class="flex items-center justify-between mb-6">
                 <div>
@@ -108,6 +111,5 @@ function formatDate(date) {
                 </table>
             </div>
 
-        </div>
-    </AppLayout>
+    </CommunitySettingsLayout>
 </template>
