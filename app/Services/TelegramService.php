@@ -95,6 +95,20 @@ class TelegramService implements TelegramGateway
         }
     }
 
+    public function getChatMemberCount(string $token, string $chatId): ?int
+    {
+        try {
+            $response = Http::timeout(5)->get(self::API_BASE . $token . '/getChatMemberCount', [
+                'chat_id' => $chatId,
+            ]);
+
+            return $response->json('result');
+        } catch (\Throwable $e) {
+            Log::warning('Telegram getChatMemberCount failed', ['error' => $e->getMessage()]);
+            return null;
+        }
+    }
+
     public function webhookSecret(string $token): string
     {
         return substr(hash('sha256', $token), 0, 32);

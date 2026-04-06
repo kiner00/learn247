@@ -118,7 +118,7 @@
                         <span class="text-sm font-semibold text-gray-900"># general</span>
                         <div v-if="telegramConnected" class="ml-auto flex items-center gap-1.5 px-2.5 py-1 bg-sky-50 border border-sky-200 rounded-full">
                             <svg class="w-3 h-3 text-sky-500" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L8.32 13.617l-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.828.942z"/></svg>
-                            <span class="text-xs font-medium text-sky-600">Telegram connected</span>
+                            <span class="text-xs font-medium text-sky-600">Telegram{{ telegramMemberCount ? ` · ${telegramMemberCount} members` : '' }}</span>
                         </div>
                     </div>
                     <div ref="messagesEl" class="flex-1 overflow-y-auto px-4 py-4 space-y-3">
@@ -282,6 +282,7 @@ const props = defineProps({
     messages:          Array,
     affiliate:         Object,
     telegramConnected: { type: Boolean, default: false },
+    telegramMemberCount: { type: Number, default: null },
     isOwner:           { type: Boolean, default: false },
     chatbotUsers:      { type: Array, default: () => [] },
     selectedChatUser:  { type: Object, default: null },

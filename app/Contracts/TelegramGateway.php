@@ -16,5 +16,7 @@ interface TelegramGateway
 
     public function getFileUrl(string $token, string $fileId): ?string;
 
+    public function getChatMemberCount(string $token, string $chatId): ?int;
+
     public function webhookSecret(string $token): string;
 }

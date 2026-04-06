@@ -258,6 +258,33 @@ class TelegramServiceTest extends TestCase
         $this->assertNull($url);
     }
 
+    // ─── getChatMemberCount ─────────────────────────────────────────────────
+
+    public function test_get_chat_member_count_returns_count(): void
+    {
+        Http::fake([
+            'https://api.telegram.org/bot*' => Http::response([
+                'ok'     => true,
+                'result' => 42,
+            ], 200),
+        ]);
+
+        $count = $this->service->getChatMemberCount($this->token, '123456');
+
+        $this->assertEquals(42, $count);
+    }
+
+    public function test_get_chat_member_count_returns_null_on_failure(): void
+    {
+        Http::fake(function () {
+            throw new \Exception('Timeout');
+        });
+
+        $count = $this->service->getChatMemberCount($this->token, '123456');
+
+        $this->assertNull($count);
+    }
+
     // ─── webhookSecret ───────────────────────────────────────────────────────
 
     public function test_webhook_secret_returns_deterministic_hash(): void

@@ -13,6 +13,7 @@ use App\Models\Message;
 use App\Queries\Chat\GetChatMessages;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Contracts\TelegramGateway;
 use App\Services\StorageService;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -32,6 +33,9 @@ class ChatController extends Controller
         $affiliate = $userId ? $community->affiliates()->where('user_id', $userId)->first() : null;
 
         $telegramConnected = (bool) ($community->telegram_bot_token && $community->telegram_chat_id);
+        $telegramMemberCount = $telegramConnected
+            ? app(TelegramGateway::class)->getChatMemberCount($community->telegram_bot_token, $community->telegram_chat_id)
+            : null;
         $isOwner = $userId && $userId === $community->owner_id;
 
         // For creator: load chatbot conversation users
@@ -70,7 +74,7 @@ class ChatController extends Controller
         }
 
         return Inertia::render('Communities/Chat', compact(
-            'community', 'messages', 'affiliate', 'telegramConnected', 'isOwner', 'chatbotUsers', 'selectedChatUser'
+            'community', 'messages', 'affiliate', 'telegramConnected', 'telegramMemberCount', 'isOwner', 'chatbotUsers', 'selectedChatUser'
         ));
     }
 
