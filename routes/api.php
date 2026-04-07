@@ -133,8 +133,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/',                           [AccountSettingsController::class, 'show']);
         Route::match(['patch', 'post'], '/profile', [AccountSettingsController::class, 'updateProfile']);
         Route::patch('/profile/visibility/{communityId}', [AccountSettingsController::class, 'updateMembershipVisibility']);
-        Route::patch('/email',                    [AccountSettingsController::class, 'updateEmail']);
-        Route::patch('/password',                 [AccountSettingsController::class, 'updatePassword']);
+        Route::patch('/email',                    [AccountSettingsController::class, 'updateEmail'])->middleware('throttle:5,1');
+        Route::patch('/password',                 [AccountSettingsController::class, 'updatePassword'])->middleware('throttle:5,1');
         Route::patch('/timezone',                 [AccountSettingsController::class, 'updateTimezone']);
         Route::post('/logout-everywhere',         [AccountSettingsController::class, 'logoutEverywhere']);
         Route::patch('/notifications',            [AccountSettingsController::class, 'updateNotifications']);

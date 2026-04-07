@@ -62,10 +62,10 @@ Route::get('/invite/{token}', [CommunityInviteController::class, 'accept'])->nam
 Route::get('/ref/{code}', [RefController::class, 'redirect'])->name('ref.redirect');
 
 // ─── Guest checkout via affiliate link (public, POST only) ───────────────────
-Route::post('/ref-checkout/{code}', [GuestCheckoutController::class, 'process'])->name('ref.checkout.process');
+Route::post('/ref-checkout/{code}', [GuestCheckoutController::class, 'process'])->name('ref.checkout.process')->middleware('throttle:10,1');
 
 // ─── Guest checkout without affiliate code (public, POST only) ───────────────
-Route::post('/communities/{community}/guest-checkout', [GuestCheckoutController::class, 'processNoAffiliate'])->name('communities.guest.checkout');
+Route::post('/communities/{community}/guest-checkout', [GuestCheckoutController::class, 'processNoAffiliate'])->name('communities.guest.checkout')->middleware('throttle:10,1');
 
 // ─── Checkout callback: auto-login + processing screen (signed URL) ──────────
 Route::get('/checkout-callback/{user}/{community}', CheckoutCallbackController::class)->name('checkout.callback');
@@ -85,11 +85,11 @@ Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
     Route::get('/forgot-password', [ForgotPasswordController::class, 'show'])->name('password.request');
-    Route::post('/forgot-password', [ForgotPasswordController::class, 'send'])->name('password.email');
+    Route::post('/forgot-password', [ForgotPasswordController::class, 'send'])->name('password.email')->middleware('throttle:3,1');
     Route::get('/reset-password/{token}', [ForgotPasswordController::class, 'showReset'])->name('password.reset');
-    Route::post('/reset-password', [ForgotPasswordController::class, 'reset'])->name('password.update');
+    Route::post('/reset-password', [ForgotPasswordController::class, 'reset'])->name('password.update')->middleware('throttle:3,1');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
@@ -165,8 +165,8 @@ Route::middleware('auth')->prefix('account')->group(function () {
     Route::get('/settings', [AccountSettingsController::class, 'show'])->name('account.settings');
     Route::match(['patch', 'post'], '/settings/profile', [AccountSettingsController::class, 'updateProfile'])->name('account.settings.profile');
     Route::patch('/settings/profile/visibility/{communityId}', [AccountSettingsController::class, 'updateMembershipVisibility'])->name('account.settings.profile.visibility');
-    Route::patch('/settings/email', [AccountSettingsController::class, 'updateEmail'])->name('account.settings.email');
-    Route::patch('/settings/password', [AccountSettingsController::class, 'updatePassword'])->name('account.settings.password');
+    Route::patch('/settings/email', [AccountSettingsController::class, 'updateEmail'])->name('account.settings.email')->middleware('throttle:5,1');
+    Route::patch('/settings/password', [AccountSettingsController::class, 'updatePassword'])->name('account.settings.password')->middleware('throttle:5,1');
     Route::patch('/settings/timezone', [AccountSettingsController::class, 'updateTimezone'])->name('account.settings.timezone');
     Route::post('/settings/logout-everywhere', [AccountSettingsController::class, 'logoutEverywhere'])->name('account.settings.logout-everywhere');
     Route::patch('/settings/notifications', [AccountSettingsController::class, 'updateNotifications'])->name('account.settings.notifications');
@@ -404,13 +404,13 @@ Route::middleware('auth')->group(function () {
 });
 
 // ─── Xendit Webhooks (no auth, no CSRF) ────────────────────────────────────
-Route::post('/webhooks/xendit/payouts', [XenditWebhookController::class, 'payouts'])->name('webhooks.xendit.payouts');
+Route::post('/webhooks/xendit/payouts', [XenditWebhookController::class, 'payouts'])->name('webhooks.xendit.payouts')->middleware('throttle:60,1');
 
 // ─── Telegram Webhooks (no auth, no CSRF) ──────────────────────────────────
-Route::post('/webhooks/telegram/{slug}', TelegramWebhookController::class)->name('webhooks.telegram');
+Route::post('/webhooks/telegram/{slug}', TelegramWebhookController::class)->name('webhooks.telegram')->middleware('throttle:60,1');
 
 // ─── Resend Webhooks (no auth, no CSRF — covered by webhooks/* exclusion) ──
-Route::post('/webhooks/resend', ResendWebhookController::class)->name('webhooks.resend');
+Route::post('/webhooks/resend', ResendWebhookController::class)->name('webhooks.resend')->middleware('throttle:60,1');
 
 // ─── Email Unsubscribe (signed URL, no auth) ──────────────────────────────
 Route::get('/email/unsubscribe/{community}/{member}', [EmailUnsubscribeController::class, 'unsubscribe'])
