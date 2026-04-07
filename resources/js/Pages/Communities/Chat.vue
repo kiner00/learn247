@@ -164,7 +164,7 @@
                         <form @submit.prevent="send" class="flex items-end gap-2">
                             <input ref="fileInputEl" type="file" accept="image/*,video/*" class="hidden" @change="onFileSelected" />
                             <button type="button" @click="fileInputEl.click()" class="shrink-0 w-9 h-9 flex items-center justify-center text-gray-400 hover:text-indigo-600 transition-colors"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg></button>
-                            <div class="flex-1"><textarea v-model="groupContent" ref="inputEl" rows="1" placeholder="Message #general" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none bg-gray-50" style="max-height: 120px; overflow-y: auto;" @keydown.enter.exact.prevent="send" @keydown.enter.shift.exact="groupContent += '\n'" @input="autoResize"></textarea></div>
+                            <div class="flex-1"><textarea v-model="groupContent" ref="inputEl" rows="1" placeholder="Message #general" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none bg-gray-50" style="max-height: 120px; overflow-y: auto;" @keydown.enter.exact.prevent="send" @keydown.enter.shift.exact="groupContent += '\n'" @input="autoResize" @paste="handlePaste"></textarea></div>
                             <button type="submit" :disabled="(!groupContent.trim() && !mediaFile) || sending" class="shrink-0 w-9 h-9 flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white rounded-xl transition-colors"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg></button>
                         </form>
                         <p class="text-xs text-gray-400 mt-1.5 ml-1">Enter to send · Shift+Enter for new line</p>
@@ -331,6 +331,20 @@ const mediaFile       = ref(null);
 const mediaPreviewUrl = ref(null);
 
 function onFileSelected(e) { const f = e.target.files[0]; if (!f) return; mediaFile.value = f; mediaPreviewUrl.value = URL.createObjectURL(f); }
+function handlePaste(e) {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+        if (item.type.startsWith('image/') || item.type.startsWith('video/')) {
+            e.preventDefault();
+            const file = item.getAsFile();
+            if (!file) return;
+            mediaFile.value = file;
+            mediaPreviewUrl.value = URL.createObjectURL(file);
+            return;
+        }
+    }
+}
 function clearMedia() { mediaFile.value = null; mediaPreviewUrl.value = null; if (fileInputEl.value) fileInputEl.value.value = ''; }
 const avatarColors = ['bg-indigo-100 text-indigo-600','bg-violet-100 text-violet-600','bg-pink-100 text-pink-600','bg-emerald-100 text-emerald-600','bg-amber-100 text-amber-600','bg-sky-100 text-sky-600'];
 function msgGroupKey(msg) { return msg.telegram_author ? `tg:${msg.telegram_author}` : `u:${msg.user?.id}`; }
