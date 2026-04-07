@@ -4,7 +4,7 @@
         <div class="bg-white border-b border-gray-200">
             <div class="max-w-4xl mx-auto px-4 py-6 flex items-center justify-between">
                 <Link href="/" class="inline-block">
-                    <img src="/brand/logo-transparent.png" alt="Curzzo" class="h-10 w-auto" />
+                    <img :src="'/brand/logo-transparent.png'" alt="Curzzo" class="h-10 w-auto" />
                 </Link>
                 <div class="flex items-center gap-4 text-sm">
                     <Link href="/privacy" class="text-gray-600 hover:text-indigo-600">Privacy Policy</Link>
