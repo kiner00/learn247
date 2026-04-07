@@ -481,8 +481,26 @@
                                         </div>
                                         </template>
 
+                                        <!-- Legal -->
+                                        <div class="p-1.5 border-t border-gray-100 dark:border-gray-700">
+                                            <Link
+                                                href="/terms"
+                                                class="block w-full px-3 py-2 text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                                @click="menuOpen = false"
+                                            >
+                                                Terms of Service
+                                            </Link>
+                                            <Link
+                                                href="/privacy"
+                                                class="block w-full px-3 py-2 text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                                @click="menuOpen = false"
+                                            >
+                                                Privacy Policy
+                                            </Link>
+                                        </div>
+
                                         <!-- Log out -->
-                                        <div class="p-1.5">
+                                        <div class="p-1.5 border-t border-gray-100 dark:border-gray-700">
                                             <Link
                                                 method="post"
                                                 href="/logout"
