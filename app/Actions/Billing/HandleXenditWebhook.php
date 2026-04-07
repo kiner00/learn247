@@ -5,6 +5,8 @@ namespace App\Actions\Billing;
 use App\Actions\Billing\WebhookHandlers\HandleCertificationPurchasePaid;
 use App\Actions\Billing\WebhookHandlers\HandleCourseEnrollmentPaid;
 use App\Actions\Billing\WebhookHandlers\HandleCreatorPlanPaid;
+use App\Actions\Billing\WebhookHandlers\HandleCurzzoPurchasePaid;
+use App\Actions\Billing\WebhookHandlers\HandleCurzzoTopupPaid;
 use App\Actions\Billing\WebhookHandlers\HandleSubscriptionPaid;
 use App\Contracts\WebhookHandler;
 use App\Models\Payment;
@@ -22,12 +24,16 @@ class HandleXenditWebhook
         private readonly XenditService $xendit,
         HandleCourseEnrollmentPaid $courseEnrollment,
         HandleCertificationPurchasePaid $certificationPurchase,
+        HandleCurzzoPurchasePaid $curzzoPurchase,
+        HandleCurzzoTopupPaid $curzzoTopup,
         HandleCreatorPlanPaid $creatorPlan,
         HandleSubscriptionPaid $subscription,
     ) {
         $this->handlers = [
             $courseEnrollment,
             $certificationPurchase,
+            $curzzoPurchase,
+            $curzzoTopup,
             $creatorPlan,
             $subscription,
         ];

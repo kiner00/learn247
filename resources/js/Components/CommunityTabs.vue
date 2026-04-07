@@ -89,6 +89,7 @@ const baseTabs = [
     { name: 'calendar',       label: 'Calendar',       href: communityPath('/calendar') },
     { name: 'members',        label: 'Members',        href: communityPath('/members') },
     { name: 'chat',           label: 'Chat',           href: communityPath('/chat') },
+    { name: 'curzzos',        label: 'Curzzos',        href: communityPath('/curzzos') },
     { name: 'leaderboard',    label: 'Leaderboards',   href: communityPath('/leaderboard') },
     { name: 'about',          label: 'About',          href: communityPath('/about') },
 ];

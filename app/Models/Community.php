@@ -26,6 +26,7 @@ class Community extends Model
         'resend_domain_id', 'resend_domain_status',
         'deletion_requested_at', 'is_featured', 'landing_page', 'ai_chatbot_instructions',
         'brand_context',
+        'curzzo_topup_packs',
     ];
 
     protected function casts(): array
@@ -38,6 +39,7 @@ class Community extends Model
             'gallery_images'            => 'array',
             'landing_page'              => 'array',
             'brand_context'             => 'array',
+            'curzzo_topup_packs'        => 'array',
             'resend_api_key'            => 'encrypted',
             'deletion_requested_at'     => 'datetime',
         ];
@@ -88,6 +90,11 @@ class Community extends Model
     public function courses(): HasMany
     {
         return $this->hasMany(Course::class)->orderBy('position');
+    }
+
+    public function curzzos(): HasMany
+    {
+        return $this->hasMany(Curzzo::class)->orderBy('position');
     }
 
     public function messages(): HasMany

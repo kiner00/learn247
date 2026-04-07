@@ -190,6 +190,7 @@
             :community="community"
             :courses="props.courses"
             :certifications="props.certifications"
+            :curzzos="props.curzzos"
             :is-owner="isOwner"
             :owner-is-pro="ownerIsPro"
             :inline-mode="inlineMode"
@@ -254,6 +255,7 @@ const SECTION_DEFS = {
     included_courses:     { label: 'Included Courses',     icon: '🎓' },
     video_courses:        { label: 'Video (After Courses)',     icon: '🎬' },
     certifications:       { label: 'Certifications',       icon: '🏆' },
+    curzzos:              { label: 'AI Bots (Curzzos)',    icon: '🤖' },
     price_justification:  { label: 'Price Justification',  icon: '💰' },
     guarantee:            { label: 'Guarantee',            icon: '🛡️' },
     faq:                  { label: 'FAQ',                  icon: '❓' },
@@ -272,7 +274,7 @@ function getSectionDef(type) {
 
 const DEFAULT_SECTION_ORDER = [
     'hero', 'social_proof', 'benefits', 'for_you', 'creator', 'video_creator',
-    'testimonials', 'video_testimonials', 'offer_stack', 'included_courses', 'video_courses', 'certifications', 'price_justification', 'guarantee',
+    'testimonials', 'video_testimonials', 'offer_stack', 'included_courses', 'video_courses', 'certifications', 'curzzos', 'price_justification', 'guarantee',
     'faq', 'cta_section',
 ];
 
@@ -287,6 +289,7 @@ const props = defineProps({
     courses:        { type: Array, default: () => [] },
     allCourses:     { type: Array, default: () => [] },
     certifications: { type: Array, default: () => [] },
+    curzzos:        { type: Array, default: () => [] },
 });
 
 // ── State ─────────────────────────────────────────────────────────────────────

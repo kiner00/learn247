@@ -49,6 +49,10 @@ use App\Http\Controllers\Web\TagController;
 use App\Http\Controllers\Web\ResendWebhookController;
 use App\Http\Controllers\Web\EmailUnsubscribeController;
 use App\Http\Controllers\Web\TicketController;
+use App\Http\Controllers\Web\CurzzoController;
+use App\Http\Controllers\Web\CurzzoChatController;
+use App\Http\Controllers\Web\CurzzoCheckoutController;
+use App\Http\Controllers\Web\CurzzoTopupController;
 use App\Http\Middleware\EnsureSuperAdmin;
 use Illuminate\Support\Facades\Route;
 
@@ -275,6 +279,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/communities/{community}/settings/general',        [CommunitySettingsController::class, 'general'])->name('communities.settings.general');
         Route::get('/communities/{community}/settings/affiliate',      [CommunitySettingsController::class, 'affiliate'])->name('communities.settings.affiliate');
         Route::get('/communities/{community}/settings/ai-tools',       [CommunitySettingsController::class, 'aiTools'])->name('communities.settings.ai-tools');
+        Route::get('/communities/{community}/settings/curzzos',        [CurzzoController::class, 'index'])->name('communities.settings.curzzos');
         Route::get('/communities/{community}/settings/announcements',  [CommunitySettingsController::class, 'announcements'])->name('communities.settings.announcements');
         Route::get('/communities/{community}/settings/level-perks',    [CommunitySettingsController::class, 'levelPerks'])->name('communities.settings.level-perks');
         Route::get('/communities/{community}/settings/invite-members', [CommunitySettingsController::class, 'inviteMembers'])->name('communities.settings.invite-members');
@@ -363,6 +368,17 @@ Route::middleware('auth')->group(function () {
         Route::post('/communities/{community}/chatbot/reply',  [CommunityChatbotController::class, 'reply'])->name('communities.chatbot.reply');
         Route::get('/communities/{community}/chatbot/poll',    [CommunityChatbotController::class, 'poll'])->name('communities.chatbot.poll');
         Route::get('/communities/{community}/chatbot/history', [CommunityChatbotController::class, 'history'])->name('communities.chatbot.history');
+
+        // ─── Curzzos (Custom AI Bots) ───────────────────────────────────────
+        Route::post('/communities/{community}/curzzos',                        [CurzzoController::class, 'store'])->name('communities.curzzos.store');
+        Route::patch('/communities/{community}/curzzos/{curzzo}',              [CurzzoController::class, 'update'])->name('communities.curzzos.update');
+        Route::delete('/communities/{community}/curzzos/{curzzo}',             [CurzzoController::class, 'destroy'])->name('communities.curzzos.destroy');
+        Route::get('/communities/{community}/curzzos',                         [CommunityController::class, 'curzzos'])->name('communities.curzzos');
+        Route::post('/communities/{community}/curzzos/{curzzo}/checkout',       [CurzzoCheckoutController::class, 'checkout'])->name('communities.curzzos.checkout');
+        Route::get('/communities/{community}/curzzos/topup-packs',             [CurzzoTopupController::class, 'packs'])->name('communities.curzzos.topup-packs');
+        Route::post('/communities/{community}/curzzos/topup/checkout',         [CurzzoTopupController::class, 'checkout'])->name('communities.curzzos.topup-checkout');
+        Route::post('/communities/{community}/curzzos/{curzzo}/chat',          [CurzzoChatController::class, 'chat'])->name('communities.curzzos.chat');
+        Route::get('/communities/{community}/curzzos/{curzzo}/history',        [CurzzoChatController::class, 'history'])->name('communities.curzzos.history');
 
         // ─── Community DMs ───────────────────────────────────────────────────
         Route::get('/communities/{community}/dm/conversations',       [CommunityDmController::class, 'conversations'])->name('communities.dm.conversations');

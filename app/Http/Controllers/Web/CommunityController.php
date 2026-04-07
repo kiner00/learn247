@@ -423,6 +423,40 @@ class CommunityController extends Controller
         return Inertia::render('Communities/Analytics', array_merge(['community' => $community], $data));
     }
 
+    public function curzzos(Community $community): Response
+    {
+        $userId = auth()->id();
+        $user   = auth()->user();
+
+        $curzzos = $community->curzzos()
+            ->where('is_active', true)
+            ->select('id', 'name', 'description', 'avatar', 'price', 'currency', 'billing_type')
+            ->orderBy('position')
+            ->get()
+            ->map(function ($bot) use ($userId, $community) {
+                $bot->has_access = $bot->price <= 0
+                    || $userId === $community->owner_id
+                    || \App\Models\CurzzoPurchase::where('curzzo_id', $bot->id)
+                        ->where('user_id', $userId)
+                        ->where('status', \App\Models\CurzzoPurchase::STATUS_PAID)
+                        ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+                        ->exists();
+                return $bot;
+            });
+
+        $limits = app(\App\Services\Community\CurzzoLimitService::class);
+        $limitInfo = $user ? $limits->canSendMessage($user, $community) : [
+            'allowed' => false, 'daily_limit' => 0, 'daily_used' => 0, 'topup_remaining' => 0,
+        ];
+
+        return Inertia::render('Communities/Curzzos', [
+            'community'  => $community,
+            'curzzos'    => $curzzos,
+            'limitInfo'  => $limitInfo,
+            'topupPacks' => $limits->getPacks($community),
+        ]);
+    }
+
     public function join(Request $request, Community $community, JoinCommunity $action): RedirectResponse
     {
         $action->execute($request->user(), $community);
@@ -770,8 +804,13 @@ class CommunityController extends Controller
                 'price'      => (float) ($c->price ?? 0),
                 'questions_count' => $c->questions_count,
             ]);
+        $curzzos = $community->curzzos()
+            ->where('is_active', true)
+            ->select('id', 'name', 'description', 'avatar', 'price', 'currency', 'billing_type')
+            ->orderBy('position')
+            ->get();
         $inertia = Inertia::render('Communities/Landing', compact(
-            'community', 'affiliate', 'invitedBy', 'membership', 'ownerIsPro', 'isOwner', 'courses', 'allCourses', 'certifications'
+            'community', 'affiliate', 'invitedBy', 'membership', 'ownerIsPro', 'isOwner', 'courses', 'allCourses', 'certifications', 'curzzos'
         ));
 
         // Persist ?ref= query param as a cookie so it carries through to checkout

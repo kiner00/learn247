@@ -14,7 +14,7 @@ class AffiliateConversion extends Model
     public const STATUS_PAID    = 'paid';
 
     protected $fillable = [
-        'affiliate_id', 'subscription_id', 'course_enrollment_id', 'certification_purchase_id', 'payment_id', 'referred_user_id',
+        'affiliate_id', 'subscription_id', 'course_enrollment_id', 'certification_purchase_id', 'curzzo_purchase_id', 'payment_id', 'referred_user_id',
         'sale_amount', 'platform_fee', 'commission_amount', 'creator_amount',
         'status', 'paid_at',
     ];

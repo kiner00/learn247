@@ -90,6 +90,25 @@ class PlanLimitService
         };
     }
 
+    // ── Curzzo limits ──────────────────────────────────────────────────────────
+
+    public function curzzoLimit(string $plan): int
+    {
+        return match ($plan) {
+            'pro'   => 5,
+            default => 0,
+        };
+    }
+
+    public function canCreateCurzzo(User $user, Community $community): bool
+    {
+        if ($user->creatorPlan() !== 'pro') {
+            return false;
+        }
+
+        return $community->curzzos()->count() < $this->curzzoLimit('pro');
+    }
+
     // ── Pricing gate (settings page) ──────────────────────────────────────────
 
     /**

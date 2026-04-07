@@ -90,6 +90,36 @@ class RecordAffiliateConversion
     }
 
     /**
+     * @return array{commission: float, sale_amount: float}|null
+     */
+    public function executeForCurzzo(\App\Models\CurzzoPurchase $purchase): ?array
+    {
+        $affiliate = $purchase->affiliate;
+
+        if (! $affiliate) {
+            return null;
+        }
+
+        $curzzo = $purchase->curzzo;
+        $rate   = ($curzzo->affiliate_commission_rate ?? 0) / 100;
+
+        if ($rate <= 0) {
+            Log::info('Curzzo affiliate commission skipped — no commission rate set', ['curzzo_id' => $curzzo->id]);
+            return null;
+        }
+
+        if (AffiliateConversion::where('curzzo_purchase_id', $purchase->id)->exists()) {
+            Log::info('Curzzo affiliate commission skipped — already recorded', ['purchase_id' => $purchase->id]);
+            return null;
+        }
+
+        return $this->record($affiliate, $rate, (float) $curzzo->price, [
+            'curzzo_purchase_id' => $purchase->id,
+            'referred_user_id'   => $purchase->user_id,
+        ], 'Curzzo affiliate commission skipped');
+    }
+
+    /**
      * Shared logic for recording a conversion, incrementing totals, and evaluating badges.
      *
      * @return array{commission: float, sale_amount: float}|null
