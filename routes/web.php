@@ -47,6 +47,7 @@ use App\Http\Controllers\Web\EmailHistoryController;
 use App\Http\Controllers\Web\TagController;
 use App\Http\Controllers\Web\ResendWebhookController;
 use App\Http\Controllers\Web\EmailUnsubscribeController;
+use App\Http\Controllers\Web\TicketController;
 use App\Http\Middleware\EnsureSuperAdmin;
 use Illuminate\Support\Facades\Route;
 
@@ -139,6 +140,11 @@ Route::middleware(['auth', EnsureSuperAdmin::class])->prefix('admin')->group(fun
     Route::post('/coupons', [AdminController::class, 'storeCoupon'])->name('admin.coupons.store');
     Route::post('/coupons/{coupon}/toggle', [AdminController::class, 'toggleCoupon'])->name('admin.coupons.toggle');
     Route::delete('/coupons/{coupon}', [AdminController::class, 'deleteCoupon'])->name('admin.coupons.destroy');
+    // Support Tickets
+    Route::get('/tickets', [TicketController::class, 'adminIndex'])->name('admin.tickets');
+    Route::get('/tickets/{ticket}', [TicketController::class, 'show'])->name('admin.tickets.show');
+    Route::post('/tickets/{ticket}/reply', [TicketController::class, 'reply'])->name('admin.tickets.reply');
+    Route::patch('/tickets/{ticket}/status', [TicketController::class, 'adminUpdateStatus'])->name('admin.tickets.status');
 });
 
 // ─── User Profile shortlink ─────────────────────────────────────────────────
@@ -401,6 +407,12 @@ Route::middleware('auth')->group(function () {
     // ─── AI Assistant ─────────────────────────────────────────────────────────
     Route::post('/ai/chat', [AIAssistantController::class, 'chat'])->name('ai.chat');
     Route::post('/ai/greet', [AIAssistantController::class, 'greet'])->name('ai.greet');
+
+    // ─── Support Tickets ─────────────────────────────────────────────────────
+    Route::get('/support', [TicketController::class, 'index'])->name('tickets.index');
+    Route::post('/support', [TicketController::class, 'store'])->name('tickets.store');
+    Route::get('/support/{ticket}', [TicketController::class, 'show'])->name('tickets.show');
+    Route::post('/support/{ticket}/reply', [TicketController::class, 'reply'])->name('tickets.reply');
 });
 
 // ─── Xendit Webhooks (no auth, no CSRF) ────────────────────────────────────

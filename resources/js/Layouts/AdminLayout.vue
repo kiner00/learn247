@@ -66,6 +66,7 @@ const navItems = [
     { href: '/admin/posts/trashed',      label: 'Trashed Posts' },
     { href: '/admin/announcements',      label: 'Announcements' },
     { href: '/admin/email-templates',    label: 'Email Templates' },
+    { href: '/admin/tickets',            label: 'Support Tickets' },
 ];
 
 function isActive(href) {

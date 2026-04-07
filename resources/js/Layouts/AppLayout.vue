@@ -423,6 +423,13 @@
                                                 🎖️ Badges
                                             </Link>
                                             <Link
+                                                href="/support"
+                                                class="block w-full px-3 py-2 text-sm font-semibold text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                                @click="menuOpen = false"
+                                            >
+                                                Support
+                                            </Link>
+                                            <Link
                                                 v-if="$page.props.auth.user.is_creator || $page.props.auth.user.is_super_admin"
                                                 href="/creator/dashboard"
                                                 class="block w-full px-3 py-2 text-sm font-semibold text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
