@@ -123,9 +123,23 @@
             class="mt-3 rounded-xl max-h-72 w-full object-cover cursor-pointer hover:opacity-95 transition-opacity"
         />
 
+        <!-- Uploaded video -->
+        <div
+            v-if="post.video"
+            class="mt-3 rounded-xl overflow-hidden"
+            @click.stop
+        >
+            <video
+                :src="post.video"
+                class="w-full max-h-96 rounded-xl"
+                controls
+                preload="metadata"
+            />
+        </div>
+
         <!-- Post video embed -->
         <div
-            v-if="
+            v-else-if="
                 post.video_url && getVideoEmbed(post.video_url)
             "
             class="mt-3 rounded-xl overflow-hidden aspect-video"

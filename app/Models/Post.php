@@ -13,7 +13,7 @@ class Post extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['community_id', 'user_id', 'title', 'content', 'image', 'video_url', 'is_pinned'];
+    protected $fillable = ['community_id', 'user_id', 'title', 'content', 'image', 'video_url', 'video', 'is_pinned'];
 
     protected function casts(): array
     {

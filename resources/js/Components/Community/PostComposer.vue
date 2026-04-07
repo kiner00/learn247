@@ -97,6 +97,25 @@
                         </button>
                     </div>
 
+                    <!-- Video file preview -->
+                    <div
+                        v-if="videoPreview"
+                        class="relative inline-block"
+                    >
+                        <video
+                            :src="videoPreview"
+                            class="h-40 rounded-xl border border-gray-200"
+                            controls
+                        />
+                        <button
+                            type="button"
+                            @click="removeVideo"
+                            class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center leading-none"
+                        >
+                            ✕
+                        </button>
+                    </div>
+
                     <!-- Video URL input -->
                     <div
                         v-if="showVideoInput"
@@ -119,6 +138,9 @@
                             ✕
                         </button>
                     </div>
+
+                    <!-- Video error -->
+                    <p v-if="form.errors.video" class="text-xs text-red-600">{{ form.errors.video }}</p>
                 </div>
             </div>
             <div class="flex items-center justify-between">
@@ -130,6 +152,13 @@
                         accept="image/*"
                         class="hidden"
                         @change="onImageChange"
+                    />
+                    <input
+                        ref="videoInput"
+                        type="file"
+                        accept="video/mp4,video/quicktime,video/webm"
+                        class="hidden"
+                        @change="onVideoChange"
                     />
                     <button
                         type="button"
@@ -162,9 +191,9 @@
                     </button>
                     <button
                         type="button"
-                        @click="showVideoInput = !showVideoInput"
+                        @click="videoInput.click()"
                         class="flex items-center gap-1 px-3 py-1.5 text-xs text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
-                        title="Add video link"
+                        title="Upload video"
                     >
                         <svg
                             class="w-4 h-4"
@@ -180,6 +209,32 @@
                             />
                         </svg>
                         Video
+                    </button>
+                    <button
+                        type="button"
+                        @click="showVideoInput = !showVideoInput"
+                        class="flex items-center gap-1 px-3 py-1.5 text-xs text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+                        title="Add YouTube or Vimeo link"
+                    >
+                        <svg
+                            class="w-4 h-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            stroke-width="2"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101"
+                            />
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M10.172 13.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.102 1.101"
+                            />
+                        </svg>
+                        Link
                     </button>
                 </div>
                 <div class="flex gap-2">
@@ -225,12 +280,15 @@ const emit = defineEmits(["posted"]);
 const composing = ref(false);
 const imagePreview = ref(null);
 const imageInput = ref(null);
+const videoPreview = ref(null);
+const videoInput = ref(null);
 const showVideoInput = ref(false);
 
 const form = useForm({
     title: "",
     content: "",
     image: null,
+    video: null,
     video_url: "",
 });
 
@@ -247,11 +305,29 @@ function removeImage() {
     if (imageInput.value) imageInput.value.value = "";
 }
 
+function onVideoChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 100 * 1024 * 1024) {
+        alert("Video must be under 100MB.");
+        return;
+    }
+    form.video = file;
+    videoPreview.value = URL.createObjectURL(file);
+}
+
+function removeVideo() {
+    form.video = null;
+    videoPreview.value = null;
+    if (videoInput.value) videoInput.value.value = "";
+}
+
 function handleSubmit() {
     form.post(`/communities/${props.communitySlug}/posts`, {
         onSuccess: () => {
             form.reset();
             removeImage();
+            removeVideo();
             showVideoInput.value = false;
             composing.value = false;
             emit("posted");
@@ -265,6 +341,7 @@ function handleCancel() {
     composing.value = false;
     form.reset();
     removeImage();
+    removeVideo();
     showVideoInput.value = false;
 }
 

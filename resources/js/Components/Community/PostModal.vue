@@ -77,9 +77,21 @@
                             @click="$emit('lightbox', post.image)"
                             class="mt-4 rounded-xl w-full object-cover max-h-96 cursor-pointer hover:opacity-95 transition-opacity"
                         />
+                        <!-- Uploaded video -->
+                        <div
+                            v-if="post.video"
+                            class="mt-4 rounded-xl overflow-hidden"
+                        >
+                            <video
+                                :src="post.video"
+                                class="w-full max-h-[500px] rounded-xl"
+                                controls
+                                preload="metadata"
+                            />
+                        </div>
                         <!-- Video embed -->
                         <div
-                            v-if="
+                            v-else-if="
                                 post.video_url &&
                                 getVideoEmbed(post.video_url)
                             "

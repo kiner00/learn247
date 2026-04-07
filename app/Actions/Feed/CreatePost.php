@@ -32,6 +32,10 @@ class CreatePost
             $data['image'] = $this->storage->upload($data['image'], 'post-images');
         }
 
+        if (isset($data['video']) && $data['video'] instanceof UploadedFile) {
+            $data['video'] = $this->storage->upload($data['video'], 'post-videos');
+        }
+
         $post = Post::create([
             'community_id' => $community->id,
             'user_id'      => $user->id,
@@ -39,6 +43,7 @@ class CreatePost
             'content'      => $data['content'],
             'image'        => $data['image'] ?? null,
             'video_url'    => $data['video_url'] ?? null,
+            'video'        => $data['video'] ?? null,
             'is_pinned'    => false,
         ]);
 
