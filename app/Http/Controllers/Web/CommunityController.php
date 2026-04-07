@@ -127,7 +127,7 @@ class CommunityController extends Controller
 
     public function members(Community $community, Request $request): Response
     {
-        $query = $community->members()->with('user:id,name,username,bio');
+        $query = $community->members()->with(['user:id,name,username,bio', 'tags:id,name,color']);
 
         if ($request->filter === 'admin') {
             $query->where('role', 'admin');
@@ -149,7 +149,11 @@ class CommunityController extends Controller
             ->orderBy('position')
             ->get();
 
-        return Inertia::render('Communities/Members', compact('community', 'members', 'totalCount', 'adminCount', 'freeCount', 'paidCount', 'affiliate', 'courses'));
+        $tags = auth()->id() === $community->owner_id
+            ? $community->tags()->withCount('members')->orderBy('name')->get()
+            : [];
+
+        return Inertia::render('Communities/Members', compact('community', 'members', 'totalCount', 'adminCount', 'freeCount', 'paidCount', 'affiliate', 'courses', 'tags'));
     }
 
     public function settings(Community $community, PlanLimitService $planLimit): Response

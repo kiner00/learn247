@@ -40,9 +40,19 @@ class SendEmailBroadcast implements ShouldQueue
             $query->whereHas('user', fn ($q) => $q->whereNotIn('id', $unsubscribedUserIds));
         }
 
-        // Tag filtering (OR logic: member has at least one of the selected tags)
+        // Include tags (OR logic: member has at least one of the selected tags)
         if (! empty($broadcast->filter_tags)) {
             $query->whereHas('tags', fn ($q) => $q->whereIn('tags.id', $broadcast->filter_tags));
+        }
+
+        // Exclude tags (member must NOT have any of the excluded tags)
+        if (! empty($broadcast->filter_exclude_tags)) {
+            $query->whereDoesntHave('tags', fn ($q) => $q->whereIn('tags.id', $broadcast->filter_exclude_tags));
+        }
+
+        // Registered days filter (only members registered over X days ago)
+        if ($broadcast->filter_registered_days !== null && $broadcast->filter_registered_days > 0) {
+            $query->where('created_at', '<=', now()->subDays($broadcast->filter_registered_days));
         }
 
         // Membership type filtering

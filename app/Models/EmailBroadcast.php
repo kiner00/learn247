@@ -22,13 +22,15 @@ class EmailBroadcast extends Model
         'from_email', 'from_name', 'reply_to',
         'scheduled_at', 'sent_at',
         'total_recipients', 'total_sent', 'total_failed',
-        'filter_tags', 'filter_membership_type', 'status',
+        'filter_tags', 'filter_exclude_tags', 'filter_registered_days',
+        'filter_membership_type', 'status',
     ];
 
     protected function casts(): array
     {
         return [
-            'filter_tags'   => 'array',
+            'filter_tags'         => 'array',
+            'filter_exclude_tags' => 'array',
             'scheduled_at'  => 'datetime',
             'sent_at'       => 'datetime',
         ];

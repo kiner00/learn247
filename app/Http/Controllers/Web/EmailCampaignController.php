@@ -77,6 +77,9 @@ class EmailCampaignController extends Controller
             'reply_to'                => ['nullable', 'email', 'max:255'],
             'filter_tags'             => ['nullable', 'array'],
             'filter_tags.*'           => ['integer'],
+            'filter_exclude_tags'     => ['nullable', 'array'],
+            'filter_exclude_tags.*'   => ['integer'],
+            'filter_registered_days'  => ['nullable', 'integer', 'min:0'],
             'filter_membership_type'  => ['nullable', 'string', 'in:free,paid'],
             'scheduled_at'            => ['nullable', 'date', 'after:now'],
         ]);
@@ -89,17 +92,19 @@ class EmailCampaignController extends Controller
         ]);
 
         EmailBroadcast::create([
-            'campaign_id'            => $campaign->id,
-            'community_id'           => $community->id,
-            'subject'                => $data['subject'],
-            'html_body'              => $data['html_body'],
-            'from_email'             => $community->resend_from_email,
-            'from_name'              => $community->resend_from_name ?? $community->name,
-            'reply_to'               => $data['reply_to'],
-            'filter_tags'            => $data['filter_tags'] ?? null,
-            'filter_membership_type' => $data['filter_membership_type'] ?? null,
-            'scheduled_at'           => $data['scheduled_at'] ?? null,
-            'status'                 => ! empty($data['scheduled_at']) ? EmailBroadcast::STATUS_SCHEDULED : EmailBroadcast::STATUS_DRAFT,
+            'campaign_id'              => $campaign->id,
+            'community_id'             => $community->id,
+            'subject'                  => $data['subject'],
+            'html_body'                => $data['html_body'],
+            'from_email'               => $community->resend_from_email,
+            'from_name'                => $community->resend_from_name ?? $community->name,
+            'reply_to'                 => $data['reply_to'],
+            'filter_tags'              => $data['filter_tags'] ?? null,
+            'filter_exclude_tags'      => $data['filter_exclude_tags'] ?? null,
+            'filter_registered_days'   => $data['filter_registered_days'] ?? null,
+            'filter_membership_type'   => $data['filter_membership_type'] ?? null,
+            'scheduled_at'             => $data['scheduled_at'] ?? null,
+            'status'                   => ! empty($data['scheduled_at']) ? EmailBroadcast::STATUS_SCHEDULED : EmailBroadcast::STATUS_DRAFT,
         ]);
 
         return redirect()->route('communities.email-campaigns.show', [$community, $campaign])
@@ -138,8 +143,10 @@ class EmailCampaignController extends Controller
                 'status'                 => $broadcast->status,
                 'sent_at'                => $broadcast->sent_at,
                 'scheduled_at'           => $broadcast->scheduled_at,
-                'filter_tags'            => $broadcast->filter_tags,
-                'filter_membership_type' => $broadcast->filter_membership_type,
+                'filter_tags'              => $broadcast->filter_tags,
+                'filter_exclude_tags'      => $broadcast->filter_exclude_tags,
+                'filter_registered_days'   => $broadcast->filter_registered_days,
+                'filter_membership_type'   => $broadcast->filter_membership_type,
             ] : null,
             'stats' => $stats,
         ]);
@@ -161,6 +168,9 @@ class EmailCampaignController extends Controller
             'reply_to'                => ['nullable', 'email', 'max:255'],
             'filter_tags'             => ['nullable', 'array'],
             'filter_tags.*'           => ['integer'],
+            'filter_exclude_tags'     => ['nullable', 'array'],
+            'filter_exclude_tags.*'   => ['integer'],
+            'filter_registered_days'  => ['nullable', 'integer', 'min:0'],
             'filter_membership_type'  => ['nullable', 'string', 'in:free,paid'],
             'scheduled_at'            => ['nullable', 'date', 'after:now'],
         ]);
@@ -170,13 +180,15 @@ class EmailCampaignController extends Controller
         $broadcast = $campaign->broadcasts()->latest()->first();
         if ($broadcast) {
             $broadcast->update([
-                'subject'                => $data['subject'],
-                'html_body'              => $data['html_body'],
-                'reply_to'               => $data['reply_to'],
-                'filter_tags'            => $data['filter_tags'] ?? null,
-                'filter_membership_type' => $data['filter_membership_type'] ?? null,
-                'scheduled_at'           => $data['scheduled_at'] ?? null,
-                'status'                 => ! empty($data['scheduled_at']) ? EmailBroadcast::STATUS_SCHEDULED : EmailBroadcast::STATUS_DRAFT,
+                'subject'                  => $data['subject'],
+                'html_body'                => $data['html_body'],
+                'reply_to'                 => $data['reply_to'],
+                'filter_tags'              => $data['filter_tags'] ?? null,
+                'filter_exclude_tags'      => $data['filter_exclude_tags'] ?? null,
+                'filter_registered_days'   => $data['filter_registered_days'] ?? null,
+                'filter_membership_type'   => $data['filter_membership_type'] ?? null,
+                'scheduled_at'             => $data['scheduled_at'] ?? null,
+                'status'                   => ! empty($data['scheduled_at']) ? EmailBroadcast::STATUS_SCHEDULED : EmailBroadcast::STATUS_DRAFT,
             ]);
         }
 

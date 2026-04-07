@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ChatbotMessage;
 use App\Models\Community;
 use App\Models\CommunityLevelPerk;
+use App\Models\Tag;
 use App\Services\Community\PlanLimitService;
 use App\Services\Email\EmailProviderFactory;
 use Inertia\Inertia;
@@ -103,6 +104,24 @@ class CommunitySettingsController extends Controller
                 'providers'         => EmailProviderFactory::all(),
             ]
         ));
+    }
+
+    public function tags(Community $community): Response
+    {
+        $tags = Tag::where('community_id', $community->id)
+            ->withCount('members')
+            ->orderBy('name')
+            ->get();
+
+        return Inertia::render('Communities/Settings/Tags', array_merge(
+            $this->baseProps($community),
+            ['tags' => $tags]
+        ));
+    }
+
+    public function workflows(Community $community): Response
+    {
+        return Inertia::render('Communities/Settings/Workflows', $this->baseProps($community));
     }
 
     public function dangerZone(Community $community): Response

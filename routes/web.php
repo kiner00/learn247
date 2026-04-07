@@ -270,6 +270,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/communities/{community}/settings/domain',         [CommunitySettingsController::class, 'domain'])->name('communities.settings.domain');
         Route::get('/communities/{community}/settings/sms',            [CommunitySettingsController::class, 'sms'])->name('communities.settings.sms');
         Route::get('/communities/{community}/settings/email',          [CommunitySettingsController::class, 'email'])->name('communities.settings.email');
+        Route::get('/communities/{community}/settings/tags',           [CommunitySettingsController::class, 'tags'])->name('communities.settings.tags');
+        Route::get('/communities/{community}/settings/workflows',      [CommunitySettingsController::class, 'workflows'])->name('communities.settings.workflows');
 
         // ─── Email Campaigns ─────────────────────────────────────────────────
         Route::get('/communities/{community}/email-campaigns',              [EmailCampaignController::class, 'index'])->name('communities.email-campaigns.index');

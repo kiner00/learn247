@@ -9,7 +9,7 @@
 
                 <!-- Filter tabs + Invite -->
                 <div class="flex items-center justify-between mb-5">
-                    <div class="flex gap-2">
+                    <div class="flex gap-2 flex-wrap">
                         <Link
                             :href="`/communities/${community.slug}/members`"
                             class="px-4 py-1.5 text-sm rounded-full font-medium border transition-colors"
@@ -74,11 +74,22 @@
                     </div>
                 </div>
 
-                <!-- Batch extend bar (owner only, free members selected) -->
+                <!-- Batch action bar (owner only, members selected) -->
                 <div v-if="isOwner && selectedIds.length > 0"
-                    class="flex items-center gap-3 bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-3 mb-4">
+                    class="flex items-center gap-3 bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-3 mb-4 flex-wrap">
                     <span class="text-sm font-medium text-indigo-800">{{ selectedIds.length }} selected</span>
                     <div class="flex-1" />
+
+                    <!-- Tag assign -->
+                    <button @click="showTagAssignModal = true"
+                        class="px-4 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/>
+                        </svg>
+                        Apply Tags
+                    </button>
+
+                    <!-- Extend access -->
                     <label class="text-xs font-medium text-indigo-700">Extend by</label>
                     <select v-model="extendMonths"
                         class="text-xs border border-indigo-300 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
@@ -97,20 +108,20 @@
 
                 <!-- Member list -->
                 <div class="divide-y divide-gray-100 bg-white border border-gray-200 rounded-2xl overflow-hidden">
-                    <!-- Select all (free tab, owner only) -->
-                    <div v-if="isOwner && hasFreeMembers" class="flex items-center gap-3 px-5 py-2.5 bg-gray-50 border-b border-gray-100">
+                    <!-- Select all (owner only) -->
+                    <div v-if="isOwner" class="flex items-center gap-3 px-5 py-2.5 bg-gray-50 border-b border-gray-100">
                         <input type="checkbox" :checked="allSelected" @change="toggleSelectAll"
                             class="w-4 h-4 accent-indigo-600 rounded cursor-pointer" />
-                        <span class="text-xs text-gray-500">Select all free members</span>
+                        <span class="text-xs text-gray-500">Select all on this page</span>
                     </div>
                     <div
                         v-for="member in members.data"
                         :key="member.id"
                         class="flex items-start gap-4 px-5 py-4 hover:bg-gray-50 transition-colors"
                     >
-                        <!-- Checkbox (free members, owner only) -->
-                        <div v-if="isOwner && member.membership_type === 'free'" class="shrink-0 mt-1">
-                            <input type="checkbox" :value="member.user?.id" v-model="selectedIds"
+                        <!-- Checkbox (owner only) -->
+                        <div v-if="isOwner" class="shrink-0 mt-1">
+                            <input type="checkbox" :value="member.id" v-model="selectedIds"
                                 class="w-4 h-4 accent-indigo-600 rounded cursor-pointer" />
                         </div>
                         <!-- Avatar + level badge -->
@@ -131,6 +142,26 @@
                             <p class="font-semibold text-gray-900 text-sm leading-tight">{{ member.user?.name }}</p>
                             <p class="text-xs text-gray-400 mb-1">@{{ member.user?.username ?? `user${member.user?.id}` }}</p>
                             <p v-if="member.user?.bio" class="text-sm text-gray-600 mb-2">{{ member.user.bio }}</p>
+
+                            <!-- Tags -->
+                            <div v-if="member.tags?.length" class="flex flex-wrap gap-1 mb-2">
+                                <span
+                                    v-for="tag in member.tags"
+                                    :key="tag.id"
+                                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium"
+                                    :style="tagStyle(tag)"
+                                >
+                                    {{ tag.name }}
+                                    <button
+                                        v-if="isOwner"
+                                        @click.stop="removeTagFromMember(member, tag)"
+                                        class="ml-0.5 opacity-60 hover:opacity-100 transition-opacity"
+                                        title="Remove tag"
+                                    >
+                                        &times;
+                                    </button>
+                                </span>
+                            </div>
 
                             <div class="flex items-center gap-3 text-xs text-gray-400 flex-wrap">
                                 <span>Joined {{ formatDate(member.joined_at) }}</span>
@@ -169,6 +200,17 @@
                                     </svg>
                                     Chat
                                 </Link>
+                                <!-- Quick tag button (owner only) -->
+                                <button
+                                    v-if="isOwner && tags.length"
+                                    @click="openQuickTag(member)"
+                                    class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-gray-200 rounded-full text-gray-500 hover:border-purple-300 hover:text-purple-600 transition-colors"
+                                >
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/>
+                                    </svg>
+                                    Tag
+                                </button>
                                 <template v-if="isAdmin && member.user?.id !== community.owner_id">
                                     <select
                                         :value="member.role"
@@ -237,8 +279,36 @@
                         Invite People
                     </button>
                 </CommunitySidebarCard>
+
+                <!-- Tag Management (owner only) -->
+                <div v-if="isOwner" class="bg-white border border-gray-200 rounded-2xl p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-sm font-semibold text-gray-900">Tags</h3>
+                        <button @click="showCreateTagModal = true" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">+ New Tag</button>
+                    </div>
+
+                    <div v-if="tags.length" class="space-y-1.5">
+                        <div
+                            v-for="tag in tags"
+                            :key="tag.id"
+                            class="flex items-center justify-between group px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full shrink-0" :style="{ backgroundColor: tag.color || '#6366f1' }"></span>
+                                <span class="text-sm text-gray-700">{{ tag.name }}</span>
+                                <span class="text-xs text-gray-400">{{ tag.members_count ?? 0 }}</span>
+                            </div>
+                            <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button @click="editTag(tag)" class="text-xs text-gray-400 hover:text-indigo-600">Edit</button>
+                                <button @click="deleteTag(tag)" class="text-xs text-gray-400 hover:text-red-500">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                    <p v-else class="text-xs text-gray-400 text-center py-4">No tags yet. Create one to start organizing members.</p>
+                </div>
             </div>
         </div>
+
         <InviteModal
             :show="showInviteModal"
             :community-name="community.name"
@@ -377,11 +447,148 @@
                 </div>
             </div>
         </Teleport>
+
+        <!-- Create / Edit Tag Modal -->
+        <Teleport to="body">
+            <div
+                v-if="showCreateTagModal"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+                @click.self="showCreateTagModal = false"
+            >
+                <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+                    <h3 class="font-semibold text-gray-900 text-base mb-4">{{ editingTag ? 'Edit Tag' : 'Create Tag' }}</h3>
+                    <form @submit.prevent="saveTag" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                            <input
+                                v-model="tagForm.name"
+                                type="text"
+                                maxlength="100"
+                                placeholder="e.g. LEAD, VIP, Buyer"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Color</label>
+                            <div class="flex gap-2 flex-wrap">
+                                <button
+                                    v-for="c in TAG_COLORS"
+                                    :key="c"
+                                    type="button"
+                                    @click="tagForm.color = c"
+                                    class="w-7 h-7 rounded-full border-2 transition-all"
+                                    :class="tagForm.color === c ? 'border-gray-900 scale-110' : 'border-transparent'"
+                                    :style="{ backgroundColor: c }"
+                                />
+                            </div>
+                        </div>
+                        <p v-if="tagFormError" class="text-sm text-red-600">{{ tagFormError }}</p>
+                        <div class="flex gap-3 pt-1">
+                            <button type="button" @click="showCreateTagModal = false"
+                                class="flex-1 px-4 py-2.5 border border-gray-300 text-sm font-medium rounded-xl text-gray-700 hover:bg-gray-50 transition-colors">
+                                Cancel
+                            </button>
+                            <button type="submit" :disabled="tagFormSaving || !tagForm.name.trim()"
+                                class="flex-1 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-50">
+                                {{ tagFormSaving ? 'Saving…' : editingTag ? 'Update' : 'Create' }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </Teleport>
+
+        <!-- Bulk Tag Assign Modal -->
+        <Teleport to="body">
+            <div
+                v-if="showTagAssignModal"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+                @click.self="showTagAssignModal = false"
+            >
+                <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+                    <h3 class="font-semibold text-gray-900 text-base mb-1">Apply Tags</h3>
+                    <p class="text-xs text-gray-400 mb-4">{{ selectedIds.length }} member(s) selected</p>
+
+                    <div v-if="tags.length" class="space-y-2 max-h-60 overflow-y-auto mb-4">
+                        <label
+                            v-for="tag in tags"
+                            :key="tag.id"
+                            class="flex items-center gap-3 px-3 py-2.5 border rounded-xl cursor-pointer transition-colors"
+                            :class="bulkTagIds.includes(tag.id) ? 'border-purple-400 bg-purple-50' : 'border-gray-200 hover:border-gray-300'"
+                        >
+                            <input type="checkbox" :value="tag.id" v-model="bulkTagIds" class="accent-purple-600" />
+                            <span class="w-2.5 h-2.5 rounded-full shrink-0" :style="{ backgroundColor: tag.color || '#6366f1' }"></span>
+                            <span class="text-sm text-gray-700">{{ tag.name }}</span>
+                        </label>
+                    </div>
+                    <div v-else class="text-center py-6">
+                        <p class="text-sm text-gray-400 mb-2">No tags yet.</p>
+                        <button @click="showTagAssignModal = false; showCreateTagModal = true"
+                            class="text-sm text-purple-600 hover:text-purple-800 font-medium">Create your first tag</button>
+                    </div>
+
+                    <div v-if="tags.length" class="flex gap-3">
+                        <button @click="showTagAssignModal = false"
+                            class="flex-1 px-4 py-2.5 border border-gray-300 text-sm font-medium rounded-xl text-gray-700 hover:bg-gray-50 transition-colors">
+                            Cancel
+                        </button>
+                        <button @click="bulkAssignTags('detach')" :disabled="!bulkTagIds.length || bulkAssigning"
+                            class="px-4 py-2.5 border border-red-200 text-sm font-medium rounded-xl text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50">
+                            Remove
+                        </button>
+                        <button @click="bulkAssignTags('attach')" :disabled="!bulkTagIds.length || bulkAssigning"
+                            class="flex-1 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-50">
+                            {{ bulkAssigning ? 'Applying…' : 'Apply' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
+
+        <!-- Quick Tag Dropdown (per-member) -->
+        <Teleport to="body">
+            <div
+                v-if="quickTagMember"
+                class="fixed inset-0 z-50"
+                @click="quickTagMember = null"
+            >
+                <div
+                    class="absolute bg-white rounded-xl shadow-xl border border-gray-200 w-56 p-3"
+                    :style="quickTagPos"
+                    @click.stop
+                >
+                    <p class="text-xs font-semibold text-gray-500 mb-2">Tag {{ quickTagMember.user?.name }}</p>
+                    <div class="space-y-1 max-h-48 overflow-y-auto">
+                        <label
+                            v-for="tag in tags"
+                            :key="tag.id"
+                            class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-50 cursor-pointer text-sm"
+                        >
+                            <input
+                                type="checkbox"
+                                :checked="quickTagMember.tags?.some(t => t.id === tag.id)"
+                                @change="toggleQuickTag(quickTagMember, tag, $event.target.checked)"
+                                class="accent-purple-600 w-3.5 h-3.5"
+                            />
+                            <span class="w-2 h-2 rounded-full" :style="{ backgroundColor: tag.color || '#6366f1' }"></span>
+                            <span class="text-gray-700">{{ tag.name }}</span>
+                        </label>
+                    </div>
+                    <button
+                        @click="quickTagMember = null; showCreateTagModal = true"
+                        class="mt-2 w-full text-xs text-center text-purple-600 hover:text-purple-800 font-medium py-1"
+                    >
+                        + Create new tag
+                    </button>
+                </div>
+            </div>
+        </Teleport>
     </AppLayout>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, reactive } from 'vue';
 import { Link, usePage, router, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import CommunityTabs from '@/Components/CommunityTabs.vue';
@@ -397,6 +604,7 @@ const props = defineProps({
     paidCount:  { type: Number, default: 0 },
     affiliate:  Object,
     courses:    { type: Array, default: () => [] },
+    tags:       { type: Array, default: () => [] },
 });
 
 const page = usePage();
@@ -470,26 +678,25 @@ const selectedIds   = ref([]);
 const extendMonths  = ref(3);
 const extendForm    = useForm({});
 
-const freeMembers = computed(() =>
-    props.members.data.filter(m => m.membership_type === 'free')
-);
-const hasFreeMembers = computed(() => freeMembers.value.length > 0);
-const allSelected    = computed(() =>
-    hasFreeMembers.value && freeMembers.value.every(m => selectedIds.value.includes(m.user?.id))
+const allSelected = computed(() =>
+    props.members.data.length > 0 && props.members.data.every(m => selectedIds.value.includes(m.id))
 );
 
 function toggleSelectAll() {
     if (allSelected.value) {
         selectedIds.value = [];
     } else {
-        selectedIds.value = freeMembers.value.map(m => m.user?.id).filter(Boolean);
+        selectedIds.value = props.members.data.map(m => m.id).filter(Boolean);
     }
 }
 
 function extendAccess() {
     extendForm.transform(() => ({
-        user_ids: selectedIds.value,
-        months:   extendMonths.value,
+        user_ids: selectedIds.value.map(memberId => {
+            const member = props.members.data.find(m => m.id === memberId);
+            return member?.user?.id;
+        }).filter(Boolean),
+        months: extendMonths.value,
     })).patch(`/communities/${props.community.slug}/members/extend-access`, {
         preserveScroll: true,
         onSuccess: () => { selectedIds.value = []; },
@@ -555,5 +762,117 @@ function computeLevel(points) {
         if (points >= LEVEL_THRESHOLDS[i]) return i + 1;
     }
     return 1;
+}
+
+// ── Tag Management ────────────────────────────────────────────────────────────
+const TAG_COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#ef4444', '#f59e0b', '#10b981', '#06b6d4', '#3b82f6', '#64748b'];
+
+const showCreateTagModal = ref(false);
+const editingTag         = ref(null);
+const tagForm            = reactive({ name: '', color: '#6366f1' });
+const tagFormSaving      = ref(false);
+const tagFormError       = ref('');
+
+function editTag(tag) {
+    editingTag.value  = tag;
+    tagForm.name      = tag.name;
+    tagForm.color     = tag.color || '#6366f1';
+    tagFormError.value = '';
+    showCreateTagModal.value = true;
+}
+
+function saveTag() {
+    tagFormSaving.value = true;
+    tagFormError.value  = '';
+
+    const url = editingTag.value
+        ? `/communities/${props.community.slug}/tags/${editingTag.value.id}`
+        : `/communities/${props.community.slug}/tags`;
+
+    const method = editingTag.value ? 'patch' : 'post';
+
+    router[method](url, {
+        name:  tagForm.name,
+        color: tagForm.color,
+        type:  'manual',
+    }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            showCreateTagModal.value = false;
+            editingTag.value = null;
+            tagForm.name  = '';
+            tagForm.color = '#6366f1';
+        },
+        onError: (errors) => {
+            tagFormError.value = errors.name ?? 'Something went wrong.';
+        },
+        onFinish: () => { tagFormSaving.value = false; },
+    });
+}
+
+function deleteTag(tag) {
+    if (!confirm(`Delete tag "${tag.name}"? It will be removed from all members.`)) return;
+    router.delete(`/communities/${props.community.slug}/tags/${tag.id}`, {
+        preserveScroll: true,
+    });
+}
+
+// ── Bulk Tag Assign ───────────────────────────────────────────────────────────
+const showTagAssignModal = ref(false);
+const bulkTagIds         = ref([]);
+const bulkAssigning      = ref(false);
+
+function bulkAssignTags(action) {
+    bulkAssigning.value = true;
+    router.post(`/communities/${props.community.slug}/tags/assign`, {
+        member_ids: selectedIds.value,
+        tag_ids:    bulkTagIds.value,
+        action,
+    }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            showTagAssignModal.value = false;
+            bulkTagIds.value = [];
+            selectedIds.value = [];
+        },
+        onFinish: () => { bulkAssigning.value = false; },
+    });
+}
+
+// ── Per-member tag removal ────────────────────────────────────────────────────
+function removeTagFromMember(member, tag) {
+    router.post(`/communities/${props.community.slug}/tags/assign`, {
+        member_ids: [member.id],
+        tag_ids:    [tag.id],
+        action:     'detach',
+    }, { preserveScroll: true });
+}
+
+// ── Quick Tag (per-member dropdown) ───────────────────────────────────────────
+const quickTagMember = ref(null);
+const quickTagPos    = ref({});
+
+function openQuickTag(member) {
+    quickTagMember.value = member;
+    // Position near the center of the viewport
+    quickTagPos.value = { top: '30%', left: '50%', transform: 'translate(-50%, 0)' };
+}
+
+function toggleQuickTag(member, tag, checked) {
+    router.post(`/communities/${props.community.slug}/tags/assign`, {
+        member_ids: [member.id],
+        tag_ids:    [tag.id],
+        action:     checked ? 'attach' : 'detach',
+    }, { preserveScroll: true });
+}
+
+// ── Tag style helper ──────────────────────────────────────────────────────────
+function tagStyle(tag) {
+    const color = tag.color || '#6366f1';
+    return {
+        backgroundColor: color + '1A', // ~10% opacity
+        color: color,
+        border: `1px solid ${color}33`,
+    };
 }
 </script>

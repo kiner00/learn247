@@ -113,6 +113,18 @@ function pct(value, total) {
                         <span class="text-gray-500">Audience:</span>
                         <span class="ml-2 font-medium capitalize">{{ broadcast.filter_membership_type }} members</span>
                     </div>
+                    <div v-if="broadcast.filter_registered_days">
+                        <span class="text-gray-500">Registered over:</span>
+                        <span class="ml-2 font-medium">{{ broadcast.filter_registered_days }} days</span>
+                    </div>
+                    <div v-if="broadcast.filter_tags?.length">
+                        <span class="text-gray-500">Include tags:</span>
+                        <span class="ml-2 font-medium">{{ broadcast.filter_tags.length }} tag(s)</span>
+                    </div>
+                    <div v-if="broadcast.filter_exclude_tags?.length">
+                        <span class="text-gray-500">Exclude tags:</span>
+                        <span class="ml-2 font-medium">{{ broadcast.filter_exclude_tags.length }} tag(s)</span>
+                    </div>
                 </div>
 
                 <!-- Email preview -->

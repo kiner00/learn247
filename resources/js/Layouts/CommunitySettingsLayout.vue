@@ -30,6 +30,8 @@ const navItems = computed(() => [
         { href: `${emailBase.value}-history`,     label: 'Send History' },
         { href: `${emailBase.value}-analytics`,   label: 'Analytics' },
     ]},
+    { href: `${base.value}/tags`,           label: 'Tags' },
+    { href: `${base.value}/workflows`,      label: 'Workflows' },
     { href: `${base.value}/danger-zone`,    label: 'Danger Zone' },
 ]);
 
