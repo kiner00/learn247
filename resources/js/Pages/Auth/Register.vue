@@ -115,6 +115,13 @@
                 Already have an account?
                 <Link href="/login" class="text-indigo-600 font-medium hover:underline">Log in</Link>
             </p>
+
+            <p class="text-center mt-3 text-xs text-gray-400">
+                By signing up, you agree to our
+                <Link href="/terms" class="text-indigo-500 hover:underline">Terms of Service</Link>
+                and
+                <Link href="/privacy" class="text-indigo-500 hover:underline">Privacy Policy</Link>.
+            </p>
         </div>
     </div>
 </template>

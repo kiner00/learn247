@@ -22,6 +22,7 @@ use App\Http\Controllers\Web\EventController;
 use App\Http\Controllers\Web\CommunityMemberController;
 use App\Http\Controllers\Web\AccountSettingsController;
 use App\Http\Controllers\Web\LeaderboardController;
+use App\Http\Controllers\Web\LegalController;
 use App\Http\Controllers\Web\LessonCommentController;
 use App\Http\Controllers\Web\ProfileController;
 use App\Http\Controllers\Web\LikeController;
@@ -79,6 +80,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/set-password', [SetPasswordController::class, 'show'])->name('password.setup');
     Route::post('/set-password', [SetPasswordController::class, 'store'])->name('password.setup.store');
 });
+
+// ─── Legal ────────────────────────────────────────────────────────────────────
+
+Route::get('/terms', [LegalController::class, 'terms'])->name('terms');
+Route::get('/privacy', [LegalController::class, 'privacy'])->name('privacy');
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
