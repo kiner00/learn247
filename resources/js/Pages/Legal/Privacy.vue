@@ -8,7 +8,6 @@
                 </Link>
                 <div class="flex items-center gap-4 text-sm">
                     <Link href="/terms" class="text-gray-600 hover:text-indigo-600 transition-colors">Terms of Service</Link>
-                    <Link href="/login" class="text-indigo-600 font-medium hover:underline">Log in</Link>
                 </div>
             </div>
         </div>
