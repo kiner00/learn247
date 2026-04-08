@@ -38,6 +38,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -852,6 +853,22 @@ class CommunityController extends Controller
             ->select('id', 'name', 'description', 'avatar', 'price', 'currency', 'billing_type')
             ->orderBy('position')
             ->get();
+        $lp = $community->landing_page ?? [];
+        $brand = $community->brand_context ?? [];
+        $ogTitle = $lp['hero_headline'] ?? $community->name;
+        $ogDesc  = $brand['social_share_description']
+            ?? $lp['hero_subheadline']
+            ?? $community->description
+            ?? '';
+        $ogImage = $lp['hero_image'] ?? $community->cover_image ?? null;
+
+        View::share('ogMeta', [
+            'title'       => $ogTitle,
+            'description' => Str::limit(strip_tags($ogDesc), 200),
+            'image'       => $ogImage,
+            'url'         => url("/communities/{$community->slug}/landing"),
+        ]);
+
         $inertia = Inertia::render('Communities/Landing', compact(
             'community', 'affiliate', 'invitedBy', 'membership', 'ownerIsPro', 'isOwner', 'courses', 'allCourses', 'certifications', 'curzzos'
         ));
