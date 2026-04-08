@@ -185,14 +185,16 @@ const form = useForm({
 });
 
 function handleFiles(e) {
-    const files = Array.from(e.target.files).slice(0, 5);
-    form.attachments = files;
+    const newFiles = Array.from(e.target.files);
+    const combined = [...form.attachments, ...newFiles].slice(0, 5);
+    form.attachments = combined;
     previews.value = [];
-    files.forEach(file => {
+    combined.forEach(file => {
         const reader = new FileReader();
         reader.onload = (ev) => previews.value.push(ev.target.result);
         reader.readAsDataURL(file);
     });
+    e.target.value = '';
 }
 
 function removeFile(index) {
