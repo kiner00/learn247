@@ -504,11 +504,13 @@ async function submitForm() {
             ? `/communities/${props.community.slug}/events/${editingEvent.value.id}`
             : `/communities/${props.community.slug}/events`
 
-        await axios.post(url, data, { headers: { 'Content-Type': 'multipart/form-data' } })
+        await axios.post(url, data)
         showForm.value = false
         router.reload({ only: ['events'] })
     } catch (e) {
-        formError.value = e.response?.data?.message || 'Something went wrong.'
+        const res = e.response?.data
+        const firstError = res?.errors ? Object.values(res.errors).flat()[0] : null
+        formError.value = firstError || res?.message || 'Something went wrong.'
     } finally {
         submitting.value = false
     }

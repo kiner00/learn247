@@ -24,4 +24,12 @@ class StoreEventRequest extends FormRequest
             'visibility'  => 'nullable|in:public,free,paid',
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'cover_image.uploaded' => 'The cover image failed to upload. The file may be too large — please use an image under 10 MB.',
+            'cover_image.max'      => 'The cover image must be under 10 MB.',
+        ];
+    }
 }
