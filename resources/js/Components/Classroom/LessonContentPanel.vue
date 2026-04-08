@@ -303,21 +303,21 @@ function startEdit() {
 
 function embedUrl(url) {
     if (!url) return '';
+
+    // YouTube: youtu.be/ID → embed
     url = url.replace('youtu.be/', 'www.youtube.com/embed/');
-    url = url.replace('youtube.com/watch?v=', 'youtube.com/embed/');
-    // Handle Vimeo URLs with optional privacy hash: vimeo.com/ID/HASH
-    url = url.replace(/vimeo\.com\/(\d+)(?:\/([a-f0-9]+))?/, (_, id, hash) =>
+    // YouTube: youtube.com/watch?v=ID → embed
+    url = url.replace(/youtube\.com\/watch\?v=([^&]+).*/, 'youtube.com/embed/$1');
+
+    // Vimeo: strip query params first, then convert path
+    url = url.replace(/vimeo\.com\/(\d+)(?:\/([a-f0-9]+))?(?:\?.*)?/, (_, id, hash) =>
         hash ? `player.vimeo.com/video/${id}?h=${hash}` : `player.vimeo.com/video/${id}`
     );
-    url = url.replace(/drive\.google\.com\/file\/d\/([^/]+)\/view/, 'drive.google.com/file/d/$1/preview');
-    // Strip trailing query params but keep Vimeo ?h= hash
-    const [base, ...rest] = url.split('?');
-    if (rest.length) {
-        const params = new URLSearchParams(rest.join('?'));
-        const h = params.get('h');
-        return h ? `${base}?h=${h}` : base;
-    }
-    return base;
+
+    // Google Drive
+    url = url.replace(/drive\.google\.com\/file\/d\/([^/]+)\/view.*/, 'drive.google.com/file/d/$1/preview');
+
+    return url;
 }
 
 function formatTime(seconds) {
