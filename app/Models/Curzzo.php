@@ -15,6 +15,7 @@ class Curzzo extends Model
         'avatar',
         'instructions',
         'personality',
+        'model_tier',
         'price',
         'currency',
         'billing_type',

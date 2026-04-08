@@ -9,6 +9,7 @@ use App\Models\Curzzo;
 use App\Services\Community\PlanLimitService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -20,10 +21,17 @@ class CurzzoController extends Controller
 
         $curzzos = $community->curzzos()->get();
 
+        $modelTiers = collect(config('curzzos.tiers'))->map(fn ($tier, $key) => [
+            'value'       => $key,
+            'label'       => $tier['label'],
+            'description' => $tier['description'],
+        ])->values();
+
         return Inertia::render('Communities/Settings/Curzzos', [
-            'community' => $community,
-            'isPro'     => auth()->user()->creatorPlan() === 'pro',
-            'curzzos'   => $curzzos,
+            'community'  => $community,
+            'isPro'      => auth()->user()->creatorPlan() === 'pro',
+            'curzzos'    => $curzzos,
+            'modelTiers' => $modelTiers,
         ]);
     }
 
@@ -46,6 +54,7 @@ class CurzzoController extends Controller
             'personality.expertise'      => ['nullable', 'string', 'max:200'],
             'personality.response_style' => ['nullable', 'string', 'in:concise,detailed,conversational'],
             'avatar'                     => ['nullable', 'image', 'max:2048'],
+            'model_tier'                 => ['sometimes', 'string', Rule::in(array_keys(config('curzzos.tiers')))],
             'price'                      => ['nullable', 'numeric', 'min:0'],
             'currency'                   => ['nullable', 'string', 'in:PHP,USD'],
             'billing_type'               => ['nullable', 'string', 'in:one_time,monthly'],
@@ -78,6 +87,7 @@ class CurzzoController extends Controller
             'personality.expertise'      => ['nullable', 'string', 'max:200'],
             'personality.response_style' => ['nullable', 'string', 'in:concise,detailed,conversational'],
             'avatar'                     => ['nullable', 'image', 'max:2048'],
+            'model_tier'                 => ['sometimes', 'string', Rule::in(array_keys(config('curzzos.tiers')))],
             'remove_avatar'              => ['sometimes', 'boolean'],
             'is_active'                  => ['sometimes', 'boolean'],
             'price'                      => ['nullable', 'numeric', 'min:0'],

@@ -7,8 +7,6 @@ use App\Ai\Tools\GetCommunityPostsTool;
 use App\Ai\Tools\SearchCommunityLessonsTool;
 use App\Models\Community;
 use App\Models\Curzzo;
-use Laravel\Ai\Attributes\Model;
-use Laravel\Ai\Attributes\Provider;
 use Laravel\Ai\Concerns\RemembersConversations;
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Contracts\Conversational;
@@ -16,8 +14,6 @@ use Laravel\Ai\Contracts\HasTools;
 use Laravel\Ai\Enums\Lab;
 use Laravel\Ai\Promptable;
 
-#[Provider(Lab::Gemini)]
-#[Model('gemini-2.5-flash')]
 class CurzzoBot implements Agent, Conversational, HasTools
 {
     use Promptable, RemembersConversations;
@@ -90,6 +86,23 @@ class CurzzoBot implements Agent, Conversational, HasTools
         }
 
         return implode("\n", $lines);
+    }
+
+    public function provider(): Lab
+    {
+        return $this->tier()['provider'];
+    }
+
+    public function model(): string
+    {
+        return $this->tier()['model'];
+    }
+
+    private function tier(): array
+    {
+        $key = $this->curzzo->model_tier ?? config('curzzos.default_tier', 'basic');
+
+        return config("curzzos.tiers.{$key}", config('curzzos.tiers.basic'));
     }
 
     public function tools(): iterable

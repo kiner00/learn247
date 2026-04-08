@@ -7,12 +7,15 @@ import { useCommunityUrl } from '@/composables/useCommunityUrl';
 const props = defineProps({
     community: Object,
     isPro:     { type: Boolean, default: false },
-    curzzos:   { type: Array, default: () => [] },
+    curzzos:    { type: Array, default: () => [] },
+    modelTiers: { type: Array, default: () => [] },
 });
 
 const page = usePage();
 const creatorPlan = computed(() => page.props.auth.user?.creator_plan ?? 'free');
 const { communityPath } = useCommunityUrl(props.community.slug);
+
+const tierMap = Object.fromEntries(props.modelTiers.map(t => [t.value, t.label]));
 
 const TONES = [
     { value: '', label: 'Default' },
@@ -44,6 +47,7 @@ const form = reactive({
     personality: { tone: '', expertise: '', response_style: '' },
     avatar: null,
     remove_avatar: false,
+    model_tier: 'basic',
     is_active: true,
     price: '',
     currency: 'PHP',
@@ -58,6 +62,7 @@ function resetForm() {
     form.personality = { tone: '', expertise: '', response_style: '' };
     form.avatar = null;
     form.remove_avatar = false;
+    form.model_tier = 'basic';
     form.is_active = true;
     form.price = '';
     form.currency = 'PHP';
@@ -85,6 +90,7 @@ function openEdit(bot) {
     };
     form.avatar = null;
     form.remove_avatar = false;
+    form.model_tier = bot.model_tier ?? 'basic';
     form.is_active = bot.is_active;
     form.price = bot.price ?? '';
     form.currency = bot.currency ?? 'PHP';
@@ -122,6 +128,7 @@ function saveBot() {
     if (form.personality.expertise) formData.append('personality[expertise]', form.personality.expertise);
     if (form.personality.response_style) formData.append('personality[response_style]', form.personality.response_style);
     if (form.avatar) formData.append('avatar', form.avatar);
+    formData.append('model_tier', form.model_tier);
     if (form.price !== '' && form.price !== null) formData.append('price', form.price);
     formData.append('currency', form.currency);
     formData.append('billing_type', form.billing_type);
@@ -195,6 +202,10 @@ function toggleActive(bot) {
                                 class="px-1.5 py-0.5 text-[10px] font-bold bg-green-100 text-green-700 rounded-full">Active</span>
                             <span v-else
                                 class="px-1.5 py-0.5 text-[10px] font-bold bg-gray-100 text-gray-500 rounded-full">Inactive</span>
+                            <span class="px-1.5 py-0.5 text-[10px] font-bold rounded-full"
+                                :class="bot.model_tier === 'basic' ? 'bg-gray-100 text-gray-500' : 'bg-purple-100 text-purple-700'">
+                                {{ tierMap[bot.model_tier] ?? bot.model_tier }}
+                            </span>
                         </div>
                         <p v-if="bot.description" class="text-xs text-gray-500 line-clamp-2">{{ bot.description }}</p>
                         <div class="flex items-center gap-2 mt-1">
@@ -319,6 +330,24 @@ function toggleActive(bot) {
                             <input v-model="form.personality.expertise" type="text" maxlength="200"
                                 placeholder="e.g. Script writing, Sales strategies, Fitness coaching"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                        </div>
+
+                        <!-- Model Tier -->
+                        <div v-if="modelTiers.length">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">AI Model</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <button v-for="tier in modelTiers" :key="tier.value"
+                                    type="button" @click="form.model_tier = tier.value"
+                                    :class="[
+                                        'relative rounded-xl border-2 p-3 text-left transition-all',
+                                        form.model_tier === tier.value
+                                            ? 'border-indigo-600 bg-indigo-50 ring-1 ring-indigo-600'
+                                            : 'border-gray-200 hover:border-gray-300'
+                                    ]">
+                                    <div class="text-sm font-semibold text-gray-900">{{ tier.label }}</div>
+                                    <div class="text-xs text-gray-500 mt-0.5">{{ tier.description }}</div>
+                                </button>
+                            </div>
                         </div>
 
                         <!-- Pricing -->
