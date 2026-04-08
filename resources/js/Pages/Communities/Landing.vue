@@ -629,6 +629,10 @@ async function uploadCustomImage(sectionId, event) {
     }
 }
 
+// ── Chunked upload constants ─────────────────────────────────────────────────
+const CHUNK_SIZE = 10 * 1024 * 1024; // 10MB per chunk
+const MAX_CONCURRENT_CHUNKS = 3;
+
 // ── Custom section video upload ──────────────────────────────────────────────
 async function handleCustomVideoUpload(sectionId, e) {
     const file = e.target.files?.[0];
@@ -638,26 +642,77 @@ async function handleCustomVideoUpload(sectionId, e) {
     sectionVideoProgress.value  = 0;
     sectionVideoError.value     = '';
 
+    const multipartBase = `/communities/${props.community.slug}/classroom/multipart`;
+    let uploadId = null;
+    let key = null;
+
     try {
-        const res = await fetch(`/communities/${props.community.slug}/landing-page/upload-video`, {
+        const res = await fetch(`${multipartBase}/initiate`, {
             method: 'POST',
             headers: jsonHeaders(),
-            body: JSON.stringify({ filename: file.name, content_type: file.type, size: file.size }),
+            body: JSON.stringify({ filename: file.name, content_type: file.type, size: file.size, type: 'preview' }),
         });
-        const data = await res.json();
-        if (!res.ok) { sectionVideoError.value = data.error ?? data.message ?? 'Failed to get upload URL.'; return; }
+        const initData = await res.json();
+        if (!res.ok) { sectionVideoError.value = initData.error ?? initData.message ?? 'Failed to start upload.'; return; }
+        uploadId = initData.upload_id;
+        key = initData.key;
 
         const { default: rawAxios } = await import('axios');
         const s3Client = rawAxios.create({ withCredentials: false });
-        await s3Client.put(data.upload_url, file, {
-            headers: { 'Content-Type': file.type },
-            onUploadProgress: (evt) => { sectionVideoProgress.value = Math.round((evt.loaded / evt.total) * 100); },
+
+        const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+        const completedParts = [];
+        const chunkProgress = new Array(totalChunks).fill(0);
+
+        function updateProgress() {
+            const loaded = chunkProgress.reduce((sum, v) => sum + v, 0);
+            sectionVideoProgress.value = Math.round((loaded / file.size) * 100);
+        }
+
+        async function uploadChunk(partNumber) {
+            const start = (partNumber - 1) * CHUNK_SIZE;
+            const end = Math.min(start + CHUNK_SIZE, file.size);
+            const chunk = file.slice(start, end);
+
+            const partRes = await fetch(`${multipartBase}/part-url`, {
+                method: 'POST',
+                headers: jsonHeaders(),
+                body: JSON.stringify({ key, upload_id: uploadId, part_number: partNumber }),
+            });
+            const partData = await partRes.json();
+
+            const response = await s3Client.put(partData.url, chunk, {
+                headers: { 'Content-Type': file.type },
+                onUploadProgress: (evt) => { chunkProgress[partNumber - 1] = evt.loaded; updateProgress(); },
+            });
+
+            const etag = response.headers['etag'] || response.headers['ETag'];
+            completedParts.push({ PartNumber: partNumber, ETag: etag });
+        }
+
+        for (let i = 0; i < totalChunks; i += MAX_CONCURRENT_CHUNKS) {
+            const batch = [];
+            for (let j = i; j < Math.min(i + MAX_CONCURRENT_CHUNKS, totalChunks); j++) {
+                batch.push(uploadChunk(j + 1));
+            }
+            await Promise.all(batch);
+        }
+
+        completedParts.sort((a, b) => a.PartNumber - b.PartNumber);
+
+        await fetch(`${multipartBase}/complete`, {
+            method: 'POST',
+            headers: jsonHeaders(),
+            body: JSON.stringify({ key, upload_id: uploadId, parts: completedParts }),
         });
 
         if (!editDraft.value.custom_sections) editDraft.value.custom_sections = {};
         if (!editDraft.value.custom_sections[sectionId]) editDraft.value.custom_sections[sectionId] = {};
-        editDraft.value.custom_sections[sectionId].video_url = data.url;
+        editDraft.value.custom_sections[sectionId].video_url = key;
     } catch (err) {
+        if (uploadId && key) {
+            try { await fetch(`${multipartBase}/abort`, { method: 'POST', headers: jsonHeaders(), body: JSON.stringify({ key, upload_id: uploadId }) }); } catch {}
+        }
         if (typeof err.response?.data === 'string' && err.response.data.includes('<Message>')) {
             const match = err.response.data.match(/<Message>([^<]+)<\/Message>/);
             sectionVideoError.value = match ? `S3: ${match[1]}` : 'Upload to storage failed.';
@@ -683,37 +738,98 @@ async function handleSectionVideoUpload(sectionType, e) {
     sectionVideoProgress.value  = 0;
     sectionVideoError.value     = '';
 
+    const multipartBase = `/communities/${props.community.slug}/classroom/multipart`;
+    let uploadId = null;
+    let key = null;
+
     try {
-        // Step 1: Get presigned upload URL
-        const res = await fetch(`/communities/${props.community.slug}/landing-page/upload-video`, {
+        // Step 1: Initiate multipart upload
+        const res = await fetch(`${multipartBase}/initiate`, {
             method: 'POST',
             headers: jsonHeaders(),
             body: JSON.stringify({
                 filename: file.name,
                 content_type: file.type,
                 size: file.size,
+                type: 'preview',
             }),
         });
-        const data = await res.json();
+        const initData = await res.json();
         if (!res.ok) {
-            sectionVideoError.value = data.error ?? data.message ?? 'Failed to get upload URL.';
+            sectionVideoError.value = initData.error ?? initData.message ?? 'Failed to start upload.';
             return;
         }
+        uploadId = initData.upload_id;
+        key = initData.key;
 
-        // Step 2: Upload directly to S3
+        // Step 2: Upload chunks
         const { default: rawAxios } = await import('axios');
         const s3Client = rawAxios.create({ withCredentials: false });
-        await s3Client.put(data.upload_url, file, {
-            headers: { 'Content-Type': file.type },
-            onUploadProgress: (evt) => {
-                sectionVideoProgress.value = Math.round((evt.loaded / evt.total) * 100);
-            },
+
+        const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+        const completedParts = [];
+        const chunkProgress = new Array(totalChunks).fill(0);
+
+        function updateProgress() {
+            const loaded = chunkProgress.reduce((sum, v) => sum + v, 0);
+            sectionVideoProgress.value = Math.round((loaded / file.size) * 100);
+        }
+
+        async function uploadChunk(partNumber) {
+            const start = (partNumber - 1) * CHUNK_SIZE;
+            const end = Math.min(start + CHUNK_SIZE, file.size);
+            const chunk = file.slice(start, end);
+
+            const partRes = await fetch(`${multipartBase}/part-url`, {
+                method: 'POST',
+                headers: jsonHeaders(),
+                body: JSON.stringify({ key, upload_id: uploadId, part_number: partNumber }),
+            });
+            const partData = await partRes.json();
+
+            const response = await s3Client.put(partData.url, chunk, {
+                headers: { 'Content-Type': file.type },
+                onUploadProgress: (evt) => {
+                    chunkProgress[partNumber - 1] = evt.loaded;
+                    updateProgress();
+                },
+            });
+
+            const etag = response.headers['etag'] || response.headers['ETag'];
+            completedParts.push({ PartNumber: partNumber, ETag: etag });
+        }
+
+        for (let i = 0; i < totalChunks; i += MAX_CONCURRENT_CHUNKS) {
+            const batch = [];
+            for (let j = i; j < Math.min(i + MAX_CONCURRENT_CHUNKS, totalChunks); j++) {
+                batch.push(uploadChunk(j + 1));
+            }
+            await Promise.all(batch);
+        }
+
+        completedParts.sort((a, b) => a.PartNumber - b.PartNumber);
+
+        // Step 3: Complete multipart upload
+        await fetch(`${multipartBase}/complete`, {
+            method: 'POST',
+            headers: jsonHeaders(),
+            body: JSON.stringify({ key, upload_id: uploadId, parts: completedParts }),
         });
 
-        // Step 3: Store the S3 URL in the section draft
+        // Step 4: Store the S3 URL in the section draft
         if (!editDraft.value[sectionType]) editDraft.value[sectionType] = {};
-        editDraft.value[sectionType].video_url = data.url;
+        editDraft.value[sectionType].video_url = key;
     } catch (err) {
+        if (uploadId && key) {
+            try {
+                await fetch(`${multipartBase}/abort`, {
+                    method: 'POST',
+                    headers: jsonHeaders(),
+                    body: JSON.stringify({ key, upload_id: uploadId }),
+                });
+            } catch {}
+        }
+
         if (typeof err.response?.data === 'string' && err.response.data.includes('<Message>')) {
             const match = err.response.data.match(/<Message>([^<]+)<\/Message>/);
             sectionVideoError.value = match ? `S3: ${match[1]}` : 'Upload to storage failed.';

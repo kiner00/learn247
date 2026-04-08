@@ -31,8 +31,13 @@ export function getVideoEmbed(url) {
             return id ? `https://www.youtube.com/embed/${id}` : null;
         }
         if (u.hostname.includes("vimeo.com")) {
-            const id = u.pathname.split("/").pop();
-            return id ? `https://player.vimeo.com/video/${id}` : null;
+            const parts = u.pathname.split("/").filter(Boolean);
+            const id = parts[0]; // numeric video ID
+            const hash = parts[1]; // optional privacy hash
+            if (!id) return null;
+            return hash && /^[a-f0-9]+$/i.test(hash)
+                ? `https://player.vimeo.com/video/${id}?h=${hash}`
+                : `https://player.vimeo.com/video/${id}`;
         }
     } catch {}
     return null;

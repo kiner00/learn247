@@ -309,7 +309,7 @@
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                                                 </svg>
                                                 <span class="text-xs text-gray-500">
-                                                    {{ sectionVideoUploading === sec.type ? `Uploading... ${sectionVideoProgress}%` : 'Choose video file (MP4, WebM, MOV — max 500MB)' }}
+                                                    {{ sectionVideoUploading === sec.type ? `Uploading... ${sectionVideoProgress}%` : 'Choose video file (MP4, WebM, MOV — max 5GB)' }}
                                                 </span>
                                                 <input
                                                     type="file"

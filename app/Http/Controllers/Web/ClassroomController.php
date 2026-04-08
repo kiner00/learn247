@@ -21,6 +21,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -424,6 +425,123 @@ class ClassroomController extends Controller
             Log::error('ClassroomController@uploadPreviewVideo failed', ['error' => $e->getMessage(), 'community' => $community->id]);
             throw $e;
         }
+    }
+
+    // ─── Chunked (multipart) video upload ──────────────────────────────────────
+
+    public function initiateMultipartUpload(Request $request, Community $community, PlanLimitService $planLimit): JsonResponse
+    {
+        $this->authorize('manage', $community);
+
+        $owner = $community->owner;
+        if (! $planLimit->canUploadVideo($owner)) {
+            return response()->json(['error' => 'Video uploads require a Pro plan.'], 403);
+        }
+
+        $request->validate([
+            'filename'     => ['required', 'string', 'max:255'],
+            'content_type' => ['required', 'string', 'in:video/mp4,video/quicktime,video/webm,video/x-msvideo'],
+            'size'         => ['required', 'integer', 'min:1'],
+            'type'         => ['sometimes', 'string', 'in:lesson,preview'],
+        ]);
+
+        $maxBytes = $planLimit->maxVideoSizeMb($owner->creatorPlan()) * 1024 * 1024;
+        if ($request->size > $maxBytes) {
+            return response()->json([
+                'error' => 'File too large. Maximum size is ' . $planLimit->maxVideoSizeMb($owner->creatorPlan()) . 'MB.',
+            ], 422);
+        }
+
+        $extension = pathinfo($request->filename, PATHINFO_EXTENSION) ?: 'mp4';
+        $prefix    = $request->input('type') === 'preview' ? 'course-previews' : 'lesson-videos';
+        $key       = $prefix . '/' . Str::uuid() . '.' . $extension;
+
+        $client = Storage::disk('s3')->getClient();
+        $bucket = config('filesystems.disks.s3.bucket');
+
+        $result = $client->createMultipartUpload([
+            'Bucket'      => $bucket,
+            'Key'         => $key,
+            'ContentType' => $request->content_type,
+        ]);
+
+        return response()->json([
+            'upload_id' => $result['UploadId'],
+            'key'       => $key,
+        ]);
+    }
+
+    public function getPartUploadUrl(Request $request, Community $community): JsonResponse
+    {
+        $this->authorize('manage', $community);
+
+        $request->validate([
+            'key'         => ['required', 'string'],
+            'upload_id'   => ['required', 'string'],
+            'part_number' => ['required', 'integer', 'min:1', 'max:10000'],
+        ]);
+
+        $client = Storage::disk('s3')->getClient();
+        $bucket = config('filesystems.disks.s3.bucket');
+
+        $command = $client->getCommand('UploadPart', [
+            'Bucket'     => $bucket,
+            'Key'        => $request->key,
+            'UploadId'   => $request->upload_id,
+            'PartNumber' => $request->part_number,
+        ]);
+
+        $presigned = $client->createPresignedRequest($command, '+30 minutes');
+
+        return response()->json([
+            'url' => (string) $presigned->getUri(),
+        ]);
+    }
+
+    public function completeMultipartUpload(Request $request, Community $community): JsonResponse
+    {
+        $this->authorize('manage', $community);
+
+        $request->validate([
+            'key'       => ['required', 'string'],
+            'upload_id' => ['required', 'string'],
+            'parts'     => ['required', 'array', 'min:1'],
+            'parts.*.PartNumber' => ['required', 'integer'],
+            'parts.*.ETag'       => ['required', 'string'],
+        ]);
+
+        $client = Storage::disk('s3')->getClient();
+        $bucket = config('filesystems.disks.s3.bucket');
+
+        $client->completeMultipartUpload([
+            'Bucket'          => $bucket,
+            'Key'             => $request->key,
+            'UploadId'        => $request->upload_id,
+            'MultipartUpload' => ['Parts' => $request->parts],
+        ]);
+
+        return response()->json(['key' => $request->key]);
+    }
+
+    public function abortMultipartUpload(Request $request, Community $community): JsonResponse
+    {
+        $this->authorize('manage', $community);
+
+        $request->validate([
+            'key'       => ['required', 'string'],
+            'upload_id' => ['required', 'string'],
+        ]);
+
+        $client = Storage::disk('s3')->getClient();
+        $bucket = config('filesystems.disks.s3.bucket');
+
+        $client->abortMultipartUpload([
+            'Bucket'   => $bucket,
+            'Key'      => $request->key,
+            'UploadId' => $request->upload_id,
+        ]);
+
+        return response()->json(['ok' => true]);
     }
 
     public function streamLessonVideo(Request $request, Community $community, Course $course, CourseLesson $lesson, CourseAccessService $access): JsonResponse

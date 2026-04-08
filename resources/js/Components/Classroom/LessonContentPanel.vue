@@ -155,7 +155,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                             </svg>
                             <span class="text-xs text-gray-500">
-                                {{ videoUploading ? `Uploading... ${videoUploadProgress}%` : lesson.video_path ? 'Replace video (MP4, WebM, MOV — max 500MB)' : 'Choose video file (MP4, WebM, MOV — max 500MB)' }}
+                                {{ videoUploading ? `Uploading... ${videoUploadProgress}%` : lesson.video_path ? 'Replace video (MP4, WebM, MOV — max 5GB)' : 'Choose video file (MP4, WebM, MOV — max 5GB)' }}
                             </span>
                             <input
                                 type="file"
@@ -305,9 +305,19 @@ function embedUrl(url) {
     if (!url) return '';
     url = url.replace('youtu.be/', 'www.youtube.com/embed/');
     url = url.replace('youtube.com/watch?v=', 'youtube.com/embed/');
-    url = url.replace(/vimeo\.com\/(\d+)/, 'player.vimeo.com/video/$1');
+    // Handle Vimeo URLs with optional privacy hash: vimeo.com/ID/HASH
+    url = url.replace(/vimeo\.com\/(\d+)(?:\/([a-f0-9]+))?/, (_, id, hash) =>
+        hash ? `player.vimeo.com/video/${id}?h=${hash}` : `player.vimeo.com/video/${id}`
+    );
     url = url.replace(/drive\.google\.com\/file\/d\/([^/]+)\/view/, 'drive.google.com/file/d/$1/preview');
-    return url.split('&')[0];
+    // Strip trailing query params but keep Vimeo ?h= hash
+    const [base, ...rest] = url.split('?');
+    if (rest.length) {
+        const params = new URLSearchParams(rest.join('?'));
+        const h = params.get('h');
+        return h ? `${base}?h=${h}` : base;
+    }
+    return base;
 }
 
 function formatTime(seconds) {

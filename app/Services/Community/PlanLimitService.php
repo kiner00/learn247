@@ -85,7 +85,7 @@ class PlanLimitService
     public function maxVideoSizeMb(string $plan): int
     {
         return match ($plan) {
-            'pro'   => 500,
+            'pro'   => 5120,
             default => 0,
         };
     }

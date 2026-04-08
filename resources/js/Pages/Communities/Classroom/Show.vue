@@ -507,6 +507,9 @@ const videoUploadProgress = ref(0);
 const videoUploadError = ref('');
 const videoUploadSuccess = ref(false);
 
+const CHUNK_SIZE = 10 * 1024 * 1024; // 10MB per chunk
+const MAX_CONCURRENT_CHUNKS = 3;
+
 async function handleVideoUpload(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -516,34 +519,81 @@ async function handleVideoUpload(e) {
     videoUploadError.value = '';
     videoUploadSuccess.value = false;
 
+    const multipartBase = `/communities/${props.community.slug}/classroom/multipart`;
+    let uploadId = null;
+    let key = null;
+
     try {
-        // Step 1: Get presigned upload URL from server
-        const { data } = await axios.post(lessonVideoUploadUrl, {
+        // Step 1: Initiate multipart upload
+        const { data: initData } = await axios.post(`${multipartBase}/initiate`, {
             filename: file.name,
             content_type: file.type,
             size: file.size,
         });
+        uploadId = initData.upload_id;
+        key = initData.key;
 
-        // Step 2: Upload directly to S3 — must avoid withCredentials (global axios sets it to true,
-        // which makes browsers reject S3's Access-Control-Allow-Origin: * response)
+        // Step 2: Upload chunks with presigned URLs
         const { default: rawAxios } = await import('axios');
         const s3Client = rawAxios.create({ withCredentials: false });
-        await s3Client.put(data.upload_url, file, {
-            headers: { 'Content-Type': file.type },
-            onUploadProgress: (e) => {
-                videoUploadProgress.value = Math.round((e.loaded / e.total) * 100);
-            },
+
+        const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+        const completedParts = [];
+        const chunkProgress = new Array(totalChunks).fill(0);
+
+        function updateProgress() {
+            const loaded = chunkProgress.reduce((sum, v) => sum + v, 0);
+            videoUploadProgress.value = Math.round((loaded / file.size) * 100);
+        }
+
+        async function uploadChunk(partNumber) {
+            const start = (partNumber - 1) * CHUNK_SIZE;
+            const end = Math.min(start + CHUNK_SIZE, file.size);
+            const chunk = file.slice(start, end);
+
+            // Get presigned URL for this part
+            const { data: partData } = await axios.post(`${multipartBase}/part-url`, {
+                key, upload_id: uploadId, part_number: partNumber,
+            });
+
+            // Upload chunk to S3
+            const response = await s3Client.put(partData.url, chunk, {
+                headers: { 'Content-Type': file.type },
+                onUploadProgress: (e) => {
+                    chunkProgress[partNumber - 1] = e.loaded;
+                    updateProgress();
+                },
+            });
+
+            const etag = response.headers['etag'] || response.headers['ETag'];
+            completedParts.push({ PartNumber: partNumber, ETag: etag });
+        }
+
+        // Upload chunks with concurrency limit
+        for (let i = 0; i < totalChunks; i += MAX_CONCURRENT_CHUNKS) {
+            const batch = [];
+            for (let j = i; j < Math.min(i + MAX_CONCURRENT_CHUNKS, totalChunks); j++) {
+                batch.push(uploadChunk(j + 1));
+            }
+            await Promise.all(batch);
+        }
+
+        // Sort parts by part number (required by S3)
+        completedParts.sort((a, b) => a.PartNumber - b.PartNumber);
+
+        // Step 3: Complete multipart upload
+        await axios.post(`${multipartBase}/complete`, {
+            key, upload_id: uploadId, parts: completedParts,
         });
 
-        // Step 3: Save the S3 key on the lesson (triggers transcoding on backend)
+        // Step 4: Save the S3 key on the lesson
         const lesson = selectedLesson.value;
         await axios.post(
             `/communities/${props.community.slug}/classroom/courses/${props.course.id}/modules/${lesson.module_id}/lessons/${lesson.id}`,
-            { video_path: data.key, video_url: '', _method: 'PATCH' }
+            { video_path: key, video_url: '', _method: 'PATCH' }
         );
 
-        // Update local state and refresh the video player
-        lesson.video_path = data.key;
+        lesson.video_path = key;
         lesson.video_url  = '';
         await fetchVideoStreamUrl(lesson);
 
@@ -552,13 +602,18 @@ async function handleVideoUpload(e) {
 
         router.reload({ only: ['course'] });
     } catch (err) {
-        // Step 1/3 return JSON; Step 2 (S3 PUT) may return XML or a network error
+        // Abort the multipart upload on failure to clean up S3
+        if (uploadId && key) {
+            try {
+                await axios.post(`${multipartBase}/abort`, { key, upload_id: uploadId });
+            } catch {}
+        }
+
         if (err.response?.data?.error) {
             videoUploadError.value = err.response.data.error;
         } else if (err.response?.data?.message) {
             videoUploadError.value = err.response.data.message;
         } else if (typeof err.response?.data === 'string' && err.response.data.includes('<Message>')) {
-            // S3 XML error
             const match = err.response.data.match(/<Message>([^<]+)<\/Message>/);
             videoUploadError.value = match ? `S3: ${match[1]}` : 'Upload to storage failed. Please try again.';
         } else if (err.message) {
