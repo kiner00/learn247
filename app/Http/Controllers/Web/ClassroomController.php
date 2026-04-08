@@ -90,7 +90,8 @@ class ClassroomController extends Controller
                 'preview_video_sound'  => ['nullable', 'boolean'],
                 'remove_preview_video' => ['nullable', 'boolean'],
                 'access_type'          => ['required', 'in:free,inclusive,paid_once,paid_monthly,member_once'],
-                'price'                => ['nullable', 'numeric', 'min:0', 'required_if:access_type,paid_once', 'required_if:access_type,paid_monthly'],
+                'price'                        => ['nullable', 'numeric', 'min:0', 'required_if:access_type,paid_once', 'required_if:access_type,paid_monthly'],
+                'affiliate_commission_rate'    => ['nullable', 'integer', 'min:0', 'max:100'],
             ]);
 
             $action->update($course, $data, $request->file('cover_image'));
