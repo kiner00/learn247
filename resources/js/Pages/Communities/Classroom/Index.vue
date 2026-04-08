@@ -492,7 +492,11 @@
                         <!-- Cover image -->
                         <div class="mb-4">
                             <label class="block text-xs font-medium text-gray-600 mb-1">Cover image</label>
-                            <div class="relative mb-2 aspect-video rounded-lg overflow-hidden border border-gray-200 bg-gray-900">
+                            <div
+                                ref="editCoverDropRef"
+                                class="relative mb-2 aspect-video rounded-lg overflow-hidden border-2 bg-gray-900 transition-colors"
+                                :class="editCoverDragging ? 'border-indigo-400 border-dashed' : 'border-gray-200'"
+                            >
                                 <img v-if="editCoverPreview || editingCourse.cover_image"
                                     :src="editCoverPreview || editingCourse.cover_image"
                                     class="w-full h-full object-cover" />
@@ -501,7 +505,7 @@
                                 </div>
                                 <label class="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/50 cursor-pointer transition-colors group/img">
                                     <span class="text-white text-xs font-semibold bg-black/50 px-3 py-1.5 rounded-full group-hover/img:bg-black/70">
-                                        {{ editCoverPreview ? 'Change photo' : 'Upload photo' }}
+                                        {{ editCoverDragging ? 'Drop image here' : (editCoverPreview ? 'Change photo' : 'Upload photo') }}
                                     </span>
                                     <input ref="editCoverInput" type="file" accept="image/*" class="hidden" @change="onEditCoverChange" />
                                 </label>
@@ -742,11 +746,14 @@ function openEdit(course) {
 }
 
 function onEditCoverChange(e) {
-    const file = e.target.files?.[0];
+    const file = e instanceof File ? e : e.target.files?.[0];
     if (!file) return;
     editForm.cover_image   = file;
     editCoverPreview.value = URL.createObjectURL(file);
 }
+
+const editCoverDropRef = ref(null);
+const { isDragging: editCoverDragging } = useDropzone(editCoverDropRef, files => onEditCoverChange(files[0]), { accept: 'image/*' });
 
 async function onEditVideoChange(e) {
     const file = e.target.files?.[0];
