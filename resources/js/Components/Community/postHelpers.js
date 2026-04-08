@@ -17,6 +17,7 @@ export function mdToHtml(text) {
             /(<li>.*<\/li>)/s,
             '<ul class="list-disc pl-4 space-y-0.5">$1</ul>',
         )
+        .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline">$1</a>')
         .replace(/\n/g, "<br>");
 }
 
