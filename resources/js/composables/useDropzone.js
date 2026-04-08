@@ -60,9 +60,6 @@ export function useDropzone(dropRef, onFiles, options = {}) {
         });
     }
 
-    // Prevent browser from navigating to dropped files anywhere on the page
-    function preventNavigation(e) { e.preventDefault(); }
-
     onMounted(() => {
         const el = dropRef.value?.$el || dropRef.value;
         if (!el) return;
@@ -70,9 +67,6 @@ export function useDropzone(dropRef, onFiles, options = {}) {
         el.addEventListener('dragover', handleDragOver);
         el.addEventListener('dragleave', handleDragLeave);
         el.addEventListener('drop', handleDrop);
-
-        document.addEventListener('dragover', preventNavigation);
-        document.addEventListener('drop', preventNavigation);
     });
 
     onBeforeUnmount(() => {
@@ -82,9 +76,6 @@ export function useDropzone(dropRef, onFiles, options = {}) {
         el.removeEventListener('dragover', handleDragOver);
         el.removeEventListener('dragleave', handleDragLeave);
         el.removeEventListener('drop', handleDrop);
-
-        document.removeEventListener('dragover', preventNavigation);
-        document.removeEventListener('drop', preventNavigation);
     });
 
     return { isDragging };
