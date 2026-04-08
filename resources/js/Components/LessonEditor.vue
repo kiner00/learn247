@@ -1,7 +1,7 @@
 <template>
-    <div class="border border-gray-200 rounded-xl overflow-y-auto max-h-[70vh] focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent">
-        <!-- Toolbar -->
-        <div class="flex items-center gap-0.5 px-2 py-1.5 bg-gray-50 border-b border-gray-200 flex-wrap sticky top-0 z-10">
+    <div class="border border-gray-200 rounded-xl flex flex-col max-h-[70vh] focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent">
+        <!-- Toolbar (fixed at top, never scrolls) -->
+        <div class="flex items-center gap-0.5 px-2 py-1.5 bg-gray-50 border-b border-gray-200 flex-wrap shrink-0 rounded-t-xl">
             <button
                 type="button"
                 @click="editor.chain().focus().toggleBold().run()"
@@ -103,8 +103,8 @@
             >↪</button>
         </div>
 
-        <!-- Editor content -->
-        <EditorContent :editor="editor" class="lesson-editor-content" />
+        <!-- Editor content (scrollable) -->
+        <EditorContent :editor="editor" class="lesson-editor-content overflow-y-auto min-h-0" />
 
         <input
             ref="imageInput"
