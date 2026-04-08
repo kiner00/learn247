@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { useForm, usePage } from '@inertiajs/vue3';
 import CommunitySettingsLayout from '@/Layouts/CommunitySettingsLayout.vue';
+import { useDropzone } from '@/composables/useDropzone';
 
 const props = defineProps({
     community: Object,
@@ -28,9 +29,13 @@ function sendSingleInvite() {
 }
 
 function onCsvChange(e) {
-    csvFile.value = e.target.files[0] ?? null;
-    csvInviteForm.csv = csvFile.value;
+    const file = e instanceof File ? e : (e.target.files[0] ?? null);
+    csvFile.value = file;
+    csvInviteForm.csv = file;
 }
+
+const csvDropRef = ref(null);
+const { isDragging: csvDragging } = useDropzone(csvDropRef, files => onCsvChange(files[0]), { accept: '.csv,.txt' });
 
 function sendCsvInvite() {
     csvInviteForm.post(`/communities/${props.community.slug}/invite`, {
@@ -96,13 +101,17 @@ function sendCsvInvite() {
 
             <!-- CSV batch -->
             <form v-else @submit.prevent="sendCsvInvite" class="space-y-3">
-                <div>
+                <div
+                    ref="csvDropRef"
+                    class="rounded-lg transition-colors"
+                    :class="csvDragging ? 'ring-2 ring-indigo-300 bg-indigo-50 ring-dashed p-2 -m-2' : ''"
+                >
                     <label class="block text-sm font-medium text-gray-700 mb-1.5">CSV file <span class="text-gray-400 font-normal">(one email per row)</span></label>
                     <label class="flex items-center gap-2 w-fit cursor-pointer px-3.5 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
                         <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
                         </svg>
-                        {{ csvFile ? csvFile.name : 'Choose CSV file' }}
+                        {{ csvDragging ? 'Drop CSV here' : (csvFile ? csvFile.name : 'Choose or drag & drop CSV file') }}
                         <input type="file" accept=".csv,.txt" class="hidden" @change="onCsvChange" />
                     </label>
                     <p class="mt-1 text-xs text-gray-400">Max 2 MB · .csv or .txt · one email per line</p>

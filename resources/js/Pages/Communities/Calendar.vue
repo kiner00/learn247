@@ -233,8 +233,15 @@
                         <!-- Cover image -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Cover Image</label>
-                            <input type="file" accept="image/*" @change="onCoverChange"
-                                class="w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700" />
+                            <div
+                                ref="coverDropRef"
+                                class="border-2 border-dashed rounded-xl p-4 text-center transition-colors cursor-pointer"
+                                :class="coverDragging ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 hover:border-indigo-300'"
+                                @click="$refs.coverFileInput.click()"
+                            >
+                                <p class="text-sm text-gray-500">{{ coverDragging ? 'Drop image here' : (coverFile ? coverFile.name : 'Click or drag & drop cover image') }}</p>
+                                <input ref="coverFileInput" type="file" accept="image/*" class="hidden" @change="onCoverChange" />
+                            </div>
                         </div>
 
                         <!-- Visibility -->
@@ -277,6 +284,7 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 import CommunityTabs from '@/Components/CommunityTabs.vue'
 import { router } from '@inertiajs/vue3'
 import axios from 'axios'
+import { useDropzone } from '@/composables/useDropzone'
 
 const props = defineProps({
     community:    Object,
@@ -489,7 +497,10 @@ function openEditModal(ev) {
     showForm.value = true
 }
 
-function onCoverChange(e) { coverFile.value = e.target.files[0] || null }
+function onCoverChange(e) { const f = e instanceof File ? e : e.target.files[0]; coverFile.value = f || null }
+
+const coverDropRef = ref(null);
+const { isDragging: coverDragging } = useDropzone(coverDropRef, files => onCoverChange(files[0]), { accept: 'image/*' });
 
 async function submitForm() {
     submitting.value = true

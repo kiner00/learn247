@@ -155,7 +155,8 @@
                         </div>
                         <div v-if="sending" class="flex gap-3 items-center px-1"><div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0"><span class="text-xs text-gray-400">...</span></div><span class="text-xs text-gray-400">Sending…</span></div>
                     </div>
-                    <div class="px-4 py-3 border-t border-gray-100 shrink-0">
+                    <div ref="chatDropRef" class="px-4 py-3 border-t border-gray-100 shrink-0 transition-colors" :class="chatDragging ? 'bg-indigo-50 ring-2 ring-indigo-300 ring-inset' : ''">
+                        <p v-if="chatDragging" class="text-xs text-indigo-500 font-medium text-center mb-2">Drop file here</p>
                         <div v-if="mediaPreviewUrl" class="mb-2 relative inline-block">
                             <img v-if="mediaFile?.type?.startsWith('image/')" :src="mediaPreviewUrl" class="h-24 rounded-lg object-cover border border-gray-200" />
                             <video v-else :src="mediaPreviewUrl" class="h-24 rounded-lg border border-gray-200" />
@@ -167,7 +168,7 @@
                             <div class="flex-1"><textarea v-model="groupContent" ref="inputEl" rows="1" placeholder="Message #general" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none bg-gray-50" style="max-height: 120px; overflow-y: auto;" @keydown.enter.exact.prevent="send" @keydown.enter.shift.exact="groupContent += '\n'" @input="autoResize" @paste="handlePaste"></textarea></div>
                             <button type="submit" :disabled="(!groupContent.trim() && !mediaFile) || sending" class="shrink-0 w-9 h-9 flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white rounded-xl transition-colors"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg></button>
                         </form>
-                        <p class="text-xs text-gray-400 mt-1.5 ml-1">Enter to send · Shift+Enter for new line</p>
+                        <p class="text-xs text-gray-400 mt-1.5 ml-1">Enter to send · Shift+Enter for new line · Drag & drop media</p>
                     </div>
                 </template>
 
@@ -276,6 +277,7 @@ import { usePage, router } from '@inertiajs/vue3';
 import axios from 'axios';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import CommunityTabs from '@/Components/CommunityTabs.vue';
+import { useDropzone } from '@/composables/useDropzone';
 
 const props = defineProps({
     community:         Object,
@@ -330,7 +332,10 @@ const fileInputEl     = ref(null);
 const mediaFile       = ref(null);
 const mediaPreviewUrl = ref(null);
 
-function onFileSelected(e) { const f = e.target.files[0]; if (!f) return; mediaFile.value = f; mediaPreviewUrl.value = URL.createObjectURL(f); }
+function onFileSelected(e) { const f = e instanceof File ? e : e.target.files[0]; if (!f) return; mediaFile.value = f; mediaPreviewUrl.value = URL.createObjectURL(f); }
+
+const chatDropRef = ref(null);
+const { isDragging: chatDragging } = useDropzone(chatDropRef, files => onFileSelected(files[0]), { accept: 'image/*,video/*' });
 function handlePaste(e) {
     const items = e.clipboardData?.items;
     if (!items) return;

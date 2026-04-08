@@ -1,6 +1,8 @@
 <template>
     <div
-        class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm"
+        ref="postDropRef"
+        class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm transition-colors"
+        :class="postDragging ? 'ring-2 ring-indigo-300 bg-indigo-50 dark:bg-indigo-900/20' : ''"
     >
         <!-- Collapsed -->
         <div
@@ -164,7 +166,7 @@
                         type="button"
                         @click="imageInput.click()"
                         class="flex items-center gap-1 px-3 py-1.5 text-xs text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
-                        title="Attach image"
+                        title="Attach image (or drag & drop onto post)"
                     >
                         <svg
                             class="w-4 h-4"
@@ -269,6 +271,7 @@
 import { ref } from "vue";
 import { useForm } from "@inertiajs/vue3";
 import UserAvatar from "@/Components/UserAvatar.vue";
+import { useDropzone } from '@/composables/useDropzone';
 
 const props = defineProps({
     communitySlug: { type: String, required: true },
@@ -293,11 +296,19 @@ const form = useForm({
 });
 
 function onImageChange(e) {
-    const file = e.target.files?.[0];
+    const file = e instanceof File ? e : e.target.files?.[0];
     if (!file) return;
     form.image = file;
     imagePreview.value = URL.createObjectURL(file);
 }
+
+const postDropRef = ref(null);
+const { isDragging: postDragging } = useDropzone(postDropRef, files => {
+    const file = files[0];
+    if (!file) return;
+    if (file.type.startsWith('image/')) onImageChange(file);
+    else if (file.type.startsWith('video/')) onVideoChange(file);
+}, { accept: 'image/*,video/*' });
 
 function removeImage() {
     form.image = null;
@@ -306,7 +317,7 @@ function removeImage() {
 }
 
 function onVideoChange(e) {
-    const file = e.target.files?.[0];
+    const file = e instanceof File ? e : e.target.files?.[0];
     if (!file) return;
     if (file.size > 100 * 1024 * 1024) {
         alert("Video must be under 100MB.");

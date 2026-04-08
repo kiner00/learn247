@@ -92,12 +92,16 @@
 
                             <!-- CSV batch -->
                             <form v-else-if="inviteTab === 'csv'" @submit.prevent="sendCsvInvite" class="space-y-2">
-                                <div class="flex items-center justify-between gap-2">
+                                <div
+                                    ref="csvDropRefModal"
+                                    class="flex items-center justify-between gap-2 rounded-lg transition-colors"
+                                    :class="csvDraggingModal ? 'ring-2 ring-indigo-300 bg-indigo-50 ring-dashed p-1 -m-1' : ''"
+                                >
                                     <label class="flex items-center gap-2 w-fit cursor-pointer px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
                                         <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
                                         </svg>
-                                        {{ csvFile ? csvFile.name : 'Choose CSV file' }}
+                                        {{ csvDraggingModal ? 'Drop CSV here' : (csvFile ? csvFile.name : 'Choose or drag & drop CSV') }}
                                         <input type="file" accept=".csv,.txt" class="hidden" @change="onCsvChange" />
                                     </label>
                                     <button type="button" @click="downloadTemplate"
@@ -160,6 +164,7 @@
 <script setup>
 import { ref } from 'vue';
 import axios from 'axios';
+import { useDropzone } from '@/composables/useDropzone';
 
 const props = defineProps({
     show:          Boolean,
@@ -247,8 +252,11 @@ function downloadTemplate() {
 }
 
 function onCsvChange(e) {
-    csvFile.value = e.target.files[0] ?? null;
+    csvFile.value = e instanceof File ? e : (e.target.files[0] ?? null);
 }
+
+const csvDropRefModal = ref(null);
+const { isDragging: csvDraggingModal } = useDropzone(csvDropRefModal, files => onCsvChange(files[0]), { accept: '.csv,.txt' });
 
 function sendCsvInvite() {
     if (!csvFile.value) return;

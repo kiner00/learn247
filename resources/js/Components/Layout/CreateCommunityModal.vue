@@ -101,7 +101,9 @@
                                     Banner image <span class="text-red-500">*</span> <span class="text-gray-400 font-normal">(recommended: {{ IMAGE_DIMENSIONS.BANNER.width }}×{{ IMAGE_DIMENSIONS.BANNER.height }})</span>
                                 </label>
                                 <div
-                                    class="relative w-full aspect-3/1 rounded-xl overflow-hidden border-2 border-dashed border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 flex items-center justify-center cursor-pointer group hover:border-indigo-400 transition-colors"
+                                    ref="bannerDropRef"
+                                    class="relative w-full aspect-3/1 rounded-xl overflow-hidden border-2 border-dashed bg-gray-50 dark:bg-gray-700 flex items-center justify-center cursor-pointer group transition-colors"
+                                    :class="bannerDragging ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-900/20' : 'border-gray-200 dark:border-gray-600 hover:border-indigo-400'"
                                     @click="coverInputC.click()"
                                 >
                                     <img v-if="coverPreviewC" :src="coverPreviewC" class="absolute inset-0 w-full h-full object-cover" />
@@ -109,7 +111,7 @@
                                         <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                                         </svg>
-                                        <span class="text-xs font-medium">Click to upload banner</span>
+                                        <span class="text-xs font-medium">{{ bannerDragging ? 'Drop image here' : 'Click or drag & drop banner' }}</span>
                                     </div>
                                     <button v-if="coverPreviewC" type="button"
                                         class="absolute top-2 right-2 w-6 h-6 bg-black/60 hover:bg-black/80 text-white rounded-full flex items-center justify-center"
@@ -132,7 +134,9 @@
                                 </label>
                                 <div class="flex items-center gap-4">
                                     <div
-                                        class="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-dashed border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 flex items-center justify-center cursor-pointer group hover:border-indigo-400 transition-colors shrink-0"
+                                        ref="avatarDropRefC"
+                                        class="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-dashed bg-gray-50 dark:bg-gray-700 flex items-center justify-center cursor-pointer group transition-colors shrink-0"
+                                        :class="avatarDraggingC ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-900/20' : 'border-gray-200 dark:border-gray-600 hover:border-indigo-400'"
                                         @click="avatarInputC.click()"
                                     >
                                         <img v-if="avatarPreviewC" :src="avatarPreviewC" class="absolute inset-0 w-full h-full object-cover" />
@@ -281,6 +285,7 @@ import { ref, computed } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import { useCreateModal } from '@/composables/useCreateModal';
 import { IMAGE_DIMENSIONS } from '@/constants';
+import { useDropzone } from '@/composables/useDropzone';
 
 const CATEGORIES = ['Tech', 'Business', 'Design', 'Health', 'Education', 'Finance', 'Other'];
 
@@ -321,8 +326,13 @@ function closeAndReset() {
     createForm.reset();
 }
 
+const bannerDropRef = ref(null);
+const avatarDropRefC = ref(null);
+const { isDragging: bannerDragging } = useDropzone(bannerDropRef, files => onCreateCoverChange(files[0]), { accept: 'image/*' });
+const { isDragging: avatarDraggingC } = useDropzone(avatarDropRefC, files => onCreateAvatarChange(files[0]), { accept: 'image/*' });
+
 function onCreateCoverChange(e) {
-    const file = e.target.files[0];
+    const file = e instanceof File ? e : e.target.files[0];
     if (!file) return;
     coverRatioError.value = null;
     coverSizeError.value  = null;
@@ -336,7 +346,7 @@ function onCreateCoverChange(e) {
 }
 
 function onCreateAvatarChange(e) {
-    const file = e.target.files[0];
+    const file = e instanceof File ? e : e.target.files[0];
     if (!file) return;
     avatarSizeError.value = null;
     if (file.size > MAX_FILE_SIZE) {

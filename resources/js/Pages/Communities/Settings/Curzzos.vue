@@ -132,16 +132,22 @@
                     <!-- Cover image -->
                     <div class="mb-3">
                         <label class="block text-xs font-medium text-gray-600 mb-1">Cover image <span class="text-gray-400 font-normal">(optional)</span></label>
-                        <div v-if="coverPreview" class="relative mb-2 h-28 rounded-lg overflow-hidden border border-gray-200">
-                            <img :src="coverPreview" class="w-full h-full object-cover" />
-                            <button type="button" @click="removeCover"
-                                class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center text-xs hover:bg-black/70">x</button>
+                        <div
+                            ref="curzzoCoverDropRef"
+                            class="rounded-lg transition-colors"
+                            :class="curzzoCoverDragging ? 'ring-2 ring-indigo-300 bg-indigo-50 ring-dashed' : ''"
+                        >
+                            <div v-if="coverPreview" class="relative mb-2 h-28 rounded-lg overflow-hidden border border-gray-200">
+                                <img :src="coverPreview" class="w-full h-full object-cover" />
+                                <button type="button" @click="removeCover"
+                                    class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center text-xs hover:bg-black/70">x</button>
+                            </div>
+                            <label class="flex items-center gap-2 w-fit cursor-pointer px-3 py-1.5 border border-gray-300 rounded-lg text-xs text-gray-600 hover:bg-gray-50 transition-colors">
+                                <svg class="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                {{ curzzoCoverDragging ? 'Drop here' : (coverPreview ? 'Change image' : 'Upload or drag & drop cover') }}
+                                <input ref="coverInput" type="file" accept="image/*" class="hidden" @change="onCoverChange" />
+                            </label>
                         </div>
-                        <label class="flex items-center gap-2 w-fit cursor-pointer px-3 py-1.5 border border-gray-300 rounded-lg text-xs text-gray-600 hover:bg-gray-50 transition-colors">
-                            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                            {{ coverPreview ? 'Change image' : 'Upload cover' }}
-                            <input ref="coverInput" type="file" accept="image/*" class="hidden" @change="onCoverChange" />
-                        </label>
                         <p class="text-xs text-gray-400 mt-1">Recommended: 1280 x 720 px</p>
                     </div>
 
@@ -541,6 +547,7 @@ import axios from 'axios';
 import draggable from 'vuedraggable';
 import CommunitySettingsLayout from '@/Layouts/CommunitySettingsLayout.vue';
 import { useCommunityUrl } from '@/composables/useCommunityUrl';
+import { useDropzone } from '@/composables/useDropzone';
 
 const props = defineProps({
     community:  Object,
@@ -630,11 +637,14 @@ function closeForm() {
 }
 
 function onCoverChange(e) {
-    const file = e.target.files?.[0];
+    const file = e instanceof File ? e : e.target.files?.[0];
     if (!file) return;
     form.value.cover_image = file;
     coverPreview.value = URL.createObjectURL(file);
 }
+
+const curzzoCoverDropRef = ref(null);
+const { isDragging: curzzoCoverDragging } = useDropzone(curzzoCoverDropRef, files => onCoverChange(files[0]), { accept: 'image/*' });
 
 function removeCover() {
     form.value.cover_image = null;

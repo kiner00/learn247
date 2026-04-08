@@ -6,7 +6,11 @@
         <form @submit.prevent="saveProfile" class="space-y-5 max-w-lg">
 
             <!-- Avatar upload -->
-            <div class="flex items-center gap-4">
+            <div
+                ref="avatarDropRef"
+                class="flex items-center gap-4 rounded-xl p-2 -m-2 transition-colors"
+                :class="avatarDragging ? 'bg-indigo-50 ring-2 ring-indigo-300 ring-dashed' : ''"
+            >
                 <div class="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center text-xl font-bold text-indigo-600 shrink-0 overflow-hidden">
                     <img
                         v-if="(avatarPreview || profileUser?.avatar) && !avatarBroken"
@@ -19,10 +23,11 @@
                 </div>
                 <div>
                     <label class="cursor-pointer">
-                        <span class="text-sm font-medium text-indigo-600 hover:text-indigo-700 transition-colors">Change profile photo</span>
+                        <span class="text-sm font-medium text-indigo-600 hover:text-indigo-700 transition-colors">Change profile photo (or drag & drop)</span>
                         <input type="file" accept="image/*" class="hidden" @change="onAvatarChange" />
                     </label>
                     <p class="text-xs text-gray-400 mt-0.5">JPG, PNG or GIF — max 5 MB &nbsp;·&nbsp; <span class="font-medium text-gray-500">Recommended: 400 × 400 px</span></p>
+                    <p v-if="avatarDragging" class="text-xs text-indigo-500 font-medium mt-0.5">Drop image here</p>
                 </div>
             </div>
 
@@ -206,6 +211,7 @@
 <script setup>
 import { ref, reactive } from 'vue';
 import { useForm, router } from '@inertiajs/vue3';
+import { useDropzone } from '@/composables/useDropzone';
 
 const props = defineProps({
     profileUser:      { type: Object, required: true },
@@ -249,11 +255,14 @@ const profileForm = useForm({
 });
 
 function onAvatarChange(e) {
-    const file = e.target.files[0];
+    const file = e instanceof File ? e : e.target.files[0];
     if (!file) return;
     profileForm.avatar = file;
     avatarPreview.value = URL.createObjectURL(file);
 }
+
+const avatarDropRef = ref(null);
+const { isDragging: avatarDragging } = useDropzone(avatarDropRef, files => onAvatarChange(files[0]), { accept: 'image/*' });
 
 function saveProfile() {
     profileForm

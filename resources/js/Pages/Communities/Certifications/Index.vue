@@ -61,12 +61,22 @@
 
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1">Certificate Cover Image <span class="text-gray-400 font-normal">(optional, recommended: 1200×800)</span></label>
-                        <div v-if="coverPreview" class="mb-2 flex items-start gap-3">
-                            <img :src="coverPreview" alt="Cover preview" class="h-24 rounded-xl object-cover border border-gray-100" />
-                            <button @click="removeCover" type="button" class="text-xs text-red-400 hover:text-red-600">Remove</button>
+                        <div
+                            ref="certCoverDropRef"
+                            class="rounded-lg transition-colors"
+                            :class="certCoverDragging ? 'ring-2 ring-indigo-300 bg-indigo-50 ring-dashed' : ''"
+                        >
+                            <div v-if="coverPreview" class="mb-2 flex items-start gap-3">
+                                <img :src="coverPreview" alt="Cover preview" class="h-24 rounded-xl object-cover border border-gray-100" />
+                                <button @click="removeCover" type="button" class="text-xs text-red-400 hover:text-red-600">Remove</button>
+                            </div>
+                            <div v-else class="border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-colors"
+                                :class="certCoverDragging ? 'border-indigo-400' : 'border-gray-200 hover:border-indigo-300'"
+                                @click="$refs.certCoverInput.click()">
+                                <p class="text-sm text-gray-500">{{ certCoverDragging ? 'Drop image here' : 'Click or drag & drop cover image' }}</p>
+                                <input ref="certCoverInput" type="file" accept="image/*" class="hidden" @change="onCoverChange" />
+                            </div>
                         </div>
-                        <input v-else type="file" accept="image/*" @change="onCoverChange"
-                            class="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100" />
                     </div>
 
                     <!-- Community Logo -->
@@ -366,6 +376,7 @@ import { useForm, usePage, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import CommunityTabs from '@/Components/CommunityTabs.vue';
 import { IMAGE_DIMENSIONS } from '@/constants';
+import { useDropzone } from '@/composables/useDropzone';
 
 const props = defineProps({
     community:          Object,
@@ -450,11 +461,14 @@ function setCorrect(qi, oi) {
 }
 
 function onCoverChange(event) {
-    const file = event.target.files[0];
+    const file = event instanceof File ? event : event.target.files[0];
     if (!file) return;
     builderForm.cover_image = file;
     coverPreview.value = URL.createObjectURL(file);
 }
+
+const certCoverDropRef = ref(null);
+const { isDragging: certCoverDragging } = useDropzone(certCoverDropRef, files => onCoverChange(files[0]), { accept: 'image/*' });
 
 function removeCover() {
     builderForm.cover_image = null;

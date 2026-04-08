@@ -4,6 +4,7 @@ import { Link, useForm, router } from '@inertiajs/vue3';
 import axios from 'axios';
 import CommunitySettingsLayout from '@/Layouts/CommunitySettingsLayout.vue';
 import { IMAGE_DIMENSIONS } from '@/constants';
+import { useDropzone } from '@/composables/useDropzone';
 
 const CATEGORIES = ['Tech', 'Business', 'Design', 'Health', 'Education', 'Finance', 'Other'];
 
@@ -54,7 +55,7 @@ const imageForm = useForm({
 });
 
 function onCoverChange(e) {
-    const file = e.target.files[0];
+    const file = e instanceof File ? e : e.target.files[0];
     if (!file) return;
     if (file.size > 15 * 1024 * 1024) {
         imageForm.errors.cover_image = 'The banner must not be larger than 15 MB.';
@@ -77,7 +78,7 @@ function removeCover() {
 }
 
 function onAvatarChange(e) {
-    const file = e.target.files[0];
+    const file = e instanceof File ? e : e.target.files[0];
     if (!file) return;
     if (file.size > 15 * 1024 * 1024) {
         imageForm.errors.avatar = 'The avatar must not be larger than 15 MB.';
@@ -119,7 +120,7 @@ const galleryUploading = ref(false);
 const galleryForm      = useForm({ image: null });
 
 function onGalleryFileChange(e) {
-    const file = e.target.files[0] ?? null;
+    const file = e instanceof File ? e : (e.target.files[0] ?? null);
     if (file && file.size > 15 * 1024 * 1024) {
         galleryForm.errors.image = 'The image must not be larger than 15 MB.';
         galleryFile.value = null;
@@ -147,6 +148,13 @@ function uploadGalleryImage() {
 function removeGalleryImage(index) {
     router.delete(`/communities/${props.community.slug}/gallery/${index}`, { preserveScroll: true });
 }
+
+const generalCoverDropRef = ref(null);
+const generalAvatarDropRef = ref(null);
+const galleryDropRef = ref(null);
+const { isDragging: generalCoverDragging } = useDropzone(generalCoverDropRef, files => onCoverChange(files[0]), { accept: 'image/*' });
+const { isDragging: generalAvatarDragging } = useDropzone(generalAvatarDropRef, files => onAvatarChange(files[0]), { accept: 'image/*' });
+const { isDragging: galleryDragging } = useDropzone(galleryDropRef, files => onGalleryFileChange(files[0]), { accept: 'image/*' });
 
 // ─── AI Gallery Generation (one at a time) ──────────────────────────────────
 const aiGalleryGenerating = ref(false);
@@ -461,7 +469,7 @@ function saveBrand() {
             <form @submit.prevent="saveImages">
                 <div class="space-y-5">
                     <!-- Banner -->
-                    <div>
+                    <div ref="generalCoverDropRef" class="rounded-lg transition-colors" :class="generalCoverDragging ? 'ring-2 ring-indigo-300 bg-indigo-50 ring-dashed p-2 -m-2' : ''">
                         <label class="block text-sm font-medium text-gray-700 mb-1.5">Banner Image</label>
                         <div
                             v-if="coverPreview || (community.cover_image && !coverRemoved)"
@@ -478,15 +486,16 @@ function saveBrand() {
                         </div>
                         <label class="flex items-center gap-2 w-fit cursor-pointer px-3.5 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
                             <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                            {{ coverPreview || (community.cover_image && !coverRemoved) ? 'Change banner' : 'Upload banner' }}
+                            {{ coverPreview || (community.cover_image && !coverRemoved) ? 'Change banner' : 'Upload or drag & drop banner' }}
                             <input ref="coverInput" type="file" accept="image/*" class="hidden" @change="onCoverChange" />
                         </label>
                         <p class="mt-1 text-xs text-gray-400">JPG, PNG, WebP — max 15 MB &nbsp;·&nbsp; <span class="font-medium text-gray-500">Recommended: {{ IMAGE_DIMENSIONS.BANNER.width }} × {{ IMAGE_DIMENSIONS.BANNER.height }} px</span></p>
+                        <p v-if="generalCoverDragging" class="text-xs text-indigo-500 font-medium mt-1">Drop image here</p>
                         <p v-if="imageForm.errors.cover_image" class="mt-1 text-xs text-red-600">{{ imageForm.errors.cover_image }}</p>
                     </div>
 
                     <!-- Avatar -->
-                    <div>
+                    <div ref="generalAvatarDropRef" class="rounded-lg transition-colors" :class="generalAvatarDragging ? 'ring-2 ring-indigo-300 bg-indigo-50 ring-dashed p-2 -m-2' : ''">
                         <label class="block text-sm font-medium text-gray-700 mb-1.5">Community Avatar</label>
                         <div
                             v-if="avatarPreview || (community.avatar && !avatarRemoved)"
@@ -503,7 +512,7 @@ function saveBrand() {
                         </div>
                         <label class="flex items-center gap-2 w-fit cursor-pointer px-3.5 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
                             <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                            {{ avatarPreview || (community.avatar && !avatarRemoved) ? 'Change avatar' : 'Upload avatar' }}
+                            {{ avatarPreview || (community.avatar && !avatarRemoved) ? 'Change avatar' : 'Upload or drag & drop avatar' }}
                             <input ref="avatarInput" type="file" accept="image/*" class="hidden" @change="onAvatarChange" />
                         </label>
                         <p class="mt-1 text-xs text-gray-400">Shown as your community icon. JPG, PNG, WebP — max 15 MB &nbsp;·&nbsp; <span class="font-medium text-gray-500">Recommended: {{ IMAGE_DIMENSIONS.AVATAR.width }} × {{ IMAGE_DIMENSIONS.AVATAR.height }} px</span></p>
@@ -750,10 +759,14 @@ function saveBrand() {
 
             <!-- Upload new -->
             <form v-if="!community.gallery_images || community.gallery_images.length < 8" @submit.prevent="uploadGalleryImage">
-                <div class="flex items-center gap-3">
+                <div
+                    ref="galleryDropRef"
+                    class="flex items-center gap-3 rounded-lg transition-colors"
+                    :class="galleryDragging ? 'ring-2 ring-indigo-300 bg-indigo-50 ring-dashed p-2 -m-2' : ''"
+                >
                     <label class="flex items-center gap-2 cursor-pointer px-3.5 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
                         <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                        {{ galleryFile ? galleryFile.name : 'Choose image' }}
+                        {{ galleryDragging ? 'Drop image here' : (galleryFile ? galleryFile.name : 'Choose or drag & drop image') }}
                         <input type="file" accept="image/*" class="hidden" @change="onGalleryFileChange" />
                     </label>
                     <button

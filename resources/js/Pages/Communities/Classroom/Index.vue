@@ -134,16 +134,22 @@
                 <!-- Cover image -->
                 <div class="mb-3">
                     <label class="block text-xs font-medium text-gray-600 mb-1">Cover image <span class="text-gray-400 font-normal">(optional)</span></label>
-                    <div v-if="coverPreview" class="relative mb-2 h-28 rounded-lg overflow-hidden border border-gray-200">
-                        <img :src="coverPreview" class="w-full h-full object-cover" />
-                        <button type="button" @click="removeCover"
-                            class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center text-xs hover:bg-black/70">x</button>
+                    <div
+                        ref="coverDropRef"
+                        class="rounded-lg transition-colors"
+                        :class="coverDragging ? 'ring-2 ring-indigo-300 bg-indigo-50 ring-dashed' : ''"
+                    >
+                        <div v-if="coverPreview" class="relative mb-2 h-28 rounded-lg overflow-hidden border border-gray-200">
+                            <img :src="coverPreview" class="w-full h-full object-cover" />
+                            <button type="button" @click="removeCover"
+                                class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center text-xs hover:bg-black/70">x</button>
+                        </div>
+                        <label class="flex items-center gap-2 w-fit cursor-pointer px-3 py-1.5 border border-gray-300 rounded-lg text-xs text-gray-600 hover:bg-gray-50 transition-colors">
+                            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                            {{ coverDragging ? 'Drop here' : (coverPreview ? 'Change image' : 'Upload or drag & drop cover') }}
+                            <input ref="coverInput" type="file" accept="image/*" class="hidden" @change="onCoverChange" />
+                        </label>
                     </div>
-                    <label class="flex items-center gap-2 w-fit cursor-pointer px-3 py-1.5 border border-gray-300 rounded-lg text-xs text-gray-600 hover:bg-gray-50 transition-colors">
-                        <svg class="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                        {{ coverPreview ? 'Change image' : 'Upload cover' }}
-                        <input ref="coverInput" type="file" accept="image/*" class="hidden" @change="onCoverChange" />
-                    </label>
                     <p class="text-xs text-gray-400 mt-1">Recommended: 1280 x 720 px</p>
                 </div>
 
@@ -566,6 +572,7 @@
 <script setup>
 import { ref, computed, watch, onBeforeUnmount } from 'vue';
 import { Link, useForm, usePage, router } from '@inertiajs/vue3';
+import { useDropzone } from '@/composables/useDropzone';
 
 import axios from 'axios';
 import draggable from 'vuedraggable';
@@ -639,11 +646,14 @@ const inviteUrl = computed(() =>
 const courseForm = useForm({ title: '', description: '', cover_image: null, preview_video: null, preview_video_sound: false, access_type: 'inclusive', price: '', affiliate_commission_rate: '' });
 
 function onCoverChange(e) {
-    const file = e.target.files?.[0];
+    const file = e instanceof File ? e : e.target.files?.[0];
     if (!file) return;
     courseForm.cover_image = file;
     coverPreview.value = URL.createObjectURL(file);
 }
+
+const coverDropRef = ref(null);
+const { isDragging: coverDragging } = useDropzone(coverDropRef, files => onCoverChange(files[0]), { accept: 'image/*' });
 
 function removeCover() {
     courseForm.cover_image = null;
