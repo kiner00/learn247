@@ -122,6 +122,14 @@
                         Invite People
                     </button>
                     <button
+                        v-else-if="$page.props.auth?.user && !isOwner"
+                        @click="community.price > 0 ? showJoinModal = true : directJoinForm.post(`/communities/${community.slug}/join`)"
+                        :disabled="directJoinForm.processing"
+                        class="w-full py-3 bg-amber-400 hover:bg-amber-500 text-gray-900 text-sm font-black rounded-xl tracking-wide uppercase transition-colors shadow-sm"
+                    >
+                        {{ directJoinForm.processing ? 'Joining...' : (community.price > 0 ? `Join · ₱${Number(community.price).toLocaleString()}${community.billing_type === 'one_time' ? '' : '/mo'}` : 'Join Group') }}
+                    </button>
+                    <button
                         v-else-if="!$page.props.auth?.user"
                         @click="showJoinModal = true"
                         class="w-full py-3 bg-amber-400 hover:bg-amber-500 text-gray-900 text-sm font-black rounded-xl tracking-wide uppercase transition-colors shadow-sm"
@@ -351,6 +359,8 @@ const joinForm = useForm({
     email:      '',
     phone:      '',
 });
+
+const directJoinForm = useForm({});
 
 function closeModal() {
     showJoinModal.value = false;
