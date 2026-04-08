@@ -1,4 +1,4 @@
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, watch, onBeforeUnmount } from 'vue';
 
 /**
  * Composable that adds drag-and-drop file support to any element.
@@ -11,6 +11,7 @@ import { ref, onMounted, onBeforeUnmount } from 'vue';
 export function useDropzone(dropRef, onFiles, options = {}) {
     const isDragging = ref(false);
     let dragCounter = 0;
+    let currentEl = null;
 
     function handleDragEnter(e) {
         e.preventDefault();
@@ -33,6 +34,7 @@ export function useDropzone(dropRef, onFiles, options = {}) {
 
     function handleDrop(e) {
         e.preventDefault();
+        e.stopPropagation();
         dragCounter = 0;
         isDragging.value = false;
 
@@ -60,23 +62,32 @@ export function useDropzone(dropRef, onFiles, options = {}) {
         });
     }
 
-    onMounted(() => {
-        const el = dropRef.value?.$el || dropRef.value;
-        if (!el) return;
+    function attach(el) {
+        if (!el || el === currentEl) return;
+        detach();
+        currentEl = el;
         el.addEventListener('dragenter', handleDragEnter);
         el.addEventListener('dragover', handleDragOver);
         el.addEventListener('dragleave', handleDragLeave);
         el.addEventListener('drop', handleDrop);
-    });
+    }
 
-    onBeforeUnmount(() => {
-        const el = dropRef.value?.$el || dropRef.value;
-        if (!el) return;
-        el.removeEventListener('dragenter', handleDragEnter);
-        el.removeEventListener('dragover', handleDragOver);
-        el.removeEventListener('dragleave', handleDragLeave);
-        el.removeEventListener('drop', handleDrop);
-    });
+    function detach() {
+        if (!currentEl) return;
+        currentEl.removeEventListener('dragenter', handleDragEnter);
+        currentEl.removeEventListener('dragover', handleDragOver);
+        currentEl.removeEventListener('dragleave', handleDragLeave);
+        currentEl.removeEventListener('drop', handleDrop);
+        currentEl = null;
+    }
+
+    // Watch the ref so listeners attach when v-if renders the element
+    watch(() => dropRef.value?.$el || dropRef.value, (el) => {
+        if (el) attach(el);
+        else detach();
+    }, { immediate: true, flush: 'post' });
+
+    onBeforeUnmount(() => detach());
 
     return { isDragging };
 }
