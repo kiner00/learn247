@@ -1,7 +1,7 @@
 <template>
     <div class="border border-gray-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent">
         <!-- Toolbar -->
-        <div class="flex items-center gap-0.5 px-2 py-1.5 bg-gray-50 border-b border-gray-200 flex-wrap">
+        <div class="flex items-center gap-0.5 px-2 py-1.5 bg-gray-50 border-b border-gray-200 flex-wrap sticky top-0 z-10">
             <button
                 type="button"
                 @click="editor.chain().focus().toggleBold().run()"
