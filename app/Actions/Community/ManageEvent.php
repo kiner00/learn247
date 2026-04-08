@@ -6,6 +6,7 @@ use App\Models\Community;
 use App\Models\Event;
 use App\Models\User;
 use App\Services\StorageService;
+use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 
 class ManageEvent
@@ -16,13 +17,15 @@ class ManageEvent
     {
         $url = $coverImage ? $this->storage->upload($coverImage, "events/{$community->id}") : null;
 
+        $tz = $data['timezone'] ?? 'UTC';
+
         return $community->events()->create([
             'created_by'  => $creator->id,
             'title'       => $data['title'],
             'description' => $data['description'] ?? null,
-            'start_at'    => $data['start_at'],
-            'end_at'      => $data['end_at'] ?? null,
-            'timezone'    => $data['timezone'],
+            'start_at'    => Carbon::parse($data['start_at'], $tz)->utc(),
+            'end_at'      => isset($data['end_at']) ? Carbon::parse($data['end_at'], $tz)->utc() : null,
+            'timezone'    => $tz,
             'url'         => $data['url'] ?? null,
             'cover_image' => $url,
             'visibility'  => $data['visibility'] ?? 'public',
@@ -34,6 +37,14 @@ class ManageEvent
         if ($coverImage) {
             $this->storage->delete($event->cover_image);
             $data['cover_image'] = $this->storage->upload($coverImage, "events/{$event->community_id}");
+        }
+
+        $tz = $data['timezone'] ?? $event->timezone ?? 'UTC';
+        if (isset($data['start_at'])) {
+            $data['start_at'] = Carbon::parse($data['start_at'], $tz)->utc();
+        }
+        if (isset($data['end_at'])) {
+            $data['end_at'] = Carbon::parse($data['end_at'], $tz)->utc();
         }
 
         $event->update($data);

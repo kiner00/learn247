@@ -331,8 +331,9 @@ const calendarCells = computed(() => {
     const daysInMonth = new Date(year, month, 0).getDate()
     const daysInPrev  = new Date(year, month - 1, 0).getDate()
 
-    const today = new Date()
-    const todayKey = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`
+    const tz = props.userTimezone || Intl.DateTimeFormat().resolvedOptions().timeZone
+    const todayParts = new Date().toLocaleDateString('en-CA', { timeZone: tz }).split('-')
+    const todayKey = `${+todayParts[0]}-${+todayParts[1]}-${+todayParts[2]}`
 
     const cells = []
 
@@ -345,10 +346,9 @@ const calendarCells = computed(() => {
     for (let d = 1; d <= daysInMonth; d++) {
         const key   = `${year}-${month}-${d}`
         const dayEvents = props.events.filter(ev => {
-            const evDate = new Date(ev.start_at)
-            return evDate.getFullYear() === year
-                && evDate.getMonth() + 1 === month
-                && evDate.getDate() === d
+            const tz = props.userTimezone || Intl.DateTimeFormat().resolvedOptions().timeZone
+            const parts = new Date(ev.start_at).toLocaleDateString('en-CA', { timeZone: tz }).split('-')
+            return +parts[0] === year && +parts[1] === month && +parts[2] === d
         })
         cells.push({
             day: d,
@@ -427,11 +427,10 @@ const submitting  = ref(false)
 const formError   = ref('')
 const coverFile   = ref(null)
 
-// Returns current datetime in datetime-local format (YYYY-MM-DDTHH:MM)
+// Returns current datetime in datetime-local format (YYYY-MM-DDTHH:MM) in user's timezone
 const nowLocal = computed(() => {
-    const now = new Date()
-    now.setSeconds(0, 0)
-    return now.toISOString().slice(0, 16)
+    const tz = props.userTimezone || Intl.DateTimeFormat().resolvedOptions().timeZone
+    return new Date().toLocaleString('sv-SE', { timeZone: tz }).replace(' ', 'T').slice(0, 16)
 })
 
 // Clear end if it's now before the new start
@@ -469,12 +468,17 @@ function openCreateModal() {
 
 function openEditModal(ev) {
     editingEvent.value = ev
-    const toLocal = (iso) => iso ? iso.slice(0, 16) : ''
+    const toLocal = (iso, tz) => {
+        if (!iso) return ''
+        const d = new Date(iso)
+        const parts = d.toLocaleString('sv-SE', { timeZone: tz || props.userTimezone || 'UTC' }).replace(' ', 'T')
+        return parts.slice(0, 16)
+    }
     form.value = {
         title:       ev.title,
         description: ev.description || '',
-        start_at:    toLocal(ev.start_at),
-        end_at:      toLocal(ev.end_at),
+        start_at:    toLocal(ev.start_at, ev.timezone),
+        end_at:      toLocal(ev.end_at, ev.timezone),
         timezone:    ev.timezone,
         url:         ev.url || '',
         visibility:  ev.visibility ?? 'public',
