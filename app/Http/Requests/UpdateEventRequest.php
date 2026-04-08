@@ -15,7 +15,7 @@ class UpdateEventRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         if ($file = $this->file('cover_image')) {
-            Log::info('Event cover_image upload debug', [
+            Log::error('Event cover_image upload debug', [
                 'error_code'   => $file->getError(),
                 'error_msg'    => $file->getErrorMessage(),
                 'size'         => $file->getSize(),
@@ -24,7 +24,7 @@ class UpdateEventRequest extends FormRequest
                 'mimeType'     => $file->getClientMimeType(),
             ]);
         } else {
-            Log::info('Event cover_image: no file received in request', [
+            Log::error('Event cover_image: no file received in request', [
                 'has_file'   => $this->hasFile('cover_image'),
                 'all_files'  => array_keys($this->allFiles()),
                 'content_type' => $this->header('Content-Type'),
