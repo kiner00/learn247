@@ -386,9 +386,12 @@
                                         v-if="menuOpen"
                                         class="absolute right-0 mt-1.5 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl overflow-hidden origin-top-right z-50"
                                     >
-                                        <!-- Email -->
+                                        <!-- Email + CXP -->
                                         <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
                                             <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ $page.props.auth.user.email }}</p>
+                                            <div class="flex items-center gap-1.5 mt-1.5">
+                                                <span class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-full">CXP {{ $page.props.auth.user.cxp_balance ?? 0 }}</span>
+                                            </div>
                                         </div>
 
                                         <!-- Primary actions (hidden on custom domain) -->

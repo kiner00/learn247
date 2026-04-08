@@ -1,12 +1,550 @@
+<template>
+    <CommunitySettingsLayout :community="community">
+        <div class="flex items-center justify-between mb-1">
+            <h2 class="text-2xl font-bold text-gray-900">
+                Curzzos
+                <span class="ml-1.5 text-sm font-normal text-gray-400">{{ curzzos.length }}</span>
+            </h2>
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-bold bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full">⭐ Pro</span>
+                <button
+                    v-if="creatorPlan === 'pro' && !showForm"
+                    @click="showForm = true"
+                    class="px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition-colors"
+                >
+                    + New Curzzo
+                </button>
+            </div>
+        </div>
+        <p class="text-sm text-gray-500 mb-6">Create custom AI bots that your members can chat with. Each Curzzo has its own personality, expertise, and instructions.</p>
+
+        <!-- Locked for non-Pro -->
+        <div v-if="creatorPlan !== 'pro'" class="rounded-xl border border-indigo-100 bg-indigo-50 px-5 py-6 text-center">
+            <p class="text-sm font-semibold text-indigo-800 mb-1">Creator Pro feature</p>
+            <p class="text-xs text-indigo-600 mb-3">Upgrade to create custom AI bots for your community.</p>
+            <Link href="/creator/plan" class="inline-block px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors">
+                Upgrade to Creator Pro →
+            </Link>
+        </div>
+
+        <!-- PRO content -->
+        <template v-else>
+            <!-- New Curzzo form (inline, like courses) -->
+            <div v-if="showForm" class="bg-white border border-indigo-200 rounded-2xl p-5 shadow-sm mb-6">
+                <h2 class="text-sm font-bold text-gray-900 mb-3">New Curzzo</h2>
+                <form @submit.prevent="createCurzzo">
+                    <input
+                        v-model="form.name"
+                        type="text"
+                        placeholder="Curzzo title"
+                        required
+                        maxlength="100"
+                        class="w-full px-3.5 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-2"
+                    />
+                    <textarea
+                        v-model="form.description"
+                        rows="2"
+                        placeholder="Description (optional)"
+                        maxlength="500"
+                        class="w-full px-3.5 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none mb-3"
+                    />
+
+                    <!-- Access type -->
+                    <div class="mb-3">
+                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Access</label>
+                        <div class="flex gap-2">
+                            <label :class="['flex-1 cursor-pointer rounded-lg border-2 p-2.5 text-center transition-all',
+                                form.access_type === 'free' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300']">
+                                <input type="radio" value="free" v-model="form.access_type" class="sr-only" />
+                                <div class="text-base mb-0.5">🌐</div>
+                                <div class="text-xs font-semibold text-gray-800">Free</div>
+                                <div class="text-[10px] text-gray-400 leading-tight mt-0.5">Anyone can access</div>
+                            </label>
+                            <label :class="['flex-1 cursor-pointer rounded-lg border-2 p-2.5 text-center transition-all',
+                                form.access_type === 'inclusive' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300']">
+                                <input type="radio" value="inclusive" v-model="form.access_type" class="sr-only" />
+                                <div class="text-base mb-0.5">⭐</div>
+                                <div class="text-xs font-semibold text-gray-800">Included</div>
+                                <div class="text-[10px] text-gray-400 leading-tight mt-0.5">Members only</div>
+                            </label>
+                            <label :class="['flex-1 cursor-pointer rounded-lg border-2 p-2.5 text-center transition-all',
+                                form.access_type === 'member_once' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300']">
+                                <input type="radio" value="member_once" v-model="form.access_type" class="sr-only" />
+                                <div class="text-base mb-0.5">🎟️</div>
+                                <div class="text-xs font-semibold text-gray-800">One-Time</div>
+                                <div class="text-[10px] text-gray-400 leading-tight mt-0.5">Past members included</div>
+                            </label>
+                            <label :class="['flex-1 cursor-pointer rounded-lg border-2 p-2.5 text-center transition-all',
+                                isPaidType(form.access_type) ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300']"
+                                @click="selectPaidIfNeeded(form)">
+                                <div class="text-base mb-0.5">💳</div>
+                                <div class="text-xs font-semibold text-gray-800">Paid</div>
+                                <div class="text-[10px] text-gray-400 leading-tight mt-0.5">Separate payment</div>
+                            </label>
+                        </div>
+                        <!-- Paid sub-choice -->
+                        <div v-if="isPaidType(form.access_type)" class="mt-2 flex gap-2 pl-0.5">
+                            <label :class="['flex-1 cursor-pointer rounded-lg border px-3 py-2 flex items-center gap-2 transition-all',
+                                form.access_type === 'paid_once' ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 hover:border-gray-300']">
+                                <input type="radio" value="paid_once" v-model="form.access_type" class="accent-indigo-600" />
+                                <div>
+                                    <div class="text-xs font-semibold text-gray-800">One-time</div>
+                                    <div class="text-[10px] text-gray-400">Pay once, access forever</div>
+                                </div>
+                            </label>
+                            <label :class="['flex-1 cursor-pointer rounded-lg border px-3 py-2 flex items-center gap-2 transition-all',
+                                form.access_type === 'paid_monthly' ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 hover:border-gray-300']">
+                                <input type="radio" value="paid_monthly" v-model="form.access_type" class="accent-indigo-600" />
+                                <div>
+                                    <div class="text-xs font-semibold text-gray-800">Monthly</div>
+                                    <div class="text-[10px] text-gray-400">Recurring monthly payment</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Price (paid types) -->
+                    <div v-if="isPaidType(form.access_type)" class="mb-3">
+                        <label class="block text-xs font-medium text-gray-600 mb-1">
+                            Price (PHP)
+                            <span class="text-gray-400 font-normal">{{ form.access_type === 'paid_monthly' ? '/ month' : '· one-time' }}</span>
+                        </label>
+                        <input v-model="form.price" type="number" min="1" step="0.01" required placeholder="e.g. 1500"
+                            class="w-48 px-3.5 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                    </div>
+
+                    <!-- Affiliate commission (paid types) -->
+                    <div v-if="isPaidType(form.access_type)" class="mb-3">
+                        <label class="block text-xs font-medium text-gray-600 mb-1">
+                            Affiliate commission
+                            <span class="text-gray-400 font-normal">· % of sale price paid to referring affiliate</span>
+                        </label>
+                        <div class="flex items-center gap-2">
+                            <input v-model="form.affiliate_commission_rate" type="number" min="0" max="100" step="1" placeholder="e.g. 30"
+                                class="w-24 px-3.5 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                            <span class="text-sm text-gray-500">%</span>
+                            <span v-if="form.affiliate_commission_rate && form.price" class="text-xs text-gray-400">
+                                = ₱{{ (form.price * form.affiliate_commission_rate / 100).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) }} per sale
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Cover image -->
+                    <div class="mb-3">
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Cover image <span class="text-gray-400 font-normal">(optional)</span></label>
+                        <div v-if="coverPreview" class="relative mb-2 h-28 rounded-lg overflow-hidden border border-gray-200">
+                            <img :src="coverPreview" class="w-full h-full object-cover" />
+                            <button type="button" @click="removeCover"
+                                class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center text-xs hover:bg-black/70">x</button>
+                        </div>
+                        <label class="flex items-center gap-2 w-fit cursor-pointer px-3 py-1.5 border border-gray-300 rounded-lg text-xs text-gray-600 hover:bg-gray-50 transition-colors">
+                            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                            {{ coverPreview ? 'Change image' : 'Upload cover' }}
+                            <input ref="coverInput" type="file" accept="image/*" class="hidden" @change="onCoverChange" />
+                        </label>
+                        <p class="text-xs text-gray-400 mt-1">Recommended: 1280 x 720 px</p>
+                    </div>
+
+                    <!-- Preview video (Pro only) -->
+                    <div class="mb-3">
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Preview video <span class="text-gray-400 font-normal">(optional)</span></label>
+                        <div v-if="videoPreview" class="relative mb-2 aspect-video rounded-lg overflow-hidden border border-gray-200 bg-black">
+                            <video :src="videoPreview" class="w-full h-full object-cover" muted playsinline />
+                            <button type="button" @click="removeVideo"
+                                class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center text-xs hover:bg-black/70">x</button>
+                        </div>
+                        <div v-if="videoUploading" class="mb-2">
+                            <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                <div class="h-full bg-indigo-500 rounded-full transition-all" :style="{ width: `${videoUploadProgress}%` }" />
+                            </div>
+                            <p class="text-xs text-gray-400 mt-1">Uploading... {{ videoUploadProgress }}%</p>
+                        </div>
+                        <p v-if="videoUploadError" class="text-xs text-red-500 mb-1">{{ videoUploadError }}</p>
+                        <label v-if="!videoUploading" class="flex items-center gap-2 w-fit cursor-pointer px-3 py-1.5 border border-gray-300 rounded-lg text-xs text-gray-600 hover:bg-gray-50 transition-colors">
+                            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                            {{ videoPreview ? 'Change video' : 'Upload preview' }}
+                            <input ref="videoInput" type="file" accept="video/mp4,video/quicktime,video/webm" class="hidden" @change="onVideoChange" />
+                        </label>
+                        <p class="text-xs text-gray-400 mt-1">MP4 recommended, 1280 x 720 px, max 500 MB. Plays on hover.</p>
+                    </div>
+
+                    <!-- Curzzo Instructions -->
+                    <div class="mb-3">
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Curzzo Instructions</label>
+                        <textarea v-model="form.instructions" rows="6" required maxlength="5000"
+                            placeholder="Define the bot's behavior, knowledge, and rules. e.g. You are a script writing expert who helps members create viral short-form video scripts. Always provide 3 hook options and a clear call-to-action."
+                            class="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
+                        <p class="text-xs text-gray-400 mt-1">This defines the bot's personality and behavior. Be specific about what it should do and how it should respond.</p>
+                    </div>
+
+                    <!-- Model Tier -->
+                    <div v-if="modelTiers.length" class="mb-3">
+                        <label class="block text-xs font-medium text-gray-600 mb-2">AI Model</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button v-for="tier in modelTiers" :key="tier.value"
+                                type="button" @click="form.model_tier = tier.value"
+                                :class="[
+                                    'relative rounded-xl border-2 p-3 text-left transition-all',
+                                    form.model_tier === tier.value
+                                        ? 'border-indigo-600 bg-indigo-50 ring-1 ring-indigo-600'
+                                        : 'border-gray-200 hover:border-gray-300'
+                                ]">
+                                <div class="text-sm font-semibold text-gray-900">{{ tier.label }}</div>
+                                <div class="text-xs text-gray-500 mt-0.5">{{ tier.description }}</div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Personality -->
+                    <div class="mb-3">
+                        <label class="block text-xs font-medium text-gray-600 mb-1.5">Personality</label>
+                        <div class="grid grid-cols-2 gap-3 mb-2">
+                            <div>
+                                <label class="block text-[11px] text-gray-500 mb-0.5">Tone</label>
+                                <select v-model="form.personality_tone"
+                                    class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    <option v-for="t in TONES" :key="t.value" :value="t.value">{{ t.label }}</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-gray-500 mb-0.5">Response Style</label>
+                                <select v-model="form.personality_response_style"
+                                    class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    <option v-for="s in STYLES" :key="s.value" :value="s.value">{{ s.label }}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-gray-500 mb-0.5">Expertise</label>
+                            <input v-model="form.personality_expertise" type="text" maxlength="200"
+                                placeholder="e.g. Script writing, Sales strategies, Fitness coaching"
+                                class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2 justify-end">
+                        <button type="button" @click="closeForm" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">Cancel</button>
+                        <button type="submit" :disabled="saving || !form.name.trim() || !form.instructions.trim()"
+                            class="px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-50">
+                            {{ saving ? 'Creating...' : 'Create Curzzo' }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Curzzo card grid (draggable) -->
+            <template v-if="localCurzzos.length">
+                <p class="text-xs text-gray-400 mb-3">Drag to reorder. {{ localCurzzos.length }} / 5 bots</p>
+                <draggable
+                    v-model="localCurzzos"
+                    item-key="id"
+                    class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
+                    handle=".drag-handle"
+                    @end="onReorder"
+                >
+                    <template #item="{ element: bot }">
+                        <div class="relative group h-full">
+                            <div class="flex flex-col h-full bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100">
+                                <!-- Cover image -->
+                                <div class="relative aspect-video bg-gray-900 overflow-hidden shrink-0">
+                                    <img v-if="bot.cover_image" :src="bot.cover_image" :alt="bot.name"
+                                        class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                                    <div v-else class="w-full h-full bg-gradient-to-br from-indigo-600 to-purple-700 flex items-center justify-center">
+                                        <span class="text-4xl font-black text-white/20 select-none">{{ bot.name.charAt(0).toUpperCase() }}</span>
+                                    </div>
+                                    <!-- Avatar overlay -->
+                                    <div v-if="bot.avatar" class="absolute bottom-2.5 left-2.5 w-8 h-8 rounded-full border-2 border-white overflow-hidden shadow-sm">
+                                        <img :src="bot.avatar" :alt="bot.name" class="w-full h-full object-cover" />
+                                    </div>
+                                </div>
+                                <!-- Content -->
+                                <div class="p-4 flex flex-col flex-1">
+                                    <div class="flex items-start justify-between gap-2 mb-1">
+                                        <h3 class="font-bold text-gray-900 group-hover:text-indigo-700 transition-colors line-clamp-1">{{ bot.name }}</h3>
+                                        <span v-if="bot.access_type === 'free' || !bot.access_type" class="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-green-100 text-green-700">FREE</span>
+                                        <span v-else-if="bot.access_type === 'inclusive'" class="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">INCLUDED</span>
+                                        <span v-else-if="bot.access_type === 'member_once'" class="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700">ONE-TIME</span>
+                                        <span v-else class="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                                            ₱{{ Number(bot.price).toLocaleString() }}{{ bot.access_type === 'paid_monthly' ? '/mo' : '' }}
+                                        </span>
+                                    </div>
+                                    <p class="text-sm text-gray-500 line-clamp-2 leading-relaxed flex-1">{{ bot.description ?? '' }}</p>
+                                    <div class="flex items-center gap-2 mt-2 pt-2 border-t border-gray-100">
+                                        <span class="px-1.5 py-0.5 text-[10px] font-bold rounded-full"
+                                            :class="bot.model_tier === 'pro' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-500'">
+                                            {{ tierMap[bot.model_tier] ?? bot.model_tier }}
+                                        </span>
+                                        <span v-if="bot.is_active" class="px-1.5 py-0.5 text-[10px] font-bold bg-green-100 text-green-700 rounded-full">Active</span>
+                                        <span v-else class="px-1.5 py-0.5 text-[10px] font-bold bg-gray-100 text-gray-500 rounded-full">Inactive</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Owner controls overlay -->
+                            <div class="absolute top-2.5 left-2.5 flex gap-1.5 z-10">
+                                <div class="drag-handle w-7 h-7 bg-black/50 hover:bg-black/80 text-white rounded-full flex items-center justify-center cursor-grab active:cursor-grabbing" title="Drag to reorder">
+                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 8h16M4 16h16"/>
+                                    </svg>
+                                </div>
+                                <button @click.prevent="openEdit(bot)"
+                                    class="w-7 h-7 bg-black/50 hover:bg-black/80 text-white rounded-full flex items-center justify-center transition-colors" title="Edit">
+                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536M9 11l6-6 3 3-6 6H9v-3z"/>
+                                    </svg>
+                                </button>
+                                <button @click.prevent="toggleActive(bot)"
+                                    :class="['w-7 h-7 rounded-full flex items-center justify-center transition-colors text-white',
+                                        bot.is_active ? 'bg-green-500/80 hover:bg-green-600' : 'bg-red-500/80 hover:bg-red-600']"
+                                    :title="bot.is_active ? 'Active · click to deactivate' : 'Inactive · click to activate'">
+                                    <svg v-if="bot.is_active" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                    <svg v-else class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                                    </svg>
+                                </button>
+                                <button @click.prevent="deleteBot(bot)"
+                                    class="w-7 h-7 bg-black/50 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-colors" title="Delete">
+                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <!-- Inactive badge -->
+                            <div v-if="!bot.is_active" class="absolute bottom-[calc(56%+8px)] right-2.5 z-10">
+                                <span class="px-2 py-0.5 bg-yellow-400 text-yellow-900 text-[10px] font-bold rounded-full uppercase tracking-wide">Inactive</span>
+                            </div>
+                        </div>
+                    </template>
+                </draggable>
+            </template>
+
+            <!-- Empty state -->
+            <div v-if="!curzzos.length && !showForm" class="bg-white border border-gray-200 rounded-2xl p-12 text-center">
+                <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-indigo-100 flex items-center justify-center">
+                    <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"/>
+                    </svg>
+                </div>
+                <h3 class="text-base font-semibold text-gray-900 mb-1">No Curzzos yet</h3>
+                <p class="text-sm text-gray-500 mb-4">Create your first AI bot to help engage your community members.</p>
+                <button @click="showForm = true"
+                    class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors">
+                    Create your first Curzzo
+                </button>
+            </div>
+        </template>
+
+        <!-- Edit Curzzo modal -->
+        <Teleport to="body">
+            <div v-if="editingBot" class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" @click.self="editingBot = null">
+                <div class="bg-white rounded-2xl w-full max-w-lg p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+                    <h2 class="text-base font-bold text-gray-900 mb-4">Edit Curzzo</h2>
+                    <form @submit.prevent="submitEdit">
+                        <input v-model="editForm.name" type="text" required maxlength="100" placeholder="Curzzo title"
+                            class="w-full px-3.5 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-2" />
+                        <textarea v-model="editForm.description" rows="2" placeholder="Description (optional)" maxlength="500"
+                            class="w-full px-3.5 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none mb-3" />
+
+                        <!-- Access type -->
+                        <div class="mb-3">
+                            <label class="block text-xs font-medium text-gray-600 mb-1.5">Access</label>
+                            <div class="flex gap-2">
+                                <label :class="['flex-1 cursor-pointer rounded-lg border-2 p-2.5 text-center transition-all',
+                                    editForm.access_type === 'free' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300']">
+                                    <input type="radio" value="free" v-model="editForm.access_type" class="sr-only" />
+                                    <div class="text-base mb-0.5">🌐</div>
+                                    <div class="text-xs font-semibold text-gray-800">Free</div>
+                                    <div class="text-[10px] text-gray-400 leading-tight mt-0.5">Anyone can access</div>
+                                </label>
+                                <label :class="['flex-1 cursor-pointer rounded-lg border-2 p-2.5 text-center transition-all',
+                                    editForm.access_type === 'inclusive' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300']">
+                                    <input type="radio" value="inclusive" v-model="editForm.access_type" class="sr-only" />
+                                    <div class="text-base mb-0.5">⭐</div>
+                                    <div class="text-xs font-semibold text-gray-800">Included</div>
+                                    <div class="text-[10px] text-gray-400 leading-tight mt-0.5">Members only</div>
+                                </label>
+                                <label :class="['flex-1 cursor-pointer rounded-lg border-2 p-2.5 text-center transition-all',
+                                    editForm.access_type === 'member_once' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300']">
+                                    <input type="radio" value="member_once" v-model="editForm.access_type" class="sr-only" />
+                                    <div class="text-base mb-0.5">🎟️</div>
+                                    <div class="text-xs font-semibold text-gray-800">One-Time</div>
+                                    <div class="text-[10px] text-gray-400 leading-tight mt-0.5">Past members included</div>
+                                </label>
+                                <label :class="['flex-1 cursor-pointer rounded-lg border-2 p-2.5 text-center transition-all',
+                                    isPaidType(editForm.access_type) ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300']"
+                                    @click="selectPaidIfNeeded(editForm)">
+                                    <div class="text-base mb-0.5">💳</div>
+                                    <div class="text-xs font-semibold text-gray-800">Paid</div>
+                                    <div class="text-[10px] text-gray-400 leading-tight mt-0.5">Separate payment</div>
+                                </label>
+                            </div>
+                            <div v-if="isPaidType(editForm.access_type)" class="mt-2 flex gap-2">
+                                <label :class="['flex-1 cursor-pointer rounded-lg border px-3 py-2 flex items-center gap-2 transition-all',
+                                    editForm.access_type === 'paid_once' ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 hover:border-gray-300']">
+                                    <input type="radio" value="paid_once" v-model="editForm.access_type" class="accent-indigo-600" />
+                                    <div>
+                                        <div class="text-xs font-semibold text-gray-800">One-time</div>
+                                        <div class="text-[10px] text-gray-400">Pay once, access forever</div>
+                                    </div>
+                                </label>
+                                <label :class="['flex-1 cursor-pointer rounded-lg border px-3 py-2 flex items-center gap-2 transition-all',
+                                    editForm.access_type === 'paid_monthly' ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 hover:border-gray-300']">
+                                    <input type="radio" value="paid_monthly" v-model="editForm.access_type" class="accent-indigo-600" />
+                                    <div>
+                                        <div class="text-xs font-semibold text-gray-800">Monthly</div>
+                                        <div class="text-[10px] text-gray-400">Recurring monthly payment</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Price -->
+                        <div v-if="isPaidType(editForm.access_type)" class="mb-3">
+                            <label class="block text-xs font-medium text-gray-600 mb-1">
+                                Price (PHP)
+                                <span class="text-gray-400 font-normal">{{ editForm.access_type === 'paid_monthly' ? '/ month' : '· one-time' }}</span>
+                            </label>
+                            <input v-model="editForm.price" type="number" min="1" step="0.01" required placeholder="e.g. 1500"
+                                class="w-48 px-3.5 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                        </div>
+
+                        <!-- Affiliate commission -->
+                        <div v-if="isPaidType(editForm.access_type)" class="mb-3">
+                            <label class="block text-xs font-medium text-gray-600 mb-1">
+                                Affiliate commission
+                                <span class="text-gray-400 font-normal">· %</span>
+                            </label>
+                            <div class="flex items-center gap-2">
+                                <input v-model="editForm.affiliate_commission_rate" type="number" min="0" max="100" step="1" placeholder="e.g. 30"
+                                    class="w-24 px-3.5 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                <span class="text-sm text-gray-500">%</span>
+                            </div>
+                        </div>
+
+                        <!-- Cover image -->
+                        <div class="mb-4">
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Cover image</label>
+                            <div class="relative mb-2 aspect-video rounded-lg overflow-hidden border border-gray-200 bg-gray-900">
+                                <img v-if="editCoverPreview || editingBot.cover_image"
+                                    :src="editCoverPreview || editingBot.cover_image"
+                                    class="w-full h-full object-cover" />
+                                <div v-else class="w-full h-full bg-gradient-to-br from-indigo-600 to-purple-700 flex items-center justify-center">
+                                    <span class="text-3xl font-black text-white/20">{{ editingBot.name.charAt(0) }}</span>
+                                </div>
+                                <label class="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/50 cursor-pointer transition-colors group/img">
+                                    <span class="text-white text-xs font-semibold bg-black/50 px-3 py-1.5 rounded-full group-hover/img:bg-black/70">
+                                        {{ editCoverPreview ? 'Change photo' : 'Upload photo' }}
+                                    </span>
+                                    <input ref="editCoverInput" type="file" accept="image/*" class="hidden" @change="onEditCoverChange" />
+                                </label>
+                            </div>
+                            <p class="text-xs text-gray-400">Recommended: 1280 x 720 px</p>
+                        </div>
+
+                        <!-- Preview video -->
+                        <div class="mb-4">
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Preview video</label>
+                            <div v-if="editVideoPreview || editingBot.preview_video" class="relative mb-2 aspect-video rounded-lg overflow-hidden border border-gray-200 bg-black">
+                                <video :src="editVideoPreview || editingBot.preview_video" class="w-full h-full object-cover" muted playsinline />
+                                <button type="button" @click="removeEditVideo"
+                                    class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center text-xs hover:bg-black/70">x</button>
+                            </div>
+                            <div v-if="editVideoUploading" class="mb-2">
+                                <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                    <div class="h-full bg-indigo-500 rounded-full transition-all" :style="{ width: `${editVideoUploadProgress}%` }" />
+                                </div>
+                                <p class="text-xs text-gray-400 mt-1">Uploading... {{ editVideoUploadProgress }}%</p>
+                            </div>
+                            <p v-if="editVideoUploadError" class="text-xs text-red-500 mb-1">{{ editVideoUploadError }}</p>
+                            <label v-if="!editVideoUploading" class="flex items-center gap-2 w-fit cursor-pointer px-3 py-1.5 border border-gray-300 rounded-lg text-xs text-gray-600 hover:bg-gray-50 transition-colors">
+                                <svg class="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                {{ (editVideoPreview || editingBot.preview_video) ? 'Change video' : 'Upload preview' }}
+                                <input ref="editVideoInput" type="file" accept="video/mp4,video/quicktime,video/webm" class="hidden" @change="onEditVideoChange" />
+                            </label>
+                            <p class="text-xs text-gray-400 mt-1">MP4 recommended, 1280 x 720 px, max 500 MB.</p>
+                        </div>
+
+                        <!-- Instructions -->
+                        <div class="mb-3">
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Curzzo Instructions</label>
+                            <textarea v-model="editForm.instructions" rows="6" required maxlength="5000"
+                                placeholder="Define the bot's behavior, knowledge, and rules..."
+                                class="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
+                        </div>
+
+                        <!-- Model Tier -->
+                        <div v-if="modelTiers.length" class="mb-3">
+                            <label class="block text-xs font-medium text-gray-600 mb-2">AI Model</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <button v-for="tier in modelTiers" :key="tier.value"
+                                    type="button" @click="editForm.model_tier = tier.value"
+                                    :class="[
+                                        'relative rounded-xl border-2 p-3 text-left transition-all',
+                                        editForm.model_tier === tier.value
+                                            ? 'border-indigo-600 bg-indigo-50 ring-1 ring-indigo-600'
+                                            : 'border-gray-200 hover:border-gray-300'
+                                    ]">
+                                    <div class="text-sm font-semibold text-gray-900">{{ tier.label }}</div>
+                                    <div class="text-xs text-gray-500 mt-0.5">{{ tier.description }}</div>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Personality -->
+                        <div class="mb-3">
+                            <label class="block text-xs font-medium text-gray-600 mb-1.5">Personality</label>
+                            <div class="grid grid-cols-2 gap-3 mb-2">
+                                <div>
+                                    <label class="block text-[11px] text-gray-500 mb-0.5">Tone</label>
+                                    <select v-model="editForm.personality_tone"
+                                        class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                        <option v-for="t in TONES" :key="t.value" :value="t.value">{{ t.label }}</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] text-gray-500 mb-0.5">Response Style</label>
+                                    <select v-model="editForm.personality_response_style"
+                                        class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                        <option v-for="s in STYLES" :key="s.value" :value="s.value">{{ s.label }}</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-gray-500 mb-0.5">Expertise</label>
+                                <input v-model="editForm.personality_expertise" type="text" maxlength="200"
+                                    placeholder="e.g. Script writing, Sales strategies"
+                                    class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2 justify-end">
+                            <button type="button" @click="editingBot = null; editCoverPreview = null"
+                                class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">Cancel</button>
+                            <button type="submit" :disabled="editSaving"
+                                class="px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-50">
+                                {{ editSaving ? 'Saving...' : 'Save changes' }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </Teleport>
+    </CommunitySettingsLayout>
+</template>
+
 <script setup>
-import { ref, reactive, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
+import axios from 'axios';
+import draggable from 'vuedraggable';
 import CommunitySettingsLayout from '@/Layouts/CommunitySettingsLayout.vue';
 import { useCommunityUrl } from '@/composables/useCommunityUrl';
 
 const props = defineProps({
-    community: Object,
-    isPro:     { type: Boolean, default: false },
+    community:  Object,
+    isPro:      { type: Boolean, default: false },
     curzzos:    { type: Array, default: () => [] },
     modelTiers: { type: Array, default: () => [] },
 });
@@ -32,375 +570,293 @@ const STYLES = [
     { value: 'conversational', label: 'Conversational' },
 ];
 
-// Modal state
-const showModal    = ref(false);
-const editingBot   = ref(null);
-const saving       = ref(false);
-const formError    = ref('');
-const avatarInput  = ref(null);
-const avatarPreview = ref(null);
+const isPaidType = (type) => type === 'paid_once' || type === 'paid_monthly';
+const selectPaidIfNeeded = (f) => { if (!isPaidType(f.access_type)) f.access_type = 'paid_once'; };
 
-const form = reactive({
+// ── Local copy for draggable ───────────────────────────────────────────────
+const localCurzzos = ref([...props.curzzos]);
+watch(() => props.curzzos, (val) => { localCurzzos.value = [...val]; });
+
+function onReorder() {
+    router.post(communityPath('/curzzos/reorder'), {
+        ids: localCurzzos.value.map(c => c.id),
+    }, { preserveScroll: true });
+}
+
+// ── Create form ─────────────────────────────────────────────────────────────
+const showForm      = ref(false);
+const saving        = ref(false);
+const coverPreview  = ref(null);
+const coverInput    = ref(null);
+const videoPreview       = ref(null);
+const videoInput         = ref(null);
+const videoUploading     = ref(false);
+const videoUploadProgress = ref(0);
+const videoUploadError   = ref('');
+
+const form = ref({
     name: '',
     description: '',
     instructions: '',
-    personality: { tone: '', expertise: '', response_style: '' },
-    avatar: null,
-    remove_avatar: false,
-    model_tier: 'basic',
-    is_active: true,
+    access_type: 'free',
     price: '',
-    currency: 'PHP',
-    billing_type: 'one_time',
     affiliate_commission_rate: '',
+    cover_image: null,
+    preview_video: null,
+    model_tier: 'basic',
+    personality_tone: '',
+    personality_response_style: '',
+    personality_expertise: '',
 });
 
 function resetForm() {
-    form.name = '';
-    form.description = '';
-    form.instructions = '';
-    form.personality = { tone: '', expertise: '', response_style: '' };
-    form.avatar = null;
-    form.remove_avatar = false;
-    form.model_tier = 'basic';
-    form.is_active = true;
-    form.price = '';
-    form.currency = 'PHP';
-    form.billing_type = 'one_time';
-    form.affiliate_commission_rate = '';
-    avatarPreview.value = null;
-    formError.value = '';
+    form.value = {
+        name: '', description: '', instructions: '',
+        access_type: 'free', price: '', affiliate_commission_rate: '',
+        cover_image: null, preview_video: null,
+        model_tier: 'basic',
+        personality_tone: '', personality_response_style: '', personality_expertise: '',
+    };
+    coverPreview.value = null;
+    videoPreview.value = null;
+    videoUploadError.value = '';
+    if (coverInput.value) coverInput.value.value = '';
+    if (videoInput.value) videoInput.value.value = '';
 }
 
-function openCreate() {
-    editingBot.value = null;
+function closeForm() {
     resetForm();
-    showModal.value = true;
+    showForm.value = false;
 }
+
+function onCoverChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    form.value.cover_image = file;
+    coverPreview.value = URL.createObjectURL(file);
+}
+
+function removeCover() {
+    form.value.cover_image = null;
+    coverPreview.value = null;
+    if (coverInput.value) coverInput.value.value = '';
+}
+
+async function onVideoChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    videoUploading.value = true;
+    videoUploadProgress.value = 0;
+    videoUploadError.value = '';
+
+    try {
+        const { data } = await axios.post(communityPath('/curzzos/preview-videos'), {
+            filename: file.name,
+            content_type: file.type,
+            size: file.size,
+        });
+
+        const { default: rawAxios } = await import('axios');
+        const s3Client = rawAxios.create({ withCredentials: false });
+        await s3Client.put(data.upload_url, file, {
+            headers: { 'Content-Type': file.type },
+            onUploadProgress: (p) => { videoUploadProgress.value = Math.round((p.loaded / p.total) * 100); },
+        });
+
+        form.value.preview_video = data.key;
+        videoPreview.value = URL.createObjectURL(file);
+    } catch (err) {
+        videoUploadError.value = err.response?.data?.error || err.response?.data?.message || 'Upload failed. Please try again.';
+    } finally {
+        videoUploading.value = false;
+        e.target.value = '';
+    }
+}
+
+function removeVideo() {
+    form.value.preview_video = null;
+    videoPreview.value = null;
+    videoUploadError.value = '';
+    if (videoInput.value) videoInput.value.value = '';
+}
+
+function createCurzzo() {
+    saving.value = true;
+
+    const formData = new FormData();
+    formData.append('name', form.value.name);
+    formData.append('description', form.value.description);
+    formData.append('instructions', form.value.instructions);
+    formData.append('access_type', form.value.access_type);
+    formData.append('model_tier', form.value.model_tier);
+
+    if (form.value.cover_image) formData.append('cover_image', form.value.cover_image);
+    if (form.value.preview_video) formData.append('preview_video', form.value.preview_video);
+
+    if (isPaidType(form.value.access_type)) {
+        if (form.value.price) formData.append('price', form.value.price);
+        formData.append('currency', 'PHP');
+        formData.append('billing_type', form.value.access_type === 'paid_monthly' ? 'monthly' : 'one_time');
+        if (form.value.affiliate_commission_rate) formData.append('affiliate_commission_rate', form.value.affiliate_commission_rate);
+    }
+
+    if (form.value.personality_tone) formData.append('personality[tone]', form.value.personality_tone);
+    if (form.value.personality_response_style) formData.append('personality[response_style]', form.value.personality_response_style);
+    if (form.value.personality_expertise) formData.append('personality[expertise]', form.value.personality_expertise);
+
+    router.post(communityPath('/curzzos'), formData, {
+        preserveScroll: true,
+        onSuccess: () => {
+            closeForm();
+        },
+        onError: (errors) => {
+            console.error('Create curzzo errors:', errors);
+        },
+        onFinish: () => { saving.value = false; },
+    });
+}
+
+// ── Edit ─────────────────────────────────────────────────────────────────────
+const editingBot       = ref(null);
+const editSaving       = ref(false);
+const editCoverPreview = ref(null);
+const editCoverInput   = ref(null);
+const editVideoPreview       = ref(null);
+const editVideoInput         = ref(null);
+const editVideoUploading     = ref(false);
+const editVideoUploadProgress = ref(0);
+const editVideoUploadError   = ref('');
+
+const editForm = ref({
+    name: '', description: '', instructions: '',
+    access_type: 'free', price: '', affiliate_commission_rate: '',
+    cover_image: null, remove_cover_image: false,
+    preview_video: null, remove_preview_video: false,
+    model_tier: 'basic',
+    personality_tone: '', personality_response_style: '', personality_expertise: '',
+});
 
 function openEdit(bot) {
     editingBot.value = bot;
-    form.name = bot.name;
-    form.description = bot.description ?? '';
-    form.instructions = bot.instructions ?? '';
-    form.personality = {
-        tone: bot.personality?.tone ?? '',
-        expertise: bot.personality?.expertise ?? '',
-        response_style: bot.personality?.response_style ?? '',
+    editCoverPreview.value = null;
+    editVideoPreview.value = null;
+    editForm.value = {
+        name: bot.name,
+        description: bot.description ?? '',
+        instructions: bot.instructions ?? '',
+        access_type: bot.access_type ?? 'free',
+        price: bot.price ?? '',
+        affiliate_commission_rate: bot.affiliate_commission_rate ?? '',
+        cover_image: null,
+        remove_cover_image: false,
+        preview_video: null,
+        remove_preview_video: false,
+        model_tier: bot.model_tier ?? 'basic',
+        personality_tone: bot.personality?.tone ?? '',
+        personality_response_style: bot.personality?.response_style ?? '',
+        personality_expertise: bot.personality?.expertise ?? '',
     };
-    form.avatar = null;
-    form.remove_avatar = false;
-    form.model_tier = bot.model_tier ?? 'basic';
-    form.is_active = bot.is_active;
-    form.price = bot.price ?? '';
-    form.currency = bot.currency ?? 'PHP';
-    form.billing_type = bot.billing_type ?? 'one_time';
-    form.affiliate_commission_rate = bot.affiliate_commission_rate ?? '';
-    avatarPreview.value = bot.avatar;
-    formError.value = '';
-    showModal.value = true;
 }
 
-function onAvatarChange(e) {
-    const file = e.target.files[0];
+function onEditCoverChange(e) {
+    const file = e.target.files?.[0];
     if (!file) return;
-    form.avatar = file;
-    form.remove_avatar = false;
-    avatarPreview.value = URL.createObjectURL(file);
+    editForm.value.cover_image = file;
+    editForm.value.remove_cover_image = false;
+    editCoverPreview.value = URL.createObjectURL(file);
 }
 
-function removeAvatar() {
-    form.avatar = null;
-    form.remove_avatar = true;
-    avatarPreview.value = null;
-    if (avatarInput.value) avatarInput.value.value = '';
+async function onEditVideoChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    editVideoUploading.value = true;
+    editVideoUploadProgress.value = 0;
+    editVideoUploadError.value = '';
+
+    try {
+        const { data } = await axios.post(communityPath('/curzzos/preview-videos'), {
+            filename: file.name,
+            content_type: file.type,
+            size: file.size,
+        });
+
+        const { default: rawAxios } = await import('axios');
+        const s3Client = rawAxios.create({ withCredentials: false });
+        await s3Client.put(data.upload_url, file, {
+            headers: { 'Content-Type': file.type },
+            onUploadProgress: (p) => { editVideoUploadProgress.value = Math.round((p.loaded / p.total) * 100); },
+        });
+
+        editForm.value.preview_video = data.key;
+        editForm.value.remove_preview_video = false;
+        editVideoPreview.value = URL.createObjectURL(file);
+    } catch (err) {
+        editVideoUploadError.value = err.response?.data?.error || err.response?.data?.message || 'Upload failed. Please try again.';
+    } finally {
+        editVideoUploading.value = false;
+        e.target.value = '';
+    }
 }
 
-function saveBot() {
-    saving.value = true;
-    formError.value = '';
+function removeEditVideo() {
+    editForm.value.preview_video = null;
+    editForm.value.remove_preview_video = true;
+    editVideoPreview.value = null;
+    editVideoUploadError.value = '';
+    if (editVideoInput.value) editVideoInput.value.value = '';
+    if (editingBot.value) editingBot.value = { ...editingBot.value, preview_video: null };
+}
+
+function submitEdit() {
+    editSaving.value = true;
 
     const formData = new FormData();
-    formData.append('name', form.name);
-    formData.append('description', form.description);
-    formData.append('instructions', form.instructions);
-    if (form.personality.tone) formData.append('personality[tone]', form.personality.tone);
-    if (form.personality.expertise) formData.append('personality[expertise]', form.personality.expertise);
-    if (form.personality.response_style) formData.append('personality[response_style]', form.personality.response_style);
-    if (form.avatar) formData.append('avatar', form.avatar);
-    formData.append('model_tier', form.model_tier);
-    if (form.price !== '' && form.price !== null) formData.append('price', form.price);
-    formData.append('currency', form.currency);
-    formData.append('billing_type', form.billing_type);
-    if (form.affiliate_commission_rate !== '' && form.affiliate_commission_rate !== null) formData.append('affiliate_commission_rate', form.affiliate_commission_rate);
+    formData.append('_method', 'PATCH');
+    formData.append('name', editForm.value.name);
+    formData.append('description', editForm.value.description);
+    formData.append('instructions', editForm.value.instructions);
+    formData.append('access_type', editForm.value.access_type);
+    formData.append('model_tier', editForm.value.model_tier);
+    formData.append('is_active', editingBot.value.is_active ? '1' : '0');
 
-    if (editingBot.value) {
-        formData.append('_method', 'PATCH');
-        formData.append('is_active', form.is_active ? '1' : '0');
-        if (form.remove_avatar) formData.append('remove_avatar', '1');
+    if (editForm.value.cover_image) formData.append('cover_image', editForm.value.cover_image);
+    if (editForm.value.remove_cover_image) formData.append('remove_cover_image', '1');
+    if (editForm.value.preview_video) formData.append('preview_video', editForm.value.preview_video);
+    if (editForm.value.remove_preview_video) formData.append('remove_preview_video', '1');
 
-        router.post(communityPath(`/curzzos/${editingBot.value.id}`), formData, {
-            preserveScroll: true,
-            onSuccess: () => { showModal.value = false; },
-            onError: (errors) => { formError.value = Object.values(errors)[0] ?? 'Something went wrong.'; },
-            onFinish: () => { saving.value = false; },
-        });
-    } else {
-        router.post(communityPath('/curzzos'), formData, {
-            preserveScroll: true,
-            onSuccess: () => { showModal.value = false; },
-            onError: (errors) => { formError.value = Object.values(errors)[0] ?? 'Something went wrong.'; },
-            onFinish: () => { saving.value = false; },
-        });
+    if (isPaidType(editForm.value.access_type)) {
+        if (editForm.value.price) formData.append('price', editForm.value.price);
+        formData.append('currency', 'PHP');
+        formData.append('billing_type', editForm.value.access_type === 'paid_monthly' ? 'monthly' : 'one_time');
+        if (editForm.value.affiliate_commission_rate) formData.append('affiliate_commission_rate', editForm.value.affiliate_commission_rate);
     }
+
+    if (editForm.value.personality_tone) formData.append('personality[tone]', editForm.value.personality_tone);
+    if (editForm.value.personality_response_style) formData.append('personality[response_style]', editForm.value.personality_response_style);
+    if (editForm.value.personality_expertise) formData.append('personality[expertise]', editForm.value.personality_expertise);
+
+    router.post(communityPath(`/curzzos/${editingBot.value.id}`), formData, {
+        preserveScroll: true,
+        onSuccess: () => {
+            editingBot.value = null;
+            editCoverPreview.value = null;
+            editVideoPreview.value = null;
+        },
+        onError: (errors) => {
+            console.error('Update curzzo errors:', errors);
+        },
+        onFinish: () => { editSaving.value = false; },
+    });
+}
+
+function toggleActive(bot) {
+    router.post(communityPath(`/curzzos/${bot.id}/toggle-active`), {}, { preserveScroll: true });
 }
 
 function deleteBot(bot) {
     if (!confirm(`Delete "${bot.name}"? All conversation history will be lost.`)) return;
     router.delete(communityPath(`/curzzos/${bot.id}`), { preserveScroll: true });
 }
-
-function toggleActive(bot) {
-    router.patch(communityPath(`/curzzos/${bot.id}`), { is_active: !bot.is_active }, { preserveScroll: true });
-}
 </script>
-
-<template>
-    <CommunitySettingsLayout :community="community">
-        <div class="flex items-center justify-between mb-1">
-            <h2 class="text-2xl font-bold text-gray-900">Curzzos</h2>
-            <span class="text-xs font-bold bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full">⭐ Pro</span>
-        </div>
-        <p class="text-sm text-gray-500 mb-6">Create custom AI bots that your members can chat with. Each Curzzo has its own personality, expertise, and instructions.</p>
-
-        <!-- Locked for non-Pro -->
-        <div v-if="creatorPlan !== 'pro'" class="rounded-xl border border-indigo-100 bg-indigo-50 px-5 py-6 text-center">
-            <p class="text-sm font-semibold text-indigo-800 mb-1">Creator Pro feature</p>
-            <p class="text-xs text-indigo-600 mb-3">Upgrade to create custom AI bots for your community.</p>
-            <Link href="/creator/plan" class="inline-block px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors">
-                Upgrade to Creator Pro →
-            </Link>
-        </div>
-
-        <!-- PRO content -->
-        <template v-else>
-            <!-- Bot cards -->
-            <div v-if="curzzos.length" class="space-y-3">
-                <div v-for="bot in curzzos" :key="bot.id"
-                    class="bg-white border border-gray-200 rounded-2xl p-5 flex items-start gap-4">
-                    <!-- Avatar -->
-                    <div class="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center shrink-0 overflow-hidden">
-                        <img v-if="bot.avatar" :src="bot.avatar" :alt="bot.name" class="w-full h-full object-cover" />
-                        <span v-else class="text-lg font-bold text-indigo-600">{{ bot.name.charAt(0).toUpperCase() }}</span>
-                    </div>
-
-                    <!-- Info -->
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-2 mb-0.5">
-                            <h3 class="font-semibold text-gray-900 text-sm">{{ bot.name }}</h3>
-                            <span v-if="bot.is_active"
-                                class="px-1.5 py-0.5 text-[10px] font-bold bg-green-100 text-green-700 rounded-full">Active</span>
-                            <span v-else
-                                class="px-1.5 py-0.5 text-[10px] font-bold bg-gray-100 text-gray-500 rounded-full">Inactive</span>
-                            <span class="px-1.5 py-0.5 text-[10px] font-bold rounded-full"
-                                :class="bot.model_tier === 'basic' ? 'bg-gray-100 text-gray-500' : 'bg-purple-100 text-purple-700'">
-                                {{ tierMap[bot.model_tier] ?? bot.model_tier }}
-                            </span>
-                        </div>
-                        <p v-if="bot.description" class="text-xs text-gray-500 line-clamp-2">{{ bot.description }}</p>
-                        <div class="flex items-center gap-2 mt-1">
-                            <p v-if="bot.personality?.expertise" class="text-xs text-indigo-500">{{ bot.personality.expertise }}</p>
-                            <span v-if="bot.price > 0" class="text-xs font-semibold text-amber-600">
-                                {{ bot.currency ?? 'PHP' }} {{ Number(bot.price).toLocaleString() }}{{ bot.billing_type === 'monthly' ? '/mo' : '' }}
-                            </span>
-                            <span v-else class="text-xs font-semibold text-green-600">Free</span>
-                            <span v-if="bot.affiliate_commission_rate" class="text-[10px] text-gray-400">{{ bot.affiliate_commission_rate }}% affiliate</span>
-                        </div>
-                    </div>
-
-                    <!-- Actions -->
-                    <div class="flex items-center gap-3 shrink-0">
-                        <button @click="toggleActive(bot)"
-                            class="text-xs font-medium"
-                            :class="bot.is_active ? 'text-amber-600 hover:text-amber-700' : 'text-green-600 hover:text-green-700'">
-                            {{ bot.is_active ? 'Deactivate' : 'Activate' }}
-                        </button>
-                        <button @click="openEdit(bot)" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">Edit</button>
-                        <button @click="deleteBot(bot)" class="text-xs text-red-500 hover:text-red-700 font-medium">Delete</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Empty state -->
-            <div v-else class="bg-white border border-gray-200 rounded-2xl p-12 text-center">
-                <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-indigo-100 flex items-center justify-center">
-                    <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"/>
-                    </svg>
-                </div>
-                <h3 class="text-base font-semibold text-gray-900 mb-1">No Curzzos yet</h3>
-                <p class="text-sm text-gray-500 mb-4">Create your first AI bot to help engage your community members.</p>
-                <button @click="openCreate"
-                    class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors">
-                    Create your first Curzzo
-                </button>
-            </div>
-
-            <!-- Create button (when bots exist) -->
-            <div v-if="curzzos.length" class="mt-4 flex items-center justify-between">
-                <button @click="openCreate"
-                    class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors">
-                    + New Curzzo
-                </button>
-                <p class="text-xs text-gray-400">{{ curzzos.length }} / 5 bots</p>
-            </div>
-        </template>
-
-        <!-- Create / Edit Modal -->
-        <Teleport to="body">
-            <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" @click.self="showModal = false">
-                <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
-                    <h3 class="font-semibold text-gray-900 text-base mb-4">{{ editingBot ? 'Edit Curzzo' : 'Create Curzzo' }}</h3>
-                    <form @submit.prevent="saveBot" class="space-y-4">
-                        <!-- Avatar -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Avatar</label>
-                            <div class="flex items-center gap-3">
-                                <div class="w-14 h-14 rounded-full bg-indigo-100 flex items-center justify-center overflow-hidden shrink-0">
-                                    <img v-if="avatarPreview" :src="avatarPreview" class="w-full h-full object-cover" />
-                                    <span v-else class="text-xl font-bold text-indigo-600">{{ (form.name || '?').charAt(0).toUpperCase() }}</span>
-                                </div>
-                                <div class="flex gap-2">
-                                    <label class="px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                                        Upload
-                                        <input ref="avatarInput" type="file" accept="image/*" class="hidden" @change="onAvatarChange" />
-                                    </label>
-                                    <button v-if="avatarPreview" type="button" @click="removeAvatar"
-                                        class="px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-lg text-red-500 hover:bg-red-50 transition-colors">
-                                        Remove
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Name -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                            <input v-model="form.name" type="text" maxlength="100" required
-                                placeholder="e.g. Script Writer, Sales Coach, Quiz Master"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                        </div>
-
-                        <!-- Description -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                            <input v-model="form.description" type="text" maxlength="500"
-                                placeholder="Brief description of what this bot does"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                        </div>
-
-                        <!-- Instructions -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Instructions</label>
-                            <textarea v-model="form.instructions" rows="6" required maxlength="5000"
-                                placeholder="Define the bot's behavior, knowledge, and rules. e.g. You are a script writing expert who helps members create viral short-form video scripts. Always provide 3 hook options and a clear call-to-action."
-                                class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none" />
-                            <p class="mt-1 text-xs text-gray-400">This defines the bot's personality and behavior. Be specific about what it should do and how it should respond.</p>
-                        </div>
-
-                        <!-- Personality -->
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Tone</label>
-                                <select v-model="form.personality.tone"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                                    <option v-for="t in TONES" :key="t.value" :value="t.value">{{ t.label }}</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Response Style</label>
-                                <select v-model="form.personality.response_style"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                                    <option v-for="s in STYLES" :key="s.value" :value="s.value">{{ s.label }}</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Expertise</label>
-                            <input v-model="form.personality.expertise" type="text" maxlength="200"
-                                placeholder="e.g. Script writing, Sales strategies, Fitness coaching"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                        </div>
-
-                        <!-- Model Tier -->
-                        <div v-if="modelTiers.length">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">AI Model</label>
-                            <div class="grid grid-cols-2 gap-3">
-                                <button v-for="tier in modelTiers" :key="tier.value"
-                                    type="button" @click="form.model_tier = tier.value"
-                                    :class="[
-                                        'relative rounded-xl border-2 p-3 text-left transition-all',
-                                        form.model_tier === tier.value
-                                            ? 'border-indigo-600 bg-indigo-50 ring-1 ring-indigo-600'
-                                            : 'border-gray-200 hover:border-gray-300'
-                                    ]">
-                                    <div class="text-sm font-semibold text-gray-900">{{ tier.label }}</div>
-                                    <div class="text-xs text-gray-500 mt-0.5">{{ tier.description }}</div>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Pricing -->
-                        <div class="border-t border-gray-100 pt-4 mt-2">
-                            <h4 class="text-sm font-semibold text-gray-700 mb-3">Pricing</h4>
-                            <div class="grid grid-cols-3 gap-3">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Price</label>
-                                    <input v-model="form.price" type="number" step="0.01" min="0"
-                                        placeholder="0 = Free"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Currency</label>
-                                    <select v-model="form.currency"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                                        <option value="PHP">PHP</option>
-                                        <option value="USD">USD</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Billing</label>
-                                    <select v-model="form.billing_type"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                                        <option value="one_time">One-time</option>
-                                        <option value="monthly">Monthly</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="mt-3">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Affiliate Commission (%)</label>
-                                <input v-model="form.affiliate_commission_rate" type="number" min="0" max="100"
-                                    placeholder="e.g. 30"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                                <p class="mt-1 text-xs text-gray-400">Set to 0 or leave empty for no affiliate program on this bot.</p>
-                            </div>
-                        </div>
-
-                        <p v-if="formError" class="text-sm text-red-600">{{ formError }}</p>
-
-                        <div class="flex gap-3 pt-1">
-                            <button type="button" @click="showModal = false"
-                                class="flex-1 px-4 py-2.5 border border-gray-300 text-sm font-medium rounded-xl text-gray-700 hover:bg-gray-50 transition-colors">
-                                Cancel
-                            </button>
-                            <button type="submit" :disabled="saving || !form.name.trim() || !form.instructions.trim()"
-                                class="flex-1 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-50">
-                                {{ saving ? 'Saving...' : editingBot ? 'Update' : 'Create' }}
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </Teleport>
-    </CommunitySettingsLayout>
-</template>

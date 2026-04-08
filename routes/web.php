@@ -377,6 +377,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/communities/{community}/curzzos',                        [CurzzoController::class, 'store'])->name('communities.curzzos.store');
         Route::patch('/communities/{community}/curzzos/{curzzo}',              [CurzzoController::class, 'update'])->name('communities.curzzos.update');
         Route::delete('/communities/{community}/curzzos/{curzzo}',             [CurzzoController::class, 'destroy'])->name('communities.curzzos.destroy');
+        Route::post('/communities/{community}/curzzos/reorder',                [CurzzoController::class, 'reorder'])->name('communities.curzzos.reorder');
+        Route::post('/communities/{community}/curzzos/{curzzo}/toggle-active', [CurzzoController::class, 'toggleActive'])->name('communities.curzzos.toggle-active');
+        Route::post('/communities/{community}/curzzos/preview-videos',         [CurzzoController::class, 'uploadPreviewVideo'])->name('communities.curzzos.upload-preview-video');
         Route::get('/communities/{community}/curzzos',                         [CommunityController::class, 'curzzos'])->name('communities.curzzos');
         Route::post('/communities/{community}/curzzos/{curzzo}/checkout',       [CurzzoCheckoutController::class, 'checkout'])->name('communities.curzzos.checkout');
         Route::get('/communities/{community}/curzzos/topup-packs',             [CurzzoTopupController::class, 'packs'])->name('communities.curzzos.topup-packs');

@@ -428,19 +428,31 @@ class CommunityController extends Controller
         $userId = auth()->id();
         $user   = auth()->user();
 
+        $isOwner = $userId && $userId === $community->owner_id;
+
+        $isMember = $userId && \App\Models\CommunityMember::where('community_id', $community->id)
+            ->where('user_id', $userId)
+            ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+            ->exists();
+
+        $isPaidMember = $userId && \App\Models\Subscription::where('community_id', $community->id)
+            ->where('user_id', $userId)
+            ->where('status', \App\Models\Subscription::STATUS_ACTIVE)
+            ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+            ->exists();
+
+        $wasEverMember = $userId && \App\Models\Subscription::where('community_id', $community->id)
+            ->where('user_id', $userId)
+            ->whereIn('status', [\App\Models\Subscription::STATUS_ACTIVE, \App\Models\Subscription::STATUS_EXPIRED, \App\Models\Subscription::STATUS_CANCELLED])
+            ->exists();
+
         $curzzos = $community->curzzos()
             ->where('is_active', true)
-            ->select('id', 'name', 'description', 'avatar', 'price', 'currency', 'billing_type')
+            ->select('id', 'name', 'description', 'avatar', 'cover_image', 'preview_video', 'access_type', 'price', 'currency', 'billing_type')
             ->orderBy('position')
             ->get()
-            ->map(function ($bot) use ($userId, $community) {
-                $bot->has_access = $bot->price <= 0
-                    || $userId === $community->owner_id
-                    || \App\Models\CurzzoPurchase::where('curzzo_id', $bot->id)
-                        ->where('user_id', $userId)
-                        ->where('status', \App\Models\CurzzoPurchase::STATUS_PAID)
-                        ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
-                        ->exists();
+            ->map(function ($bot) use ($userId, $isOwner, $isMember, $isPaidMember, $wasEverMember) {
+                $bot->has_access = $this->resolveCurzzoAccess($bot, $userId, $isOwner, $isMember, $isPaidMember, $wasEverMember);
                 return $bot;
             });
 
@@ -455,6 +467,37 @@ class CommunityController extends Controller
             'limitInfo'  => $limitInfo,
             'topupPacks' => $limits->getPacks($community),
         ]);
+    }
+
+    private function resolveCurzzoAccess($bot, ?int $userId, bool $isOwner, bool $isMember, bool $isPaidMember, bool $wasEverMember): bool
+    {
+        if ($isOwner) {
+            return true;
+        }
+
+        $accessType = $bot->access_type ?? 'free';
+
+        if ($accessType === 'free') {
+            return $isMember;
+        }
+
+        if ($accessType === 'inclusive') {
+            return $isPaidMember;
+        }
+
+        if (in_array($accessType, ['paid_once', 'paid_monthly'])) {
+            return $userId && \App\Models\CurzzoPurchase::where('curzzo_id', $bot->id)
+                ->where('user_id', $userId)
+                ->where('status', \App\Models\CurzzoPurchase::STATUS_PAID)
+                ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+                ->exists();
+        }
+
+        if ($accessType === 'member_once') {
+            return $wasEverMember;
+        }
+
+        return false;
     }
 
     public function join(Request $request, Community $community, JoinCommunity $action): RedirectResponse

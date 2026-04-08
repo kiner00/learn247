@@ -97,6 +97,7 @@ class HandleInertiaRequests extends Middleware
                     'kyc_verified'   => $request->user()->isKycVerified(),
                     'kyc_status'     => $request->user()->kyc_status ?? 'none',
                     'theme'          => $request->user()->theme ?? 'light',
+                    'cxp_balance'    => 0, // placeholder for future CXP token system
                 ] : null,
                 'communities' => $request->user()
                     ? $request->user()->communityMemberships()
