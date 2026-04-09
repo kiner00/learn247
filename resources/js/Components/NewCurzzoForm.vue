@@ -57,6 +57,7 @@ function makeEmptyForm() {
         affiliate_commission_rate: '',
         cover_image: null,
         preview_video: null,
+        preview_video_sound: false,
         remove_cover_image: false,
         remove_preview_video: false,
         model_tier: 'basic',
@@ -77,6 +78,7 @@ function fillFromBot(bot) {
         affiliate_commission_rate: bot.affiliate_commission_rate ?? '',
         cover_image: null,
         preview_video: null,
+        preview_video_sound: !!bot.preview_video_sound,
         remove_cover_image: false,
         remove_preview_video: false,
         model_tier: bot.model_tier ?? 'basic',
@@ -176,6 +178,7 @@ function submitCurzzo() {
 
     if (form.value.cover_image) formData.append('cover_image', form.value.cover_image);
     if (form.value.preview_video) formData.append('preview_video', form.value.preview_video);
+    formData.append('preview_video_sound', form.value.preview_video_sound ? '1' : '0');
     if (form.value.remove_cover_image) formData.append('remove_cover_image', '1');
     if (form.value.remove_preview_video) formData.append('remove_preview_video', '1');
 
@@ -362,6 +365,10 @@ function submitCurzzo() {
                     <input ref="videoInput" type="file" accept="video/mp4,video/quicktime,video/webm" class="hidden" @change="onVideoChange" />
                 </label>
                 <p class="text-xs text-gray-400 mt-1">MP4 recommended, 1280 x 720 px, max 500 MB. Plays on hover.</p>
+                <label v-if="videoPreview || form.preview_video" class="flex items-center gap-2 mt-2 cursor-pointer">
+                    <input type="checkbox" v-model="form.preview_video_sound" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                    <span class="text-xs text-gray-600">Enable sound on preview</span>
+                </label>
             </div>
 
             <!-- Curzzo Instructions -->

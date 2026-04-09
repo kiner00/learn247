@@ -15,6 +15,7 @@ class Curzzo extends Model
         'avatar',
         'cover_image',
         'preview_video',
+        'preview_video_sound',
         'access_type',
         'instructions',
         'personality',
@@ -30,9 +31,10 @@ class Curzzo extends Model
     protected function casts(): array
     {
         return [
-            'personality' => 'array',
-            'is_active'   => 'boolean',
-            'price'        => 'decimal:2',
+            'personality'         => 'array',
+            'is_active'           => 'boolean',
+            'preview_video_sound' => 'boolean',
+            'price'               => 'decimal:2',
         ];
     }
 

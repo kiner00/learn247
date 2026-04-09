@@ -121,15 +121,21 @@ function getBotVideo(container, botId) {
     return container.querySelector(`video[data-bot-id="${botId}"]`);
 }
 
-function startBotVideo(video) {
-    video.muted = true;
+function startBotVideo(video, bot) {
+    const wantSound = bot?.preview_video_sound;
+    video.muted = !wantSound;
     video.currentTime = 0;
-    video.play().then(() => { video.style.opacity = '1'; }).catch(() => {});
+    video.play().then(() => { video.style.opacity = '1'; }).catch(() => {
+        // Autoplay with sound blocked — fall back to muted
+        video.muted = true;
+        video.play().then(() => { video.style.opacity = '1'; }).catch(() => {});
+    });
 }
 
 function stopBotVideo(video) {
     video.style.opacity = '0';
     video.pause();
+    video.muted = true;
     video.currentTime = 0;
 }
 
@@ -138,7 +144,7 @@ function onCardHover(e, bot) {
     const container = e.currentTarget;
     hoverTimer = setTimeout(() => {
         const video = getBotVideo(container, bot.id);
-        if (video) startBotVideo(video);
+        if (video) startBotVideo(video, bot);
     }, 500);
 }
 
@@ -154,7 +160,7 @@ function onCardTouchStart(e, bot) {
     const container = e.currentTarget;
     touchTimer = setTimeout(() => {
         const video = getBotVideo(container, bot.id);
-        if (video) startBotVideo(video);
+        if (video) startBotVideo(video, bot);
     }, 400);
 }
 
@@ -285,7 +291,7 @@ onBeforeUnmount(() => {
                                         :data-bot-id="bot.id"
                                         :src="bot.preview_video"
                                         class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-300 z-[1]"
-                                        loop playsinline preload="none" muted />
+                                        loop playsinline preload="none" />
                                     <img v-if="bot.cover_image" :src="bot.cover_image" :alt="bot.name"
                                         class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                                     <div v-else class="w-full h-full bg-gradient-to-br from-indigo-600 to-purple-700 flex items-center justify-center">
@@ -330,7 +336,7 @@ onBeforeUnmount(() => {
                                 :data-bot-id="bot.id"
                                 :src="bot.preview_video"
                                 class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-300 z-[1]"
-                                loop playsinline preload="none" muted />
+                                loop playsinline preload="none" />
                             <img v-if="bot.cover_image" :src="bot.cover_image" :alt="bot.name"
                                 :class="['w-full h-full object-cover transition-transform duration-300',
                                     bot.has_access ? 'group-hover:scale-105' : 'blur-[1.5px]']" />

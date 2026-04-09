@@ -451,7 +451,7 @@ class CommunityController extends Controller
         if (! $isOwner) {
             $curzzosQuery->where('is_active', true);
         }
-        $selectFields = ['id', 'name', 'description', 'avatar', 'cover_image', 'preview_video', 'access_type', 'price', 'currency', 'billing_type'];
+        $selectFields = ['id', 'name', 'description', 'avatar', 'cover_image', 'preview_video', 'preview_video_sound', 'access_type', 'price', 'currency', 'billing_type'];
         if ($isOwner) {
             $selectFields = array_merge($selectFields, ['instructions', 'personality', 'model_tier', 'affiliate_commission_rate', 'is_active']);
         }
