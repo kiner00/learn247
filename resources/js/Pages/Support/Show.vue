@@ -73,10 +73,10 @@
                             class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
                             :class="reply.is_admin ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'"
                         >
-                            {{ reply.user?.name?.charAt(0)?.toUpperCase() }}
+                            {{ reply.is_admin ? 'S' : reply.user?.name?.charAt(0)?.toUpperCase() }}
                         </div>
                         <p class="text-sm font-semibold text-gray-900">
-                            {{ reply.user?.name }}
+                            {{ reply.is_admin ? 'Support' : reply.user?.name }}
                             <span v-if="reply.is_admin" class="text-xs font-medium text-amber-600 ml-1">Admin</span>
                         </p>
                         <span class="text-xs text-gray-400 ml-auto">{{ formatDate(reply.created_at) }}</span>
