@@ -113,6 +113,10 @@
                                         <input v-model="editDraft.hero.cta_label" type="text" class="field-input" />
                                     </div>
                                     <div>
+                                        <label class="field-label">Price Note <span class="text-gray-400 font-normal">(below button — leave empty to hide)</span></label>
+                                        <input v-model="editDraft.hero.price_note" type="text" placeholder="e.g. PHP 999/month · cancel anytime" class="field-input" />
+                                    </div>
+                                    <div>
                                         <label class="field-label">Video Type</label>
                                         <div class="flex items-center gap-1 p-0.5 bg-gray-100 rounded-lg w-fit">
                                             <button type="button" @click="editDraft.hero.video_type = 'vsl'" class="px-3 py-1 text-xs font-medium rounded-md transition-colors" :class="(!editDraft.hero.video_type || editDraft.hero.video_type === 'vsl') ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'">
@@ -667,6 +671,10 @@
                                         <div>
                                             <label class="field-label">CTA Button Label</label>
                                             <input v-model="editDraft.cta_section.cta_label" type="text" class="field-input" />
+                                        </div>
+                                        <div>
+                                            <label class="field-label">Price Note <span class="text-gray-400 font-normal">(below button — leave empty to hide)</span></label>
+                                            <input v-model="editDraft.cta_section.price_note" type="text" placeholder="e.g. PHP 999/month · cancel anytime" class="field-input" />
                                         </div>
                                         <div class="pt-2 border-t border-gray-200 mt-1">
                                             <label class="field-label mb-2">Button Colors</label>

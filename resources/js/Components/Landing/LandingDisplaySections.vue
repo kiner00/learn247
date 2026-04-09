@@ -521,10 +521,11 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                 </svg>
             </button>
-            <p class="mt-4 text-slate-500 text-sm">
-                {{ community.price > 0
-                    ? `${community.currency ?? 'PHP'} ${Number(community.price).toLocaleString()}${community.billing_type === 'one_time' ? ' · one-time payment' : '/month · cancel anytime'}`
-                    : '100% free · no credit card required' }}
+            <p v-if="lp.cta_section?.price_note !== ''" class="mt-4 text-slate-500 text-sm">
+                {{ lp.cta_section?.price_note
+                    || (community.price > 0
+                        ? `${community.currency ?? 'PHP'} ${Number(community.price).toLocaleString()}${community.billing_type === 'one_time' ? ' · one-time payment' : '/month · cancel anytime'}`
+                        : '100% free · no credit card required') }}
             </p>
         </div>
     </section>

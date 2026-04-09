@@ -902,6 +902,7 @@ class CommunityController extends Controller
             'hero.subheadline_font_size' => 'nullable|integer|min:12|max:40',
             'hero.btn_bg'                         => 'nullable|string|max:20',
             'hero.btn_text'                       => 'nullable|string|max:20',
+            'hero.price_note'                     => 'nullable|string|max:100',
             'social_proof.stat_label' => 'nullable|string|max:100',
             'social_proof.trust_line' => 'nullable|string|max:100',
             'social_proof.bg_color'   => 'nullable|string|max:20',
@@ -934,6 +935,7 @@ class CommunityController extends Controller
             'cta_section.bg_image'    => 'nullable|url|max:2048',
             'cta_section.btn_bg'                  => 'nullable|string|max:20',
             'cta_section.btn_text'                => 'nullable|string|max:20',
+            'cta_section.price_note'              => 'nullable|string|max:100',
             // Hero bg image
             'hero.bg_image'                       => 'nullable|url|max:2048',
             // Offer stack
