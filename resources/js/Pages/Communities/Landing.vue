@@ -486,7 +486,24 @@ function isVisible(type) {
     const sections = lp.value._sections;
     if (!sections) return true; // backward compat: old pages show all
     const sec = sections.find(s => s.type === type);
-    return sec ? sec.visible : false;
+    // Section not yet in _sections (added to DEFAULT_SECTION_ORDER after this
+    // landing page was last saved): fall back to content-driven default so
+    // newly-introduced sections like curzzos appear without forcing every
+    // owner to re-open the editor.
+    if (!sec) return defaultSectionVisible(type);
+    return sec.visible;
+}
+
+// Sections whose data lives outside landing_page JSON — visibility should
+// default to true when the underlying content exists.
+function defaultSectionVisible(type) {
+    if (type === 'hero' || type === 'cta_section') return true;
+    if (type === 'included_courses') return props.courses.length > 0;
+    if (type === 'certifications')   return props.certifications.length > 0;
+    if (type === 'curzzos')          return props.curzzos.length > 0;
+    // Other sections: visible iff their landing_page key has data
+    const v = editDraft.value?.[type];
+    return !!(v && (Array.isArray(v) ? v.length > 0 : true));
 }
 
 // ── Open edit panel ───────────────────────────────────────────────────────────
@@ -504,9 +521,7 @@ watch(showEditPanel, (open) => {
         if (!editDraft.value._sections) {
             editDraft.value._sections = DEFAULT_SECTION_ORDER.map(type => ({
                 type,
-                visible: type === 'hero' || type === 'cta_section'
-                    ? true
-                    : !!(editDraft.value[type] && (Array.isArray(editDraft.value[type]) ? editDraft.value[type].length > 0 : true)),
+                visible: defaultSectionVisible(type),
             }));
         }
 
@@ -522,7 +537,7 @@ watch(showEditPanel, (open) => {
                         const prevIdx = editDraft.value._sections.findIndex(s => s.type === DEFAULT_SECTION_ORDER[j]);
                         if (prevIdx !== -1) { insertIdx = prevIdx + 1; break; }
                     }
-                    editDraft.value._sections.splice(insertIdx, 0, { type, visible: false });
+                    editDraft.value._sections.splice(insertIdx, 0, { type, visible: defaultSectionVisible(type) });
                 }
             }
         }
