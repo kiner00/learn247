@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, onBeforeUnmount } from 'vue';
 import { router } from '@inertiajs/vue3';
 import draggable from 'vuedraggable';
 import AppLayout from '@/Layouts/AppLayout.vue';
@@ -112,6 +112,63 @@ function onReorder() {
         ids: localCurzzos.value.map(c => c.id),
     }, { preserveScroll: true });
 }
+
+// ── Hover / tap-to-play preview video ────────────────────────────────────────
+let hoverTimer = null;
+let touchTimer = null;
+
+function getBotVideo(container, botId) {
+    return container.querySelector(`video[data-bot-id="${botId}"]`);
+}
+
+function startBotVideo(video) {
+    video.muted = true;
+    video.currentTime = 0;
+    video.play().then(() => { video.style.opacity = '1'; }).catch(() => {});
+}
+
+function stopBotVideo(video) {
+    video.style.opacity = '0';
+    video.pause();
+    video.currentTime = 0;
+}
+
+function onCardHover(e, bot) {
+    if (!bot.preview_video) return;
+    const container = e.currentTarget;
+    hoverTimer = setTimeout(() => {
+        const video = getBotVideo(container, bot.id);
+        if (video) startBotVideo(video);
+    }, 500);
+}
+
+function onCardLeave(e, bot) {
+    clearTimeout(hoverTimer);
+    if (!bot.preview_video) return;
+    const video = getBotVideo(e.currentTarget, bot.id);
+    if (video) stopBotVideo(video);
+}
+
+function onCardTouchStart(e, bot) {
+    if (!bot.preview_video) return;
+    const container = e.currentTarget;
+    touchTimer = setTimeout(() => {
+        const video = getBotVideo(container, bot.id);
+        if (video) startBotVideo(video);
+    }, 400);
+}
+
+function onCardTouchEnd(bot) {
+    clearTimeout(touchTimer);
+    if (!bot.preview_video) return;
+    document.querySelectorAll(`video[data-bot-id="${bot.id}"]`).forEach(stopBotVideo);
+}
+
+onBeforeUnmount(() => {
+    document.querySelectorAll('video[data-bot-id]').forEach(stopBotVideo);
+    clearTimeout(hoverTimer);
+    clearTimeout(touchTimer);
+});
 </script>
 
 <template>
@@ -219,7 +276,16 @@ function onReorder() {
                                 :class="['w-full text-left flex flex-col h-full bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100',
                                     !bot.is_active && 'opacity-60']"
                             >
-                                <div class="relative aspect-video bg-gray-900 overflow-hidden shrink-0">
+                                <div class="relative aspect-video bg-gray-900 overflow-hidden shrink-0"
+                                    @mouseenter="onCardHover($event, bot)"
+                                    @mouseleave="onCardLeave($event, bot)"
+                                    @touchstart.passive="onCardTouchStart($event, bot)"
+                                    @touchend.passive="onCardTouchEnd(bot)">
+                                    <video v-if="bot.preview_video"
+                                        :data-bot-id="bot.id"
+                                        :src="bot.preview_video"
+                                        class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-300 z-[1]"
+                                        loop playsinline preload="none" muted />
                                     <img v-if="bot.cover_image" :src="bot.cover_image" :alt="bot.name"
                                         class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                                     <div v-else class="w-full h-full bg-gradient-to-br from-indigo-600 to-purple-700 flex items-center justify-center">
@@ -227,6 +293,10 @@ function onReorder() {
                                     </div>
                                     <div v-if="bot.avatar" class="absolute bottom-2.5 left-2.5 w-8 h-8 rounded-full border-2 border-white overflow-hidden shadow-sm z-[2]">
                                         <img :src="bot.avatar" :alt="bot.name" class="w-full h-full object-cover" />
+                                    </div>
+                                    <div v-if="bot.preview_video" class="absolute bottom-2 left-2 z-[2] flex items-center gap-1 px-2 py-1 bg-black/50 text-white text-[10px] font-medium rounded-full backdrop-blur-sm pointer-events-none sm:hidden">
+                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                        Tap to preview
                                     </div>
                                 </div>
                                 <div class="p-4 flex flex-col flex-1">
@@ -251,7 +321,16 @@ function onReorder() {
                         @click="selectBot(bot)"
                         class="w-full text-left flex flex-col h-full bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100"
                     >
-                        <div class="relative aspect-video bg-gray-900 overflow-hidden shrink-0">
+                        <div class="relative aspect-video bg-gray-900 overflow-hidden shrink-0"
+                            @mouseenter="onCardHover($event, bot)"
+                            @mouseleave="onCardLeave($event, bot)"
+                            @touchstart.passive="onCardTouchStart($event, bot)"
+                            @touchend.passive="onCardTouchEnd(bot)">
+                            <video v-if="bot.preview_video"
+                                :data-bot-id="bot.id"
+                                :src="bot.preview_video"
+                                class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-300 z-[1]"
+                                loop playsinline preload="none" muted />
                             <img v-if="bot.cover_image" :src="bot.cover_image" :alt="bot.name"
                                 :class="['w-full h-full object-cover transition-transform duration-300',
                                     bot.has_access ? 'group-hover:scale-105' : 'blur-[1.5px]']" />
@@ -262,6 +341,10 @@ function onReorder() {
                             </div>
                             <div v-if="bot.avatar" class="absolute bottom-2.5 left-2.5 w-8 h-8 rounded-full border-2 border-white overflow-hidden shadow-sm z-[2]">
                                 <img :src="bot.avatar" :alt="bot.name" class="w-full h-full object-cover" />
+                            </div>
+                            <div v-if="bot.preview_video && bot.has_access" class="absolute bottom-2 left-2 z-[2] flex items-center gap-1 px-2 py-1 bg-black/50 text-white text-[10px] font-medium rounded-full backdrop-blur-sm pointer-events-none sm:hidden">
+                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                Tap to preview
                             </div>
                             <div v-if="!bot.has_access"
                                 class="absolute inset-0 flex flex-col items-center justify-center bg-black/20">
