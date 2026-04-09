@@ -462,12 +462,21 @@ class CommunityController extends Controller
             'allowed' => false, 'daily_limit' => 0, 'daily_used' => 0, 'topup_remaining' => 0,
         ];
 
+        $modelTiers = $isOwner
+            ? collect(config('curzzos.tiers'))->map(fn ($tier, $key) => [
+                'value'       => $key,
+                'label'       => $tier['label'],
+                'description' => $tier['description'],
+            ])->values()
+            : [];
+
         return Inertia::render('Communities/Curzzos', [
             'community'  => $community,
             'curzzos'    => $curzzos,
             'limitInfo'  => $limitInfo,
             'topupPacks' => $limits->getPacks($community),
             'isOwner'    => $isOwner,
+            'modelTiers' => $modelTiers,
         ]);
     }
 

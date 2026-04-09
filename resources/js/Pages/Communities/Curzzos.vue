@@ -4,6 +4,7 @@ import { router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import CommunityTabs from '@/Components/CommunityTabs.vue';
 import CurzzoChat from '@/Components/CurzzoChat.vue';
+import NewCurzzoForm from '@/Components/NewCurzzoForm.vue';
 import { useCommunityUrl } from '@/composables/useCommunityUrl';
 
 const props = defineProps({
@@ -12,7 +13,10 @@ const props = defineProps({
     limitInfo:  { type: Object, default: () => ({}) },
     topupPacks: { type: Array, default: () => [] },
     isOwner:    { type: Boolean, default: false },
+    modelTiers: { type: Array, default: () => [] },
 });
+
+const showNewForm = ref(false);
 
 const { communityPath } = useCommunityUrl(props.community.slug);
 const chatMode = ref(false);
@@ -87,17 +91,25 @@ function accessBadgeText(bot) {
                     <h2 class="text-lg font-bold text-gray-900">Curzzos</h2>
                     <p class="text-sm text-gray-400 mt-0.5">Chat with specialized AI bots</p>
                 </div>
-                <a
-                    v-if="isOwner"
-                    :href="communityPath('/settings/curzzos')"
+                <button
+                    v-if="isOwner && !showNewForm"
+                    @click="showNewForm = true"
                     class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition-colors"
                 >
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                     </svg>
                     New Curzzo
-                </a>
+                </button>
             </div>
+
+            <NewCurzzoForm
+                v-if="showNewForm"
+                :community="community"
+                :model-tiers="modelTiers"
+                @cancel="showNewForm = false"
+                @created="showNewForm = false"
+            />
 
             <!-- Empty state -->
             <div v-if="!curzzos.length" class="bg-white border border-gray-200 rounded-2xl p-16 text-center shadow-sm">
