@@ -166,11 +166,11 @@ onMounted(loadHistory);
             <template v-else>
                 <div v-for="(msg, i) in messages" :key="i"
                     class="flex" :class="msg.role === 'user' ? 'justify-end' : 'justify-start'">
-                    <div class="max-w-[80%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed"
+                    <div class="max-w-[80%] min-w-0 px-4 py-2.5 rounded-2xl text-sm leading-relaxed"
                         :class="msg.role === 'user'
                             ? 'bg-indigo-600 text-white rounded-br-md'
                             : 'bg-white text-gray-800 border border-gray-200 rounded-bl-md'">
-                        <p class="whitespace-pre-wrap">{{ msg.text }}</p>
+                        <p class="whitespace-pre-wrap break-words">{{ msg.text }}</p>
                     </div>
                 </div>
             </template>

@@ -347,7 +347,7 @@ function onReorder() {
 
                 <!-- Chat panel -->
                 <div
-                    class="flex-1 bg-white border-t border-b border-r border-gray-200"
+                    class="flex-1 min-w-0 bg-white border-t border-b border-r border-gray-200"
                     :class="selectedCurzzo ? 'block' : 'hidden md:block'"
                 >
                     <CurzzoChat
