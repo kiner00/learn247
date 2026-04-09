@@ -993,6 +993,14 @@ class CommunityController extends Controller
             '_sections.*.visible'     => 'nullable|boolean',
         ]);
 
+        // Preserve empty strings for price_note fields so the frontend can
+        // distinguish "never set" (key absent) from "intentionally cleared" ("")
+        foreach (['hero', 'cta_section'] as $section) {
+            if (array_key_exists($section, $data) && array_key_exists('price_note', $data[$section]) && $data[$section]['price_note'] === null) {
+                $data[$section]['price_note'] = '';
+            }
+        }
+
         // Merge into existing landing page so unreferenced sections are preserved
         $current = $community->landing_page ?? [];
         // Handle flat arrays separately (full replace, not deep merge)
