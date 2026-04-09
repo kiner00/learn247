@@ -102,6 +102,7 @@
                             <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500">Xendit Reference</th>
                             <th class="text-right px-5 py-3 text-xs font-semibold text-gray-500">Requested</th>
                             <th class="text-right px-5 py-3 text-xs font-semibold text-gray-500">Processed</th>
+                            <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500">Processed By</th>
                             <th class="px-5 py-3"></th>
                         </tr>
                     </thead>
@@ -152,6 +153,7 @@
                                 </td>
                                 <td class="px-5 py-3 text-right text-xs text-gray-400 whitespace-nowrap">{{ r.requested_at }}</td>
                                 <td class="px-5 py-3 text-right text-xs text-gray-400 whitespace-nowrap">{{ r.processed_at ?? '—' }}</td>
+                                <td class="px-5 py-3 text-xs text-gray-500 whitespace-nowrap">{{ r.processed_by_name ?? '—' }}</td>
                                 <td class="px-5 py-3 text-right">
                                     <div v-if="r.status === 'pending'" class="flex items-center justify-end gap-2">
                                         <button @click="approveRequest(r.id)"
@@ -173,7 +175,7 @@
                             </tr>
                             <!-- Inline reject form -->
                             <tr v-if="rejectingId === r.id" class="bg-red-50">
-                                <td colspan="11" class="px-5 py-3">
+                                <td colspan="13" class="px-5 py-3">
                                     <div class="flex items-center gap-3">
                                         <input v-model="rejectReason" type="text" placeholder="Reason (optional)"
                                                class="flex-1 max-w-sm border border-red-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />

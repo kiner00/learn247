@@ -76,6 +76,7 @@ class ApprovePayoutRequest
             'status'           => PayoutRequest::STATUS_APPROVED,
             'xendit_reference' => $result['id'] ?? $referenceId,
             'processed_at'     => now(),
+            'processed_by'     => auth()->id(),
         ]);
 
         CacheKeys::flushPayment($payoutRequest->community_id, $user->id);

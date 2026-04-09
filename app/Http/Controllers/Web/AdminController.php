@@ -167,7 +167,10 @@ class AdminController extends Controller
                 });
         }
 
-        $payoutRequest->update(['status' => PayoutRequest::STATUS_PAID]);
+        $payoutRequest->update([
+            'status'       => PayoutRequest::STATUS_PAID,
+            'processed_by' => auth()->id(),
+        ]);
 
         return back()->with('success', "Payout request #{$payoutRequest->id} marked as paid and conversions settled.");
     }

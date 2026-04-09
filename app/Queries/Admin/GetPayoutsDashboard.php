@@ -124,7 +124,7 @@ class GetPayoutsDashboard
 
     private function buildPayoutRequests(): \Illuminate\Support\Collection
     {
-        return PayoutRequest::with(['user', 'community'])
+        return PayoutRequest::with(['user', 'community', 'processedByUser'])
             ->whereHas('user')
             ->latest()
             ->get()
@@ -147,6 +147,7 @@ class GetPayoutsDashboard
                 'xendit_reference'  => $r->xendit_reference,
                 'requested_at'      => $r->created_at->toDateString(),
                 'processed_at'      => $r->processed_at?->format('M d, Y H:i'),
+                'processed_by_name' => $r->processedByUser?->name,
             ]);
     }
 }

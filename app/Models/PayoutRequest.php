@@ -18,7 +18,7 @@ class PayoutRequest extends Model
     protected $fillable = [
         'user_id', 'type', 'community_id', 'affiliate_id',
         'amount', 'eligible_amount', 'status',
-        'rejection_reason', 'xendit_reference', 'processed_at',
+        'rejection_reason', 'xendit_reference', 'processed_at', 'processed_by',
     ];
 
     protected function casts(): array
@@ -43,6 +43,11 @@ class PayoutRequest extends Model
     public function affiliate(): BelongsTo
     {
         return $this->belongsTo(Affiliate::class);
+    }
+
+    public function processedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'processed_by');
     }
 
     public function isPending(): bool

@@ -15,6 +15,7 @@ class RejectPayoutRequest
             'status'           => PayoutRequest::STATUS_REJECTED,
             'rejection_reason' => $reason,
             'processed_at'     => now(),
+            'processed_by'     => auth()->id(),
         ]);
 
         CacheKeys::flushAdmin();
