@@ -467,6 +467,7 @@ class CommunityController extends Controller
             'curzzos'    => $curzzos,
             'limitInfo'  => $limitInfo,
             'topupPacks' => $limits->getPacks($community),
+            'isOwner'    => $isOwner,
         ]);
     }
 
