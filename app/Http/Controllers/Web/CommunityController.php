@@ -447,10 +447,16 @@ class CommunityController extends Controller
             ->whereIn('status', [\App\Models\Subscription::STATUS_ACTIVE, \App\Models\Subscription::STATUS_EXPIRED, \App\Models\Subscription::STATUS_CANCELLED])
             ->exists();
 
-        $curzzos = $community->curzzos()
-            ->where('is_active', true)
-            ->select('id', 'name', 'description', 'avatar', 'cover_image', 'preview_video', 'access_type', 'price', 'currency', 'billing_type')
-            ->orderBy('position')
+        $curzzosQuery = $community->curzzos()->orderBy('position');
+        if (! $isOwner) {
+            $curzzosQuery->where('is_active', true);
+        }
+        $selectFields = ['id', 'name', 'description', 'avatar', 'cover_image', 'preview_video', 'access_type', 'price', 'currency', 'billing_type'];
+        if ($isOwner) {
+            $selectFields = array_merge($selectFields, ['instructions', 'personality', 'model_tier', 'affiliate_commission_rate', 'is_active']);
+        }
+        $curzzos = $curzzosQuery
+            ->select($selectFields)
             ->get()
             ->map(function ($bot) use ($userId, $isOwner, $isMember, $isPaidMember, $wasEverMember) {
                 $bot->has_access = $this->resolveCurzzoAccess($bot, $userId, $isOwner, $isMember, $isPaidMember, $wasEverMember);

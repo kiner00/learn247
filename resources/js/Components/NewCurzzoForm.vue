@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, computed, onMounted } from 'vue';
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
 import { useCommunityUrl } from '@/composables/useCommunityUrl';
@@ -8,9 +8,12 @@ import { useDropzone } from '@/composables/useDropzone';
 const props = defineProps({
     community:  { type: Object, required: true },
     modelTiers: { type: Array, default: () => [] },
+    bot:        { type: Object, default: null },
 });
 
-const emit = defineEmits(['cancel', 'created']);
+const emit = defineEmits(['cancel', 'created', 'updated']);
+
+const isEditMode = computed(() => !!props.bot);
 
 const { communityPath } = useCommunityUrl(props.community.slug);
 
@@ -54,12 +57,42 @@ function makeEmptyForm() {
         affiliate_commission_rate: '',
         cover_image: null,
         preview_video: null,
+        remove_cover_image: false,
+        remove_preview_video: false,
         model_tier: 'basic',
         personality_tone: '',
         personality_response_style: '',
         personality_expertise: '',
     };
 }
+
+function fillFromBot(bot) {
+    if (!bot) return;
+    form.value = {
+        name: bot.name ?? '',
+        description: bot.description ?? '',
+        instructions: bot.instructions ?? '',
+        access_type: bot.access_type ?? 'free',
+        price: bot.price ?? '',
+        affiliate_commission_rate: bot.affiliate_commission_rate ?? '',
+        cover_image: null,
+        preview_video: null,
+        remove_cover_image: false,
+        remove_preview_video: false,
+        model_tier: bot.model_tier ?? 'basic',
+        personality_tone: bot.personality?.tone ?? '',
+        personality_response_style: bot.personality?.response_style ?? '',
+        personality_expertise: bot.personality?.expertise ?? '',
+    };
+    coverPreview.value = bot.cover_image ?? null;
+    videoPreview.value = bot.preview_video ?? null;
+}
+
+onMounted(() => {
+    if (props.bot) fillFromBot(props.bot);
+});
+
+watch(() => props.bot, (b) => { if (b) fillFromBot(b); });
 
 function resetForm() {
     form.value = makeEmptyForm();
@@ -88,6 +121,7 @@ function removeCover() {
     form.value.cover_image = null;
     coverPreview.value = null;
     if (coverInput.value) coverInput.value.value = '';
+    if (isEditMode.value) form.value.remove_cover_image = true;
 }
 
 async function onVideoChange(e) {
@@ -127,9 +161,10 @@ function removeVideo() {
     videoPreview.value = null;
     videoUploadError.value = '';
     if (videoInput.value) videoInput.value.value = '';
+    if (isEditMode.value) form.value.remove_preview_video = true;
 }
 
-function createCurzzo() {
+function submitCurzzo() {
     saving.value = true;
 
     const formData = new FormData();
@@ -141,6 +176,8 @@ function createCurzzo() {
 
     if (form.value.cover_image) formData.append('cover_image', form.value.cover_image);
     if (form.value.preview_video) formData.append('preview_video', form.value.preview_video);
+    if (form.value.remove_cover_image) formData.append('remove_cover_image', '1');
+    if (form.value.remove_preview_video) formData.append('remove_preview_video', '1');
 
     if (isPaidType(form.value.access_type)) {
         if (form.value.price) formData.append('price', form.value.price);
@@ -152,6 +189,21 @@ function createCurzzo() {
     if (form.value.personality_tone) formData.append('personality[tone]', form.value.personality_tone);
     if (form.value.personality_response_style) formData.append('personality[response_style]', form.value.personality_response_style);
     if (form.value.personality_expertise) formData.append('personality[expertise]', form.value.personality_expertise);
+
+    if (isEditMode.value) {
+        formData.append('_method', 'PATCH');
+        router.post(communityPath(`/curzzos/${props.bot.id}`), formData, {
+            preserveScroll: true,
+            onSuccess: () => {
+                emit('updated');
+            },
+            onError: (errors) => {
+                console.error('Update curzzo errors:', errors);
+            },
+            onFinish: () => { saving.value = false; },
+        });
+        return;
+    }
 
     router.post(communityPath('/curzzos'), formData, {
         preserveScroll: true,
@@ -169,8 +221,8 @@ function createCurzzo() {
 
 <template>
     <div class="bg-white border border-indigo-200 rounded-2xl p-5 shadow-sm mb-6">
-        <h2 class="text-sm font-bold text-gray-900 mb-3">New Curzzo</h2>
-        <form @submit.prevent="createCurzzo">
+        <h2 class="text-sm font-bold text-gray-900 mb-3">{{ isEditMode ? 'Edit Curzzo' : 'New Curzzo' }}</h2>
+        <form @submit.prevent="submitCurzzo">
             <input
                 v-model="form.name"
                 type="text"
@@ -370,7 +422,7 @@ function createCurzzo() {
                 <button type="button" @click="cancel" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">Cancel</button>
                 <button type="submit" :disabled="saving || !form.name.trim() || !form.instructions.trim()"
                     class="px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-50">
-                    {{ saving ? 'Creating...' : 'Create Curzzo' }}
+                    {{ saving ? (isEditMode ? 'Saving...' : 'Creating...') : (isEditMode ? 'Save Changes' : 'Create Curzzo') }}
                 </button>
             </div>
         </form>

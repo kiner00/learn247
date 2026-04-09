@@ -17,6 +17,7 @@ const props = defineProps({
 });
 
 const showNewForm = ref(false);
+const editingBot = ref(null);
 
 const { communityPath } = useCommunityUrl(props.community.slug);
 const chatMode = ref(false);
@@ -78,6 +79,17 @@ function accessBadgeText(bot) {
     if (t === 'member_once') return 'ONE-TIME';
     return formatPrice(bot);
 }
+
+function openEdit(bot) {
+    editingBot.value = bot;
+    showNewForm.value = false;
+    // Scroll into view so the user sees the form
+    setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 50);
+}
+
+function closeEdit() {
+    editingBot.value = null;
+}
 </script>
 
 <template>
@@ -111,6 +123,16 @@ function accessBadgeText(bot) {
                 @created="showNewForm = false"
             />
 
+            <NewCurzzoForm
+                v-if="editingBot"
+                :key="`edit-${editingBot.id}`"
+                :community="community"
+                :model-tiers="modelTiers"
+                :bot="editingBot"
+                @cancel="closeEdit"
+                @updated="closeEdit"
+            />
+
             <!-- Empty state -->
             <div v-if="!curzzos.length" class="bg-white border border-gray-200 rounded-2xl p-16 text-center shadow-sm">
                 <div class="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-4">
@@ -125,6 +147,15 @@ function accessBadgeText(bot) {
             <!-- Bot card grid -->
             <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 <div v-for="bot in curzzos" :key="bot.id" class="relative group h-full">
+                    <!-- Owner edit overlay -->
+                    <div v-if="isOwner" class="absolute top-2.5 left-2.5 z-10 flex gap-1.5">
+                        <button @click.prevent.stop="openEdit(bot)"
+                            class="w-7 h-7 bg-black/50 hover:bg-black/80 text-white rounded-full flex items-center justify-center transition-colors" title="Edit Curzzo">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536M9 11l6-6 3 3-6 6H9v-3z"/>
+                            </svg>
+                        </button>
+                    </div>
                     <button
                         @click="selectBot(bot)"
                         class="w-full text-left flex flex-col h-full bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100"
