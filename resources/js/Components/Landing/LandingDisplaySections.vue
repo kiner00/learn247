@@ -380,9 +380,13 @@
             <div class="flex flex-wrap justify-center gap-6">
                 <div v-for="bot in curzzos" :key="bot.id"
                     class="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm flex flex-col w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)]">
-                    <div class="aspect-video bg-indigo-50 overflow-hidden flex items-center justify-center">
-                        <img v-if="bot.avatar" :src="bot.avatar" :alt="bot.name" class="w-full h-full object-cover" />
+                    <div class="relative aspect-video bg-indigo-50 overflow-hidden flex items-center justify-center">
+                        <img v-if="bot.cover_image" :src="bot.cover_image" :alt="bot.name" class="w-full h-full object-cover" />
+                        <img v-else-if="bot.avatar" :src="bot.avatar" :alt="bot.name" class="w-full h-full object-cover" />
                         <span v-else class="text-5xl font-black text-indigo-300">{{ bot.name.charAt(0).toUpperCase() }}</span>
+                        <div v-if="bot.avatar && bot.cover_image" class="absolute bottom-2.5 left-2.5 w-8 h-8 rounded-full border-2 border-white overflow-hidden shadow-sm">
+                            <img :src="bot.avatar" :alt="bot.name" class="w-full h-full object-cover" />
+                        </div>
                     </div>
                     <div class="p-5 flex flex-col flex-1">
                         <h3 class="font-bold text-gray-900 text-base mb-1">{{ bot.name }}</h3>

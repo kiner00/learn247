@@ -866,7 +866,7 @@ class CommunityController extends Controller
             ]);
         $curzzos = $community->curzzos()
             ->where('is_active', true)
-            ->select('id', 'name', 'description', 'avatar', 'price', 'currency', 'billing_type')
+            ->select('id', 'name', 'description', 'avatar', 'cover_image', 'price', 'currency', 'billing_type')
             ->orderBy('position')
             ->get();
         $lp = $community->landing_page ?? [];
