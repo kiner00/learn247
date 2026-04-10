@@ -23,7 +23,8 @@ class StartSubscriptionCheckoutAdditionalTest extends TestCase
         parent::setUp();
 
         $this->xendit = Mockery::mock(XenditService::class);
-        $this->action = new StartSubscriptionCheckout($this->xendit);
+        $this->app->instance(XenditService::class, $this->xendit);
+        $this->action = app(StartSubscriptionCheckout::class);
     }
 
     public function test_xendit_api_failure_is_rethrown(): void

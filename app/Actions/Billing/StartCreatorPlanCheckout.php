@@ -2,17 +2,17 @@
 
 namespace App\Actions\Billing;
 
+use App\Billing\CheckoutContext;
+use App\Billing\Strategies\RecurringCheckoutStrategy;
 use App\Models\CreatorSubscription;
 use App\Models\Setting;
 use App\Models\User;
-use App\Services\XenditService;
-use App\Support\InvoiceBuilder;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class StartCreatorPlanCheckout
 {
-    public function __construct(private readonly XenditService $xendit) {}
+    public function __construct(private readonly RecurringCheckoutStrategy $strategy) {}
 
     /**
      * @return array{creator_subscription: CreatorSubscription, checkout_url: string}
@@ -37,33 +37,35 @@ class StartCreatorPlanCheckout
         $price        = (float) Setting::get($priceKey, $defaultPrice);
 
         $planLabel  = $plan === CreatorSubscription::PLAN_PRO ? 'Pro' : 'Basic';
-        $externalId = "creator_plan_{$plan}_{$user->id}_" . time();
 
         try {
-            $invoice = $this->xendit->createInvoice(
-                InvoiceBuilder::make()
-                    ->externalId($externalId)
-                    ->amount($price)
-                    ->currency('PHP')
-                    ->description("Creator {$planLabel} Plan — Monthly")
-                    ->customer($user)
-                    ->successUrl(config('app.url') . '/creator/plan?success=1')
-                    ->failureUrl(config('app.url') . '/creator/plan?failed=1')
-                    ->item("Creator {$planLabel} Plan", $price, 'Creator Subscription')
-                    ->toArray()
-            );
+            // Creator plans are always monthly — always use recurring strategy
+            $result = $this->strategy->initiatePayment(new CheckoutContext(
+                user: $user,
+                amount: $price,
+                currency: 'PHP',
+                description: "Creator {$planLabel} Plan — Monthly",
+                referenceId: "creator_plan_{$plan}_{$user->id}_" . time(),
+                successUrl: config('app.url') . '/creator/plan?success=1',
+                failureUrl: config('app.url') . '/creator/plan?failed=1',
+                itemName: "Creator {$planLabel} Plan",
+                itemCategory: 'Creator Subscription',
+            ));
 
             $creatorSubscription = CreatorSubscription::create([
                 'user_id'            => $user->id,
                 'plan'               => $plan,
                 'status'             => CreatorSubscription::STATUS_PENDING,
-                'xendit_id'          => $invoice['id'],
-                'xendit_invoice_url' => $invoice['invoice_url'],
+                'xendit_id'          => $result->invoiceId,
+                'xendit_invoice_url' => $result->invoiceUrl,
+                'xendit_plan_id'     => $result->planId,
+                'xendit_customer_id' => $result->customerId,
+                'recurring_status'   => $result->recurringStatus,
             ]);
 
             return [
                 'creator_subscription' => $creatorSubscription,
-                'checkout_url'         => $invoice['invoice_url'],
+                'checkout_url'         => $result->checkoutUrl,
             ];
         } catch (\Throwable $e) {
             Log::error('StartCreatorPlanCheckout failed', [

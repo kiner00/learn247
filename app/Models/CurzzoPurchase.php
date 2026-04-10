@@ -7,12 +7,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CurzzoPurchase extends Model
 {
+    use Concerns\HasRecurringPlan;
     public const STATUS_PENDING = 'pending';
     public const STATUS_PAID    = 'paid';
 
     protected $fillable = [
         'user_id',
         'curzzo_id',
+        'xendit_plan_id', 'xendit_customer_id', 'recurring_status',
         'affiliate_id',
         'xendit_id',
         'status',

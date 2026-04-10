@@ -2,19 +2,17 @@
 
 namespace App\Actions\Billing;
 
+use App\Billing\CheckoutContext;
+use App\Billing\CheckoutStrategyFactory;
 use App\Models\Affiliate;
 use App\Models\Community;
 use App\Models\Subscription;
 use App\Models\User;
-use App\Services\XenditService;
-use App\Support\InvoiceBuilder;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class StartSubscriptionCheckout
 {
-    public function __construct(private readonly XenditService $xendit) {}
-
     /**
      * @return array{subscription: Subscription, checkout_url: string}
      * @throws ValidationException|\RuntimeException
@@ -39,20 +37,20 @@ class StartSubscriptionCheckout
         }
 
         try {
-            $externalId = "{$community->slug}_sub_{$user->id}_" . time();
+            // Strategy decides how to charge: invoice (one-time) or recurring plan (monthly)
+            $strategy = CheckoutStrategyFactory::make($community->billing_type);
 
-            $invoice = $this->xendit->createInvoice(
-                InvoiceBuilder::make()
-                    ->externalId($externalId)
-                    ->amount((float) $community->price)
-                    ->currency($community->currency)
-                    ->description("Subscription to {$community->name}")
-                    ->customer($user)
-                    ->successUrl($successRedirectUrl ?? config('app.url') . "/communities/{$community->slug}")
-                    ->failureUrl(config('app.url') . "/communities/{$community->slug}")
-                    ->item("Community: {$community->name}", (float) $community->price, 'Community Subscription')
-                    ->toArray()
-            );
+            $result = $strategy->initiatePayment(new CheckoutContext(
+                user: $user,
+                amount: (float) $community->price,
+                currency: $community->currency,
+                description: "Subscription to {$community->name}",
+                referenceId: "{$community->slug}_sub_{$user->id}_" . time(),
+                successUrl: $successRedirectUrl ?? config('app.url') . "/communities/{$community->slug}",
+                failureUrl: config('app.url') . "/communities/{$community->slug}",
+                itemName: "Community: {$community->name}",
+                itemCategory: 'Community Subscription',
+            ));
 
             // Resolve affiliate from cookie code (must be active and for this community)
             $affiliateId = null;
@@ -69,11 +67,14 @@ class StartSubscriptionCheckout
                 'user_id'            => $user->id,
                 'affiliate_id'       => $affiliateId,
                 'status'             => Subscription::STATUS_PENDING,
-                'xendit_id'          => $invoice['id'],
-                'xendit_invoice_url' => $invoice['invoice_url'],
+                'xendit_id'          => $result->invoiceId,
+                'xendit_invoice_url' => $result->invoiceUrl,
+                'xendit_plan_id'     => $result->planId,
+                'xendit_customer_id' => $result->customerId,
+                'recurring_status'   => $result->recurringStatus,
             ]);
 
-            return ['subscription' => $subscription, 'checkout_url' => $invoice['invoice_url']];
+            return ['subscription' => $subscription, 'checkout_url' => $result->checkoutUrl];
         } catch (\Throwable $e) {
             Log::error('StartSubscriptionCheckout failed', [
                 'user_id'      => $user->id,

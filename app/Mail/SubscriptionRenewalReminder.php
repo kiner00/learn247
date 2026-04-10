@@ -18,6 +18,7 @@ class SubscriptionRenewalReminder extends Mailable
         public readonly Subscription $subscription,
         public readonly string $renewalUrl,
         public readonly bool $urgent = false,
+        public readonly ?string $autoRenewUrl = null,
     ) {}
 
     public function envelope(): Envelope
@@ -51,6 +52,7 @@ class SubscriptionRenewalReminder extends Mailable
             'community_name' => $this->subscription->community->name,
             'expiry_date'    => $this->subscription->expires_at->format('F j, Y'),
             'renewal_url'    => $this->renewalUrl,
+            'auto_renew_url' => $this->autoRenewUrl,
         ];
     }
 }

@@ -20,7 +20,7 @@ class SubscriptionControllerTest extends TestCase
     public function test_checkout_redirects_to_xendit_invoice_url(): void
     {
         $user      = User::factory()->create();
-        $community = Community::factory()->paid(499)->create();
+        $community = Community::factory()->paid(499)->create(['billing_type' => 'one_time']);
 
         $invoiceUrl = 'https://checkout.xendit.co/test-invoice-123';
 
@@ -42,7 +42,7 @@ class SubscriptionControllerTest extends TestCase
     public function test_checkout_creates_pending_subscription(): void
     {
         $user      = User::factory()->create();
-        $community = Community::factory()->paid(499)->create();
+        $community = Community::factory()->paid(499)->create(['billing_type' => 'one_time']);
 
         $this->mock(XenditService::class, function (MockInterface $mock) {
             $mock->shouldReceive('createInvoice')
@@ -78,7 +78,7 @@ class SubscriptionControllerTest extends TestCase
     public function test_checkout_with_existing_active_subscription_returns_error(): void
     {
         $user      = User::factory()->create();
-        $community = Community::factory()->paid(499)->create();
+        $community = Community::factory()->paid(499)->create(['billing_type' => 'one_time']);
 
         Subscription::factory()->active()->create([
             'community_id' => $community->id,
@@ -93,7 +93,7 @@ class SubscriptionControllerTest extends TestCase
 
     public function test_guest_cannot_checkout(): void
     {
-        $community = Community::factory()->paid(499)->create();
+        $community = Community::factory()->paid(499)->create(['billing_type' => 'one_time']);
 
         $response = $this->post("/communities/{$community->slug}/checkout");
 

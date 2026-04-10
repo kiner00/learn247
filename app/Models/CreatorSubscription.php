@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CreatorSubscription extends Model
 {
+    use Concerns\HasRecurringPlan;
     const STATUS_PENDING   = 'pending';
     const STATUS_ACTIVE    = 'active';
     const STATUS_EXPIRED   = 'expired';
@@ -18,6 +19,7 @@ class CreatorSubscription extends Model
     protected $fillable = [
         'user_id',
         'plan',
+        'xendit_plan_id', 'xendit_customer_id', 'recurring_status',
         'status',
         'xendit_id',
         'xendit_invoice_url',

@@ -37,6 +37,7 @@ use App\Http\Controllers\Web\RefController;
 use App\Http\Controllers\Web\ForgotPasswordController;
 use App\Http\Controllers\Web\SetPasswordController;
 use App\Http\Controllers\Web\FreeSubscribeController;
+use App\Http\Controllers\Web\RecurringCancellationController;
 use App\Http\Controllers\Web\SubscriptionController;
 use App\Http\Middleware\EnsureActiveMembership;
 use App\Http\Controllers\XenditWebhookController;
@@ -216,6 +217,10 @@ Route::middleware('auth')->group(function () {
 
     // Paid community checkout → redirects to Xendit invoice URL
     Route::post('/communities/{community}/checkout', [SubscriptionController::class, 'checkout'])->name('communities.checkout');
+    Route::post('/subscriptions/{subscription}/cancel-recurring', [RecurringCancellationController::class, 'cancelSubscription'])->name('subscriptions.cancel-recurring');
+    Route::post('/subscriptions/{subscription}/enable-auto-renew', [RecurringCancellationController::class, 'enableSubscriptionAutoRenew'])->name('subscriptions.enable-auto-renew');
+    Route::post('/course-enrollments/{courseEnrollment}/cancel-recurring', [RecurringCancellationController::class, 'cancelCourseEnrollment'])->name('course-enrollments.cancel-recurring');
+    Route::post('/curzzo-purchases/{curzzoPurchase}/cancel-recurring', [RecurringCancellationController::class, 'cancelCurzzoPurchase'])->name('curzzo-purchases.cancel-recurring');
 
     // Free community subscription (for access to free courses)
     Route::post('/communities/{community}/free-subscribe', [FreeSubscribeController::class, 'store'])->name('communities.free-subscribe');
@@ -417,6 +422,8 @@ Route::middleware('auth')->group(function () {
     // ─── Creator Dashboard ────────────────────────────────────────────────────
     Route::get('/creator/plan', [CreatorController::class, 'plan'])->name('creator.plan');
     Route::post('/creator/plan/checkout', [CreatorController::class, 'planCheckout'])->name('creator.plan.checkout');
+    Route::post('/creator/plan/cancel-recurring', [RecurringCancellationController::class, 'cancelCreatorPlan'])->name('creator.plan.cancel-recurring');
+    Route::post('/creator/plan/enable-auto-renew', [RecurringCancellationController::class, 'enableCreatorPlanAutoRenew'])->name('creator.plan.enable-auto-renew');
     Route::post('/creator/plan/redeem-coupon', [CreatorController::class, 'redeemCoupon'])->name('creator.plan.redeem-coupon');
     Route::get('/creator/dashboard', [CreatorController::class, 'dashboard'])->name('creator.dashboard');
     Route::post('/creator/payout-request/{community:id}', [PayoutRequestController::class, 'storeOwner'])->name('creator.payout-request.store');

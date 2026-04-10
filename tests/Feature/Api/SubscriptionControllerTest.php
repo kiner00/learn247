@@ -17,7 +17,7 @@ class SubscriptionControllerTest extends TestCase
     public function test_checkout_creates_subscription_and_returns_url(): void
     {
         $user      = User::factory()->create();
-        $community = Community::factory()->paid(499)->create();
+        $community = Community::factory()->paid(499)->create(['billing_type' => 'one_time']);
 
         $this->mock(XenditService::class, function ($mock): void {
             $mock->shouldReceive('createInvoice')
@@ -57,7 +57,7 @@ class SubscriptionControllerTest extends TestCase
     public function test_checkout_with_existing_active_subscription_returns_422(): void
     {
         $user      = User::factory()->create();
-        $community = Community::factory()->paid(499)->create();
+        $community = Community::factory()->paid(499)->create(['billing_type' => 'one_time']);
         Subscription::factory()->create([
             'community_id' => $community->id,
             'user_id'     => $user->id,
@@ -73,7 +73,7 @@ class SubscriptionControllerTest extends TestCase
 
     public function test_unauthenticated_cannot_checkout(): void
     {
-        $community = Community::factory()->paid(499)->create();
+        $community = Community::factory()->paid(499)->create(['billing_type' => 'one_time']);
 
         $this->postJson("/api/communities/{$community->slug}/checkout")
             ->assertUnauthorized();
@@ -82,7 +82,7 @@ class SubscriptionControllerTest extends TestCase
     public function test_checkout_with_affiliate_code(): void
     {
         $user      = User::factory()->create();
-        $community = Community::factory()->paid(499)->create();
+        $community = Community::factory()->paid(499)->create(['billing_type' => 'one_time']);
         $affiliate = Affiliate::create([
             'community_id' => $community->id,
             'user_id'      => User::factory()->create()->id,

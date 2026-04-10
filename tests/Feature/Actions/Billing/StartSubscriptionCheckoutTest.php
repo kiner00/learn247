@@ -25,7 +25,8 @@ class StartSubscriptionCheckoutTest extends TestCase
         parent::setUp();
 
         $this->xendit = Mockery::mock(XenditService::class);
-        $this->action = new StartSubscriptionCheckout($this->xendit);
+        $this->app->instance(XenditService::class, $this->xendit);
+        $this->action = app(StartSubscriptionCheckout::class);
     }
 
     public function test_creates_pending_subscription_and_returns_checkout_url(): void

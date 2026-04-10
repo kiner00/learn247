@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\XenditService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -26,6 +27,7 @@ class User extends Authenticatable
         'crypto_wallet', 'crz_token_balance',
         'kyc_verified_at', 'kyc_status', 'kyc_id_document', 'kyc_selfie',
         'kyc_submitted_at', 'kyc_rejected_reason', 'kyc_ai_result', 'kyc_ai_rejections',
+        'xendit_customer_id',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -114,5 +116,28 @@ class User extends Authenticatable
     public function hasActiveCreatorPlan(): bool
     {
         return $this->creatorPlan() !== 'free';
+    }
+
+    /**
+     * Ensure this user has a Xendit customer record. Creates one if needed.
+     */
+    public function ensureXenditCustomer(XenditService $xendit): string
+    {
+        if ($this->xendit_customer_id) {
+            return $this->xendit_customer_id;
+        }
+
+        $customer = $xendit->createCustomer([
+            'reference_id'      => "user_{$this->id}",
+            'email'             => $this->email,
+            'type'              => 'INDIVIDUAL',
+            'individual_detail' => [
+                'given_names' => $this->name,
+            ],
+        ]);
+
+        $this->update(['xendit_customer_id' => $customer['id']]);
+
+        return $customer['id'];
     }
 }

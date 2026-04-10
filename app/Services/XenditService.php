@@ -147,4 +147,80 @@ class XenditService implements PaymentGateway
 
         return hash_equals($this->callbackToken, $token);
     }
+
+    /**
+     * Create a Xendit Customer (idempotent by reference_id).
+     * @throws \RuntimeException
+     */
+    public function createCustomer(array $data): array
+    {
+        $response = Http::withBasicAuth($this->secretKey, '')
+            ->post(self::BASE_URL . '/customers', $data);
+
+        if ($response->failed()) {
+            Log::error('XenditService::createCustomer failed', [
+                'status' => $response->status(),
+                'body'   => $response->json(),
+            ]);
+            throw new \RuntimeException('Failed to create Xendit customer: ' . $response->body());
+        }
+
+        return $response->json();
+    }
+
+    /**
+     * Create a Xendit Recurring Plan (subscription).
+     * @throws \RuntimeException
+     */
+    public function createRecurringPlan(array $data): array
+    {
+        $response = Http::withBasicAuth($this->secretKey, '')
+            ->post(self::BASE_URL . '/recurring/plans', $data);
+
+        if ($response->failed()) {
+            Log::error('XenditService::createRecurringPlan failed', [
+                'status' => $response->status(),
+                'body'   => $response->json(),
+            ]);
+            throw new \RuntimeException('Failed to create Xendit recurring plan: ' . $response->body());
+        }
+
+        return $response->json();
+    }
+
+    /**
+     * Fetch a Xendit Recurring Plan by ID.
+     * @throws \RuntimeException
+     */
+    public function getRecurringPlan(string $planId): array
+    {
+        $response = Http::withBasicAuth($this->secretKey, '')
+            ->get(self::BASE_URL . "/recurring/plans/{$planId}");
+
+        if ($response->failed()) {
+            throw new \RuntimeException('Failed to fetch Xendit recurring plan: ' . $response->body());
+        }
+
+        return $response->json();
+    }
+
+    /**
+     * Deactivate a Xendit Recurring Plan (cancel auto-charge).
+     * @throws \RuntimeException
+     */
+    public function deactivateRecurringPlan(string $planId): array
+    {
+        $response = Http::withBasicAuth($this->secretKey, '')
+            ->post(self::BASE_URL . "/recurring/plans/{$planId}/deactivate");
+
+        if ($response->failed()) {
+            Log::error('XenditService::deactivateRecurringPlan failed', [
+                'status' => $response->status(),
+                'body'   => $response->json(),
+            ]);
+            throw new \RuntimeException('Failed to deactivate Xendit recurring plan: ' . $response->body());
+        }
+
+        return $response->json();
+    }
 }

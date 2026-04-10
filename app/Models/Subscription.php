@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Subscription extends Model
 {
-    use HasFactory;
+    use Concerns\HasRecurringPlan, HasFactory;
 
     public const STATUS_PENDING   = 'pending';
     public const STATUS_ACTIVE    = 'active';
@@ -18,6 +18,7 @@ class Subscription extends Model
 
     protected $fillable = [
         'community_id', 'user_id', 'affiliate_id', 'status',
+        'xendit_plan_id', 'xendit_customer_id', 'recurring_status',
         'xendit_id', 'xendit_invoice_url', 'expires_at',
         'reminder_5d_sent_at', 'reminder_1d_sent_at',
     ];

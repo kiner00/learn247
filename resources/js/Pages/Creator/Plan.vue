@@ -2,12 +2,16 @@
 import AppLayout from '@/Layouts/AppLayout.vue';
 import axios from 'axios';
 import { ref, onMounted } from 'vue';
-import { useForm, usePage } from '@inertiajs/vue3';
+import { useForm, usePage, router } from '@inertiajs/vue3';
 
 const props = defineProps({
-    basicPrice:  { type: Number, default: 499 },
-    proPrice:    { type: Number, default: 1999 },
-    currentPlan: { type: String, default: 'free' },
+    basicPrice:      { type: Number, default: 499 },
+    proPrice:        { type: Number, default: 1999 },
+    currentPlan:     { type: String, default: 'free' },
+    isAutoRenewing:  { type: Boolean, default: false },
+    isRecurring:     { type: Boolean, default: false },
+    recurringStatus: { type: String, default: null },
+    expiresAt:       { type: String, default: null },
 });
 
 const notice = ref(null);
@@ -41,6 +45,30 @@ async function subscribe(plan) {
         window.location.href = data.checkout_url;
     } catch {
         processing.value = false;
+    }
+}
+
+const autoRenewLoading = ref(false);
+
+function formatDate(dateStr) {
+    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+async function enableAutoRenew() {
+    autoRenewLoading.value = true;
+    try {
+        const { data } = await axios.post('/creator/plan/enable-auto-renew');
+        if (data.linking_url) window.location.href = data.linking_url;
+    } catch (e) {
+        alert(e.response?.data?.message || 'Failed to enable auto-renew.');
+    } finally {
+        autoRenewLoading.value = false;
+    }
+}
+
+function cancelAutoRenew() {
+    if (confirm('Cancel auto-renewal? Your plan will remain active until the current period ends.')) {
+        router.post('/creator/plan/cancel-recurring');
     }
 }
 
@@ -97,9 +125,36 @@ const planLabel = { free: 'Free', basic: 'Basic', pro: 'Pro' };
             </div>
 
             <!-- Current plan banner -->
-            <div v-if="currentPlan !== 'free'" class="mb-6 bg-indigo-50 border border-indigo-200 rounded-2xl px-5 py-4 flex items-center gap-3">
-                <span class="text-xl">⭐</span>
-                <p class="text-sm font-bold text-indigo-800">You're on the <span class="capitalize">{{ currentPlan }}</span> plan. All your features are active.</p>
+            <div v-if="currentPlan !== 'free'" class="mb-6 bg-indigo-50 border border-indigo-200 rounded-2xl px-5 py-4">
+                <div class="flex items-center gap-3">
+                    <span class="text-xl">⭐</span>
+                    <div class="flex-1">
+                        <p class="text-sm font-bold text-indigo-800">You're on the <span class="capitalize">{{ currentPlan }}</span> plan. All your features are active.</p>
+                        <p v-if="expiresAt" class="text-xs text-indigo-600 mt-0.5">
+                            {{ isAutoRenewing ? 'Auto-renews' : 'Expires' }} on {{ formatDate(expiresAt) }}
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <span v-if="isAutoRenewing" class="inline-flex items-center text-xs font-medium px-2 py-1 rounded-full bg-green-100 text-green-700">Auto-Renew ON</span>
+                        <span v-else-if="recurringStatus === 'INACTIVE'" class="inline-flex items-center text-xs font-medium px-2 py-1 rounded-full bg-gray-100 text-gray-500">Auto-Renew Cancelled</span>
+                        <button
+                            v-if="!isRecurring"
+                            @click="enableAutoRenew"
+                            :disabled="autoRenewLoading"
+                            class="text-xs text-indigo-600 hover:text-indigo-800 px-3 py-1.5 border border-indigo-300 rounded-lg transition-colors disabled:opacity-50"
+                        >
+                            {{ autoRenewLoading ? 'Loading...' : 'Enable Auto-Renew' }}
+                        </button>
+                        <a
+                            v-if="isAutoRenewing"
+                            href="/creator/plan/cancel-recurring"
+                            @click.prevent="cancelAutoRenew"
+                            class="text-xs text-red-500 hover:text-red-700 px-3 py-1.5 border border-red-200 rounded-lg transition-colors"
+                        >
+                            Cancel Auto-Renew
+                        </a>
+                    </div>
+                </div>
             </div>
 
             <!-- Coupon input -->

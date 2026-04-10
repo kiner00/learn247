@@ -2,19 +2,17 @@
 
 namespace App\Actions\Billing;
 
+use App\Billing\CheckoutContext;
+use App\Billing\CheckoutStrategyFactory;
 use App\Models\Affiliate;
 use App\Models\Curzzo;
 use App\Models\CurzzoPurchase;
 use App\Models\User;
-use App\Services\XenditService;
-use App\Support\InvoiceBuilder;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class StartCurzzoCheckout
 {
-    public function __construct(private readonly XenditService $xendit) {}
-
     /**
      * @return array{purchase: CurzzoPurchase, checkout_url: string}
      */
@@ -39,21 +37,22 @@ class StartCurzzoCheckout
         }
 
         try {
-            $community  = $curzzo->community;
-            $externalId = "curzzo_{$curzzo->id}_user_{$user->id}_" . time();
+            $community = $curzzo->community;
 
-            $invoice = $this->xendit->createInvoice(
-                InvoiceBuilder::make()
-                    ->externalId($externalId)
-                    ->amount((float) $curzzo->price)
-                    ->currency($curzzo->currency ?? $community->currency ?? 'PHP')
-                    ->description("Curzzo: {$curzzo->name} — {$community->name}")
-                    ->customer($user)
-                    ->successUrl($successRedirectUrl ?? config('app.url') . "/communities/{$community->slug}/curzzos")
-                    ->failureUrl(config('app.url') . "/communities/{$community->slug}/curzzos")
-                    ->item("Curzzo: {$curzzo->name}", (float) $curzzo->price, 'AI Bot')
-                    ->toArray()
-            );
+            // Strategy decides how to charge: invoice (one-time) or recurring plan (monthly)
+            $strategy = CheckoutStrategyFactory::make($curzzo->billing_type ?? 'one_time');
+
+            $result = $strategy->initiatePayment(new CheckoutContext(
+                user: $user,
+                amount: (float) $curzzo->price,
+                currency: $curzzo->currency ?? $community->currency ?? 'PHP',
+                description: "Curzzo: {$curzzo->name} — {$community->name}",
+                referenceId: "curzzo_{$curzzo->id}_user_{$user->id}_" . time(),
+                successUrl: $successRedirectUrl ?? config('app.url') . "/communities/{$community->slug}/curzzos",
+                failureUrl: config('app.url') . "/communities/{$community->slug}/curzzos",
+                itemName: "Curzzo: {$curzzo->name}",
+                itemCategory: 'AI Bot',
+            ));
 
             $affiliateId = null;
             if ($affiliateCode) {
@@ -65,14 +64,17 @@ class StartCurzzoCheckout
             }
 
             $purchase = CurzzoPurchase::create([
-                'user_id'      => $user->id,
-                'curzzo_id'    => $curzzo->id,
-                'affiliate_id' => $affiliateId,
-                'status'       => CurzzoPurchase::STATUS_PENDING,
-                'xendit_id'    => $invoice['id'],
+                'user_id'            => $user->id,
+                'curzzo_id'          => $curzzo->id,
+                'affiliate_id'       => $affiliateId,
+                'status'             => CurzzoPurchase::STATUS_PENDING,
+                'xendit_id'          => $result->invoiceId,
+                'xendit_plan_id'     => $result->planId,
+                'xendit_customer_id' => $result->customerId,
+                'recurring_status'   => $result->recurringStatus,
             ]);
 
-            return ['purchase' => $purchase, 'checkout_url' => $invoice['invoice_url']];
+            return ['purchase' => $purchase, 'checkout_url' => $result->checkoutUrl];
         } catch (\Throwable $e) {
             Log::error('StartCurzzoCheckout failed', [
                 'user_id'   => $user->id,

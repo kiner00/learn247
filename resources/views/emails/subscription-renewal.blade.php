@@ -38,6 +38,14 @@
 
         <a href="{{ $renewalUrl }}" class="btn {{ $urgent ? 'btn-urgent' : '' }}">Renew Subscription</a>
 
+        @if($autoRenewUrl)
+            <p style="text-align:center; margin-top:4px;">
+                <a href="{{ $autoRenewUrl }}" style="color:#4F46E5; font-size:14px; text-decoration:underline;">
+                    Or enable auto-renew to never miss a renewal
+                </a>
+            </p>
+        @endif
+
         <p class="footer">
             If you no longer wish to stay subscribed, simply ignore this email and your access will end on the expiry date.
         </p>

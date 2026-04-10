@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Actions\Billing\StartCreatorPlanCheckout;
 use App\Actions\Coupon\RedeemCoupon;
 use App\Http\Controllers\Controller;
+use App\Models\CreatorSubscription;
 use App\Models\Setting;
 use App\Queries\Creator\GetCreatorDashboard;
 use App\Services\Analytics\CreatorAnalyticsService;
@@ -20,10 +21,20 @@ class CreatorController extends Controller
     {
         $user = Auth::user();
 
+        $activeSub = $user->creatorSubscriptions()
+            ->where('status', CreatorSubscription::STATUS_ACTIVE)
+            ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+            ->latest()
+            ->first();
+
         return Inertia::render('Creator/Plan', [
-            'basicPrice'  => (float) Setting::get('creator_plan_basic_price', 499),
-            'proPrice'    => (float) Setting::get('creator_plan_pro_price', 1999),
-            'currentPlan' => $user->creatorPlan(),
+            'basicPrice'      => (float) Setting::get('creator_plan_basic_price', 499),
+            'proPrice'        => (float) Setting::get('creator_plan_pro_price', 1999),
+            'currentPlan'     => $user->creatorPlan(),
+            'isAutoRenewing'  => $activeSub?->isAutoRenewing() ?? false,
+            'isRecurring'     => $activeSub?->isRecurring() ?? false,
+            'recurringStatus' => $activeSub?->recurring_status,
+            'expiresAt'       => $activeSub?->expires_at?->toDateTimeString(),
         ]);
     }
 

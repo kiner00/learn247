@@ -8,6 +8,7 @@ use App\Models\Subscription;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\URL;
 
 class RenewExpiringSubscriptions extends Command
 {
@@ -25,6 +26,7 @@ class RenewExpiringSubscriptions extends Command
     private function sendReminders(CreateRenewalInvoice $action, int $days, string $column, bool $urgent): void
     {
         $subscriptions = Subscription::where('status', Subscription::STATUS_ACTIVE)
+            ->whereNull('xendit_plan_id') // skip recurring — they auto-renew
             ->whereBetween('expires_at', [now()->addDays($days - 1), now()->addDays($days + 1)])
             ->whereNull($column)
             ->with(['user', 'community'])
@@ -41,8 +43,13 @@ class RenewExpiringSubscriptions extends Command
                     ? ($subscription->xendit_invoice_url ?? $action->execute($subscription))
                     : $action->execute($subscription);
 
+                // Generate a signed auto-renew URL (valid for 7 days)
+                $autoRenewUrl = URL::signedRoute('subscriptions.enable-auto-renew', [
+                    'subscription' => $subscription->id,
+                ], now()->addDays(7));
+
                 Mail::to($subscription->user->email)
-                    ->queue(new SubscriptionRenewalReminder($subscription, $renewalUrl, $urgent));
+                    ->queue(new SubscriptionRenewalReminder($subscription, $renewalUrl, $urgent, $autoRenewUrl));
 
                 $subscription->update([$column => now()]);
 

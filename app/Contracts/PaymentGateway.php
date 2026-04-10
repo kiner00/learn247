@@ -17,4 +17,12 @@ interface PaymentGateway
     public static function collectionFee(string $channel, float $gross): float;
 
     public function verifyCallbackToken(?string $token): bool;
+
+    public function createCustomer(array $data): array;
+
+    public function createRecurringPlan(array $data): array;
+
+    public function getRecurringPlan(string $planId): array;
+
+    public function deactivateRecurringPlan(string $planId): array;
 }
