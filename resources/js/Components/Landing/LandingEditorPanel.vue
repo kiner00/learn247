@@ -803,12 +803,18 @@ function addSection(type) {
 
 function removeSection(type) {
     if (!props.editDraft._sections) return;
-    props.editDraft._sections = props.editDraft._sections.filter(s => s.type !== type);
-    if (expandedSection.value === type) expandedSection.value = null;
-    // Clean up custom section data
-    if (type.startsWith('custom_') && props.editDraft.custom_sections) {
-        delete props.editDraft.custom_sections[type];
+    if (type.startsWith('custom_')) {
+        // Custom sections: fully remove from array and clean up data
+        props.editDraft._sections = props.editDraft._sections.filter(s => s.type !== type);
+        if (props.editDraft.custom_sections) {
+            delete props.editDraft.custom_sections[type];
+        }
+    } else {
+        // Built-in sections: hide instead of removing so they stay in _sections
+        const sec = props.editDraft._sections.find(s => s.type === type);
+        if (sec) sec.visible = false;
     }
+    if (expandedSection.value === type) expandedSection.value = null;
 }
 
 function addCustomSection() {

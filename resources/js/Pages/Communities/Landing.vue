@@ -492,7 +492,14 @@ function isVisible(type) {
     const sections = lp.value._sections;
     if (!sections) return true; // backward compat: old pages show all
     const sec = sections.find(s => s.type === type);
-    if (!sec) return defaultSectionVisible(type);
+    if (!sec) {
+        // Section missing from _sections: auto-introduce if not yet reviewed,
+        // otherwise treat as hidden (user removed it or it was never added).
+        if (AUTO_INTRODUCE_SECTIONS.includes(type) && !lp.value[`_${type}_introduced`]) {
+            return defaultSectionVisible(type);
+        }
+        return false;
+    }
     if (!sec.visible && AUTO_INTRODUCE_SECTIONS.includes(type) && !lp.value[`_${type}_introduced`]) {
         return defaultSectionVisible(type);
     }
@@ -542,7 +549,10 @@ watch(showEditPanel, (open) => {
                         const prevIdx = editDraft.value._sections.findIndex(s => s.type === DEFAULT_SECTION_ORDER[j]);
                         if (prevIdx !== -1) { insertIdx = prevIdx + 1; break; }
                     }
-                    editDraft.value._sections.splice(insertIdx, 0, { type, visible: defaultSectionVisible(type) });
+                    // If the section was already introduced (owner has seen editor before)
+                    // but is missing from _sections, the owner likely removed it — default hidden.
+                    const wasRemoved = editDraft.value[`_${type}_introduced`];
+                    editDraft.value._sections.splice(insertIdx, 0, { type, visible: wasRemoved ? false : defaultSectionVisible(type) });
                 }
             }
         }
