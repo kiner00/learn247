@@ -481,16 +481,21 @@ function customSectionsAfter(afterType) {
 }
 
 // ── Section visibility helpers ────────────────────────────────────────────────
+// Newly-introduced section types that were auto-defaulted to hidden before
+// owners had a chance to review them. Until the owner opens the editor and
+// saves (setting the _introduced flag), treat these as visible when content
+// exists so they appear on the live page immediately.
+const AUTO_INTRODUCE_SECTIONS = ['curzzos'];
+
 function isVisible(type) {
     if (!lp.value) return false;
     const sections = lp.value._sections;
     if (!sections) return true; // backward compat: old pages show all
     const sec = sections.find(s => s.type === type);
-    // Section not yet in _sections (added to DEFAULT_SECTION_ORDER after this
-    // landing page was last saved): fall back to content-driven default so
-    // newly-introduced sections like curzzos appear without forcing every
-    // owner to re-open the editor.
     if (!sec) return defaultSectionVisible(type);
+    if (!sec.visible && AUTO_INTRODUCE_SECTIONS.includes(type) && !lp.value[`_${type}_introduced`]) {
+        return defaultSectionVisible(type);
+    }
     return sec.visible;
 }
 
@@ -538,6 +543,18 @@ watch(showEditPanel, (open) => {
                         if (prevIdx !== -1) { insertIdx = prevIdx + 1; break; }
                     }
                     editDraft.value._sections.splice(insertIdx, 0, { type, visible: defaultSectionVisible(type) });
+                }
+            }
+        }
+
+        // One-time introduction: auto-enable newly-added content-driven sections
+        // when they have data and the owner hasn't reviewed them yet.
+        for (const type of AUTO_INTRODUCE_SECTIONS) {
+            if (!editDraft.value[`_${type}_introduced`]) {
+                editDraft.value[`_${type}_introduced`] = true;
+                const sec = editDraft.value._sections?.find(s => s.type === type);
+                if (sec && !sec.visible && defaultSectionVisible(type)) {
+                    sec.visible = true;
                 }
             }
         }

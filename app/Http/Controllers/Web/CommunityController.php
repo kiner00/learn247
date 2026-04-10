@@ -1006,6 +1006,8 @@ class CommunityController extends Controller
             '_sections'               => 'nullable|array',
             '_sections.*.type'        => 'nullable|string|max:50',
             '_sections.*.visible'     => 'nullable|boolean',
+            // One-time introduction flags for newly-added section types
+            '_curzzos_introduced'     => 'nullable|boolean',
         ]);
 
         // Preserve empty strings for price_note fields so the frontend can
