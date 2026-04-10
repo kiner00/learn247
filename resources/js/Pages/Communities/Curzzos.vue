@@ -29,7 +29,14 @@ const chatMode = ref(false);
 const selectedCurzzo = ref(null);
 const checkingOut = ref(false);
 
+function stopAllPreviews() {
+    clearTimeout(hoverTimer);
+    clearTimeout(touchTimer);
+    document.querySelectorAll('video[data-bot-id]').forEach(stopBotVideo);
+}
+
 function selectBot(bot) {
+    stopAllPreviews();
     if (!bot.has_access) {
         startCheckout(bot);
         return;
@@ -170,11 +177,7 @@ function onCardTouchEnd(bot) {
     document.querySelectorAll(`video[data-bot-id="${bot.id}"]`).forEach(stopBotVideo);
 }
 
-onBeforeUnmount(() => {
-    document.querySelectorAll('video[data-bot-id]').forEach(stopBotVideo);
-    clearTimeout(hoverTimer);
-    clearTimeout(touchTimer);
-});
+onBeforeUnmount(stopAllPreviews);
 </script>
 
 <template>
