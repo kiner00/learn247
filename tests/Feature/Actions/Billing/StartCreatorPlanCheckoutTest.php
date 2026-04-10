@@ -38,7 +38,6 @@ class StartCreatorPlanCheckoutTest extends TestCase
     {
         $user = User::factory()->create();
 
-        // Create active basic subscription
         CreatorSubscription::create([
             'user_id'    => $user->id,
             'plan'       => CreatorSubscription::PLAN_BASIC,
@@ -55,16 +54,9 @@ class StartCreatorPlanCheckoutTest extends TestCase
     public function test_basic_plan_checkout_creates_subscription_and_returns_url(): void
     {
         Http::fake([
-            // Recurring strategy calls createCustomer then createRecurringPlan
-            'https://api.xendit.co/customers' => Http::response([
-                'id' => 'cust_test_123',
-            ], 200),
-            'https://api.xendit.co/recurring/plans' => Http::response([
-                'id'      => 'repl_basic_123',
-                'status'  => 'REQUIRES_ACTION',
-                'actions' => [
-                    ['url' => 'https://linking.xendit.co/basic_123', 'action' => 'AUTH'],
-                ],
+            'https://api.xendit.co/v2/invoices' => Http::response([
+                'id'          => 'inv_basic_123',
+                'invoice_url' => 'https://checkout.xendit.co/inv_basic_123',
             ], 200),
         ]);
 
@@ -75,29 +67,22 @@ class StartCreatorPlanCheckoutTest extends TestCase
 
         $this->assertArrayHasKey('creator_subscription', $result);
         $this->assertArrayHasKey('checkout_url', $result);
-        $this->assertEquals('https://linking.xendit.co/basic_123', $result['checkout_url']);
+        $this->assertEquals('https://checkout.xendit.co/inv_basic_123', $result['checkout_url']);
 
         $this->assertDatabaseHas('creator_subscriptions', [
-            'user_id'          => $user->id,
-            'plan'             => CreatorSubscription::PLAN_BASIC,
-            'status'           => CreatorSubscription::STATUS_PENDING,
-            'xendit_plan_id'   => 'repl_basic_123',
-            'recurring_status' => 'REQUIRES_ACTION',
+            'user_id'   => $user->id,
+            'plan'      => CreatorSubscription::PLAN_BASIC,
+            'status'    => CreatorSubscription::STATUS_PENDING,
+            'xendit_id' => 'inv_basic_123',
         ]);
     }
 
     public function test_pro_plan_checkout_creates_subscription(): void
     {
         Http::fake([
-            'https://api.xendit.co/customers' => Http::response([
-                'id' => 'cust_test_456',
-            ], 200),
-            'https://api.xendit.co/recurring/plans' => Http::response([
-                'id'      => 'repl_pro_123',
-                'status'  => 'REQUIRES_ACTION',
-                'actions' => [
-                    ['url' => 'https://linking.xendit.co/pro_123', 'action' => 'AUTH'],
-                ],
+            'https://api.xendit.co/v2/invoices' => Http::response([
+                'id'          => 'inv_pro_123',
+                'invoice_url' => 'https://checkout.xendit.co/inv_pro_123',
             ], 200),
         ]);
 
@@ -107,20 +92,16 @@ class StartCreatorPlanCheckoutTest extends TestCase
         $result = $action->execute($user, CreatorSubscription::PLAN_PRO);
 
         $this->assertDatabaseHas('creator_subscriptions', [
-            'user_id'        => $user->id,
-            'plan'           => CreatorSubscription::PLAN_PRO,
-            'status'         => CreatorSubscription::STATUS_PENDING,
-            'xendit_plan_id' => 'repl_pro_123',
+            'user_id' => $user->id,
+            'plan'    => CreatorSubscription::PLAN_PRO,
+            'status'  => CreatorSubscription::STATUS_PENDING,
         ]);
     }
 
     public function test_xendit_failure_propagates_exception(): void
     {
         Http::fake([
-            'https://api.xendit.co/customers' => Http::response([
-                'id' => 'cust_test_789',
-            ], 200),
-            'https://api.xendit.co/recurring/plans' => Http::response(['error' => 'bad'], 500),
+            'https://api.xendit.co/v2/invoices' => Http::response(['error' => 'bad'], 500),
         ]);
 
         $user   = User::factory()->create();

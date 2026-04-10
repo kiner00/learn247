@@ -3,7 +3,7 @@
 namespace App\Actions\Billing;
 
 use App\Billing\CheckoutContext;
-use App\Billing\Strategies\RecurringCheckoutStrategy;
+use App\Billing\CheckoutStrategyFactory;
 use App\Models\CreatorSubscription;
 use App\Models\Setting;
 use App\Models\User;
@@ -12,7 +12,6 @@ use Illuminate\Validation\ValidationException;
 
 class StartCreatorPlanCheckout
 {
-    public function __construct(private readonly RecurringCheckoutStrategy $strategy) {}
 
     /**
      * @return array{creator_subscription: CreatorSubscription, checkout_url: string}
@@ -39,8 +38,9 @@ class StartCreatorPlanCheckout
         $planLabel  = $plan === CreatorSubscription::PLAN_PRO ? 'Pro' : 'Basic';
 
         try {
-            // Creator plans are always monthly — always use recurring strategy
-            $result = $this->strategy->initiatePayment(new CheckoutContext(
+            // Creator plans use invoice strategy for now; members opt into recurring via Enable Auto-Renew
+            $strategy = CheckoutStrategyFactory::make('monthly');
+            $result = $strategy->initiatePayment(new CheckoutContext(
                 user: $user,
                 amount: $price,
                 currency: 'PHP',
