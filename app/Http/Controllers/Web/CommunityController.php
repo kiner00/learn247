@@ -295,6 +295,19 @@ class CommunityController extends Controller
         return back()->with('success', 'Community updated.');
     }
 
+    public function updateAiInstructions(Request $request, Community $community): RedirectResponse
+    {
+        $this->authorize('update', $community);
+
+        $data = $request->validate([
+            'ai_chatbot_instructions' => ['nullable', 'string', 'max:10000'],
+        ]);
+
+        $community->update($data);
+
+        return back()->with('success', 'AI instructions saved.');
+    }
+
     public function addGalleryImage(Request $request, Community $community, ManageGallery $action): RedirectResponse
     {
         $this->authorize('update', $community);

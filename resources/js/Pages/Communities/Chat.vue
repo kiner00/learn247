@@ -607,9 +607,7 @@ const aiError  = ref('');
 function saveAiInstructions() {
     aiSaving.value = true;
     aiError.value  = '';
-    router.post(`/communities/${props.community.slug}`, {
-        _method: 'PATCH',
-        name: props.community.name,
+    router.patch(`/communities/${props.community.slug}/ai-instructions`, {
         ai_chatbot_instructions: aiInstructions.value,
     }, {
         preserveScroll: true,
@@ -618,8 +616,8 @@ function saveAiInstructions() {
             aiSaved.value = true;
             setTimeout(() => (aiSaved.value = false), 4000);
         },
-        onError: () => {
-            aiError.value = 'Failed to save. Please try again.';
+        onError: (errors) => {
+            aiError.value = errors?.ai_chatbot_instructions || 'Failed to save. Please try again.';
         },
         onFinish: () => { aiSaving.value = false; },
     });
