@@ -583,6 +583,7 @@
                 />
             </div>
         </Teleport>
+        <ConfirmModal :show="confirmShow" :title="confirmTitle" :message="confirmMessage" :confirm-label="confirmLabel" :destructive="confirmDestructive" @confirm="onConfirm" @cancel="onCancel" />
     </AppLayout>
 </template>
 
@@ -597,6 +598,10 @@ import UserAvatar from "@/Components/UserAvatar.vue";
 import PostComposer from "@/Components/Community/PostComposer.vue";
 import PostCard from "@/Components/Community/PostCard.vue";
 import PostModal from "@/Components/Community/PostModal.vue";
+import ConfirmModal from '@/Components/ConfirmModal.vue';
+import { useConfirm } from '@/composables/useConfirm';
+
+const { show: confirmShow, title: confirmTitle, message: confirmMessage, confirmLabel, destructive: confirmDestructive, ask, onConfirm, onCancel } = useConfirm();
 
 const props = defineProps({
     community: Object,
@@ -671,8 +676,8 @@ function freeSubscribe() {
 }
 
 // ─── Posts ────────────────────────────────────────────────────────────────────
-function deletePost(post) {
-    if (confirm("Delete this post?")) {
+async function deletePost(post) {
+    if (await ask({ title: 'Delete post', message: 'Delete this post?', confirmLabel: 'Delete', destructive: true })) {
         router.delete(`/posts/${post.id}`, { preserveScroll: true });
     }
 }

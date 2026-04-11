@@ -6,7 +6,9 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import CommunityTabs from '@/Components/CommunityTabs.vue';
 import CurzzoChat from '@/Components/CurzzoChat.vue';
 import NewCurzzoForm from '@/Components/NewCurzzoForm.vue';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
 import { useCommunityUrl } from '@/composables/useCommunityUrl';
+import { useConfirm } from '@/composables/useConfirm';
 
 const props = defineProps({
     community:  Object,
@@ -16,6 +18,8 @@ const props = defineProps({
     isOwner:    { type: Boolean, default: false },
     modelTiers: { type: Array, default: () => [] },
 });
+
+const { show: confirmShow, title: confirmTitle, message: confirmMessage, confirmLabel, destructive: confirmDestructive, ask, onConfirm, onCancel } = useConfirm();
 
 const showNewForm = ref(false);
 const editingBot = ref(null);
@@ -103,8 +107,8 @@ function closeEdit() {
     editingBot.value = null;
 }
 
-function deleteBot(bot) {
-    if (!confirm(`Delete "${bot.name}"? This cannot be undone.`)) return;
+async function deleteBot(bot) {
+    if (!await ask({ title: 'Delete Curzzo', message: `Delete "${bot.name}"? This cannot be undone.`, confirmLabel: 'Delete', destructive: true })) return;
     router.delete(communityPath(`/curzzos/${bot.id}`), {
         preserveScroll: true,
     });
@@ -465,5 +469,6 @@ onBeforeUnmount(stopAllPreviews);
                 </div>
             </div>
         </template>
+        <ConfirmModal :show="confirmShow" :title="confirmTitle" :message="confirmMessage" :confirm-label="confirmLabel" :destructive="confirmDestructive" @confirm="onConfirm" @cancel="onCancel" />
     </AppLayout>
 </template>

@@ -275,6 +275,7 @@
                 </div>
             </div>
         </Teleport>
+        <ConfirmModal :show="confirmShow" :title="confirmTitle" :message="confirmMessage" :confirm-label="confirmLabel" :destructive="confirmDestructive" @confirm="onConfirm" @cancel="onCancel" />
     </AppLayout>
 </template>
 
@@ -282,9 +283,11 @@
 import { ref, computed } from 'vue'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import CommunityTabs from '@/Components/CommunityTabs.vue'
+import ConfirmModal from '@/Components/ConfirmModal.vue'
 import { router } from '@inertiajs/vue3'
 import axios from 'axios'
 import { useDropzone } from '@/composables/useDropzone'
+import { useConfirm } from '@/composables/useConfirm'
 
 const props = defineProps({
     community:    Object,
@@ -295,6 +298,8 @@ const props = defineProps({
     isOwner:      Boolean,
     userTimezone: String,
 })
+
+const { show: confirmShow, title: confirmTitle, message: confirmMessage, confirmLabel, destructive: confirmDestructive, ask, onConfirm, onCancel } = useConfirm();
 
 // ── Calendar navigation ───────────────────────────────────────────────────────
 const curYear  = ref(props.year)
@@ -528,7 +533,7 @@ async function submitForm() {
 }
 
 async function confirmDelete(ev) {
-    if (! confirm(`Delete "${ev.title}"?`)) return
+    if (!await ask({ title: 'Delete Event', message: `Delete "${ev.title}"?`, confirmLabel: 'Delete', destructive: true })) return
     await axios.delete(`/communities/${props.community.slug}/events/${ev.id}`)
     selectedEvent.value = null
     router.reload({ only: ['events'] })

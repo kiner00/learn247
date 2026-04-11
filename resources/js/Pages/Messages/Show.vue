@@ -110,6 +110,7 @@
                 </div>
             </div>
         </div>
+        <ConfirmModal :show="confirmShow" :title="confirmTitle" :message="confirmMessage" :confirm-label="confirmLabel" :destructive="confirmDestructive" @confirm="onConfirm" @cancel="onCancel" />
     </AppLayout>
 </template>
 
@@ -118,11 +119,15 @@ import { ref, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
+import { useConfirm } from '@/composables/useConfirm';
 
 const props = defineProps({
     partner:  Object,
     messages: Array,
 });
+
+const { show: confirmShow, title: confirmTitle, message: confirmMessage, confirmLabel, destructive: confirmDestructive, ask, onConfirm, onCancel } = useConfirm();
 
 const messages   = ref([...props.messages]);
 const content    = ref('');
@@ -160,7 +165,7 @@ function scrollToBottom(smooth = false) {
 }
 
 async function deleteMessage(msg) {
-    if (!confirm('Delete this message?')) return;
+    if (!await ask({ title: 'Delete Message', message: 'Delete this message?', confirmLabel: 'Delete', destructive: true })) return;
     try {
         await axios.delete(`/direct-messages/${msg.id}`);
         messages.value = messages.value.filter(m => m.id !== msg.id);

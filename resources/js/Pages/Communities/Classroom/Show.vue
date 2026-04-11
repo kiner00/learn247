@@ -150,6 +150,7 @@
                 </div>
             </div>
         </div>
+        <ConfirmModal :show="confirmShow" :title="confirmTitle" :message="confirmMessage" :confirm-label="confirmLabel" :destructive="confirmDestructive" @confirm="onConfirm" @cancel="onCancel" />
     </AppLayout>
 </template>
 
@@ -160,6 +161,8 @@ import axios from 'axios';
 import Hls from 'hls.js';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import CommunityTabs from '@/Components/CommunityTabs.vue';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
+import { useConfirm } from '@/composables/useConfirm';
 import CourseProgressBar from '@/Components/Classroom/CourseProgressBar.vue';
 import CourseSalesPage from '@/Components/Classroom/CourseSalesPage.vue';
 import CourseSidebar from '@/Components/Classroom/CourseSidebar.vue';
@@ -180,6 +183,7 @@ const props = defineProps({
     canUploadVideo:     Boolean,
 });
 
+const { show: confirmShow, title: confirmTitle, message: confirmMessage, confirmLabel, destructive: confirmDestructive, ask, onConfirm, onCancel } = useConfirm();
 const page      = usePage();
 const isOwner   = props.canManage;
 const authUserId = page.props.auth?.user?.id;
@@ -413,8 +417,8 @@ function saveModuleTitle(mod, title) {
 }
 
 // ─── Delete lesson ────────────────────────────────────────────────────────────
-function deleteLesson(mod, lesson) {
-    if (!confirm(`Delete lesson "${lesson.title}"?`)) return;
+async function deleteLesson(mod, lesson) {
+    if (!await ask({ title: 'Delete Lesson', message: `Delete lesson "${lesson.title}"?`, confirmLabel: 'Delete', destructive: true })) return;
     router.delete(
         `/communities/${props.community.slug}/classroom/courses/${props.course.id}/modules/${mod.id}/lessons/${lesson.id}`,
         { preserveScroll: true }
@@ -427,8 +431,8 @@ function togglePublish() {
 }
 
 // ─── Delete module ────────────────────────────────────────────────────────────
-function deleteModule(mod) {
-    if (!confirm(`Delete module "${mod.title}" and all its lessons?`)) return;
+async function deleteModule(mod) {
+    if (!await ask({ title: 'Delete Module', message: `Delete module "${mod.title}" and all its lessons?`, confirmLabel: 'Delete', destructive: true })) return;
     router.delete(
         `/communities/${props.community.slug}/classroom/courses/${props.course.id}/modules/${mod.id}`,
         { preserveScroll: true }
@@ -630,7 +634,7 @@ async function handleVideoUpload(e) {
 
 // ─── Delete video ────────────────────────────────────────────────────────────
 async function deleteVideo() {
-    if (!confirm('Remove this video? This cannot be undone.')) return;
+    if (!await ask({ title: 'Remove Video', message: 'Remove this video? This cannot be undone.', confirmLabel: 'Remove', destructive: true })) return;
     const lesson = selectedLesson.value;
     try {
         await axios.patch(
@@ -691,10 +695,10 @@ function retakeQuiz() {
     resetQuizAnswers();
 }
 
-function deleteQuiz() {
+async function deleteQuiz() {
     const lesson = selectedLesson.value;
     const quiz   = lesson?.quiz;
-    if (!quiz || !confirm('Delete this quiz?')) return;
+    if (!quiz || !await ask({ title: 'Delete Quiz', message: 'Delete this quiz?', confirmLabel: 'Delete', destructive: true })) return;
     router.delete(
         `/communities/${props.community.slug}/classroom/courses/${props.course.id}/lessons/${lesson.id}/quiz/${quiz.id}`,
         { preserveScroll: true }

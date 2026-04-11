@@ -2,7 +2,9 @@
 import { ref, computed, onMounted } from 'vue';
 import { useForm, router } from '@inertiajs/vue3';
 import CommunitySettingsLayout from '@/Layouts/CommunitySettingsLayout.vue';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
 import axios from 'axios';
+import { useConfirm } from '@/composables/useConfirm';
 
 const props = defineProps({
     community: Object,
@@ -15,6 +17,8 @@ const props = defineProps({
     domainStatus: String,
     providers: Array,
 });
+
+const { show: confirmShow, title: confirmTitle, message: confirmMessage, confirmLabel, destructive: confirmDestructive, ask, onConfirm, onCancel } = useConfirm();
 
 const saved = ref(false);
 const testingEmail = ref(false);
@@ -214,8 +218,8 @@ function saveTag() {
     });
 }
 
-function deleteTag(tag) {
-    if (!confirm(`Delete tag "${tag.name}"? Members will be untagged.`)) return;
+async function deleteTag(tag) {
+    if (!await ask({ title: 'Delete Tag', message: `Delete tag "${tag.name}"? Members will be untagged.`, confirmLabel: 'Delete', destructive: true })) return;
 
     router.delete(`/communities/${props.community.slug}/tags/${tag.id}`, {
         preserveScroll: true,
@@ -505,5 +509,6 @@ function deleteTag(tag) {
                 <p v-if="tagSuccess" class="mt-3 text-sm text-green-600">{{ tagSuccess }}</p>
             </div>
         </div>
+        <ConfirmModal :show="confirmShow" :title="confirmTitle" :message="confirmMessage" :confirm-label="confirmLabel" :destructive="confirmDestructive" @confirm="onConfirm" @cancel="onCancel" />
     </CommunitySettingsLayout>
 </template>

@@ -584,6 +584,8 @@
                 </div>
             </div>
         </Teleport>
+
+        <ConfirmModal :show="confirmShow" :title="confirmTitle" :message="confirmMessage" :confirm-label="confirmLabel" :destructive="confirmDestructive" @confirm="onConfirm" @cancel="onCancel" />
     </AppLayout>
 </template>
 
@@ -594,6 +596,10 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import CommunityTabs from '@/Components/CommunityTabs.vue';
 import CommunitySidebarCard from '@/Components/CommunitySidebarCard.vue';
 import InviteModal from '@/Components/InviteModal.vue';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
+import { useConfirm } from '@/composables/useConfirm';
+
+const { show: confirmShow, title: confirmTitle, message: confirmMessage, confirmLabel, destructive: confirmDestructive, ask, onConfirm, onCancel } = useConfirm();
 
 const props = defineProps({
     community:  Object,
@@ -730,9 +736,17 @@ function changeRole(member, role) {
     );
 }
 
-function toggleBlock(member) {
+async function toggleBlock(member) {
     const action = member.is_blocked ? 'unblock' : 'block';
-    if (!confirm(`${action === 'block' ? 'Block' : 'Unblock'} ${member.user?.name}? ${action === 'block' ? 'They will not be able to post, comment, or chat.' : 'They will regain posting and chat access.'}`)) return;
+    const confirmed = await ask({
+        title: action === 'block' ? 'Block member' : 'Unblock member',
+        message: action === 'block'
+            ? `Block ${member.user?.name}? They will not be able to post, comment, or chat.`
+            : `Unblock ${member.user?.name}? They will regain posting and chat access.`,
+        confirmLabel: action === 'block' ? 'Block' : 'Unblock',
+        destructive: action === 'block',
+    });
+    if (!confirmed) return;
     router.patch(
         `/communities/${props.community.slug}/members/${member.user.id}/block`,
         {},
@@ -740,8 +754,14 @@ function toggleBlock(member) {
     );
 }
 
-function removeMember(member) {
-    if (!confirm(`Remove ${member.user?.name} from the community?`)) return;
+async function removeMember(member) {
+    const confirmed = await ask({
+        title: 'Remove member',
+        message: `Remove ${member.user?.name} from the community?`,
+        confirmLabel: 'Remove',
+        destructive: true,
+    });
+    if (!confirmed) return;
     router.delete(
         `/communities/${props.community.slug}/members/${member.user.id}`,
         { preserveScroll: true },
@@ -810,8 +830,14 @@ function saveTag() {
     });
 }
 
-function deleteTag(tag) {
-    if (!confirm(`Delete tag "${tag.name}"? It will be removed from all members.`)) return;
+async function deleteTag(tag) {
+    const confirmed = await ask({
+        title: 'Delete tag',
+        message: `Delete tag "${tag.name}"? It will be removed from all members.`,
+        confirmLabel: 'Delete',
+        destructive: true,
+    });
+    if (!confirmed) return;
     router.delete(`/communities/${props.community.slug}/tags/${tag.id}`, {
         preserveScroll: true,
     });

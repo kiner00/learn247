@@ -119,6 +119,7 @@
         <img
             v-if="post.image"
             :src="post.image"
+            alt="Post attachment"
             @click.stop="$emit('lightbox', post.image)"
             class="mt-3 rounded-xl max-h-72 w-full object-cover cursor-pointer hover:opacity-95 transition-opacity"
         />

@@ -1,7 +1,9 @@
 <script setup>
 import { Link, router } from '@inertiajs/vue3';
 import CommunitySettingsLayout from '@/Layouts/CommunitySettingsLayout.vue';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
 import { useCommunityUrl } from '@/composables/useCommunityUrl';
+import { useConfirm } from '@/composables/useConfirm';
 import { sanitizeHtml } from '@/utils/sanitize';
 
 const props = defineProps({
@@ -11,6 +13,7 @@ const props = defineProps({
 });
 
 const { communityPath } = useCommunityUrl(props.community.slug);
+const { show: confirmShow, title: confirmTitle, message: confirmMessage, confirmLabel, destructive: confirmDestructive, ask, onConfirm, onCancel } = useConfirm();
 
 const triggerLabels = {
     'member.joined': 'Member Joined',
@@ -40,8 +43,8 @@ function pause() {
     router.post(communityPath(`/email-sequences/${props.sequence.id}/pause`), {}, { preserveScroll: true });
 }
 
-function deleteSequence() {
-    if (!confirm('Are you sure you want to delete this sequence? All enrollments will be cancelled.')) return;
+async function deleteSequence() {
+    if (!await ask({ title: 'Delete Sequence', message: 'Are you sure you want to delete this sequence? All enrollments will be cancelled.', confirmLabel: 'Delete', destructive: true })) return;
     router.delete(communityPath(`/email-sequences/${props.sequence.id}`));
 }
 
@@ -129,5 +132,6 @@ function delayLabel(hours) {
                 </div>
                 <p v-else class="text-sm text-gray-400">No steps configured.</p>
             </div>
+        <ConfirmModal :show="confirmShow" :title="confirmTitle" :message="confirmMessage" :confirm-label="confirmLabel" :destructive="confirmDestructive" @confirm="onConfirm" @cancel="onCancel" />
     </CommunitySettingsLayout>
 </template>

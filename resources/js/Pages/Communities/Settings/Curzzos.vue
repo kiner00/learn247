@@ -336,6 +336,7 @@
                 </div>
             </div>
         </Teleport>
+        <ConfirmModal :show="confirmShow" :title="confirmTitle" :message="confirmMessage" :confirm-label="confirmLabel" :destructive="confirmDestructive" @confirm="onConfirm" @cancel="onCancel" />
     </CommunitySettingsLayout>
 </template>
 
@@ -346,7 +347,9 @@ import axios from 'axios';
 import draggable from 'vuedraggable';
 import CommunitySettingsLayout from '@/Layouts/CommunitySettingsLayout.vue';
 import NewCurzzoForm from '@/Components/NewCurzzoForm.vue';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
 import { useCommunityUrl } from '@/composables/useCommunityUrl';
+import { useConfirm } from '@/composables/useConfirm';
 
 const props = defineProps({
     community:  Object,
@@ -358,6 +361,7 @@ const props = defineProps({
 const page = usePage();
 const creatorPlan = computed(() => page.props.auth.user?.creator_plan ?? 'free');
 const { communityPath } = useCommunityUrl(props.community.slug);
+const { show: confirmShow, title: confirmTitle, message: confirmMessage, confirmLabel, destructive: confirmDestructive, ask, onConfirm, onCancel } = useConfirm();
 
 const tierMap = Object.fromEntries(props.modelTiers.map(t => [t.value, t.label]));
 
@@ -530,8 +534,8 @@ function toggleActive(bot) {
     router.post(communityPath(`/curzzos/${bot.id}/toggle-active`), {}, { preserveScroll: true });
 }
 
-function deleteBot(bot) {
-    if (!confirm(`Delete "${bot.name}"? All conversation history will be lost.`)) return;
+async function deleteBot(bot) {
+    if (!await ask({ title: 'Delete Curzzo', message: `Delete "${bot.name}"? All conversation history will be lost.`, confirmLabel: 'Delete', destructive: true })) return;
     router.delete(communityPath(`/curzzos/${bot.id}`), { preserveScroll: true });
 }
 </script>

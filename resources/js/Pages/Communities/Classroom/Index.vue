@@ -395,6 +395,9 @@
                 </template>
             </template>
         </div>
+        <div v-else class="bg-white border border-gray-200 rounded-2xl p-12 text-center">
+            <p class="text-gray-400 text-sm">No courses yet.</p>
+        </div>
 
         <!-- Edit course modal -->
         <Teleport to="body">
@@ -570,6 +573,7 @@
             @close="showInviteModal = false"
         />
         <AuthModal :show="showAuthModal" @close="showAuthModal = false" />
+        <ConfirmModal :show="confirmShow" :title="confirmTitle" :message="confirmMessage" :confirm-label="confirmLabel" :destructive="confirmDestructive" @confirm="onConfirm" @cancel="onCancel" />
     </AppLayout>
 </template>
 
@@ -584,6 +588,8 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import CommunityTabs from '@/Components/CommunityTabs.vue';
 import InviteModal from '@/Components/InviteModal.vue';
 import AuthModal from '@/Components/AuthModal.vue';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
+import { useConfirm } from '@/composables/useConfirm';
 
 const props = defineProps({
     community:     Object,
@@ -594,6 +600,7 @@ const props = defineProps({
     ownerPlan:     String,
 });
 
+const { show: confirmShow, title: confirmTitle, message: confirmMessage, confirmLabel, destructive: confirmDestructive, ask, onConfirm, onCancel } = useConfirm();
 const page      = usePage();
 const isOwner   = props.canManage;
 const isMember  = computed(() => !!props.membership);
@@ -816,8 +823,8 @@ function togglePublish(course) {
     router.post(`/communities/${props.community.slug}/classroom/courses/${course.id}/toggle-publish`);
 }
 
-function deleteCourse(course) {
-    if (!confirm(`Delete "${course.title}"? This will permanently remove all modules, lessons, quizzes, and certificates.`)) return;
+async function deleteCourse(course) {
+    if (!await ask({ title: 'Delete Course', message: `Delete "${course.title}"? This will permanently remove all modules, lessons, quizzes, and certificates.`, confirmLabel: 'Delete', destructive: true })) return;
     router.delete(`/communities/${props.community.slug}/classroom/courses/${course.id}`);
 }
 

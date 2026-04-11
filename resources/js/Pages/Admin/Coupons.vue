@@ -124,12 +124,17 @@
                 </tbody>
             </table>
         </div>
+        <ConfirmModal :show="confirmShow" :title="confirmTitle" :message="confirmMessage" :confirm-label="confirmLabel" :destructive="confirmDestructive" @confirm="onConfirm" @cancel="onCancel" />
     </AdminLayout>
 </template>
 
 <script setup>
 import { Link, useForm, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
+import { useConfirm } from '@/composables/useConfirm';
+
+const { show: confirmShow, title: confirmTitle, message: confirmMessage, confirmLabel, destructive: confirmDestructive, ask, onConfirm, onCancel } = useConfirm();
 
 defineProps({
     coupons: { type: Array, default: () => [] },
@@ -157,8 +162,8 @@ function toggleCoupon(coupon) {
     router.post(`/admin/coupons/${coupon.id}/toggle`, {}, { preserveScroll: true });
 }
 
-function deleteCoupon(coupon) {
-    if (!confirm(`Delete coupon ${coupon.code}?`)) return;
+async function deleteCoupon(coupon) {
+    if (!await ask({ title: 'Delete Coupon', message: `Delete coupon ${coupon.code}?`, confirmLabel: 'Delete', destructive: true })) return;
     router.delete(`/admin/coupons/${coupon.id}`, { preserveScroll: true });
 }
 </script>

@@ -11,7 +11,7 @@
         </button>
         <!-- Background image -->
         <div v-if="lp.hero?.bg_image || community.cover_image" class="absolute inset-0 opacity-20">
-            <img :src="lp.hero?.bg_image || community.cover_image" class="w-full h-full object-cover" />
+            <img :src="lp.hero?.bg_image || community.cover_image" alt="Community hero background" class="w-full h-full object-cover" />
             <div class="absolute inset-0 bg-gradient-to-b from-slate-900/60 via-transparent to-slate-900" />
         </div>
         <div class="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150 h-150 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />

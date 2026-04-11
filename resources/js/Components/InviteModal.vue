@@ -16,7 +16,7 @@
                 <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl">
                     <div class="flex items-center justify-between mb-1">
                         <h2 class="text-lg font-bold text-gray-900">Invite people</h2>
-                        <button @click="$emit('close')" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <button @click="$emit('close')" aria-label="Close" class="text-gray-400 hover:text-gray-600 transition-colors">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                             </svg>

@@ -76,6 +76,7 @@
                 />
             </div>
         </div>
+        <ConfirmModal :show="confirmShow" :title="confirmTitle" :message="confirmMessage" :confirm-label="confirmLabel" :destructive="confirmDestructive" @confirm="onConfirm" @cancel="onCancel" />
     </AdminLayout>
 </template>
 
@@ -83,11 +84,15 @@
 import { ref } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
+import { useConfirm } from '@/composables/useConfirm';
 
 const props = defineProps({
     posts:   { type: Object, default: () => ({ data: [], total: 0, last_page: 1, links: [] }) },
     filters: { type: Object, default: () => ({}) },
 });
+
+const { show: confirmShow, title: confirmTitle, message: confirmMessage, confirmLabel, destructive: confirmDestructive, ask, onConfirm, onCancel } = useConfirm();
 
 const search = ref(props.filters.search ?? '');
 const acting = ref(null);
@@ -100,8 +105,8 @@ function onSearch() {
     }, 350);
 }
 
-function restore(id) {
-    if (!confirm('Restore this post?')) return;
+async function restore(id) {
+    if (!await ask({ title: 'Restore Post', message: 'Restore this post?', confirmLabel: 'Restore', destructive: false })) return;
     acting.value = id;
     router.post(`/admin/posts/${id}/restore`, {}, {
         preserveScroll: true,
@@ -109,8 +114,8 @@ function restore(id) {
     });
 }
 
-function forceDelete(id) {
-    if (!confirm('Permanently delete this post? This cannot be undone.')) return;
+async function forceDelete(id) {
+    if (!await ask({ title: 'Delete Permanently', message: 'Permanently delete this post? This cannot be undone.', confirmLabel: 'Delete Permanently', destructive: true })) return;
     acting.value = id;
     router.delete(`/admin/posts/${id}/force-delete`, {
         preserveScroll: true,

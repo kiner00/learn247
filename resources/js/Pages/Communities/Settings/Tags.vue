@@ -2,7 +2,9 @@
 import { ref, reactive } from 'vue';
 import { router } from '@inertiajs/vue3';
 import CommunitySettingsLayout from '@/Layouts/CommunitySettingsLayout.vue';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
 import { useCommunityUrl } from '@/composables/useCommunityUrl';
+import { useConfirm } from '@/composables/useConfirm';
 
 const props = defineProps({
     community: Object,
@@ -10,6 +12,7 @@ const props = defineProps({
 });
 
 const { communityPath } = useCommunityUrl(props.community.slug);
+const { show: confirmShow, title: confirmTitle, message: confirmMessage, confirmLabel, destructive: confirmDestructive, ask, onConfirm, onCancel } = useConfirm();
 
 const TAG_COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#ef4444', '#f59e0b', '#10b981', '#06b6d4', '#3b82f6', '#64748b'];
 
@@ -53,8 +56,8 @@ function saveTag() {
     });
 }
 
-function deleteTag(tag) {
-    if (!confirm(`Delete tag "${tag.name}"? It will be removed from all members.`)) return;
+async function deleteTag(tag) {
+    if (!await ask({ title: 'Delete Tag', message: `Delete tag "${tag.name}"? It will be removed from all members.`, confirmLabel: 'Delete', destructive: true })) return;
     router.delete(communityPath(`/tags/${tag.id}`), { preserveScroll: true });
 }
 </script>
@@ -162,5 +165,6 @@ function deleteTag(tag) {
                 </div>
             </div>
         </Teleport>
+        <ConfirmModal :show="confirmShow" :title="confirmTitle" :message="confirmMessage" :confirm-label="confirmLabel" :destructive="confirmDestructive" @confirm="onConfirm" @cancel="onCancel" />
     </CommunitySettingsLayout>
 </template>

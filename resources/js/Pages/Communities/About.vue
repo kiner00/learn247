@@ -47,7 +47,7 @@
                             :class="activeBannerImg === img ? 'border-indigo-500' : 'border-gray-200'"
                             @click="activeBannerImg = img"
                         >
-                            <img :src="img" class="w-full h-full object-cover" />
+                            <img :src="img" :alt="'Gallery image ' + (i + 1)" class="w-full h-full object-cover" />
                         </div>
                     </div>
 

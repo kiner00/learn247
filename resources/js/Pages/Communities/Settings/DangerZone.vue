@@ -1,18 +1,33 @@
 <script setup>
 import { router } from '@inertiajs/vue3';
 import CommunitySettingsLayout from '@/Layouts/CommunitySettingsLayout.vue';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
+import { useConfirm } from '@/composables/useConfirm';
+
+const { show: confirmShow, title: confirmTitle, message: confirmMessage, confirmLabel, destructive: confirmDestructive, ask, onConfirm, onCancel } = useConfirm();
 
 const props = defineProps({
     community: Object,
 });
 
-function deleteCommunity() {
-    if (!confirm('Are you sure you want to delete this community? If there are active subscribers, deletion will be scheduled and the community will be removed once all subscriptions expire.')) return;
+async function deleteCommunity() {
+    const confirmed = await ask({
+        title: 'Delete community?',
+        message: 'Are you sure you want to delete this community? If there are active subscribers, deletion will be scheduled and the community will be removed once all subscriptions expire.',
+        confirmLabel: 'Delete',
+        destructive: true,
+    });
+    if (!confirmed) return;
     router.delete(`/communities/${props.community.slug}`);
 }
 
-function cancelDeletion() {
-    if (!confirm('Cancel the scheduled deletion? The community will become active again.')) return;
+async function cancelDeletion() {
+    const confirmed = await ask({
+        title: 'Cancel scheduled deletion?',
+        message: 'Cancel the scheduled deletion? The community will become active again.',
+        confirmLabel: 'Yes, cancel deletion',
+    });
+    if (!confirmed) return;
     router.post(`/communities/${props.community.slug}/cancel-deletion`, {}, { preserveScroll: true });
 }
 </script>
@@ -50,5 +65,14 @@ function cancelDeletion() {
                 </button>
             </template>
         </div>
+        <ConfirmModal
+            :show="confirmShow"
+            :title="confirmTitle"
+            :message="confirmMessage"
+            :confirmLabel="confirmLabel"
+            :destructive="confirmDestructive"
+            @confirm="onConfirm"
+            @cancel="onCancel"
+        />
     </CommunitySettingsLayout>
 </template>

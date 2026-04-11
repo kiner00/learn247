@@ -2,12 +2,16 @@
 import { ref } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import CommunitySettingsLayout from '@/Layouts/CommunitySettingsLayout.vue';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
+import { useConfirm } from '@/composables/useConfirm';
 
 const props = defineProps({
     community:          Object,
     canUseIntegrations: { type: Boolean, default: false },
     isPro:              { type: Boolean, default: false },
 });
+
+const { show: confirmShow, title: confirmTitle, message: confirmMessage, confirmLabel, destructive: confirmDestructive, ask, onConfirm, onCancel } = useConfirm();
 
 // ─── Integrations ────────────────────────────────────────────────────────────
 const integrationsSaved = ref(false);
@@ -50,8 +54,8 @@ function saveTelegram() {
         });
 }
 
-function disconnectTelegram() {
-    if (!confirm('Disconnect Telegram? Messages will no longer sync.')) return;
+async function disconnectTelegram() {
+    if (!await ask({ title: 'Disconnect Telegram', message: 'Disconnect Telegram? Messages will no longer sync.', confirmLabel: 'Disconnect', destructive: true })) return;
     telegramForm.telegram_clear     = true;
     telegramForm.telegram_bot_token = '';
     telegramForm.telegram_chat_id   = '';
@@ -265,5 +269,6 @@ function disconnectTelegram() {
                 </form>
             </template>
         </div>
+        <ConfirmModal :show="confirmShow" :title="confirmTitle" :message="confirmMessage" :confirm-label="confirmLabel" :destructive="confirmDestructive" @confirm="onConfirm" @cancel="onCancel" />
     </CommunitySettingsLayout>
 </template>

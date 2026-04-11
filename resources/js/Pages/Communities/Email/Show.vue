@@ -1,7 +1,9 @@
 <script setup>
 import { Link, router } from '@inertiajs/vue3';
 import CommunitySettingsLayout from '@/Layouts/CommunitySettingsLayout.vue';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
 import { useCommunityUrl } from '@/composables/useCommunityUrl';
+import { useConfirm } from '@/composables/useConfirm';
 import { sanitizeHtml } from '@/utils/sanitize';
 
 const props = defineProps({
@@ -12,6 +14,7 @@ const props = defineProps({
 });
 
 const { communityPath } = useCommunityUrl(props.community.slug);
+const { show: confirmShow, title: confirmTitle, message: confirmMessage, confirmLabel, destructive: confirmDestructive, ask, onConfirm, onCancel } = useConfirm();
 
 const statusColors = {
     draft: 'bg-gray-100 text-gray-700',
@@ -22,15 +25,15 @@ const statusColors = {
     cancelled: 'bg-red-100 text-red-700',
 };
 
-function sendNow() {
-    if (!confirm('Send this campaign to your members now?')) return;
+async function sendNow() {
+    if (!await ask({ title: 'Send Campaign', message: 'Send this campaign to your members now?', confirmLabel: 'Send', destructive: false })) return;
     router.post(communityPath(`/email-campaigns/${props.campaign.id}/send`), {}, {
         preserveScroll: true,
     });
 }
 
-function deleteCampaign() {
-    if (!confirm('Are you sure you want to delete this campaign?')) return;
+async function deleteCampaign() {
+    if (!await ask({ title: 'Delete Campaign', message: 'Are you sure you want to delete this campaign?', confirmLabel: 'Delete', destructive: true })) return;
     router.delete(communityPath(`/email-campaigns/${props.campaign.id}`));
 }
 
@@ -141,5 +144,6 @@ function pct(value, total) {
             <div v-else class="bg-white border border-gray-200 rounded-2xl p-12 text-center">
                 <p class="text-sm text-gray-500">No broadcast created for this campaign yet.</p>
             </div>
+        <ConfirmModal :show="confirmShow" :title="confirmTitle" :message="confirmMessage" :confirm-label="confirmLabel" :destructive="confirmDestructive" @confirm="onConfirm" @cancel="onCancel" />
     </CommunitySettingsLayout>
 </template>

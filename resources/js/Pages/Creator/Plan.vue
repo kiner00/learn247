@@ -3,6 +3,8 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import axios from 'axios';
 import { ref, onMounted } from 'vue';
 import { useForm, usePage, router } from '@inertiajs/vue3';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
+import { useConfirm } from '@/composables/useConfirm';
 
 const props = defineProps({
     basicPrice:      { type: Number, default: 499 },
@@ -13,6 +15,8 @@ const props = defineProps({
     recurringStatus: { type: String, default: null },
     expiresAt:       { type: String, default: null },
 });
+
+const { show: confirmShow, title: confirmTitle, message: confirmMessage, confirmLabel, destructive: confirmDestructive, ask, onConfirm, onCancel } = useConfirm();
 
 const notice = ref(null);
 const processing = ref(false);
@@ -66,8 +70,8 @@ async function enableAutoRenew() {
     }
 }
 
-function cancelAutoRenew() {
-    if (confirm('Cancel auto-renewal? Your plan will remain active until the current period ends.')) {
+async function cancelAutoRenew() {
+    if (await ask({ title: 'Cancel Auto-Renewal', message: 'Cancel auto-renewal? Your plan will remain active until the current period ends.', confirmLabel: 'Cancel Auto-Renewal', destructive: true })) {
         router.post('/creator/plan/cancel-recurring');
     }
 }
@@ -325,5 +329,6 @@ const planLabel = { free: 'Free', basic: 'Basic', pro: 'Pro' };
             </div>
 
         </div>
+        <ConfirmModal :show="confirmShow" :title="confirmTitle" :message="confirmMessage" :confirm-label="confirmLabel" :destructive="confirmDestructive" @confirm="onConfirm" @cancel="onCancel" />
     </AppLayout>
 </template>

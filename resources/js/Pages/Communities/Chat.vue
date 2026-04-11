@@ -268,6 +268,7 @@
                 </template>
             </div>
         </div>
+        <ConfirmModal :show="confirmShow" :title="confirmTitle" :message="confirmMessage" :confirm-label="confirmLabel" :destructive="confirmDestructive" @confirm="onConfirm" @cancel="onCancel" />
     </AppLayout>
 </template>
 
@@ -277,7 +278,9 @@ import { usePage, router } from '@inertiajs/vue3';
 import axios from 'axios';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import CommunityTabs from '@/Components/CommunityTabs.vue';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
 import { useDropzone } from '@/composables/useDropzone';
+import { useConfirm } from '@/composables/useConfirm';
 
 const props = defineProps({
     community:         Object,
@@ -289,6 +292,8 @@ const props = defineProps({
     chatbotUsers:      { type: Array, default: () => [] },
     selectedChatUser:  { type: Object, default: null },
 });
+
+const { show: confirmShow, title: confirmTitle, message: confirmMessage, confirmLabel, destructive: confirmDestructive, ask, onConfirm, onCancel } = useConfirm();
 
 const page      = usePage();
 
@@ -359,7 +364,10 @@ function formatRelativeTime(d) { if (!d) return ''; const diff = Math.floor((Dat
 function autoResize(e) { e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px'; }
 function scrollToBottom(smooth = false) { nextTick(() => { messagesEl.value?.scrollTo({ top: messagesEl.value.scrollHeight, behavior: smooth ? 'smooth' : 'instant' }); }); }
 function canDelete(msg) { const u = page.props.auth?.user; return u && (msg.user?.id === u.id || u.is_super_admin); }
-async function deleteMessage(msg) { if (!confirm('Delete this message?')) return; try { await axios.delete(`/communities/${props.community.slug}/chat/${msg.id}`); groupMessages.value = groupMessages.value.filter(m => m.id !== msg.id); } catch {} }
+async function deleteMessage(msg) {
+    if (!await ask({ title: 'Delete Message', message: 'Delete this message?', confirmLabel: 'Delete', destructive: true })) return;
+    try { await axios.delete(`/communities/${props.community.slug}/chat/${msg.id}`); groupMessages.value = groupMessages.value.filter(m => m.id !== msg.id); } catch {}
+}
 
 async function send() {
     const text = groupContent.value.trim();
