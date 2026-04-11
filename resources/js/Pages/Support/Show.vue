@@ -85,6 +85,28 @@
                 </div>
             </div>
 
+            <!-- Resolved actions (user only) -->
+            <div v-if="ticket.status === 'resolved' && !isAdmin" class="bg-blue-50 border border-blue-200 rounded-2xl p-5 shadow-sm mb-4">
+                <p class="text-sm text-blue-800 font-medium mb-1">This ticket has been marked as resolved.</p>
+                <p class="text-xs text-blue-600 mb-4">Please verify the fix. Close the ticket if resolved, or reopen if you still need help.</p>
+                <div class="flex gap-3">
+                    <button
+                        @click="closeTicket"
+                        :disabled="actionProcessing"
+                        class="px-5 py-2 bg-green-600 text-white text-sm font-semibold rounded-xl hover:bg-green-700 transition-colors disabled:opacity-50"
+                    >
+                        Close Ticket
+                    </button>
+                    <button
+                        @click="reopenTicket"
+                        :disabled="actionProcessing"
+                        class="px-5 py-2 bg-white text-gray-700 text-sm font-semibold rounded-xl border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                    >
+                        Reopen Ticket
+                    </button>
+                </div>
+            </div>
+
             <!-- Reply form -->
             <div v-if="ticket.status !== 'closed'" class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
                 <form @submit.prevent="submitReply">
@@ -134,15 +156,32 @@
 
 <script setup>
 import { ref } from 'vue';
-import { Link, useForm } from '@inertiajs/vue3';
+import { Link, useForm, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 
 const props = defineProps({ ticket: Object, isAdmin: Boolean });
 
 const previewImage = ref(null);
+const actionProcessing = ref(false);
 
 const replyForm = useForm({ content: '' });
+
+function reopenTicket() {
+    actionProcessing.value = true;
+    router.patch(`/support/${props.ticket.id}/reopen`, {}, {
+        preserveScroll: true,
+        onFinish: () => actionProcessing.value = false,
+    });
+}
+
+function closeTicket() {
+    actionProcessing.value = true;
+    router.patch(`/support/${props.ticket.id}/close`, {}, {
+        preserveScroll: true,
+        onFinish: () => actionProcessing.value = false,
+    });
+}
 
 function submitReply() {
     const replyUrl = props.isAdmin

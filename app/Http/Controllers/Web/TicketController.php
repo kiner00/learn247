@@ -7,9 +7,11 @@ use App\Actions\Tickets\ReplyToTicket;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CreateTicketRequest;
 use App\Http\Requests\ReplyTicketRequest;
+use App\Mail\TicketStatusChangedMail;
 use App\Models\Ticket;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -73,6 +75,36 @@ class TicketController extends Controller
         }
     }
 
+    public function reopen(Ticket $ticket): RedirectResponse
+    {
+        if ($ticket->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        if ($ticket->status !== 'resolved') {
+            return back()->with('error', 'Only resolved tickets can be reopened.');
+        }
+
+        $ticket->update(['status' => 'open']);
+
+        return back()->with('success', 'Ticket reopened.');
+    }
+
+    public function close(Ticket $ticket): RedirectResponse
+    {
+        if ($ticket->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        if ($ticket->status !== 'resolved') {
+            return back()->with('error', 'Only resolved tickets can be closed.');
+        }
+
+        $ticket->update(['status' => 'closed']);
+
+        return back()->with('success', 'Ticket closed. Thank you for confirming!');
+    }
+
     // ─── Admin methods ──────────────────────────────────────────────────────────
 
     public function adminIndex(): Response
@@ -113,7 +145,12 @@ class TicketController extends Controller
     {
         $status = request()->validate(['status' => 'required|in:open,in_progress,resolved,closed'])['status'];
 
+        $oldStatus = $ticket->status;
         $ticket->update(['status' => $status]);
+
+        if ($oldStatus !== $status && $ticket->user?->email) {
+            Mail::to($ticket->user->email)->queue(new TicketStatusChangedMail($ticket, $oldStatus, $status));
+        }
 
         return back()->with('success', 'Ticket status updated.');
     }

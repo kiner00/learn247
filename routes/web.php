@@ -450,6 +450,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/support', [TicketController::class, 'store'])->name('tickets.store');
     Route::get('/support/{ticket}', [TicketController::class, 'show'])->name('tickets.show');
     Route::post('/support/{ticket}/reply', [TicketController::class, 'reply'])->name('tickets.reply');
+    Route::patch('/support/{ticket}/reopen', [TicketController::class, 'reopen'])->name('tickets.reopen');
+    Route::patch('/support/{ticket}/close', [TicketController::class, 'close'])->name('tickets.close');
 });
 
 // ─── Xendit Webhooks (no auth, no CSRF) ────────────────────────────────────

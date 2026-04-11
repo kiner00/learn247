@@ -20,4 +20,7 @@ Schedule::command('carts:detect-abandoned --hours=1')->everyThirtyMinutes();
 // Email analytics: aggregate daily stats at 2 AM
 Schedule::command('email-stats:aggregate')->dailyAt('02:00');
 
+// Ticket reminders: nudge users to close resolved tickets (every 2 days)
+Schedule::command('tickets:remind-resolved')->dailyAt('10:00');
+
 // Schedule::command('pulse:check')->everyMinute();
