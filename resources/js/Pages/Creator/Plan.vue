@@ -91,7 +91,7 @@ const comparisonRows = [
     { feature: 'Certifications & Exams', free: false,     basic: false,        pro: true },
     { feature: 'Leaderboard & Gamification', free: false, basic: false,        pro: true },
     { feature: 'Custom Domain',        free: false,        basic: false,        pro: true },
-    { feature: 'Video Hosting (S3)',   free: false,        basic: false,        pro: true },
+    { feature: 'Video Hosting',   free: false,        basic: false,        pro: true },
     { feature: 'Workflow Builder',     free: false,        basic: false,        pro: '(Soon)' },
 ];
 
@@ -268,7 +268,7 @@ const planLabel = { free: 'Free', basic: 'Basic', pro: 'Pro' };
                         <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Certifications &amp; Exams</li>
                         <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Leaderboard &amp; Gamification</li>
                         <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Custom Domain</li>
-                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Video Hosting (S3)</li>
+                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Video Hosting</li>
                     </ul>
                     <div class="px-6 py-5 border-t border-indigo-500">
                         <button
