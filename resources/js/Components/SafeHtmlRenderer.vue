@@ -3,37 +3,35 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { ref, watch, onMounted, nextTick } from 'vue';
+import DOMPurify from 'dompurify';
 
 const props = defineProps({ html: String });
 
 const container = ref(null);
-const injectedScripts = [];
+
+// Allow iframes for YouTube/Vimeo embeds only
+const purifyConfig = {
+    ADD_TAGS: ['iframe'],
+    ADD_ATTR: ['allow', 'allowfullscreen', 'frameborder', 'scrolling'],
+    ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
+};
+
+DOMPurify.addHook('uponSanitizeElement', (node) => {
+    if (node.tagName === 'IFRAME') {
+        const src = node.getAttribute('src') || '';
+        const allowed = /^https:\/\/(www\.)?(youtube\.com|youtube-nocookie\.com|player\.vimeo\.com|fast\.wistia\.(com|net))\//;
+        if (!allowed.test(src)) {
+            node.remove();
+        }
+    }
+});
 
 function renderHtml() {
     if (!container.value) return;
-
-    // Clear previous scripts
-    injectedScripts.forEach(s => s.remove());
-    injectedScripts.length = 0;
-
-    container.value.innerHTML = props.html ?? '';
-
-    // Re-execute any <script> tags (v-html silently drops them)
-    container.value.querySelectorAll('script').forEach(oldScript => {
-        const newScript = document.createElement('script');
-        [...oldScript.attributes].forEach(attr => newScript.setAttribute(attr.name, attr.value));
-        newScript.textContent = oldScript.textContent;
-        oldScript.replaceWith(newScript);
-        injectedScripts.push(newScript);
-    });
+    container.value.innerHTML = DOMPurify.sanitize(props.html ?? '', purifyConfig);
 }
 
 onMounted(() => nextTick(renderHtml));
 watch(() => props.html, () => nextTick(renderHtml));
-
-onBeforeUnmount(() => {
-    injectedScripts.forEach(s => s.remove());
-    injectedScripts.length = 0;
-});
 </script>

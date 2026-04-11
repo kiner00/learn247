@@ -3,7 +3,7 @@
         :style="{ backgroundColor: data.bg_color || '#ffffff' }">
         <div class="max-w-3xl mx-auto px-6">
             <h2 v-if="data.title"
-                v-html="data.title"
+                v-html="sanitizeHtml(data.title)"
                 :contenteditable="inlineMode ? 'true' : 'false'"
                 @focus="inlineMode && $emit('elFocus', $event, `custom_sections.${sectionId}.title`)"
                 @blur="inlineMode && $emit('elBlur', $event, `custom_sections.${sectionId}.title`)"
@@ -12,7 +12,7 @@
                 :style="{ color: data.text_color || '#111827' }"
             />
             <div v-if="data.text"
-                v-html="data.text"
+                v-html="sanitizeHtml(data.text)"
                 :contenteditable="inlineMode ? 'true' : 'false'"
                 @focus="inlineMode && $emit('elFocus', $event, `custom_sections.${sectionId}.text`)"
                 @blur="inlineMode && $emit('elBlur', $event, `custom_sections.${sectionId}.text`)"
@@ -37,6 +37,7 @@
 
 <script setup>
 import SafeHtmlRenderer from '@/Components/SafeHtmlRenderer.vue';
+import { sanitizeHtml } from '@/utils/sanitize';
 
 defineProps({
     sectionId: { type: String, required: true },

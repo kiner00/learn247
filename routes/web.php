@@ -113,14 +113,14 @@ Route::middleware(['auth', EnsureSuperAdmin::class])->prefix('admin')->group(fun
     Route::patch('/settings', [AdminController::class, 'updateSettings'])->name('admin.settings.update');
     Route::patch('/creator-plan-pricing', [AdminController::class, 'updateCreatorPlanPricing'])->name('admin.creator-plan-pricing.update');
     Route::get('/payouts', [AdminController::class, 'payouts'])->name('admin.payouts');
-    Route::post('/payouts/owner/{community:id}', [AdminController::class, 'payOwner'])->name('admin.payouts.owner');
-    Route::post('/payouts/owners/batch', [AdminController::class, 'batchPayOwners'])->name('admin.payouts.owners.batch');
-    Route::post('/payouts/owners/selected', [AdminController::class, 'paySelectedOwners'])->name('admin.payouts.owners.selected');
-    Route::post('/payouts/affiliates/batch', [AdminController::class, 'batchPayAffiliates'])->name('admin.payouts.affiliates.batch');
-    Route::post('/payouts/affiliates/selected', [AdminController::class, 'paySelectedAffiliates'])->name('admin.payouts.affiliates.selected');
-    Route::post('/payout-requests/{payoutRequest}/approve', [AdminController::class, 'approvePayoutRequest'])->name('admin.payout-requests.approve');
-    Route::post('/payout-requests/{payoutRequest}/reject', [AdminController::class, 'rejectPayoutRequest'])->name('admin.payout-requests.reject');
-    Route::post('/payout-requests/{payoutRequest}/mark-paid', [AdminController::class, 'markPayoutRequestPaid'])->name('admin.payout-requests.mark-paid');
+    Route::post('/payouts/owner/{community:id}', [AdminController::class, 'payOwner'])->name('admin.payouts.owner')->middleware('throttle:10,1');
+    Route::post('/payouts/owners/batch', [AdminController::class, 'batchPayOwners'])->name('admin.payouts.owners.batch')->middleware('throttle:5,1');
+    Route::post('/payouts/owners/selected', [AdminController::class, 'paySelectedOwners'])->name('admin.payouts.owners.selected')->middleware('throttle:5,1');
+    Route::post('/payouts/affiliates/batch', [AdminController::class, 'batchPayAffiliates'])->name('admin.payouts.affiliates.batch')->middleware('throttle:5,1');
+    Route::post('/payouts/affiliates/selected', [AdminController::class, 'paySelectedAffiliates'])->name('admin.payouts.affiliates.selected')->middleware('throttle:5,1');
+    Route::post('/payout-requests/{payoutRequest}/approve', [AdminController::class, 'approvePayoutRequest'])->name('admin.payout-requests.approve')->middleware('throttle:10,1');
+    Route::post('/payout-requests/{payoutRequest}/reject', [AdminController::class, 'rejectPayoutRequest'])->name('admin.payout-requests.reject')->middleware('throttle:10,1');
+    Route::post('/payout-requests/{payoutRequest}/mark-paid', [AdminController::class, 'markPayoutRequestPaid'])->name('admin.payout-requests.mark-paid')->middleware('throttle:10,1');
     Route::post('/onboarding/{user}/resend', [AdminController::class, 'resendOnboardingEmail'])->name('admin.onboarding.resend');
     // Featured communities
     Route::post('/communities/{community}/toggle-featured', [AdminController::class, 'toggleFeatured'])->name('admin.communities.toggle-featured');
@@ -140,7 +140,7 @@ Route::middleware(['auth', EnsureSuperAdmin::class])->prefix('admin')->group(fun
     Route::delete('/posts/{postId}/force-delete', [AdminController::class, 'forceDeletePost'])->name('admin.posts.force-delete');
     // Global announcement
     Route::get('/announcements', [AdminController::class, 'globalAnnouncement'])->name('admin.announcements');
-    Route::post('/announcements', [AdminController::class, 'sendGlobalAnnouncement'])->name('admin.announcements.send');
+    Route::post('/announcements', [AdminController::class, 'sendGlobalAnnouncement'])->name('admin.announcements.send')->middleware('throttle:3,1');
     // Email templates
     Route::get('/email-templates', [AdminController::class, 'emailTemplates'])->name('admin.email-templates');
     Route::get('/email-templates/{key}/edit', [AdminController::class, 'editEmailTemplate'])->name('admin.email-templates.edit');
@@ -216,7 +216,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/communities/{community}/join', [CommunityController::class, 'join'])->name('communities.join');
 
     // Paid community checkout → redirects to Xendit invoice URL
-    Route::post('/communities/{community}/checkout', [SubscriptionController::class, 'checkout'])->name('communities.checkout');
+    Route::post('/communities/{community}/checkout', [SubscriptionController::class, 'checkout'])->name('communities.checkout')->middleware('throttle:10,1');
     Route::post('/subscriptions/{subscription}/cancel-recurring', [RecurringCancellationController::class, 'cancelSubscription'])->name('subscriptions.cancel-recurring');
     Route::post('/subscriptions/{subscription}/enable-auto-renew', [RecurringCancellationController::class, 'enableSubscriptionAutoRenew'])->name('subscriptions.enable-auto-renew');
     Route::post('/course-enrollments/{courseEnrollment}/cancel-recurring', [RecurringCancellationController::class, 'cancelCourseEnrollment'])->name('course-enrollments.cancel-recurring');
@@ -226,7 +226,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/communities/{community}/free-subscribe', [FreeSubscribeController::class, 'store'])->name('communities.free-subscribe');
 
     // Course one-time purchase (no membership required)
-    Route::post('/communities/{community}/classroom/courses/{course}/enroll', [CourseEnrollmentController::class, 'checkout'])->name('communities.classroom.courses.enroll');
+    Route::post('/communities/{community}/classroom/courses/{course}/enroll', [CourseEnrollmentController::class, 'checkout'])->name('communities.classroom.courses.enroll')->middleware('throttle:10,1');
 
     // Owner-only: invite members by email / CSV
     Route::get('/communities/{community}/invites', [CommunityInviteController::class, 'index'])->name('communities.invites.index');
@@ -248,10 +248,10 @@ Route::middleware('auth')->group(function () {
     Route::put('/communities/{community}/gallery/reorder', [CommunityController::class, 'reorderGallery'])->name('communities.gallery.reorder');
     Route::delete('/communities/{community}', [CommunityController::class, 'destroy'])->name('communities.destroy');
     Route::post('/communities/{community}/cancel-deletion', [CommunityController::class, 'cancelDeletion'])->name('communities.cancel-deletion');
-    Route::post('/communities/{community}/announce', [CommunityController::class, 'announce'])->name('communities.announce');
+    Route::post('/communities/{community}/announce', [CommunityController::class, 'announce'])->name('communities.announce')->middleware('throttle:5,1');
     Route::post('/communities/{community}/sms-config', [CommunityController::class, 'updateSmsConfig'])->name('communities.sms-config');
     Route::post('/communities/{community}/sms-test', [CommunityController::class, 'testSms'])->name('communities.sms-test');
-    Route::post('/communities/{community}/sms-blast', [CommunityController::class, 'sendSmsBlast'])->name('communities.sms-blast');
+    Route::post('/communities/{community}/sms-blast', [CommunityController::class, 'sendSmsBlast'])->name('communities.sms-blast')->middleware('throttle:3,1');
 
     // ─── Resend Email Config ─────────────────────────────────────────────────
     Route::post('/communities/{community}/resend-config', [CommunityController::class, 'updateResendConfig'])->name('communities.resend-config');
@@ -302,7 +302,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/communities/{community}/email-campaigns',             [EmailCampaignController::class, 'store'])->name('communities.email-campaigns.store');
         Route::get('/communities/{community}/email-campaigns/{campaign}',   [EmailCampaignController::class, 'show'])->name('communities.email-campaigns.show');
         Route::patch('/communities/{community}/email-campaigns/{campaign}', [EmailCampaignController::class, 'update'])->name('communities.email-campaigns.update');
-        Route::post('/communities/{community}/email-campaigns/{campaign}/send', [EmailCampaignController::class, 'send'])->name('communities.email-campaigns.send');
+        Route::post('/communities/{community}/email-campaigns/{campaign}/send', [EmailCampaignController::class, 'send'])->name('communities.email-campaigns.send')->middleware('throttle:5,1');
         Route::delete('/communities/{community}/email-campaigns/{campaign}', [EmailCampaignController::class, 'destroy'])->name('communities.email-campaigns.destroy');
         Route::post('/communities/{community}/email-campaigns/upload-image', [EmailCampaignController::class, 'uploadImage'])->name('communities.email-campaigns.upload-image');
 
@@ -366,7 +366,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/communities/{community}/certifications', [CertificationExamController::class, 'store'])->name('certification.store');
         Route::post('/communities/{community}/certifications/{certification}', [CertificationExamController::class, 'update'])->name('certification.update');
         Route::post('/communities/{community}/certifications/{certification}/submit', [CertificationExamController::class, 'submit'])->name('certification.submit');
-        Route::post('/communities/{community}/certifications/{certification}/checkout', [CertificationExamController::class, 'checkout'])->name('certification.checkout');
+        Route::post('/communities/{community}/certifications/{certification}/checkout', [CertificationExamController::class, 'checkout'])->name('certification.checkout')->middleware('throttle:10,1');
         Route::delete('/communities/{community}/certifications/{certification}', [CertificationExamController::class, 'destroy'])->name('certification.destroy');
 
         // ─── Chat ─────────────────────────────────────────────────────────────
@@ -387,9 +387,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/communities/{community}/curzzos/{curzzo}/toggle-active', [CurzzoController::class, 'toggleActive'])->name('communities.curzzos.toggle-active');
         Route::post('/communities/{community}/curzzos/preview-videos',         [CurzzoController::class, 'uploadPreviewVideo'])->name('communities.curzzos.upload-preview-video');
         Route::get('/communities/{community}/curzzos',                         [CommunityController::class, 'curzzos'])->name('communities.curzzos');
-        Route::post('/communities/{community}/curzzos/{curzzo}/checkout',       [CurzzoCheckoutController::class, 'checkout'])->name('communities.curzzos.checkout');
+        Route::post('/communities/{community}/curzzos/{curzzo}/checkout',       [CurzzoCheckoutController::class, 'checkout'])->name('communities.curzzos.checkout')->middleware('throttle:10,1');
         Route::get('/communities/{community}/curzzos/topup-packs',             [CurzzoTopupController::class, 'packs'])->name('communities.curzzos.topup-packs');
-        Route::post('/communities/{community}/curzzos/topup/checkout',         [CurzzoTopupController::class, 'checkout'])->name('communities.curzzos.topup-checkout');
+        Route::post('/communities/{community}/curzzos/topup/checkout',         [CurzzoTopupController::class, 'checkout'])->name('communities.curzzos.topup-checkout')->middleware('throttle:10,1');
         Route::post('/communities/{community}/curzzos/{curzzo}/chat',          [CurzzoChatController::class, 'chat'])->name('communities.curzzos.chat');
         Route::get('/communities/{community}/curzzos/{curzzo}/history',        [CurzzoChatController::class, 'history'])->name('communities.curzzos.history');
 
@@ -422,12 +422,12 @@ Route::middleware('auth')->group(function () {
 
     // ─── Creator Dashboard ────────────────────────────────────────────────────
     Route::get('/creator/plan', [CreatorController::class, 'plan'])->name('creator.plan');
-    Route::post('/creator/plan/checkout', [CreatorController::class, 'planCheckout'])->name('creator.plan.checkout');
+    Route::post('/creator/plan/checkout', [CreatorController::class, 'planCheckout'])->name('creator.plan.checkout')->middleware('throttle:10,1');
     Route::post('/creator/plan/cancel-recurring', [RecurringCancellationController::class, 'cancelCreatorPlan'])->name('creator.plan.cancel-recurring');
     Route::post('/creator/plan/enable-auto-renew', [RecurringCancellationController::class, 'enableCreatorPlanAutoRenew'])->name('creator.plan.enable-auto-renew');
     Route::post('/creator/plan/redeem-coupon', [CreatorController::class, 'redeemCoupon'])->name('creator.plan.redeem-coupon');
     Route::get('/creator/dashboard', [CreatorController::class, 'dashboard'])->name('creator.dashboard');
-    Route::post('/creator/payout-request/{community:id}', [PayoutRequestController::class, 'storeOwner'])->name('creator.payout-request.store');
+    Route::post('/creator/payout-request/{community:id}', [PayoutRequestController::class, 'storeOwner'])->name('creator.payout-request.store')->middleware('throttle:5,1');
 
     // ─── Affiliates ───────────────────────────────────────────────────────────
     Route::get('/my-affiliates', [AffiliateController::class, 'index'])->name('affiliates.index');
@@ -438,8 +438,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/affiliate-conversions/{conversion}/disburse', [AffiliateController::class, 'disburse'])->name('affiliate-conversions.disburse');
     Route::patch('/affiliates/{affiliate}/payout', [AffiliateController::class, 'updatePayout'])->name('affiliates.payout');
     Route::patch('/affiliates/{affiliate}/pixels', [AffiliateController::class, 'updatePixels'])->name('affiliates.pixels');
-    Route::post('/affiliates/{affiliate}/payout-request', [PayoutRequestController::class, 'storeAffiliate'])->name('affiliates.payout-request.store');
-    Route::post('/affiliates/payout-request/all', [PayoutRequestController::class, 'storeAffiliateAll'])->name('affiliates.payout-request.all');
+    Route::post('/affiliates/{affiliate}/payout-request', [PayoutRequestController::class, 'storeAffiliate'])->name('affiliates.payout-request.store')->middleware('throttle:5,1');
+    Route::post('/affiliates/payout-request/all', [PayoutRequestController::class, 'storeAffiliateAll'])->name('affiliates.payout-request.all')->middleware('throttle:5,1');
 
     // ─── AI Assistant ─────────────────────────────────────────────────────────
     Route::post('/ai/chat', [AIAssistantController::class, 'chat'])->name('ai.chat');

@@ -25,7 +25,7 @@
                 </div>
             </div>
             <div class="hidden sm:block w-px h-6 bg-white/20"></div>
-            <p v-html="lp.social_proof.trust_line"
+            <p v-html="sanitizeHtml(lp.social_proof.trust_line)"
                 :contenteditable="inlineMode ? 'true' : 'false'"
                 @focus="inlineMode && $emit('elFocus', $event, 'social_proof.trust_line')"
                 @blur="inlineMode && $emit('elBlur', $event, 'social_proof.trust_line')"
@@ -41,7 +41,7 @@
     <!-- ── BENEFITS ── -->
     <section v-if="isVisible('benefits') && lp.benefits" class="py-24 bg-white">
         <div class="max-w-5xl mx-auto px-6">
-            <h2 v-html="lp.benefits.headline"
+            <h2 v-html="sanitizeHtml(lp.benefits.headline)"
                 :contenteditable="inlineMode ? 'true' : 'false'"
                 @focus="inlineMode && $emit('elFocus', $event, 'benefits.headline')"
                 @blur="inlineMode && $emit('elBlur', $event, 'benefits.headline')"
@@ -55,14 +55,14 @@
                         {{ item.icon }}
                     </div>
                     <div>
-                        <h3 v-html="item.title"
+                        <h3 v-html="sanitizeHtml(item.title)"
                             :contenteditable="inlineMode ? 'true' : 'false'"
                             @focus="inlineMode && $emit('elFocus', $event, `benefits.items.${i}.title`)"
                             @blur="inlineMode && $emit('elBlur', $event, `benefits.items.${i}.title`)"
                             @keydown.enter.prevent
                             :class="['font-bold text-gray-900 mb-1.5', inlineMode ? editableClass : '']"
                         />
-                        <p v-html="item.body"
+                        <p v-html="sanitizeHtml(item.body)"
                             :contenteditable="inlineMode ? 'true' : 'false'"
                             @focus="inlineMode && $emit('elFocus', $event, `benefits.items.${i}.body`)"
                             @blur="inlineMode && $emit('elBlur', $event, `benefits.items.${i}.body`)"
@@ -80,7 +80,7 @@
     <!-- ── FOR YOU ── -->
     <section v-if="isVisible('for_you') && lp.for_you" class="py-20 bg-linear-to-br from-indigo-50 to-white">
         <div class="max-w-2xl mx-auto px-6 text-center">
-            <h2 v-html="lp.for_you.headline"
+            <h2 v-html="sanitizeHtml(lp.for_you.headline)"
                 :contenteditable="inlineMode ? 'true' : 'false'"
                 @focus="inlineMode && $emit('elFocus', $event, 'for_you.headline')"
                 @blur="inlineMode && $emit('elBlur', $event, 'for_you.headline')"
@@ -95,7 +95,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                         </svg>
                     </div>
-                    <p v-html="point"
+                    <p v-html="sanitizeHtml(point)"
                         :contenteditable="inlineMode ? 'true' : 'false'"
                         @focus="inlineMode && $emit('elFocus', $event, `for_you.points.${i}`)"
                         @blur="inlineMode && $emit('elBlur', $event, `for_you.points.${i}`)"
@@ -122,7 +122,7 @@
                             {{ (lp.creator.name || community.owner?.name)?.charAt(0) ?? '?' }}
                         </div>
                     </div>
-                    <p v-html="lp.creator.name || community.owner?.name"
+                    <p v-html="sanitizeHtml(lp.creator.name || community.owner?.name)"
                         :contenteditable="inlineMode ? 'true' : 'false'"
                         @focus="inlineMode && $emit('elFocus', $event, 'creator.name')"
                         @blur="inlineMode && $emit('elBlur', $event, 'creator.name')"
@@ -132,14 +132,14 @@
                     <p class="text-white/60 text-xs mt-0.5">Creator</p>
                 </div>
                 <div>
-                    <h2 v-html="lp.creator.headline"
+                    <h2 v-html="sanitizeHtml(lp.creator.headline)"
                         :contenteditable="inlineMode ? 'true' : 'false'"
                         @focus="inlineMode && $emit('elFocus', $event, 'creator.headline')"
                         @blur="inlineMode && $emit('elBlur', $event, 'creator.headline')"
                         @keydown.enter.prevent
                         :class="['text-2xl font-black mb-4 text-white', inlineMode ? editableClass : '']"
                     />
-                    <p v-html="lp.creator.bio"
+                    <p v-html="sanitizeHtml(lp.creator.bio)"
                         :contenteditable="inlineMode ? 'true' : 'false'"
                         @focus="inlineMode && $emit('elFocus', $event, 'creator.bio')"
                         @blur="inlineMode && $emit('elBlur', $event, 'creator.bio')"
@@ -188,7 +188,7 @@
                             <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
                         </svg>
                     </div>
-                    <p v-html="`&ldquo;${t.quote}&rdquo;`"
+                    <p v-html="sanitizeHtml(`&ldquo;${t.quote}&rdquo;`)"
                         :contenteditable="inlineMode ? 'true' : 'false'"
                         @focus="inlineMode && $emit('elFocus', $event, `testimonials.${i}.quote`)"
                         @blur="inlineMode && $emit('elBlur', $event, `testimonials.${i}.quote`)"
@@ -482,7 +482,7 @@
                         </svg>
                     </button>
                     <div v-if="openFaqIdx === i || inlineMode"
-                        v-html="item.answer"
+                        v-html="sanitizeHtml(item.answer)"
                         :contenteditable="inlineMode ? 'true' : 'false'"
                         @focus="inlineMode && $emit('elFocus', $event, `faq.${i}.answer`)"
                         @blur="inlineMode && $emit('elBlur', $event, `faq.${i}.answer`)"
@@ -513,7 +513,7 @@
         </button>
         <div class="relative z-10 max-w-xl mx-auto px-6">
             <h2
-                v-html="lp.cta_section?.headline ?? `Join ${community.name} Today`"
+                v-html="sanitizeHtml(lp.cta_section?.headline ?? `Join ${community.name} Today`)"
                 :contenteditable="inlineMode ? 'true' : 'false'"
                 @focus="inlineMode && $emit('elFocus', $event, 'cta_section.headline')"
                 @blur="inlineMode && $emit('elBlur', $event, 'cta_section.headline')"
@@ -521,7 +521,7 @@
                 :class="['text-3xl sm:text-4xl font-black mb-4 text-white', inlineMode ? editableClass : '']"
             />
             <p
-                v-html="lp.cta_section?.subtext ?? 'Start your journey. Cancel anytime.'"
+                v-html="sanitizeHtml(lp.cta_section?.subtext ?? 'Start your journey. Cancel anytime.')"
                 :contenteditable="inlineMode ? 'true' : 'false'"
                 @focus="inlineMode && $emit('elFocus', $event, 'cta_section.subtext')"
                 @blur="inlineMode && $emit('elBlur', $event, 'cta_section.subtext')"
@@ -563,6 +563,7 @@
 import { ref, computed } from 'vue';
 import SafeHtmlRenderer from '@/Components/SafeHtmlRenderer.vue';
 import LandingCustomSection from '@/Components/Landing/LandingCustomSection.vue';
+import { sanitizeHtml } from '@/utils/sanitize';
 
 const props = defineProps({
     lp: { type: Object, required: true },

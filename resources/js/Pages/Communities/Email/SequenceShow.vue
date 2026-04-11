@@ -2,6 +2,7 @@
 import { Link, router } from '@inertiajs/vue3';
 import CommunitySettingsLayout from '@/Layouts/CommunitySettingsLayout.vue';
 import { useCommunityUrl } from '@/composables/useCommunityUrl';
+import { sanitizeHtml } from '@/utils/sanitize';
 
 const props = defineProps({
     community: Object,
@@ -121,7 +122,7 @@ function delayLabel(hours) {
                             </div>
                             <p class="text-sm font-medium text-gray-800">{{ step.subject }}</p>
                             <div class="mt-2 text-xs text-gray-500 border border-gray-100 rounded p-3 bg-gray-50 max-h-32 overflow-y-auto">
-                                <div v-html="step.html_body"></div>
+                                <div v-html="sanitizeHtml(step.html_body)"></div>
                             </div>
                         </div>
                     </div>

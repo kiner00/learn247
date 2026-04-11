@@ -2,6 +2,7 @@
 import { Link, router } from '@inertiajs/vue3';
 import CommunitySettingsLayout from '@/Layouts/CommunitySettingsLayout.vue';
 import { useCommunityUrl } from '@/composables/useCommunityUrl';
+import { sanitizeHtml } from '@/utils/sanitize';
 
 const props = defineProps({
     community: Object,
@@ -131,7 +132,7 @@ function pct(value, total) {
                 <div>
                     <h3 class="text-sm font-medium text-gray-700 mb-2">Email Preview</h3>
                     <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                        <div v-html="broadcast.html_body" class="prose prose-sm max-w-none"></div>
+                        <div v-html="sanitizeHtml(broadcast.html_body)" class="prose prose-sm max-w-none"></div>
                     </div>
                 </div>
             </div>

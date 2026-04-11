@@ -30,7 +30,7 @@
         <div class="relative z-10 max-w-3xl mx-auto px-6 py-24 text-center">
             <!-- Pre-headline -->
             <p v-if="lp.hero?.pre_headline"
-                v-html="lp.hero.pre_headline"
+                v-html="sanitizeHtml(lp.hero.pre_headline)"
                 :contenteditable="inlineMode ? 'true' : 'false'"
                 @focus="inlineMode && $emit('elFocus', $event, 'hero.pre_headline')"
                 @blur="inlineMode && $emit('elBlur', $event, 'hero.pre_headline')"
@@ -45,7 +45,7 @@
 
             <h1
                 :key="renderKey + '_hero_h'"
-                v-html="lp.hero.headline"
+                v-html="sanitizeHtml(lp.hero.headline)"
                 :contenteditable="inlineMode ? 'true' : 'false'"
                 @focus="inlineMode && $emit('elFocus', $event, 'hero.headline')"
                 @blur="inlineMode && $emit('elBlur', $event, 'hero.headline')"
@@ -55,7 +55,7 @@
             />
             <p
                 :key="renderKey + '_hero_sub'"
-                v-html="lp.hero.subheadline"
+                v-html="sanitizeHtml(lp.hero.subheadline)"
                 :contenteditable="inlineMode ? 'true' : 'false'"
                 @focus="inlineMode && $emit('elFocus', $event, 'hero.subheadline')"
                 @blur="inlineMode && $emit('elBlur', $event, 'hero.subheadline')"
@@ -112,6 +112,7 @@
 
 <script setup>
 import SafeHtmlRenderer from '@/Components/SafeHtmlRenderer.vue';
+import { sanitizeHtml } from '@/utils/sanitize';
 
 defineProps({
     lp: { type: Object, required: true },

@@ -40,6 +40,7 @@ class Community extends Model
             'landing_page'              => 'array',
             'brand_context'             => 'array',
             'curzzo_topup_packs'        => 'array',
+            'telegram_bot_token'        => 'encrypted',
             'resend_api_key'            => 'encrypted',
             'deletion_requested_at'     => 'datetime',
         ];
