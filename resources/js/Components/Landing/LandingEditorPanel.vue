@@ -524,6 +524,30 @@
                                     </template>
                                 </template>
 
+                                <!-- CURZZOS (AI BOTS) -->
+                                <template v-if="sec.type === 'curzzos'">
+                                    <div v-if="!curzzos.length" class="text-xs text-gray-500 italic">
+                                        No AI bots yet. Create one in the Curzzos settings.
+                                    </div>
+                                    <template v-else>
+                                        <div>
+                                            <label class="field-label">Section Headline</label>
+                                            <input v-model="editDraft.curzzos_headline" type="text" placeholder="AI-Powered Bots" class="field-input" />
+                                        </div>
+                                        <p class="text-xs text-gray-400">Bots are pulled automatically from your community's Curzzos.</p>
+                                        <div v-for="bot in curzzos" :key="bot.id" class="flex items-center gap-3 bg-white rounded-xl p-3 border border-gray-200">
+                                            <div class="w-10 h-10 rounded-lg overflow-hidden shrink-0 bg-indigo-100 flex items-center justify-center text-lg">
+                                                <img v-if="bot.avatar" :src="bot.avatar" class="w-full h-full object-cover" />
+                                                <span v-else>🤖</span>
+                                            </div>
+                                            <div class="min-w-0">
+                                                <p class="text-sm font-medium text-gray-800 truncate">{{ bot.name }}</p>
+                                                <p class="text-xs text-gray-400">{{ bot.access_type || 'free' }}</p>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </template>
+
                                 <!-- GUARANTEE -->
                                 <template v-if="sec.type === 'guarantee'">
                                     <div v-if="!editDraft.guarantee" class="text-xs text-gray-500">
@@ -768,6 +792,7 @@ const props = defineProps({
     community: { type: Object, required: true },
     allCourses: { type: Array, default: () => [] },
     certifications: { type: Array, default: () => [] },
+    curzzos: { type: Array, default: () => [] },
     allCoursesSelected: { type: Boolean, default: false },
     SECTION_DEFS: { type: Object, required: true },
     DEFAULT_SECTION_ORDER: { type: Array, required: true },

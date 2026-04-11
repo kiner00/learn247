@@ -96,6 +96,7 @@
         :community="community"
         :all-courses="allCourses"
         :certifications="certifications"
+        :curzzos="curzzos"
         :all-courses-selected="allCoursesSelected"
         :SECTION_DEFS="SECTION_DEFS"
         :DEFAULT_SECTION_ORDER="DEFAULT_SECTION_ORDER"

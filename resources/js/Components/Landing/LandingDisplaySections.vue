@@ -379,13 +379,26 @@
             <p class="text-center text-gray-500 mb-12">Chat with specialized AI bots built for this community.</p>
             <div class="flex flex-wrap justify-center gap-6">
                 <div v-for="bot in curzzos" :key="bot.id"
-                    class="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm flex flex-col w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)]">
-                    <div class="relative aspect-video bg-indigo-50 overflow-hidden flex items-center justify-center">
-                        <img v-if="bot.cover_image" :src="bot.cover_image" :alt="bot.name" class="w-full h-full object-cover" />
-                        <img v-else-if="bot.avatar" :src="bot.avatar" :alt="bot.name" class="w-full h-full object-cover" />
+                    class="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm flex flex-col w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] group">
+                    <div class="relative aspect-video bg-indigo-50 overflow-hidden flex items-center justify-center"
+                        @mouseenter="onBotHover($event, bot)"
+                        @mouseleave="onBotLeave($event, bot)"
+                        @touchstart.passive="onBotTouchStart($event, bot)"
+                        @touchend.passive="onBotTouchEnd(bot)">
+                        <video v-if="bot.preview_video"
+                            :data-lp-bot-id="bot.id"
+                            :src="bot.preview_video"
+                            class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-300 z-[1]"
+                            loop playsinline preload="none" />
+                        <img v-if="bot.cover_image" :src="bot.cover_image" :alt="bot.name" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                        <img v-else-if="bot.avatar" :src="bot.avatar" :alt="bot.name" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                         <span v-else class="text-5xl font-black text-indigo-300">{{ bot.name.charAt(0).toUpperCase() }}</span>
                         <div v-if="bot.avatar && bot.cover_image" class="absolute bottom-2.5 left-2.5 w-8 h-8 rounded-full border-2 border-white overflow-hidden shadow-sm">
                             <img :src="bot.avatar" :alt="bot.name" class="w-full h-full object-cover" />
+                        </div>
+                        <div v-if="bot.preview_video" class="absolute bottom-2 left-2 z-[2] flex items-center gap-1 px-2 py-1 bg-black/50 text-white text-[10px] font-medium rounded-full backdrop-blur-sm pointer-events-none sm:hidden">
+                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                            Tap to preview
                         </div>
                     </div>
                     <div class="p-5 flex flex-col flex-1">
@@ -395,7 +408,8 @@
                             <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-full">
                                 🤖 AI Bot
                             </span>
-                            <span v-if="bot.price > 0" class="text-xs font-semibold text-amber-600">
+                            <span v-if="bot.access_type === 'inclusive'" class="text-xs font-semibold text-indigo-600">Included</span>
+                            <span v-else-if="bot.price > 0" class="text-xs font-semibold text-amber-600">
                                 {{ bot.currency === 'USD' ? '$' : '₱' }}{{ Number(bot.price).toLocaleString() }}{{ bot.billing_type === 'monthly' ? '/mo' : '' }}
                             </span>
                             <span v-else class="text-xs font-semibold text-green-600">Free</span>
@@ -662,5 +676,44 @@ function onCourseTouchEnd(course) {
     clearTimeout(lpTouchTimer);
     if (!course.preview_video) return;
     document.querySelectorAll(`video[data-lp-course-id="${course.id}"]`).forEach(v => stopLpVideo(v));
+}
+
+// ── Bot preview video hover/tap-to-play ────────────────────────────────────
+let botHoverTimer = null;
+let botTouchTimer = null;
+
+function getLpBotVideoEl(container, id) {
+    return container.querySelector(`video[data-lp-bot-id="${id}"]`);
+}
+
+function onBotHover(e, bot) {
+    if (!bot.preview_video) return;
+    const container = e.currentTarget;
+    botHoverTimer = setTimeout(() => {
+        const video = getLpBotVideoEl(container, bot.id);
+        if (video) playLpVideo(video, bot);
+    }, 500);
+}
+
+function onBotLeave(e, bot) {
+    clearTimeout(botHoverTimer);
+    if (!bot.preview_video) return;
+    const video = getLpBotVideoEl(e.currentTarget, bot.id);
+    if (video) stopLpVideo(video);
+}
+
+function onBotTouchStart(e, bot) {
+    if (!bot.preview_video) return;
+    const container = e.currentTarget;
+    botTouchTimer = setTimeout(() => {
+        const video = getLpBotVideoEl(container, bot.id);
+        if (video) playLpVideo(video, bot);
+    }, 400);
+}
+
+function onBotTouchEnd(bot) {
+    clearTimeout(botTouchTimer);
+    if (!bot.preview_video) return;
+    document.querySelectorAll(`video[data-lp-bot-id="${bot.id}"]`).forEach(v => stopLpVideo(v));
 }
 </script>
