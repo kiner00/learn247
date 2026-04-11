@@ -85,6 +85,11 @@ const comparisonRows = [
     { feature: 'Custom Branding',      free: false,        basic: false,        pro: '(Soon)' },
     { feature: 'Priority Payouts',     free: false,        basic: false,        pro: '(Soon)' },
     { feature: 'AI Landing Page Builder', free: false,     basic: false,        pro: 'Beta ✨' },
+    { feature: 'AI Bots (Curzzos)',    free: false,        basic: false,        pro: true },
+    { feature: 'Telegram Integration', free: false,        basic: false,        pro: true },
+    { feature: 'Affiliate System',    free: false,        basic: true,         pro: true },
+    { feature: 'Certifications & Exams', free: false,     basic: false,        pro: true },
+    { feature: 'Leaderboard & Gamification', free: false, basic: false,        pro: true },
     { feature: 'Custom Domain',        free: false,        basic: false,        pro: '(Soon)' },
     { feature: 'Workflow Builder',     free: false,        basic: false,        pro: '(Soon)' },
     { feature: 'Video Hosting',        free: false,        basic: false,        pro: '(Soon)' },
@@ -257,6 +262,13 @@ const planLabel = { free: 'Free', basic: 'Basic', pro: 'Pro' };
                         <li class="flex items-start gap-2 opacity-60"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Custom branding <span class="text-indigo-300 text-xs ml-1">(Soon)</span></li>
                         <li class="flex items-start gap-2 opacity-60"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Priority payouts <span class="text-indigo-300 text-xs ml-1">(Soon)</span></li>
                         <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> AI Landing Page Builder <span class="ml-1 bg-amber-400/20 text-amber-300 text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide">Beta</span></li>
+                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> AI Bots (Curzzos)</li>
+                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Telegram Integration</li>
+                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Affiliate System</li>
+                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Certifications &amp; Exams</li>
+                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Leaderboard &amp; Gamification</li>
+                        <li class="flex items-start gap-2 opacity-60"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Custom Domain <span class="text-indigo-300 text-xs ml-1">(Soon)</span></li>
+                        <li class="flex items-start gap-2 opacity-60"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Video Hosting <span class="text-indigo-300 text-xs ml-1">(Soon)</span></li>
                     </ul>
                     <div class="px-6 py-5 border-t border-indigo-500">
                         <button
