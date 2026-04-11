@@ -281,12 +281,45 @@
                 View all {{ post.comments_count }} comments
             </button>
         </div>
+
+        <!-- Inline comment input -->
+        <div
+            v-if="isMember"
+            class="mt-3 border-t border-gray-100 dark:border-gray-700 pt-3"
+            @click.stop
+        >
+            <div class="flex gap-2.5 items-end">
+                <UserAvatar
+                    :name="authUser?.name"
+                    :avatar="authUser?.avatar"
+                    size="7"
+                    class="shrink-0"
+                />
+                <div class="flex-1 flex gap-2">
+                    <textarea
+                        v-model="inlineComment"
+                        rows="1"
+                        placeholder="Write a comment..."
+                        class="flex-1 px-3 py-2 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
+                        @keydown.enter.exact.prevent="submitInlineComment"
+                    />
+                    <button
+                        @click="submitInlineComment"
+                        :disabled="!inlineComment.trim() || submittingComment"
+                        class="px-3 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-40 self-end"
+                    >
+                        Post
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
 <script setup>
 import { ref } from "vue";
 import { useForm } from "@inertiajs/vue3";
+import { router } from "@inertiajs/vue3";
 import UserAvatar from "@/Components/UserAvatar.vue";
 import { REACTIONS, mdToHtml, getVideoEmbed, formatDate, formatRelative } from "./postHelpers";
 
@@ -295,6 +328,8 @@ const props = defineProps({
     isAdmin: { type: Boolean, default: false },
     currentUserId: { type: [Number, String], default: null },
     canDelete: { type: Boolean, default: false },
+    isMember: { type: Boolean, default: false },
+    authUser: { type: Object, default: null },
 });
 
 defineEmits(["open", "delete", "togglePin", "react", "lightbox"]);
@@ -321,5 +356,24 @@ function submitEdit() {
             editing.value = false;
         },
     });
+}
+
+// ─── Inline commenting ──────────────────────────────────────────────────────
+const inlineComment = ref("");
+const submittingComment = ref(false);
+
+function submitInlineComment() {
+    const content = inlineComment.value.trim();
+    if (!content || submittingComment.value) return;
+    submittingComment.value = true;
+    router.post(
+        `/posts/${props.post.id}/comments`,
+        { content, parent_id: null },
+        {
+            preserveScroll: true,
+            onSuccess: () => { inlineComment.value = ""; },
+            onFinish: () => { submittingComment.value = false; },
+        },
+    );
 }
 </script>

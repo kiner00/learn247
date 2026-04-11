@@ -21,6 +21,8 @@
                         :is-admin="isAdmin"
                         :current-user-id="page.props.auth?.user?.id"
                         :can-delete="canDeletePost(post)"
+                        :is-member="isMember"
+                        :auth-user="page.props.auth?.user"
                         @open="openPost"
                         @delete="deletePost"
                         @toggle-pin="togglePin"
