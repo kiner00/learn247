@@ -77,13 +77,35 @@ class TicketController extends Controller
 
     public function adminIndex(): Response
     {
-        $tickets = Ticket::with('user:id,name,email,avatar')
-            ->withCount('replies')
-            ->latest()
-            ->paginate(20);
+        $status = request('status');
+
+        $query = Ticket::with('user:id,name,email,avatar')
+            ->withCount('replies');
+
+        if ($status && in_array($status, ['open', 'in_progress', 'resolved', 'closed'])) {
+            $query->where('status', $status);
+        }
+
+        $tickets = $query->latest()->paginate(20)->withQueryString();
+
+        $counts = Ticket::selectRaw("
+            COUNT(*) as all_count,
+            SUM(status = 'open') as open_count,
+            SUM(status = 'in_progress') as in_progress_count,
+            SUM(status = 'resolved') as resolved_count,
+            SUM(status = 'closed') as closed_count
+        ")->first();
 
         return Inertia::render('Admin/Tickets', [
             'tickets' => $tickets,
+            'counts'  => [
+                'all'         => (int) $counts->all_count,
+                'open'        => (int) $counts->open_count,
+                'in_progress' => (int) $counts->in_progress_count,
+                'resolved'    => (int) $counts->resolved_count,
+                'closed'      => (int) $counts->closed_count,
+            ],
+            'currentStatus' => $status,
         ]);
     }
 

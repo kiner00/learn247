@@ -5,6 +5,22 @@
             <p class="text-sm text-gray-500 mt-0.5">{{ tickets.total }} tickets total</p>
         </div>
 
+        <!-- Status Tabs -->
+        <div class="flex gap-2 mb-4 flex-wrap">
+            <Link
+                v-for="tab in statusTabs"
+                :key="tab.value"
+                :href="tab.value ? `/admin/tickets?status=${tab.value}` : '/admin/tickets'"
+                class="px-4 py-2 text-sm font-medium rounded-lg border transition-colors"
+                :class="currentStatus === tab.value
+                    ? 'bg-amber-500 text-white border-amber-500'
+                    : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'"
+            >
+                {{ tab.label }}
+                <span class="ml-1.5 text-xs opacity-75">({{ tab.count }})</span>
+            </Link>
+        </div>
+
         <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
             <table class="w-full text-sm">
                 <thead>
@@ -77,10 +93,23 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 
-defineProps({ tickets: Object });
+const props = defineProps({
+    tickets: Object,
+    counts: Object,
+    currentStatus: String,
+});
+
+const statusTabs = computed(() => [
+    { label: 'All',         value: null,          count: props.counts?.all ?? 0 },
+    { label: 'Open',        value: 'open',        count: props.counts?.open ?? 0 },
+    { label: 'In Progress', value: 'in_progress', count: props.counts?.in_progress ?? 0 },
+    { label: 'Resolved',    value: 'resolved',    count: props.counts?.resolved ?? 0 },
+    { label: 'Closed',      value: 'closed',      count: props.counts?.closed ?? 0 },
+]);
 
 const typeStyles = {
     bug:        'bg-red-100 text-red-700',
