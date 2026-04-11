@@ -27,27 +27,16 @@ class GetCommunityFeedTest extends TestCase
         $this->assertCount(3, $result->items());
     }
 
-    public function test_enrich_post_adds_reaction_data(): void
+    public function test_paginated_enriches_post_reaction_data(): void
     {
         $community = Community::factory()->create();
         $user      = User::factory()->create();
-        $post      = Post::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
-        $post->load([
-            'author:id,name,username,avatar',
-            'likes',
-            'comments' => fn ($q) => $q
-                ->whereNull('parent_id')
-                ->with([
-                    'author:id,name,username,avatar',
-                    'likes',
-                    'replies' => fn ($r) => $r->with(['author:id,name,username,avatar', 'likes']),
-                ])
-                ->latest(),
-        ])->loadCount('likes', 'comments');
+        Post::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
-        $query = new GetCommunityFeed();
-        $query->enrichPost($post, $user->id);
+        $query  = new GetCommunityFeed();
+        $result = $query->paginated($community, $user->id);
 
+        $post = $result->items()[0];
         $this->assertTrue(isset($post->reactions));
         $this->assertIsArray($post->reactions);
         $this->assertArrayHasKey('like', $post->reactions);
@@ -88,7 +77,7 @@ class GetCommunityFeedTest extends TestCase
         $this->assertNotNull($enrichedPost->last_comment_at);
     }
 
-    public function test_enrich_post_processes_comment_and_reply_reactions(): void
+    public function test_paginated_enriches_comment_and_reply_reactions(): void
     {
         $community = Community::factory()->create();
         $user      = User::factory()->create();
@@ -100,7 +89,7 @@ class GetCommunityFeedTest extends TestCase
             'user_id'      => $user->id,
         ]);
 
-        $reply = Comment::create([
+        Comment::create([
             'post_id'      => $post->id,
             'community_id' => $community->id,
             'user_id'      => $user->id,
@@ -115,23 +104,11 @@ class GetCommunityFeedTest extends TestCase
             'type'          => 'like',
         ]);
 
-        $post->load([
-            'author:id,name,username,avatar',
-            'likes',
-            'comments' => fn ($q) => $q
-                ->whereNull('parent_id')
-                ->with([
-                    'author:id,name,username,avatar',
-                    'likes',
-                    'replies' => fn ($r) => $r->with(['author:id,name,username,avatar', 'likes']),
-                ])
-                ->latest(),
-        ])->loadCount('likes', 'comments');
+        $query  = new GetCommunityFeed();
+        $result = $query->paginated($community, $user->id);
 
-        $query = new GetCommunityFeed();
-        $query->enrichPost($post, $user->id);
-
-        $enrichedComment = $post->comments->first();
+        $enrichedPost    = $result->items()[0];
+        $enrichedComment = $enrichedPost->comments->first();
         $this->assertIsArray($enrichedComment->reactions);
         $this->assertSame(1, $enrichedComment->reactions['like']);
         $this->assertSame('like', $enrichedComment->user_reaction);

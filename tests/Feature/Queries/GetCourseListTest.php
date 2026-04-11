@@ -3,6 +3,7 @@
 namespace Tests\Feature\Queries;
 
 use App\Models\Community;
+use App\Models\CommunityMember;
 use App\Models\Course;
 use App\Models\CourseEnrollment;
 use App\Models\CourseLesson;
@@ -22,6 +23,7 @@ class GetCourseListTest extends TestCase
     {
         $community = Community::factory()->create();
         $user      = User::factory()->create();
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
         $course    = Course::create(['community_id' => $community->id, 'title' => 'Test Course', 'position' => 0, 'access_type' => 'free']);
         $module    = CourseModule::create(['course_id' => $course->id, 'title' => 'Module 1', 'position' => 0]);
         $lesson    = CourseLesson::create(['module_id' => $module->id, 'title' => 'Lesson 1', 'position' => 0]);

@@ -72,6 +72,14 @@ class GetCommunityFeed
     }
 
     /**
+     * Enrich a single post with reaction data (delegates to batchEnrich).
+     */
+    public function enrichPost($post, ?int $userId): void
+    {
+        $this->batchEnrich(collect([$post]), $userId);
+    }
+
+    /**
      * Batch-load reaction counts and user reactions for posts + comments + replies
      * using 2 aggregate queries instead of N+1 per-item lookups.
      */

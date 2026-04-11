@@ -3,24 +3,24 @@
 namespace Tests\Feature\Actions\Chat;
 
 use App\Actions\Chat\SendChatMessage;
+use App\Jobs\ForwardMessageToTelegram;
 use App\Models\Community;
 use App\Models\CommunityMember;
 use App\Models\Message;
 use App\Models\User;
-use App\Services\TelegramService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Mockery;
+use Illuminate\Support\Facades\Bus;
 use Tests\TestCase;
 
 class SendChatMessageTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function createAction(?TelegramService $telegram = null): SendChatMessage
+    private function getJobProperty(ForwardMessageToTelegram $job, string $property): mixed
     {
-        $telegram ??= Mockery::mock(TelegramService::class)->shouldIgnoreMissing();
+        $ref = new \ReflectionProperty($job, $property);
 
-        return new SendChatMessage($telegram);
+        return $ref->getValue($job);
     }
 
     public function test_creates_message_in_database(): void
@@ -29,7 +29,7 @@ class SendChatMessageTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $user->id]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
-        $action = $this->createAction();
+        $action  = new SendChatMessage();
         $message = $action->execute($user, $community, 'Hello world');
 
         $this->assertInstanceOf(Message::class, $message);
@@ -50,7 +50,7 @@ class SendChatMessageTest extends TestCase
             'messages_last_read_at' => null,
         ]);
 
-        $action = $this->createAction();
+        $action = new SendChatMessage();
         $action->execute($user, $community, 'Test message');
 
         $this->assertNotNull(
@@ -66,7 +66,7 @@ class SendChatMessageTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $user->id]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
-        $action  = $this->createAction();
+        $action  = new SendChatMessage();
         $message = $action->execute($user, $community, 'Test');
 
         $this->assertTrue($message->relationLoaded('user'));
@@ -79,7 +79,7 @@ class SendChatMessageTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $user->id]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
-        $action  = $this->createAction();
+        $action  = new SendChatMessage();
         $message = $action->execute($user, $community, 'See image', 'https://example.com/photo.jpg', 'image');
 
         $this->assertDatabaseHas('messages', [
@@ -91,6 +91,8 @@ class SendChatMessageTest extends TestCase
 
     public function test_sends_telegram_text_message_when_configured(): void
     {
+        Bus::fake([ForwardMessageToTelegram::class]);
+
         $user      = User::factory()->create(['name' => 'Alice']);
         $community = Community::factory()->create([
             'owner_id'           => $user->id,
@@ -99,22 +101,23 @@ class SendChatMessageTest extends TestCase
         ]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
-        $telegram = Mockery::mock(TelegramService::class);
-        $telegram->shouldReceive('sendMessage')
-            ->once()
-            ->withArgs(function ($token, $chatId, $text) {
-                return $token === 'bot-token-123'
-                    && $chatId === 'chat-456'
-                    && str_contains($text, 'Admin')
-                    && str_contains($text, 'Alice');
-            });
-
-        $action = new SendChatMessage($telegram);
+        $action = new SendChatMessage();
         $action->execute($user, $community, 'Hello telegram');
+
+        Bus::assertDispatched(ForwardMessageToTelegram::class, function (ForwardMessageToTelegram $job) {
+            return $this->getJobProperty($job, 'token') === 'bot-token-123'
+                && $this->getJobProperty($job, 'chatId') === 'chat-456'
+                && str_contains($this->getJobProperty($job, 'caption'), 'Admin')
+                && str_contains($this->getJobProperty($job, 'caption'), 'Alice')
+                && $this->getJobProperty($job, 'mediaUrl') === null
+                && $this->getJobProperty($job, 'mediaType') === null;
+        });
     }
 
     public function test_sends_telegram_photo_when_media_type_is_image(): void
     {
+        Bus::fake([ForwardMessageToTelegram::class]);
+
         $user      = User::factory()->create(['name' => 'Bob']);
         $community = Community::factory()->create([
             'owner_id'           => User::factory()->create()->id,
@@ -123,22 +126,22 @@ class SendChatMessageTest extends TestCase
         ]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
-        $telegram = Mockery::mock(TelegramService::class);
-        $telegram->shouldReceive('sendPhoto')
-            ->once()
-            ->withArgs(function ($token, $chatId, $photoUrl, $caption) {
-                return $token === 'bot-token'
-                    && $photoUrl === 'https://example.com/photo.jpg'
-                    && str_contains($caption, 'Member')
-                    && str_contains($caption, 'Bob');
-            });
-
-        $action = new SendChatMessage($telegram);
+        $action = new SendChatMessage();
         $action->execute($user, $community, 'Check this', 'https://example.com/photo.jpg', 'image');
+
+        Bus::assertDispatched(ForwardMessageToTelegram::class, function (ForwardMessageToTelegram $job) {
+            return $this->getJobProperty($job, 'token') === 'bot-token'
+                && $this->getJobProperty($job, 'mediaUrl') === 'https://example.com/photo.jpg'
+                && $this->getJobProperty($job, 'mediaType') === 'image'
+                && str_contains($this->getJobProperty($job, 'caption'), 'Member')
+                && str_contains($this->getJobProperty($job, 'caption'), 'Bob');
+        });
     }
 
     public function test_sends_telegram_video_when_media_type_is_video(): void
     {
+        Bus::fake([ForwardMessageToTelegram::class]);
+
         $user      = User::factory()->create(['name' => 'Carol']);
         $community = Community::factory()->create([
             'owner_id'           => $user->id,
@@ -147,20 +150,20 @@ class SendChatMessageTest extends TestCase
         ]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
-        $telegram = Mockery::mock(TelegramService::class);
-        $telegram->shouldReceive('sendVideo')
-            ->once()
-            ->withArgs(function ($token, $chatId, $videoUrl, $caption) {
-                return $videoUrl === 'https://example.com/video.mp4'
-                    && str_contains($caption, 'Admin');
-            });
-
-        $action = new SendChatMessage($telegram);
+        $action = new SendChatMessage();
         $action->execute($user, $community, 'Watch this', 'https://example.com/video.mp4', 'video');
+
+        Bus::assertDispatched(ForwardMessageToTelegram::class, function (ForwardMessageToTelegram $job) {
+            return $this->getJobProperty($job, 'mediaUrl') === 'https://example.com/video.mp4'
+                && $this->getJobProperty($job, 'mediaType') === 'video'
+                && str_contains($this->getJobProperty($job, 'caption'), 'Admin');
+        });
     }
 
     public function test_does_not_send_telegram_when_not_configured(): void
     {
+        Bus::fake([ForwardMessageToTelegram::class]);
+
         $user      = User::factory()->create();
         $community = Community::factory()->create([
             'owner_id'           => $user->id,
@@ -169,17 +172,16 @@ class SendChatMessageTest extends TestCase
         ]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
-        $telegram = Mockery::mock(TelegramService::class);
-        $telegram->shouldNotReceive('sendMessage');
-        $telegram->shouldNotReceive('sendPhoto');
-        $telegram->shouldNotReceive('sendVideo');
-
-        $action = new SendChatMessage($telegram);
+        $action = new SendChatMessage();
         $action->execute($user, $community, 'No telegram');
+
+        Bus::assertNotDispatched(ForwardMessageToTelegram::class);
     }
 
     public function test_telegram_prefix_shows_member_for_non_owner(): void
     {
+        Bus::fake([ForwardMessageToTelegram::class]);
+
         $owner     = User::factory()->create();
         $member    = User::factory()->create(['name' => 'Dave']);
         $community = Community::factory()->create([
@@ -189,19 +191,20 @@ class SendChatMessageTest extends TestCase
         ]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
-        $telegram = Mockery::mock(TelegramService::class);
-        $telegram->shouldReceive('sendMessage')
-            ->once()
-            ->withArgs(function ($token, $chatId, $text) {
-                return str_contains($text, 'Member') && str_contains($text, 'Dave');
-            });
-
-        $action = new SendChatMessage($telegram);
+        $action = new SendChatMessage();
         $action->execute($member, $community, 'Member message');
+
+        Bus::assertDispatched(ForwardMessageToTelegram::class, function (ForwardMessageToTelegram $job) {
+            $caption = $this->getJobProperty($job, 'caption');
+
+            return str_contains($caption, 'Member') && str_contains($caption, 'Dave');
+        });
     }
 
     public function test_sends_photo_with_empty_content(): void
     {
+        Bus::fake([ForwardMessageToTelegram::class]);
+
         $user      = User::factory()->create(['name' => 'Eve']);
         $community = Community::factory()->create([
             'owner_id'           => $user->id,
@@ -210,15 +213,16 @@ class SendChatMessageTest extends TestCase
         ]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
-        $telegram = Mockery::mock(TelegramService::class);
-        $telegram->shouldReceive('sendPhoto')
-            ->once()
-            ->withArgs(function ($token, $chatId, $photoUrl, $caption) {
-                // When content is empty, caption should just be the prefix
-                return str_contains($caption, 'Admin') && str_contains($caption, 'Eve');
-            });
-
-        $action = new SendChatMessage($telegram);
+        $action = new SendChatMessage();
         $action->execute($user, $community, '', 'https://example.com/photo.jpg', 'image');
+
+        Bus::assertDispatched(ForwardMessageToTelegram::class, function (ForwardMessageToTelegram $job) {
+            $caption = $this->getJobProperty($job, 'caption');
+
+            return str_contains($caption, 'Admin')
+                && str_contains($caption, 'Eve')
+                && $this->getJobProperty($job, 'mediaUrl') === 'https://example.com/photo.jpg'
+                && $this->getJobProperty($job, 'mediaType') === 'image';
+        });
     }
 }

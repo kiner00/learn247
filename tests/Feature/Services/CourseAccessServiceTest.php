@@ -25,20 +25,25 @@ class CourseAccessServiceTest extends TestCase
 
     // ── FREE courses ──────────────────────────────────────────────────────────
 
-    public function test_free_course_grants_access_to_guest(): void
+    public function test_free_course_denies_access_to_guest(): void
     {
         $community = Community::factory()->create();
         $course    = Course::factory()->create(['community_id' => $community->id, 'access_type' => Course::ACCESS_FREE]);
 
-        $this->assertTrue($this->service->hasAccess(null, $community, $course));
+        $this->assertFalse($this->service->hasAccess(null, $community, $course));
     }
 
-    public function test_free_course_grants_access_to_any_user(): void
+    public function test_free_course_requires_membership(): void
     {
         $user      = User::factory()->create();
         $community = Community::factory()->create();
         $course    = Course::factory()->create(['community_id' => $community->id, 'access_type' => Course::ACCESS_FREE]);
 
+        // Without membership — denied
+        $this->assertFalse($this->service->hasAccess($user, $community, $course));
+
+        // With membership — granted
+        \App\Models\CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
         $this->assertTrue($this->service->hasAccess($user, $community, $course));
     }
 

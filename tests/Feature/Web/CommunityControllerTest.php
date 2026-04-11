@@ -87,7 +87,7 @@ class CommunityControllerTest extends TestCase
             ->assertOk();
     }
 
-    public function test_private_community_show_page_is_accessible(): void
+    public function test_private_community_show_page_denied_for_non_member(): void
     {
         $owner   = User::factory()->create();
         $other   = User::factory()->create();
@@ -95,7 +95,7 @@ class CommunityControllerTest extends TestCase
 
         $this->actingAs($other)
             ->get("/communities/{$community->slug}")
-            ->assertOk();
+            ->assertForbidden();
     }
 
     // ─── join ─────────────────────────────────────────────────────────────────
@@ -146,7 +146,7 @@ class CommunityControllerTest extends TestCase
 
         $this->actingAs($owner)
             ->get("/communities/{$community->slug}/settings")
-            ->assertOk();
+            ->assertRedirect("/communities/{$community->slug}/settings/general");
     }
 
     public function test_non_owner_cannot_view_settings_page(): void
@@ -157,7 +157,7 @@ class CommunityControllerTest extends TestCase
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $other->id]);
 
         $this->actingAs($other)
-            ->get("/communities/{$community->slug}/settings")
+            ->get("/communities/{$community->slug}/settings/general")
             ->assertForbidden();
     }
 

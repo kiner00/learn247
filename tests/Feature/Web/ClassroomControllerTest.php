@@ -1784,16 +1784,16 @@ class ClassroomControllerTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
-        // Pro plan max is 500MB = 524288000 bytes, send more
+        // Pro plan max is 5120MB = 5GB, send more
         $response = $this->actingAs($owner)
             ->postJson("/communities/{$community->slug}/classroom/lesson-videos", [
                 'filename'     => 'large-video.mp4',
                 'content_type' => 'video/mp4',
-                'size'         => 600 * 1024 * 1024, // 600 MB
+                'size'         => 6000 * 1024 * 1024, // 6000 MB > 5120 MB
             ]);
 
         $response->assertStatus(422);
-        $response->assertJson(['error' => 'File too large. Maximum size is 500MB.']);
+        $response->assertJson(['error' => 'File too large. Maximum size is 5120MB.']);
     }
 
     public function test_upload_lesson_video_success_for_pro_owner(): void
