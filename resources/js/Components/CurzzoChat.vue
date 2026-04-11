@@ -55,7 +55,7 @@ async function loadHistory() {
         messages.value = data.messages ?? [];
         scrollToBottom();
     } catch (e) {
-        // silent fail
+        messages.value = [{ role: 'assistant', text: 'Failed to load chat history. Please try again.' }];
     } finally {
         loadingHistory.value = false;
     }

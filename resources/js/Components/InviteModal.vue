@@ -215,7 +215,7 @@ function resendInvite(email) {
     formData.append('email', email);
     axios.post(`/communities/${props.communitySlug}/invite`, formData)
         .then(() => openStatusTab())
-        .catch(() => {});
+        .catch(() => { openStatusTab(); });
 }
 
 function sendSingleInvite() {

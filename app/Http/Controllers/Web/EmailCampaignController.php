@@ -24,10 +24,12 @@ class EmailCampaignController extends Controller
 
         $campaigns = EmailCampaign::where('community_id', $community->id)
             ->withCount('broadcasts')
+            ->withSum('broadcasts', 'total_sent')
+            ->with(['broadcasts' => fn ($q) => $q->latest()->limit(1)->select('id', 'campaign_id', 'sent_at')])
             ->orderByDesc('created_at')
             ->get()
             ->map(function ($campaign) {
-                $latestBroadcast = $campaign->broadcasts()->latest()->first();
+                $latestBroadcast = $campaign->broadcasts->first();
 
                 return [
                     'id'              => $campaign->id,
@@ -35,7 +37,7 @@ class EmailCampaignController extends Controller
                     'type'            => $campaign->type,
                     'status'          => $campaign->status,
                     'broadcasts_count' => $campaign->broadcasts_count,
-                    'total_sent'      => $campaign->broadcasts()->sum('total_sent'),
+                    'total_sent'      => (int) ($campaign->broadcasts_sum_total_sent ?? 0),
                     'latest_sent_at'  => $latestBroadcast?->sent_at,
                     'created_at'      => $campaign->created_at,
                 ];

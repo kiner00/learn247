@@ -18,7 +18,7 @@ class XenditWebhookController extends Controller
         $token    = $request->header('X-CALLBACK-TOKEN');
         $expected = config('services.xendit.callback_token');
         Log::info('XenditWebhook: token check', ['received' => $token, 'expected' => $expected]);
-        if ($token !== $expected) {
+        if (! $expected || ! $token || ! hash_equals($expected, $token)) {
             Log::warning('XenditWebhook: invalid callback token');
             return response('Unauthorized', 401);
         }

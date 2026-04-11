@@ -470,11 +470,22 @@ class CommunityController extends Controller
         }
         $curzzos = $curzzosQuery
             ->select($selectFields)
-            ->get()
-            ->map(function ($bot) use ($userId, $isOwner, $isMember, $isPaidMember, $wasEverMember) {
-                $bot->has_access = $this->resolveCurzzoAccess($bot, $userId, $isOwner, $isMember, $isPaidMember, $wasEverMember);
-                return $bot;
-            });
+            ->get();
+
+        // Batch-load paid curzzo purchases to avoid N+1 in resolveCurzzoAccess
+        $paidCurzzoIds = collect();
+        if ($userId && ! $isOwner) {
+            $paidCurzzoIds = \App\Models\CurzzoPurchase::where('user_id', $userId)
+                ->whereIn('curzzo_id', $curzzos->pluck('id'))
+                ->where('status', \App\Models\CurzzoPurchase::STATUS_PAID)
+                ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+                ->pluck('curzzo_id');
+        }
+
+        $curzzos = $curzzos->map(function ($bot) use ($userId, $isOwner, $isMember, $isPaidMember, $wasEverMember, $paidCurzzoIds) {
+            $bot->has_access = $this->resolveCurzzoAccess($bot, $userId, $isOwner, $isMember, $isPaidMember, $wasEverMember, $paidCurzzoIds);
+            return $bot;
+        });
 
         $limits = app(\App\Services\Community\CurzzoLimitService::class);
         $limitInfo = $user ? $limits->canSendMessage($user, $community) : [
@@ -499,7 +510,7 @@ class CommunityController extends Controller
         ]);
     }
 
-    private function resolveCurzzoAccess($bot, ?int $userId, bool $isOwner, bool $isMember, bool $isPaidMember, bool $wasEverMember): bool
+    private function resolveCurzzoAccess($bot, ?int $userId, bool $isOwner, bool $isMember, bool $isPaidMember, bool $wasEverMember, $paidCurzzoIds = null): bool
     {
         if ($isOwner) {
             return true;
@@ -516,11 +527,7 @@ class CommunityController extends Controller
         }
 
         if (in_array($accessType, ['paid_once', 'paid_monthly'])) {
-            return $userId && \App\Models\CurzzoPurchase::where('curzzo_id', $bot->id)
-                ->where('user_id', $userId)
-                ->where('status', \App\Models\CurzzoPurchase::STATUS_PAID)
-                ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
-                ->exists();
+            return $userId && ($paidCurzzoIds?->contains($bot->id) ?? false);
         }
 
         if ($accessType === 'member_once') {

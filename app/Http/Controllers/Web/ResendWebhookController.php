@@ -12,6 +12,33 @@ class ResendWebhookController extends Controller
 {
     public function __invoke(Request $request)
     {
+        // Verify Resend webhook signing secret (Svix)
+        $signingSecret = config('services.resend.webhook_secret');
+        if ($signingSecret) {
+            $signature = $request->header('svix-signature', '');
+            $msgId     = $request->header('svix-id', '');
+            $timestamp = $request->header('svix-timestamp', '');
+            $body      = $request->getContent();
+
+            $toSign    = "{$msgId}.{$timestamp}.{$body}";
+            $expected  = base64_encode(hash_hmac('sha256', $toSign, base64_decode(str_replace('whsec_', '', $signingSecret)), true));
+
+            // Svix sends multiple signatures separated by spaces (v1,<sig>)
+            $valid = false;
+            foreach (explode(' ', $signature) as $sig) {
+                $parts = explode(',', $sig, 2);
+                if (isset($parts[1]) && hash_equals($expected, $parts[1])) {
+                    $valid = true;
+                    break;
+                }
+            }
+
+            if (! $valid) {
+                Log::warning('ResendWebhook: invalid signature');
+                return response()->json(['message' => 'invalid signature'], 401);
+            }
+        }
+
         $payload = $request->all();
         $type    = $payload['type'] ?? null;
         $data    = $payload['data'] ?? [];
