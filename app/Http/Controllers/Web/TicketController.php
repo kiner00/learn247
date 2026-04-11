@@ -52,7 +52,8 @@ class TicketController extends Controller
         ]);
 
         return Inertia::render('Support/Show', [
-            'ticket' => $ticket,
+            'ticket'  => $ticket,
+            'isAdmin' => request()->routeIs('admin.*'),
         ]);
     }
 
