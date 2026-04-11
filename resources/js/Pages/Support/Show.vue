@@ -43,19 +43,19 @@
                 <div v-if="ticket.attachments?.length" class="mt-4">
                     <p class="text-xs font-medium text-gray-500 mb-2">Attachments</p>
                     <div class="flex gap-3 flex-wrap">
-                        <a
+                        <button
                             v-for="att in ticket.attachments"
                             :key="att.id"
-                            :href="att.file_url"
-                            target="_blank"
-                            class="block"
+                            type="button"
+                            @click="previewImage = att.file_url"
+                            class="block cursor-pointer"
                         >
                             <img
                                 :src="att.file_url"
                                 :alt="att.file_name"
                                 class="w-24 h-24 object-cover rounded-xl border border-gray-200 hover:border-amber-400 transition-colors"
                             />
-                        </a>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -110,14 +110,36 @@
                 <p class="text-sm text-gray-500">This ticket is closed.</p>
             </div>
         </div>
+
+        <!-- Image preview modal -->
+        <Teleport to="body">
+            <div
+                v-if="previewImage"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+                @click.self="previewImage = null"
+            >
+                <button
+                    type="button"
+                    class="absolute top-4 right-4 text-white text-3xl leading-none hover:text-gray-300"
+                    @click="previewImage = null"
+                >&times;</button>
+                <img
+                    :src="previewImage"
+                    class="max-w-[90vw] max-h-[90vh] rounded-xl shadow-2xl"
+                />
+            </div>
+        </Teleport>
     </AppLayout>
 </template>
 
 <script setup>
+import { ref } from 'vue';
 import { Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
 const props = defineProps({ ticket: Object });
+
+const previewImage = ref(null);
 
 const replyForm = useForm({ content: '' });
 
