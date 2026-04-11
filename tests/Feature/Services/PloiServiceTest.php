@@ -37,7 +37,7 @@ class PloiServiceTest extends TestCase
         Http::assertSent(function ($request) {
             return $request->method() === 'POST'
                 && str_contains($request->url(), '/tenants')
-                && $request['domain'] === 'custom.com'
+                && $request['tenants'] === ['custom.com']
                 && $request->hasHeader('Authorization', 'Bearer test-ploi-token');
         });
     }

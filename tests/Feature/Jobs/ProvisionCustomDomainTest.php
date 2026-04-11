@@ -4,6 +4,7 @@ namespace Tests\Feature\Jobs;
 
 use App\Jobs\ProvisionCustomDomain;
 use App\Services\PloiService;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Mockery;
 use Tests\TestCase;
@@ -12,6 +13,8 @@ class ProvisionCustomDomainTest extends TestCase
 {
     public function test_job_calls_add_tenant_and_request_certificate(): void
     {
+        Http::fake(['*' => Http::response('ok', 200)]);
+
         $ploi = Mockery::mock(PloiService::class);
         $ploi->shouldReceive('addTenant')
             ->once()
@@ -53,12 +56,17 @@ class ProvisionCustomDomainTest extends TestCase
 
     public function test_handle_logs_provisioning_messages(): void
     {
+        Http::fake(['*' => Http::response('ok', 200)]);
+
         Log::shouldReceive('info')
             ->once()
             ->with('Provisioning custom domain: logs.example.com');
         Log::shouldReceive('info')
             ->once()
-            ->with('Custom domain provisioned: logs.example.com');
+            ->with(Mockery::pattern('/HTTP reachable for logs\.example\.com/'));
+        Log::shouldReceive('info')
+            ->once()
+            ->with('Custom domain provisioned and SSL active: logs.example.com');
 
         $ploi = Mockery::mock(PloiService::class);
         $ploi->shouldReceive('addTenant')->once();
