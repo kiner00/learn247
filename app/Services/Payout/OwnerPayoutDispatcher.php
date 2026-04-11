@@ -4,6 +4,7 @@ namespace App\Services\Payout;
 
 use App\Models\Community;
 use App\Models\OwnerPayout;
+use App\Models\PayoutRequest;
 use App\Services\XenditService;
 use App\Support\PayoutChannelMap;
 use RuntimeException;
@@ -65,6 +66,17 @@ class OwnerPayoutDispatcher
             'xendit_reference' => $result['id'] ?? $referenceId,
             'paid_at'          => now(),
         ]);
+
+        // Resolve any pending payout requests for this community
+        PayoutRequest::where('community_id', $community->id)
+            ->where('type', PayoutRequest::TYPE_OWNER)
+            ->where('status', PayoutRequest::STATUS_PENDING)
+            ->update([
+                'status'           => PayoutRequest::STATUS_PAID,
+                'xendit_reference' => $result['id'] ?? $referenceId,
+                'processed_at'     => now(),
+                'processed_by'     => auth()->id(),
+            ]);
 
         return ['amount' => $pending, 'reference' => $result['id'] ?? $referenceId];
     }
