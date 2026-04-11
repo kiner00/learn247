@@ -14,6 +14,7 @@ class ListCommunities
 
         return Community::with('owner')
             ->withCount('members')
+            ->where('is_private', false)
             ->whereHas('owner', fn ($q) => $q->where('kyc_status', User::KYC_APPROVED)->orWhereNotNull('kyc_verified_at'))
             ->when($search, fn ($q) => $q->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")

@@ -11,6 +11,7 @@ class GetFeaturedCommunities
     public function execute(): Collection
     {
         return Community::where('is_featured', true)
+            ->where('is_private', false)
             ->whereHas('owner', fn ($q) => $q->where('kyc_status', User::KYC_APPROVED)->orWhereNotNull('kyc_verified_at'))
             ->with('owner:id,name')
             ->withCount('members')

@@ -15,7 +15,19 @@ class CommunityPolicy
 
     public function view(?User $user, Community $community): bool
     {
-        return true;
+        if (! $community->is_private) {
+            return true;
+        }
+
+        if (! $user) {
+            return false;
+        }
+
+        return $user->id === $community->owner_id
+            || $user->isSuperAdmin()
+            || CommunityMember::where('community_id', $community->id)
+                ->where('user_id', $user->id)
+                ->exists();
     }
 
     public function create(User $user): bool
