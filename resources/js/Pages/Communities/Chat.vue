@@ -373,7 +373,9 @@ async function send() {
         if (savedText) fd.append('content', savedText);
         if (savedFile) fd.append('media', savedFile);
         const res = await axios.post(`/communities/${props.community.slug}/chat`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
-        groupMessages.value.push(res.data.message);
+        if (!groupMessages.value.some(m => m.id === res.data.message.id)) {
+            groupMessages.value.push(res.data.message);
+        }
         scrollToBottom(true);
     } catch { groupContent.value = savedText; }
     finally { sending.value = false; }
