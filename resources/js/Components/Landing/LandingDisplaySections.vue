@@ -288,7 +288,7 @@
             <h2 class="text-3xl sm:text-4xl font-black text-gray-900 text-center mb-4">
                 {{ lp?.included_courses_headline || 'Everything included in your membership' }}
             </h2>
-            <p class="text-center text-gray-500 mb-12">All courses below are unlocked the moment you join.</p>
+            <p class="text-center text-gray-500 mb-12">{{ lp?.included_courses_subtitle || 'All courses below are unlocked the moment you join.' }}</p>
             <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div v-for="course in courses" :key="course.id"
                     class="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm flex flex-col group">

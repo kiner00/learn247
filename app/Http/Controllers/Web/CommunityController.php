@@ -977,6 +977,7 @@ class CommunityController extends Controller
             'video_courses.video_url'             => 'nullable|string|max:500',
             // Included courses
             'included_courses_headline'           => 'nullable|string|max:200',
+            'included_courses_subtitle'           => 'nullable|string|max:300',
             'included_courses_bg_color'           => 'nullable|string|max:20',
             'included_courses_btn_bg'             => 'nullable|string|max:20',
             'included_courses_btn_text'           => 'nullable|string|max:20',

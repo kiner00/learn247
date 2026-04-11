@@ -485,6 +485,10 @@
                                             <input v-model="editDraft.included_courses_headline" type="text" placeholder="Everything included in your membership" class="field-input" />
                                         </div>
                                         <div>
+                                            <label class="field-label">Section Subtitle</label>
+                                            <input v-model="editDraft.included_courses_subtitle" type="text" placeholder="All courses below are unlocked the moment you join." class="field-input" />
+                                        </div>
+                                        <div>
                                             <label class="field-label">Background Color</label>
                                             <div class="flex items-center gap-2">
                                                 <input type="color" v-model="editDraft.included_courses_bg_color" class="w-8 h-8 rounded cursor-pointer border border-gray-200 p-0.5" />
