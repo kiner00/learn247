@@ -122,6 +122,9 @@
                                             <button type="button" @click="editDraft.hero.video_type = 'vsl'" class="px-3 py-1 text-xs font-medium rounded-md transition-colors" :class="(!editDraft.hero.video_type || editDraft.hero.video_type === 'vsl') ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'">
                                                 VSL Video URL
                                             </button>
+                                            <button type="button" @click="editDraft.hero.video_type = 'upload'" class="px-3 py-1 text-xs font-medium rounded-md transition-colors" :class="editDraft.hero.video_type === 'upload' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'">
+                                                Upload Video
+                                            </button>
                                             <button type="button" @click="editDraft.hero.video_type = 'embed'" class="px-3 py-1 text-xs font-medium rounded-md transition-colors" :class="editDraft.hero.video_type === 'embed' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'">
                                                 Embed Script
                                             </button>
@@ -130,6 +133,34 @@
                                     <div v-if="!editDraft.hero.video_type || editDraft.hero.video_type === 'vsl'">
                                         <label class="field-label">VSL Video URL <span class="text-gray-400 font-normal">(YouTube, Drive, Vimeo)</span></label>
                                         <input v-model="editDraft.hero.vsl_url" type="url" placeholder="https://youtube.com/watch?v=..." class="field-input" />
+                                    </div>
+                                    <div v-else-if="editDraft.hero.video_type === 'upload'">
+                                        <div v-if="editDraft.hero.video_url" class="mb-2">
+                                            <p class="text-xs text-green-600 font-medium mb-1">Video uploaded</p>
+                                            <div class="flex items-center gap-2">
+                                                <input :value="editDraft.hero.video_url" type="text" readonly class="field-input flex-1 text-xs text-gray-400" />
+                                                <button type="button" @click="editDraft.hero.video_url = ''" class="text-xs text-red-500 hover:text-red-700 font-medium shrink-0">Remove</button>
+                                            </div>
+                                        </div>
+                                        <div v-if="canUploadSectionVideo">
+                                            <label class="flex items-center justify-center gap-2 px-3 py-2.5 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 transition-colors">
+                                                <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                                </svg>
+                                                <span class="text-xs text-gray-500">
+                                                    {{ sectionVideoUploading === 'hero' ? `Uploading... ${sectionVideoProgress}%` : 'Choose video file (MP4, WebM, MOV)' }}
+                                                </span>
+                                                <input
+                                                    type="file"
+                                                    accept="video/mp4,video/webm,video/quicktime"
+                                                    class="hidden"
+                                                    :disabled="sectionVideoUploading === 'hero'"
+                                                    @change="$emit('sectionVideoUpload', 'hero', $event)"
+                                                />
+                                            </label>
+                                            <p v-if="sectionVideoError" class="text-xs text-red-500 mt-1">{{ sectionVideoError }}</p>
+                                        </div>
+                                        <p v-else class="text-xs text-gray-400 italic">Video upload requires a Pro plan.</p>
                                     </div>
                                     <div v-else>
                                         <label class="field-label">Embed Code <span class="text-gray-400 font-normal">(paste iframe / script embed)</span></label>
