@@ -10,6 +10,11 @@ use App\Actions\Community\JoinCommunity;
 use App\Actions\Community\ManageGallery;
 use App\Actions\Community\SendAnnouncement;
 use App\Actions\Community\SendSmsBlast;
+use App\Actions\Community\SyncCommunityDomains;
+use App\Actions\Community\SyncTelegramWebhook;
+use App\Actions\Community\UpdateLandingPage;
+use App\Http\Requests\UpdateCommunityRequest;
+use App\Http\Requests\UpdateLandingPageRequest;
 use App\Services\Analytics\CommunityAnalyticsService;
 use App\Services\Community\CommunityChecklistService;
 use App\Services\TelegramService;
@@ -176,121 +181,32 @@ class CommunityController extends Controller
         ));
     }
 
-    public function update(Request $request, Community $community, UpdateCommunity $action): RedirectResponse
-    {
-        $this->authorize('update', $community);
+    public function update(
+        UpdateCommunityRequest $request,
+        Community $community,
+        UpdateCommunity $action,
+        SyncTelegramWebhook $syncTelegram,
+        SyncCommunityDomains $syncDomains,
+    ): RedirectResponse {
+        $data = $request->validated();
 
-        $plan               = $request->user()->creatorPlan();
-        $canUseIntegrations = in_array($plan, ['basic', 'pro']);
-        $isPro              = $plan === 'pro';
-
-        $data = $request->validate([
-            'name'                     => ['required', 'string', 'max:255'],
-            'description'              => ['nullable', 'string', 'max:2000'],
-            'category'                 => ['nullable', 'string', 'in:Tech,Business,Design,Health,Education,Finance,Other'],
-            'avatar'      => ['nullable', 'image', 'max:15360'],
-            'cover_image' => ['nullable', 'image', 'max:15360'],
-            'remove_cover_image' => ['sometimes', 'boolean'],
-            'remove_avatar'      => ['sometimes', 'boolean'],
-            'price'                    => ['nullable', 'numeric', 'min:0'],
-            'currency'                 => ['nullable', 'string', 'in:PHP,USD'],
-            'billing_type'             => ['nullable', 'string', 'in:monthly,one_time'],
-            'is_private'               => ['boolean'],
-            'affiliate_commission_rate' => ['nullable', 'integer', 'min:0', 'max:85'],
-            'facebook_pixel_id'         => $canUseIntegrations ? ['nullable', 'string', 'max:30', 'regex:/^\d+$/'] : ['prohibited'],
-            'tiktok_pixel_id'           => $canUseIntegrations ? ['nullable', 'string', 'max:30', 'regex:/^[A-Z0-9]+$/i'] : ['prohibited'],
-            'google_analytics_id'       => $canUseIntegrations ? ['nullable', 'string', 'max:20', 'regex:/^G-[A-Z0-9]+$/i'] : ['prohibited'],
-            'telegram_bot_token'        => $isPro ? ['nullable', 'string', 'max:100'] : ['prohibited'],
-            'telegram_chat_id'          => $isPro ? ['nullable', 'string', 'max:50'] : ['prohibited'],
-            'telegram_clear'            => $isPro ? ['sometimes', 'boolean'] : ['prohibited'],
-            'ai_chatbot_instructions'   => ['nullable', 'string', 'max:10000'],
-            // Brand Source of Truth
-            'brand_context'                           => ['nullable', 'array'],
-            'brand_context.brand_personality'          => ['nullable', 'string', 'max:500'],
-            'brand_context.target_audience'            => ['nullable', 'string', 'max:1000'],
-            'brand_context.tone_of_voice'              => ['nullable', 'string', 'in:first_person,we,formal'],
-            'brand_context.value_proposition'          => ['nullable', 'string', 'max:500'],
-            'brand_context.primary_keywords'           => ['nullable', 'string', 'max:500'],
-            'brand_context.big_problem'                => ['nullable', 'string', 'max:1000'],
-            'brand_context.color_primary'              => ['nullable', 'string', 'max:7', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'brand_context.color_secondary'            => ['nullable', 'string', 'max:7', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'brand_context.color_accent'               => ['nullable', 'string', 'max:7', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'brand_context.visual_style'               => ['nullable', 'string', 'max:500'],
-            'brand_context.logo_rules'                 => ['nullable', 'string', 'max:500'],
-            'brand_context.cta_goal'                   => ['nullable', 'string', 'max:300'],
-            'brand_context.offer_details'              => ['nullable', 'string', 'max:500'],
-            'brand_context.social_share_description'   => ['nullable', 'string', 'max:300'],
-            // Domain fields
-            'subdomain'    => [
-                'nullable', 'string', 'max:63',
-                'regex:/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/',
-                Rule::unique('communities', 'subdomain')->ignore($community->id),
-            ],
-            'custom_domain' => [
-                Rule::prohibitedIf(! $isPro),
-                'nullable', 'string', 'max:253',
-                'regex:/^([a-z0-9]([a-z0-9\-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/',
-                Rule::unique('communities', 'custom_domain')->ignore($community->id),
-            ],
-        ]);
-
-        // Capture old values before the update so we can diff
         $oldSubdomain    = $community->subdomain;
         $oldCustomDomain = $community->custom_domain;
+        $oldTelegram     = $community->telegram_bot_token;
 
-        $oldTelegramToken = $community->telegram_bot_token;
-
-        // Clear telegram if explicitly requested
         if (! empty($data['telegram_clear'])) {
             $data['telegram_bot_token'] = null;
             $data['telegram_chat_id']   = null;
         } elseif (empty($data['telegram_bot_token'])) {
-            // Don't overwrite existing token when field is left blank
             unset($data['telegram_bot_token']);
         }
         unset($data['telegram_clear']);
 
         $action->execute($community, $data, $request->file('avatar'), $request->file('cover_image'));
-
-        // Register / update Telegram webhook when token changes
         $community->refresh();
-        $newToken = $community->telegram_bot_token;
-        $telegram = app(TelegramService::class);
 
-        if ($newToken && $community->telegram_chat_id && $newToken !== $oldTelegramToken) {
-            $webhookUrl = route('webhooks.telegram', ['slug' => $community->slug]);
-            $telegram->setWebhook($newToken, $webhookUrl, $telegram->webhookSecret($newToken));
-        } elseif (! $newToken && $oldTelegramToken) {
-            $telegram->deleteWebhook($oldTelegramToken);
-        }
-
-        // Sync subdomain with Ploi (only when it actually changed)
-        $freshCommunity  = $community->fresh();
-        $newSubdomain    = $freshCommunity->subdomain;
-        $appHost         = parse_url(config('app.url'), PHP_URL_HOST) ?? 'curzzo.com';
-        $baseDomain      = explode(':', $appHost)[0];
-
-        if ($oldSubdomain !== $newSubdomain) {
-            if ($oldSubdomain) {
-                \App\Jobs\RemoveCustomDomain::dispatch("{$oldSubdomain}.{$baseDomain}");
-            }
-            if ($newSubdomain) {
-                \App\Jobs\ProvisionCustomDomain::dispatch("{$newSubdomain}.{$baseDomain}");
-            }
-        }
-
-        // Sync custom domain with Ploi (only when it actually changed)
-        $newCustomDomain = $freshCommunity->custom_domain;
-
-        if ($oldCustomDomain !== $newCustomDomain) {
-            if ($oldCustomDomain) {
-                \App\Jobs\RemoveCustomDomain::dispatch($oldCustomDomain);
-            }
-            if ($newCustomDomain) {
-                // Delay slightly — DNS propagation needs time before cert request succeeds
-                \App\Jobs\ProvisionCustomDomain::dispatch($newCustomDomain)->delay(now()->addMinutes(2));
-            }
-        }
+        $syncTelegram->execute($community, $oldTelegram);
+        $syncDomains->execute($community, $oldSubdomain, $oldCustomDomain);
 
         return back()->with('success', 'Community updated.');
     }
@@ -917,151 +833,11 @@ class CommunityController extends Controller
         return $inertia;
     }
 
-    public function updateLandingPage(Request $request, Community $community): \Illuminate\Http\JsonResponse
+    public function updateLandingPage(UpdateLandingPageRequest $request, Community $community, UpdateLandingPage $action): \Illuminate\Http\JsonResponse
     {
-        $user = $request->user();
-
-        if ($community->owner_id !== $user->id && !$user->is_super_admin) {
-            abort(403);
-        }
-
-        $data = $request->validate([
-            'hero.headline'           => 'required|string|max:500',
-            'hero.pre_headline'       => 'nullable|string|max:300',
-            'hero.subheadline'        => 'required|string|max:500',
-            'hero.cta_label'          => 'required|string|max:50',
-            'hero.vsl_url'            => 'nullable|url|max:500',
-            'hero.video_type'         => 'nullable|string|in:vsl,upload,embed',
-            'hero.video_url'          => 'nullable|string|max:2048',
-            'hero.embed_html'        => 'nullable|string|max:5000',
-            'hero.headline_font_size' => 'nullable|integer|min:24|max:80',
-            'hero.subheadline_font_size' => 'nullable|integer|min:12|max:40',
-            'hero.btn_bg'                         => 'nullable|string|max:20',
-            'hero.btn_text'                       => 'nullable|string|max:20',
-            'hero.price_note'                     => 'nullable|string|max:100',
-            'social_proof.stat_label' => 'nullable|string|max:100',
-            'social_proof.trust_line' => 'nullable|string|max:100',
-            'social_proof.bg_color'   => 'nullable|string|max:20',
-            'social_proof.hide_avatars' => 'nullable|boolean',
-            'benefits.headline'       => 'nullable|string|max:100',
-            'benefits.items'          => 'nullable|array|max:6',
-            'benefits.items.*.icon'   => 'nullable|string|max:10',
-            'benefits.items.*.title'  => 'nullable|string|max:80',
-            'benefits.items.*.body'   => 'nullable|string|max:300',
-            'for_you.headline'        => 'nullable|string|max:100',
-            'for_you.points'          => 'nullable|array|max:6',
-            'for_you.points.*'        => 'nullable|string|max:120',
-            'creator.headline'        => 'nullable|string|max:80',
-            'creator.bio'             => 'nullable|string|max:500',
-            'creator.name'            => 'nullable|string|max:80',
-            'creator.photo'           => 'nullable|url|max:2048',
-            'creator.bg_color'        => 'nullable|string|max:20',
-            'testimonials_type'       => 'nullable|string|in:manual,embed',
-            'testimonials_embed_html' => 'nullable|string|max:5000',
-            'testimonials'            => 'nullable|array|max:6',
-            'testimonials.*.name'     => 'nullable|string|max:80',
-            'testimonials.*.role'     => 'nullable|string|max:80',
-            'testimonials.*.quote'    => 'nullable|string|max:300',
-            'faq'                     => 'nullable|array|max:10',
-            'faq.*.question'          => 'nullable|string|max:200',
-            'faq.*.answer'            => 'nullable|string|max:1000',
-            'cta_section.headline'    => 'nullable|string|max:120',
-            'cta_section.subtext'     => 'nullable|string|max:150',
-            'cta_section.cta_label'   => 'nullable|string|max:50',
-            'cta_section.bg_image'    => 'nullable|url|max:2048',
-            'cta_section.btn_bg'                  => 'nullable|string|max:20',
-            'cta_section.btn_text'                => 'nullable|string|max:20',
-            'cta_section.price_note'              => 'nullable|string|max:100',
-            // Hero bg image
-            'hero.bg_image'                       => 'nullable|url|max:2048',
-            // Offer stack
-            'offer_stack.headline'                => 'nullable|string|max:120',
-            'offer_stack.items'                   => 'nullable|array|max:8',
-            'offer_stack.items.*.name'            => 'nullable|string|max:500',
-            'offer_stack.items.*.value'           => 'nullable|string|max:40',
-            'offer_stack.items.*.description'     => 'nullable|string|max:500',
-            'offer_stack.total_value'             => 'nullable|string|max:40',
-            'offer_stack.price'                   => 'nullable|string|max:40',
-            'offer_stack.price_note'              => 'nullable|string|max:60',
-            'offer_stack.bg_color'                => 'nullable|string|max:20',
-            'offer_stack.price_color'             => 'nullable|string|max:20',
-            'offer_stack.btn_bg'                  => 'nullable|string|max:20',
-            'offer_stack.btn_text'                => 'nullable|string|max:20',
-            'offer_stack.cta_label'               => 'nullable|string|max:50',
-            // Video sections (after creator, after testimonials, after courses)
-            'video_creator.embed_html'            => 'nullable|string|max:5000',
-            'video_creator.video_url'             => 'nullable|string|max:500',
-            'video_testimonials.embed_html'       => 'nullable|string|max:5000',
-            'video_testimonials.video_url'        => 'nullable|string|max:500',
-            'video_courses.embed_html'            => 'nullable|string|max:5000',
-            'video_courses.video_url'             => 'nullable|string|max:500',
-            // Included courses
-            'included_courses_headline'           => 'nullable|string|max:200',
-            'included_courses_subtitle'           => 'nullable|string|max:300',
-            'included_courses_bg_color'           => 'nullable|string|max:20',
-            'included_courses_btn_bg'             => 'nullable|string|max:20',
-            'included_courses_btn_text'           => 'nullable|string|max:20',
-            'included_courses_selected'           => 'nullable|array',
-            'included_courses_selected.*'         => 'integer',
-            // Certifications
-            'certifications_headline'             => 'nullable|string|max:200',
-            // Guarantee
-            'guarantee.headline'                  => 'nullable|string|max:100',
-            'guarantee.days'                      => 'nullable|integer|min:1|max:365',
-            'guarantee.body'                      => 'nullable|string|max:400',
-            // Price justification
-            'price_justification.headline'              => 'nullable|string|max:100',
-            'price_justification.options'               => 'nullable|array|max:5',
-            'price_justification.options.*.label'       => 'nullable|string|max:80',
-            'price_justification.options.*.description' => 'nullable|string|max:300',
-            // Custom sections
-            'custom_sections'                        => 'nullable|array',
-            'custom_sections.*'                      => 'nullable|array',
-            'custom_sections.*.title'                => 'nullable|string|max:200',
-            'custom_sections.*.text'                 => 'nullable|string|max:5000',
-            'custom_sections.*.image_url'            => 'nullable|url|max:2048',
-            'custom_sections.*.video_url'            => 'nullable|string|max:500',
-            'custom_sections.*.embed_html'           => 'nullable|string|max:5000',
-            'custom_sections.*.bg_color'             => 'nullable|string|max:20',
-            'custom_sections.*.text_color'           => 'nullable|string|max:20',
-            // Section visibility/ordering metadata
-            '_sections'               => 'nullable|array',
-            '_sections.*.type'        => 'nullable|string|max:50',
-            '_sections.*.visible'     => 'nullable|boolean',
-            // One-time introduction flags for newly-added section types
-            '_curzzos_introduced'     => 'nullable|boolean',
-        ]);
-
-        // Preserve empty strings for price_note fields so the frontend can
-        // distinguish "never set" (key absent) from "intentionally cleared" ("")
-        foreach (['hero', 'cta_section'] as $section) {
-            if (array_key_exists($section, $data) && array_key_exists('price_note', $data[$section]) && $data[$section]['price_note'] === null) {
-                $data[$section]['price_note'] = '';
-            }
-        }
-
-        // Merge into existing landing page so unreferenced sections are preserved
-        $current = $community->landing_page ?? [];
-        // Handle flat arrays separately (full replace, not deep merge)
-        $sections = $data['_sections'] ?? null;
-        $selectedCourses = array_key_exists('included_courses_selected', $data) ? $data['included_courses_selected'] : null;
-        $customSections = array_key_exists('custom_sections', $data) ? $data['custom_sections'] : null;
-        unset($data['_sections'], $data['included_courses_selected'], $data['custom_sections']);
-        $merged = array_replace_recursive($current, $data);
-        if ($sections !== null) {
-            $merged['_sections'] = $sections;
-        }
-        if ($selectedCourses !== null) {
-            $merged['included_courses_selected'] = $selectedCourses;
-        }
-        if ($customSections !== null) {
-            $merged['custom_sections'] = $customSections;
-        }
-
-        $community->update(['landing_page' => $merged]);
-
-        return response()->json($merged);
+        return response()->json($action->execute($community, $request->validated()));
     }
+
 
     public function generateLandingPage(Request $request, Community $community, GenerateLandingPage $action): \Illuminate\Http\JsonResponse
     {
