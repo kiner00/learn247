@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Contracts\Encryption\DecryptException;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Crypt;
 
 class Community extends Model
 {
@@ -40,8 +43,6 @@ class Community extends Model
             'landing_page'              => 'array',
             'brand_context'             => 'array',
             'curzzo_topup_packs'        => 'array',
-            'telegram_bot_token'        => 'encrypted',
-            'resend_api_key'            => 'encrypted',
             'deletion_requested_at'     => 'datetime',
         ];
     }
@@ -49,6 +50,39 @@ class Community extends Model
     public function getRouteKeyName(): string
     {
         return 'slug';
+    }
+
+    // ─── Encrypted secrets ────────────────────────────────────────────────────
+    // Accessors decrypt lazily and return null if the stored value is plaintext
+    // or was encrypted with a different APP_KEY, so a single bad row never 500s
+    // a list view that hydrates many communities.
+
+    protected function telegramBotToken(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($v) => self::safeDecrypt($v),
+            set: fn ($v) => $v === null || $v === '' ? null : Crypt::encryptString($v),
+        );
+    }
+
+    protected function resendApiKey(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($v) => self::safeDecrypt($v),
+            set: fn ($v) => $v === null || $v === '' ? null : Crypt::encryptString($v),
+        );
+    }
+
+    private static function safeDecrypt(?string $v): ?string
+    {
+        if ($v === null || $v === '') {
+            return null;
+        }
+        try {
+            return Crypt::decryptString($v);
+        } catch (DecryptException) {
+            return null;
+        }
     }
 
     // ─── Relationships ────────────────────────────────────────────────────────
