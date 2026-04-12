@@ -267,4 +267,155 @@ class TicketControllerTest extends TestCase
             $mail->envelope()->subject,
         );
     }
+
+    // ─── User: Index / Store / Show / Reply ──────────────────────────────────
+
+    public function test_user_can_view_own_tickets(): void
+    {
+        $user = $this->regularUser();
+        $other = $this->regularUser();
+
+        $this->createTicket(['user_id' => $user->id]);
+        $this->createTicket(['user_id' => $user->id]);
+        $this->createTicket(['user_id' => $other->id]);
+
+        $response = $this->actingAs($user)->get(route('tickets.index'));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Support/Index')
+            ->has('tickets.data', 2)
+        );
+    }
+
+    public function test_user_can_create_ticket(): void
+    {
+        $user = $this->regularUser();
+
+        $response = $this->actingAs($user)->post(route('tickets.store'), [
+            'subject'     => 'Something is broken',
+            'description' => 'It crashed when I clicked the button',
+            'type'        => 'bug',
+            'priority'    => 'medium',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('tickets', [
+            'user_id'     => $user->id,
+            'subject'     => 'Something is broken',
+            'type'        => 'bug',
+        ]);
+    }
+
+    public function test_store_ticket_validates_required_fields(): void
+    {
+        $user = $this->regularUser();
+
+        $response = $this->actingAs($user)->post(route('tickets.store'), []);
+
+        $response->assertSessionHasErrors(['subject', 'description', 'type']);
+    }
+
+    public function test_user_can_view_own_ticket(): void
+    {
+        $user   = $this->regularUser();
+        $ticket = $this->createTicket(['user_id' => $user->id]);
+
+        $response = $this->actingAs($user)->get(route('tickets.show', $ticket));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Support/Show')
+            ->where('ticket.id', $ticket->id)
+            ->where('isAdmin', false)
+        );
+    }
+
+    public function test_user_cannot_view_other_users_ticket(): void
+    {
+        $user   = $this->regularUser();
+        $other  = $this->regularUser();
+        $ticket = $this->createTicket(['user_id' => $other->id]);
+
+        $response = $this->actingAs($user)->get(route('tickets.show', $ticket));
+
+        $response->assertForbidden();
+    }
+
+    public function test_admin_can_view_any_ticket(): void
+    {
+        $admin  = $this->superAdmin();
+        $user   = $this->regularUser();
+        $ticket = $this->createTicket(['user_id' => $user->id]);
+
+        $response = $this->actingAs($admin)->get(route('admin.tickets.show', $ticket));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Support/Show')
+            ->where('isAdmin', true)
+        );
+    }
+
+    public function test_user_can_reply_to_own_ticket(): void
+    {
+        $user   = $this->regularUser();
+        $ticket = $this->createTicket(['user_id' => $user->id]);
+
+        $response = $this->actingAs($user)->post(route('tickets.reply', $ticket), [
+            'content' => 'Thanks for your help!',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('ticket_replies', [
+            'ticket_id' => $ticket->id,
+            'user_id'   => $user->id,
+            'content'   => 'Thanks for your help!',
+            'is_admin'  => false,
+        ]);
+    }
+
+    public function test_admin_reply_is_marked_as_admin(): void
+    {
+        $admin  = $this->superAdmin();
+        $user   = $this->regularUser();
+        $ticket = $this->createTicket(['user_id' => $user->id]);
+
+        $this->actingAs($admin)->post(route('admin.tickets.reply', $ticket), [
+            'content' => 'We are looking into it.',
+        ]);
+
+        $this->assertDatabaseHas('ticket_replies', [
+            'ticket_id' => $ticket->id,
+            'user_id'   => $admin->id,
+            'is_admin'  => true,
+        ]);
+    }
+
+    public function test_user_cannot_reply_to_other_users_ticket(): void
+    {
+        $user   = $this->regularUser();
+        $other  = $this->regularUser();
+        $ticket = $this->createTicket(['user_id' => $other->id]);
+
+        $response = $this->actingAs($user)->post(route('tickets.reply', $ticket), [
+            'content' => 'Not my ticket',
+        ]);
+
+        $response->assertForbidden();
+    }
+
+    public function test_reply_validates_content(): void
+    {
+        $user   = $this->regularUser();
+        $ticket = $this->createTicket(['user_id' => $user->id]);
+
+        $response = $this->actingAs($user)->post(route('tickets.reply', $ticket), []);
+
+        $response->assertSessionHasErrors(['content']);
+    }
 }
