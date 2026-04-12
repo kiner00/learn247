@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -548,5 +549,121 @@ class AccountSettingsControllerTest extends TestCase
         ]);
 
         $response->assertSessionHasErrors(['crypto_wallet']);
+    }
+
+    // ─── submitKyc ────────────────────────────────────────────────────────────
+
+    public function test_submit_kyc_successfully(): void
+    {
+        Storage::fake(config('filesystems.default'));
+        Queue::fake();
+
+        $user = User::factory()->create(['kyc_status' => User::KYC_REJECTED]);
+
+        $response = $this->actingAs($user)->post('/account/settings/kyc', [
+            'id_document' => UploadedFile::fake()->image('id.jpg', 400, 300),
+            'selfie'      => UploadedFile::fake()->image('selfie.jpg', 400, 300),
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', 'KYC documents submitted! We\'ll review them shortly.');
+
+        $user->refresh();
+        $this->assertEquals(User::KYC_SUBMITTED, $user->kyc_status);
+        $this->assertNotNull($user->kyc_id_document);
+        $this->assertNotNull($user->kyc_selfie);
+        $this->assertNotNull($user->kyc_submitted_at);
+    }
+
+    public function test_submit_kyc_rejects_when_already_submitted(): void
+    {
+        $user = User::factory()->create(['kyc_status' => User::KYC_SUBMITTED]);
+
+        $response = $this->actingAs($user)->post('/account/settings/kyc', [
+            'id_document' => UploadedFile::fake()->image('id.jpg', 400, 300),
+            'selfie'      => UploadedFile::fake()->image('selfie.jpg', 400, 300),
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasErrors(['kyc']);
+    }
+
+    public function test_submit_kyc_rejects_when_already_approved(): void
+    {
+        $user = User::factory()->create(['kyc_status' => User::KYC_APPROVED]);
+
+        $response = $this->actingAs($user)->post('/account/settings/kyc', [
+            'id_document' => UploadedFile::fake()->image('id.jpg', 400, 300),
+            'selfie'      => UploadedFile::fake()->image('selfie.jpg', 400, 300),
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasErrors(['kyc']);
+    }
+
+    public function test_submit_kyc_validates_required_images(): void
+    {
+        $user = User::factory()->create(['kyc_status' => User::KYC_REJECTED]);
+
+        $response = $this->actingAs($user)->post('/account/settings/kyc', []);
+
+        $response->assertSessionHasErrors(['id_document', 'selfie']);
+    }
+
+    public function test_submit_kyc_validates_files_are_images(): void
+    {
+        $user = User::factory()->create(['kyc_status' => User::KYC_REJECTED]);
+
+        $response = $this->actingAs($user)->post('/account/settings/kyc', [
+            'id_document' => UploadedFile::fake()->create('doc.pdf', 100, 'application/pdf'),
+            'selfie'      => UploadedFile::fake()->create('text.txt', 100, 'text/plain'),
+        ]);
+
+        $response->assertSessionHasErrors(['id_document', 'selfie']);
+    }
+
+    // ─── requestManualKycReview ───────────────────────────────────────────────
+
+    public function test_request_manual_kyc_review_after_three_ai_rejections(): void
+    {
+        $user = User::factory()->create([
+            'kyc_status'        => User::KYC_REJECTED,
+            'kyc_ai_rejections' => 3,
+        ]);
+
+        $response = $this->actingAs($user)->post('/account/settings/kyc/manual-review');
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', 'Your documents have been sent for manual review by our team.');
+
+        $user->refresh();
+        $this->assertEquals(User::KYC_SUBMITTED, $user->kyc_status);
+        $this->assertNull($user->kyc_rejected_reason);
+    }
+
+    public function test_request_manual_kyc_review_denied_under_three_rejections(): void
+    {
+        $user = User::factory()->create([
+            'kyc_status'        => User::KYC_REJECTED,
+            'kyc_ai_rejections' => 2,
+        ]);
+
+        $response = $this->actingAs($user)->post('/account/settings/kyc/manual-review');
+
+        $response->assertRedirect();
+        $response->assertSessionHasErrors(['kyc']);
+    }
+
+    public function test_request_manual_kyc_review_denied_when_already_submitted(): void
+    {
+        $user = User::factory()->create([
+            'kyc_status'        => User::KYC_SUBMITTED,
+            'kyc_ai_rejections' => 5,
+        ]);
+
+        $response = $this->actingAs($user)->post('/account/settings/kyc/manual-review');
+
+        $response->assertRedirect();
+        $response->assertSessionHasErrors(['kyc']);
     }
 }

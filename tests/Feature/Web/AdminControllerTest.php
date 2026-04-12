@@ -10,6 +10,7 @@ use App\Models\AffiliateConversion;
 use App\Models\Community;
 use App\Models\CommunityMember;
 use App\Models\EmailTemplate;
+use App\Models\Coupon;
 use App\Models\OwnerPayout;
 use App\Models\Payment;
 use App\Models\PayoutRequest;
@@ -1627,5 +1628,366 @@ class AdminControllerTest extends TestCase
             ->where('creatorPlanPricing.basic_price', 399)
             ->where('creatorPlanPricing.pro_price', 1599)
         );
+    }
+
+    // ── coupons ─────────────────────────────────────────────────────────────
+
+    public function test_coupons_page_renders(): void
+    {
+        $admin = $this->superAdmin();
+
+        $response = $this->actingAs($admin)->get('/admin/coupons');
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Admin/Coupons')
+            ->has('coupons')
+        );
+    }
+
+    public function test_coupons_page_lists_existing_coupons(): void
+    {
+        $admin = $this->superAdmin();
+
+        Coupon::create([
+            'code'            => 'TESTCODE1',
+            'plan'            => 'basic',
+            'duration_months' => 3,
+            'max_redemptions' => 10,
+            'is_active'       => true,
+        ]);
+
+        $response = $this->actingAs($admin)->get('/admin/coupons');
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Admin/Coupons')
+            ->has('coupons', 1)
+            ->where('coupons.0.code', 'TESTCODE1')
+        );
+    }
+
+    // ── storeCoupon ─────────────────────────────────────────────────────────
+
+    public function test_store_coupon_success(): void
+    {
+        $admin = $this->superAdmin();
+
+        $response = $this->actingAs($admin)->post('/admin/coupons', [
+            'code'            => 'SAVE50',
+            'plan'            => 'pro',
+            'duration_months' => 6,
+            'max_redemptions' => 100,
+            'expires_at'      => now()->addMonth()->format('Y-m-d'),
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+        $this->assertDatabaseHas('coupons', [
+            'code'            => 'SAVE50',
+            'plan'            => 'pro',
+            'duration_months' => 6,
+            'max_redemptions' => 100,
+        ]);
+    }
+
+    public function test_store_coupon_uppercases_code(): void
+    {
+        $admin = $this->superAdmin();
+
+        $response = $this->actingAs($admin)->post('/admin/coupons', [
+            'code'            => 'lowercase',
+            'plan'            => 'basic',
+            'duration_months' => 1,
+            'max_redemptions' => 5,
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('coupons', ['code' => 'LOWERCASE']);
+    }
+
+    public function test_store_coupon_validates_required_fields(): void
+    {
+        $admin = $this->superAdmin();
+
+        $response = $this->actingAs($admin)->post('/admin/coupons', []);
+
+        $response->assertSessionHasErrors(['code', 'plan', 'duration_months', 'max_redemptions']);
+    }
+
+    public function test_store_coupon_validates_unique_code(): void
+    {
+        $admin = $this->superAdmin();
+
+        Coupon::create([
+            'code'            => 'DUPE',
+            'plan'            => 'basic',
+            'duration_months' => 1,
+            'max_redemptions' => 10,
+        ]);
+
+        $response = $this->actingAs($admin)->post('/admin/coupons', [
+            'code'            => 'DUPE',
+            'plan'            => 'pro',
+            'duration_months' => 3,
+            'max_redemptions' => 5,
+        ]);
+
+        $response->assertSessionHasErrors('code');
+    }
+
+    public function test_store_coupon_validates_plan_values(): void
+    {
+        $admin = $this->superAdmin();
+
+        $response = $this->actingAs($admin)->post('/admin/coupons', [
+            'code'            => 'BADPLAN',
+            'plan'            => 'enterprise',
+            'duration_months' => 1,
+            'max_redemptions' => 5,
+        ]);
+
+        $response->assertSessionHasErrors('plan');
+    }
+
+    public function test_store_coupon_rejects_past_expiry_date(): void
+    {
+        $admin = $this->superAdmin();
+
+        $response = $this->actingAs($admin)->post('/admin/coupons', [
+            'code'            => 'EXPIRED',
+            'plan'            => 'basic',
+            'duration_months' => 1,
+            'max_redemptions' => 5,
+            'expires_at'      => now()->subDay()->format('Y-m-d'),
+        ]);
+
+        $response->assertSessionHasErrors('expires_at');
+    }
+
+    // ── toggleCoupon ────────────────────────────────────────────────────────
+
+    public function test_toggle_coupon_deactivates(): void
+    {
+        $admin = $this->superAdmin();
+
+        $coupon = Coupon::create([
+            'code'            => 'TOGGLE1',
+            'plan'            => 'basic',
+            'duration_months' => 1,
+            'max_redemptions' => 10,
+            'is_active'       => true,
+        ]);
+
+        $response = $this->actingAs($admin)->post("/admin/coupons/{$coupon->id}/toggle");
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+        $this->assertDatabaseHas('coupons', ['id' => $coupon->id, 'is_active' => false]);
+    }
+
+    public function test_toggle_coupon_activates(): void
+    {
+        $admin = $this->superAdmin();
+
+        $coupon = Coupon::create([
+            'code'            => 'TOGGLE2',
+            'plan'            => 'pro',
+            'duration_months' => 2,
+            'max_redemptions' => 5,
+            'is_active'       => false,
+        ]);
+
+        $response = $this->actingAs($admin)->post("/admin/coupons/{$coupon->id}/toggle");
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+        $this->assertDatabaseHas('coupons', ['id' => $coupon->id, 'is_active' => true]);
+    }
+
+    // ── deleteCoupon ────────────────────────────────────────────────────────
+
+    public function test_delete_coupon_success(): void
+    {
+        $admin = $this->superAdmin();
+
+        $coupon = Coupon::create([
+            'code'            => 'DELETEME',
+            'plan'            => 'basic',
+            'duration_months' => 1,
+            'max_redemptions' => 10,
+            'times_redeemed'  => 0,
+        ]);
+
+        $response = $this->actingAs($admin)->delete("/admin/coupons/{$coupon->id}");
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+        $this->assertDatabaseMissing('coupons', ['id' => $coupon->id]);
+    }
+
+    public function test_delete_coupon_fails_if_already_redeemed(): void
+    {
+        $admin = $this->superAdmin();
+
+        $coupon = Coupon::create([
+            'code'            => 'REDEEMED',
+            'plan'            => 'basic',
+            'duration_months' => 1,
+            'max_redemptions' => 10,
+            'times_redeemed'  => 3,
+        ]);
+
+        $response = $this->actingAs($admin)->delete("/admin/coupons/{$coupon->id}");
+
+        $response->assertStatus(422);
+        $this->assertDatabaseHas('coupons', ['id' => $coupon->id]);
+    }
+
+    // ── toggleKyc ───────────────────────────────────────────────────────────
+
+    public function test_toggle_kyc_verifies_unverified_user(): void
+    {
+        $admin = $this->superAdmin();
+        $user = User::factory()->create([
+            'kyc_status'      => User::KYC_NONE,
+            'kyc_verified_at' => null,
+        ]);
+
+        $response = $this->actingAs($admin)->patch("/admin/users/{$user->id}/toggle-kyc");
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+        $user->refresh();
+        $this->assertEquals(User::KYC_APPROVED, $user->kyc_status);
+        $this->assertNotNull($user->kyc_verified_at);
+    }
+
+    public function test_toggle_kyc_unverifies_verified_user(): void
+    {
+        $admin = $this->superAdmin();
+        $user = User::factory()->create([
+            'kyc_status'      => User::KYC_APPROVED,
+            'kyc_verified_at' => now(),
+        ]);
+
+        $response = $this->actingAs($admin)->patch("/admin/users/{$user->id}/toggle-kyc");
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+        $user->refresh();
+        $this->assertEquals(User::KYC_NONE, $user->kyc_status);
+        $this->assertNull($user->kyc_verified_at);
+    }
+
+    // ── kycReviews ──────────────────────────────────────────────────────────
+
+    public function test_kyc_reviews_page_renders(): void
+    {
+        $admin = $this->superAdmin();
+
+        $response = $this->actingAs($admin)->get('/admin/kyc-reviews');
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Admin/KycReviews')
+            ->has('users')
+            ->has('filters')
+            ->has('counts')
+        );
+    }
+
+    public function test_kyc_reviews_filters_by_status(): void
+    {
+        $admin = $this->superAdmin();
+
+        User::factory()->create(['kyc_status' => User::KYC_SUBMITTED, 'kyc_submitted_at' => now()]);
+        User::factory()->create(['kyc_status' => User::KYC_APPROVED, 'kyc_verified_at' => now()]);
+
+        $response = $this->actingAs($admin)->get('/admin/kyc-reviews?status=approved');
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Admin/KycReviews')
+            ->where('filters.status', 'approved')
+            ->has('users.data', 1)
+        );
+    }
+
+    public function test_kyc_reviews_returns_counts(): void
+    {
+        $admin = $this->superAdmin();
+
+        User::factory()->count(2)->create(['kyc_status' => User::KYC_SUBMITTED, 'kyc_submitted_at' => now()]);
+        User::factory()->create(['kyc_status' => User::KYC_APPROVED, 'kyc_verified_at' => now()]);
+
+        $response = $this->actingAs($admin)->get('/admin/kyc-reviews');
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->where('counts.submitted', 2)
+            ->where('counts.approved', 1)
+            ->where('counts.rejected', 0)
+        );
+    }
+
+    // ── approveKyc ──────────────────────────────────────────────────────────
+
+    public function test_approve_kyc_success(): void
+    {
+        Mail::fake();
+        $admin = $this->superAdmin();
+        $user = User::factory()->create([
+            'kyc_status'      => User::KYC_SUBMITTED,
+            'kyc_submitted_at' => now(),
+        ]);
+
+        $response = $this->actingAs($admin)->patch("/admin/kyc-reviews/{$user->id}/approve");
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+        $user->refresh();
+        $this->assertEquals(User::KYC_APPROVED, $user->kyc_status);
+        $this->assertNotNull($user->kyc_verified_at);
+        $this->assertNull($user->kyc_rejected_reason);
+        Mail::assertQueued(\App\Mail\KycResultMail::class);
+    }
+
+    // ── rejectKyc ───────────────────────────────────────────────────────────
+
+    public function test_reject_kyc_success(): void
+    {
+        Mail::fake();
+        $admin = $this->superAdmin();
+        $user = User::factory()->create([
+            'kyc_status'       => User::KYC_SUBMITTED,
+            'kyc_submitted_at' => now(),
+            'kyc_verified_at'  => now(),
+        ]);
+
+        $response = $this->actingAs($admin)->patch("/admin/kyc-reviews/{$user->id}/reject", [
+            'reason' => 'Document is blurry',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+        $user->refresh();
+        $this->assertEquals(User::KYC_REJECTED, $user->kyc_status);
+        $this->assertNull($user->kyc_verified_at);
+        $this->assertEquals('Document is blurry', $user->kyc_rejected_reason);
+        Mail::assertQueued(\App\Mail\KycResultMail::class);
+    }
+
+    public function test_reject_kyc_requires_reason(): void
+    {
+        $admin = $this->superAdmin();
+        $user = User::factory()->create([
+            'kyc_status'       => User::KYC_SUBMITTED,
+            'kyc_submitted_at' => now(),
+        ]);
+
+        $response = $this->actingAs($admin)->patch("/admin/kyc-reviews/{$user->id}/reject", []);
+
+        $response->assertSessionHasErrors('reason');
     }
 }

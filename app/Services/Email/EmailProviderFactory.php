@@ -7,6 +7,9 @@ use App\Models\Community;
 
 class EmailProviderFactory
 {
+    /** @internal Override for testing only. */
+    public static ?EmailProvider $fakeProvider = null;
+
     public const PROVIDERS = [
         'resend'   => ResendProvider::class,
         'sendgrid' => SendGridProvider::class,
@@ -22,6 +25,10 @@ class EmailProviderFactory
      */
     public static function make(Community $community): EmailProvider
     {
+        if (static::$fakeProvider) {
+            return static::$fakeProvider;
+        }
+
         $providerId = $community->email_provider ?? 'resend';
 
         $class = self::PROVIDERS[$providerId] ?? null;

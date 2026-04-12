@@ -2312,4 +2312,580 @@ class ClassroomControllerTest extends TestCase
             ->actingAs($member)
             ->post("/communities/{$community->slug}/classroom/courses/{$course->id}/lessons/{$lesson->id}/complete");
     }
+
+    // ─── trackPreviewPlay ──────────────────────────────────────────────────
+
+    public function test_track_preview_play_increments_counters(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+
+        $course = Course::create([
+            'community_id'         => $community->id,
+            'title'                => 'Course With Preview',
+            'position'             => 1,
+            'is_published'         => true,
+            'preview_play_count'   => 0,
+            'preview_watch_seconds' => 0,
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/classroom/courses/{$course->id}/preview-play", [
+                'seconds' => 30,
+            ]);
+
+        $response->assertOk();
+        $response->assertJson(['ok' => true]);
+        $course->refresh();
+        $this->assertEquals(1, $course->preview_play_count);
+        $this->assertEquals(30, $course->preview_watch_seconds);
+    }
+
+    public function test_track_preview_play_validates_seconds(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Course',
+            'position'     => 1,
+            'is_published' => true,
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/classroom/courses/{$course->id}/preview-play", [
+                'seconds' => 0,
+            ]);
+
+        $response->assertUnprocessable();
+        $response->assertJsonValidationErrors(['seconds']);
+    }
+
+    public function test_track_preview_play_rejects_seconds_over_max(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Course',
+            'position'     => 1,
+            'is_published' => true,
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/classroom/courses/{$course->id}/preview-play", [
+                'seconds' => 601,
+            ]);
+
+        $response->assertUnprocessable();
+        $response->assertJsonValidationErrors(['seconds']);
+    }
+
+    // ─── trackLessonVideoPlay ──────────────────────────────────────────────
+
+    public function test_track_lesson_video_play_increments_counters(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Course',
+            'position'     => 1,
+            'is_published' => true,
+        ]);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
+        $lesson = CourseLesson::create([
+            'module_id'           => $module->id,
+            'title'               => 'Lesson',
+            'position'            => 1,
+            'video_play_count'    => 0,
+            'video_watch_seconds' => 0,
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/classroom/courses/{$course->id}/lessons/{$lesson->id}/video-play", [
+                'seconds' => 120,
+            ]);
+
+        $response->assertOk();
+        $response->assertJson(['ok' => true]);
+        $lesson->refresh();
+        $this->assertEquals(1, $lesson->video_play_count);
+        $this->assertEquals(120, $lesson->video_watch_seconds);
+    }
+
+    public function test_track_lesson_video_play_validates_seconds(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Course',
+            'position'     => 1,
+            'is_published' => true,
+        ]);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
+        $lesson = CourseLesson::create(['module_id' => $module->id, 'title' => 'Lesson', 'position' => 1]);
+
+        $response = $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/classroom/courses/{$course->id}/lessons/{$lesson->id}/video-play", []);
+
+        $response->assertUnprocessable();
+        $response->assertJsonValidationErrors(['seconds']);
+    }
+
+    // ─── transcodeStatus ───────────────────────────────────────────────────
+
+    public function test_transcode_status_returns_lesson_transcode_info(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Course',
+            'position'     => 1,
+            'is_published' => true,
+        ]);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
+        $lesson = CourseLesson::create([
+            'module_id'               => $module->id,
+            'title'                   => 'Lesson',
+            'position'                => 1,
+            'video_transcode_status'  => 'processing',
+            'video_transcode_percent' => 45,
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->getJson("/communities/{$community->slug}/classroom/courses/{$course->id}/lessons/{$lesson->id}/transcode-status");
+
+        $response->assertOk();
+        $response->assertJson([
+            'status'  => 'processing',
+            'percent' => 45,
+        ]);
+    }
+
+    // ─── uploadPreviewVideo ────────────────────────────────────────────────
+
+    public function test_upload_preview_video_requires_pro_plan(): void
+    {
+        $owner     = User::factory()->create(); // free plan
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $response = $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/classroom/preview-videos", [
+                'filename'     => 'preview.mp4',
+                'content_type' => 'video/mp4',
+                'size'         => 1024,
+            ]);
+
+        $response->assertForbidden();
+        $response->assertJson(['error' => 'Preview video uploads require a Pro plan.']);
+    }
+
+    public function test_upload_preview_video_rejects_file_too_large(): void
+    {
+        $owner = User::factory()->create();
+        CreatorSubscription::create([
+            'user_id'    => $owner->id,
+            'plan'       => CreatorSubscription::PLAN_PRO,
+            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'expires_at' => now()->addYear(),
+        ]);
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $response = $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/classroom/preview-videos", [
+                'filename'     => 'large-preview.mp4',
+                'content_type' => 'video/mp4',
+                'size'         => 6000 * 1024 * 1024,
+            ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonStructure(['error']);
+    }
+
+    public function test_upload_preview_video_success_for_pro_owner(): void
+    {
+        $owner = User::factory()->create();
+        CreatorSubscription::create([
+            'user_id'    => $owner->id,
+            'plan'       => CreatorSubscription::PLAN_PRO,
+            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'expires_at' => now()->addYear(),
+        ]);
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $mockRequest = new \GuzzleHttp\Psr7\Request('PUT', 'https://s3.amazonaws.com/test-bucket/course-previews/test.mp4');
+        $mockClient = \Mockery::mock(\Aws\S3\S3Client::class);
+        $mockClient->shouldReceive('getCommand')->once()->andReturn(new \Aws\Command('PutObject'));
+        $mockClient->shouldReceive('createPresignedRequest')->once()->andReturn($mockRequest);
+
+        $mockDisk = \Mockery::mock(\Illuminate\Contracts\Filesystem\Filesystem::class);
+        $mockDisk->shouldReceive('getClient')->once()->andReturn($mockClient);
+
+        Storage::shouldReceive('disk')->with('s3')->once()->andReturn($mockDisk);
+
+        $response = $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/classroom/preview-videos", [
+                'filename'     => 'preview.mp4',
+                'content_type' => 'video/mp4',
+                'size'         => 10 * 1024 * 1024,
+            ]);
+
+        $response->assertOk();
+        $response->assertJsonStructure(['upload_url', 'key']);
+    }
+
+    public function test_upload_preview_video_rejects_invalid_content_type(): void
+    {
+        $owner = User::factory()->create();
+        CreatorSubscription::create([
+            'user_id'    => $owner->id,
+            'plan'       => CreatorSubscription::PLAN_PRO,
+            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'expires_at' => now()->addYear(),
+        ]);
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $response = $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/classroom/preview-videos", [
+                'filename'     => 'preview.avi',
+                'content_type' => 'video/x-msvideo',
+                'size'         => 1024,
+            ]);
+
+        $response->assertUnprocessable();
+        $response->assertJsonValidationErrors(['content_type']);
+    }
+
+    public function test_regular_member_cannot_upload_preview_video(): void
+    {
+        $owner     = User::factory()->create();
+        $member    = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+
+        $response = $this->actingAs($member)
+            ->postJson("/communities/{$community->slug}/classroom/preview-videos", [
+                'filename'     => 'preview.mp4',
+                'content_type' => 'video/mp4',
+                'size'         => 1024,
+            ]);
+
+        $response->assertForbidden();
+    }
+
+    // ─── initiateMultipartUpload ───────────────────────────────────────────
+
+    public function test_initiate_multipart_upload_requires_pro_plan(): void
+    {
+        $owner     = User::factory()->create(); // free plan
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $response = $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/classroom/multipart/initiate", [
+                'filename'     => 'big-video.mp4',
+                'content_type' => 'video/mp4',
+                'size'         => 100 * 1024 * 1024,
+            ]);
+
+        $response->assertForbidden();
+        $response->assertJson(['error' => 'Video uploads require a Pro plan.']);
+    }
+
+    public function test_initiate_multipart_upload_rejects_file_too_large(): void
+    {
+        $owner = User::factory()->create();
+        CreatorSubscription::create([
+            'user_id'    => $owner->id,
+            'plan'       => CreatorSubscription::PLAN_PRO,
+            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'expires_at' => now()->addYear(),
+        ]);
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $response = $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/classroom/multipart/initiate", [
+                'filename'     => 'huge-video.mp4',
+                'content_type' => 'video/mp4',
+                'size'         => 6000 * 1024 * 1024,
+            ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonStructure(['error']);
+    }
+
+    public function test_initiate_multipart_upload_success(): void
+    {
+        $owner = User::factory()->create();
+        CreatorSubscription::create([
+            'user_id'    => $owner->id,
+            'plan'       => CreatorSubscription::PLAN_PRO,
+            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'expires_at' => now()->addYear(),
+        ]);
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $mockClient = \Mockery::mock(\Aws\S3\S3Client::class);
+        $mockClient->shouldReceive('createMultipartUpload')->once()->andReturn(new \Aws\Result([
+            'UploadId' => 'test-upload-id-123',
+        ]));
+
+        $mockDisk = \Mockery::mock(\Illuminate\Contracts\Filesystem\Filesystem::class);
+        $mockDisk->shouldReceive('getClient')->once()->andReturn($mockClient);
+
+        Storage::shouldReceive('disk')->with('s3')->once()->andReturn($mockDisk);
+
+        $response = $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/classroom/multipart/initiate", [
+                'filename'     => 'big-video.mp4',
+                'content_type' => 'video/mp4',
+                'size'         => 100 * 1024 * 1024,
+            ]);
+
+        $response->assertOk();
+        $response->assertJsonStructure(['upload_id', 'key']);
+        $response->assertJson(['upload_id' => 'test-upload-id-123']);
+    }
+
+    public function test_initiate_multipart_upload_with_preview_type(): void
+    {
+        $owner = User::factory()->create();
+        CreatorSubscription::create([
+            'user_id'    => $owner->id,
+            'plan'       => CreatorSubscription::PLAN_PRO,
+            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'expires_at' => now()->addYear(),
+        ]);
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $mockClient = \Mockery::mock(\Aws\S3\S3Client::class);
+        $mockClient->shouldReceive('createMultipartUpload')->once()->andReturn(new \Aws\Result([
+            'UploadId' => 'preview-upload-id',
+        ]));
+
+        $mockDisk = \Mockery::mock(\Illuminate\Contracts\Filesystem\Filesystem::class);
+        $mockDisk->shouldReceive('getClient')->once()->andReturn($mockClient);
+
+        Storage::shouldReceive('disk')->with('s3')->once()->andReturn($mockDisk);
+
+        $response = $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/classroom/multipart/initiate", [
+                'filename'     => 'preview.mp4',
+                'content_type' => 'video/mp4',
+                'size'         => 50 * 1024 * 1024,
+                'type'         => 'preview',
+            ]);
+
+        $response->assertOk();
+        $this->assertStringContainsString('course-previews/', $response->json('key'));
+    }
+
+    public function test_regular_member_cannot_initiate_multipart_upload(): void
+    {
+        $owner     = User::factory()->create();
+        $member    = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+
+        $response = $this->actingAs($member)
+            ->postJson("/communities/{$community->slug}/classroom/multipart/initiate", [
+                'filename'     => 'video.mp4',
+                'content_type' => 'video/mp4',
+                'size'         => 1024,
+            ]);
+
+        $response->assertForbidden();
+    }
+
+    // ─── getPartUploadUrl ──────────────────────────────────────────────────
+
+    public function test_get_part_upload_url_success(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $mockRequest = new \GuzzleHttp\Psr7\Request('PUT', 'https://s3.amazonaws.com/test-bucket/lesson-videos/test.mp4?partNumber=1');
+        $mockClient = \Mockery::mock(\Aws\S3\S3Client::class);
+        $mockClient->shouldReceive('getCommand')->once()->andReturn(new \Aws\Command('UploadPart'));
+        $mockClient->shouldReceive('createPresignedRequest')->once()->andReturn($mockRequest);
+
+        $mockDisk = \Mockery::mock(\Illuminate\Contracts\Filesystem\Filesystem::class);
+        $mockDisk->shouldReceive('getClient')->once()->andReturn($mockClient);
+
+        Storage::shouldReceive('disk')->with('s3')->once()->andReturn($mockDisk);
+
+        $response = $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/classroom/multipart/part-url", [
+                'key'         => 'lesson-videos/test-uuid.mp4',
+                'upload_id'   => 'test-upload-id',
+                'part_number' => 1,
+            ]);
+
+        $response->assertOk();
+        $response->assertJsonStructure(['url']);
+    }
+
+    public function test_get_part_upload_url_validates_required_fields(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $response = $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/classroom/multipart/part-url", []);
+
+        $response->assertUnprocessable();
+        $response->assertJsonValidationErrors(['key', 'upload_id', 'part_number']);
+    }
+
+    public function test_regular_member_cannot_get_part_upload_url(): void
+    {
+        $owner     = User::factory()->create();
+        $member    = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+
+        $response = $this->actingAs($member)
+            ->postJson("/communities/{$community->slug}/classroom/multipart/part-url", [
+                'key'         => 'lesson-videos/test.mp4',
+                'upload_id'   => 'upload-id',
+                'part_number' => 1,
+            ]);
+
+        $response->assertForbidden();
+    }
+
+    // ─── completeMultipartUpload ───────────────────────────────────────────
+
+    public function test_complete_multipart_upload_success(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $mockClient = \Mockery::mock(\Aws\S3\S3Client::class);
+        $mockClient->shouldReceive('completeMultipartUpload')->once()->andReturn(new \Aws\Result([]));
+
+        $mockDisk = \Mockery::mock(\Illuminate\Contracts\Filesystem\Filesystem::class);
+        $mockDisk->shouldReceive('getClient')->once()->andReturn($mockClient);
+
+        Storage::shouldReceive('disk')->with('s3')->once()->andReturn($mockDisk);
+
+        $response = $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/classroom/multipart/complete", [
+                'key'       => 'lesson-videos/test-uuid.mp4',
+                'upload_id' => 'test-upload-id',
+                'parts'     => [
+                    ['PartNumber' => 1, 'ETag' => '"etag1"'],
+                    ['PartNumber' => 2, 'ETag' => '"etag2"'],
+                ],
+            ]);
+
+        $response->assertOk();
+        $response->assertJson(['key' => 'lesson-videos/test-uuid.mp4']);
+    }
+
+    public function test_complete_multipart_upload_validates_required_fields(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $response = $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/classroom/multipart/complete", []);
+
+        $response->assertUnprocessable();
+        $response->assertJsonValidationErrors(['key', 'upload_id', 'parts']);
+    }
+
+    public function test_regular_member_cannot_complete_multipart_upload(): void
+    {
+        $owner     = User::factory()->create();
+        $member    = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+
+        $response = $this->actingAs($member)
+            ->postJson("/communities/{$community->slug}/classroom/multipart/complete", [
+                'key'       => 'lesson-videos/test.mp4',
+                'upload_id' => 'upload-id',
+                'parts'     => [['PartNumber' => 1, 'ETag' => '"etag"']],
+            ]);
+
+        $response->assertForbidden();
+    }
+
+    // ─── abortMultipartUpload ──────────────────────────────────────────────
+
+    public function test_abort_multipart_upload_success(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $mockClient = \Mockery::mock(\Aws\S3\S3Client::class);
+        $mockClient->shouldReceive('abortMultipartUpload')->once()->andReturn(new \Aws\Result([]));
+
+        $mockDisk = \Mockery::mock(\Illuminate\Contracts\Filesystem\Filesystem::class);
+        $mockDisk->shouldReceive('getClient')->once()->andReturn($mockClient);
+
+        Storage::shouldReceive('disk')->with('s3')->once()->andReturn($mockDisk);
+
+        $response = $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/classroom/multipart/abort", [
+                'key'       => 'lesson-videos/test-uuid.mp4',
+                'upload_id' => 'test-upload-id',
+            ]);
+
+        $response->assertOk();
+        $response->assertJson(['ok' => true]);
+    }
+
+    public function test_abort_multipart_upload_validates_required_fields(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $response = $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/classroom/multipart/abort", []);
+
+        $response->assertUnprocessable();
+        $response->assertJsonValidationErrors(['key', 'upload_id']);
+    }
+
+    public function test_regular_member_cannot_abort_multipart_upload(): void
+    {
+        $owner     = User::factory()->create();
+        $member    = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+
+        $response = $this->actingAs($member)
+            ->postJson("/communities/{$community->slug}/classroom/multipart/abort", [
+                'key'       => 'lesson-videos/test.mp4',
+                'upload_id' => 'upload-id',
+            ]);
+
+        $response->assertForbidden();
+    }
 }
