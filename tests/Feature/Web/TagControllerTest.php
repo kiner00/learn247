@@ -185,6 +185,28 @@ class TagControllerTest extends TestCase
         ]);
     }
 
+    public function test_owner_can_detach_tags_from_members(): void
+    {
+        [$owner, $community] = $this->ownerWithCommunity();
+
+        $tag    = Tag::create(['community_id' => $community->id, 'name' => 'VIP', 'slug' => 'vip']);
+        $member = CommunityMember::factory()->create(['community_id' => $community->id]);
+        $member->tags()->attach($tag->id, ['tagged_at' => now()]);
+
+        $this->actingAs($owner)
+            ->post(route('communities.tags.assign', $community), [
+                'member_ids' => [$member->id],
+                'tag_ids'    => [$tag->id],
+                'action'     => 'detach',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('community_member_tag', [
+            'community_member_id' => $member->id,
+            'tag_id'              => $tag->id,
+        ]);
+    }
+
     public function test_assign_validates_action(): void
     {
         [$owner, $community] = $this->ownerWithCommunity();

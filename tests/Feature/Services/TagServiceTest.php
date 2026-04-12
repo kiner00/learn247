@@ -91,6 +91,32 @@ class TagServiceTest extends TestCase
         $this->assertTrue($paidMember->fresh()->tags->contains($tag));
     }
 
+    public function test_auto_tag_respects_course_id_filter(): void
+    {
+        $community = Community::factory()->create();
+        $member = CommunityMember::factory()->create(['community_id' => $community->id]);
+
+        $tag = Tag::create([
+            'community_id' => $community->id,
+            'name'         => 'Course 5 Student',
+            'slug'         => 'course-5-student',
+            'color'        => '#000',
+            'type'         => Tag::TYPE_AUTOMATIC,
+            'auto_rule'    => [
+                'event'  => 'course.enrolled',
+                'filter' => ['course_id' => 5],
+            ],
+        ]);
+
+        // Different course — should NOT tag
+        $this->service->applyAutoTags($member, 'course.enrolled', ['course_id' => 99]);
+        $this->assertFalse($member->fresh()->tags->contains($tag));
+
+        // Matching course — SHOULD tag
+        $this->service->applyAutoTags($member, 'course.enrolled', ['course_id' => 5]);
+        $this->assertTrue($member->fresh()->tags->contains($tag));
+    }
+
     public function test_tag_with_null_auto_rule_is_skipped(): void
     {
         $community = Community::factory()->create();

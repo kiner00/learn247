@@ -101,6 +101,49 @@ class ResendWebhookControllerTest extends TestCase
         $this->assertNotNull($send->opened_at);
     }
 
+    public function test_clicked_event_sets_clicked_at(): void
+    {
+        config(['services.resend.webhook_secret' => null]);
+
+        $community = Community::factory()->create();
+        $member    = CommunityMember::factory()->create(['community_id' => $community->id]);
+
+        $send = EmailSend::create([
+            'community_id'        => $community->id,
+            'community_member_id' => $member->id,
+            'resend_email_id'     => 'resend_click1',
+            'status'              => 'delivered',
+        ]);
+
+        $this->postJson('/webhooks/resend', [
+            'type' => 'email.clicked',
+            'data' => ['email_id' => 'resend_click1'],
+        ])->assertOk();
+
+        $send->refresh();
+        $this->assertNotNull($send->clicked_at);
+    }
+
+    public function test_unknown_event_type_returns_ok(): void
+    {
+        config(['services.resend.webhook_secret' => null]);
+
+        $community = Community::factory()->create();
+        $member    = CommunityMember::factory()->create(['community_id' => $community->id]);
+
+        EmailSend::create([
+            'community_id'        => $community->id,
+            'community_member_id' => $member->id,
+            'resend_email_id'     => 'resend_weird1',
+            'status'              => 'sent',
+        ]);
+
+        $this->postJson('/webhooks/resend', [
+            'type' => 'email.weird_event',
+            'data' => ['email_id' => 'resend_weird1'],
+        ])->assertOk();
+    }
+
     public function test_bounced_event_unsubscribes_user(): void
     {
         config(['services.resend.webhook_secret' => null]);

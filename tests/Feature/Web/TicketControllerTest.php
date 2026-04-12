@@ -225,6 +225,60 @@ class TicketControllerTest extends TestCase
         ]);
     }
 
+    public function test_user_cannot_close_other_users_ticket(): void
+    {
+        $user      = $this->regularUser();
+        $otherUser = $this->regularUser();
+        $ticket    = $this->createTicket(['user_id' => $otherUser->id, 'status' => 'resolved']);
+
+        $response = $this->actingAs($user)
+            ->patch(route('tickets.close', $ticket));
+
+        $response->assertForbidden();
+
+        $this->assertDatabaseHas('tickets', [
+            'id'     => $ticket->id,
+            'status' => 'resolved',
+        ]);
+    }
+
+    public function test_store_ticket_handles_action_exception(): void
+    {
+        $user = $this->regularUser();
+
+        // Force the CreateTicket action to throw
+        $this->mock(\App\Actions\Tickets\CreateTicket::class, function ($mock) {
+            $mock->shouldReceive('execute')->andThrow(new \RuntimeException('boom'));
+        });
+
+        $response = $this->actingAs($user)->post(route('tickets.store'), [
+            'subject'     => 'Something',
+            'description' => 'Something broke',
+            'type'        => 'bug',
+            'priority'    => 'medium',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+    }
+
+    public function test_reply_handles_action_exception(): void
+    {
+        $user   = $this->regularUser();
+        $ticket = $this->createTicket(['user_id' => $user->id]);
+
+        $this->mock(\App\Actions\Tickets\ReplyToTicket::class, function ($mock) {
+            $mock->shouldReceive('execute')->andThrow(new \RuntimeException('boom'));
+        });
+
+        $response = $this->actingAs($user)->post(route('tickets.reply', $ticket), [
+            'content' => 'Hi there',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+    }
+
     public function test_user_cannot_reopen_other_users_ticket(): void
     {
         $user        = $this->regularUser();

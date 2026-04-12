@@ -240,6 +240,32 @@ class ManageLessonTest extends TestCase
         $this->assertEquals(0, $updated->video_transcode_percent);
     }
 
+    public function test_update_deletes_hls_files_when_replacing_video(): void
+    {
+        $disk = config('filesystems.default');
+        Storage::fake($disk);
+        Storage::disk($disk)->put('lesson-videos/old.mp4', 'old');
+        Storage::disk($disk)->put('lesson-videos/new.mp4', 'new');
+        Storage::disk($disk)->put('hls/old-lesson/index.m3u8', 'playlist');
+        Storage::disk($disk)->put('hls/old-lesson/segment1.ts', 'segment');
+
+        $community = Community::factory()->create();
+        $course = Course::create(['community_id' => $community->id, 'title' => 'C1', 'position' => 1]);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'M1', 'position' => 1]);
+        $lesson = CourseLesson::create([
+            'module_id'      => $module->id,
+            'title'          => 'Video Lesson',
+            'video_path'     => 'lesson-videos/old.mp4',
+            'video_hls_path' => 'hls/old-lesson/index.m3u8',
+            'position'       => 1,
+        ]);
+
+        $this->action->update($lesson, ['video_path' => 'lesson-videos/new.mp4']);
+
+        Storage::disk($disk)->assertMissing('hls/old-lesson/index.m3u8');
+        Storage::disk($disk)->assertMissing('hls/old-lesson/segment1.ts');
+    }
+
     public function test_update_same_video_path_does_not_delete(): void
     {
         $disk = config('filesystems.default');

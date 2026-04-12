@@ -130,6 +130,36 @@ class EmailSequenceControllerTest extends TestCase
         $response->assertSessionHasErrors('resend');
     }
 
+    // ─── show ───────────────────────────────────────────────────────────────────
+
+    public function test_owner_can_view_sequence(): void
+    {
+        [$owner, $community] = $this->ownerWithCommunity();
+        $sequence = $this->createSequence($community);
+
+        $response = $this->actingAs($owner)
+            ->get("/communities/{$community->slug}/email-sequences/{$sequence->id}");
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Communities/Email/SequenceShow')
+            ->where('sequence.id', $sequence->id)
+            ->has('enrollmentStats')
+        );
+    }
+
+    public function test_show_returns_404_for_sequence_from_another_community(): void
+    {
+        [$owner, $community] = $this->ownerWithCommunity();
+        $otherCommunity = Community::factory()->create();
+        $sequence = $this->createSequence($otherCommunity);
+
+        $response = $this->actingAs($owner)
+            ->get("/communities/{$community->slug}/email-sequences/{$sequence->id}");
+
+        $response->assertNotFound();
+    }
+
     // ─── activate / pause ───────────────────────────────────────────────────────
 
     public function test_owner_can_activate_sequence_with_steps(): void

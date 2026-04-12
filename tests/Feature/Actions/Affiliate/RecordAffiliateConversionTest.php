@@ -10,6 +10,8 @@ use App\Models\Course;
 use App\Models\CourseEnrollment;
 use App\Models\CourseCertification;
 use App\Models\CertificationPurchase;
+use App\Models\Curzzo;
+use App\Models\CurzzoPurchase;
 use App\Models\Payment;
 use App\Models\Subscription;
 use App\Models\User;
@@ -502,6 +504,141 @@ class RecordAffiliateConversionTest extends TestCase
         $this->assertNull($result);
         // Should still have only 1 conversion
         $this->assertEquals(1, AffiliateConversion::where('certification_purchase_id', $purchase->id)->count());
+    }
+
+    // ─── executeForCurzzo ──────────────────────────────────────────────────
+
+    private function createCurzzoAffiliateSetup(float $price, int $commissionRate, bool $subscribe = true): array
+    {
+        $affiliateUser = User::factory()->create();
+        $community     = Community::factory()->create();
+        $curzzo        = Curzzo::create([
+            'community_id'              => $community->id,
+            'name'                      => 'Test Bot',
+            'instructions'              => 'Be helpful.',
+            'price'                     => $price,
+            'affiliate_commission_rate' => $commissionRate,
+        ]);
+        $affiliate = Affiliate::create([
+            'user_id'      => $affiliateUser->id,
+            'community_id' => $community->id,
+            'code'         => 'CURZ' . rand(1000, 9999),
+            'status'       => Affiliate::STATUS_ACTIVE,
+        ]);
+
+        if ($subscribe) {
+            Subscription::factory()->active()->create([
+                'community_id' => $community->id,
+                'user_id'      => $affiliateUser->id,
+            ]);
+        }
+
+        return [$affiliateUser, $community, $curzzo, $affiliate];
+    }
+
+    public function test_curzzo_records_conversion(): void
+    {
+        [, $community, $curzzo, $affiliate] = $this->createCurzzoAffiliateSetup(300, 25);
+
+        $purchase = CurzzoPurchase::create([
+            'user_id'      => User::factory()->create()->id,
+            'curzzo_id'    => $curzzo->id,
+            'affiliate_id' => $affiliate->id,
+            'status'       => CurzzoPurchase::STATUS_PAID,
+            'paid_at'      => now(),
+        ]);
+
+        $result = $this->action->executeForCurzzo($purchase);
+
+        $this->assertNotNull($result);
+        $this->assertEquals(75.0, $result['commission']); // 25% of 300
+        $this->assertEquals(300.0, $result['sale_amount']);
+
+        $this->assertDatabaseHas('affiliate_conversions', [
+            'affiliate_id'       => $affiliate->id,
+            'curzzo_purchase_id' => $purchase->id,
+            'sale_amount'        => 300,
+            'commission_amount'  => 75,
+        ]);
+    }
+
+    public function test_curzzo_skips_if_no_affiliate(): void
+    {
+        $community = Community::factory()->create();
+        $curzzo    = Curzzo::create([
+            'community_id'              => $community->id,
+            'name'                      => 'Bot',
+            'instructions'              => 'Help.',
+            'price'                     => 300,
+            'affiliate_commission_rate' => 25,
+        ]);
+
+        $purchase = CurzzoPurchase::create([
+            'user_id'      => User::factory()->create()->id,
+            'curzzo_id'    => $curzzo->id,
+            'affiliate_id' => null,
+            'status'       => CurzzoPurchase::STATUS_PAID,
+            'paid_at'      => now(),
+        ]);
+
+        $this->assertNull($this->action->executeForCurzzo($purchase));
+    }
+
+    public function test_curzzo_skips_if_zero_commission_rate(): void
+    {
+        [, , $curzzo, $affiliate] = $this->createCurzzoAffiliateSetup(300, 0);
+
+        $purchase = CurzzoPurchase::create([
+            'user_id'      => User::factory()->create()->id,
+            'curzzo_id'    => $curzzo->id,
+            'affiliate_id' => $affiliate->id,
+            'status'       => CurzzoPurchase::STATUS_PAID,
+            'paid_at'      => now(),
+        ]);
+
+        $this->assertNull($this->action->executeForCurzzo($purchase));
+        $this->assertDatabaseCount('affiliate_conversions', 0);
+    }
+
+    public function test_curzzo_skips_if_already_recorded(): void
+    {
+        [, , $curzzo, $affiliate] = $this->createCurzzoAffiliateSetup(300, 25);
+
+        $purchase = CurzzoPurchase::create([
+            'user_id'      => User::factory()->create()->id,
+            'curzzo_id'    => $curzzo->id,
+            'affiliate_id' => $affiliate->id,
+            'status'       => CurzzoPurchase::STATUS_PAID,
+            'paid_at'      => now(),
+        ]);
+
+        AffiliateConversion::create([
+            'affiliate_id'       => $affiliate->id,
+            'curzzo_purchase_id' => $purchase->id,
+            'referred_user_id'   => $purchase->user_id,
+            'sale_amount'        => 300,
+            'platform_fee'       => 30,
+            'commission_amount'  => 75,
+            'creator_amount'     => 195,
+        ]);
+
+        $this->assertNull($this->action->executeForCurzzo($purchase));
+        $this->assertEquals(1, AffiliateConversion::where('curzzo_purchase_id', $purchase->id)->count());
+    }
+
+    public function test_curzzo_skips_if_affiliate_not_subscribed(): void
+    {
+        [, , $curzzo, $affiliate] = $this->createCurzzoAffiliateSetup(300, 25, subscribe: false);
+
+        $purchase = CurzzoPurchase::create([
+            'user_id'      => User::factory()->create()->id,
+            'curzzo_id'    => $curzzo->id,
+            'affiliate_id' => $affiliate->id,
+            'status'       => CurzzoPurchase::STATUS_PAID,
+            'paid_at'      => now(),
+        ]);
+
+        $this->assertNull($this->action->executeForCurzzo($purchase));
     }
 
     public function test_certification_skips_if_affiliate_not_subscribed(): void

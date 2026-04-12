@@ -2278,4 +2278,207 @@ class CommunityControllerTest extends TestCase
 
         $response->assertOk();
     }
+
+    // ─── updateAiInstructions (dedicated route) ──────────────────────────────
+
+    public function test_owner_can_update_ai_instructions_via_dedicated_route(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $this->actingAs($owner)
+            ->patch("/communities/{$community->slug}/ai-instructions", [
+                'ai_chatbot_instructions' => 'Be concise and friendly.',
+            ])
+            ->assertRedirect();
+
+        $this->assertSame('Be concise and friendly.', $community->fresh()->ai_chatbot_instructions);
+    }
+
+    public function test_non_owner_cannot_update_ai_instructions_via_dedicated_route(): void
+    {
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $this->actingAs($other)
+            ->patch("/communities/{$community->slug}/ai-instructions", [
+                'ai_chatbot_instructions' => 'hacked',
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_update_ai_instructions_validates_max_length(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $this->actingAs($owner)
+            ->patch("/communities/{$community->slug}/ai-instructions", [
+                'ai_chatbot_instructions' => str_repeat('a', 10001),
+            ])
+            ->assertSessionHasErrors('ai_chatbot_instructions');
+    }
+
+    // ─── curzzos page ────────────────────────────────────────────────────────
+
+    public function test_owner_can_view_curzzos_page(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $response = $this->actingAs($owner)->get("/communities/{$community->slug}/curzzos");
+
+        $response->assertOk();
+    }
+
+    public function test_member_can_view_curzzos_page(): void
+    {
+        $owner  = User::factory()->create();
+        $member = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        CommunityMember::create([
+            'community_id' => $community->id,
+            'user_id'      => $member->id,
+        ]);
+
+        $response = $this->actingAs($member)->get("/communities/{$community->slug}/curzzos");
+
+        $response->assertOk();
+    }
+
+    // ─── uploadSectionVideo ─────────────────────────────────────────────────
+
+    public function test_non_owner_cannot_upload_section_video(): void
+    {
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $this->actingAs($other)
+            ->postJson("/communities/{$community->slug}/landing-page/upload-video", [
+                'filename'     => 'video.mp4',
+                'content_type' => 'video/mp4',
+                'size'         => 1024,
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_upload_section_video_requires_pro_plan(): void
+    {
+        $owner     = User::factory()->create(); // free plan
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $response = $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/landing-page/upload-video", [
+                'filename'     => 'video.mp4',
+                'content_type' => 'video/mp4',
+                'size'         => 1024,
+            ]);
+
+        $response->assertStatus(403);
+        $response->assertJsonFragment(['error' => 'Video uploads require a Pro plan.']);
+    }
+
+    public function test_upload_section_video_validates_content_type(): void
+    {
+        $owner = User::factory()->create();
+        CreatorSubscription::create([
+            'user_id' => $owner->id,
+            'plan'    => CreatorSubscription::PLAN_PRO,
+            'status'  => CreatorSubscription::STATUS_ACTIVE,
+        ]);
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/landing-page/upload-video", [
+                'filename'     => 'video.mkv',
+                'content_type' => 'video/x-matroska',
+                'size'         => 1024,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('content_type');
+    }
+
+    public function test_upload_section_video_rejects_oversized_file(): void
+    {
+        $owner = User::factory()->create();
+        CreatorSubscription::create([
+            'user_id' => $owner->id,
+            'plan'    => CreatorSubscription::PLAN_PRO,
+            'status'  => CreatorSubscription::STATUS_ACTIVE,
+        ]);
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        // 5120 MB max → 5121 MB should fail
+        $tooBig = 5121 * 1024 * 1024;
+
+        $response = $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/landing-page/upload-video", [
+                'filename'     => 'video.mp4',
+                'content_type' => 'video/mp4',
+                'size'         => $tooBig,
+            ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonFragment(['error' => 'File too large. Maximum size is 5120MB.']);
+    }
+
+    // ─── aiGenerateGallery: conflict when already generating ────────────────
+
+    public function test_ai_generate_gallery_rejects_when_already_generating(): void
+    {
+        $owner = User::factory()->create();
+        CreatorSubscription::create([
+            'user_id' => $owner->id,
+            'plan'    => CreatorSubscription::PLAN_PRO,
+            'status'  => CreatorSubscription::STATUS_ACTIVE,
+        ]);
+        $community = Community::factory()->create([
+            'owner_id'       => $owner->id,
+            'gallery_images' => [],
+        ]);
+
+        \Illuminate\Support\Facades\Cache::put(
+            "gallery-generating:{$community->id}",
+            ['status' => 'generating', 'progress' => 0, 'total' => 8],
+            300
+        );
+
+        $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/gallery/ai-generate")
+            ->assertStatus(409);
+    }
+
+    public function test_ai_gallery_status_returns_generating_when_in_progress(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        \Illuminate\Support\Facades\Cache::put(
+            "gallery-generating:{$community->id}",
+            ['status' => 'generating', 'progress' => 2, 'total' => 8],
+            300
+        );
+
+        $response = $this->actingAs($owner)
+            ->getJson("/communities/{$community->slug}/gallery/ai-status");
+
+        $response->assertOk();
+        $response->assertJsonFragment(['status' => 'generating', 'progress' => 2]);
+    }
+
+    // ─── destroy: no active subscribers (hard delete path) ─────────────────
+
+    public function test_owner_can_hard_delete_community_with_no_subscribers(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $this->actingAs($owner)
+            ->delete("/communities/{$community->slug}")
+            ->assertRedirect('/communities');
+
+        $this->assertNull(Community::find($community->id));
+    }
 }

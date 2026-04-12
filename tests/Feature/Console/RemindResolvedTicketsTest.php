@@ -80,6 +80,31 @@ class RemindResolvedTicketsTest extends TestCase
         Mail::assertNothingQueued();
     }
 
+    public function test_skips_ticket_when_user_is_missing(): void
+    {
+        Mail::fake();
+
+        $user = User::factory()->create();
+        Ticket::create([
+            'user_id'     => $user->id,
+            'subject'     => 'Resolved ticket for missing user',
+            'description' => 'Test',
+            'type'        => 'bug',
+            'status'      => 'resolved',
+            'priority'    => 'medium',
+        ]);
+        Ticket::query()->update(['updated_at' => now()->subDays(2)->subHours(12)]);
+
+        // Delete the user so $ticket->user is null → ->user?->email is null → skipped
+        $user->forceDelete();
+
+        $this->artisan('tickets:remind-resolved')
+            ->expectsOutputToContain('0 resolved ticket reminder')
+            ->assertSuccessful();
+
+        Mail::assertNothingQueued();
+    }
+
     public function test_does_not_send_reminder_for_non_resolved_tickets(): void
     {
         Mail::fake();

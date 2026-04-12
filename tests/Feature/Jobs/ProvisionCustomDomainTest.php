@@ -75,4 +75,51 @@ class ProvisionCustomDomainTest extends TestCase
         $job = new ProvisionCustomDomain('logs.example.com');
         $job->handle($ploi);
     }
+
+    public function test_http_unreachable_throws_and_aborts_before_requesting_ssl(): void
+    {
+        // Fake so that HTTP calls throw a connection exception (e.g. nginx not serving domain).
+        Http::fake(function () {
+            throw new \Illuminate\Http\Client\ConnectionException('Connection refused');
+        });
+
+        $ploi = Mockery::mock(PloiService::class);
+        $ploi->shouldReceive('addTenant')->once()->with('bad.example.com');
+        // Should NOT reach requestTenantCertificate when HTTP is unreachable.
+        $ploi->shouldNotReceive('requestTenantCertificate');
+
+        $this->app->instance(PloiService::class, $ploi);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('HTTP not reachable for bad.example.com');
+
+        $job = new ProvisionCustomDomain('bad.example.com');
+        $job->handle($ploi);
+    }
+
+    public function test_ssl_verification_failure_is_warned_but_does_not_throw(): void
+    {
+        // HTTP reachable check succeeds, but https:// call throws.
+        Http::fake(function (\Illuminate\Http\Client\Request $request) {
+            if (str_starts_with($request->url(), 'https://')) {
+                throw new \Illuminate\Http\Client\ConnectionException('SSL handshake failed');
+            }
+            return Http::response('ok', 200);
+        });
+
+        Log::shouldReceive('info')->zeroOrMoreTimes();
+        Log::shouldReceive('warning')
+            ->once()
+            ->with(Mockery::pattern('/SSL verification failed for ssl\.example\.com/'));
+
+        $ploi = Mockery::mock(PloiService::class);
+        $ploi->shouldReceive('addTenant')->once();
+        $ploi->shouldReceive('requestTenantCertificate')->once();
+
+        // Should complete without throwing — SSL failure is a soft warning.
+        $job = new ProvisionCustomDomain('ssl.example.com');
+        $job->handle($ploi);
+
+        $this->assertTrue(true);
+    }
 }

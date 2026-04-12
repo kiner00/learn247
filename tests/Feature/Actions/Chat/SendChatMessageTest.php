@@ -201,6 +201,41 @@ class SendChatMessageTest extends TestCase
         });
     }
 
+    public function test_logs_warning_when_broadcast_fails_but_still_returns_message(): void
+    {
+        // Force broadcasting to use a driver that will throw (pusher with missing creds)
+        config([
+            'broadcasting.default'            => 'pusher',
+            'broadcasting.connections.pusher' => [
+                'driver' => 'pusher',
+                'key'    => '',
+                'secret' => '',
+                'app_id' => '',
+                'options' => [],
+            ],
+        ]);
+
+        \Illuminate\Support\Facades\Log::spy();
+
+        $user      = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $user->id]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+
+        $action  = new SendChatMessage();
+        $message = $action->execute($user, $community, 'Hello broadcast');
+
+        // Message still created & returned even though broadcast blew up
+        $this->assertInstanceOf(Message::class, $message);
+        $this->assertDatabaseHas('messages', [
+            'id'      => $message->id,
+            'content' => 'Hello broadcast',
+        ]);
+
+        \Illuminate\Support\Facades\Log::shouldHaveReceived('warning')
+            ->with('Chat broadcast failed', \Mockery::type('array'))
+            ->atLeast()->once();
+    }
+
     public function test_sends_photo_with_empty_content(): void
     {
         Bus::fake([ForwardMessageToTelegram::class]);

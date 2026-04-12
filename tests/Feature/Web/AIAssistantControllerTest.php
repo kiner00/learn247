@@ -198,4 +198,29 @@ class AIAssistantControllerTest extends TestCase
             ->assertOk()
             ->assertJsonPath('type', 'text');
     }
+
+    /**
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function test_chat_returns_friendly_error_when_image_generation_fails(): void
+    {
+        $user = User::factory()->create();
+        $this->mockContextWithCommunities($user);
+
+        $imageMock = Mockery::mock('alias:Laravel\Ai\Image');
+        $imageMock->shouldReceive('of')->andReturnSelf();
+        $imageMock->shouldReceive('size')->andReturnSelf();
+        $imageMock->shouldReceive('generate')->andThrow(new \RuntimeException('AI offline'));
+
+        \Illuminate\Support\Facades\Log::shouldReceive('error')->atLeast()->once();
+
+        $this->actingAs($user)
+            ->postJson(route('ai.chat'), [
+                'message' => 'generate an image of a sunset',
+            ])
+            ->assertOk()
+            ->assertJsonPath('type', 'text')
+            ->assertJsonPath('message', "Sorry, I couldn't generate that image right now. Please try again later.");
+    }
 }

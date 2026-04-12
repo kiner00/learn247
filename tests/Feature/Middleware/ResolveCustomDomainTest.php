@@ -181,4 +181,45 @@ class ResolveCustomDomainTest extends TestCase
 
         $this->assertNull($community);
     }
+
+    // ── auth paths skip the rewrite ──────────────────────────────────────────
+
+    public function test_auth_paths_are_not_rewritten_on_custom_domain(): void
+    {
+        config(['app.url' => 'https://curzzo.com']);
+
+        Community::factory()->create(['subdomain' => 'authtest', 'slug' => 'auth-slug']);
+
+        [$community, $uri] = $this->runMiddleware('https://authtest.curzzo.com/login');
+
+        // Community attribute is still set so Inertia sharing works
+        $this->assertEquals('auth-slug', $community);
+        // But URI is NOT rewritten to /communities/{slug}/login
+        $this->assertEquals('/login', $uri);
+    }
+
+    public function test_nested_auth_path_is_not_rewritten(): void
+    {
+        config(['app.url' => 'https://curzzo.com']);
+
+        Community::factory()->create(['subdomain' => 'authnest', 'slug' => 'authnest-slug']);
+
+        [$community, $uri] = $this->runMiddleware('https://authnest.curzzo.com/reset-password/token123');
+
+        $this->assertEquals('authnest-slug', $community);
+        $this->assertEquals('/reset-password/token123', $uri);
+    }
+
+    public function test_certificates_path_is_not_rewritten(): void
+    {
+        config(['app.url' => 'https://curzzo.com']);
+
+        Community::factory()->create(['subdomain' => 'certs', 'slug' => 'certs-slug']);
+
+        [$community, $uri] = $this->runMiddleware('https://certs.curzzo.com/certificates/abc');
+
+        $this->assertEquals('certs-slug', $community);
+        $this->assertEquals('/certificates/abc', $uri);
+    }
+
 }

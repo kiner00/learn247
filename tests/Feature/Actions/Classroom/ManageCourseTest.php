@@ -220,6 +220,48 @@ class ManageCourseTest extends TestCase
         $this->assertEquals('/storage/course-previews/existing.mp4', $updated->preview_video);
     }
 
+    public function test_destroy_deletes_preview_video_without_course_previews_path(): void
+    {
+        $disk = config('filesystems.default');
+        Storage::fake($disk);
+        Storage::disk($disk)->put('other/vid.mp4', 'data');
+
+        $community = Community::factory()->create();
+        $course = Course::create([
+            'community_id'  => $community->id,
+            'title'         => 'With Video',
+            'position'      => 1,
+            // URL that does NOT contain 'course-previews/' — hits else branch
+            'preview_video' => 'other/vid.mp4',
+        ]);
+
+        $this->action->destroy($course);
+
+        $this->assertDatabaseMissing('courses', ['id' => $course->id]);
+    }
+
+    public function test_update_with_cover_image_deletes_old_cover(): void
+    {
+        Storage::fake('public');
+        $community = Community::factory()->create();
+
+        // Create an existing cover
+        $oldPath = UploadedFile::fake()->image('old.jpg')->store('course-covers', 'public');
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Course',
+            'cover_image'  => asset('storage/' . $oldPath),
+            'position'     => 1,
+        ]);
+
+        $newImage = UploadedFile::fake()->image('new.jpg');
+
+        $this->action->update($course, ['title' => 'Updated'], $newImage);
+
+        Storage::disk('public')->assertMissing($oldPath);
+    }
+
     public function test_destroy_deletes_preview_video_with_course_previews_key(): void
     {
         $disk = config('filesystems.default');

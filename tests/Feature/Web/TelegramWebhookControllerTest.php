@@ -285,6 +285,39 @@ class TelegramWebhookControllerTest extends TestCase
         ]);
     }
 
+    public function test_deduplicates_already_processed_messages(): void
+    {
+        Http::fake();
+
+        // Pre-create a message with the same telegram_message_id
+        Message::create([
+            'community_id'        => $this->community->id,
+            'user_id'             => $this->community->owner_id,
+            'content'             => 'Original',
+            'telegram_author'     => 'Someone',
+            'telegram_message_id' => 9999,
+        ]);
+
+        $payload = [
+            'message' => [
+                'message_id' => 9999,
+                'chat'       => ['id' => -1001234567890],
+                'from'       => ['id' => 101, 'is_bot' => false, 'first_name' => 'Dup'],
+                'text'       => 'Duplicate attempt',
+            ],
+        ];
+
+        $response = $this->postJson(
+            '/webhooks/telegram/' . $this->community->slug,
+            $payload,
+            ['X-Telegram-Bot-Api-Secret-Token' => $this->secret]
+        );
+
+        $response->assertStatus(200);
+        // Still only 1 message — dedup worked
+        $this->assertDatabaseCount('messages', 1);
+    }
+
     public function test_skips_message_with_no_text_and_no_media(): void
     {
         Http::fake();

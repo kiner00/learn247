@@ -220,4 +220,48 @@ class AIAssistantControllerTest extends TestCase
             ->assertOk()
             ->assertJsonPath('type', 'text');
     }
+
+    public function test_chat_validates_conversation_id_must_be_uuid(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson('/api/ai/chat', [
+                'message'         => 'Hello',
+                'conversation_id' => 'not-a-uuid',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('conversation_id');
+    }
+
+    /**
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function test_chat_returns_friendly_error_when_image_generation_fails(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->create();
+        CommunityMember::factory()->create([
+            'community_id' => $community->id,
+            'user_id'      => $user->id,
+        ]);
+
+        $mockContext = Mockery::mock(BuildAIContext::class);
+        $mockContext->shouldReceive('execute')->once()->andReturn($this->fullContext($user, $community));
+        $this->instance(BuildAIContext::class, $mockContext);
+
+        $imageMock = Mockery::mock('alias:Laravel\Ai\Image');
+        $imageMock->shouldReceive('of')->andReturnSelf();
+        $imageMock->shouldReceive('size')->andReturnSelf();
+        $imageMock->shouldReceive('generate')->andThrow(new \RuntimeException('AI offline'));
+
+        \Illuminate\Support\Facades\Log::shouldReceive('error')->atLeast()->once();
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson('/api/ai/chat', ['message' => 'generate an image of a cat'])
+            ->assertOk()
+            ->assertJsonPath('type', 'text')
+            ->assertJsonPath('message', "Sorry, I couldn't generate that image right now. Please try again later.");
+    }
 }

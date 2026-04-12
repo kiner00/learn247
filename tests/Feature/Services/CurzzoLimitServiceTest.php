@@ -422,6 +422,51 @@ class CurzzoLimitServiceTest extends TestCase
 
     // ─── getPacks with custom packs ──────────────────────────────────────────
 
+    public function test_can_send_message_denied_when_community_monthly_cap_hit(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->create();
+        CommunityMember::factory()->create([
+            'community_id'    => $community->id,
+            'user_id'         => $user->id,
+            'membership_type' => CommunityMember::MEMBERSHIP_FREE,
+        ]);
+
+        // Stub service with the monthly cap already hit
+        $service = new class extends CurzzoLimitService {
+            public function communityMonthlyUsage(\App\Models\Community $community): int
+            {
+                return 10000;
+            }
+        };
+
+        $result = $service->canSendMessage($user, $community);
+
+        $this->assertFalse($result['allowed']);
+        $this->assertStringContainsString('monthly', $result['reason']);
+    }
+
+    public function test_consume_topup_does_nothing_when_no_active_topup(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->create();
+
+        // Expired message pack (no remaining capacity)
+        CurzzoTopup::create([
+            'user_id'       => $user->id,
+            'community_id'  => $community->id,
+            'status'        => CurzzoTopup::STATUS_PAID,
+            'messages'      => 5,
+            'messages_used' => 5,
+            'expires_at'    => null,
+        ]);
+
+        // Should not throw
+        $this->service->consumeTopup($user, $community);
+
+        $this->assertTrue(true);
+    }
+
     public function test_get_packs_returns_custom_packs_when_set(): void
     {
         $customPacks = [

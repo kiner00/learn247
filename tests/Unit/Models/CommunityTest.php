@@ -3,7 +3,7 @@
 namespace Tests\Unit\Models;
 
 use App\Models\Community;
-use PHPUnit\Framework\TestCase;
+use Tests\TestCase;
 
 class CommunityTest extends TestCase
 {
@@ -64,4 +64,47 @@ class CommunityTest extends TestCase
         $this->assertFalse($community->hasAffiliateProgram());
     }
 
+    public function test_is_pending_deletion_returns_false_when_null(): void
+    {
+        $community = new Community();
+        $community->deletion_requested_at = null;
+
+        $this->assertFalse($community->isPendingDeletion());
+    }
+
+    public function test_is_pending_deletion_returns_true_when_set(): void
+    {
+        $community = new Community();
+        $community->deletion_requested_at = now();
+
+        $this->assertTrue($community->isPendingDeletion());
+    }
+
+    public function test_url_uses_custom_domain_when_set(): void
+    {
+        $community = new Community();
+        $community->custom_domain = 'example.com';
+
+        $this->assertSame('https://example.com', $community->url());
+    }
+
+    public function test_url_uses_subdomain_when_set(): void
+    {
+        config(['app.url' => 'https://curzzo.test']);
+
+        $community = new Community();
+        $community->subdomain = 'mycom';
+
+        $this->assertSame('https://mycom.curzzo.test', $community->url());
+    }
+
+    public function test_url_falls_back_to_path_when_no_domain_or_subdomain(): void
+    {
+        config(['app.url' => 'https://curzzo.test']);
+
+        $community = new Community();
+        $community->slug = 'foo';
+
+        $this->assertSame('https://curzzo.test/communities/foo', $community->url());
+    }
 }
