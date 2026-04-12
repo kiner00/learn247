@@ -17,6 +17,8 @@ use App\Http\Requests\UpdateCommunityRequest;
 use App\Http\Requests\UpdateLandingPageRequest;
 use App\Services\Analytics\CommunityAnalyticsService;
 use App\Services\Community\CommunityChecklistService;
+use App\Services\Community\CurzzoAccessService;
+use App\Services\Community\CurzzoLimitService;
 use App\Services\TelegramService;
 use App\Services\Community\MembershipAccessService;
 use App\Services\Community\PlanLimitService;
@@ -353,57 +355,28 @@ class CommunityController extends Controller
         return Inertia::render('Communities/Analytics', array_merge(['community' => $community], $data));
     }
 
-    public function curzzos(Community $community): Response
+    public function curzzos(Community $community, CurzzoAccessService $access, CurzzoLimitService $limits): Response
     {
-        $userId = auth()->id();
-        $user   = auth()->user();
+        $user = auth()->user();
 
-        $isOwner = $userId && $userId === $community->owner_id;
-
-        $isMember = $userId && \App\Models\CommunityMember::where('community_id', $community->id)
-            ->where('user_id', $userId)
-            ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
-            ->exists();
-
-        $isPaidMember = $userId && \App\Models\Subscription::where('community_id', $community->id)
-            ->where('user_id', $userId)
-            ->where('status', \App\Models\Subscription::STATUS_ACTIVE)
-            ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
-            ->exists();
-
-        $wasEverMember = $userId && \App\Models\Subscription::where('community_id', $community->id)
-            ->where('user_id', $userId)
-            ->whereIn('status', [\App\Models\Subscription::STATUS_ACTIVE, \App\Models\Subscription::STATUS_EXPIRED, \App\Models\Subscription::STATUS_CANCELLED])
-            ->exists();
-
-        $curzzosQuery = $community->curzzos()->orderBy('position');
-        if (! $isOwner) {
-            $curzzosQuery->where('is_active', true);
-        }
         $selectFields = ['id', 'name', 'description', 'avatar', 'cover_image', 'preview_video', 'preview_video_sound', 'access_type', 'price', 'currency', 'billing_type'];
+        $isOwner      = $user !== null && $user->id === $community->owner_id;
         if ($isOwner) {
             $selectFields = array_merge($selectFields, ['instructions', 'personality', 'model_tier', 'affiliate_commission_rate', 'is_active']);
         }
-        $curzzos = $curzzosQuery
+
+        $curzzos = $community->curzzos()
+            ->orderBy('position')
+            ->when(! $isOwner, fn ($q) => $q->where('is_active', true))
             ->select($selectFields)
             ->get();
 
-        // Batch-load paid curzzo purchases to avoid N+1 in resolveCurzzoAccess
-        $paidCurzzoIds = collect();
-        if ($userId && ! $isOwner) {
-            $paidCurzzoIds = \App\Models\CurzzoPurchase::where('user_id', $userId)
-                ->whereIn('curzzo_id', $curzzos->pluck('id'))
-                ->where('status', \App\Models\CurzzoPurchase::STATUS_PAID)
-                ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
-                ->pluck('curzzo_id');
-        }
-
-        $curzzos = $curzzos->map(function ($bot) use ($userId, $isOwner, $isMember, $isPaidMember, $wasEverMember, $paidCurzzoIds) {
-            $bot->has_access = $this->resolveCurzzoAccess($bot, $userId, $isOwner, $isMember, $isPaidMember, $wasEverMember, $paidCurzzoIds);
+        $context = $access->buildContext($user, $community, $curzzos->pluck('id'));
+        $curzzos = $curzzos->map(function ($bot) use ($access, $context) {
+            $bot->has_access = $access->hasAccess($bot, $context);
             return $bot;
         });
 
-        $limits = app(\App\Services\Community\CurzzoLimitService::class);
         $limitInfo = $user ? $limits->canSendMessage($user, $community) : [
             'allowed' => false, 'daily_limit' => 0, 'daily_used' => 0, 'topup_remaining' => 0,
         ];
@@ -424,33 +397,6 @@ class CommunityController extends Controller
             'isOwner'    => $isOwner,
             'modelTiers' => $modelTiers,
         ]);
-    }
-
-    private function resolveCurzzoAccess($bot, ?int $userId, bool $isOwner, bool $isMember, bool $isPaidMember, bool $wasEverMember, $paidCurzzoIds = null): bool
-    {
-        if ($isOwner) {
-            return true;
-        }
-
-        $accessType = $bot->access_type ?? 'free';
-
-        if ($accessType === 'free') {
-            return $isMember;
-        }
-
-        if ($accessType === 'inclusive') {
-            return $isPaidMember;
-        }
-
-        if (in_array($accessType, ['paid_once', 'paid_monthly'])) {
-            return $userId && ($paidCurzzoIds?->contains($bot->id) ?? false);
-        }
-
-        if ($accessType === 'member_once') {
-            return $wasEverMember;
-        }
-
-        return false;
     }
 
     public function join(Request $request, Community $community, JoinCommunity $action): RedirectResponse
