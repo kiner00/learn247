@@ -27,6 +27,27 @@ class CommunityControllerTest extends TestCase
 {
     use RefreshDatabase;
 
+    private function createFakeEmailProvider(bool $validKey = true): \App\Contracts\EmailProvider
+    {
+        return new class($validKey) implements \App\Contracts\EmailProvider {
+            public function __construct(private bool $validKey = true) {}
+            public function validateApiKey(\App\Models\Community $community): bool { return $this->validKey; }
+            public function sendEmail(\App\Models\Community $community, array $params): array { return ['id' => 'msg_1']; }
+            public function sendBatch(\App\Models\Community $community, array $emails): array { return []; }
+            public function addDomain(\App\Models\Community $community, string $domain): array {
+                return ['id' => 'dom_123', 'status' => 'pending', 'records' => []];
+            }
+            public function getDomain(\App\Models\Community $community, string $domainId): array {
+                return ['id' => 'dom_123', 'name' => 'mail.example.com', 'status' => 'verified', 'records' => []];
+            }
+            public function verifyDomain(\App\Models\Community $community, string $domainId): array {
+                return ['id' => 'dom_123', 'status' => 'verified'];
+            }
+            public static function id(): string { return 'fake'; }
+            public static function label(): string { return 'Fake'; }
+        };
+    }
+
     // ─── index ────────────────────────────────────────────────────────────────
 
     public function test_index_returns_200(): void
@@ -1756,6 +1777,436 @@ class CommunityControllerTest extends TestCase
 
         Bus::assertDispatched(\App\Jobs\RemoveCustomDomain::class, fn ($job) => str_contains($job->domain, 'oldshop.'));
         Bus::assertNotDispatched(\App\Jobs\ProvisionCustomDomain::class);
+    }
+
+    // ─── updateResendConfig ─────────────────────────────────────────────────
+
+    public function test_owner_can_update_resend_config(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        \App\Services\Email\EmailProviderFactory::$fakeProvider = $this->createFakeEmailProvider();
+
+        $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/resend-config", [
+                'email_provider'    => 'resend',
+                'resend_api_key'    => 're_test_key_123',
+                'resend_from_email' => 'hello@example.com',
+                'resend_from_name'  => 'Test Sender',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('communities', [
+            'id'             => $community->id,
+            'email_provider' => 'resend',
+        ]);
+        // API key is encrypted at rest, so verify via model accessor
+        $this->assertEquals('re_test_key_123', $community->fresh()->resend_api_key);
+
+        \App\Services\Email\EmailProviderFactory::$fakeProvider = null;
+    }
+
+    public function test_non_owner_cannot_update_resend_config(): void
+    {
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $this->actingAs($other)
+            ->post("/communities/{$community->slug}/resend-config", [
+                'email_provider' => 'resend',
+                'resend_api_key' => 'hack',
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_resend_config_rejects_invalid_api_key(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        \App\Services\Email\EmailProviderFactory::$fakeProvider = $this->createFakeEmailProvider(validKey: false);
+
+        $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/resend-config", [
+                'email_provider' => 'resend',
+                'resend_api_key' => 'invalid_key',
+            ])
+            ->assertRedirect()
+            ->assertSessionHasErrors('resend_api_key');
+
+        \App\Services\Email\EmailProviderFactory::$fakeProvider = null;
+    }
+
+    // ─── resendAddDomain ─────────────────────────────────────────────────────
+
+    public function test_owner_can_add_resend_domain(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create([
+            'owner_id'      => $owner->id,
+            'resend_api_key' => 're_test_key',
+        ]);
+
+        \App\Services\Email\EmailProviderFactory::$fakeProvider = $this->createFakeEmailProvider();
+
+        $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/resend-add-domain", [
+                'domain' => 'mail.example.com',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('communities', [
+            'id'                   => $community->id,
+            'resend_domain_id'     => 'dom_123',
+            'resend_domain_status' => 'pending',
+        ]);
+
+        \App\Services\Email\EmailProviderFactory::$fakeProvider = null;
+    }
+
+    public function test_resend_add_domain_fails_without_api_key(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create([
+            'owner_id'       => $owner->id,
+            'resend_api_key' => null,
+        ]);
+
+        $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/resend-add-domain", [
+                'domain' => 'mail.example.com',
+            ])
+            ->assertRedirect()
+            ->assertSessionHasErrors('resend_domain');
+    }
+
+    // ─── resendVerifyDomain ──────────────────────────────────────────────────
+
+    public function test_owner_can_verify_resend_domain(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create([
+            'owner_id'         => $owner->id,
+            'resend_api_key'   => 're_test_key',
+            'resend_domain_id' => 'dom_123',
+        ]);
+
+        \App\Services\Email\EmailProviderFactory::$fakeProvider = $this->createFakeEmailProvider();
+
+        $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/resend-verify-domain")
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertEquals('verified', $community->fresh()->resend_domain_status);
+
+        \App\Services\Email\EmailProviderFactory::$fakeProvider = null;
+    }
+
+    public function test_resend_verify_domain_fails_without_domain_id(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create([
+            'owner_id'         => $owner->id,
+            'resend_api_key'   => 're_test_key',
+            'resend_domain_id' => null,
+        ]);
+
+        $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/resend-verify-domain")
+            ->assertRedirect()
+            ->assertSessionHasErrors('resend_domain');
+    }
+
+    // ─── resendGetDomain ─────────────────────────────────────────────────────
+
+    public function test_owner_can_get_resend_domain_info(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create([
+            'owner_id'         => $owner->id,
+            'resend_api_key'   => 're_test_key',
+            'resend_domain_id' => 'dom_123',
+        ]);
+
+        \App\Services\Email\EmailProviderFactory::$fakeProvider = $this->createFakeEmailProvider();
+
+        $response = $this->actingAs($owner)
+            ->getJson("/communities/{$community->slug}/resend-domain-info");
+
+        $response->assertOk();
+        $response->assertJsonFragment(['id' => 'dom_123', 'status' => 'verified']);
+
+        \App\Services\Email\EmailProviderFactory::$fakeProvider = null;
+    }
+
+    public function test_resend_get_domain_fails_without_config(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create([
+            'owner_id'         => $owner->id,
+            'resend_api_key'   => null,
+            'resend_domain_id' => null,
+        ]);
+
+        $this->actingAs($owner)
+            ->getJson("/communities/{$community->slug}/resend-domain-info")
+            ->assertStatus(422);
+    }
+
+    // ─── resendTestEmail ─────────────────────────────────────────────────────
+
+    public function test_owner_can_send_resend_test_email(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create([
+            'owner_id'       => $owner->id,
+            'resend_api_key' => 're_test_key',
+        ]);
+
+        \App\Services\Email\EmailProviderFactory::$fakeProvider = $this->createFakeEmailProvider();
+
+        $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/resend-test", [
+                'test_email' => 'test@example.com',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        \App\Services\Email\EmailProviderFactory::$fakeProvider = null;
+    }
+
+    public function test_resend_test_email_fails_without_api_key(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create([
+            'owner_id'       => $owner->id,
+            'resend_api_key' => null,
+        ]);
+
+        $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/resend-test", [
+                'test_email' => 'test@example.com',
+            ])
+            ->assertRedirect()
+            ->assertSessionHasErrors('resend_test');
+    }
+
+    // ─── aiGenerateGallery ───────────────────────────────────────────────────
+
+    public function test_ai_generate_gallery_requires_pro_plan(): void
+    {
+        $owner     = User::factory()->create(); // free plan
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/gallery/ai-generate")
+            ->assertForbidden();
+    }
+
+    public function test_ai_generate_gallery_rejects_when_gallery_full(): void
+    {
+        $owner = User::factory()->create();
+        CreatorSubscription::create([
+            'user_id' => $owner->id,
+            'plan'    => CreatorSubscription::PLAN_PRO,
+            'status'  => CreatorSubscription::STATUS_ACTIVE,
+        ]);
+        $community = Community::factory()->create([
+            'owner_id'       => $owner->id,
+            'gallery_images' => array_fill(0, 8, '/storage/img.jpg'),
+        ]);
+
+        $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/gallery/ai-generate")
+            ->assertStatus(422);
+    }
+
+    public function test_ai_generate_gallery_starts_generation(): void
+    {
+        Bus::fake([\App\Jobs\GenerateSingleGalleryImage::class]);
+
+        $owner = User::factory()->create();
+        CreatorSubscription::create([
+            'user_id' => $owner->id,
+            'plan'    => CreatorSubscription::PLAN_PRO,
+            'status'  => CreatorSubscription::STATUS_ACTIVE,
+        ]);
+        $community = Community::factory()->create([
+            'owner_id'       => $owner->id,
+            'gallery_images' => [],
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/gallery/ai-generate");
+
+        $response->assertStatus(202);
+        $response->assertJsonFragment(['message' => 'Image generation started.']);
+        Bus::assertDispatched(\App\Jobs\GenerateSingleGalleryImage::class);
+    }
+
+    // ─── aiGalleryStatus ─────────────────────────────────────────────────────
+
+    public function test_ai_gallery_status_returns_idle_by_default(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $response = $this->actingAs($owner)
+            ->getJson("/communities/{$community->slug}/gallery/ai-status");
+
+        $response->assertOk();
+        $response->assertJsonFragment(['status' => 'idle']);
+    }
+
+    // ─── reorderGallery ──────────────────────────────────────────────────────
+
+    public function test_owner_can_reorder_gallery(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create([
+            'owner_id'       => $owner->id,
+            'gallery_images' => ['/img/a.jpg', '/img/b.jpg', '/img/c.jpg'],
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->putJson("/communities/{$community->slug}/gallery/reorder", [
+                'order' => [2, 0, 1],
+            ]);
+
+        $response->assertOk();
+        $this->assertEquals(
+            ['/img/c.jpg', '/img/a.jpg', '/img/b.jpg'],
+            $community->fresh()->gallery_images
+        );
+    }
+
+    public function test_reorder_gallery_rejects_invalid_order(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create([
+            'owner_id'       => $owner->id,
+            'gallery_images' => ['/img/a.jpg', '/img/b.jpg'],
+        ]);
+
+        $this->actingAs($owner)
+            ->putJson("/communities/{$community->slug}/gallery/reorder", [
+                'order' => [0, 5],
+            ])
+            ->assertStatus(422);
+    }
+
+    public function test_non_owner_cannot_reorder_gallery(): void
+    {
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
+        $community = Community::factory()->create([
+            'owner_id'       => $owner->id,
+            'gallery_images' => ['/img/a.jpg', '/img/b.jpg'],
+        ]);
+
+        $this->actingAs($other)
+            ->putJson("/communities/{$community->slug}/gallery/reorder", [
+                'order' => [1, 0],
+            ])
+            ->assertForbidden();
+    }
+
+    // ─── update with brand_context ──────────────────────────────────────────
+
+    public function test_owner_can_update_brand_context(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $this->actingAs($owner)->patch("/communities/{$community->slug}", [
+            'name'          => $community->name,
+            'brand_context' => [
+                'brand_personality' => 'Professional yet friendly',
+                'target_audience'   => 'Aspiring developers',
+                'tone_of_voice'     => 'we',
+                'color_primary'     => '#FF5733',
+            ],
+        ])->assertRedirect();
+
+        $fresh = $community->fresh();
+        $this->assertEquals('Professional yet friendly', $fresh->brand_context['brand_personality']);
+        $this->assertEquals('#FF5733', $fresh->brand_context['color_primary']);
+    }
+
+    public function test_update_validates_brand_context_color_format(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $this->actingAs($owner)->patch("/communities/{$community->slug}", [
+            'name'          => $community->name,
+            'brand_context' => [
+                'color_primary' => 'not-a-hex',
+            ],
+        ])->assertSessionHasErrors('brand_context.color_primary');
+    }
+
+    public function test_update_validates_brand_context_tone_values(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $this->actingAs($owner)->patch("/communities/{$community->slug}", [
+            'name'          => $community->name,
+            'brand_context' => [
+                'tone_of_voice' => 'invalid_tone',
+            ],
+        ])->assertSessionHasErrors('brand_context.tone_of_voice');
+    }
+
+    // ─── update with ai_chatbot_instructions ────────────────────────────────
+
+    public function test_owner_can_update_ai_chatbot_instructions(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $this->actingAs($owner)->patch("/communities/{$community->slug}", [
+            'name'                    => $community->name,
+            'ai_chatbot_instructions' => 'Always be helpful and kind.',
+        ])->assertRedirect();
+
+        $this->assertEquals('Always be helpful and kind.', $community->fresh()->ai_chatbot_instructions);
+    }
+
+    // ─── update: integration fields prohibited on free plan ─────────────────
+
+    public function test_update_prohibits_pixel_fields_on_free_plan(): void
+    {
+        $owner     = User::factory()->create(); // free plan
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $this->actingAs($owner)->patch("/communities/{$community->slug}", [
+            'name'              => $community->name,
+            'facebook_pixel_id' => '12345678901234',
+        ])->assertSessionHasErrors('facebook_pixel_id');
+    }
+
+    public function test_update_prohibits_telegram_fields_on_non_pro_plan(): void
+    {
+        $owner = User::factory()->create();
+        CreatorSubscription::create([
+            'user_id'    => $owner->id,
+            'plan'       => CreatorSubscription::PLAN_BASIC,
+            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'expires_at' => now()->addYear(),
+        ]);
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $this->actingAs($owner)->patch("/communities/{$community->slug}", [
+            'name'               => $community->name,
+            'telegram_bot_token' => 'some-token',
+        ])->assertSessionHasErrors('telegram_bot_token');
     }
 
     // ─── announce: success path with plan (lines 330-337) ────────────────────

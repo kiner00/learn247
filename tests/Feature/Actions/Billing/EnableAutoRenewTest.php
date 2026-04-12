@@ -247,4 +247,102 @@ class EnableAutoRenewTest extends TestCase
             ->assertOk()
             ->assertJsonStructure(['linking_url']);
     }
+
+    public function test_creates_recurring_plan_for_creator_pro_subscription(): void
+    {
+        $this->mockXendit();
+
+        $user = User::factory()->create();
+        $creatorSub = CreatorSubscription::create([
+            'user_id'    => $user->id,
+            'plan'       => CreatorSubscription::PLAN_PRO,
+            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'xendit_id'  => 'inv_creator_pro_legacy',
+            'expires_at' => now()->addDays(15),
+        ]);
+
+        $action = app(EnableAutoRenew::class);
+        $linkingUrl = $action->executeForCreatorPlan($creatorSub);
+
+        $this->assertEquals('https://linking.xendit.co/auto', $linkingUrl);
+
+        $creatorSub->refresh();
+        $this->assertEquals('repl_auto_001', $creatorSub->xendit_plan_id);
+        $this->assertEquals('REQUIRES_ACTION', $creatorSub->recurring_status);
+    }
+
+    public function test_throws_if_creator_plan_already_recurring(): void
+    {
+        $user = User::factory()->create();
+        $creatorSub = CreatorSubscription::create([
+            'user_id'        => $user->id,
+            'plan'           => CreatorSubscription::PLAN_BASIC,
+            'status'         => CreatorSubscription::STATUS_ACTIVE,
+            'xendit_plan_id' => 'repl_existing_creator',
+            'expires_at'     => now()->addDays(15),
+        ]);
+
+        $action = app(EnableAutoRenew::class);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('already has auto-renew');
+        $action->executeForCreatorPlan($creatorSub);
+    }
+
+    public function test_rethrows_xendit_api_failure_for_subscription(): void
+    {
+        $xendit = Mockery::mock(XenditService::class);
+        $xendit->shouldReceive('createCustomer')
+            ->andReturn(['id' => 'cust_fail']);
+        $xendit->shouldReceive('createRecurringPlan')
+            ->andThrow(new \RuntimeException('Xendit create plan failed'));
+
+        $this->app->instance(XenditService::class, $xendit);
+
+        $user = User::factory()->create();
+        $community = Community::factory()->paid(499)->create();
+        $subscription = Subscription::create([
+            'community_id' => $community->id,
+            'user_id'      => $user->id,
+            'status'       => Subscription::STATUS_ACTIVE,
+            'xendit_id'    => 'inv_fail_test',
+            'expires_at'   => now()->addDays(20),
+        ]);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Xendit create plan failed');
+
+        $action = app(EnableAutoRenew::class);
+        $action->executeForSubscription($subscription);
+    }
+
+    public function test_returns_empty_string_when_no_actions_url(): void
+    {
+        $xendit = Mockery::mock(XenditService::class);
+        $xendit->shouldReceive('createCustomer')
+            ->andReturn(['id' => 'cust_no_url']);
+        $xendit->shouldReceive('createRecurringPlan')
+            ->andReturn([
+                'id'      => 'repl_no_url',
+                'status'  => 'REQUIRES_ACTION',
+                'actions' => [['action' => 'AUTH']],
+            ]);
+
+        $this->app->instance(XenditService::class, $xendit);
+
+        $user = User::factory()->create();
+        $community = Community::factory()->paid(499)->create();
+        $subscription = Subscription::create([
+            'community_id' => $community->id,
+            'user_id'      => $user->id,
+            'status'       => Subscription::STATUS_ACTIVE,
+            'xendit_id'    => 'inv_no_url_test',
+            'expires_at'   => now()->addDays(20),
+        ]);
+
+        $action = app(EnableAutoRenew::class);
+        $linkingUrl = $action->executeForSubscription($subscription);
+
+        $this->assertEquals('', $linkingUrl);
+    }
 }

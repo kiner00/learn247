@@ -464,6 +464,97 @@ class CreatorControllerTest extends TestCase
         );
     }
 
+    // ─── redeemCoupon ─────────────────────────────────────────────────────────
+
+    public function test_user_can_redeem_valid_coupon(): void
+    {
+        $user = User::factory()->create();
+
+        $mockAction = $this->mock(\App\Actions\Coupon\RedeemCoupon::class);
+        $fakeSub = \App\Models\CreatorSubscription::create([
+            'user_id'    => $user->id,
+            'plan'       => 'basic',
+            'status'     => \App\Models\CreatorSubscription::STATUS_ACTIVE,
+            'expires_at' => now()->addMonth(),
+        ]);
+        $mockAction->shouldReceive('execute')
+            ->once()
+            ->with(\Mockery::on(fn ($u) => $u->id === $user->id), 'TESTCODE')
+            ->andReturn($fakeSub);
+
+        $response = $this->actingAs($user)
+            ->post('/creator/plan/redeem-coupon', ['code' => 'TESTCODE']);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+    }
+
+    public function test_redeem_coupon_validates_code_required(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post('/creator/plan/redeem-coupon', [])
+            ->assertSessionHasErrors('code');
+    }
+
+    public function test_redeem_coupon_validates_code_max_length(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post('/creator/plan/redeem-coupon', ['code' => str_repeat('X', 33)])
+            ->assertSessionHasErrors('code');
+    }
+
+    public function test_redeem_coupon_returns_error_for_invalid_code(): void
+    {
+        $user = User::factory()->create();
+
+        $mockAction = $this->mock(\App\Actions\Coupon\RedeemCoupon::class);
+        $mockAction->shouldReceive('execute')
+            ->once()
+            ->andThrow(new \Symfony\Component\HttpKernel\Exception\HttpException(422, 'Invalid or expired coupon code.'));
+
+        $response = $this->actingAs($user)
+            ->post('/creator/plan/redeem-coupon', ['code' => 'BADCODE']);
+
+        $response->assertRedirect();
+        $response->assertSessionHasErrors('code');
+    }
+
+    public function test_guest_cannot_redeem_coupon(): void
+    {
+        $this->post('/creator/plan/redeem-coupon', ['code' => 'TEST'])
+            ->assertRedirect('/login');
+    }
+
+    // ─── plan page auto-renew and recurring flags ────────────────────────────
+
+    public function test_plan_page_shows_auto_renew_status(): void
+    {
+        $user = User::factory()->create();
+        \App\Models\CreatorSubscription::create([
+            'user_id'          => $user->id,
+            'plan'             => 'basic',
+            'status'           => \App\Models\CreatorSubscription::STATUS_ACTIVE,
+            'xendit_plan_id'   => 'repl_test',
+            'recurring_status' => 'ACTIVE',
+            'expires_at'       => now()->addMonth(),
+        ]);
+
+        $response = $this->actingAs($user)->get('/creator/plan');
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page->component('Creator/Plan')
+            ->where('isRecurring', true)
+            ->where('isAutoRenewing', true)
+            ->where('currentPlan', 'basic')
+        );
+    }
+
+    // ─── dashboard handles exception gracefully ──────────────────────────────
+
     public function test_dashboard_handles_exception_gracefully(): void
     {
         $owner = User::factory()->create();

@@ -101,4 +101,76 @@ class CreatePostTest extends TestCase
             'type'    => 'new_post',
         ]);
     }
+
+    public function test_blocked_member_cannot_create_post(): void
+    {
+        $community = Community::factory()->create();
+        $user      = User::factory()->create();
+        CommunityMember::factory()->create([
+            'community_id' => $community->id,
+            'user_id'      => $user->id,
+            'is_blocked'   => true,
+        ]);
+
+        $this->expectException(AuthorizationException::class);
+        $this->expectExceptionMessage('blocked');
+        $this->action->execute($user, $community, ['content' => 'Should fail']);
+    }
+
+    public function test_post_with_video_upload_stores_file(): void
+    {
+        Storage::fake(config('filesystems.default'));
+        $community = Community::factory()->create();
+        $user      = User::factory()->create();
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+
+        $post = $this->action->execute($user, $community, [
+            'content' => 'Post with video',
+            'video'   => UploadedFile::fake()->create('clip.mp4', 1024, 'video/mp4'),
+        ]);
+
+        $this->assertNotNull($post->video);
+    }
+
+    public function test_post_with_video_url(): void
+    {
+        $community = Community::factory()->create();
+        $user      = User::factory()->create();
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+
+        $post = $this->action->execute($user, $community, [
+            'content'   => 'Post with YouTube',
+            'video_url' => 'https://youtube.com/watch?v=abc123',
+        ]);
+
+        $this->assertEquals('https://youtube.com/watch?v=abc123', $post->video_url);
+    }
+
+    public function test_post_is_not_pinned_by_default(): void
+    {
+        $community = Community::factory()->create();
+        $user      = User::factory()->create();
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+
+        $post = $this->action->execute($user, $community, ['content' => 'Regular post']);
+
+        $this->assertFalse($post->is_pinned);
+    }
+
+    public function test_notification_contains_correct_data(): void
+    {
+        $owner     = User::factory()->create();
+        $member    = User::factory()->create(['name' => 'Jane Doe']);
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'name' => 'Test Community']);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+
+        $post = $this->action->execute($member, $community, ['content' => 'Check this', 'title' => 'My Title']);
+
+        $this->assertDatabaseHas('notifications', [
+            'user_id'      => $owner->id,
+            'actor_id'     => $member->id,
+            'community_id' => $community->id,
+            'type'         => 'new_post',
+        ]);
+    }
 }

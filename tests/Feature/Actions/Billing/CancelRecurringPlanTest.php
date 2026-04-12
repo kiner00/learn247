@@ -119,4 +119,62 @@ class CancelRecurringPlanTest extends TestCase
         $this->assertEquals('INACTIVE', $creatorSub->recurring_status);
         $this->assertEquals(CreatorSubscription::STATUS_ACTIVE, $creatorSub->status);
     }
+
+    public function test_rethrows_xendit_api_failure(): void
+    {
+        $xendit = Mockery::mock(XenditService::class);
+        $xendit->shouldReceive('deactivateRecurringPlan')
+            ->once()
+            ->andThrow(new \RuntimeException('Xendit API error'));
+
+        $this->app->instance(XenditService::class, $xendit);
+
+        $user = User::factory()->create();
+        $community = Community::factory()->paid()->create();
+        $subscription = Subscription::create([
+            'community_id'     => $community->id,
+            'user_id'          => $user->id,
+            'status'           => Subscription::STATUS_ACTIVE,
+            'xendit_plan_id'   => 'repl_fail_001',
+            'recurring_status' => 'ACTIVE',
+            'expires_at'       => now()->addDays(20),
+        ]);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Xendit API error');
+
+        $action = app(CancelRecurringPlan::class);
+        $action->execute($subscription);
+    }
+
+    public function test_recurring_status_not_updated_on_api_failure(): void
+    {
+        $xendit = Mockery::mock(XenditService::class);
+        $xendit->shouldReceive('deactivateRecurringPlan')
+            ->once()
+            ->andThrow(new \RuntimeException('Network error'));
+
+        $this->app->instance(XenditService::class, $xendit);
+
+        $user = User::factory()->create();
+        $community = Community::factory()->paid()->create();
+        $subscription = Subscription::create([
+            'community_id'     => $community->id,
+            'user_id'          => $user->id,
+            'status'           => Subscription::STATUS_ACTIVE,
+            'xendit_plan_id'   => 'repl_no_update',
+            'recurring_status' => 'ACTIVE',
+            'expires_at'       => now()->addDays(20),
+        ]);
+
+        try {
+            $action = app(CancelRecurringPlan::class);
+            $action->execute($subscription);
+        } catch (\RuntimeException) {
+            // expected
+        }
+
+        $subscription->refresh();
+        $this->assertEquals('ACTIVE', $subscription->recurring_status);
+    }
 }

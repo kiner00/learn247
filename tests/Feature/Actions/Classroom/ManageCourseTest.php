@@ -142,4 +142,101 @@ class ManageCourseTest extends TestCase
         Storage::disk('public')->assertMissing($path);
         $this->assertDatabaseMissing('courses', ['id' => $course->id]);
     }
+
+    public function test_store_with_preview_video_converts_key_to_url(): void
+    {
+        Storage::fake(config('filesystems.default'));
+        $community = Community::factory()->create();
+
+        $course = $this->action->store($community, [
+            'title'         => 'Video Course',
+            'preview_video' => 'course-previews/abc123.mp4',
+        ]);
+
+        $this->assertNotNull($course->preview_video);
+        // Storage::url() is called on the S3 key
+        $this->assertStringContainsString('course-previews/abc123.mp4', $course->preview_video);
+    }
+
+    public function test_store_without_preview_video_leaves_null(): void
+    {
+        $community = Community::factory()->create();
+
+        $course = $this->action->store($community, ['title' => 'No Video']);
+
+        $this->assertNull($course->preview_video);
+    }
+
+    public function test_update_with_preview_video_replaces_old(): void
+    {
+        Storage::fake(config('filesystems.default'));
+        $community = Community::factory()->create();
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Course',
+            'preview_video' => '/storage/course-previews/old.mp4',
+            'position'     => 1,
+        ]);
+
+        $updated = $this->action->update($course, [
+            'title'         => 'Course',
+            'preview_video' => 'course-previews/new.mp4',
+        ]);
+
+        $this->assertStringContainsString('course-previews/new.mp4', $updated->preview_video);
+    }
+
+    public function test_update_with_remove_preview_video_clears_it(): void
+    {
+        Storage::fake(config('filesystems.default'));
+        $community = Community::factory()->create();
+        $course = Course::create([
+            'community_id'  => $community->id,
+            'title'         => 'Course',
+            'preview_video' => '/storage/course-previews/old.mp4',
+            'position'      => 1,
+        ]);
+
+        $updated = $this->action->update($course, [
+            'title'                => 'Course',
+            'remove_preview_video' => true,
+        ]);
+
+        $this->assertNull($updated->preview_video);
+    }
+
+    public function test_update_without_preview_video_key_preserves_existing(): void
+    {
+        $community = Community::factory()->create();
+        $course = Course::create([
+            'community_id'  => $community->id,
+            'title'         => 'Course',
+            'preview_video' => '/storage/course-previews/existing.mp4',
+            'position'      => 1,
+        ]);
+
+        $updated = $this->action->update($course, ['title' => 'Updated Title']);
+
+        $this->assertEquals('/storage/course-previews/existing.mp4', $updated->preview_video);
+    }
+
+    public function test_destroy_deletes_preview_video_with_course_previews_key(): void
+    {
+        $disk = config('filesystems.default');
+        Storage::fake($disk);
+        Storage::disk($disk)->put('course-previews/vid.mp4', 'data');
+
+        $community = Community::factory()->create();
+        $course = Course::create([
+            'community_id'  => $community->id,
+            'title'         => 'With Video',
+            'position'      => 1,
+            'preview_video' => 'https://cdn.example.com/course-previews/vid.mp4',
+        ]);
+
+        $this->action->destroy($course);
+
+        Storage::disk($disk)->assertMissing('course-previews/vid.mp4');
+        $this->assertDatabaseMissing('courses', ['id' => $course->id]);
+    }
 }

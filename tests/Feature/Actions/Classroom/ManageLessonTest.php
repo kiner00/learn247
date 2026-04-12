@@ -158,4 +158,107 @@ class ManageLessonTest extends TestCase
         $this->assertEquals(1, $l2->fresh()->position);
         $this->assertEquals(2, $l1->fresh()->position);
     }
+
+    public function test_update_explicitly_removing_video_path_clears_fields(): void
+    {
+        $disk = config('filesystems.default');
+        Storage::fake($disk);
+        Storage::disk($disk)->put('lesson-videos/to-remove.mp4', 'data');
+
+        $community = Community::factory()->create();
+        $course = Course::create(['community_id' => $community->id, 'title' => 'C1', 'position' => 1]);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'M1', 'position' => 1]);
+        $lesson = CourseLesson::create([
+            'module_id'                 => $module->id,
+            'title'                     => 'Video Lesson',
+            'video_path'                => 'lesson-videos/to-remove.mp4',
+            'video_hls_path'            => 'hls/to-remove/index.m3u8',
+            'video_transcode_status'    => 'completed',
+            'video_transcode_percent'   => 100,
+            'position'                  => 1,
+        ]);
+
+        $updated = $this->action->update($lesson, ['video_path' => '']);
+
+        $this->assertNull($updated->video_path);
+        $this->assertNull($updated->video_hls_path);
+        $this->assertNull($updated->video_transcode_status);
+        $this->assertEquals(0, $updated->video_transcode_percent);
+        Storage::disk($disk)->assertMissing('lesson-videos/to-remove.mp4');
+    }
+
+    public function test_update_setting_new_video_path_when_none_exists(): void
+    {
+        $disk = config('filesystems.default');
+        Storage::fake($disk);
+        Storage::disk($disk)->put('lesson-videos/new.mp4', 'content');
+
+        $community = Community::factory()->create();
+        $course = Course::create(['community_id' => $community->id, 'title' => 'C1', 'position' => 1]);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'M1', 'position' => 1]);
+        $lesson = CourseLesson::create([
+            'module_id' => $module->id,
+            'title'     => 'No Video Yet',
+            'position'  => 1,
+        ]);
+
+        $updated = $this->action->update($lesson, ['video_path' => 'lesson-videos/new.mp4']);
+
+        $this->assertEquals('lesson-videos/new.mp4', $updated->video_path);
+        $this->assertNull($updated->video_hls_path);
+        $this->assertNull($updated->video_transcode_status);
+        $this->assertEquals(0, $updated->video_transcode_percent);
+    }
+
+    public function test_update_with_video_url_resets_transcode_fields(): void
+    {
+        $disk = config('filesystems.default');
+        Storage::fake($disk);
+        Storage::disk($disk)->put('lesson-videos/uploaded.mp4', 'data');
+
+        $community = Community::factory()->create();
+        $course = Course::create(['community_id' => $community->id, 'title' => 'C1', 'position' => 1]);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'M1', 'position' => 1]);
+        $lesson = CourseLesson::create([
+            'module_id'                 => $module->id,
+            'title'                     => 'Video Lesson',
+            'video_path'                => 'lesson-videos/uploaded.mp4',
+            'video_hls_path'            => 'hls/uploaded/index.m3u8',
+            'video_transcode_status'    => 'completed',
+            'video_transcode_percent'   => 100,
+            'position'                  => 1,
+        ]);
+
+        $updated = $this->action->update($lesson, [
+            'video_url' => 'https://youtube.com/watch?v=xyz',
+        ]);
+
+        $this->assertEquals('https://youtube.com/watch?v=xyz', $updated->video_url);
+        $this->assertNull($updated->video_path);
+        $this->assertNull($updated->video_hls_path);
+        $this->assertNull($updated->video_transcode_status);
+        $this->assertEquals(0, $updated->video_transcode_percent);
+    }
+
+    public function test_update_same_video_path_does_not_delete(): void
+    {
+        $disk = config('filesystems.default');
+        Storage::fake($disk);
+        Storage::disk($disk)->put('lesson-videos/same.mp4', 'data');
+
+        $community = Community::factory()->create();
+        $course = Course::create(['community_id' => $community->id, 'title' => 'C1', 'position' => 1]);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'M1', 'position' => 1]);
+        $lesson = CourseLesson::create([
+            'module_id'  => $module->id,
+            'title'      => 'Video Lesson',
+            'video_path' => 'lesson-videos/same.mp4',
+            'position'   => 1,
+        ]);
+
+        $updated = $this->action->update($lesson, ['video_path' => 'lesson-videos/same.mp4']);
+
+        $this->assertEquals('lesson-videos/same.mp4', $updated->video_path);
+        Storage::disk($disk)->assertExists('lesson-videos/same.mp4');
+    }
 }

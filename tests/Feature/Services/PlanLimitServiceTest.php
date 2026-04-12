@@ -287,6 +287,163 @@ class PlanLimitServiceTest extends TestCase
         $this->assertFalse($gate['can_enable_pricing']);
     }
 
+    // ── canUseEmail ──────────────────────────────────────────────────────────
+
+    public function test_free_user_cannot_use_email(): void
+    {
+        $user = User::factory()->create();
+
+        $this->assertFalse($this->service->canUseEmail($user));
+    }
+
+    public function test_basic_user_can_use_email(): void
+    {
+        $user = User::factory()->create();
+        $this->giveCreatorPlan($user, 'basic');
+
+        $this->assertTrue($this->service->canUseEmail($user));
+    }
+
+    public function test_pro_user_can_use_email(): void
+    {
+        $user = User::factory()->create();
+        $this->giveCreatorPlan($user, 'pro');
+
+        $this->assertTrue($this->service->canUseEmail($user));
+    }
+
+    // ── canUseBYOK ───────────────────────────────────────────────────────────
+
+    public function test_free_user_cannot_use_byok(): void
+    {
+        $user = User::factory()->create();
+
+        $this->assertFalse($this->service->canUseBYOK($user));
+    }
+
+    public function test_basic_user_cannot_use_byok(): void
+    {
+        $user = User::factory()->create();
+        $this->giveCreatorPlan($user, 'basic');
+
+        $this->assertFalse($this->service->canUseBYOK($user));
+    }
+
+    public function test_pro_user_can_use_byok(): void
+    {
+        $user = User::factory()->create();
+        $this->giveCreatorPlan($user, 'pro');
+
+        $this->assertTrue($this->service->canUseBYOK($user));
+    }
+
+    // ── canUploadVideo ───────────────────────────────────────────────────────
+
+    public function test_free_user_cannot_upload_video(): void
+    {
+        $user = User::factory()->create();
+
+        $this->assertFalse($this->service->canUploadVideo($user));
+    }
+
+    public function test_basic_user_cannot_upload_video(): void
+    {
+        $user = User::factory()->create();
+        $this->giveCreatorPlan($user, 'basic');
+
+        $this->assertFalse($this->service->canUploadVideo($user));
+    }
+
+    public function test_pro_user_can_upload_video(): void
+    {
+        $user = User::factory()->create();
+        $this->giveCreatorPlan($user, 'pro');
+
+        $this->assertTrue($this->service->canUploadVideo($user));
+    }
+
+    // ── maxVideoSizeMb ───────────────────────────────────────────────────────
+
+    public function test_pro_max_video_size_is_5120(): void
+    {
+        $this->assertSame(5120, $this->service->maxVideoSizeMb('pro'));
+    }
+
+    public function test_free_max_video_size_is_zero(): void
+    {
+        $this->assertSame(0, $this->service->maxVideoSizeMb('free'));
+    }
+
+    public function test_basic_max_video_size_is_zero(): void
+    {
+        $this->assertSame(0, $this->service->maxVideoSizeMb('basic'));
+    }
+
+    // ── curzzoLimit ──────────────────────────────────────────────────────────
+
+    public function test_pro_curzzo_limit_is_five(): void
+    {
+        $this->assertSame(5, $this->service->curzzoLimit('pro'));
+    }
+
+    public function test_free_curzzo_limit_is_zero(): void
+    {
+        $this->assertSame(0, $this->service->curzzoLimit('free'));
+    }
+
+    public function test_basic_curzzo_limit_is_zero(): void
+    {
+        $this->assertSame(0, $this->service->curzzoLimit('basic'));
+    }
+
+    // ── canCreateCurzzo ──────────────────────────────────────────────────────
+
+    public function test_free_user_cannot_create_curzzo(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $user->id]);
+
+        $this->assertFalse($this->service->canCreateCurzzo($user, $community));
+    }
+
+    public function test_basic_user_cannot_create_curzzo(): void
+    {
+        $user = User::factory()->create();
+        $this->giveCreatorPlan($user, 'basic');
+        $community = Community::factory()->create(['owner_id' => $user->id]);
+
+        $this->assertFalse($this->service->canCreateCurzzo($user, $community));
+    }
+
+    public function test_pro_user_can_create_curzzo_below_limit(): void
+    {
+        $user = User::factory()->create();
+        $this->giveCreatorPlan($user, 'pro');
+        $community = Community::factory()->create(['owner_id' => $user->id]);
+
+        $this->assertTrue($this->service->canCreateCurzzo($user, $community));
+    }
+
+    public function test_pro_user_cannot_create_curzzo_at_limit(): void
+    {
+        $user = User::factory()->create();
+        $this->giveCreatorPlan($user, 'pro');
+        $community = Community::factory()->create(['owner_id' => $user->id]);
+
+        // Create 5 curzzos (the limit)
+        for ($i = 0; $i < 5; $i++) {
+            \App\Models\Curzzo::create([
+                'community_id' => $community->id,
+                'name'         => "Curzzo {$i}",
+                'access_type'  => 'free',
+                'instructions' => 'Test instructions',
+                'position'     => $i,
+            ]);
+        }
+
+        $this->assertFalse($this->service->canCreateCurzzo($user, $community));
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private function giveCreatorPlan(User $user, string $plan): void

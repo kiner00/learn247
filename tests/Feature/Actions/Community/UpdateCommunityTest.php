@@ -159,4 +159,82 @@ class UpdateCommunityTest extends TestCase
         $this->assertNotNull($result->avatar);
         Storage::disk($disk)->assertMissing('community-avatars/old-avatar.jpg');
     }
+
+    public function test_remove_cover_image_flag_clears_cover(): void
+    {
+        $disk = config('filesystems.default');
+        Storage::fake($disk);
+        Storage::disk($disk)->put('community-covers/old-cover.jpg', 'dummy');
+
+        $community = Community::factory()->create(['cover_image' => '/storage/community-covers/old-cover.jpg']);
+        $action = app(UpdateCommunity::class);
+
+        $result = $action->execute($community, [
+            'name'               => $community->name,
+            'remove_cover_image' => true,
+        ]);
+
+        $this->assertNull($result->cover_image);
+    }
+
+    public function test_remove_avatar_flag_clears_avatar(): void
+    {
+        $disk = config('filesystems.default');
+        Storage::fake($disk);
+        Storage::disk($disk)->put('community-avatars/old-avatar.jpg', 'dummy');
+
+        $community = Community::factory()->create(['avatar' => '/storage/community-avatars/old-avatar.jpg']);
+        $action = app(UpdateCommunity::class);
+
+        $result = $action->execute($community, [
+            'name'          => $community->name,
+            'remove_avatar' => true,
+        ]);
+
+        $this->assertNull($result->avatar);
+    }
+
+    public function test_pricing_gate_passes_when_all_requirements_met(): void
+    {
+        $disk = config('filesystems.default');
+        Storage::fake($disk);
+
+        $owner = User::factory()->create(['bio' => 'A bio', 'avatar' => 'av.jpg']);
+        $community = Community::factory()->create([
+            'owner_id'    => $owner->id,
+            'cover_image' => '/storage/cover.jpg',
+            'description' => 'Desc',
+            'price'       => 0,
+        ]);
+        $course = Course::create(['community_id' => $community->id, 'title' => 'C']);
+        for ($i = 1; $i <= 5; $i++) {
+            CourseModule::create(['course_id' => $course->id, 'title' => "M{$i}", 'position' => $i]);
+        }
+
+        $action = app(UpdateCommunity::class);
+        $result = $action->execute($community, ['name' => 'Paid Community', 'price' => 499, 'description' => 'A paid community']);
+
+        $this->assertEquals('Paid Community', $result->name);
+        $this->assertEquals(499, (float) $result->price);
+    }
+
+    public function test_no_cover_image_uploaded_and_no_flag_preserves_existing(): void
+    {
+        $community = Community::factory()->create(['cover_image' => '/storage/existing-cover.jpg']);
+        $action = app(UpdateCommunity::class);
+
+        $result = $action->execute($community, ['name' => 'Same Cover']);
+
+        $this->assertEquals('/storage/existing-cover.jpg', $result->cover_image);
+    }
+
+    public function test_no_avatar_uploaded_and_no_flag_preserves_existing(): void
+    {
+        $community = Community::factory()->create(['avatar' => '/storage/existing-avatar.jpg']);
+        $action = app(UpdateCommunity::class);
+
+        $result = $action->execute($community, ['name' => 'Same Avatar']);
+
+        $this->assertEquals('/storage/existing-avatar.jpg', $result->avatar);
+    }
 }

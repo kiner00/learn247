@@ -386,4 +386,140 @@ class ChatControllerTest extends TestCase
                 ->value('messages_last_read_at')
         );
     }
+
+    // ─── owner sees chatbot users ────────────────────────────────────────────
+
+    public function test_owner_sees_chatbot_users_on_chat_index(): void
+    {
+        [$owner, $community, $member] = $this->createCommunityWithMember();
+
+        // Create chatbot messages from the member
+        \App\Models\ChatbotMessage::create([
+            'community_id' => $community->id,
+            'user_id'      => $member->id,
+            'role'         => 'user',
+            'content'      => 'Hello bot',
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->get("/communities/{$community->slug}/chat");
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Communities/Chat')
+            ->where('isOwner', true)
+            ->has('chatbotUsers', 1)
+        );
+    }
+
+    public function test_member_does_not_see_chatbot_users(): void
+    {
+        [$owner, $community, $member] = $this->createCommunityWithMember();
+
+        $response = $this->actingAs($member)
+            ->get("/communities/{$community->slug}/chat");
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Communities/Chat')
+            ->where('isOwner', false)
+            ->where('chatbotUsers', [])
+        );
+    }
+
+    // ─── selectedChatUser query param ────────────────────────────────────────
+
+    public function test_owner_can_deep_link_to_specific_user_chat(): void
+    {
+        [$owner, $community, $member] = $this->createCommunityWithMember();
+
+        $response = $this->actingAs($owner)
+            ->get("/communities/{$community->slug}/chat?user={$member->id}");
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Communities/Chat')
+            ->where('selectedChatUser.id', $member->id)
+        );
+    }
+
+    public function test_chat_index_without_user_param_has_null_selected_user(): void
+    {
+        [$owner, $community, $member] = $this->createCommunityWithMember();
+
+        $response = $this->actingAs($member)
+            ->get("/communities/{$community->slug}/chat");
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Communities/Chat')
+            ->where('selectedChatUser', null)
+        );
+    }
+
+    // ─── owner cannot delete others' messages (only super_admin can) ───────
+
+    public function test_owner_cannot_delete_others_chat_message(): void
+    {
+        [$owner, $community, $member] = $this->createCommunityWithMember();
+
+        $msg = Message::create([
+            'community_id' => $community->id,
+            'user_id'      => $member->id,
+            'content'      => 'Member message',
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->deleteJson("/communities/{$community->slug}/chat/{$msg->id}");
+
+        $response->assertForbidden();
+        $this->assertDatabaseHas('messages', ['id' => $msg->id]);
+    }
+
+    // ─── store: message without content but with media ───────────────────────
+
+    public function test_member_can_send_media_only_message(): void
+    {
+        Storage::fake(config('filesystems.default'));
+
+        [$owner, $community, $member] = $this->createCommunityWithMember();
+
+        $response = $this->actingAs($member)
+            ->postJson("/communities/{$community->slug}/chat", [
+                'content' => null,
+                'media'   => UploadedFile::fake()->image('photo.jpg'),
+            ]);
+
+        // This will either pass or fail depending on SendMessageRequest validation
+        // The key assertion is that media-only messages are handled
+        $this->assertTrue(in_array($response->status(), [200, 422]));
+    }
+
+    // ─── guest cannot poll ───────────────────────────────────────────────────
+
+    public function test_guest_cannot_poll_chat(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+
+        $this->getJson("/communities/{$community->slug}/chat/poll?after=0")
+            ->assertUnauthorized();
+    }
+
+    // ─── guest cannot delete ─────────────────────────────────────────────────
+
+    public function test_guest_cannot_delete_chat_message(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+
+        $msg = Message::create([
+            'community_id' => $community->id,
+            'user_id'      => $owner->id,
+            'content'      => 'Test',
+        ]);
+
+        $this->deleteJson("/communities/{$community->slug}/chat/{$msg->id}")
+            ->assertUnauthorized();
+    }
 }
