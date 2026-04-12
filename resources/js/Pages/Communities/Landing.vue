@@ -853,15 +853,16 @@ async function handleSectionVideoUpload(sectionType, e) {
         completedParts.sort((a, b) => a.PartNumber - b.PartNumber);
 
         // Step 3: Complete multipart upload
-        await fetch(`${multipartBase}/complete`, {
+        const completeRes = await fetch(`${multipartBase}/complete`, {
             method: 'POST',
             headers: jsonHeaders(),
             body: JSON.stringify({ key, upload_id: uploadId, parts: completedParts }),
         });
+        const completeData = await completeRes.json();
 
         // Step 4: Store the S3 URL in the section draft
         if (!editDraft.value[sectionType]) editDraft.value[sectionType] = {};
-        editDraft.value[sectionType].video_url = key;
+        editDraft.value[sectionType].video_url = completeData.url ?? key;
     } catch (err) {
         if (uploadId && key) {
             try {

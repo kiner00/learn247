@@ -521,7 +521,10 @@ class ClassroomController extends Controller
             'MultipartUpload' => ['Parts' => $request->parts],
         ]);
 
-        return response()->json(['key' => $request->key]);
+        return response()->json([
+            'key' => $request->key,
+            'url' => Storage::disk('s3')->url($request->key),
+        ]);
     }
 
     public function abortMultipartUpload(Request $request, Community $community): JsonResponse
