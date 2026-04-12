@@ -107,4 +107,30 @@ class CommunityTest extends TestCase
 
         $this->assertSame('https://curzzo.test/communities/foo', $community->url());
     }
+
+    // ─── Relationship definitions (covers HasMany/BelongsTo methods) ──────────
+
+    public function test_relationship_methods_return_correct_relation_types(): void
+    {
+        $community = new Community();
+
+        // BelongsTo
+        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, $community->owner());
+
+        // HasMany
+        $hasManyRelations = [
+            'members', 'posts', 'comments', 'subscriptions', 'payments',
+            'affiliates', 'courses', 'curzzos', 'messages', 'events',
+            'invites', 'certifications', 'tags', 'emailCampaigns',
+            'emailUnsubscribes', 'emailSequences', 'cartEvents',
+        ];
+
+        foreach ($hasManyRelations as $rel) {
+            $this->assertInstanceOf(
+                \Illuminate\Database\Eloquent\Relations\HasMany::class,
+                $community->{$rel}(),
+                "Relation {$rel}() should be HasMany"
+            );
+        }
+    }
 }

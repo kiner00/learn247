@@ -506,6 +506,35 @@ class ChatControllerTest extends TestCase
             ->assertUnauthorized();
     }
 
+    // ─── telegram-connected community triggers telegram member count fetch ──
+
+    public function test_index_fetches_telegram_member_count_when_connected(): void
+    {
+        [$owner, $community, $member] = $this->createCommunityWithMember();
+
+        $community->update([
+            'telegram_bot_token' => 'tg-bot-token',
+            'telegram_chat_id'   => '-100123456',
+        ]);
+
+        $gateway = \Mockery::mock(\App\Contracts\TelegramGateway::class);
+        $gateway->shouldReceive('getChatMemberCount')
+            ->once()
+            ->with('tg-bot-token', '-100123456')
+            ->andReturn(42);
+        $this->app->instance(\App\Contracts\TelegramGateway::class, $gateway);
+
+        $response = $this->actingAs($member)
+            ->get("/communities/{$community->slug}/chat");
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Communities/Chat')
+            ->where('telegramConnected', true)
+            ->where('telegramMemberCount', 42)
+        );
+    }
+
     // ─── guest cannot delete ─────────────────────────────────────────────────
 
     public function test_guest_cannot_delete_chat_message(): void
