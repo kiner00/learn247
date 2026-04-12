@@ -169,4 +169,31 @@ class HandleCurzzoTopupPaidTest extends TestCase
         $handler->matches('inv_topup_123');
         $handler->handle([], 'evt_1', 'PAID');
     }
+
+    public function test_logs_error_and_rethrows_when_update_fails(): void
+    {
+        $data    = $this->createPendingTopup();
+        $handler = new HandleCurzzoTopupPaid();
+        $handler->matches('inv_topup_123');
+
+        // Drop the curzzo_topups table to force the update to throw.
+        \Illuminate\Support\Facades\Schema::drop('curzzo_topups');
+
+        Log::shouldReceive('error')
+            ->once()
+            ->withArgs(function ($msg, $context) use ($data) {
+                return str_contains($msg, 'HandleCurzzoTopupPaid failed')
+                    && $context['topup_id'] === $data['topup']->id
+                    && isset($context['error']);
+            });
+
+        $this->expectException(\Throwable::class);
+
+        try {
+            $handler->handle([], 'evt_1', 'PAID');
+        } finally {
+            // Restore schema for RefreshDatabase teardown
+            \Illuminate\Support\Facades\Artisan::call('migrate:fresh');
+        }
+    }
 }

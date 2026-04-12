@@ -9,6 +9,7 @@ use App\Models\CommunityMember;
 use App\Models\EmailBroadcast;
 use App\Models\EmailCampaign;
 use App\Models\EmailUnsubscribe;
+use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
@@ -127,5 +128,97 @@ class SendEmailBroadcastTest extends TestCase
 
         $broadcast->refresh();
         $this->assertEquals(1, $broadcast->total_recipients);
+    }
+
+    public function test_filters_by_included_tags(): void
+    {
+        Queue::fake([SendEmailBroadcastBatch::class]);
+
+        [$community, $broadcast, $campaign, $members] = $this->createBroadcastWithMembers(3);
+
+        $tag = Tag::create([
+            'community_id' => $community->id,
+            'name'         => 'VIP',
+            'slug'         => 'vip',
+            'color'        => '#ff0000',
+            'type'         => 'manual',
+        ]);
+
+        // Tag only the first two members
+        $members[0]->tags()->attach($tag->id, ['tagged_at' => now()]);
+        $members[1]->tags()->attach($tag->id, ['tagged_at' => now()]);
+
+        $broadcast->update(['filter_tags' => [$tag->id]]);
+
+        $job = new SendEmailBroadcast($broadcast);
+        $job->handle();
+
+        $broadcast->refresh();
+        $this->assertEquals(2, $broadcast->total_recipients);
+    }
+
+    public function test_filters_by_excluded_tags(): void
+    {
+        Queue::fake([SendEmailBroadcastBatch::class]);
+
+        [$community, $broadcast, $campaign, $members] = $this->createBroadcastWithMembers(3);
+
+        $tag = Tag::create([
+            'community_id' => $community->id,
+            'name'         => 'Spammer',
+            'slug'         => 'spammer',
+            'color'        => '#000000',
+            'type'         => 'manual',
+        ]);
+
+        // Exclude the first member
+        $members[0]->tags()->attach($tag->id, ['tagged_at' => now()]);
+
+        $broadcast->update(['filter_exclude_tags' => [$tag->id]]);
+
+        $job = new SendEmailBroadcast($broadcast);
+        $job->handle();
+
+        $broadcast->refresh();
+        $this->assertEquals(2, $broadcast->total_recipients);
+    }
+
+    public function test_filters_by_registered_days(): void
+    {
+        Queue::fake([SendEmailBroadcastBatch::class]);
+
+        [$community, $broadcast, $campaign, $members] = $this->createBroadcastWithMembers(3);
+
+        // Make only one member "old enough" (bypass timestamps with query builder)
+        \App\Models\CommunityMember::where('id', $members[0]->id)->update(['created_at' => now()->subDays(10)]);
+        \App\Models\CommunityMember::where('id', $members[1]->id)->update(['created_at' => now()->subDay()]);
+        \App\Models\CommunityMember::where('id', $members[2]->id)->update(['created_at' => now()]);
+
+        $broadcast->update(['filter_registered_days' => 7]);
+
+        $job = new SendEmailBroadcast($broadcast);
+        $job->handle();
+
+        $broadcast->refresh();
+        $this->assertEquals(1, $broadcast->total_recipients);
+    }
+
+    public function test_filters_by_membership_type(): void
+    {
+        Queue::fake([SendEmailBroadcastBatch::class]);
+
+        [$community, $broadcast, $campaign, $members] = $this->createBroadcastWithMembers(3);
+
+        $members[0]->update(['membership_type' => 'paid']);
+        $members[1]->update(['membership_type' => 'paid']);
+        $members[2]->update(['membership_type' => 'free']);
+
+        $broadcast->update(['filter_membership_type' => 'paid']);
+
+        $job = new SendEmailBroadcast($broadcast);
+        $job->handle();
+
+        $broadcast->refresh();
+        $this->assertEquals(2, $broadcast->total_recipients);
     }
 }

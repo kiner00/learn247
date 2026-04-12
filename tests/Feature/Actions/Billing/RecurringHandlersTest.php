@@ -900,4 +900,53 @@ class RecurringHandlersTest extends TestCase
         ]);
         $this->assertEquals(0, AffiliateConversion::count());
     }
+
+    // =====================================================================
+    // AbstractRecurringCycleHandler — additional coverage
+    // =====================================================================
+
+    public function test_handle_plan_activated_returns_early_for_unknown_plan(): void
+    {
+        $handler = app(RecurringSubscriptionHandler::class);
+
+        // No subscription exists for this plan ID — should silently return.
+        $handler->handlePlanActivated(['id' => 'repl_plan_activated_unknown']);
+
+        $this->assertEquals(0, Subscription::count());
+    }
+
+    public function test_handle_cycle_succeeded_rethrows_when_inner_transaction_fails(): void
+    {
+        $handler = app(RecurringSubscriptionHandler::class);
+
+        $user = User::factory()->create();
+        $community = Community::factory()->paid()->create();
+        Subscription::create([
+            'community_id'     => $community->id,
+            'user_id'          => $user->id,
+            'status'           => Subscription::STATUS_ACTIVE,
+            'xendit_plan_id'   => 'repl_sub_throws_001',
+            'recurring_status' => 'ACTIVE',
+            'expires_at'       => now()->addDays(5),
+        ]);
+
+        // Force a DB-level failure by passing an absurdly huge amount that
+        // violates SQLite column constraints isn't guaranteed. Instead, we
+        // drop the payments table to force createPaymentRecord to throw.
+        \Illuminate\Support\Facades\Schema::drop('payments');
+
+        $this->expectException(\Throwable::class);
+
+        try {
+            $handler->handleCycleSucceeded([
+                'plan_id'  => 'repl_sub_throws_001',
+                'cycle_id' => 'cycle_sub_throws_001',
+                'id'       => 'cycle_sub_throws_001',
+                'amount'   => 499,
+            ]);
+        } finally {
+            // Recreate payments table so RefreshDatabase teardown succeeds.
+            \Illuminate\Support\Facades\Artisan::call('migrate:fresh');
+        }
+    }
 }
