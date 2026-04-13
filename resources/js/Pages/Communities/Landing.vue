@@ -570,12 +570,17 @@ watch(showEditPanel, (open) => {
             }
         }
 
-        // Ensure hero video_type is initialized
+        // Ensure hero video_type is initialized. If the draft already has
+        // embed content but no explicit type, infer 'embed' so the display
+        // condition matches. Otherwise default to 'vsl'.
         if (!editDraft.value.hero.video_type) {
-            editDraft.value.hero.video_type = editDraft.value.hero.vsl_url ? 'vsl' : 'vsl';
-        }
-        if (!editDraft.value.hero.embed_html) {
-            editDraft.value.hero.embed_html = editDraft.value.embed?.html || '';
+            if (editDraft.value.hero.embed_html) {
+                editDraft.value.hero.video_type = 'embed';
+            } else if (editDraft.value.hero.video_url) {
+                editDraft.value.hero.video_type = 'upload';
+            } else {
+                editDraft.value.hero.video_type = 'vsl';
+            }
         }
     }
 });
