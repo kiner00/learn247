@@ -21,6 +21,15 @@ const conversationId = ref(null);
 const loading = ref(false);
 const loadingHistory = ref(true);
 const chatContainer = ref(null);
+const inputEl = ref(null);
+
+function autoResize() {
+    nextTick(() => {
+        if (!inputEl.value) return;
+        inputEl.value.style.height = 'auto';
+        inputEl.value.style.height = Math.min(inputEl.value.scrollHeight, 120) + 'px';
+    });
+}
 const limitReached = ref(false);
 const limitReason = ref('');
 const checkingOut = ref(false);
@@ -66,6 +75,7 @@ async function send() {
     if (!text || loading.value || limitReached.value) return;
 
     newMessage.value = '';
+    autoResize();
     messages.value.push({ role: 'user', text });
     scrollToBottom();
 
@@ -207,16 +217,19 @@ onMounted(loadHistory);
 
         <!-- Input (hidden when limit reached) -->
         <div v-else class="px-4 py-3 bg-white border-t border-gray-200 shrink-0">
-            <form @submit.prevent="send" class="flex items-center gap-2">
-                <input
+            <form @submit.prevent="send" class="flex items-end gap-2">
+                <textarea
                     v-model="newMessage"
-                    type="text"
+                    ref="inputEl"
+                    rows="1"
                     maxlength="1000"
                     :placeholder="`Message ${curzzo.name}...`"
                     :disabled="loading"
-                    class="flex-1 px-4 py-2.5 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-50"
+                    class="flex-1 px-4 py-2.5 border border-gray-300 rounded-3xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-50 resize-none leading-5"
+                    style="max-height: 120px;"
                     @keydown.enter.exact.prevent="send"
-                />
+                    @input="autoResize"
+                ></textarea>
                 <button type="submit" :disabled="!newMessage.trim() || loading"
                     class="w-10 h-10 flex items-center justify-center bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-colors disabled:opacity-50 shrink-0">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
