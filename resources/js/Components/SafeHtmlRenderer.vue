@@ -27,10 +27,12 @@ DOMPurify.addHook('uponSanitizeElement', (node) => {
     }
 });
 
-function extractAllowedScripts(html) {
+function extractAllowedContent(html) {
     const scripts = [];
+    const iframes = [];
     const tmp = document.createElement('div');
     tmp.innerHTML = html ?? '';
+
     tmp.querySelectorAll('script').forEach((s) => {
         const src = s.getAttribute('src') || '';
         if (src) {
@@ -51,15 +53,50 @@ function extractAllowedScripts(html) {
         }
         s.remove();
     });
-    return { cleanedHtml: tmp.innerHTML, scripts };
+
+    tmp.querySelectorAll('iframe').forEach((frame) => {
+        const src = frame.getAttribute('src') || '';
+        const onload = frame.getAttribute('onload') || '';
+        const hasAllowedLoader = SCRIPT_HOST_ALLOWED.test(src) || SCRIPT_HOST_ALLOWED.test(onload.match(/https:\/\/[^\s'"]+/)?.[0] || '');
+
+        if (IFRAME_ALLOWED.test(src) && !onload) return;
+        if (!hasAllowedLoader) return;
+
+        const attrs = {};
+        for (const attr of frame.attributes) attrs[attr.name] = attr.value;
+        const placeholder = document.createElement('div');
+        placeholder.setAttribute('data-ifr-placeholder', String(iframes.length));
+        iframes.push(attrs);
+        frame.replaceWith(placeholder);
+    });
+
+    return { cleanedHtml: tmp.innerHTML, scripts, iframes };
 }
 
 function renderHtml() {
     if (!container.value) return;
     const raw = props.html ?? '';
-    const { cleanedHtml, scripts } = extractAllowedScripts(raw);
+    const { cleanedHtml, scripts, iframes } = extractAllowedContent(raw);
 
-    container.value.innerHTML = DOMPurify.sanitize(cleanedHtml, purifyConfig);
+    container.value.innerHTML = DOMPurify.sanitize(cleanedHtml, {
+        ...purifyConfig,
+        ADD_ATTR: [...purifyConfig.ADD_ATTR, 'data-ifr-placeholder'],
+    });
+
+    container.value.querySelectorAll('[data-ifr-placeholder]').forEach((ph) => {
+        const idx = Number(ph.getAttribute('data-ifr-placeholder'));
+        const attrs = iframes[idx];
+        if (!attrs) return;
+        const frame = document.createElement('iframe');
+        Object.entries(attrs).forEach(([name, value]) => {
+            if (name === 'onload') {
+                frame.onload = new Function(value);
+            } else {
+                frame.setAttribute(name, value);
+            }
+        });
+        ph.replaceWith(frame);
+    });
 
     scripts.forEach((meta) => {
         const el = document.createElement('script');
