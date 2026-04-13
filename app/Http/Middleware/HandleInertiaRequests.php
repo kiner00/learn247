@@ -128,6 +128,7 @@ class HandleInertiaRequests extends Middleware
                 ? Notification::where('user_id', $request->user()->id)->whereNull('read_at')->count()
                 : 0,
             'app_theme' => Setting::get('app_theme', 'green'),
+            's3_base_url' => rtrim(config('filesystems.disks.s3.url') ?: '', '/'),
             // Set when request comes in on a custom subdomain or custom domain
             'domain_community' => ($dc = $request->attributes->get('domain_community'))
                 ? ['id' => $dc->id, 'slug' => $dc->slug]

@@ -80,7 +80,7 @@
             <!-- Uploaded Video -->
             <div v-else-if="lp.hero.video_type === 'upload' && lp.hero.video_url" class="mb-10 w-full max-w-2xl mx-auto rounded-2xl overflow-hidden shadow-2xl shadow-black/40 border border-white/10">
                 <p class="text-xs text-indigo-300 text-center py-2 bg-black/30 font-medium tracking-wide uppercase">🔊 Make sure your sound is on</p>
-                <video :src="lp.hero.video_url" controls class="w-full aspect-video object-cover" />
+                <video :src="resolveMediaUrl(lp.hero.video_url)" controls class="w-full aspect-video object-cover" />
             </div>
 
             <!-- Embed Script -->
@@ -113,6 +113,7 @@
 <script setup>
 import SafeHtmlRenderer from '@/Components/SafeHtmlRenderer.vue';
 import { sanitizeHtml } from '@/utils/sanitize';
+import { resolveMediaUrl } from '@/utils/media';
 
 defineProps({
     lp: { type: Object, required: true },

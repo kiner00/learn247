@@ -27,7 +27,7 @@
             <div v-else-if="data.video_url" class="mb-8">
                 <div class="aspect-video rounded-2xl overflow-hidden shadow-2xl">
                     <video v-if="data.video_url.includes('.mp4') || data.video_url.includes('.webm') || data.video_url.includes('.mov')"
-                        :src="data.video_url" controls class="w-full h-full object-cover" />
+                        :src="resolveMediaUrl(data.video_url)" controls class="w-full h-full object-cover" />
                     <iframe v-else :src="normalizeVideoUrl(data.video_url)" class="w-full h-full" frameborder="0" allowfullscreen allow="autoplay; encrypted-media" />
                 </div>
             </div>
@@ -38,6 +38,7 @@
 <script setup>
 import SafeHtmlRenderer from '@/Components/SafeHtmlRenderer.vue';
 import { sanitizeHtml } from '@/utils/sanitize';
+import { resolveMediaUrl } from '@/utils/media';
 
 defineProps({
     sectionId: { type: String, required: true },

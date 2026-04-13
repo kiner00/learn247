@@ -159,7 +159,7 @@
             <SafeHtmlRenderer v-if="lp.video_creator.embed_html" :html="lp.video_creator.embed_html" />
             <div v-else-if="lp.video_creator.video_url" class="aspect-video rounded-2xl overflow-hidden shadow-2xl">
                 <video v-if="lp.video_creator.video_url.includes('.mp4') || lp.video_creator.video_url.includes('.webm') || lp.video_creator.video_url.includes('.mov')"
-                    :src="lp.video_creator.video_url" controls class="w-full h-full object-cover" />
+                    :src="resolveMediaUrl(lp.video_creator.video_url)" controls class="w-full h-full object-cover" />
                 <iframe v-else :src="normalizeVideoUrl(lp.video_creator.video_url)" class="w-full h-full" frameborder="0" allowfullscreen allow="autoplay; encrypted-media" />
             </div>
         </div>
@@ -218,7 +218,7 @@
             <SafeHtmlRenderer v-if="lp.video_testimonials.embed_html" :html="lp.video_testimonials.embed_html" />
             <div v-else-if="lp.video_testimonials.video_url" class="aspect-video rounded-2xl overflow-hidden shadow-2xl">
                 <video v-if="lp.video_testimonials.video_url.includes('.mp4') || lp.video_testimonials.video_url.includes('.webm') || lp.video_testimonials.video_url.includes('.mov')"
-                    :src="lp.video_testimonials.video_url" controls class="w-full h-full object-cover" />
+                    :src="resolveMediaUrl(lp.video_testimonials.video_url)" controls class="w-full h-full object-cover" />
                 <iframe v-else :src="normalizeVideoUrl(lp.video_testimonials.video_url)" class="w-full h-full" frameborder="0" allowfullscreen allow="autoplay; encrypted-media" />
             </div>
         </div>
@@ -564,6 +564,7 @@ import { ref, computed } from 'vue';
 import SafeHtmlRenderer from '@/Components/SafeHtmlRenderer.vue';
 import LandingCustomSection from '@/Components/Landing/LandingCustomSection.vue';
 import { sanitizeHtml } from '@/utils/sanitize';
+import { resolveMediaUrl } from '@/utils/media';
 
 const props = defineProps({
     lp: { type: Object, required: true },
