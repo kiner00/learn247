@@ -319,7 +319,7 @@
                         >
                             {{
                                 community.price > 0
-                                    ? `₱${Number(community.price).toLocaleString()}/mo`
+                                    ? `₱${Number(community.price).toLocaleString()}${community.billing_type === "one_time" ? "" : "/mo"}`
                                     : "Free"
                             }}
                         </span>
