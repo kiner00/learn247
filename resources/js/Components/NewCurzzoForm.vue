@@ -330,7 +330,7 @@ function submitCurzzo() {
                     class="rounded-lg transition-colors"
                     :class="curzzoCoverDragging ? 'ring-2 ring-indigo-300 bg-indigo-50 ring-dashed' : ''"
                 >
-                    <div v-if="coverPreview" class="relative mb-2 h-28 rounded-lg overflow-hidden border border-gray-200">
+                    <div v-if="coverPreview" class="relative mb-2 aspect-video rounded-lg overflow-hidden border border-gray-200 bg-gray-900">
                         <img :src="coverPreview" class="w-full h-full object-cover" />
                         <button type="button" @click="removeCover"
                             class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center text-xs hover:bg-black/70">x</button>
