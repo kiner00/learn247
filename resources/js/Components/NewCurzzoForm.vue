@@ -374,7 +374,7 @@ function submitCurzzo() {
             <!-- Curzzo Instructions -->
             <div class="mb-3">
                 <label class="block text-xs font-medium text-gray-600 mb-1">Curzzo Instructions</label>
-                <textarea v-model="form.instructions" rows="6" required maxlength="5000"
+                <textarea v-model="form.instructions" rows="6" required maxlength="20000"
                     placeholder="Define the bot's behavior, knowledge, and rules. e.g. You are a script writing expert who helps members create viral short-form video scripts. Always provide 3 hook options and a clear call-to-action."
                     class="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
                 <p class="text-xs text-gray-400 mt-1">This defines the bot's personality and behavior. Be specific about what it should do and how it should respond.</p>
@@ -419,9 +419,9 @@ function submitCurzzo() {
                 </div>
                 <div>
                     <label class="block text-[11px] text-gray-500 mb-0.5">Expertise</label>
-                    <input v-model="form.personality_expertise" type="text" maxlength="200"
+                    <textarea v-model="form.personality_expertise" rows="3" maxlength="5000"
                         placeholder="e.g. Script writing, Sales strategies, Fitness coaching"
-                        class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                        class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
                 </div>
             </div>
 
