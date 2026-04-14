@@ -746,11 +746,17 @@ class CommunityController extends Controller
                 'price'      => (float) ($c->price ?? 0),
                 'questions_count' => $c->questions_count,
             ]);
-        $curzzos = $community->curzzos()
+        $allCurzzos = $community->curzzos()
             ->where('is_active', true)
-            ->select('id', 'name', 'description', 'avatar', 'cover_image', 'price', 'currency', 'billing_type')
+            ->select('id', 'name', 'description', 'avatar', 'cover_image', 'preview_video', 'preview_video_sound', 'access_type', 'price', 'currency', 'billing_type')
             ->orderBy('position')
             ->get();
+        $selectedCurzzoIds = $community->landing_page['curzzos_selected'] ?? null;
+        // Visitors see only selected bots (fall back to all when nothing selected yet).
+        // Owners see the full list so they can toggle selection checkboxes.
+        $curzzos = $selectedCurzzoIds !== null
+            ? $allCurzzos->whereIn('id', $selectedCurzzoIds)->values()
+            : $allCurzzos;
         $lp = $community->landing_page ?? [];
         $brand = $community->brand_context ?? [];
         $ogTitle = $lp['hero_headline'] ?? $community->name;
@@ -768,7 +774,7 @@ class CommunityController extends Controller
         ]);
 
         $inertia = Inertia::render('Communities/Landing', compact(
-            'community', 'affiliate', 'invitedBy', 'membership', 'ownerIsPro', 'isOwner', 'courses', 'allCourses', 'certifications', 'curzzos'
+            'community', 'affiliate', 'invitedBy', 'membership', 'ownerIsPro', 'isOwner', 'courses', 'allCourses', 'certifications', 'curzzos', 'allCurzzos'
         ));
 
         // Persist ?ref= query param as a cookie so it carries through to checkout

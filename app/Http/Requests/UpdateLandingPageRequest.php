@@ -103,6 +103,9 @@ class UpdateLandingPageRequest extends FormRequest
             'included_courses_selected'   => 'nullable|array',
             'included_courses_selected.*' => 'integer',
 
+            'curzzos_selected'   => 'nullable|array',
+            'curzzos_selected.*' => 'integer',
+
             'certifications_headline' => 'nullable|string|max:200',
 
             'guarantee.headline' => 'nullable|string|max:100',

@@ -561,7 +561,7 @@
 
                                 <!-- CURZZOS (AI BOTS) -->
                                 <template v-if="sec.type === 'curzzos'">
-                                    <div v-if="!curzzos.length" class="text-xs text-gray-500 italic">
+                                    <div v-if="!allCurzzos.length" class="text-xs text-gray-500 italic">
                                         No AI bots yet. Create one in the Curzzos settings.
                                     </div>
                                     <template v-else>
@@ -569,15 +569,26 @@
                                             <label class="field-label">Section Headline</label>
                                             <input v-model="editDraft.curzzos_headline" type="text" placeholder="AI-Powered Bots" class="field-input" />
                                         </div>
-                                        <p class="text-xs text-gray-400">Bots are pulled automatically from your community's Curzzos.</p>
-                                        <div v-for="bot in curzzos" :key="bot.id" class="flex items-center gap-3 bg-white rounded-xl p-3 border border-gray-200">
+                                        <p class="text-xs text-gray-400">Select which bots to display on this landing page.</p>
+                                        <div class="flex items-center justify-between mb-1">
+                                            <label class="field-label mb-0">Bots</label>
+                                            <button type="button" @click="$emit('toggleAllCurzzos')" class="text-xs text-indigo-600 hover:underline">
+                                                {{ allCurzzosSelected ? 'Deselect All' : 'Select All' }}
+                                            </button>
+                                        </div>
+                                        <div v-for="bot in allCurzzos" :key="bot.id"
+                                            class="flex items-center gap-3 bg-white rounded-xl p-3 border border-gray-200 cursor-pointer hover:border-indigo-300 transition-colors"
+                                            @click="$emit('toggleCurzzoSelection', bot.id)">
+                                            <input type="checkbox"
+                                                :checked="(editDraft.curzzos_selected ?? []).includes(bot.id)"
+                                                @click.stop="$emit('toggleCurzzoSelection', bot.id)"
+                                                class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 shrink-0" />
                                             <div class="w-10 h-10 rounded-lg overflow-hidden shrink-0 bg-indigo-100 flex items-center justify-center text-lg">
                                                 <img v-if="bot.avatar" :src="bot.avatar" class="w-full h-full object-cover" />
                                                 <span v-else>🤖</span>
                                             </div>
-                                            <div class="min-w-0">
+                                            <div class="min-w-0 flex-1">
                                                 <p class="text-sm font-medium text-gray-800 truncate">{{ bot.name }}</p>
-                                                <p class="text-xs text-gray-400">{{ bot.access_type || 'free' }}</p>
                                             </div>
                                         </div>
                                     </template>
@@ -935,7 +946,9 @@ const props = defineProps({
     allCourses: { type: Array, default: () => [] },
     certifications: { type: Array, default: () => [] },
     curzzos: { type: Array, default: () => [] },
+    allCurzzos: { type: Array, default: () => [] },
     allCoursesSelected: { type: Boolean, default: false },
+    allCurzzosSelected: { type: Boolean, default: false },
     SECTION_DEFS: { type: Object, required: true },
     DEFAULT_SECTION_ORDER: { type: Array, required: true },
     getSectionDef: { type: Function, required: true },
@@ -946,6 +959,7 @@ const emit = defineEmits([
     'uploadCarouselSlide', 'uploadCarouselBg',
     'sectionVideoUpload', 'customVideoUpload',
     'toggleCourseSelection', 'toggleAllCourses',
+    'toggleCurzzoSelection', 'toggleAllCurzzos',
 ]);
 
 const expandedSection = ref(null);

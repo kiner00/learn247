@@ -97,7 +97,9 @@
         :all-courses="allCourses"
         :certifications="certifications"
         :curzzos="curzzos"
+        :all-curzzos="allCurzzos"
         :all-courses-selected="allCoursesSelected"
+        :all-curzzos-selected="allCurzzosSelected"
         :SECTION_DEFS="SECTION_DEFS"
         :DEFAULT_SECTION_ORDER="DEFAULT_SECTION_ORDER"
         :get-section-def="getSectionDef"
@@ -112,6 +114,8 @@
         @custom-video-upload="handleCustomVideoUpload"
         @toggle-course-selection="toggleCourseSelection"
         @toggle-all-courses="toggleAllCourses"
+        @toggle-curzzo-selection="toggleCurzzoSelection"
+        @toggle-all-curzzos="toggleAllCurzzos"
     />
 
     <!-- Empty state for owners -->
@@ -293,6 +297,7 @@ const props = defineProps({
     allCourses:     { type: Array, default: () => [] },
     certifications: { type: Array, default: () => [] },
     curzzos:        { type: Array, default: () => [] },
+    allCurzzos:     { type: Array, default: () => [] },
 });
 
 // ── State ─────────────────────────────────────────────────────────────────────
@@ -385,6 +390,31 @@ function toggleAllCourses() {
         editDraft.value.included_courses_selected = [];
     } else {
         editDraft.value.included_courses_selected = props.allCourses.map(c => c.id);
+    }
+}
+
+function toggleCurzzoSelection(botId) {
+    if (!editDraft.value.curzzos_selected) {
+        editDraft.value.curzzos_selected = [];
+    }
+    const idx = editDraft.value.curzzos_selected.indexOf(botId);
+    if (idx === -1) {
+        editDraft.value.curzzos_selected.push(botId);
+    } else {
+        editDraft.value.curzzos_selected.splice(idx, 1);
+    }
+}
+
+const allCurzzosSelected = computed(() => {
+    const sel = editDraft.value.curzzos_selected ?? [];
+    return props.allCurzzos.length > 0 && props.allCurzzos.every(b => sel.includes(b.id));
+});
+
+function toggleAllCurzzos() {
+    if (allCurzzosSelected.value) {
+        editDraft.value.curzzos_selected = [];
+    } else {
+        editDraft.value.curzzos_selected = props.allCurzzos.map(b => b.id);
     }
 }
 
@@ -530,6 +560,11 @@ watch(showEditPanel, (open) => {
         // Initialize course selection from saved data or default to current inclusive courses
         if (!editDraft.value.included_courses_selected) {
             editDraft.value.included_courses_selected = props.courses.map(c => c.id);
+        }
+
+        // Initialize curzzo selection from saved data or default to all active bots
+        if (!editDraft.value.curzzos_selected) {
+            editDraft.value.curzzos_selected = props.allCurzzos.map(b => b.id);
         }
 
         // Ensure _sections exists for old landing pages

@@ -380,7 +380,7 @@
             <div class="flex flex-wrap justify-center gap-6">
                 <div v-for="bot in curzzos" :key="bot.id"
                     class="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm flex flex-col w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] group">
-                    <div class="relative aspect-video bg-indigo-50 overflow-hidden flex items-center justify-center"
+                    <div class="aspect-video bg-indigo-50 overflow-hidden relative"
                         @mouseenter="onBotHover($event, bot)"
                         @mouseleave="onBotLeave($event, bot)"
                         @touchstart.passive="onBotTouchStart($event, bot)"
@@ -392,11 +392,11 @@
                             loop playsinline preload="none" />
                         <img v-if="bot.cover_image" :src="bot.cover_image" :alt="bot.name" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                         <img v-else-if="bot.avatar" :src="bot.avatar" :alt="bot.name" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                        <span v-else class="text-5xl font-black text-indigo-300">{{ bot.name.charAt(0).toUpperCase() }}</span>
-                        <div v-if="bot.avatar && bot.cover_image" class="absolute bottom-2.5 left-2.5 w-8 h-8 rounded-full border-2 border-white overflow-hidden shadow-sm">
+                        <div v-else class="w-full h-full flex items-center justify-center text-5xl font-black text-indigo-300">{{ bot.name.charAt(0).toUpperCase() }}</div>
+                        <div v-if="bot.avatar && bot.cover_image" class="absolute bottom-2.5 left-2.5 w-8 h-8 rounded-full border-2 border-white overflow-hidden shadow-sm z-[2]">
                             <img :src="bot.avatar" :alt="bot.name" class="w-full h-full object-cover" />
                         </div>
-                        <div v-if="bot.preview_video" class="absolute bottom-2 left-2 z-[2] flex items-center gap-1 px-2 py-1 bg-black/50 text-white text-[10px] font-medium rounded-full backdrop-blur-sm pointer-events-none sm:hidden">
+                        <div v-if="bot.preview_video" class="absolute bottom-2 right-2 z-[2] flex items-center gap-1 px-2 py-1 bg-black/50 text-white text-[10px] font-medium rounded-full backdrop-blur-sm pointer-events-none sm:hidden">
                             <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                             Tap to preview
                         </div>
@@ -404,16 +404,9 @@
                     <div class="p-5 flex flex-col flex-1">
                         <h3 class="font-bold text-gray-900 text-base mb-1">{{ bot.name }}</h3>
                         <p v-if="bot.description" class="text-gray-500 text-sm leading-relaxed line-clamp-2 flex-1">{{ bot.description }}</p>
-                        <div class="flex items-center gap-3 mt-4">
-                            <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-full">
-                                🤖 AI Bot
-                            </span>
-                            <span v-if="bot.access_type === 'inclusive'" class="text-xs font-semibold text-indigo-600">Included</span>
-                            <span v-else-if="bot.price > 0" class="text-xs font-semibold text-amber-600">
-                                {{ bot.currency === 'USD' ? '$' : '₱' }}{{ Number(bot.price).toLocaleString() }}{{ bot.billing_type === 'monthly' ? '/mo' : '' }}
-                            </span>
-                            <span v-else class="text-xs font-semibold text-green-600">Free</span>
-                        </div>
+                        <span class="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-full self-start">
+                            🤖 AI Bot
+                        </span>
                     </div>
                 </div>
             </div>
