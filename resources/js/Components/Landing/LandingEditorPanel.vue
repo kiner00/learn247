@@ -644,8 +644,109 @@
                                     </template>
                                 </template>
 
+                                <!-- CAROUSEL SECTION (custom_* with kind=carousel) -->
+                                <template v-if="sec.type.startsWith('custom_') && getCustomData(sec.type).kind === 'carousel'">
+                                    <div class="space-y-3">
+                                        <div>
+                                            <label class="field-label">Title</label>
+                                            <input v-model="getCustomData(sec.type).title" type="text" placeholder="Section heading" class="field-input" />
+                                        </div>
+                                        <div>
+                                            <label class="field-label">Subtitle</label>
+                                            <input v-model="getCustomData(sec.type).subtitle" type="text" placeholder="Short supporting line" class="field-input" />
+                                        </div>
+                                        <div class="pt-2 border-t border-gray-200 mt-1">
+                                            <div class="flex items-center justify-between mb-2">
+                                                <label class="field-label !mb-0">Slides</label>
+                                                <span class="text-[10px] text-gray-400">{{ (getCustomData(sec.type).slides || []).length }} slide(s)</span>
+                                            </div>
+                                            <div class="space-y-3">
+                                                <div v-for="(slide, si) in (getCustomData(sec.type).slides || [])" :key="si"
+                                                    class="bg-white rounded-xl p-3 border border-gray-200 space-y-2">
+                                                    <div class="flex items-center justify-between">
+                                                        <span class="text-[11px] font-semibold text-gray-500">Slide {{ si + 1 }}</span>
+                                                        <button @click="removeCarouselSlide(sec.type, si)"
+                                                            class="text-[11px] text-red-400 hover:text-red-600">Remove</button>
+                                                    </div>
+                                                    <img v-if="slide.image_url" :src="slide.image_url" class="w-full h-28 object-cover rounded-lg border border-gray-100" />
+                                                    <input v-model="slide.image_url" type="url" placeholder="https://... or upload below" class="field-input text-xs" />
+                                                    <label class="flex items-center gap-2 cursor-pointer text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+                                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                                        {{ uploadLoading === `${sec.type}:${si}` ? 'Uploading...' : 'Upload image' }}
+                                                        <input type="file" accept="image/*" class="sr-only" @change="$emit('uploadCarouselSlide', sec.type, si, $event)" />
+                                                    </label>
+                                                    <input v-model="slide.alt" type="text" placeholder="Alt text (optional)" class="field-input text-xs" />
+                                                </div>
+                                            </div>
+                                            <button @click="addCarouselSlide(sec.type)" class="mt-2 text-xs text-indigo-600 font-medium hover:underline">+ Add slide</button>
+                                        </div>
+                                        <div class="pt-2 border-t border-gray-200 mt-1">
+                                            <label class="field-label">CTA Button Label <span class="text-gray-400 font-normal">(leave empty to hide)</span></label>
+                                            <input v-model="getCustomData(sec.type).cta_label" type="text" placeholder="e.g. Learn more" class="field-input" />
+                                        </div>
+                                        <div>
+                                            <label class="field-label">CTA Button URL</label>
+                                            <input v-model="getCustomData(sec.type).cta_url" type="url" placeholder="https://..." class="field-input" />
+                                        </div>
+                                        <div class="pt-2 border-t border-gray-200 mt-1">
+                                            <label class="field-label mb-2">Text Colors</label>
+                                            <div class="grid grid-cols-2 gap-2">
+                                                <div>
+                                                    <label class="text-[10px] text-gray-400 font-medium">Title</label>
+                                                    <div class="flex items-center gap-2">
+                                                        <input type="color" v-model="getCustomData(sec.type).text_color" class="w-8 h-8 rounded cursor-pointer border border-gray-200 p-0.5" />
+                                                        <input v-model="getCustomData(sec.type).text_color" type="text" placeholder="#111827" class="field-input flex-1 text-xs" />
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label class="text-[10px] text-gray-400 font-medium">Subtitle</label>
+                                                    <div class="flex items-center gap-2">
+                                                        <input type="color" v-model="getCustomData(sec.type).subtitle_color" class="w-8 h-8 rounded cursor-pointer border border-gray-200 p-0.5" />
+                                                        <input v-model="getCustomData(sec.type).subtitle_color" type="text" placeholder="#4b5563" class="field-input flex-1 text-xs" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="pt-2 border-t border-gray-200 mt-1">
+                                            <label class="field-label mb-2">Button Colors</label>
+                                            <div class="grid grid-cols-2 gap-2">
+                                                <div>
+                                                    <label class="text-[10px] text-gray-400 font-medium">Button BG</label>
+                                                    <div class="flex items-center gap-2">
+                                                        <input type="color" v-model="getCustomData(sec.type).btn_bg" class="w-8 h-8 rounded cursor-pointer border border-gray-200 p-0.5" />
+                                                        <input v-model="getCustomData(sec.type).btn_bg" type="text" placeholder="#fbbf24" class="field-input flex-1 text-xs" />
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label class="text-[10px] text-gray-400 font-medium">Button Text</label>
+                                                    <div class="flex items-center gap-2">
+                                                        <input type="color" v-model="getCustomData(sec.type).btn_text" class="w-8 h-8 rounded cursor-pointer border border-gray-200 p-0.5" />
+                                                        <input v-model="getCustomData(sec.type).btn_text" type="text" placeholder="#111827" class="field-input flex-1 text-xs" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="pt-2 border-t border-gray-200 mt-1">
+                                            <label class="field-label">Background Color</label>
+                                            <div class="flex items-center gap-2">
+                                                <input type="color" v-model="getCustomData(sec.type).bg_color" class="w-8 h-8 rounded cursor-pointer border border-gray-200 p-0.5" />
+                                                <input v-model="getCustomData(sec.type).bg_color" type="text" placeholder="#ffffff" class="field-input flex-1 text-xs" />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="field-label">Background Image <span class="text-gray-400 font-normal">(overrides bg color)</span></label>
+                                            <input v-model="getCustomData(sec.type).bg_image" type="url" placeholder="https://..." class="field-input" />
+                                            <label class="mt-2 flex items-center gap-2 cursor-pointer text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+                                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                                {{ uploadLoading === `${sec.type}:bg` ? 'Uploading...' : 'Upload image' }}
+                                                <input type="file" accept="image/*" class="sr-only" @change="$emit('uploadCarouselBg', sec.type, $event)" />
+                                            </label>
+                                        </div>
+                                    </div>
+                                </template>
+
                                 <!-- CUSTOM SECTION -->
-                                <template v-if="sec.type.startsWith('custom_')">
+                                <template v-else-if="sec.type.startsWith('custom_')">
                                     <div class="space-y-3">
                                         <div>
                                             <label class="field-label">Section Title</label>
@@ -798,6 +899,12 @@
                                     <span>🧩</span>
                                     Custom Section
                                 </button>
+                                <button
+                                    @click="addCarouselSection"
+                                    class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-sky-50 hover:bg-sky-100 text-sky-700 rounded-lg border border-sky-200 hover:border-sky-300 transition">
+                                    <span>🎠</span>
+                                    Carousel
+                                </button>
                             </div>
                             <p v-if="availableSectionsToAdd.length === 0" class="text-xs text-gray-400">All standard sections are added. You can still add unlimited custom sections.</p>
                         </div>
@@ -836,6 +943,7 @@ const props = defineProps({
 
 const emit = defineEmits([
     'close', 'save', 'regenSection', 'uploadImage', 'uploadCustomImage',
+    'uploadCarouselSlide', 'uploadCarouselBg',
     'sectionVideoUpload', 'customVideoUpload',
     'toggleCourseSelection', 'toggleAllCourses',
 ]);
@@ -899,6 +1007,49 @@ function getCustomData(sectionId) {
         props.editDraft.custom_sections[sectionId] = { title: '', text: '', image_url: '', video_url: '', embed_html: '', bg_color: '', text_color: '' };
     }
     return props.editDraft.custom_sections[sectionId];
+}
+
+function addCarouselSection() {
+    if (!props.editDraft._sections) return;
+    const id = 'custom_' + Math.random().toString(36).slice(2, 10);
+    const ctaIdx = props.editDraft._sections.findIndex(s => s.type === 'cta_section');
+    const newSec = { type: id, visible: true };
+    if (ctaIdx !== -1) {
+        props.editDraft._sections.splice(ctaIdx, 0, newSec);
+    } else {
+        props.editDraft._sections.push(newSec);
+    }
+    if (!props.editDraft.custom_sections) props.editDraft.custom_sections = {};
+    props.editDraft.custom_sections[id] = {
+        kind: 'carousel',
+        title: 'Featured',
+        subtitle: '',
+        slides: [
+            { image_url: '', alt: '' },
+            { image_url: '', alt: '' },
+            { image_url: '', alt: '' },
+        ],
+        cta_label: '',
+        cta_url: '',
+        text_color: '#111827',
+        subtitle_color: '#4b5563',
+        btn_bg: '#fbbf24',
+        btn_text: '#111827',
+        bg_color: '#ffffff',
+        bg_image: '',
+    };
+    expandedSection.value = id;
+}
+
+function addCarouselSlide(sectionId) {
+    const data = getCustomData(sectionId);
+    if (!Array.isArray(data.slides)) data.slides = [];
+    data.slides.push({ image_url: '', alt: '' });
+}
+
+function removeCarouselSlide(sectionId, idx) {
+    const data = getCustomData(sectionId);
+    if (Array.isArray(data.slides)) data.slides.splice(idx, 1);
 }
 
 function moveSection(idx, direction) {

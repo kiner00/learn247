@@ -106,6 +106,8 @@
         @regen-section="regenSection"
         @upload-image="uploadImage"
         @upload-custom-image="uploadCustomImage"
+        @upload-carousel-slide="uploadCarouselSlide"
+        @upload-carousel-bg="uploadCarouselBg"
         @section-video-upload="handleSectionVideoUpload"
         @custom-video-upload="handleCustomVideoUpload"
         @toggle-course-selection="toggleCourseSelection"
@@ -669,6 +671,66 @@ async function uploadCustomImage(sectionId, event) {
         if (!editDraft.value.custom_sections) editDraft.value.custom_sections = {};
         if (!editDraft.value.custom_sections[sectionId]) editDraft.value.custom_sections[sectionId] = {};
         editDraft.value.custom_sections[sectionId].image_url = data.url;
+    } catch (e) {
+        alert(e?.message ?? 'Upload failed.');
+    } finally {
+        uploadLoading.value = null;
+        event.target.value = '';
+    }
+}
+
+// ── Carousel image uploads ───────────────────────────────────────────────────
+async function uploadCarouselSlide(sectionId, slideIdx, event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    uploadLoading.value = `${sectionId}:${slideIdx}`;
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+        const res = await fetch(`/communities/${props.community.slug}/landing-page/upload-image`, {
+            method: 'POST',
+            headers: { 'Accept': 'application/json', 'X-XSRF-TOKEN': xsrfToken() },
+            body: formData,
+        });
+        const data = await res.json();
+        if (!res.ok) { alert(data.message ?? 'Upload failed.'); return; }
+
+        if (!editDraft.value.custom_sections) editDraft.value.custom_sections = {};
+        if (!editDraft.value.custom_sections[sectionId]) editDraft.value.custom_sections[sectionId] = {};
+        const sec = editDraft.value.custom_sections[sectionId];
+        if (!Array.isArray(sec.slides)) sec.slides = [];
+        if (!sec.slides[slideIdx]) sec.slides[slideIdx] = { image_url: '', alt: '' };
+        sec.slides[slideIdx].image_url = data.url;
+    } catch (e) {
+        alert(e?.message ?? 'Upload failed.');
+    } finally {
+        uploadLoading.value = null;
+        event.target.value = '';
+    }
+}
+
+async function uploadCarouselBg(sectionId, event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    uploadLoading.value = `${sectionId}:bg`;
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+        const res = await fetch(`/communities/${props.community.slug}/landing-page/upload-image`, {
+            method: 'POST',
+            headers: { 'Accept': 'application/json', 'X-XSRF-TOKEN': xsrfToken() },
+            body: formData,
+        });
+        const data = await res.json();
+        if (!res.ok) { alert(data.message ?? 'Upload failed.'); return; }
+
+        if (!editDraft.value.custom_sections) editDraft.value.custom_sections = {};
+        if (!editDraft.value.custom_sections[sectionId]) editDraft.value.custom_sections[sectionId] = {};
+        editDraft.value.custom_sections[sectionId].bg_image = data.url;
     } catch (e) {
         alert(e?.message ?? 'Upload failed.');
     } finally {
