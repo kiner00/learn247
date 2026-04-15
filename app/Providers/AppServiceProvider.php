@@ -21,6 +21,7 @@ use App\Services\XenditService;
 use App\Listeners\EnrollInEmailSequence;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -41,5 +42,16 @@ class AppServiceProvider extends ServiceProvider
         LessonCompletion::observe(LessonCompletionObserver::class);
 
         Event::subscribe(EnrollInEmailSequence::class);
+
+        View::composer('app', function ($view) {
+            if (! array_key_exists('ogMeta', $view->getData())) {
+                $view->with('ogMeta', [
+                    'title'       => 'Curzzo — Build & monetize your community',
+                    'description' => 'Create communities, sell courses, and launch AI bots on Curzzo.',
+                    'image'       => url('/brand/ICON/' . rawurlencode('CURZZO LOGO WHIT BG ROUND.png')),
+                    'url'         => url()->current(),
+                ]);
+            }
+        });
     }
 }
