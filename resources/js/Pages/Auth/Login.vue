@@ -107,7 +107,7 @@
                 >
             </p>
 
-            <p v-if="isCustomDomain" class="text-center mt-4 text-xs text-gray-400">
+            <p v-if="isCommunityDomain" class="text-center mt-4 text-xs text-gray-400">
                 Powered by
                 <a href="https://curzzo.com" target="_blank" rel="noopener" class="font-medium text-gray-500 hover:text-indigo-600">Curzzo</a>
             </p>
@@ -120,9 +120,9 @@ import { Link, useForm, usePage } from "@inertiajs/vue3";
 import { computed } from "vue";
 
 const dc = computed(() => usePage().props.domain_community);
-const isCustomDomain = computed(() => !!dc.value?.is_custom_domain);
-const brandLogo = computed(() => isCustomDomain.value && dc.value?.avatar ? dc.value.avatar : '/brand/logo-transparent.png');
-const brandName = computed(() => isCustomDomain.value && dc.value?.name ? dc.value.name : 'Curzzo');
+const isCommunityDomain = computed(() => !!dc.value);
+const brandLogo = computed(() => dc.value?.avatar || '/brand/logo-transparent.png');
+const brandName = computed(() => dc.value?.name || 'Curzzo');
 
 const form = useForm({
     email: "",

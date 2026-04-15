@@ -29,13 +29,11 @@ class FeedController extends Controller
 
         $post->load([
             'author:id,name,username,avatar',
-            'likes',
             'comments' => fn ($q) => $q
                 ->whereNull('parent_id')
                 ->with([
                     'author:id,name,username,avatar',
-                    'likes',
-                    'replies' => fn ($r) => $r->with(['author:id,name,username,avatar', 'likes']),
+                    'replies' => fn ($r) => $r->with(['author:id,name,username,avatar'])->take(3),
                 ])
                 ->latest(),
         ])->loadCount('likes', 'comments');
