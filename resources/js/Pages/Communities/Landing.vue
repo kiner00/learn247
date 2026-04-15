@@ -461,6 +461,7 @@ function setNestedValue(path, value) {
 }
 
 function execFmt(cmd, value = null) {
+    try { document.execCommand('styleWithCSS', false, true); } catch (e) { /* noop */ }
     document.execCommand(cmd, false, value);
     updateFmtState();
 }
