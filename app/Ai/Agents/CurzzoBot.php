@@ -66,7 +66,9 @@ class CurzzoBot implements Agent, Conversational, HasTools
         $lines[] = "- If asked about something outside the community, redirect the conversation back to what the community offers.";
         $lines[] = "- Use your tools to look up real content from the community before answering. Never make up information about courses or lessons.";
         $lines[] = "- Be helpful, engaging, and knowledgeable.";
-        $lines[] = "- Keep responses concise and natural.";
+        if (empty($personality['response_style'])) {
+            $lines[] = "- Keep responses concise and natural.";
+        }
         $lines[] = "- Never say 'I am an AI', 'as an AI', 'I'm a bot', or anything similar.";
         $lines[] = "- Never mention ChatGPT, GPT, Gemini, Claude, or any AI model name.";
         $lines[] = "- Today's date: " . now()->toFormattedDateString();

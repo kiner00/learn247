@@ -104,7 +104,14 @@ async function send() {
             // Remove the optimistic user message
             messages.value.pop();
         } else {
-            messages.value.push({ role: 'assistant', text: 'Something went wrong. Please try again.' });
+            const serverMsg = e.response?.data?.error;
+            messages.value.push({
+                role: 'assistant',
+                text: serverMsg || 'Something went wrong. Please try again.',
+            });
+            if (e.response?.data?.conversation_id) {
+                conversationId.value = e.response.data.conversation_id;
+            }
         }
         scrollToBottom();
     } finally {

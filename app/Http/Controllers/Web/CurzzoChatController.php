@@ -11,6 +11,8 @@ use App\Models\CurzzoPurchase;
 use App\Services\Community\CurzzoLimitService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class CurzzoChatController extends Controller
 {
@@ -53,9 +55,26 @@ class CurzzoChatController extends Controller
 
         $agent = new CurzzoBot($curzzo, $community);
 
-        $response = $request->conversation_id
-            ? $agent->continue($request->conversation_id, as: $user)->prompt($request->message)
-            : $agent->forUser($user)->prompt($request->message);
+        try {
+            $response = $request->conversation_id
+                ? $agent->continue($request->conversation_id, as: $user)->prompt($request->message)
+                : $agent->forUser($user)->prompt($request->message);
+        } catch (Throwable $e) {
+            Log::error('CurzzoChat agent call failed', [
+                'curzzo_id'       => $curzzo->id,
+                'community_id'    => $community->id,
+                'user_id'         => $user->id,
+                'conversation_id' => $request->conversation_id,
+                'model_tier'      => $curzzo->model_tier,
+                'error'           => $e->getMessage(),
+                'exception'       => get_class($e),
+            ]);
+
+            return response()->json([
+                'error'           => 'The bot had trouble responding. Please try again.',
+                'conversation_id' => $request->conversation_id,
+            ], 503);
+        }
 
         $attrs = [
             'curzzo_id'       => $curzzo->id,
