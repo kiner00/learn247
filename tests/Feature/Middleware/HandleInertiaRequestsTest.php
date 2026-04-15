@@ -42,6 +42,8 @@ class HandleInertiaRequestsTest extends TestCase
         $this->assertNotNull($shared['domain_community']);
         $this->assertEquals($community->id, $shared['domain_community']['id']);
         $this->assertEquals($community->slug, $shared['domain_community']['slug']);
+        $this->assertEquals($community->name, $shared['domain_community']['name']);
+        $this->assertArrayHasKey('avatar', $shared['domain_community']);
     }
 
     public function test_share_returns_null_auth_user_and_zero_counters_when_guest(): void

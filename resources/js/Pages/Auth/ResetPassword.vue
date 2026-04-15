@@ -4,8 +4,8 @@
             <div class="text-center mb-8">
                 <Link href="/" class="inline-block">
                     <img
-                        :src="'/brand/logo-transparent.png'"
-                        alt="Curzzo"
+                        :src="brandLogo"
+                        :alt="brandName"
                         class="h-30 w-auto mx-auto"
                     />
                 </Link>
@@ -103,7 +103,12 @@
 </template>
 
 <script setup>
-import { Link, useForm } from "@inertiajs/vue3";
+import { Link, useForm, usePage } from "@inertiajs/vue3";
+import { computed } from "vue";
+
+const dc = computed(() => usePage().props.domain_community);
+const brandLogo = computed(() => dc.value?.avatar || '/brand/logo-transparent.png');
+const brandName = computed(() => dc.value?.name || 'Curzzo');
 
 const props = defineProps({
     token: String,

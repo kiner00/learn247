@@ -4,9 +4,9 @@
             <!-- Logo -->
             <div class="text-center mb-8">
                 <Link href="/" class="inline-block">
-                    <img :src="'/brand/logo-transparent.png'" alt="Curzzo" class="h-30 w-auto mx-auto" />
+                    <img :src="brandLogo" :alt="brandName" class="h-30 w-auto mx-auto" />
                 </Link>
-                <p class="mt-2 text-gray-500 text-sm">Create your Curzzo account</p>
+                <p class="mt-2 text-gray-500 text-sm">Create your {{ brandName }} account</p>
             </div>
 
             <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
@@ -128,7 +128,11 @@
 
 <script setup>
 import { Link, useForm, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 const page = usePage();
+const dc = computed(() => page.props.domain_community);
+const brandLogo = computed(() => dc.value?.avatar || '/brand/logo-transparent.png');
+const brandName = computed(() => dc.value?.name || 'Curzzo');
 
 const form = useForm({
     first_name:            '',
