@@ -106,6 +106,11 @@
                     >Get started free</Link
                 >
             </p>
+
+            <p v-if="dc" class="text-center mt-4 text-xs text-gray-400">
+                Powered by
+                <a href="https://curzzo.com" target="_blank" rel="noopener" class="font-medium text-gray-500 hover:text-indigo-600">Curzzo</a>
+            </p>
         </div>
     </div>
 </template>
