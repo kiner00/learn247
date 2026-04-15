@@ -25,6 +25,7 @@ use App\Services\Admin\EmailTemplateService;
 use App\Services\Analytics\AdminDashboardService;
 use App\Services\Payout\OwnerPayoutDispatcher;
 use App\Services\XenditService;
+use App\Support\CacheKeys;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -189,6 +190,7 @@ class AdminController extends Controller
     public function toggleFeatured(Community $community): RedirectResponse
     {
         $community->update(['is_featured' => ! $community->is_featured]);
+        CacheKeys::flushAdmin();
 
         return back()->with('success', "{$community->name} is now " . ($community->is_featured ? 'featured' : 'unfeatured') . ".");
     }
