@@ -261,7 +261,7 @@ onMounted(loadHistory);
                     v-model="newMessage"
                     ref="inputEl"
                     rows="1"
-                    maxlength="1000"
+                    maxlength="20000"
                     :placeholder="`Message ${curzzo.name}...`"
                     :disabled="loading"
                     class="flex-1 px-4 py-2.5 border border-gray-300 rounded-3xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-50 resize-none leading-5"

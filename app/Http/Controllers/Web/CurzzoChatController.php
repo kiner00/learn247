@@ -46,7 +46,7 @@ class CurzzoChatController extends Controller
         }
 
         $request->validate([
-            'message'         => ['required', 'string', 'max:1000'],
+            'message'         => ['required', 'string', 'max:20000'],
             'conversation_id' => ['nullable', 'string', 'uuid'],
         ]);
 
