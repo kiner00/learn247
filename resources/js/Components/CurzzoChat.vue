@@ -119,6 +119,26 @@ async function send() {
     }
 }
 
+const resetting = ref(false);
+
+async function restartConversation() {
+    if (resetting.value || loading.value) return;
+    if (!messages.value.length && !conversationId.value) return;
+    if (!confirm('Start a new conversation? This clears the current chat history with this bot.')) return;
+
+    resetting.value = true;
+    try {
+        await axios.delete(communityPath(`/curzzos/${props.curzzo.id}/history`));
+        messages.value = [];
+        conversationId.value = null;
+    } catch (e) {
+        messages.value.push({ role: 'assistant', text: 'Could not restart the conversation. Please try again.' });
+        scrollToBottom();
+    } finally {
+        resetting.value = false;
+    }
+}
+
 function buyTopup(packIndex) {
     if (checkingOut.value) return;
     checkingOut.value = true;
@@ -164,6 +184,18 @@ onMounted(loadHistory);
                 </div>
                 <p v-if="topupRemaining > 0 && topupRemaining !== -1" class="text-[9px] text-indigo-400 mt-0.5">+{{ topupRemaining }} bonus</p>
             </div>
+            <!-- Restart conversation -->
+            <button
+                type="button"
+                @click="restartConversation"
+                :disabled="resetting || loading || (!messages.length && !conversationId)"
+                title="Start a new conversation"
+                class="shrink-0 w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-gray-400"
+            >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+            </button>
         </div>
 
         <!-- Messages -->

@@ -123,4 +123,15 @@ class CurzzoChatController extends Controller
 
         return response()->json(['messages' => $messages]);
     }
+
+    public function resetHistory(Request $request, Community $community, Curzzo $curzzo): JsonResponse
+    {
+        abort_unless($curzzo->community_id === $community->id, 404);
+
+        CurzzoMessage::where('curzzo_id', $curzzo->id)
+            ->where('user_id', $request->user()->id)
+            ->delete();
+
+        return response()->json(['ok' => true]);
+    }
 }

@@ -392,6 +392,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/communities/{community}/curzzos/topup/checkout',         [CurzzoTopupController::class, 'checkout'])->name('communities.curzzos.topup-checkout')->middleware('throttle:10,1');
         Route::post('/communities/{community}/curzzos/{curzzo}/chat',          [CurzzoChatController::class, 'chat'])->name('communities.curzzos.chat');
         Route::get('/communities/{community}/curzzos/{curzzo}/history',        [CurzzoChatController::class, 'history'])->name('communities.curzzos.history');
+        Route::delete('/communities/{community}/curzzos/{curzzo}/history',     [CurzzoChatController::class, 'resetHistory'])->name('communities.curzzos.reset');
 
         // ─── Community DMs ───────────────────────────────────────────────────
         Route::get('/communities/{community}/dm/conversations',       [CommunityDmController::class, 'conversations'])->name('communities.dm.conversations');
