@@ -29,7 +29,7 @@
                 :contenteditable="inlineMode ? 'true' : 'false'"
                 @focus="inlineMode && $emit('elFocus', $event, 'social_proof.trust_line')"
                 @blur="inlineMode && $emit('elBlur', $event, 'social_proof.trust_line')"
-                @keydown.enter.prevent
+                @keydown.enter.prevent="insertBr"
                 :class="['text-white/80 text-sm font-medium', inlineMode ? editableClass : '']"
             />
         </div>
@@ -45,7 +45,7 @@
                 :contenteditable="inlineMode ? 'true' : 'false'"
                 @focus="inlineMode && $emit('elFocus', $event, 'benefits.headline')"
                 @blur="inlineMode && $emit('elBlur', $event, 'benefits.headline')"
-                @keydown.enter.prevent
+                @keydown.enter.prevent="insertBr"
                 :class="['text-3xl sm:text-4xl font-black text-gray-900 text-center mb-16', inlineMode ? editableClass : '']"
             />
             <div class="grid sm:grid-cols-2 gap-8">
@@ -59,7 +59,7 @@
                             :contenteditable="inlineMode ? 'true' : 'false'"
                             @focus="inlineMode && $emit('elFocus', $event, `benefits.items.${i}.title`)"
                             @blur="inlineMode && $emit('elBlur', $event, `benefits.items.${i}.title`)"
-                            @keydown.enter.prevent
+                            @keydown.enter.prevent="insertBr"
                             :class="['font-bold text-gray-900 mb-1.5', inlineMode ? editableClass : '']"
                         />
                         <p v-html="sanitizeHtml(item.body)"
@@ -84,7 +84,7 @@
                 :contenteditable="inlineMode ? 'true' : 'false'"
                 @focus="inlineMode && $emit('elFocus', $event, 'for_you.headline')"
                 @blur="inlineMode && $emit('elBlur', $event, 'for_you.headline')"
-                @keydown.enter.prevent
+                @keydown.enter.prevent="insertBr"
                 :class="['text-3xl sm:text-4xl font-black text-gray-900 mb-12', inlineMode ? editableClass : '']"
             />
             <div class="space-y-4 text-left">
@@ -99,7 +99,7 @@
                         :contenteditable="inlineMode ? 'true' : 'false'"
                         @focus="inlineMode && $emit('elFocus', $event, `for_you.points.${i}`)"
                         @blur="inlineMode && $emit('elBlur', $event, `for_you.points.${i}`)"
-                        @keydown.enter.prevent
+                        @keydown.enter.prevent="insertBr"
                         :class="['text-gray-700 font-medium leading-relaxed flex-1', inlineMode ? editableClass : '']"
                     />
                 </div>
@@ -126,7 +126,7 @@
                         :contenteditable="inlineMode ? 'true' : 'false'"
                         @focus="inlineMode && $emit('elFocus', $event, 'creator.name')"
                         @blur="inlineMode && $emit('elBlur', $event, 'creator.name')"
-                        @keydown.enter.prevent
+                        @keydown.enter.prevent="insertBr"
                         :class="['font-bold text-white text-sm', inlineMode ? editableClass : '']"
                     />
                     <p class="text-white/60 text-xs mt-0.5">Creator</p>
@@ -136,7 +136,7 @@
                         :contenteditable="inlineMode ? 'true' : 'false'"
                         @focus="inlineMode && $emit('elFocus', $event, 'creator.headline')"
                         @blur="inlineMode && $emit('elBlur', $event, 'creator.headline')"
-                        @keydown.enter.prevent
+                        @keydown.enter.prevent="insertBr"
                         :class="['text-2xl font-black mb-4 text-white', inlineMode ? editableClass : '']"
                     />
                     <p v-html="sanitizeHtml(lp.creator.bio)"
@@ -510,7 +510,7 @@
                 :contenteditable="inlineMode ? 'true' : 'false'"
                 @focus="inlineMode && $emit('elFocus', $event, 'cta_section.headline')"
                 @blur="inlineMode && $emit('elBlur', $event, 'cta_section.headline')"
-                @keydown.enter.prevent
+                @keydown.enter.prevent="insertBr"
                 :class="['text-3xl sm:text-4xl font-black mb-4 text-white', inlineMode ? editableClass : '']"
             />
             <p
@@ -518,7 +518,7 @@
                 :contenteditable="inlineMode ? 'true' : 'false'"
                 @focus="inlineMode && $emit('elFocus', $event, 'cta_section.subtext')"
                 @blur="inlineMode && $emit('elBlur', $event, 'cta_section.subtext')"
-                @keydown.enter.prevent
+                @keydown.enter.prevent="insertBr"
                 :class="['text-slate-400 mb-8 leading-relaxed', inlineMode ? editableClass : '']"
             />
             <button @click="(inlineMode || showEditPanel) ? $emit('openColorPopover', $event, [
@@ -578,6 +578,10 @@ const props = defineProps({
 defineEmits(['openColorPopover', 'elFocus', 'elBlur', 'cta']);
 
 const openFaqIdx = ref(null);
+
+function insertBr() {
+    document.execCommand('insertLineBreak');
+}
 
 // Returns custom sections that should render after a given standard section
 function customSectionsAfter(afterType) {

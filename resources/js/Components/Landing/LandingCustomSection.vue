@@ -11,7 +11,7 @@
                 :contenteditable="inlineMode ? 'true' : 'false'"
                 @focus="inlineMode && $emit('elFocus', $event, `custom_sections.${sectionId}.title`)"
                 @blur="inlineMode && $emit('elBlur', $event, `custom_sections.${sectionId}.title`)"
-                @keydown.enter.prevent
+                @keydown.enter.prevent="insertBr"
                 :class="['text-3xl sm:text-4xl font-black text-center mb-3', inlineMode ? editableClass : '']"
                 :style="{ color: data.text_color || '#111827' }"
             />
@@ -20,7 +20,7 @@
                 :contenteditable="inlineMode ? 'true' : 'false'"
                 @focus="inlineMode && $emit('elFocus', $event, `custom_sections.${sectionId}.subtitle`)"
                 @blur="inlineMode && $emit('elBlur', $event, `custom_sections.${sectionId}.subtitle`)"
-                @keydown.enter.prevent
+                @keydown.enter.prevent="insertBr"
                 :class="['text-base sm:text-lg text-center mb-10', inlineMode ? editableClass : '']"
                 :style="{ color: data.subtitle_color || '#4b5563' }"
             />
@@ -75,7 +75,7 @@
                 :contenteditable="inlineMode ? 'true' : 'false'"
                 @focus="inlineMode && $emit('elFocus', $event, `custom_sections.${sectionId}.title`)"
                 @blur="inlineMode && $emit('elBlur', $event, `custom_sections.${sectionId}.title`)"
-                @keydown.enter.prevent
+                @keydown.enter.prevent="insertBr"
                 :class="['text-3xl sm:text-4xl font-black text-center mb-8', inlineMode ? editableClass : '']"
                 :style="{ color: data.text_color || '#111827' }"
             />
@@ -133,5 +133,9 @@ function prev() {
 function next() {
     if (!slides.value.length) return;
     activeIdx.value = (activeIdx.value + 1) % slides.value.length;
+}
+
+function insertBr() {
+    document.execCommand('insertLineBreak');
 }
 </script>

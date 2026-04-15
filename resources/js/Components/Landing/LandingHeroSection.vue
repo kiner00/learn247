@@ -34,7 +34,7 @@
                 :contenteditable="inlineMode ? 'true' : 'false'"
                 @focus="inlineMode && $emit('elFocus', $event, 'hero.pre_headline')"
                 @blur="inlineMode && $emit('elBlur', $event, 'hero.pre_headline')"
-                @keydown.enter.prevent
+                @keydown.enter.prevent="insertBr"
                 :class="['text-indigo-300 text-sm font-semibold uppercase tracking-widest mb-4', inlineMode ? editableClass : '']"
             />
             <!-- Badge -->
@@ -49,7 +49,7 @@
                 :contenteditable="inlineMode ? 'true' : 'false'"
                 @focus="inlineMode && $emit('elFocus', $event, 'hero.headline')"
                 @blur="inlineMode && $emit('elBlur', $event, 'hero.headline')"
-                @keydown.enter.prevent
+                @keydown.enter.prevent="insertBr"
                 :class="[lp.hero.headline_font_size ? '' : 'text-4xl sm:text-5xl lg:text-6xl', 'font-black leading-tight mb-6 text-white', inlineMode ? editableClass : '']"
                 :style="lp.hero.headline_font_size ? { fontSize: lp.hero.headline_font_size + 'px' } : {}"
             />
@@ -128,4 +128,8 @@ defineProps({
 });
 
 defineEmits(['openColorPopover', 'elFocus', 'elBlur', 'cta']);
+
+function insertBr() {
+    document.execCommand('insertLineBreak');
+}
 </script>
