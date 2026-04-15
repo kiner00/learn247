@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Actions\Community\ChangeMemberRole;
 use App\Actions\Community\ExtendMemberAccess;
 use App\Actions\Community\RemoveMember;
+use App\Actions\Community\SetMemberExpiry;
 use App\Actions\Community\ToggleMemberBlock;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ChangeRoleRequest;
@@ -63,6 +64,30 @@ class CommunityMemberController extends Controller
         } catch (\Throwable $e) {
             Log::error('CommunityMemberController@extendAccess failed', ['error' => $e->getMessage(), 'community_id' => $community->id]);
             return back()->with('error', 'Failed to extend access.');
+        }
+    }
+
+    public function setExpiry(Request $request, Community $community, SetMemberExpiry $action): RedirectResponse
+    {
+        abort_unless($request->user()->id === $community->owner_id, 403);
+
+        $data = $request->validate([
+            'user_ids'   => ['required', 'array', 'min:1'],
+            'user_ids.*' => ['required', 'integer'],
+            'months'     => ['nullable', 'integer', 'min:1', 'max:120'],
+        ]);
+
+        try {
+            $count = $action->execute($community, $data['user_ids'], $data['months'] ?? null);
+
+            $suffix = $data['months'] === null
+                ? 'to no expiry'
+                : 'to expire in ' . $data['months'] . ' month' . ($data['months'] !== 1 ? 's' : '');
+
+            return back()->with('success', "Set {$count} member" . ($count !== 1 ? 's' : '') . " {$suffix}.");
+        } catch (\Throwable $e) {
+            Log::error('CommunityMemberController@setExpiry failed', ['error' => $e->getMessage(), 'community_id' => $community->id]);
+            return back()->with('error', 'Failed to set expiry.');
         }
     }
 

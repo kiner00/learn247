@@ -478,6 +478,98 @@ class CommunityMemberControllerTest extends TestCase
             ->assertSessionHas('error', 'Failed to toggle block status.');
     }
 
+    // ── setExpiry ────────────────────────────────────────────────────────────
+
+    public function test_owner_can_set_member_expiry(): void
+    {
+        $owner = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $member = User::factory()->create();
+
+        CommunityMember::factory()->create([
+            'community_id'    => $community->id,
+            'user_id'         => $member->id,
+            'membership_type' => CommunityMember::MEMBERSHIP_FREE,
+            'expires_at'      => null,
+        ]);
+
+        $this->actingAs($owner)
+            ->patch(route('communities.members.set-expiry', $community), [
+                'user_ids' => [$member->id],
+                'months'   => 1,
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertNotNull(CommunityMember::where('user_id', $member->id)->first()->expires_at);
+    }
+
+    public function test_set_expiry_overwrites_existing_expiry(): void
+    {
+        $owner = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $member = User::factory()->create();
+
+        CommunityMember::factory()->create([
+            'community_id'    => $community->id,
+            'user_id'         => $member->id,
+            'membership_type' => CommunityMember::MEMBERSHIP_FREE,
+            'expires_at'      => now()->addYears(5),
+        ]);
+
+        $this->actingAs($owner)
+            ->patch(route('communities.members.set-expiry', $community), [
+                'user_ids' => [$member->id],
+                'months'   => 1,
+            ])
+            ->assertSessionHas('success');
+
+        $newExpiry = CommunityMember::where('user_id', $member->id)->first()->expires_at;
+        $this->assertTrue($newExpiry->lessThan(now()->addMonths(2)));
+    }
+
+    public function test_set_expiry_accepts_null_for_no_expiry(): void
+    {
+        $owner = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $member = User::factory()->create();
+
+        CommunityMember::factory()->create([
+            'community_id'    => $community->id,
+            'user_id'         => $member->id,
+            'membership_type' => CommunityMember::MEMBERSHIP_FREE,
+            'expires_at'      => now()->addMonth(),
+        ]);
+
+        $this->actingAs($owner)
+            ->patch(route('communities.members.set-expiry', $community), [
+                'user_ids' => [$member->id],
+                'months'   => null,
+            ])
+            ->assertSessionHas('success');
+
+        $this->assertNull(CommunityMember::where('user_id', $member->id)->first()->expires_at);
+    }
+
+    public function test_non_owner_cannot_set_expiry(): void
+    {
+        $owner = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $admin = User::factory()->create();
+
+        CommunityMember::factory()->admin()->create([
+            'community_id' => $community->id,
+            'user_id'      => $admin->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->patch(route('communities.members.set-expiry', $community), [
+                'user_ids' => [$admin->id],
+                'months'   => 1,
+            ])
+            ->assertForbidden();
+    }
+
     // ── extendAccess error catch path ────────────────────────────────────────
 
     public function test_extend_access_catches_generic_exception_and_returns_error(): void

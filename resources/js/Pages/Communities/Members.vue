@@ -103,6 +103,24 @@
                         class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg transition-colors disabled:opacity-50">
                         {{ extendForm.processing ? 'Extending…' : 'Extend access' }}
                     </button>
+
+                    <span class="w-px h-4 bg-indigo-200 mx-1"></span>
+
+                    <!-- Set expiry (overwrites) -->
+                    <label class="text-xs font-medium text-indigo-700">Set expiry to</label>
+                    <select v-model="setExpiryMonths"
+                        class="text-xs border border-indigo-300 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option :value="1">1 month</option>
+                        <option :value="2">2 months</option>
+                        <option :value="3">3 months</option>
+                        <option :value="6">6 months</option>
+                        <option :value="12">1 year</option>
+                        <option :value="null">No expiry</option>
+                    </select>
+                    <button @click="setExpiry" :disabled="setExpiryForm.processing"
+                        class="px-4 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg transition-colors disabled:opacity-50">
+                        {{ setExpiryForm.processing ? 'Saving…' : 'Set expiry' }}
+                    </button>
                     <button @click="selectedIds = []" class="text-xs text-gray-400 hover:text-gray-600">Clear</button>
                 </div>
 
@@ -683,6 +701,8 @@ const isOwner = computed(() => currentUserId.value === props.community.owner_id)
 const selectedIds   = ref([]);
 const extendMonths  = ref(3);
 const extendForm    = useForm({});
+const setExpiryMonths = ref(1);
+const setExpiryForm   = useForm({});
 
 const allSelected = computed(() =>
     props.members.data.length > 0 && props.members.data.every(m => selectedIds.value.includes(m.id))
@@ -704,6 +724,19 @@ function extendAccess() {
         }).filter(Boolean),
         months: extendMonths.value,
     })).patch(`/communities/${props.community.slug}/members/extend-access`, {
+        preserveScroll: true,
+        onSuccess: () => { selectedIds.value = []; },
+    });
+}
+
+function setExpiry() {
+    setExpiryForm.transform(() => ({
+        user_ids: selectedIds.value.map(memberId => {
+            const member = props.members.data.find(m => m.id === memberId);
+            return member?.user?.id;
+        }).filter(Boolean),
+        months: setExpiryMonths.value,
+    })).patch(`/communities/${props.community.slug}/members/set-expiry`, {
         preserveScroll: true,
         onSuccess: () => { selectedIds.value = []; },
     });

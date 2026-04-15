@@ -277,6 +277,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/communities/{community}/members/{user}/role', [CommunityMemberController::class, 'changeRole'])->name('communities.members.role');
     Route::patch('/communities/{community}/members/{user}/block', [CommunityMemberController::class, 'toggleBlock'])->name('communities.members.block');
     Route::patch('/communities/{community}/members/extend-access', [CommunityMemberController::class, 'extendAccess'])->name('communities.members.extend-access');
+    Route::patch('/communities/{community}/members/set-expiry', [CommunityMemberController::class, 'setExpiry'])->name('communities.members.set-expiry');
 
     // Gated: active membership required
     Route::middleware(EnsureActiveMembership::class)->group(function () {
