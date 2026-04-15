@@ -123,7 +123,7 @@
                 <Link href="/privacy" class="text-indigo-500 hover:underline">Privacy Policy</Link>.
             </p>
 
-            <p v-if="dc" class="text-center mt-4 text-xs text-gray-400">
+            <p v-if="isCustomDomain" class="text-center mt-4 text-xs text-gray-400">
                 Powered by
                 <a href="https://curzzo.com" target="_blank" rel="noopener" class="font-medium text-gray-500 hover:text-indigo-600">Curzzo</a>
             </p>
@@ -136,8 +136,9 @@ import { Link, useForm, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 const page = usePage();
 const dc = computed(() => page.props.domain_community);
-const brandLogo = computed(() => dc.value?.avatar || '/brand/logo-transparent.png');
-const brandName = computed(() => dc.value?.name || 'Curzzo');
+const isCustomDomain = computed(() => !!dc.value?.is_custom_domain);
+const brandLogo = computed(() => isCustomDomain.value && dc.value?.avatar ? dc.value.avatar : '/brand/logo-transparent.png');
+const brandName = computed(() => isCustomDomain.value && dc.value?.name ? dc.value.name : 'Curzzo');
 
 const form = useForm({
     first_name:            '',

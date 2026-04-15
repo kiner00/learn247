@@ -131,7 +131,13 @@ class HandleInertiaRequests extends Middleware
             's3_base_url' => rtrim(config('filesystems.disks.s3.url') ?: '', '/'),
             // Set when request comes in on a custom subdomain or custom domain
             'domain_community' => ($dc = $request->attributes->get('domain_community'))
-                ? ['id' => $dc->id, 'slug' => $dc->slug, 'name' => $dc->name, 'avatar' => $dc->avatar]
+                ? [
+                    'id'               => $dc->id,
+                    'slug'             => $dc->slug,
+                    'name'             => $dc->name,
+                    'avatar'           => $dc->avatar,
+                    'is_custom_domain' => $dc->custom_domain && $request->getHost() === $dc->custom_domain,
+                ]
                 : null,
         ];
     }
