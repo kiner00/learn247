@@ -23,8 +23,9 @@ class PayoutRequestControllerTest extends TestCase
     public function test_owner_can_submit_payout_request(): void
     {
         $owner = User::factory()->create([
-            'payout_method'  => 'gcash',
-            'payout_details' => '09171234567',
+            'payout_method'   => 'gcash',
+            'payout_details'  => '09171234567',
+            'kyc_verified_at' => now(),
         ]);
         $community = Community::factory()->paid()->create(['owner_id' => $owner->id]);
 
@@ -149,7 +150,7 @@ class PayoutRequestControllerTest extends TestCase
 
     public function test_affiliate_can_submit_payout_request(): void
     {
-        $user      = User::factory()->create();
+        $user      = User::factory()->create(['kyc_verified_at' => now()]);
         $referred  = User::factory()->create();
         $community = Community::factory()->paid()->create();
 

@@ -31,7 +31,7 @@
                 <SettingsPaymentMethods   v-else-if="activeTab === 'payment_methods'" />
                 <SettingsPaymentHistory   v-else-if="activeTab === 'payment_history'" />
                 <SettingsTheme            v-else-if="activeTab === 'theme'"      :theme="theme" />
-                <SettingsPayouts          v-else-if="activeTab === 'payouts'"    :payout-method="payoutMethod" :payout-details="payoutDetails" :bank-name="bankName" />
+                <SettingsPayouts          v-else-if="activeTab === 'payouts'"    :payout-method="payoutMethod" :payout-details="payoutDetails" :bank-name="bankName" :kyc="kyc" @go-to-kyc="activeTab = 'kyc'" />
                 <SettingsCrypto           v-else-if="activeTab === 'crypto'"     :crypto-wallet="cryptoWallet" :crz-balance="crzBalance" />
 
                 <!-- Fallback for unknown tabs -->

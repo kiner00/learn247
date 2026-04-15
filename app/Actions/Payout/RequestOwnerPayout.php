@@ -17,6 +17,10 @@ class RequestOwnerPayout
      */
     public function execute(User $owner, Community $community, float $amount): array
     {
+        if (! $owner->isKycVerified()) {
+            return ['success' => false, 'message' => 'KYC verification is required before requesting payouts. Please complete identity verification in Account Settings.'];
+        }
+
         if (! in_array($owner->payout_method, ['gcash', 'maya']) || ! $owner->payout_details) {
             return ['success' => false, 'message' => 'Please set your payout method in Account Settings before requesting a payout.'];
         }

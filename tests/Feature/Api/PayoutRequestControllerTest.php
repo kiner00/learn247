@@ -40,7 +40,7 @@ class PayoutRequestControllerTest extends TestCase
 
     public function test_store_owner_validates_amount_is_required(): void
     {
-        $owner     = User::factory()->create(['payout_method' => 'gcash', 'payout_details' => '09171234567']);
+        $owner     = User::factory()->create(['payout_method' => 'gcash', 'payout_details' => '09171234567', 'kyc_verified_at' => now()]);
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 499]);
 
         $this->actingAs($owner, 'sanctum')
@@ -51,7 +51,7 @@ class PayoutRequestControllerTest extends TestCase
 
     public function test_store_owner_returns_422_when_no_payout_method_set(): void
     {
-        $owner     = User::factory()->create(['payout_method' => null, 'payout_details' => null]);
+        $owner     = User::factory()->create(['payout_method' => null, 'payout_details' => null, 'kyc_verified_at' => now()]);
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 499]);
 
         $this->actingAs($owner, 'sanctum')
@@ -62,7 +62,7 @@ class PayoutRequestControllerTest extends TestCase
 
     public function test_store_owner_returns_422_when_pending_request_exists(): void
     {
-        $owner     = User::factory()->create(['payout_method' => 'gcash', 'payout_details' => '09171234567']);
+        $owner     = User::factory()->create(['payout_method' => 'gcash', 'payout_details' => '09171234567', 'kyc_verified_at' => now()]);
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 499]);
 
         $subscriber   = User::factory()->create();
@@ -100,7 +100,7 @@ class PayoutRequestControllerTest extends TestCase
 
     public function test_store_owner_creates_payout_request_successfully(): void
     {
-        $owner     = User::factory()->create(['payout_method' => 'gcash', 'payout_details' => '09171234567']);
+        $owner     = User::factory()->create(['payout_method' => 'gcash', 'payout_details' => '09171234567', 'kyc_verified_at' => now()]);
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 499]);
 
         $subscriber   = User::factory()->create();
@@ -171,7 +171,7 @@ class PayoutRequestControllerTest extends TestCase
 
     public function test_store_affiliate_creates_payout_request_successfully(): void
     {
-        $user      = User::factory()->create();
+        $user      = User::factory()->create(['kyc_verified_at' => now()]);
         $community = Community::factory()->create(['price' => 499]);
         $affiliate = Affiliate::create([
             'community_id'   => $community->id,

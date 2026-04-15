@@ -184,8 +184,9 @@ class CoverageGapsTest extends TestCase
     public function test_request_owner_payout_rejects_amount_below_fee(): void
     {
         $owner = User::factory()->create([
-            'payout_method'  => 'gcash',
-            'payout_details' => '09171234567',
+            'payout_method'   => 'gcash',
+            'payout_details'  => '09171234567',
+            'kyc_verified_at' => now(),
         ]);
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 

@@ -18,9 +18,9 @@ class RequestAffiliatePayoutTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function makeAffiliate(array $overrides = []): Affiliate
+    private function makeAffiliate(array $overrides = [], array $userOverrides = []): Affiliate
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(array_merge(['kyc_verified_at' => now()], $userOverrides));
         $community = Community::factory()->create();
 
         return Affiliate::create(array_merge([
@@ -46,6 +46,19 @@ class RequestAffiliatePayoutTest extends TestCase
 
         $this->assertFalse($result['success']);
         $this->assertStringContainsString('suspended', $result['message']);
+    }
+
+    public function test_unverified_kyc_returns_failure(): void
+    {
+        $affiliate = $this->makeAffiliate([], ['kyc_verified_at' => null, 'kyc_status' => User::KYC_NONE]);
+
+        $eligibility = Mockery::mock(CalculateEligibility::class);
+        $action = new RequestAffiliatePayout($eligibility);
+
+        $result = $action->execute($affiliate, 100);
+
+        $this->assertFalse($result['success']);
+        $this->assertStringContainsString('KYC verification is required', $result['message']);
     }
 
     public function test_missing_payout_method_returns_failure(): void

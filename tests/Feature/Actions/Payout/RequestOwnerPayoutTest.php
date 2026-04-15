@@ -17,7 +17,7 @@ class RequestOwnerPayoutTest extends TestCase
 
     public function test_missing_payout_method_returns_failure(): void
     {
-        $owner = User::factory()->create(['payout_method' => null, 'payout_details' => null]);
+        $owner = User::factory()->create(['payout_method' => null, 'payout_details' => null, 'kyc_verified_at' => now()]);
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $eligibility = Mockery::mock(CalculateEligibility::class);
@@ -29,9 +29,28 @@ class RequestOwnerPayoutTest extends TestCase
         $this->assertStringContainsString('payout method', $result['message']);
     }
 
+    public function test_unverified_kyc_returns_failure(): void
+    {
+        $owner = User::factory()->create([
+            'payout_method'   => 'gcash',
+            'payout_details'  => '09171234567',
+            'kyc_verified_at' => null,
+            'kyc_status'      => User::KYC_NONE,
+        ]);
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $eligibility = Mockery::mock(CalculateEligibility::class);
+        $action = new RequestOwnerPayout($eligibility);
+
+        $result = $action->execute($owner, $community, 100);
+
+        $this->assertFalse($result['success']);
+        $this->assertStringContainsString('KYC verification is required', $result['message']);
+    }
+
     public function test_unsupported_payout_method_returns_failure(): void
     {
-        $owner = User::factory()->create(['payout_method' => 'paypal', 'payout_details' => 'x@paypal.com']);
+        $owner = User::factory()->create(['payout_method' => 'paypal', 'payout_details' => 'x@paypal.com', 'kyc_verified_at' => now()]);
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $eligibility = Mockery::mock(CalculateEligibility::class);
@@ -45,7 +64,7 @@ class RequestOwnerPayoutTest extends TestCase
 
     public function test_has_pending_request_returns_failure(): void
     {
-        $owner = User::factory()->create(['payout_method' => 'gcash', 'payout_details' => '09171234567']);
+        $owner = User::factory()->create(['payout_method' => 'gcash', 'payout_details' => '09171234567', 'kyc_verified_at' => now()]);
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         PayoutRequest::create([
@@ -68,7 +87,7 @@ class RequestOwnerPayoutTest extends TestCase
 
     public function test_zero_eligible_earnings_returns_failure(): void
     {
-        $owner = User::factory()->create(['payout_method' => 'gcash', 'payout_details' => '09171234567']);
+        $owner = User::factory()->create(['payout_method' => 'gcash', 'payout_details' => '09171234567', 'kyc_verified_at' => now()]);
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $eligibility = Mockery::mock(CalculateEligibility::class);
@@ -83,7 +102,7 @@ class RequestOwnerPayoutTest extends TestCase
 
     public function test_amount_exceeds_eligible_balance_returns_failure(): void
     {
-        $owner = User::factory()->create(['payout_method' => 'maya', 'payout_details' => '09171234567']);
+        $owner = User::factory()->create(['payout_method' => 'maya', 'payout_details' => '09171234567', 'kyc_verified_at' => now()]);
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $eligibility = Mockery::mock(CalculateEligibility::class);
@@ -98,7 +117,7 @@ class RequestOwnerPayoutTest extends TestCase
 
     public function test_successful_payout_request_creates_record(): void
     {
-        $owner = User::factory()->create(['payout_method' => 'gcash', 'payout_details' => '09171234567']);
+        $owner = User::factory()->create(['payout_method' => 'gcash', 'payout_details' => '09171234567', 'kyc_verified_at' => now()]);
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $eligibility = Mockery::mock(CalculateEligibility::class);

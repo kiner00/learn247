@@ -5,6 +5,28 @@
             Set where you want to receive your earnings as a community owner.
             This applies to all communities you own.
         </p>
+
+        <div v-if="!isKycVerified" class="mb-6 rounded-xl border p-4"
+             :class="kycStatus === 'rejected' ? 'border-red-200 bg-red-50' : kycStatus === 'submitted' ? 'border-blue-200 bg-blue-50' : 'border-amber-200 bg-amber-50'">
+            <div class="flex items-start gap-3">
+                <div class="flex-1">
+                    <p class="text-sm font-bold"
+                       :class="kycStatus === 'rejected' ? 'text-red-800' : kycStatus === 'submitted' ? 'text-blue-800' : 'text-amber-800'">
+                        {{ kycBannerTitle }}
+                    </p>
+                    <p class="text-xs mt-1"
+                       :class="kycStatus === 'rejected' ? 'text-red-700' : kycStatus === 'submitted' ? 'text-blue-700' : 'text-amber-700'">
+                        {{ kycBannerMessage }}
+                    </p>
+                </div>
+                <button v-if="kycStatus !== 'submitted'" type="button" @click="$emit('go-to-kyc')"
+                        class="shrink-0 px-3 py-1.5 text-xs font-bold rounded-lg transition-colors"
+                        :class="kycStatus === 'rejected' ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-amber-600 hover:bg-amber-700 text-white'">
+                    {{ kycStatus === 'rejected' ? 'Resubmit' : 'Verify now' }}
+                </button>
+            </div>
+        </div>
+
         <form @submit.prevent="savePayout" class="max-w-sm space-y-4">
             <div>
                 <label class="block text-xs font-semibold text-gray-600 mb-1">Payout Method</label>
@@ -42,12 +64,35 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 
 const props = defineProps({
     payoutMethod:  { type: String, default: 'gcash' },
     payoutDetails: { type: String, default: '' },
     bankName:      { type: String, default: '' },
+    kyc:           { type: Object, default: () => ({ status: 'none' }) },
+});
+
+defineEmits(['go-to-kyc']);
+
+const kycStatus = computed(() => props.kyc?.status ?? 'none');
+const isKycVerified = computed(() => kycStatus.value === 'approved');
+
+const kycBannerTitle = computed(() => {
+    switch (kycStatus.value) {
+        case 'submitted': return 'Identity verification in review';
+        case 'rejected':  return 'Identity verification was rejected';
+        default:          return 'Identity verification required';
+    }
+});
+
+const kycBannerMessage = computed(() => {
+    switch (kycStatus.value) {
+        case 'submitted': return 'We\'re reviewing your documents. You\'ll be able to request payouts once approved.';
+        case 'rejected':  return props.kyc?.rejected_reason || 'Please resubmit your ID and selfie for verification.';
+        default:          return 'You must complete KYC verification before you can request payouts.';
+    }
 });
 
 const PH_BANKS = [
