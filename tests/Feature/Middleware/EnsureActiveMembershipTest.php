@@ -102,6 +102,54 @@ class EnsureActiveMembershipTest extends TestCase
             ->assertRedirect("/communities/{$community->slug}/about");
     }
 
+    public function test_free_tier_member_of_paid_community_can_access(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->paid()->create();
+        CommunityMember::factory()->create([
+            'community_id'    => $community->id,
+            'user_id'         => $user->id,
+            'membership_type' => CommunityMember::MEMBERSHIP_FREE,
+            'expires_at'      => null,
+        ]);
+
+        $this->actingAs($user)
+            ->get("/communities/{$community->slug}/members")
+            ->assertOk();
+    }
+
+    public function test_free_tier_member_of_paid_community_with_future_expiry_can_access(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->paid()->create();
+        CommunityMember::factory()->create([
+            'community_id'    => $community->id,
+            'user_id'         => $user->id,
+            'membership_type' => CommunityMember::MEMBERSHIP_FREE,
+            'expires_at'      => now()->addMonths(12),
+        ]);
+
+        $this->actingAs($user)
+            ->get("/communities/{$community->slug}/members")
+            ->assertOk();
+    }
+
+    public function test_free_tier_member_of_paid_community_with_past_expiry_is_denied(): void
+    {
+        $user      = User::factory()->create();
+        $community = Community::factory()->paid()->create();
+        CommunityMember::factory()->create([
+            'community_id'    => $community->id,
+            'user_id'         => $user->id,
+            'membership_type' => CommunityMember::MEMBERSHIP_FREE,
+            'expires_at'      => now()->subDay(),
+        ]);
+
+        $this->actingAs($user)
+            ->get("/communities/{$community->slug}/members")
+            ->assertRedirect("/communities/{$community->slug}/about");
+    }
+
     public function test_unauthenticated_json_request_returns_401(): void
     {
         $community = Community::factory()->create();

@@ -14,8 +14,9 @@ class EnsureActiveMembership
     /**
      * Gate access to community routes.
      * - Free communities: check membership row exists.
-     * - Paid communities: check active, non-expired subscription.
-     * - Owner always passes through.
+     * - Paid communities: active non-expired subscription, OR free-tier member
+     *   (CommunityMember.membership_type=free) with unexpired expires_at.
+     * - Owner and super admins always pass through.
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -62,7 +63,19 @@ class EnsureActiveMembership
             })
             ->exists();
 
-        if (! $hasActive) {
+        if ($hasActive) {
+            return $next($request);
+        }
+
+        $hasFreeTier = CommunityMember::where('community_id', $community->id)
+            ->where('user_id', $user->id)
+            ->where('membership_type', CommunityMember::MEMBERSHIP_FREE)
+            ->where(function ($q) {
+                $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+            })
+            ->exists();
+
+        if (! $hasFreeTier) {
             return $this->deny($request, $community, 'An active membership is required.');
         }
 
