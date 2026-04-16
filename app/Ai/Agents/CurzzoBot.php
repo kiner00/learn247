@@ -7,6 +7,7 @@ use App\Ai\Tools\GetCommunityPostsTool;
 use App\Ai\Tools\SearchCommunityLessonsTool;
 use App\Models\Community;
 use App\Models\Curzzo;
+use Laravel\Ai\Attributes\MaxTokens;
 use Laravel\Ai\Concerns\RemembersConversations;
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Contracts\Conversational;
@@ -14,6 +15,7 @@ use Laravel\Ai\Contracts\HasTools;
 use Laravel\Ai\Enums\Lab;
 use Laravel\Ai\Promptable;
 
+#[MaxTokens(16384)]
 class CurzzoBot implements Agent, Conversational, HasTools
 {
     use Promptable, RemembersConversations;

@@ -86,7 +86,11 @@ async function send() {
             conversation_id: conversationId.value,
         });
         conversationId.value = data.conversation_id;
-        messages.value.push({ role: 'assistant', text: data.message });
+        const replyText = (data.message ?? '').trim();
+        messages.value.push({
+            role: 'assistant',
+            text: replyText || 'The reply came back empty — the request may have been too long. Try shortening your question or splitting it into steps.',
+        });
 
         // Update usage from response
         if (data.daily_limit !== undefined) dailyLimit.value = data.daily_limit;
