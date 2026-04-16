@@ -15,7 +15,7 @@ use Laravel\Ai\Contracts\HasTools;
 use Laravel\Ai\Enums\Lab;
 use Laravel\Ai\Promptable;
 
-#[MaxTokens(16384)]
+#[MaxTokens(32768)]
 class CurzzoBot implements Agent, Conversational, HasTools
 {
     use Promptable, RemembersConversations;
