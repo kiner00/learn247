@@ -25,6 +25,11 @@ class CurzzoBot implements Agent, Conversational, HasTools
         private Community $community,
     ) {}
 
+    public function timeout(): int
+    {
+        return 120;
+    }
+
     public function instructions(): string
     {
         $lines = [];
