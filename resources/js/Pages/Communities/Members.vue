@@ -74,6 +74,33 @@
                     </div>
                 </div>
 
+                <!-- Search bar -->
+                <div class="relative mb-4">
+                    <svg class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
+                    </svg>
+                    <input
+                        v-model="searchInput"
+                        @input="onSearchInput"
+                        type="text"
+                        :placeholder="isOwner ? 'Search by name, username, or email' : 'Search by name or username'"
+                        class="w-full pl-10 pr-10 py-2 text-sm border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    />
+                    <button
+                        v-if="searchInput"
+                        @click="clearSearch"
+                        type="button"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        aria-label="Clear search"
+                    >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
                 <!-- Batch action bar (owner only, members selected) -->
                 <div v-if="isOwner && selectedIds.length > 0"
                     class="flex items-center gap-3 bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-3 mb-4 flex-wrap">
@@ -629,6 +656,7 @@ const props = defineProps({
     affiliate:  Object,
     courses:    { type: Array, default: () => [] },
     tags:       { type: Array, default: () => [] },
+    search:     { type: String, default: '' },
 });
 
 const page = usePage();
@@ -641,6 +669,34 @@ const currentFilter = computed(() => {
 const currentUserId = computed(() => page.props.auth?.user?.id);
 
 const showInviteModal = ref(false);
+
+// ── Search ────────────────────────────────────────────────────────────────────
+const searchInput = ref(props.search ?? '');
+let searchTimer = null;
+
+function runSearch() {
+    const params = {};
+    if (currentFilter.value) params.filter = currentFilter.value;
+    if (searchInput.value.trim()) params.search = searchInput.value.trim();
+
+    router.get(`/communities/${props.community.slug}/members`, params, {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true,
+        only: ['members', 'totalCount', 'adminCount', 'freeCount', 'paidCount', 'search'],
+    });
+}
+
+function onSearchInput() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(runSearch, 300);
+}
+
+function clearSearch() {
+    clearTimeout(searchTimer);
+    searchInput.value = '';
+    runSearch();
+}
 
 // SMS blast
 const showSmsModal      = ref(false);

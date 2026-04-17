@@ -135,7 +135,11 @@ class CommunityController extends Controller
 
     public function members(Community $community, Request $request): Response
     {
-        $query = $community->members()->with(['user:id,name,username,bio', 'tags:id,name,color']);
+        $canSearchEmail = auth()->id() === $community->owner_id;
+        $userSelect = $canSearchEmail
+            ? 'id,name,username,bio,email'
+            : 'id,name,username,bio';
+        $query = $community->members()->with(["user:{$userSelect}", 'tags:id,name,color']);
 
         if ($request->filter === 'admin') {
             $query->where('role', 'admin');
@@ -143,6 +147,19 @@ class CommunityController extends Controller
             $query->where('membership_type', CommunityMember::MEMBERSHIP_FREE);
         } elseif ($request->filter === 'paid') {
             $query->where('membership_type', CommunityMember::MEMBERSHIP_PAID);
+        }
+
+        $search = trim((string) $request->input('search', ''));
+        if ($search !== '') {
+            $query->whereHas('user', function ($q) use ($search, $canSearchEmail) {
+                $q->where(function ($q) use ($search, $canSearchEmail) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('username', 'like', "%{$search}%");
+                    if ($canSearchEmail) {
+                        $q->orWhere('email', 'like', "%{$search}%");
+                    }
+                });
+            });
         }
 
         $members    = $query->orderByRaw("CASE role WHEN 'admin' THEN 0 WHEN 'moderator' THEN 1 ELSE 2 END")->paginate(20)->withQueryString();
@@ -161,7 +178,7 @@ class CommunityController extends Controller
             ? $community->tags()->withCount('members')->orderBy('name')->get()
             : [];
 
-        return Inertia::render('Communities/Members', compact('community', 'members', 'totalCount', 'adminCount', 'freeCount', 'paidCount', 'affiliate', 'courses', 'tags'));
+        return Inertia::render('Communities/Members', compact('community', 'members', 'totalCount', 'adminCount', 'freeCount', 'paidCount', 'affiliate', 'courses', 'tags', 'search'));
     }
 
     public function settings(Community $community, PlanLimitService $planLimit): Response
