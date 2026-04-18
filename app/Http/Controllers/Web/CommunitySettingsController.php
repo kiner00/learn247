@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\ChatbotMessage;
 use App\Models\Community;
 use App\Models\CommunityLevelPerk;
+use App\Models\Course;
 use App\Models\Tag;
+use App\Models\Workflow;
 use App\Services\Community\PlanLimitService;
 use App\Services\Email\EmailProviderFactory;
 use Inertia\Inertia;
@@ -121,7 +123,26 @@ class CommunitySettingsController extends Controller
 
     public function workflows(Community $community): Response
     {
-        return Inertia::render('Communities/Settings/Workflows', $this->baseProps($community));
+        $workflows = Workflow::where('community_id', $community->id)
+            ->orderByDesc('id')
+            ->get();
+
+        $tags = Tag::where('community_id', $community->id)
+            ->orderBy('name')
+            ->get(['id', 'name', 'color']);
+
+        $courses = Course::where('community_id', $community->id)
+            ->orderBy('position')
+            ->get(['id', 'title']);
+
+        return Inertia::render('Communities/Settings/Workflows', array_merge(
+            $this->baseProps($community),
+            [
+                'workflows' => $workflows,
+                'tags'      => $tags,
+                'courses'   => $courses,
+            ]
+        ));
     }
 
     public function dangerZone(Community $community): Response

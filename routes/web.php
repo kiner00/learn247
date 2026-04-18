@@ -47,6 +47,7 @@ use App\Http\Controllers\Web\EmailSequenceController;
 use App\Http\Controllers\Web\EmailAnalyticsController;
 use App\Http\Controllers\Web\EmailHistoryController;
 use App\Http\Controllers\Web\TagController;
+use App\Http\Controllers\Web\WorkflowController;
 use App\Http\Controllers\Web\ResendWebhookController;
 use App\Http\Controllers\Web\EmailUnsubscribeController;
 use App\Http\Controllers\Web\TicketController;
@@ -266,6 +267,11 @@ Route::middleware('auth')->group(function () {
     Route::patch('/communities/{community}/tags/{tag}', [TagController::class, 'update'])->name('communities.tags.update');
     Route::delete('/communities/{community}/tags/{tag}', [TagController::class, 'destroy'])->name('communities.tags.destroy');
     Route::post('/communities/{community}/tags/assign', [TagController::class, 'assign'])->name('communities.tags.assign');
+
+    Route::post('/communities/{community}/workflows', [WorkflowController::class, 'store'])->name('communities.workflows.store');
+    Route::patch('/communities/{community}/workflows/{workflow}', [WorkflowController::class, 'update'])->name('communities.workflows.update');
+    Route::post('/communities/{community}/workflows/{workflow}/toggle', [WorkflowController::class, 'toggle'])->name('communities.workflows.toggle');
+    Route::delete('/communities/{community}/workflows/{workflow}', [WorkflowController::class, 'destroy'])->name('communities.workflows.destroy');
     Route::post('/communities/{community}/ai-landing', [CommunityController::class, 'generateLandingPage'])->name('communities.ai-landing');
     Route::post('/communities/{community}/ai-landing/section', [CommunityController::class, 'regenerateSection'])->name('communities.ai-landing.section');
     Route::post('/communities/{community}/landing-page/upload-image', [CommunityController::class, 'uploadSectionImage'])->name('communities.landing-page.upload-image');
