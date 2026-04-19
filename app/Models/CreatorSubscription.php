@@ -8,13 +8,18 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class CreatorSubscription extends Model
 {
     use Concerns\HasRecurringPlan;
-    const STATUS_PENDING   = 'pending';
-    const STATUS_ACTIVE    = 'active';
-    const STATUS_EXPIRED   = 'expired';
+
+    const STATUS_PENDING = 'pending';
+
+    const STATUS_ACTIVE = 'active';
+
+    const STATUS_EXPIRED = 'expired';
+
     const STATUS_CANCELLED = 'cancelled';
 
     const PLAN_BASIC = 'basic';
-    const PLAN_PRO   = 'pro';
+
+    const PLAN_PRO = 'pro';
 
     protected $fillable = [
         'user_id',

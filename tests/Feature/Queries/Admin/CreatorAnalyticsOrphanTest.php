@@ -16,7 +16,7 @@ class CreatorAnalyticsOrphanTest extends TestCase
     {
         // Create a community with a valid owner, then add a global scope
         // that forces owner to be null for our community, simulating orphan.
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         // Add a global scope on User that excludes our owner from eager loads,
@@ -25,7 +25,7 @@ class CreatorAnalyticsOrphanTest extends TestCase
             $query->where('users.id', '!=', $owner->id);
         });
 
-        $result = (new CreatorAnalytics())->execute();
+        $result = (new CreatorAnalytics)->execute();
 
         $this->assertEmpty($result['creators']);
 

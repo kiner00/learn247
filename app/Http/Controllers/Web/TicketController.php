@@ -37,6 +37,7 @@ class TicketController extends Controller
             return back()->with('success', 'Ticket submitted successfully.');
         } catch (\Throwable $e) {
             Log::error('TicketController@store failed', ['error' => $e->getMessage()]);
+
             return back()->with('error', 'Failed to submit ticket.');
         }
     }
@@ -54,7 +55,7 @@ class TicketController extends Controller
         ]);
 
         return Inertia::render('Support/Show', [
-            'ticket'  => $ticket,
+            'ticket' => $ticket,
             'isAdmin' => request()->routeIs('admin.*'),
         ]);
     }
@@ -71,6 +72,7 @@ class TicketController extends Controller
             return back()->with('success', 'Reply sent.');
         } catch (\Throwable $e) {
             Log::error('TicketController@reply failed', ['error' => $e->getMessage(), 'ticket_id' => $ticket->id]);
+
             return back()->with('error', 'Failed to send reply.');
         }
     }
@@ -130,12 +132,12 @@ class TicketController extends Controller
 
         return Inertia::render('Admin/Tickets', [
             'tickets' => $tickets,
-            'counts'  => [
-                'all'         => (int) $counts->all_count,
-                'open'        => (int) $counts->open_count,
+            'counts' => [
+                'all' => (int) $counts->all_count,
+                'open' => (int) $counts->open_count,
                 'in_progress' => (int) $counts->in_progress_count,
-                'resolved'    => (int) $counts->resolved_count,
-                'closed'      => (int) $counts->closed_count,
+                'resolved' => (int) $counts->resolved_count,
+                'closed' => (int) $counts->closed_count,
             ],
             'currentStatus' => $status,
         ]);

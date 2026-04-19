@@ -10,11 +10,11 @@ class CommunityMemberResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'           => $this->id,
+            'id' => $this->id,
             'community_id' => $this->community_id,
-            'role'         => $this->role,
-            'joined_at'    => $this->joined_at,
-            'user'         => new UserResource($this->whenLoaded('user')),
+            'role' => $this->role,
+            'joined_at' => $this->joined_at,
+            'user' => new UserResource($this->whenLoaded('user')),
         ];
     }
 }

@@ -22,7 +22,7 @@ class AuthControllerTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->post('/login', [
-            'email'    => $user->email,
+            'email' => $user->email,
             'password' => 'password',
         ]);
 
@@ -35,7 +35,7 @@ class AuthControllerTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->post('/login', [
-            'email'    => $user->email,
+            'email' => $user->email,
             'password' => 'wrong-password',
         ]);
 
@@ -54,10 +54,10 @@ class AuthControllerTest extends TestCase
     public function test_user_can_register(): void
     {
         $response = $this->post('/register', [
-            'first_name'            => 'John',
-            'last_name'             => 'Doe',
-            'email'                 => 'john@example.com',
-            'password'              => 'password123',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'email' => 'john@example.com',
+            'password' => 'password123',
             'password_confirmation' => 'password123',
         ]);
 
@@ -69,10 +69,10 @@ class AuthControllerTest extends TestCase
     public function test_register_requires_valid_email(): void
     {
         $response = $this->post('/register', [
-            'first_name'            => 'John',
-            'last_name'             => 'Doe',
-            'email'                 => 'not-a-valid-email',
-            'password'              => 'password123',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'email' => 'not-a-valid-email',
+            'password' => 'password123',
             'password_confirmation' => 'password123',
         ]);
 
@@ -108,7 +108,7 @@ class AuthControllerTest extends TestCase
         $user = User::factory()->create(['needs_password_setup' => true]);
 
         $response = $this->post('/login', [
-            'email'    => $user->email,
+            'email' => $user->email,
             'password' => 'password',
         ]);
 
@@ -121,7 +121,7 @@ class AuthControllerTest extends TestCase
     public function test_login_rejects_email_over_255_characters(): void
     {
         $response = $this->post('/login', [
-            'email'    => str_repeat('a', 250) . '@x.com',
+            'email' => str_repeat('a', 250).'@x.com',
             'password' => 'password',
         ]);
 
@@ -132,7 +132,7 @@ class AuthControllerTest extends TestCase
     public function test_login_rejects_password_over_255_characters(): void
     {
         $response = $this->post('/login', [
-            'email'    => 'user@example.com',
+            'email' => 'user@example.com',
             'password' => str_repeat('a', 256),
         ]);
 
@@ -165,7 +165,7 @@ class AuthControllerTest extends TestCase
     public function test_login_rejects_non_email_format(): void
     {
         $response = $this->post('/login', [
-            'email'    => 'not-an-email',
+            'email' => 'not-an-email',
             'password' => 'password',
         ]);
 
@@ -194,10 +194,10 @@ class AuthControllerTest extends TestCase
     public function test_register_requires_matching_password_confirmation(): void
     {
         $response = $this->post('/register', [
-            'first_name'            => 'Jane',
-            'last_name'             => 'Doe',
-            'email'                 => 'jane@example.com',
-            'password'              => 'SecureP@ss1',
+            'first_name' => 'Jane',
+            'last_name' => 'Doe',
+            'email' => 'jane@example.com',
+            'password' => 'SecureP@ss1',
             'password_confirmation' => 'DifferentP@ss1',
         ]);
 
@@ -210,9 +210,9 @@ class AuthControllerTest extends TestCase
     {
         $response = $this->post('/register', [
             'first_name' => 'Jane',
-            'last_name'  => 'Doe',
-            'email'      => 'jane@example.com',
-            'password'   => 'SecureP@ss1',
+            'last_name' => 'Doe',
+            'email' => 'jane@example.com',
+            'password' => 'SecureP@ss1',
         ]);
 
         $response->assertSessionHasErrors('password');

@@ -11,10 +11,10 @@ class CourseLessonFactory extends Factory
     {
         return [
             'module_id' => CourseModule::factory(),
-            'title'     => fake()->sentence(3),
-            'content'   => fake()->paragraphs(2, true),
+            'title' => fake()->sentence(3),
+            'content' => fake()->paragraphs(2, true),
             'video_url' => null,
-            'position'  => 0,
+            'position' => 0,
         ];
     }
 }

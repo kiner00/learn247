@@ -170,7 +170,7 @@ class UpdateCommunityTest extends TestCase
         $action = app(UpdateCommunity::class);
 
         $result = $action->execute($community, [
-            'name'               => $community->name,
+            'name' => $community->name,
             'remove_cover_image' => true,
         ]);
 
@@ -187,7 +187,7 @@ class UpdateCommunityTest extends TestCase
         $action = app(UpdateCommunity::class);
 
         $result = $action->execute($community, [
-            'name'          => $community->name,
+            'name' => $community->name,
             'remove_avatar' => true,
         ]);
 
@@ -201,10 +201,10 @@ class UpdateCommunityTest extends TestCase
 
         $owner = User::factory()->create(['bio' => 'A bio', 'avatar' => 'av.jpg']);
         $community = Community::factory()->create([
-            'owner_id'    => $owner->id,
+            'owner_id' => $owner->id,
             'cover_image' => '/storage/cover.jpg',
             'description' => 'Desc',
-            'price'       => 0,
+            'price' => 0,
         ]);
         $course = Course::create(['community_id' => $community->id, 'title' => 'C']);
         for ($i = 1; $i <= 5; $i++) {

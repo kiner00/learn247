@@ -19,16 +19,17 @@ class TranscodeExistingVideos extends Command
             ->where('video_path', '!=', '')
             ->where(function ($q) {
                 $q->whereNull('video_hls_path')
-                  ->orWhere('video_transcode_status', 'failed');
+                    ->orWhere('video_transcode_status', 'failed');
             })
             ->where(function ($q) {
                 $q->whereNull('video_transcode_status')
-                  ->orWhereIn('video_transcode_status', ['failed', 'pending']);
+                    ->orWhereIn('video_transcode_status', ['failed', 'pending']);
             })
             ->get();
 
         if ($lessons->isEmpty()) {
             $this->info('No videos need transcoding.');
+
             return self::SUCCESS;
         }
 

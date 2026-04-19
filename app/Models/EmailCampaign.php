@@ -12,12 +12,17 @@ class EmailCampaign extends Model
     use HasFactory;
 
     public const TYPE_BROADCAST = 'broadcast';
-    public const TYPE_SEQUENCE  = 'sequence';
 
-    public const STATUS_DRAFT     = 'draft';
-    public const STATUS_SENDING   = 'sending';
-    public const STATUS_SENT      = 'sent';
-    public const STATUS_PAUSED    = 'paused';
+    public const TYPE_SEQUENCE = 'sequence';
+
+    public const STATUS_DRAFT = 'draft';
+
+    public const STATUS_SENDING = 'sending';
+
+    public const STATUS_SENT = 'sent';
+
+    public const STATUS_PAUSED = 'paused';
+
     public const STATUS_CANCELLED = 'cancelled';
 
     protected $fillable = [

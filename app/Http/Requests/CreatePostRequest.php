@@ -14,15 +14,15 @@ class CreatePostRequest extends FormRequest
     public function rules(): array
     {
         $rules = [
-            'title'     => ['nullable', 'string', 'max:255'],
-            'content'   => ['required', 'string', 'max:10000'],
-            'image'     => ['nullable', 'image', 'max:10240'],
+            'title' => ['nullable', 'string', 'max:255'],
+            'content' => ['required', 'string', 'max:10000'],
+            'image' => ['nullable', 'image', 'max:10240'],
             'video_url' => ['nullable', 'url', 'max:500'],
-            'video'     => ['nullable', 'file', 'mimetypes:video/mp4,video/quicktime,video/webm', 'max:102400'],
+            'video' => ['nullable', 'file', 'mimetypes:video/mp4,video/quicktime,video/webm', 'max:102400'],
         ];
 
         if (! $this->route('community')) {
-            $rules['community_id']   = ['required_without:community_slug', 'nullable', 'exists:communities,id'];
+            $rules['community_id'] = ['required_without:community_slug', 'nullable', 'exists:communities,id'];
             $rules['community_slug'] = ['required_without:community_id', 'nullable', 'exists:communities,slug'];
         }
 

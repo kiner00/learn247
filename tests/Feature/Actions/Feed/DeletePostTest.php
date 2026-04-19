@@ -20,14 +20,14 @@ class DeletePostTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->action = new DeletePost();
+        $this->action = new DeletePost;
     }
 
     public function test_author_can_delete_own_post(): void
     {
         $community = Community::factory()->create();
-        $user      = User::factory()->create();
-        $post      = Post::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+        $user = User::factory()->create();
+        $post = Post::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         $this->action->execute($user, $post);
 
@@ -37,9 +37,9 @@ class DeletePostTest extends TestCase
     public function test_moderator_can_delete_any_post(): void
     {
         $community = Community::factory()->create();
-        $author    = User::factory()->create();
-        $mod       = User::factory()->create();
-        $post      = Post::factory()->create(['community_id' => $community->id, 'user_id' => $author->id]);
+        $author = User::factory()->create();
+        $mod = User::factory()->create();
+        $post = Post::factory()->create(['community_id' => $community->id, 'user_id' => $author->id]);
         CommunityMember::factory()->moderator()->create(['community_id' => $community->id, 'user_id' => $mod->id]);
 
         $this->action->execute($mod, $post);
@@ -50,9 +50,9 @@ class DeletePostTest extends TestCase
     public function test_regular_member_cannot_delete_others_post(): void
     {
         $community = Community::factory()->create();
-        $author    = User::factory()->create();
-        $other     = User::factory()->create();
-        $post      = Post::factory()->create(['community_id' => $community->id, 'user_id' => $author->id]);
+        $author = User::factory()->create();
+        $other = User::factory()->create();
+        $post = Post::factory()->create(['community_id' => $community->id, 'user_id' => $author->id]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $other->id]);
 
         $this->expectException(AuthorizationException::class);
@@ -62,9 +62,9 @@ class DeletePostTest extends TestCase
     public function test_non_member_cannot_delete_post(): void
     {
         $community = Community::factory()->create();
-        $author    = User::factory()->create();
-        $outsider  = User::factory()->create();
-        $post      = Post::factory()->create(['community_id' => $community->id, 'user_id' => $author->id]);
+        $author = User::factory()->create();
+        $outsider = User::factory()->create();
+        $post = Post::factory()->create(['community_id' => $community->id, 'user_id' => $author->id]);
 
         $this->expectException(AuthorizationException::class);
         $this->action->execute($outsider, $post);

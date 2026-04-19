@@ -13,9 +13,9 @@ class RegisterUser
     public function execute(array $data): User
     {
         $user = User::create([
-            'name'     => trim($data['first_name'] . ' ' . $data['last_name']),
-            'email'    => $data['email'],
-            'phone'    => $data['phone'] ?? null,
+            'name' => trim($data['first_name'].' '.$data['last_name']),
+            'email' => $data['email'],
+            'phone' => $data['phone'] ?? null,
             'password' => Hash::make($data['password']),
         ]);
 
@@ -34,8 +34,8 @@ class RegisterUser
         );
 
         $first = $slug($firstName) ?: 'user';
-        $last  = $slug($lastName);
-        $base  = $last ? "{$first}-{$last}" : $first;
+        $last = $slug($lastName);
+        $base = $last ? "{$first}-{$last}" : $first;
 
         return "{$base}-{$userId}";
     }

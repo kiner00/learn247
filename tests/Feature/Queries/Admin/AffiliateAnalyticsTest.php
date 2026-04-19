@@ -5,15 +5,13 @@ namespace Tests\Feature\Queries\Admin;
 use App\Models\Affiliate;
 use App\Models\AffiliateConversion;
 use App\Models\Community;
+use App\Models\Payment;
 use App\Models\PayoutRequest;
 use App\Models\Subscription;
-use App\Models\Payment;
 use App\Models\User;
 use App\Queries\Admin\AffiliateAnalytics;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Mockery;
 use Tests\TestCase;
 
 class AffiliateAnalyticsTest extends TestCase
@@ -39,7 +37,7 @@ class AffiliateAnalyticsTest extends TestCase
         ?string $communityName = null,
     ): Affiliate {
         $user = User::factory()->create([
-            'name'  => $userName ?? fake()->name(),
+            'name' => $userName ?? fake()->name(),
             'email' => $userEmail ?? fake()->safeEmail(),
         ]);
 
@@ -48,10 +46,10 @@ class AffiliateAnalyticsTest extends TestCase
         ]);
 
         return Affiliate::create([
-            'community_id'  => $community->id,
-            'user_id'       => $user->id,
-            'code'          => $code,
-            'status'        => $status,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'code' => $code,
+            'status' => $status,
             'payout_method' => $payoutMethod,
         ]);
     }
@@ -64,31 +62,31 @@ class AffiliateAnalyticsTest extends TestCase
     ): AffiliateConversion {
         $sub = Subscription::factory()->create([
             'community_id' => $affiliate->community_id,
-            'status'       => Subscription::STATUS_ACTIVE,
+            'status' => Subscription::STATUS_ACTIVE,
         ]);
 
         $payment = Payment::create([
-            'subscription_id'    => $sub->id,
-            'community_id'       => $affiliate->community_id,
-            'user_id'            => $sub->user_id,
-            'amount'             => $saleAmount,
-            'currency'           => 'PHP',
-            'status'             => Payment::STATUS_PAID,
-            'metadata'           => [],
-            'paid_at'            => now(),
+            'subscription_id' => $sub->id,
+            'community_id' => $affiliate->community_id,
+            'user_id' => $sub->user_id,
+            'amount' => $saleAmount,
+            'currency' => 'PHP',
+            'status' => Payment::STATUS_PAID,
+            'metadata' => [],
+            'paid_at' => now(),
         ]);
 
         return AffiliateConversion::create([
-            'affiliate_id'      => $affiliate->id,
-            'subscription_id'   => $sub->id,
-            'payment_id'        => $payment->id,
-            'referred_user_id'  => $sub->user_id,
-            'sale_amount'       => $saleAmount,
-            'platform_fee'      => $saleAmount * 0.15,
+            'affiliate_id' => $affiliate->id,
+            'subscription_id' => $sub->id,
+            'payment_id' => $payment->id,
+            'referred_user_id' => $sub->user_id,
+            'sale_amount' => $saleAmount,
+            'platform_fee' => $saleAmount * 0.15,
             'commission_amount' => $commission,
-            'creator_amount'    => $saleAmount - ($saleAmount * 0.15) - $commission,
-            'status'            => $status,
-            'paid_at'           => $status === 'paid' ? now() : null,
+            'creator_amount' => $saleAmount - ($saleAmount * 0.15) - $commission,
+            'status' => $status,
+            'paid_at' => $status === 'paid' ? now() : null,
         ]);
     }
 
@@ -98,12 +96,12 @@ class AffiliateAnalyticsTest extends TestCase
         string $status = 'pending',
     ): PayoutRequest {
         return PayoutRequest::create([
-            'user_id'          => $affiliate->user_id,
-            'type'             => PayoutRequest::TYPE_AFFILIATE,
-            'affiliate_id'     => $affiliate->id,
-            'amount'           => $amount,
-            'eligible_amount'  => $amount,
-            'status'           => $status,
+            'user_id' => $affiliate->user_id,
+            'type' => PayoutRequest::TYPE_AFFILIATE,
+            'affiliate_id' => $affiliate->id,
+            'amount' => $amount,
+            'eligible_amount' => $amount,
+            'status' => $status,
         ]);
     }
 
@@ -114,7 +112,8 @@ class AffiliateAnalyticsTest extends TestCase
      */
     private function buildQuery(): AffiliateAnalytics
     {
-        return new class extends AffiliateAnalytics {
+        return new class extends AffiliateAnalytics
+        {
             public function execute(string $search = '', string $status = ''): array
             {
                 $affiliates = Affiliate::with(['user', 'community'])
@@ -122,8 +121,8 @@ class AffiliateAnalyticsTest extends TestCase
                     ->when($search, fn ($q) => $q->where(function ($q) use ($search) {
                         $q->whereHas('user', fn ($q) => $q->where('name', 'like', "%{$search}%")
                             ->orWhere('email', 'like', "%{$search}%"))
-                          ->orWhereHas('community', fn ($q) => $q->where('name', 'like', "%{$search}%"))
-                          ->orWhere('code', 'like', "%{$search}%");
+                            ->orWhereHas('community', fn ($q) => $q->where('name', 'like', "%{$search}%"))
+                            ->orWhere('code', 'like', "%{$search}%");
                     }))
                     ->when($status, fn ($q) => $q->where('status', $status))
                     ->orderByDesc('id')
@@ -131,13 +130,13 @@ class AffiliateAnalyticsTest extends TestCase
 
                 // SQLite-compatible: use single quotes in CASE expression
                 $conversionStats = AffiliateConversion::select(
-                        'affiliate_id',
-                        DB::raw('COUNT(*) as total_conversions'),
-                        DB::raw('SUM(sale_amount) as total_sales'),
-                        DB::raw('SUM(commission_amount) as total_commission'),
-                        DB::raw("SUM(CASE WHEN status = 'paid' THEN commission_amount ELSE 0 END) as commission_paid"),
-                        DB::raw("SUM(CASE WHEN status = 'pending' THEN commission_amount ELSE 0 END) as commission_pending"),
-                    )
+                    'affiliate_id',
+                    DB::raw('COUNT(*) as total_conversions'),
+                    DB::raw('SUM(sale_amount) as total_sales'),
+                    DB::raw('SUM(commission_amount) as total_commission'),
+                    DB::raw("SUM(CASE WHEN status = 'paid' THEN commission_amount ELSE 0 END) as commission_paid"),
+                    DB::raw("SUM(CASE WHEN status = 'pending' THEN commission_amount ELSE 0 END) as commission_pending"),
+                )
                     ->groupBy('affiliate_id')
                     ->get()
                     ->keyBy('affiliate_id');
@@ -149,52 +148,52 @@ class AffiliateAnalyticsTest extends TestCase
                     ->get()
                     ->keyBy('affiliate_id');
 
-                $rows   = [];
+                $rows = [];
                 $totals = [
-                    'conversions'        => 0,
-                    'total_sales'        => 0,
-                    'total_commission'   => 0,
-                    'commission_paid'    => 0,
+                    'conversions' => 0,
+                    'total_sales' => 0,
+                    'total_commission' => 0,
+                    'commission_paid' => 0,
                     'commission_pending' => 0,
-                    'in_flight'          => 0,
+                    'in_flight' => 0,
                 ];
 
                 foreach ($affiliates as $affiliate) {
-                    $stats   = $conversionStats->get($affiliate->id);
-                    $flight  = (float) ($inFlight->get($affiliate->id)?->total ?? 0);
+                    $stats = $conversionStats->get($affiliate->id);
+                    $flight = (float) ($inFlight->get($affiliate->id)?->total ?? 0);
 
-                    $totalSales       = (float) ($stats->total_sales ?? 0);
-                    $totalCommission  = (float) ($stats->total_commission ?? 0);
-                    $commissionPaid   = (float) ($stats->commission_paid ?? 0);
+                    $totalSales = (float) ($stats->total_sales ?? 0);
+                    $totalCommission = (float) ($stats->total_commission ?? 0);
+                    $commissionPaid = (float) ($stats->commission_paid ?? 0);
                     $commissionPending = (float) ($stats->commission_pending ?? 0);
-                    $availableNow     = max(0, round($commissionPending - $flight, 2));
+                    $availableNow = max(0, round($commissionPending - $flight, 2));
 
                     $row = [
-                        'affiliate_id'        => $affiliate->id,
-                        'affiliate_code'      => $affiliate->code,
-                        'affiliate_status'    => $affiliate->status,
-                        'payout_method'       => $affiliate->payout_method,
-                        'user_name'           => $affiliate->user?->name ?? '—',
-                        'user_email'          => $affiliate->user?->email ?? '—',
-                        'community_name'      => $affiliate->community?->name ?? '—',
-                        'community_slug'      => $affiliate->community?->slug ?? '',
-                        'conversions'         => (int) ($stats->total_conversions ?? 0),
-                        'total_sales'         => $totalSales,
-                        'total_commission'    => $totalCommission,
-                        'commission_paid'     => $commissionPaid,
-                        'commission_pending'  => $commissionPending,
-                        'in_flight'           => $flight,
-                        'available_now'       => $availableNow,
+                        'affiliate_id' => $affiliate->id,
+                        'affiliate_code' => $affiliate->code,
+                        'affiliate_status' => $affiliate->status,
+                        'payout_method' => $affiliate->payout_method,
+                        'user_name' => $affiliate->user?->name ?? '—',
+                        'user_email' => $affiliate->user?->email ?? '—',
+                        'community_name' => $affiliate->community?->name ?? '—',
+                        'community_slug' => $affiliate->community?->slug ?? '',
+                        'conversions' => (int) ($stats->total_conversions ?? 0),
+                        'total_sales' => $totalSales,
+                        'total_commission' => $totalCommission,
+                        'commission_paid' => $commissionPaid,
+                        'commission_pending' => $commissionPending,
+                        'in_flight' => $flight,
+                        'available_now' => $availableNow,
                     ];
 
                     $rows[] = $row;
 
-                    $totals['conversions']        += $row['conversions'];
-                    $totals['total_sales']        += $totalSales;
-                    $totals['total_commission']   += $totalCommission;
-                    $totals['commission_paid']    += $commissionPaid;
+                    $totals['conversions'] += $row['conversions'];
+                    $totals['total_sales'] += $totalSales;
+                    $totals['total_commission'] += $totalCommission;
+                    $totals['commission_paid'] += $commissionPaid;
                     $totals['commission_pending'] += $commissionPending;
-                    $totals['in_flight']          += $flight;
+                    $totals['in_flight'] += $flight;
                 }
 
                 foreach ($totals as $k => $v) {
@@ -203,8 +202,8 @@ class AffiliateAnalyticsTest extends TestCase
 
                 return [
                     'affiliates' => $rows,
-                    'totals'     => $totals,
-                    'filters'    => ['search' => $search, 'status' => $status],
+                    'totals' => $totals,
+                    'filters' => ['search' => $search, 'status' => $status],
                 ];
             }
         };
@@ -468,7 +467,7 @@ class AffiliateAnalyticsTest extends TestCase
         $this->createConversion($aff, 500, 50, 'pending');
         $this->createPayoutRequest($aff, 20, PayoutRequest::STATUS_PENDING);
 
-        $query  = new AffiliateAnalytics();
+        $query = new AffiliateAnalytics;
         $result = $query->execute();
 
         $this->assertCount(1, $result['affiliates']);
@@ -507,7 +506,7 @@ class AffiliateAnalyticsTest extends TestCase
         $this->createConversion($aff2, 2000, 200, 'pending');
         $this->createPayoutRequest($aff2, 50, PayoutRequest::STATUS_APPROVED);
 
-        $query  = new AffiliateAnalytics();
+        $query = new AffiliateAnalytics;
         $result = $query->execute();
 
         $this->assertCount(2, $result['affiliates']);
@@ -523,7 +522,7 @@ class AffiliateAnalyticsTest extends TestCase
     {
         $this->createAffiliateWithRelations(code: 'REALNOCONV');
 
-        $query  = new AffiliateAnalytics();
+        $query = new AffiliateAnalytics;
         $result = $query->execute();
 
         $this->assertCount(1, $result['affiliates']);
@@ -542,7 +541,7 @@ class AffiliateAnalyticsTest extends TestCase
         $this->createAffiliateWithRelations(code: 'REALFIND', userName: 'Findable User');
         $this->createAffiliateWithRelations(code: 'REALHIDE', userName: 'Hidden User');
 
-        $query  = new AffiliateAnalytics();
+        $query = new AffiliateAnalytics;
         $result = $query->execute('Findable');
 
         $this->assertCount(1, $result['affiliates']);
@@ -554,7 +553,7 @@ class AffiliateAnalyticsTest extends TestCase
         $this->createAffiliateWithRelations(code: 'REALACT', status: 'active');
         $this->createAffiliateWithRelations(code: 'REALINACT', status: 'inactive');
 
-        $query  = new AffiliateAnalytics();
+        $query = new AffiliateAnalytics;
         $result = $query->execute('', 'active');
 
         $this->assertCount(1, $result['affiliates']);

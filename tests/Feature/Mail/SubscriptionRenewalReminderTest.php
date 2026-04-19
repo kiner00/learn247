@@ -21,8 +21,8 @@ class SubscriptionRenewalReminderTest extends TestCase
 
         return Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'expires_at'   => now()->addDays(5),
+            'user_id' => $user->id,
+            'expires_at' => now()->addDays(5),
         ]);
     }
 

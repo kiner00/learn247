@@ -15,7 +15,7 @@ class AuthApiTest extends TestCase
         $user = User::factory()->create(['password' => 'password']);
 
         $response = $this->postJson('/api/auth/login', [
-            'email'    => $user->email,
+            'email' => $user->email,
             'password' => 'password',
         ]);
 
@@ -29,7 +29,7 @@ class AuthApiTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->postJson('/api/auth/login', [
-            'email'    => $user->email,
+            'email' => $user->email,
             'password' => 'wrong-password',
         ]);
 
@@ -40,10 +40,10 @@ class AuthApiTest extends TestCase
     public function test_register_creates_user_and_returns_token_and_user(): void
     {
         $response = $this->postJson('/api/auth/register', [
-            'first_name'            => 'John',
-            'last_name'             => 'Doe',
-            'email'                 => 'john@example.com',
-            'password'              => 'Password1!',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'email' => 'john@example.com',
+            'password' => 'Password1!',
             'password_confirmation' => 'Password1!',
         ]);
 
@@ -64,10 +64,10 @@ class AuthApiTest extends TestCase
 
     public function test_logout_revokes_token(): void
     {
-        $user  = User::factory()->create();
+        $user = User::factory()->create();
         $token = $user->createToken('mobile')->plainTextToken;
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/auth/logout');
 
         $response->assertOk()->assertJsonPath('message', 'Logged out.');

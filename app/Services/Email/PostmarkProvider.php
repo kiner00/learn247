@@ -23,7 +23,7 @@ class PostmarkProvider implements EmailProvider
     public function validateApiKey(Community $community): bool
     {
         try {
-            $response = $this->http($community)->get(self::BASE_URL . '/server');
+            $response = $this->http($community)->get(self::BASE_URL.'/server');
 
             return $response->successful();
         } catch (\Exception) {
@@ -35,9 +35,9 @@ class PostmarkProvider implements EmailProvider
     {
         $from = $params['from'];
         $payload = [
-            'From'     => $from,
-            'To'       => implode(',', $params['to']),
-            'Subject'  => $params['subject'],
+            'From' => $from,
+            'To' => implode(',', $params['to']),
+            'Subject' => $params['subject'],
             'HtmlBody' => $params['html'],
         ];
 
@@ -45,7 +45,7 @@ class PostmarkProvider implements EmailProvider
             $payload['ReplyTo'] = is_array($params['reply_to']) ? $params['reply_to'][0] : $params['reply_to'];
         }
 
-        $response = $this->http($community)->post(self::BASE_URL . '/email', $payload);
+        $response = $this->http($community)->post(self::BASE_URL.'/email', $payload);
 
         return ['id' => (string) ($response->json('MessageID') ?? '')];
     }
@@ -57,9 +57,9 @@ class PostmarkProvider implements EmailProvider
 
         foreach ($emails as $email) {
             $item = [
-                'From'     => $email['from'],
-                'To'       => implode(',', $email['to']),
-                'Subject'  => $email['subject'],
+                'From' => $email['from'],
+                'To' => implode(',', $email['to']),
+                'Subject' => $email['subject'],
                 'HtmlBody' => $email['html'],
             ];
 
@@ -70,7 +70,7 @@ class PostmarkProvider implements EmailProvider
             $batch[] = $item;
         }
 
-        $response = $this->http($community)->post(self::BASE_URL . '/email/batch', $batch);
+        $response = $this->http($community)->post(self::BASE_URL.'/email/batch', $batch);
         $results = [];
 
         foreach ($response->json() ?? [] as $item) {
@@ -86,14 +86,14 @@ class PostmarkProvider implements EmailProvider
         // For simplicity, use the server token to create a sender signature.
         $response = $this->accountHttp($community)->post('https://api.postmarkapp.com/senders', [
             'FromEmail' => "noreply@{$domain}",
-            'Name'      => $domain,
+            'Name' => $domain,
         ]);
 
         $data = $response->json();
 
         return [
-            'id'      => (string) ($data['ID'] ?? ''),
-            'status'  => ($data['Confirmed'] ?? false) ? 'verified' : 'pending',
+            'id' => (string) ($data['ID'] ?? ''),
+            'status' => ($data['Confirmed'] ?? false) ? 'verified' : 'pending',
             'records' => $this->mapPostmarkRecords($data),
         ];
     }
@@ -104,9 +104,9 @@ class PostmarkProvider implements EmailProvider
         $data = $response->json();
 
         return [
-            'id'      => (string) ($data['ID'] ?? ''),
-            'name'    => $data['Domain'] ?? '',
-            'status'  => ($data['Confirmed'] ?? false) ? 'verified' : 'pending',
+            'id' => (string) ($data['ID'] ?? ''),
+            'name' => $data['Domain'] ?? '',
+            'status' => ($data['Confirmed'] ?? false) ? 'verified' : 'pending',
             'records' => $this->mapPostmarkRecords($data),
         ];
     }
@@ -118,7 +118,7 @@ class PostmarkProvider implements EmailProvider
         $data = $response->json();
 
         return [
-            'id'     => (string) $domainId,
+            'id' => (string) $domainId,
             'status' => ($data['SPFVerified'] ?? false) ? 'verified' : 'pending',
         ];
     }
@@ -133,8 +133,8 @@ class PostmarkProvider implements EmailProvider
 
         return Http::withHeaders([
             'X-Postmark-Server-Token' => $apiKey,
-            'Accept'                  => 'application/json',
-            'Content-Type'            => 'application/json',
+            'Accept' => 'application/json',
+            'Content-Type' => 'application/json',
         ]);
     }
 
@@ -150,18 +150,18 @@ class PostmarkProvider implements EmailProvider
 
         if (! empty($data['DKIMHost'])) {
             $records[] = [
-                'type'   => 'TXT',
-                'name'   => $data['DKIMHost'],
-                'value'  => $data['DKIMTextValue'] ?? '',
+                'type' => 'TXT',
+                'name' => $data['DKIMHost'],
+                'value' => $data['DKIMTextValue'] ?? '',
                 'status' => ($data['DKIMVerified'] ?? false) ? 'verified' : 'pending',
             ];
         }
 
         if (! empty($data['ReturnPathDomain'])) {
             $records[] = [
-                'type'   => 'CNAME',
-                'name'   => $data['ReturnPathDomain'],
-                'value'  => $data['ReturnPathDomainCNAMEValue'] ?? '',
+                'type' => 'CNAME',
+                'name' => $data['ReturnPathDomain'],
+                'value' => $data['ReturnPathDomainCNAMEValue'] ?? '',
                 'status' => ($data['ReturnPathDomainVerified'] ?? false) ? 'verified' : 'pending',
             ];
         }

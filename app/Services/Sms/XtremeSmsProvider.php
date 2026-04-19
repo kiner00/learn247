@@ -10,7 +10,7 @@ class XtremeSmsProvider implements SmsProviderInterface
 {
     public function send(Community $community, array $numbers, string $message): array
     {
-        $sent   = 0;
+        $sent = 0;
         $failed = 0;
         $errors = [];
 
@@ -20,7 +20,7 @@ class XtremeSmsProvider implements SmsProviderInterface
             return ['sent' => 0, 'failed' => count($numbers), 'errors' => ['Xtreme SMS server URL not set.']];
         }
 
-        $url      = "{$baseUrl}/services/send.php";
+        $url = "{$baseUrl}/services/send.php";
         $messages = array_map(fn ($n) => ['number' => $n, 'message' => $message], $numbers);
 
         foreach (array_chunk($messages, 100) as $chunk) {
@@ -28,9 +28,9 @@ class XtremeSmsProvider implements SmsProviderInterface
                 $response = Http::timeout(60)
                     ->asForm()
                     ->post($url, [
-                        'key'      => $community->sms_api_key,
+                        'key' => $community->sms_api_key,
                         'messages' => json_encode($chunk),
-                        'option'   => 1,
+                        'option' => 1,
                     ]);
 
                 if ($response->successful()) {
@@ -39,13 +39,13 @@ class XtremeSmsProvider implements SmsProviderInterface
                         $sent += count($chunk);
                     } else {
                         $failed += count($chunk);
-                        $msg     = $json['error']['message'] ?? $response->body();
+                        $msg = $json['error']['message'] ?? $response->body();
                         $errors[] = "Xtreme SMS error: {$msg}";
                         Log::error('XtremeSmsProvider error', ['body' => $response->body()]);
                     }
                 } else {
                     $failed += count($chunk);
-                    $errors[] = 'Xtreme SMS HTTP error: ' . $response->status();
+                    $errors[] = 'Xtreme SMS HTTP error: '.$response->status();
                     Log::error('XtremeSmsProvider HTTP error', ['status' => $response->status()]);
                 }
             } catch (\Throwable $e) {

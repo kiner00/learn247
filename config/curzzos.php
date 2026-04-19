@@ -25,14 +25,14 @@ return [
     'tiers' => [
         'basic' => [
             'provider' => Lab::Gemini,
-            'model'    => 'gemini-2.5-flash',
-            'label'    => 'Curzzos Basic',
+            'model' => 'gemini-2.5-flash',
+            'label' => 'Curzzos Basic',
             'description' => 'Fast responses, great for most use cases',
         ],
         'pro' => [
             'provider' => Lab::Gemini,
-            'model'    => 'gemini-2.5-pro',
-            'label'    => 'Curzzos Pro',
+            'model' => 'gemini-2.5-pro',
+            'label' => 'Curzzos Pro',
             'description' => 'Advanced reasoning, deeper analysis',
         ],
     ],

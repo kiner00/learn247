@@ -44,11 +44,11 @@ class RecurringHandlersTest extends TestCase
 
         $community = Community::factory()->create();
         Subscription::create([
-            'community_id'   => $community->id,
-            'user_id'        => User::factory()->create()->id,
-            'status'         => Subscription::STATUS_ACTIVE,
+            'community_id' => $community->id,
+            'user_id' => User::factory()->create()->id,
+            'status' => Subscription::STATUS_ACTIVE,
             'xendit_plan_id' => 'repl_sub_match_001',
-            'expires_at'     => now()->addMonth(),
+            'expires_at' => now()->addMonth(),
         ]);
 
         $this->assertTrue($handler->matchesPlan('repl_sub_match_001'));
@@ -64,12 +64,12 @@ class RecurringHandlersTest extends TestCase
         $expiresAt = now()->addDays(20);
 
         $subscription = Subscription::create([
-            'community_id'     => $community->id,
-            'user_id'          => $user->id,
-            'status'           => Subscription::STATUS_ACTIVE,
-            'xendit_plan_id'   => 'repl_sub_active_001',
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'xendit_plan_id' => 'repl_sub_active_001',
             'recurring_status' => 'REQUIRES_ACTION',
-            'expires_at'       => $expiresAt,
+            'expires_at' => $expiresAt,
         ]);
 
         $handler->handlePlanActivated(['id' => 'repl_sub_active_001']);
@@ -92,12 +92,12 @@ class RecurringHandlersTest extends TestCase
         $community = Community::factory()->create();
 
         $subscription = Subscription::create([
-            'community_id'     => $community->id,
-            'user_id'          => $user->id,
-            'status'           => Subscription::STATUS_ACTIVE,
-            'xendit_plan_id'   => 'repl_sub_inact_001',
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'xendit_plan_id' => 'repl_sub_inact_001',
             'recurring_status' => 'ACTIVE',
-            'expires_at'       => now()->addDays(10),
+            'expires_at' => now()->addDays(10),
         ]);
 
         $handler->handlePlanInactivated(['id' => 'repl_sub_inact_001']);
@@ -123,9 +123,9 @@ class RecurringHandlersTest extends TestCase
 
         // Should not throw — just logs and returns
         $handler->handleCycleSucceeded([
-            'plan_id'  => 'repl_nonexistent',
+            'plan_id' => 'repl_nonexistent',
             'cycle_id' => 'cycle_nonexistent',
-            'amount'   => 100,
+            'amount' => 100,
         ]);
 
         $this->assertEquals(0, Payment::count());
@@ -142,19 +142,19 @@ class RecurringHandlersTest extends TestCase
         $community = Community::factory()->create();
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Monthly Course',
-            'access_type'  => Course::ACCESS_PAID_MONTHLY,
-            'price'        => 200,
-            'position'     => 1,
+            'title' => 'Monthly Course',
+            'access_type' => Course::ACCESS_PAID_MONTHLY,
+            'price' => 200,
+            'position' => 1,
         ]);
 
         CourseEnrollment::create([
-            'user_id'        => User::factory()->create()->id,
-            'course_id'      => $course->id,
-            'status'         => CourseEnrollment::STATUS_PAID,
+            'user_id' => User::factory()->create()->id,
+            'course_id' => $course->id,
+            'status' => CourseEnrollment::STATUS_PAID,
             'xendit_plan_id' => 'repl_course_match_001',
-            'expires_at'     => now()->addMonth(),
-            'paid_at'        => now(),
+            'expires_at' => now()->addMonth(),
+            'paid_at' => now(),
         ]);
 
         $this->assertTrue($handler->matchesPlan('repl_course_match_001'));
@@ -169,17 +169,17 @@ class RecurringHandlersTest extends TestCase
         $community = Community::factory()->create();
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Activated Course',
-            'access_type'  => Course::ACCESS_PAID_MONTHLY,
-            'price'        => 200,
-            'position'     => 1,
+            'title' => 'Activated Course',
+            'access_type' => Course::ACCESS_PAID_MONTHLY,
+            'price' => 200,
+            'position' => 1,
         ]);
 
         $enrollment = CourseEnrollment::create([
-            'user_id'          => $user->id,
-            'course_id'        => $course->id,
-            'status'           => CourseEnrollment::STATUS_PENDING,
-            'xendit_plan_id'   => 'repl_course_activate_001',
+            'user_id' => $user->id,
+            'course_id' => $course->id,
+            'status' => CourseEnrollment::STATUS_PENDING,
+            'xendit_plan_id' => 'repl_course_activate_001',
             'recurring_status' => 'REQUIRES_ACTION',
         ]);
 
@@ -200,20 +200,20 @@ class RecurringHandlersTest extends TestCase
         $community = Community::factory()->create();
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Inactivated Course',
-            'access_type'  => Course::ACCESS_PAID_MONTHLY,
-            'price'        => 200,
-            'position'     => 1,
+            'title' => 'Inactivated Course',
+            'access_type' => Course::ACCESS_PAID_MONTHLY,
+            'price' => 200,
+            'position' => 1,
         ]);
 
         $enrollment = CourseEnrollment::create([
-            'user_id'          => $user->id,
-            'course_id'        => $course->id,
-            'status'           => CourseEnrollment::STATUS_PAID,
-            'xendit_plan_id'   => 'repl_course_inact_001',
+            'user_id' => $user->id,
+            'course_id' => $course->id,
+            'status' => CourseEnrollment::STATUS_PAID,
+            'xendit_plan_id' => 'repl_course_inact_001',
             'recurring_status' => 'ACTIVE',
-            'expires_at'       => now()->addDays(15),
-            'paid_at'          => now(),
+            'expires_at' => now()->addDays(15),
+            'paid_at' => now(),
         ]);
 
         $handler->handlePlanInactivated(['id' => 'repl_course_inact_001']);
@@ -231,35 +231,35 @@ class RecurringHandlersTest extends TestCase
         $community = Community::factory()->create();
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Cycle Course',
-            'access_type'  => Course::ACCESS_PAID_MONTHLY,
-            'price'        => 200,
-            'position'     => 1,
+            'title' => 'Cycle Course',
+            'access_type' => Course::ACCESS_PAID_MONTHLY,
+            'price' => 200,
+            'position' => 1,
         ]);
 
         $enrollment = CourseEnrollment::create([
-            'user_id'          => $user->id,
-            'course_id'        => $course->id,
-            'status'           => CourseEnrollment::STATUS_PAID,
-            'xendit_plan_id'   => 'repl_course_cycle_pay',
+            'user_id' => $user->id,
+            'course_id' => $course->id,
+            'status' => CourseEnrollment::STATUS_PAID,
+            'xendit_plan_id' => 'repl_course_cycle_pay',
             'recurring_status' => 'ACTIVE',
-            'expires_at'       => now()->addDays(5),
-            'paid_at'          => now(),
+            'expires_at' => now()->addDays(5),
+            'paid_at' => now(),
         ]);
 
         $handler->handleCycleSucceeded([
-            'plan_id'  => 'repl_course_cycle_pay',
+            'plan_id' => 'repl_course_cycle_pay',
             'cycle_id' => 'cycle_course_pay_001',
-            'id'       => 'cycle_course_pay_001',
-            'amount'   => 200,
+            'id' => 'cycle_course_pay_001',
+            'amount' => 200,
             'currency' => 'PHP',
         ]);
 
         $this->assertDatabaseHas('payments', [
-            'community_id'    => $community->id,
-            'user_id'         => $user->id,
-            'amount'          => 200,
-            'status'          => Payment::STATUS_PAID,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'amount' => 200,
+            'status' => Payment::STATUS_PAID,
             'xendit_event_id' => 'cycle_course_pay_001_SUCCEEDED',
         ]);
     }
@@ -275,20 +275,20 @@ class RecurringHandlersTest extends TestCase
         $community = Community::factory()->create();
         $curzzo = Curzzo::create([
             'community_id' => $community->id,
-            'name'         => 'Bot',
+            'name' => 'Bot',
             'instructions' => 'Test',
             'billing_type' => 'monthly',
-            'price'        => 299,
-            'is_active'    => true,
+            'price' => 299,
+            'is_active' => true,
         ]);
 
         CurzzoPurchase::create([
-            'user_id'        => User::factory()->create()->id,
-            'curzzo_id'      => $curzzo->id,
-            'status'         => CurzzoPurchase::STATUS_PAID,
+            'user_id' => User::factory()->create()->id,
+            'curzzo_id' => $curzzo->id,
+            'status' => CurzzoPurchase::STATUS_PAID,
             'xendit_plan_id' => 'repl_curzzo_match_001',
-            'expires_at'     => now()->addMonth(),
-            'paid_at'        => now(),
+            'expires_at' => now()->addMonth(),
+            'paid_at' => now(),
         ]);
 
         $this->assertTrue($handler->matchesPlan('repl_curzzo_match_001'));
@@ -303,18 +303,18 @@ class RecurringHandlersTest extends TestCase
         $community = Community::factory()->create();
         $curzzo = Curzzo::create([
             'community_id' => $community->id,
-            'name'         => 'Activated Bot',
+            'name' => 'Activated Bot',
             'instructions' => 'Test',
             'billing_type' => 'monthly',
-            'price'        => 299,
-            'is_active'    => true,
+            'price' => 299,
+            'is_active' => true,
         ]);
 
         $purchase = CurzzoPurchase::create([
-            'user_id'          => $user->id,
-            'curzzo_id'        => $curzzo->id,
-            'status'           => CurzzoPurchase::STATUS_PENDING,
-            'xendit_plan_id'   => 'repl_curzzo_activate_001',
+            'user_id' => $user->id,
+            'curzzo_id' => $curzzo->id,
+            'status' => CurzzoPurchase::STATUS_PENDING,
+            'xendit_plan_id' => 'repl_curzzo_activate_001',
             'recurring_status' => 'REQUIRES_ACTION',
         ]);
 
@@ -335,21 +335,21 @@ class RecurringHandlersTest extends TestCase
         $community = Community::factory()->create();
         $curzzo = Curzzo::create([
             'community_id' => $community->id,
-            'name'         => 'Inactivated Bot',
+            'name' => 'Inactivated Bot',
             'instructions' => 'Test',
             'billing_type' => 'monthly',
-            'price'        => 299,
-            'is_active'    => true,
+            'price' => 299,
+            'is_active' => true,
         ]);
 
         $purchase = CurzzoPurchase::create([
-            'user_id'          => $user->id,
-            'curzzo_id'        => $curzzo->id,
-            'status'           => CurzzoPurchase::STATUS_PAID,
-            'xendit_plan_id'   => 'repl_curzzo_inact_001',
+            'user_id' => $user->id,
+            'curzzo_id' => $curzzo->id,
+            'status' => CurzzoPurchase::STATUS_PAID,
+            'xendit_plan_id' => 'repl_curzzo_inact_001',
             'recurring_status' => 'ACTIVE',
-            'expires_at'       => now()->addDays(15),
-            'paid_at'          => now(),
+            'expires_at' => now()->addDays(15),
+            'paid_at' => now(),
         ]);
 
         $handler->handlePlanInactivated(['id' => 'repl_curzzo_inact_001']);
@@ -367,36 +367,36 @@ class RecurringHandlersTest extends TestCase
         $community = Community::factory()->create();
         $curzzo = Curzzo::create([
             'community_id' => $community->id,
-            'name'         => 'Cycle Bot',
+            'name' => 'Cycle Bot',
             'instructions' => 'Test',
             'billing_type' => 'monthly',
-            'price'        => 299,
-            'is_active'    => true,
+            'price' => 299,
+            'is_active' => true,
         ]);
 
         $purchase = CurzzoPurchase::create([
-            'user_id'          => $user->id,
-            'curzzo_id'        => $curzzo->id,
-            'status'           => CurzzoPurchase::STATUS_PAID,
-            'xendit_plan_id'   => 'repl_curzzo_cycle_pay',
+            'user_id' => $user->id,
+            'curzzo_id' => $curzzo->id,
+            'status' => CurzzoPurchase::STATUS_PAID,
+            'xendit_plan_id' => 'repl_curzzo_cycle_pay',
             'recurring_status' => 'ACTIVE',
-            'expires_at'       => now()->addDays(5),
-            'paid_at'          => now(),
+            'expires_at' => now()->addDays(5),
+            'paid_at' => now(),
         ]);
 
         $handler->handleCycleSucceeded([
-            'plan_id'  => 'repl_curzzo_cycle_pay',
+            'plan_id' => 'repl_curzzo_cycle_pay',
             'cycle_id' => 'cycle_curzzo_pay_001',
-            'id'       => 'cycle_curzzo_pay_001',
-            'amount'   => 299,
+            'id' => 'cycle_curzzo_pay_001',
+            'amount' => 299,
             'currency' => 'PHP',
         ]);
 
         $this->assertDatabaseHas('payments', [
-            'community_id'    => $community->id,
-            'user_id'         => $user->id,
-            'amount'          => 299,
-            'status'          => Payment::STATUS_PAID,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'amount' => 299,
+            'status' => Payment::STATUS_PAID,
             'xendit_event_id' => 'cycle_curzzo_pay_001_SUCCEEDED',
         ]);
     }
@@ -409,29 +409,29 @@ class RecurringHandlersTest extends TestCase
         $community = Community::factory()->create();
         $curzzo = Curzzo::create([
             'community_id' => $community->id,
-            'name'         => 'Expiry Bot',
+            'name' => 'Expiry Bot',
             'instructions' => 'Test',
             'billing_type' => 'monthly',
-            'price'        => 299,
-            'is_active'    => true,
+            'price' => 299,
+            'is_active' => true,
         ]);
 
         $originalExpiry = now()->addDays(5);
         $purchase = CurzzoPurchase::create([
-            'user_id'          => $user->id,
-            'curzzo_id'        => $curzzo->id,
-            'status'           => CurzzoPurchase::STATUS_PAID,
-            'xendit_plan_id'   => 'repl_curzzo_expiry_001',
+            'user_id' => $user->id,
+            'curzzo_id' => $curzzo->id,
+            'status' => CurzzoPurchase::STATUS_PAID,
+            'xendit_plan_id' => 'repl_curzzo_expiry_001',
             'recurring_status' => 'ACTIVE',
-            'expires_at'       => $originalExpiry,
-            'paid_at'          => now(),
+            'expires_at' => $originalExpiry,
+            'paid_at' => now(),
         ]);
 
         $handler->handleCycleSucceeded([
-            'plan_id'  => 'repl_curzzo_expiry_001',
+            'plan_id' => 'repl_curzzo_expiry_001',
             'cycle_id' => 'cycle_curzzo_exp_001',
-            'id'       => 'cycle_curzzo_exp_001',
-            'amount'   => 299,
+            'id' => 'cycle_curzzo_exp_001',
+            'amount' => 299,
             'currency' => 'PHP',
         ]);
 
@@ -453,39 +453,39 @@ class RecurringHandlersTest extends TestCase
         $community = Community::factory()->create();
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Idempotent Course',
-            'access_type'  => Course::ACCESS_PAID_MONTHLY,
-            'price'        => 200,
-            'position'     => 1,
+            'title' => 'Idempotent Course',
+            'access_type' => Course::ACCESS_PAID_MONTHLY,
+            'price' => 200,
+            'position' => 1,
         ]);
 
         $enrollment = CourseEnrollment::create([
-            'user_id'          => $user->id,
-            'course_id'        => $course->id,
-            'status'           => CourseEnrollment::STATUS_PAID,
-            'xendit_plan_id'   => 'repl_course_idemp',
+            'user_id' => $user->id,
+            'course_id' => $course->id,
+            'status' => CourseEnrollment::STATUS_PAID,
+            'xendit_plan_id' => 'repl_course_idemp',
             'recurring_status' => 'ACTIVE',
-            'expires_at'       => now()->addDays(5),
-            'paid_at'          => now(),
+            'expires_at' => now()->addDays(5),
+            'paid_at' => now(),
         ]);
 
         // Pre-create payment (simulating already processed)
         Payment::create([
-            'community_id'    => $community->id,
-            'user_id'         => $user->id,
-            'amount'          => 200,
-            'currency'        => 'PHP',
-            'status'          => Payment::STATUS_PAID,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'amount' => 200,
+            'currency' => 'PHP',
+            'status' => Payment::STATUS_PAID,
             'xendit_event_id' => 'cycle_course_idemp_001_SUCCEEDED',
-            'metadata'        => [],
-            'paid_at'         => now(),
+            'metadata' => [],
+            'paid_at' => now(),
         ]);
 
         $handler->handleCycleSucceeded([
-            'plan_id'  => 'repl_course_idemp',
+            'plan_id' => 'repl_course_idemp',
             'cycle_id' => 'cycle_course_idemp_001',
-            'id'       => 'cycle_course_idemp_001',
-            'amount'   => 200,
+            'id' => 'cycle_course_idemp_001',
+            'amount' => 200,
         ]);
 
         $this->assertEquals(1, Payment::where('xendit_event_id', 'cycle_course_idemp_001_SUCCEEDED')->count());
@@ -506,41 +506,41 @@ class RecurringHandlersTest extends TestCase
 
         // Need an active member record for the SubscriptionPaid event dispatch.
         $subscription = Subscription::create([
-            'community_id'     => $community->id,
-            'user_id'          => $user->id,
-            'status'           => Subscription::STATUS_ACTIVE,
-            'xendit_plan_id'   => 'repl_sub_cycle_001',
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'xendit_plan_id' => 'repl_sub_cycle_001',
             'recurring_status' => 'ACTIVE',
-            'expires_at'       => now()->addDays(5),
+            'expires_at' => now()->addDays(5),
         ]);
 
         CommunityMember::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'role'         => 'member',
+            'user_id' => $user->id,
+            'role' => 'member',
         ]);
 
         // Existing cart event that should be marked completed
         CartEvent::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'event_type'   => CartEvent::TYPE_CHECKOUT_STARTED,
+            'user_id' => $user->id,
+            'event_type' => CartEvent::TYPE_CHECKOUT_STARTED,
         ]);
 
         $handler->handleCycleSucceeded([
-            'plan_id'  => 'repl_sub_cycle_001',
+            'plan_id' => 'repl_sub_cycle_001',
             'cycle_id' => 'cycle_sub_pay_001',
-            'id'       => 'cycle_sub_pay_001',
-            'amount'   => 499,
+            'id' => 'cycle_sub_pay_001',
+            'amount' => 499,
             'currency' => 'PHP',
         ]);
 
         // Payment created
         $this->assertDatabaseHas('payments', [
-            'community_id'    => $community->id,
-            'user_id'         => $user->id,
-            'amount'          => 499,
-            'status'          => Payment::STATUS_PAID,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'amount' => 499,
+            'status' => Payment::STATUS_PAID,
             'xendit_event_id' => 'cycle_sub_pay_001_SUCCEEDED',
             'subscription_id' => $subscription->id,
         ]);
@@ -548,15 +548,15 @@ class RecurringHandlersTest extends TestCase
         // Affiliate auto-created for subscriber
         $this->assertDatabaseHas('affiliates', [
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => $user->id,
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         // Cart event marked completed
         $this->assertDatabaseHas('cart_events', [
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'event_type'   => CartEvent::TYPE_PAYMENT_COMPLETED,
+            'user_id' => $user->id,
+            'event_type' => CartEvent::TYPE_PAYMENT_COMPLETED,
         ]);
 
         Event::assertDispatched(SubscriptionPaidEvent::class);
@@ -570,27 +570,27 @@ class RecurringHandlersTest extends TestCase
         $community = Community::factory()->paid()->create();
 
         Subscription::create([
-            'community_id'     => $community->id,
-            'user_id'          => $user->id,
-            'status'           => Subscription::STATUS_ACTIVE,
-            'xendit_plan_id'   => 'repl_sub_dupaff_001',
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'xendit_plan_id' => 'repl_sub_dupaff_001',
             'recurring_status' => 'ACTIVE',
-            'expires_at'       => now()->addDays(5),
+            'expires_at' => now()->addDays(5),
         ]);
 
         // Pre-existing affiliate record
         Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'code'         => 'EXISTING',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => $user->id,
+            'code' => 'EXISTING',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         $handler->handleCycleSucceeded([
-            'plan_id'  => 'repl_sub_dupaff_001',
+            'plan_id' => 'repl_sub_dupaff_001',
             'cycle_id' => 'cycle_sub_dupaff_001',
-            'id'       => 'cycle_sub_dupaff_001',
-            'amount'   => 499,
+            'id' => 'cycle_sub_dupaff_001',
+            'amount' => 499,
         ]);
 
         $this->assertEquals(
@@ -604,48 +604,48 @@ class RecurringHandlersTest extends TestCase
     {
         $handler = app(RecurringSubscriptionHandler::class);
 
-        $buyer       = User::factory()->create();
+        $buyer = User::factory()->create();
         $affiliateUser = User::factory()->create(['name' => 'Promoter Pete']);
-        $community   = Community::factory()->paid()->create([
+        $community = Community::factory()->paid()->create([
             'affiliate_commission_rate' => 20,
         ]);
 
         // Affiliate user must be actively subscribed in the community for conversion to record.
         Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $affiliateUser->id,
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->addMonth(),
+            'user_id' => $affiliateUser->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addMonth(),
         ]);
 
         $affiliate = Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => $affiliateUser->id,
-            'code'         => 'PETE',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => $affiliateUser->id,
+            'code' => 'PETE',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         Subscription::create([
-            'community_id'     => $community->id,
-            'user_id'          => $buyer->id,
-            'affiliate_id'     => $affiliate->id,
-            'status'           => Subscription::STATUS_ACTIVE,
-            'xendit_plan_id'   => 'repl_sub_aff_001',
+            'community_id' => $community->id,
+            'user_id' => $buyer->id,
+            'affiliate_id' => $affiliate->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'xendit_plan_id' => 'repl_sub_aff_001',
             'recurring_status' => 'ACTIVE',
-            'expires_at'       => now()->addDays(5),
+            'expires_at' => now()->addDays(5),
         ]);
 
         $handler->handleCycleSucceeded([
-            'plan_id'  => 'repl_sub_aff_001',
+            'plan_id' => 'repl_sub_aff_001',
             'cycle_id' => 'cycle_sub_aff_001',
-            'id'       => 'cycle_sub_aff_001',
-            'amount'   => 500,
+            'id' => 'cycle_sub_aff_001',
+            'amount' => 500,
         ]);
 
         // Affiliate conversion recorded via RecordAffiliateConversion::execute()
         $this->assertDatabaseHas('affiliate_conversions', [
             'affiliate_id' => $affiliate->id,
-            'sale_amount'  => 500,
+            'sale_amount' => 500,
             // 20% commission of 500 = 100
             'commission_amount' => 100,
         ]);
@@ -653,7 +653,7 @@ class RecurringHandlersTest extends TestCase
         // Payment still created
         $this->assertDatabaseHas('payments', [
             'xendit_event_id' => 'cycle_sub_aff_001_SUCCEEDED',
-            'user_id'         => $buyer->id,
+            'user_id' => $buyer->id,
         ]);
     }
 
@@ -666,19 +666,19 @@ class RecurringHandlersTest extends TestCase
         $original = now()->addDays(3);
 
         $sub = Subscription::create([
-            'community_id'     => $community->id,
-            'user_id'          => $user->id,
-            'status'           => Subscription::STATUS_ACTIVE,
-            'xendit_plan_id'   => 'repl_sub_extend_001',
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'xendit_plan_id' => 'repl_sub_extend_001',
             'recurring_status' => 'ACTIVE',
-            'expires_at'       => $original,
+            'expires_at' => $original,
         ]);
 
         $handler->handleCycleSucceeded([
-            'plan_id'  => 'repl_sub_extend_001',
+            'plan_id' => 'repl_sub_extend_001',
             'cycle_id' => 'cycle_sub_extend_001',
-            'id'       => 'cycle_sub_extend_001',
-            'amount'   => 499,
+            'id' => 'cycle_sub_extend_001',
+            'amount' => 499,
         ]);
 
         $sub->refresh();
@@ -697,62 +697,62 @@ class RecurringHandlersTest extends TestCase
     {
         $handler = app(RecurringCourseEnrollmentHandler::class);
 
-        $buyer         = User::factory()->create();
+        $buyer = User::factory()->create();
         $affiliateUser = User::factory()->create(['name' => 'Course Promoter']);
-        $community     = Community::factory()->paid()->create();
+        $community = Community::factory()->paid()->create();
 
         // Affiliate user must be actively subscribed in the community for conversion to record.
         Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $affiliateUser->id,
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->addMonth(),
+            'user_id' => $affiliateUser->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addMonth(),
         ]);
 
         $affiliate = Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => $affiliateUser->id,
-            'code'         => 'COURSEAFF',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => $affiliateUser->id,
+            'code' => 'COURSEAFF',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         $course = Course::create([
-            'community_id'              => $community->id,
-            'title'                     => 'Affiliate Course',
-            'access_type'               => Course::ACCESS_PAID_MONTHLY,
-            'price'                     => 300,
-            'position'                  => 1,
+            'community_id' => $community->id,
+            'title' => 'Affiliate Course',
+            'access_type' => Course::ACCESS_PAID_MONTHLY,
+            'price' => 300,
+            'position' => 1,
             'affiliate_commission_rate' => 25,
         ]);
 
         CourseEnrollment::create([
-            'user_id'          => $buyer->id,
-            'course_id'        => $course->id,
-            'affiliate_id'     => $affiliate->id,
-            'status'           => CourseEnrollment::STATUS_PAID,
-            'xendit_plan_id'   => 'repl_course_aff_001',
+            'user_id' => $buyer->id,
+            'course_id' => $course->id,
+            'affiliate_id' => $affiliate->id,
+            'status' => CourseEnrollment::STATUS_PAID,
+            'xendit_plan_id' => 'repl_course_aff_001',
             'recurring_status' => 'ACTIVE',
-            'expires_at'       => now()->addDays(5),
-            'paid_at'          => now(),
+            'expires_at' => now()->addDays(5),
+            'paid_at' => now(),
         ]);
 
         $handler->handleCycleSucceeded([
-            'plan_id'  => 'repl_course_aff_001',
+            'plan_id' => 'repl_course_aff_001',
             'cycle_id' => 'cycle_course_aff_001',
-            'id'       => 'cycle_course_aff_001',
-            'amount'   => 300,
+            'id' => 'cycle_course_aff_001',
+            'amount' => 300,
         ]);
 
         // 25% of 300 = 75
         $this->assertDatabaseHas('affiliate_conversions', [
-            'affiliate_id'      => $affiliate->id,
-            'sale_amount'       => 300,
+            'affiliate_id' => $affiliate->id,
+            'sale_amount' => 300,
             'commission_amount' => 75,
         ]);
 
         $this->assertDatabaseHas('payments', [
             'xendit_event_id' => 'cycle_course_aff_001_SUCCEEDED',
-            'user_id'         => $buyer->id,
+            'user_id' => $buyer->id,
         ]);
     }
 
@@ -764,27 +764,27 @@ class RecurringHandlersTest extends TestCase
         $community = Community::factory()->create();
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'No Affiliate Course',
-            'access_type'  => Course::ACCESS_PAID_MONTHLY,
-            'price'        => 100,
-            'position'     => 1,
+            'title' => 'No Affiliate Course',
+            'access_type' => Course::ACCESS_PAID_MONTHLY,
+            'price' => 100,
+            'position' => 1,
         ]);
 
         CourseEnrollment::create([
-            'user_id'          => $user->id,
-            'course_id'        => $course->id,
-            'status'           => CourseEnrollment::STATUS_PAID,
-            'xendit_plan_id'   => 'repl_course_noaff_001',
+            'user_id' => $user->id,
+            'course_id' => $course->id,
+            'status' => CourseEnrollment::STATUS_PAID,
+            'xendit_plan_id' => 'repl_course_noaff_001',
             'recurring_status' => 'ACTIVE',
-            'expires_at'       => now()->addDays(5),
-            'paid_at'          => now(),
+            'expires_at' => now()->addDays(5),
+            'paid_at' => now(),
         ]);
 
         $handler->handleCycleSucceeded([
-            'plan_id'  => 'repl_course_noaff_001',
+            'plan_id' => 'repl_course_noaff_001',
             'cycle_id' => 'cycle_course_noaff_001',
-            'id'       => 'cycle_course_noaff_001',
-            'amount'   => 100,
+            'id' => 'cycle_course_noaff_001',
+            'amount' => 100,
         ]);
 
         // Payment created
@@ -804,62 +804,62 @@ class RecurringHandlersTest extends TestCase
     {
         $handler = app(RecurringCurzzoPurchaseHandler::class);
 
-        $buyer         = User::factory()->create();
+        $buyer = User::factory()->create();
         $affiliateUser = User::factory()->create(['name' => 'Curzzo Promoter']);
-        $community     = Community::factory()->paid()->create();
+        $community = Community::factory()->paid()->create();
 
         Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $affiliateUser->id,
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->addMonth(),
+            'user_id' => $affiliateUser->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addMonth(),
         ]);
 
         $affiliate = Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => $affiliateUser->id,
-            'code'         => 'CURZZOAFF',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => $affiliateUser->id,
+            'code' => 'CURZZOAFF',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         $curzzo = Curzzo::create([
-            'community_id'              => $community->id,
-            'name'                      => 'Affiliate Bot',
-            'instructions'              => 'Test',
-            'billing_type'              => 'monthly',
-            'price'                     => 400,
-            'is_active'                 => true,
+            'community_id' => $community->id,
+            'name' => 'Affiliate Bot',
+            'instructions' => 'Test',
+            'billing_type' => 'monthly',
+            'price' => 400,
+            'is_active' => true,
             'affiliate_commission_rate' => 15,
         ]);
 
         CurzzoPurchase::create([
-            'user_id'          => $buyer->id,
-            'curzzo_id'        => $curzzo->id,
-            'affiliate_id'     => $affiliate->id,
-            'status'           => CurzzoPurchase::STATUS_PAID,
-            'xendit_plan_id'   => 'repl_curzzo_aff_001',
+            'user_id' => $buyer->id,
+            'curzzo_id' => $curzzo->id,
+            'affiliate_id' => $affiliate->id,
+            'status' => CurzzoPurchase::STATUS_PAID,
+            'xendit_plan_id' => 'repl_curzzo_aff_001',
             'recurring_status' => 'ACTIVE',
-            'expires_at'       => now()->addDays(5),
-            'paid_at'          => now(),
+            'expires_at' => now()->addDays(5),
+            'paid_at' => now(),
         ]);
 
         $handler->handleCycleSucceeded([
-            'plan_id'  => 'repl_curzzo_aff_001',
+            'plan_id' => 'repl_curzzo_aff_001',
             'cycle_id' => 'cycle_curzzo_aff_001',
-            'id'       => 'cycle_curzzo_aff_001',
-            'amount'   => 400,
+            'id' => 'cycle_curzzo_aff_001',
+            'amount' => 400,
         ]);
 
         // 15% of 400 = 60
         $this->assertDatabaseHas('affiliate_conversions', [
-            'affiliate_id'      => $affiliate->id,
-            'sale_amount'       => 400,
+            'affiliate_id' => $affiliate->id,
+            'sale_amount' => 400,
             'commission_amount' => 60,
         ]);
 
         $this->assertDatabaseHas('payments', [
             'xendit_event_id' => 'cycle_curzzo_aff_001_SUCCEEDED',
-            'user_id'         => $buyer->id,
+            'user_id' => $buyer->id,
         ]);
     }
 
@@ -871,28 +871,28 @@ class RecurringHandlersTest extends TestCase
         $community = Community::factory()->create();
         $curzzo = Curzzo::create([
             'community_id' => $community->id,
-            'name'         => 'No Aff Bot',
+            'name' => 'No Aff Bot',
             'instructions' => 'Test',
             'billing_type' => 'monthly',
-            'price'        => 299,
-            'is_active'    => true,
+            'price' => 299,
+            'is_active' => true,
         ]);
 
         CurzzoPurchase::create([
-            'user_id'          => $user->id,
-            'curzzo_id'        => $curzzo->id,
-            'status'           => CurzzoPurchase::STATUS_PAID,
-            'xendit_plan_id'   => 'repl_curzzo_noaff_001',
+            'user_id' => $user->id,
+            'curzzo_id' => $curzzo->id,
+            'status' => CurzzoPurchase::STATUS_PAID,
+            'xendit_plan_id' => 'repl_curzzo_noaff_001',
             'recurring_status' => 'ACTIVE',
-            'expires_at'       => now()->addDays(5),
-            'paid_at'          => now(),
+            'expires_at' => now()->addDays(5),
+            'paid_at' => now(),
         ]);
 
         $handler->handleCycleSucceeded([
-            'plan_id'  => 'repl_curzzo_noaff_001',
+            'plan_id' => 'repl_curzzo_noaff_001',
             'cycle_id' => 'cycle_curzzo_noaff_001',
-            'id'       => 'cycle_curzzo_noaff_001',
-            'amount'   => 299,
+            'id' => 'cycle_curzzo_noaff_001',
+            'amount' => 299,
         ]);
 
         $this->assertDatabaseHas('payments', [
@@ -922,12 +922,12 @@ class RecurringHandlersTest extends TestCase
         $user = User::factory()->create();
         $community = Community::factory()->paid()->create();
         Subscription::create([
-            'community_id'     => $community->id,
-            'user_id'          => $user->id,
-            'status'           => Subscription::STATUS_ACTIVE,
-            'xendit_plan_id'   => 'repl_sub_throws_001',
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'xendit_plan_id' => 'repl_sub_throws_001',
             'recurring_status' => 'ACTIVE',
-            'expires_at'       => now()->addDays(5),
+            'expires_at' => now()->addDays(5),
         ]);
 
         // Force a DB-level failure by passing an absurdly huge amount that
@@ -939,10 +939,10 @@ class RecurringHandlersTest extends TestCase
 
         try {
             $handler->handleCycleSucceeded([
-                'plan_id'  => 'repl_sub_throws_001',
+                'plan_id' => 'repl_sub_throws_001',
                 'cycle_id' => 'cycle_sub_throws_001',
-                'id'       => 'cycle_sub_throws_001',
-                'amount'   => 499,
+                'id' => 'cycle_sub_throws_001',
+                'amount' => 499,
             ]);
         } finally {
             // Recreate payments table so RefreshDatabase teardown succeeds.

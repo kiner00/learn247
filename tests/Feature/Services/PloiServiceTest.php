@@ -17,9 +17,9 @@ class PloiServiceTest extends TestCase
         parent::setUp();
 
         config([
-            'services.ploi.token'     => 'test-ploi-token',
+            'services.ploi.token' => 'test-ploi-token',
             'services.ploi.server_id' => '111',
-            'services.ploi.site_id'   => '222',
+            'services.ploi.site_id' => '222',
         ]);
     }
 
@@ -29,7 +29,7 @@ class PloiServiceTest extends TestCase
             'https://ploi.io/api/servers/111/sites/222/tenants' => Http::response(['data' => ['domain' => 'custom.com']], 200),
         ]);
 
-        $service = new PloiService();
+        $service = new PloiService;
         $response = $service->addTenant('custom.com');
 
         $this->assertTrue($response->successful());
@@ -48,7 +48,7 @@ class PloiServiceTest extends TestCase
             'https://ploi.io/api/servers/111/sites/222/tenants/custom.com' => Http::response([], 200),
         ]);
 
-        $service = new PloiService();
+        $service = new PloiService;
         $response = $service->removeTenant('custom.com');
 
         $this->assertTrue($response->successful());
@@ -65,7 +65,7 @@ class PloiServiceTest extends TestCase
             'https://ploi.io/api/servers/111/sites/222/tenants/custom.com/request-certificate' => Http::response(['data' => []], 200),
         ]);
 
-        $service = new PloiService();
+        $service = new PloiService;
         $response = $service->requestTenantCertificate('custom.com');
 
         $this->assertTrue($response->successful());
@@ -80,7 +80,7 @@ class PloiServiceTest extends TestCase
     {
         config(['services.ploi.token' => null]);
 
-        $service = new PloiService();
+        $service = new PloiService;
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('PLOI_API_TOKEN is not configured.');
@@ -94,7 +94,7 @@ class PloiServiceTest extends TestCase
             'https://ploi.io/api/*' => Http::response(['error' => 'Not Found'], 404),
         ]);
 
-        $service = new PloiService();
+        $service = new PloiService;
 
         $this->expectException(\Illuminate\Http\Client\RequestException::class);
 
@@ -107,7 +107,7 @@ class PloiServiceTest extends TestCase
             'https://ploi.io/api/*' => Http::response(['error' => 'Server Error'], 500),
         ]);
 
-        $service = new PloiService();
+        $service = new PloiService;
 
         $this->expectException(\Illuminate\Http\Client\RequestException::class);
 

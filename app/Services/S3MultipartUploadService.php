@@ -13,20 +13,20 @@ class S3MultipartUploadService
     public function initiate(string $filename, string $contentType, string $prefix): array
     {
         $extension = pathinfo($filename, PATHINFO_EXTENSION) ?: 'bin';
-        $key       = trim($prefix, '/') . '/' . Str::uuid() . '.' . $extension;
+        $key = trim($prefix, '/').'/'.Str::uuid().'.'.$extension;
 
         $client = Storage::disk('s3')->getClient();
         $bucket = config('filesystems.disks.s3.bucket');
 
         $result = $client->createMultipartUpload([
-            'Bucket'      => $bucket,
-            'Key'         => $key,
+            'Bucket' => $bucket,
+            'Key' => $key,
             'ContentType' => $contentType,
         ]);
 
         return [
             'upload_id' => $result['UploadId'],
-            'key'       => $key,
+            'key' => $key,
         ];
     }
 
@@ -39,9 +39,9 @@ class S3MultipartUploadService
         $bucket = config('filesystems.disks.s3.bucket');
 
         $command = $client->getCommand('UploadPart', [
-            'Bucket'     => $bucket,
-            'Key'        => $key,
-            'UploadId'   => $uploadId,
+            'Bucket' => $bucket,
+            'Key' => $key,
+            'UploadId' => $uploadId,
             'PartNumber' => $partNumber,
         ]);
 
@@ -59,9 +59,9 @@ class S3MultipartUploadService
         $bucket = config('filesystems.disks.s3.bucket');
 
         $client->completeMultipartUpload([
-            'Bucket'          => $bucket,
-            'Key'             => $key,
-            'UploadId'        => $uploadId,
+            'Bucket' => $bucket,
+            'Key' => $key,
+            'UploadId' => $uploadId,
             'MultipartUpload' => ['Parts' => $parts],
         ]);
     }
@@ -72,8 +72,8 @@ class S3MultipartUploadService
         $bucket = config('filesystems.disks.s3.bucket');
 
         $client->abortMultipartUpload([
-            'Bucket'   => $bucket,
-            'Key'      => $key,
+            'Bucket' => $bucket,
+            'Key' => $key,
             'UploadId' => $uploadId,
         ]);
     }

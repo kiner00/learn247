@@ -104,6 +104,7 @@ class ProvisionCustomDomainTest extends TestCase
             if (str_starts_with($request->url(), 'https://')) {
                 throw new \Illuminate\Http\Client\ConnectionException('SSL handshake failed');
             }
+
             return Http::response('ok', 200);
         });
 

@@ -38,17 +38,18 @@ class CommunityInviteMail extends Mailable
         if ($rendered) {
             return new Content(htmlString: $rendered['html']);
         }
+
         return new Content(view: 'emails.community-invite');
     }
 
     private function vars(): array
     {
         return [
-            'community_name'        => $this->invite->community->name,
-            'community_name_upper'  => strtoupper($this->invite->community->name),
+            'community_name' => $this->invite->community->name,
+            'community_name_upper' => strtoupper($this->invite->community->name),
             'community_description' => $this->invite->community->description ?? '',
-            'invite_url'            => config('app.url') . '/invite/' . $this->invite->token,
-            'invite_email'          => $this->invite->email,
+            'invite_url' => config('app.url').'/invite/'.$this->invite->token,
+            'invite_email' => $this->invite->email,
         ];
     }
 }

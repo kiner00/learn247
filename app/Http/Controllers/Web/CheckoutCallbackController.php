@@ -24,7 +24,7 @@ class CheckoutCallbackController extends Controller
     public function __invoke(Request $request, int $user, string $community): mixed
     {
         $expires = (int) $request->query('expires', 0);
-        $token   = $request->query('token', '');
+        $token = $request->query('token', '');
 
         if ($expires < now()->getTimestamp()) {
             abort(403, 'Checkout link has expired.');
@@ -36,13 +36,13 @@ class CheckoutCallbackController extends Controller
             abort(403, 'Invalid checkout link.');
         }
 
-        $userModel      = User::findOrFail($user);
+        $userModel = User::findOrFail($user);
         $communityModel = Community::where('slug', $community)->firstOrFail();
 
         Auth::login($userModel, true);
 
-        $refCode      = $request->cookie('ref_code');
-        $affPixels    = ['affiliateFbPixelId' => null, 'affiliateTiktokPixelId' => null, 'affiliateGaId' => null];
+        $refCode = $request->cookie('ref_code');
+        $affPixels = ['affiliateFbPixelId' => null, 'affiliateTiktokPixelId' => null, 'affiliateGaId' => null];
         if ($refCode) {
             $aff = Affiliate::where('code', $refCode)
                 ->where('community_id', $communityModel->id)
@@ -50,21 +50,21 @@ class CheckoutCallbackController extends Controller
                 ->first(['facebook_pixel_id', 'tiktok_pixel_id', 'google_analytics_id']);
             if ($aff) {
                 $affPixels = [
-                    'affiliateFbPixelId'    => $aff->facebook_pixel_id,
+                    'affiliateFbPixelId' => $aff->facebook_pixel_id,
                     'affiliateTiktokPixelId' => $aff->tiktok_pixel_id,
-                    'affiliateGaId'          => $aff->google_analytics_id,
+                    'affiliateGaId' => $aff->google_analytics_id,
                 ];
             }
         }
 
         return Inertia::render('CheckoutProcessing', array_merge([
-            'communitySlug'     => $communityModel->slug,
-            'communityName'     => $communityModel->name,
-            'pixelId'           => $communityModel->facebook_pixel_id,
-            'tiktokPixelId'     => $communityModel->tiktok_pixel_id,
+            'communitySlug' => $communityModel->slug,
+            'communityName' => $communityModel->name,
+            'pixelId' => $communityModel->facebook_pixel_id,
+            'tiktokPixelId' => $communityModel->tiktok_pixel_id,
             'googleAnalyticsId' => $communityModel->google_analytics_id,
-            'amount'            => (float) $communityModel->price,
-            'currency'          => $communityModel->currency ?? 'PHP',
+            'amount' => (float) $communityModel->price,
+            'currency' => $communityModel->currency ?? 'PHP',
         ], $affPixels));
     }
 

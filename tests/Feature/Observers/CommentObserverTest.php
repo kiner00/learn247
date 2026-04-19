@@ -16,20 +16,20 @@ class CommentObserverTest extends TestCase
 
     public function test_creating_comment_awards_points(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $member    = CommunityMember::factory()->create([
+        $member = CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'points'       => 0,
+            'user_id' => $user->id,
+            'points' => 0,
         ]);
         $post = Post::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         Comment::create([
-            'post_id'      => $post->id,
+            'post_id' => $post->id,
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'content'      => 'Nice post!',
+            'user_id' => $user->id,
+            'content' => 'Nice post!',
         ]);
 
         $this->assertGreaterThan(0, $member->fresh()->points);
@@ -37,20 +37,20 @@ class CommentObserverTest extends TestCase
 
     public function test_deleting_comment_deducts_points(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $member    = CommunityMember::factory()->create([
+        $member = CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'points'       => 100,
+            'user_id' => $user->id,
+            'points' => 100,
         ]);
         $post = Post::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         $comment = Comment::create([
-            'post_id'      => $post->id,
+            'post_id' => $post->id,
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'content'      => 'Test comment',
+            'user_id' => $user->id,
+            'content' => 'Test comment',
         ]);
         $pointsAfterCreate = $member->fresh()->points;
 

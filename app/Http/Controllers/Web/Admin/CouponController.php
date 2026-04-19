@@ -18,15 +18,15 @@ class CouponController extends Controller
                 ->orderByDesc('created_at')
                 ->get()
                 ->map(fn (Coupon $c) => [
-                    'id'              => $c->id,
-                    'code'            => $c->code,
-                    'plan'            => $c->plan,
+                    'id' => $c->id,
+                    'code' => $c->code,
+                    'plan' => $c->plan,
                     'duration_months' => $c->duration_months,
                     'max_redemptions' => $c->max_redemptions,
-                    'times_redeemed'  => $c->times_redeemed,
-                    'expires_at'      => $c->expires_at?->format('Y-m-d'),
-                    'is_active'       => $c->is_active,
-                    'created_at'      => $c->created_at->format('M d, Y'),
+                    'times_redeemed' => $c->times_redeemed,
+                    'expires_at' => $c->expires_at?->format('Y-m-d'),
+                    'is_active' => $c->is_active,
+                    'created_at' => $c->created_at->format('M d, Y'),
                 ]),
         ]);
     }
@@ -34,11 +34,11 @@ class CouponController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'code'            => 'required|string|max:32|unique:coupons,code',
-            'plan'            => 'required|in:basic,pro',
+            'code' => 'required|string|max:32|unique:coupons,code',
+            'plan' => 'required|in:basic,pro',
             'duration_months' => 'required|integer|min:1|max:36',
             'max_redemptions' => 'required|integer|min:1',
-            'expires_at'      => 'nullable|date|after:today',
+            'expires_at' => 'nullable|date|after:today',
         ]);
 
         $data['code'] = strtoupper(trim($data['code']));
@@ -52,7 +52,7 @@ class CouponController extends Controller
     {
         $coupon->update(['is_active' => ! $coupon->is_active]);
 
-        return back()->with('success', "Coupon {$coupon->code} " . ($coupon->is_active ? 'activated' : 'deactivated') . '.');
+        return back()->with('success', "Coupon {$coupon->code} ".($coupon->is_active ? 'activated' : 'deactivated').'.');
     }
 
     public function destroy(Coupon $coupon): RedirectResponse

@@ -42,16 +42,17 @@ class SubscriptionRenewalReminder extends Mailable
         if ($rendered) {
             return new Content(htmlString: $rendered['html']);
         }
+
         return new Content(view: 'emails.subscription-renewal');
     }
 
     private function vars(): array
     {
         return [
-            'user_name'      => $this->subscription->user->name,
+            'user_name' => $this->subscription->user->name,
             'community_name' => $this->subscription->community->name,
-            'expiry_date'    => $this->subscription->expires_at->format('F j, Y'),
-            'renewal_url'    => $this->renewalUrl,
+            'expiry_date' => $this->subscription->expires_at->format('F j, Y'),
+            'renewal_url' => $this->renewalUrl,
             'auto_renew_url' => $this->autoRenewUrl,
         ];
     }

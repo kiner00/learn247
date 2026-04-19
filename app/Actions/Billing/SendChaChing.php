@@ -15,11 +15,9 @@ class SendChaChing
      * Send affiliate and creator cha-ching notification emails.
      *
      * @param  User|null  $affiliateUser  The affiliate who referred the sale (null if no affiliate)
-     * @param  User|null  $creator        The community/course creator
-     * @param  Community  $community
-     * @param  float      $saleAmount
-     * @param  float|null $commission     Affiliate commission amount (null if no affiliate)
-     * @param  string|null $referredBy    Name of the referrer for creator email (null if no affiliate)
+     * @param  User|null  $creator  The community/course creator
+     * @param  float|null  $commission  Affiliate commission amount (null if no affiliate)
+     * @param  string|null  $referredBy  Name of the referrer for creator email (null if no affiliate)
      */
     public function execute(
         ?User $affiliateUser,

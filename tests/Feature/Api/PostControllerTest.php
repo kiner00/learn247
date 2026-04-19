@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Api;
 
-use App\Actions\Feed\CreatePost;
 use App\Actions\Feed\DeletePost;
 use App\Actions\Feed\TogglePin;
 use App\Actions\Feed\UpdatePost;
@@ -14,7 +13,6 @@ use App\Models\Post;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\Request;
 use Mockery;
 use Tests\TestCase;
 
@@ -24,47 +22,47 @@ class PostControllerTest extends TestCase
 
     public function test_store_with_community_slug_creates_post(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         $response = $this->actingAs($user)->postJson('/api/posts', [
             'community_slug' => $community->slug,
-            'content'        => 'Post content via slug',
+            'content' => 'Post content via slug',
         ]);
 
         $response->assertStatus(201)
             ->assertJsonPath('data.content', 'Post content via slug');
         $this->assertDatabaseHas('posts', [
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'content'      => 'Post content via slug',
+            'user_id' => $user->id,
+            'content' => 'Post content via slug',
         ]);
     }
 
     public function test_store_with_community_id_creates_post(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         $response = $this->actingAs($user)->postJson('/api/posts', [
             'community_id' => $community->id,
-            'content'      => 'Post content via id',
+            'content' => 'Post content via id',
         ]);
 
         $response->assertStatus(201)
             ->assertJsonPath('data.content', 'Post content via id');
         $this->assertDatabaseHas('posts', [
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'content'      => 'Post content via id',
+            'user_id' => $user->id,
+            'content' => 'Post content via id',
         ]);
     }
 
     public function test_store_validates_content_required(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
@@ -77,7 +75,7 @@ class PostControllerTest extends TestCase
 
     public function test_store_requires_community_reference(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
@@ -90,11 +88,11 @@ class PostControllerTest extends TestCase
 
     public function test_author_can_destroy_own_post(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $post      = Post::factory()->create([
+        $post = Post::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         $this->actingAs($user)->deleteJson("/api/posts/{$post->id}")
@@ -106,12 +104,12 @@ class PostControllerTest extends TestCase
 
     public function test_non_author_cannot_destroy_post(): void
     {
-        $user      = User::factory()->create();
-        $author    = User::factory()->create();
+        $user = User::factory()->create();
+        $author = User::factory()->create();
         $community = Community::factory()->create();
-        $post      = Post::factory()->create([
+        $post = Post::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $author->id,
+            'user_id' => $author->id,
         ]);
 
         $this->actingAs($user)->deleteJson("/api/posts/{$post->id}")
@@ -126,32 +124,32 @@ class PostControllerTest extends TestCase
 
         $this->postJson('/api/posts', [
             'community_id' => $community->id,
-            'content'      => 'Some content',
+            'content' => 'Some content',
         ])
             ->assertUnauthorized();
     }
 
     public function test_admin_can_pin_post(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
-            'role'         => 'admin',
+            'user_id' => $owner->id,
+            'role' => 'admin',
         ]);
 
         $post = Post::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
-            'is_pinned'    => false,
+            'user_id' => $owner->id,
+            'is_pinned' => false,
         ]);
 
         $this->actingAs($owner, 'sanctum');
 
         $controller = app(PostController::class);
-        $response   = $controller->togglePin($post, app(TogglePin::class));
-        $data       = json_decode($response->getContent(), true);
+        $response = $controller->togglePin($post, app(TogglePin::class));
+        $data = json_decode($response->getContent(), true);
 
         $this->assertEquals('Post pinned.', $data['message']);
         $this->assertTrue($data['is_pinned']);
@@ -160,25 +158,25 @@ class PostControllerTest extends TestCase
 
     public function test_admin_can_unpin_post(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
-            'role'         => 'admin',
+            'user_id' => $owner->id,
+            'role' => 'admin',
         ]);
 
         $post = Post::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
-            'is_pinned'    => true,
+            'user_id' => $owner->id,
+            'is_pinned' => true,
         ]);
 
         $this->actingAs($owner, 'sanctum');
 
         $controller = app(PostController::class);
-        $response   = $controller->togglePin($post, app(TogglePin::class));
-        $data       = json_decode($response->getContent(), true);
+        $response = $controller->togglePin($post, app(TogglePin::class));
+        $data = json_decode($response->getContent(), true);
 
         $this->assertEquals('Post unpinned.', $data['message']);
         $this->assertFalse($data['is_pinned']);
@@ -187,13 +185,13 @@ class PostControllerTest extends TestCase
 
     public function test_non_admin_cannot_toggle_pin(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
 
         $post = Post::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'is_pinned'    => false,
+            'user_id' => $user->id,
+            'is_pinned' => false,
         ]);
 
         $this->actingAs($user, 'sanctum');
@@ -208,12 +206,12 @@ class PostControllerTest extends TestCase
 
     public function test_author_can_update_post_via_controller(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $post      = Post::factory()->create([
+        $post = Post::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'content'      => 'Original content',
+            'user_id' => $user->id,
+            'content' => 'Original content',
         ]);
 
         $this->actingAs($user, 'sanctum');
@@ -227,8 +225,8 @@ class PostControllerTest extends TestCase
         $request->validateResolved();
 
         $controller = app(PostController::class);
-        $response   = $controller->update($request, $post, app(UpdatePost::class));
-        $data       = json_decode($response->getContent(), true);
+        $response = $controller->update($request, $post, app(UpdatePost::class));
+        $data = json_decode($response->getContent(), true);
 
         $this->assertEquals('Post updated.', $data['message']);
         $this->assertEquals('Updated API content', $post->fresh()->content);
@@ -236,11 +234,11 @@ class PostControllerTest extends TestCase
 
     public function test_update_returns_500_when_action_throws(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $post      = Post::factory()->create([
+        $post = Post::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         $this->actingAs($user, 'sanctum');
@@ -256,7 +254,7 @@ class PostControllerTest extends TestCase
         $request->validateResolved();
 
         $controller = app(PostController::class);
-        $response   = $controller->update($request, $post, $mock);
+        $response = $controller->update($request, $post, $mock);
 
         $this->assertEquals(500, $response->getStatusCode());
         $data = json_decode($response->getContent(), true);
@@ -267,11 +265,11 @@ class PostControllerTest extends TestCase
 
     public function test_destroy_returns_500_when_action_throws(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $post      = Post::factory()->create([
+        $post = Post::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         $mock = Mockery::mock(DeletePost::class);
@@ -288,17 +286,17 @@ class PostControllerTest extends TestCase
 
     public function test_toggle_pin_returns_500_when_action_throws_runtime(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         CommunityMember::factory()->admin()->create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
+            'user_id' => $owner->id,
         ]);
 
         $post = Post::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
-            'is_pinned'    => false,
+            'user_id' => $owner->id,
+            'is_pinned' => false,
         ]);
 
         $this->actingAs($owner, 'sanctum');
@@ -307,7 +305,7 @@ class PostControllerTest extends TestCase
         $mock->shouldReceive('execute')->once()->andThrow(new \RuntimeException('db error'));
 
         $controller = app(PostController::class);
-        $response   = $controller->togglePin($post, $mock);
+        $response = $controller->togglePin($post, $mock);
 
         $this->assertEquals(500, $response->getStatusCode());
         $data = json_decode($response->getContent(), true);
@@ -320,7 +318,7 @@ class PostControllerTest extends TestCase
     {
         \Illuminate\Support\Facades\Storage::fake(config('filesystems.default'));
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
@@ -328,15 +326,15 @@ class PostControllerTest extends TestCase
 
         $response = $this->actingAs($user)->postJson('/api/posts', [
             'community_id' => $community->id,
-            'content'      => 'Post with image',
-            'image'        => $file,
+            'content' => 'Post with image',
+            'image' => $file,
         ]);
 
         $response->assertStatus(201);
         $this->assertDatabaseHas('posts', [
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'content'      => 'Post with image',
+            'user_id' => $user->id,
+            'content' => 'Post with image',
         ]);
     }
 
@@ -345,7 +343,7 @@ class PostControllerTest extends TestCase
     public function test_unauthenticated_cannot_destroy_post(): void
     {
         $community = Community::factory()->create();
-        $post      = Post::factory()->create(['community_id' => $community->id]);
+        $post = Post::factory()->create(['community_id' => $community->id]);
 
         $this->deleteJson("/api/posts/{$post->id}")
             ->assertUnauthorized();

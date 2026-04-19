@@ -17,7 +17,7 @@ class PhilSmsProviderTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->provider = new PhilSmsProvider();
+        $this->provider = new PhilSmsProvider;
     }
 
     public function test_send_success(): void
@@ -27,7 +27,7 @@ class PhilSmsProviderTest extends TestCase
         ]);
 
         $community = Community::factory()->create([
-            'sms_api_key'     => 'phil-token',
+            'sms_api_key' => 'phil-token',
             'sms_sender_name' => 'TestSender',
         ]);
 
@@ -53,7 +53,7 @@ class PhilSmsProviderTest extends TestCase
         ]);
 
         $community = Community::factory()->create([
-            'sms_api_key'     => 'phil-token',
+            'sms_api_key' => 'phil-token',
             'sms_sender_name' => null,
         ]);
 

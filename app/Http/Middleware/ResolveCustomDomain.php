@@ -11,8 +11,8 @@ class ResolveCustomDomain
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $host    = $request->getHost();
-        $appUrl  = config('app.url', '');
+        $host = $request->getHost();
+        $appUrl = config('app.url', '');
         $appHost = parse_url($appUrl, PHP_URL_HOST) ?? '';
         // Strip port (e.g. localhost:8080 → localhost)
         $bareHost = explode(':', $appHost)[0];
@@ -24,8 +24,8 @@ class ResolveCustomDomain
         $community = null;
 
         // ── Subdomain: test.curzzo.com ─────────────────────────────────────────
-        if (str_ends_with($host, '.' . $bareHost)) {
-            $sub = substr($host, 0, -strlen('.' . $bareHost));
+        if (str_ends_with($host, '.'.$bareHost)) {
+            $sub = substr($host, 0, -strlen('.'.$bareHost));
             // Only single-level subdomains (no nested dots)
             if ($sub && ! str_contains($sub, '.')) {
                 $community = Community::where('subdomain', $sub)->first();
@@ -46,8 +46,8 @@ class ResolveCustomDomain
         // Rewrite the URI so existing /communities/{slug}/... routes handle it.
         // Skip rewriting if Inertia's client-side router already sent the full path.
         // Skip auth routes — they are defined at root level, not under /communities/{slug}.
-        $path   = $request->getPathInfo();
-        $prefix = '/communities/' . $community->slug;
+        $path = $request->getPathInfo();
+        $prefix = '/communities/'.$community->slug;
 
         $authPaths = [
             '/login', '/register', '/logout',
@@ -58,7 +58,7 @@ class ResolveCustomDomain
 
         $isAuthPath = false;
         foreach ($authPaths as $authPath) {
-            if ($path === $authPath || str_starts_with($path, $authPath . '/')) {
+            if ($path === $authPath || str_starts_with($path, $authPath.'/')) {
                 $isAuthPath = true;
                 break;
             }
@@ -68,9 +68,9 @@ class ResolveCustomDomain
             // Preserve the original URI so Inertia can return the clean custom-domain URL
             $request->attributes->set('original_uri', $request->getRequestUri());
 
-            $newUri = $prefix . ($path === '/' ? '' : $path);
+            $newUri = $prefix.($path === '/' ? '' : $path);
             if ($qs = $request->getQueryString()) {
-                $newUri .= '?' . $qs;
+                $newUri .= '?'.$qs;
             }
 
             $request->initialize(

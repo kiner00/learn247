@@ -21,7 +21,7 @@ class ChatController extends Controller
         $membership->assertMembership($request->user(), $community);
 
         $userId = $request->user()->id;
-        $after  = (int) $request->query('after', 0);
+        $after = (int) $request->query('after', 0);
 
         $messages = $after > 0
             ? $query->after($community, $after)
@@ -49,14 +49,14 @@ class ChatController extends Controller
     {
         $membership->assertMembership($request->user(), $community);
 
-        $after    = (int) $request->query('after', 0);
+        $after = (int) $request->query('after', 0);
         $messages = $query->after($community, $after)->map(fn ($m) => [
-            'id'         => $m->id,
-            'content'    => $m->content,
+            'id' => $m->id,
+            'content' => $m->content,
             'created_at' => $m->created_at,
-            'user'       => [
-                'id'       => $m->user->id,
-                'name'     => $m->user->name,
+            'user' => [
+                'id' => $m->user->id,
+                'name' => $m->user->name,
                 'username' => $m->user->username,
             ],
         ]);

@@ -22,12 +22,12 @@ class CourseLessonController extends Controller
             $this->authorize('manage', $community);
 
             $data = $request->validate([
-                'title'      => ['required', 'string', 'max:255'],
-                'content'    => ['nullable', 'string'],
+                'title' => ['required', 'string', 'max:255'],
+                'content' => ['nullable', 'string'],
                 'embed_html' => ['nullable', 'string'],
-                'video_url'  => ['nullable', 'url', 'max:500'],
-                'cta_label'  => ['nullable', 'string', 'max:100'],
-                'cta_url'    => ['nullable', 'url', 'max:500'],
+                'video_url' => ['nullable', 'url', 'max:500'],
+                'cta_label' => ['nullable', 'string', 'max:100'],
+                'cta_url' => ['nullable', 'url', 'max:500'],
             ]);
 
             $action->store($module, $data);
@@ -45,13 +45,13 @@ class CourseLessonController extends Controller
             $this->authorize('manage', $community);
 
             $data = $request->validate([
-                'title'      => ['sometimes', 'string', 'max:255'],
-                'content'    => ['nullable', 'string'],
+                'title' => ['sometimes', 'string', 'max:255'],
+                'content' => ['nullable', 'string'],
                 'embed_html' => ['nullable', 'string'],
-                'video_url'  => ['nullable', 'url', 'max:500'],
+                'video_url' => ['nullable', 'url', 'max:500'],
                 'video_path' => ['nullable', 'string', 'max:1000'],
-                'cta_label'  => ['nullable', 'string', 'max:100'],
-                'cta_url'    => ['nullable', 'url', 'max:500'],
+                'cta_label' => ['nullable', 'string', 'max:100'],
+                'cta_url' => ['nullable', 'url', 'max:500'],
             ]);
 
             $action->update($lesson, $data);
@@ -113,7 +113,7 @@ class CourseLessonController extends Controller
             $this->authorize('manage', $community);
 
             $request->validate([
-                'lesson_ids'   => ['required', 'array'],
+                'lesson_ids' => ['required', 'array'],
                 'lesson_ids.*' => ['required', 'integer', 'exists:course_lessons,id'],
             ]);
 

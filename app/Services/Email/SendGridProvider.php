@@ -23,7 +23,7 @@ class SendGridProvider implements EmailProvider
     public function validateApiKey(Community $community): bool
     {
         try {
-            $response = $this->http($community)->get(self::BASE_URL . '/scopes');
+            $response = $this->http($community)->get(self::BASE_URL.'/scopes');
 
             return $response->successful();
         } catch (\Exception) {
@@ -35,7 +35,7 @@ class SendGridProvider implements EmailProvider
     {
         $payload = $this->buildPayload($params);
 
-        $response = $this->http($community)->post(self::BASE_URL . '/mail/send', $payload);
+        $response = $this->http($community)->post(self::BASE_URL.'/mail/send', $payload);
 
         return ['id' => $response->header('X-Message-Id')];
     }
@@ -58,40 +58,40 @@ class SendGridProvider implements EmailProvider
 
     public function addDomain(Community $community, string $domain): array
     {
-        $response = $this->http($community)->post(self::BASE_URL . '/whitelabel/domains', [
-            'domain'            => $domain,
+        $response = $this->http($community)->post(self::BASE_URL.'/whitelabel/domains', [
+            'domain' => $domain,
             'automatic_security' => true,
         ]);
 
         $data = $response->json();
 
         return [
-            'id'      => (string) ($data['id'] ?? ''),
-            'status'  => ($data['valid'] ?? false) ? 'verified' : 'pending',
+            'id' => (string) ($data['id'] ?? ''),
+            'status' => ($data['valid'] ?? false) ? 'verified' : 'pending',
             'records' => $this->mapSendGridRecords($data),
         ];
     }
 
     public function getDomain(Community $community, string $domainId): array
     {
-        $response = $this->http($community)->get(self::BASE_URL . "/whitelabel/domains/{$domainId}");
+        $response = $this->http($community)->get(self::BASE_URL."/whitelabel/domains/{$domainId}");
         $data = $response->json();
 
         return [
-            'id'      => (string) ($data['id'] ?? ''),
-            'name'    => $data['domain'] ?? '',
-            'status'  => ($data['valid'] ?? false) ? 'verified' : 'pending',
+            'id' => (string) ($data['id'] ?? ''),
+            'name' => $data['domain'] ?? '',
+            'status' => ($data['valid'] ?? false) ? 'verified' : 'pending',
             'records' => $this->mapSendGridRecords($data),
         ];
     }
 
     public function verifyDomain(Community $community, string $domainId): array
     {
-        $response = $this->http($community)->post(self::BASE_URL . "/whitelabel/domains/{$domainId}/validate");
+        $response = $this->http($community)->post(self::BASE_URL."/whitelabel/domains/{$domainId}/validate");
         $data = $response->json();
 
         return [
-            'id'     => (string) $domainId,
+            'id' => (string) $domainId,
             'status' => ($data['valid'] ?? false) ? 'verified' : 'pending',
         ];
     }
@@ -117,7 +117,7 @@ class SendGridProvider implements EmailProvider
                     'to' => array_map(fn ($email) => ['email' => $email], $params['to']),
                 ],
             ],
-            'from'    => $from,
+            'from' => $from,
             'subject' => $params['subject'],
             'content' => [
                 ['type' => 'text/html', 'value' => $params['html']],
@@ -148,9 +148,9 @@ class SendGridProvider implements EmailProvider
             foreach ($dnsData as $key => $record) {
                 if (is_array($record) && isset($record['host'])) {
                     $records[] = [
-                        'type'   => $record['type'] ?? 'CNAME',
-                        'name'   => $record['host'] ?? '',
-                        'value'  => $record['data'] ?? '',
+                        'type' => $record['type'] ?? 'CNAME',
+                        'name' => $record['host'] ?? '',
+                        'value' => $record['data'] ?? '',
                         'status' => ($record['valid'] ?? false) ? 'verified' : 'pending',
                     ];
                 }

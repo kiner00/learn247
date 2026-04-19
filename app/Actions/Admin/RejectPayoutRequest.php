@@ -12,10 +12,10 @@ class RejectPayoutRequest
         abort_unless($payoutRequest->isPending(), 422, 'Request is no longer pending.');
 
         $payoutRequest->update([
-            'status'           => PayoutRequest::STATUS_REJECTED,
+            'status' => PayoutRequest::STATUS_REJECTED,
             'rejection_reason' => $reason,
-            'processed_at'     => now(),
-            'processed_by'     => auth()->id(),
+            'processed_at' => now(),
+            'processed_by' => auth()->id(),
         ]);
 
         CacheKeys::flushAdmin();

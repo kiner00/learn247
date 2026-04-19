@@ -29,12 +29,12 @@ class CancelRecurringPlanTest extends TestCase
         $user = User::factory()->create();
         $community = Community::factory()->paid()->create();
         $subscription = Subscription::create([
-            'community_id'     => $community->id,
-            'user_id'          => $user->id,
-            'status'           => Subscription::STATUS_ACTIVE,
-            'xendit_plan_id'   => 'repl_cancel_001',
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'xendit_plan_id' => 'repl_cancel_001',
             'recurring_status' => 'ACTIVE',
-            'expires_at'       => now()->addDays(20),
+            'expires_at' => now()->addDays(20),
         ]);
 
         $action = app(CancelRecurringPlan::class);
@@ -58,12 +58,12 @@ class CancelRecurringPlanTest extends TestCase
         $user = User::factory()->create();
         $community = Community::factory()->paid()->create();
         $subscription = Subscription::create([
-            'community_id'     => $community->id,
-            'user_id'          => $user->id,
-            'status'           => Subscription::STATUS_ACTIVE,
-            'xendit_plan_id'   => 'repl_already_inactive',
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'xendit_plan_id' => 'repl_already_inactive',
             'recurring_status' => 'INACTIVE',
-            'expires_at'       => now()->addDays(10),
+            'expires_at' => now()->addDays(10),
         ]);
 
         $action = app(CancelRecurringPlan::class);
@@ -79,10 +79,10 @@ class CancelRecurringPlanTest extends TestCase
         $community = Community::factory()->paid()->create();
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'status'       => Subscription::STATUS_ACTIVE,
-            'xendit_id'    => 'inv_not_recurring',
-            'expires_at'   => now()->addDays(20),
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'xendit_id' => 'inv_not_recurring',
+            'expires_at' => now()->addDays(20),
         ]);
 
         $action = app(CancelRecurringPlan::class);
@@ -104,12 +104,12 @@ class CancelRecurringPlanTest extends TestCase
 
         $user = User::factory()->create();
         $creatorSub = CreatorSubscription::create([
-            'user_id'          => $user->id,
-            'plan'             => CreatorSubscription::PLAN_PRO,
-            'status'           => CreatorSubscription::STATUS_ACTIVE,
-            'xendit_plan_id'   => 'repl_creator_cancel',
+            'user_id' => $user->id,
+            'plan' => CreatorSubscription::PLAN_PRO,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
+            'xendit_plan_id' => 'repl_creator_cancel',
             'recurring_status' => 'ACTIVE',
-            'expires_at'       => now()->addDays(20),
+            'expires_at' => now()->addDays(20),
         ]);
 
         $action = app(CancelRecurringPlan::class);
@@ -132,12 +132,12 @@ class CancelRecurringPlanTest extends TestCase
         $user = User::factory()->create();
         $community = Community::factory()->paid()->create();
         $subscription = Subscription::create([
-            'community_id'     => $community->id,
-            'user_id'          => $user->id,
-            'status'           => Subscription::STATUS_ACTIVE,
-            'xendit_plan_id'   => 'repl_fail_001',
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'xendit_plan_id' => 'repl_fail_001',
             'recurring_status' => 'ACTIVE',
-            'expires_at'       => now()->addDays(20),
+            'expires_at' => now()->addDays(20),
         ]);
 
         $this->expectException(\RuntimeException::class);
@@ -159,12 +159,12 @@ class CancelRecurringPlanTest extends TestCase
         $user = User::factory()->create();
         $community = Community::factory()->paid()->create();
         $subscription = Subscription::create([
-            'community_id'     => $community->id,
-            'user_id'          => $user->id,
-            'status'           => Subscription::STATUS_ACTIVE,
-            'xendit_plan_id'   => 'repl_no_update',
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'xendit_plan_id' => 'repl_no_update',
             'recurring_status' => 'ACTIVE',
-            'expires_at'       => now()->addDays(20),
+            'expires_at' => now()->addDays(20),
         ]);
 
         try {

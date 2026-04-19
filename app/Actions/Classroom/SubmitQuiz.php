@@ -18,7 +18,7 @@ class SubmitQuiz
     {
         $quiz->load('questions.options');
 
-        $total   = $quiz->questions->count();
+        $total = $quiz->questions->count();
         $correct = 0;
 
         foreach ($quiz->questions as $question) {
@@ -30,15 +30,15 @@ class SubmitQuiz
             }
         }
 
-        $score  = $total > 0 ? (int) round($correct / $total * 100) : 0;
+        $score = $total > 0 ? (int) round($correct / $total * 100) : 0;
         $passed = $score >= $quiz->pass_score;
 
         $attempt = QuizAttempt::create([
-            'quiz_id'      => $quiz->id,
-            'user_id'      => $user->id,
-            'answers'      => $answers,
-            'score'        => $score,
-            'passed'       => $passed,
+            'quiz_id' => $quiz->id,
+            'user_id' => $user->id,
+            'answers' => $answers,
+            'score' => $score,
+            'passed' => $passed,
             'completed_at' => now(),
         ]);
 
@@ -47,9 +47,9 @@ class SubmitQuiz
         }
 
         return [
-            'score'   => $score,
-            'passed'  => $passed,
-            'total'   => $total,
+            'score' => $score,
+            'passed' => $passed,
+            'total' => $total,
             'correct' => $correct,
             'attempt' => $attempt,
         ];

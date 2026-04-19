@@ -25,6 +25,7 @@ class PostController extends Controller
             return back();
         } catch (\Throwable $e) {
             Log::error('PostController@store failed', ['error' => $e->getMessage(), 'community_id' => $community->id]);
+
             return back()->with('error', 'Failed to create post.');
         }
     }
@@ -39,6 +40,7 @@ class PostController extends Controller
             throw $e;
         } catch (\Throwable $e) {
             Log::error('PostController@update failed', ['error' => $e->getMessage(), 'post_id' => $post->id]);
+
             return back()->with('error', 'Failed to update post.');
         }
     }
@@ -53,6 +55,7 @@ class PostController extends Controller
             throw $e;
         } catch (\Throwable $e) {
             Log::error('PostController@destroy failed', ['error' => $e->getMessage(), 'post_id' => $post->id]);
+
             return back()->with('error', 'Failed to delete post.');
         }
     }
@@ -67,6 +70,7 @@ class PostController extends Controller
             throw $e;
         } catch (\Throwable $e) {
             Log::error('PostController@togglePin failed', ['error' => $e->getMessage(), 'post_id' => $post->id]);
+
             return back()->with('error', 'Failed to toggle pin.');
         }
     }

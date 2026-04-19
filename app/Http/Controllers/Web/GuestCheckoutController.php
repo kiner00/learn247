@@ -26,9 +26,9 @@ class GuestCheckoutController extends Controller
 
         $data = $request->validate([
             'first_name' => ['required', 'string', 'max:100'],
-            'last_name'  => ['required', 'string', 'max:100'],
-            'email'      => ['required', 'email'],
-            'phone'      => ['required', 'string', 'max:30'],
+            'last_name' => ['required', 'string', 'max:100'],
+            'email' => ['required', 'email'],
+            'phone' => ['required', 'string', 'max:30'],
         ]);
 
         $community = $affiliate->community;
@@ -49,12 +49,12 @@ class GuestCheckoutController extends Controller
 
         // Track cart event for abandonment detection
         CartEvent::create([
-            'community_id'   => $community->id,
-            'user_id'        => $user->id,
-            'email'          => $user->email,
-            'event_type'     => CartEvent::TYPE_CHECKOUT_STARTED,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'event_type' => CartEvent::TYPE_CHECKOUT_STARTED,
             'reference_type' => 'subscription',
-            'metadata'       => ['affiliate_code' => $code, 'amount' => $community->price],
+            'metadata' => ['affiliate_code' => $code, 'amount' => $community->price],
         ]);
 
         return Inertia::location($result['checkout_url']);
@@ -68,9 +68,9 @@ class GuestCheckoutController extends Controller
 
         $data = $request->validate([
             'first_name' => ['required', 'string', 'max:100'],
-            'last_name'  => ['required', 'string', 'max:100'],
-            'email'      => ['required', 'email'],
-            'phone'      => ['required', 'string', 'max:30'],
+            'last_name' => ['required', 'string', 'max:100'],
+            'email' => ['required', 'email'],
+            'phone' => ['required', 'string', 'max:30'],
         ]);
 
         $user = $checkout->findOrCreateUser($data);
@@ -87,12 +87,12 @@ class GuestCheckoutController extends Controller
 
         // Track cart event for abandonment detection
         CartEvent::create([
-            'community_id'   => $community->id,
-            'user_id'        => $user->id,
-            'email'          => $user->email,
-            'event_type'     => CartEvent::TYPE_CHECKOUT_STARTED,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'event_type' => CartEvent::TYPE_CHECKOUT_STARTED,
             'reference_type' => 'subscription',
-            'metadata'       => ['amount' => $community->price],
+            'metadata' => ['amount' => $community->price],
         ]);
 
         return Inertia::location($result['checkout_url']);
@@ -105,13 +105,13 @@ class GuestCheckoutController extends Controller
     public static function buildCallbackUrl(int $userId, string $communitySlug): string
     {
         $expires = now()->addHours(2)->getTimestamp();
-        $token   = hash_hmac('sha256', "{$userId}|{$communitySlug}|{$expires}", config('app.key'));
+        $token = hash_hmac('sha256', "{$userId}|{$communitySlug}|{$expires}", config('app.key'));
 
         return route('checkout.callback', [
-            'user'      => $userId,
+            'user' => $userId,
             'community' => $communitySlug,
-            'expires'   => $expires,
-            'token'     => $token,
+            'expires' => $expires,
+            'token' => $token,
         ]);
     }
 }

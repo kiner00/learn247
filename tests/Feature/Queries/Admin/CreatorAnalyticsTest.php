@@ -23,7 +23,7 @@ class CreatorAnalyticsTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->query = new CreatorAnalytics();
+        $this->query = new CreatorAnalytics;
     }
 
     // ─── helpers ───────────────────────────────────────────────────────────────
@@ -33,7 +33,7 @@ class CreatorAnalyticsTest extends TestCase
         $owner = User::factory()->create(['name' => $ownerName]);
         $community = Community::factory()->create([
             'owner_id' => $owner->id,
-            'price'    => $price,
+            'price' => $price,
         ]);
 
         return [$owner, $community];
@@ -43,20 +43,20 @@ class CreatorAnalyticsTest extends TestCase
     {
         $sub = Subscription::factory()->create([
             'community_id' => $community->id,
-            'status'       => Subscription::STATUS_ACTIVE,
+            'status' => Subscription::STATUS_ACTIVE,
         ]);
 
         return Payment::create([
-            'subscription_id'    => $sub->id,
-            'community_id'       => $community->id,
-            'user_id'            => $sub->user_id,
-            'amount'             => $amount,
-            'processing_fee'     => $processingFee,
-            'platform_fee'       => $platformFee,
-            'currency'           => 'PHP',
-            'status'             => Payment::STATUS_PAID,
-            'metadata'           => [],
-            'paid_at'            => now(),
+            'subscription_id' => $sub->id,
+            'community_id' => $community->id,
+            'user_id' => $sub->user_id,
+            'amount' => $amount,
+            'processing_fee' => $processingFee,
+            'platform_fee' => $platformFee,
+            'currency' => 'PHP',
+            'status' => Payment::STATUS_PAID,
+            'metadata' => [],
+            'paid_at' => now(),
         ]);
     }
 
@@ -65,25 +65,25 @@ class CreatorAnalyticsTest extends TestCase
         $affUser = User::factory()->create();
         $affiliate = Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => $affUser->id,
-            'code'         => strtoupper(fake()->unique()->lexify('????????')),
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => $affUser->id,
+            'code' => strtoupper(fake()->unique()->lexify('????????')),
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         $sub = Subscription::factory()->create([
             'community_id' => $community->id,
-            'status'       => Subscription::STATUS_ACTIVE,
+            'status' => Subscription::STATUS_ACTIVE,
         ]);
 
         AffiliateConversion::create([
-            'affiliate_id'      => $affiliate->id,
-            'subscription_id'   => $sub->id,
-            'referred_user_id'  => $sub->user_id,
-            'sale_amount'       => 500,
-            'platform_fee'      => 75,
+            'affiliate_id' => $affiliate->id,
+            'subscription_id' => $sub->id,
+            'referred_user_id' => $sub->user_id,
+            'sale_amount' => 500,
+            'platform_fee' => 75,
             'commission_amount' => $commission,
-            'creator_amount'    => 500 - 75 - $commission,
-            'status'            => AffiliateConversion::STATUS_PENDING,
+            'creator_amount' => 500 - 75 - $commission,
+            'status' => AffiliateConversion::STATUS_PENDING,
         ]);
     }
 
@@ -91,9 +91,9 @@ class CreatorAnalyticsTest extends TestCase
     {
         OwnerPayout::create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
-            'amount'       => $amount,
-            'status'       => $status,
+            'user_id' => $owner->id,
+            'amount' => $amount,
+            'status' => $status,
         ]);
     }
 
@@ -344,18 +344,18 @@ class CreatorAnalyticsTest extends TestCase
         // Create a pending payment - should NOT count
         $sub = Subscription::factory()->create([
             'community_id' => $community->id,
-            'status'       => Subscription::STATUS_ACTIVE,
+            'status' => Subscription::STATUS_ACTIVE,
         ]);
         Payment::create([
-            'subscription_id'    => $sub->id,
-            'community_id'       => $community->id,
-            'user_id'            => $sub->user_id,
-            'amount'             => 5000,
-            'processing_fee'     => 250,
-            'platform_fee'       => 750,
-            'currency'           => 'PHP',
-            'status'             => Payment::STATUS_PENDING,
-            'metadata'           => [],
+            'subscription_id' => $sub->id,
+            'community_id' => $community->id,
+            'user_id' => $sub->user_id,
+            'amount' => 5000,
+            'processing_fee' => 250,
+            'platform_fee' => 750,
+            'currency' => 'PHP',
+            'status' => Payment::STATUS_PENDING,
+            'metadata' => [],
         ]);
 
         $result = $this->query->execute();

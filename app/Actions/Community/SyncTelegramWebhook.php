@@ -16,6 +16,7 @@ class SyncTelegramWebhook
         if ($newToken && $community->telegram_chat_id && $newToken !== $oldToken) {
             $url = route('webhooks.telegram', ['slug' => $community->slug]);
             $this->telegram->setWebhook($newToken, $url, $this->telegram->webhookSecret($newToken));
+
             return;
         }
 

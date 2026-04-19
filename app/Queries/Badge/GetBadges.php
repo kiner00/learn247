@@ -26,18 +26,18 @@ class GetBadges
             : collect();
 
         $format = fn (Badge $badge) => [
-            'id'          => $badge->id,
-            'key'         => $badge->key,
-            'name'        => $badge->name,
-            'icon'        => $badge->icon,
+            'id' => $badge->id,
+            'key' => $badge->key,
+            'name' => $badge->name,
+            'icon' => $badge->icon,
             'description' => $badge->description,
             'how_to_earn' => $badge->how_to_earn,
-            'type'        => $badge->type,
-            'earned'      => $earnedBadgeIds->has($badge->id),
+            'type' => $badge->type,
+            'earned' => $earnedBadgeIds->has($badge->id),
         ];
 
         return [
-            'member'  => $allBadges->where('type', 'member')->map($format)->values(),
+            'member' => $allBadges->where('type', 'member')->map($format)->values(),
             'creator' => $allBadges->where('type', 'creator')->map($format)->values(),
         ];
     }

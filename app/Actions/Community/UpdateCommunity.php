@@ -16,8 +16,8 @@ class UpdateCommunity
      */
     public function execute(Community $community, array $data, ?UploadedFile $avatar = null, ?UploadedFile $coverImage = null): Community
     {
-        $removeCover  = !empty($data['remove_cover_image']);
-        $removeAvatar = !empty($data['remove_avatar']);
+        $removeCover = ! empty($data['remove_cover_image']);
+        $removeAvatar = ! empty($data['remove_avatar']);
         unset($data['remove_cover_image'], $data['remove_avatar']);
 
         $newPrice = isset($data['price']) ? (float) $data['price'] : null;
@@ -57,7 +57,7 @@ class UpdateCommunity
         $moduleCount = $community->courses()
             ->withCount(['modules' => fn ($q) => $q->where('is_free', false)])
             ->get()->sum('modules_count');
-        $owner       = $community->owner;
+        $owner = $community->owner;
 
         if ($moduleCount < 5) {
             throw ValidationException::withMessages([

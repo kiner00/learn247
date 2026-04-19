@@ -5,7 +5,6 @@ namespace Tests\Feature\Requests;
 use App\Http\Requests\CreateCommunityRequest;
 use App\Models\Community;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\Request;
 use Tests\TestCase;
 
 class CreateCommunityRequestTest extends TestCase
@@ -66,7 +65,7 @@ class CreateCommunityRequestTest extends TestCase
 
     public function test_rules_include_expected_fields(): void
     {
-        $req = new CreateCommunityRequest();
+        $req = new CreateCommunityRequest;
         $rules = $req->rules();
 
         $this->assertArrayHasKey('name', $rules);
@@ -77,7 +76,7 @@ class CreateCommunityRequestTest extends TestCase
 
     public function test_authorize_returns_true(): void
     {
-        $req = new CreateCommunityRequest();
+        $req = new CreateCommunityRequest;
         $this->assertTrue($req->authorize());
     }
 }

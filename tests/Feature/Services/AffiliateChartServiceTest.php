@@ -22,11 +22,12 @@ class AffiliateChartServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new AffiliateChartService();
+        $this->service = new AffiliateChartService;
 
         // SQLite does not have DATE_FORMAT — register a compatible shim
         DB::connection()->getPdo()->sqliteCreateFunction('DATE_FORMAT', function ($date, $format) {
             $map = ['%Y' => 'Y', '%m' => 'm', '%d' => 'd', '%H' => 'H', '%i' => 'i', '%s' => 's'];
+
             return date(strtr($format, $map), strtotime($date));
         }, 2);
     }
@@ -71,7 +72,7 @@ class AffiliateChartServiceTest extends TestCase
 
     public function test_build_chart_week_returns_seven_data_points(): void
     {
-        $from   = Carbon::now()->startOfWeek();
+        $from = Carbon::now()->startOfWeek();
         $result = $this->service->buildChart(collect([]), 'week', $from);
 
         $this->assertCount(7, $result);
@@ -79,7 +80,7 @@ class AffiliateChartServiceTest extends TestCase
 
     public function test_build_chart_week_each_point_has_label_and_total(): void
     {
-        $from   = Carbon::now()->startOfWeek();
+        $from = Carbon::now()->startOfWeek();
         $result = $this->service->buildChart(collect([]), 'week', $from);
 
         foreach ($result as $point) {
@@ -91,7 +92,7 @@ class AffiliateChartServiceTest extends TestCase
 
     public function test_build_chart_week_totals_zero_with_no_conversions(): void
     {
-        $from   = Carbon::now()->startOfWeek();
+        $from = Carbon::now()->startOfWeek();
         $result = $this->service->buildChart(collect([999]), 'week', $from);
 
         foreach ($result as $point) {
@@ -101,30 +102,30 @@ class AffiliateChartServiceTest extends TestCase
 
     public function test_build_chart_week_includes_conversion_amounts(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $affUser   = User::factory()->create();
+        $affUser = User::factory()->create();
         $affiliate = Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => $affUser->id,
-            'code'         => 'CHT01',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => $affUser->id,
+            'code' => 'CHT01',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
         $member = User::factory()->create();
-        $sub    = Subscription::factory()->active()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+        $sub = Subscription::factory()->active()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         AffiliateConversion::create([
-            'affiliate_id'     => $affiliate->id,
-            'subscription_id'  => $sub->id,
+            'affiliate_id' => $affiliate->id,
+            'subscription_id' => $sub->id,
             'referred_user_id' => $member->id,
-            'sale_amount'      => 1000,
-            'platform_fee'     => 98,
-            'commission_amount'=> 100,
-            'creator_amount'   => 802,
-            'created_at'       => Carbon::now()->startOfWeek()->addDay(),
+            'sale_amount' => 1000,
+            'platform_fee' => 98,
+            'commission_amount' => 100,
+            'creator_amount' => 802,
+            'created_at' => Carbon::now()->startOfWeek()->addDay(),
         ]);
 
-        $from   = Carbon::now()->startOfWeek();
+        $from = Carbon::now()->startOfWeek();
         $result = $this->service->buildChart([$affiliate->id], 'week', $from);
 
         $totalCommission = collect($result)->sum('total');
@@ -133,8 +134,8 @@ class AffiliateChartServiceTest extends TestCase
 
     public function test_build_chart_month_returns_days_in_current_month(): void
     {
-        $from    = Carbon::now()->startOfMonth();
-        $result  = $this->service->buildChart(collect([]), 'month', $from);
+        $from = Carbon::now()->startOfMonth();
+        $result = $this->service->buildChart(collect([]), 'month', $from);
         $expected = Carbon::now()->daysInMonth;
 
         $this->assertCount($expected, $result);
@@ -160,36 +161,36 @@ class AffiliateChartServiceTest extends TestCase
 
     public function test_by_comm_groups_by_affiliate_community(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'name' => 'Test Community']);
-        $affUser   = User::factory()->create();
+        $affUser = User::factory()->create();
         $affiliate = Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => $affUser->id,
-            'code'         => 'BYC01',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => $affUser->id,
+            'code' => 'BYC01',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
         $member = User::factory()->create();
-        $sub    = Subscription::factory()->active()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+        $sub = Subscription::factory()->active()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         AffiliateConversion::create([
-            'affiliate_id'     => $affiliate->id,
-            'subscription_id'  => $sub->id,
+            'affiliate_id' => $affiliate->id,
+            'subscription_id' => $sub->id,
             'referred_user_id' => $member->id,
-            'sale_amount'      => 500,
-            'platform_fee'     => 49,
-            'commission_amount'=> 50,
-            'creator_amount'   => 401,
+            'sale_amount' => 500,
+            'platform_fee' => 49,
+            'commission_amount' => 50,
+            'creator_amount' => 401,
         ]);
 
         AffiliateConversion::create([
-            'affiliate_id'     => $affiliate->id,
-            'subscription_id'  => $sub->id,
+            'affiliate_id' => $affiliate->id,
+            'subscription_id' => $sub->id,
             'referred_user_id' => $member->id,
-            'sale_amount'      => 500,
-            'platform_fee'     => 49,
-            'commission_amount'=> 75,
-            'creator_amount'   => 376,
+            'sale_amount' => 500,
+            'platform_fee' => 49,
+            'commission_amount' => 75,
+            'creator_amount' => 376,
         ]);
 
         $result = $this->service->byComm([$affiliate->id]);
@@ -202,17 +203,17 @@ class AffiliateChartServiceTest extends TestCase
     public function test_by_comm_only_includes_given_affiliate_ids(): void
     {
         $owner = User::factory()->create();
-        $c1    = Community::factory()->create(['owner_id' => $owner->id, 'name' => 'C1']);
-        $c2    = Community::factory()->create(['owner_id' => $owner->id, 'name' => 'C2']);
-        $u1    = User::factory()->create();
-        $u2    = User::factory()->create();
+        $c1 = Community::factory()->create(['owner_id' => $owner->id, 'name' => 'C1']);
+        $c2 = Community::factory()->create(['owner_id' => $owner->id, 'name' => 'C2']);
+        $u1 = User::factory()->create();
+        $u2 = User::factory()->create();
 
         $aff1 = Affiliate::create(['community_id' => $c1->id, 'user_id' => $u1->id, 'code' => 'A1', 'status' => Affiliate::STATUS_ACTIVE]);
         $aff2 = Affiliate::create(['community_id' => $c2->id, 'user_id' => $u2->id, 'code' => 'A2', 'status' => Affiliate::STATUS_ACTIVE]);
 
         $member = User::factory()->create();
-        $sub1   = Subscription::factory()->active()->create(['community_id' => $c1->id, 'user_id' => $member->id]);
-        $sub2   = Subscription::factory()->active()->create(['community_id' => $c2->id, 'user_id' => $member->id]);
+        $sub1 = Subscription::factory()->active()->create(['community_id' => $c1->id, 'user_id' => $member->id]);
+        $sub2 = Subscription::factory()->active()->create(['community_id' => $c2->id, 'user_id' => $member->id]);
 
         AffiliateConversion::create(['affiliate_id' => $aff1->id, 'subscription_id' => $sub1->id, 'referred_user_id' => $member->id,
             'sale_amount' => 100, 'platform_fee' => 10, 'commission_amount' => 20, 'creator_amount' => 70]);
@@ -229,18 +230,18 @@ class AffiliateChartServiceTest extends TestCase
 
     public function test_by_comm_sorted_by_total_descending(): void
     {
-        $owner  = User::factory()->create();
-        $c1     = Community::factory()->create(['owner_id' => $owner->id, 'name' => 'Low Earner']);
-        $c2     = Community::factory()->create(['owner_id' => $owner->id, 'name' => 'High Earner']);
-        $u1     = User::factory()->create();
-        $u2     = User::factory()->create();
+        $owner = User::factory()->create();
+        $c1 = Community::factory()->create(['owner_id' => $owner->id, 'name' => 'Low Earner']);
+        $c2 = Community::factory()->create(['owner_id' => $owner->id, 'name' => 'High Earner']);
+        $u1 = User::factory()->create();
+        $u2 = User::factory()->create();
 
-        $aff1   = Affiliate::create(['community_id' => $c1->id, 'user_id' => $u1->id, 'code' => 'S1', 'status' => Affiliate::STATUS_ACTIVE]);
-        $aff2   = Affiliate::create(['community_id' => $c2->id, 'user_id' => $u2->id, 'code' => 'S2', 'status' => Affiliate::STATUS_ACTIVE]);
+        $aff1 = Affiliate::create(['community_id' => $c1->id, 'user_id' => $u1->id, 'code' => 'S1', 'status' => Affiliate::STATUS_ACTIVE]);
+        $aff2 = Affiliate::create(['community_id' => $c2->id, 'user_id' => $u2->id, 'code' => 'S2', 'status' => Affiliate::STATUS_ACTIVE]);
 
         $member = User::factory()->create();
-        $sub1   = Subscription::factory()->active()->create(['community_id' => $c1->id, 'user_id' => $member->id]);
-        $sub2   = Subscription::factory()->active()->create(['community_id' => $c2->id, 'user_id' => $member->id]);
+        $sub1 = Subscription::factory()->active()->create(['community_id' => $c1->id, 'user_id' => $member->id]);
+        $sub2 = Subscription::factory()->active()->create(['community_id' => $c2->id, 'user_id' => $member->id]);
 
         AffiliateConversion::create(['affiliate_id' => $aff1->id, 'subscription_id' => $sub1->id, 'referred_user_id' => $member->id,
             'sale_amount' => 100, 'platform_fee' => 10, 'commission_amount' => 10, 'creator_amount' => 80]);

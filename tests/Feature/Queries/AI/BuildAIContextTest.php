@@ -26,7 +26,7 @@ class BuildAIContextTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->query = new BuildAIContext();
+        $this->query = new BuildAIContext;
     }
 
     public function test_returns_basic_info_when_user_has_no_memberships(): void
@@ -46,9 +46,9 @@ class BuildAIContextTest extends TestCase
         $community = Community::factory()->create(['name' => 'Test Community']);
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'role'         => 'admin',
-            'points'       => 100,
+            'user_id' => $user->id,
+            'role' => 'admin',
+            'points' => 100,
         ]);
 
         $result = $this->query->execute($user);
@@ -67,28 +67,28 @@ class BuildAIContextTest extends TestCase
         $community = Community::factory()->create();
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Course 1',
-            'position'     => 0,
+            'title' => 'Course 1',
+            'position' => 0,
         ]);
         $module = CourseModule::create([
             'course_id' => $course->id,
-            'title'     => 'Module 1',
-            'position'  => 0,
+            'title' => 'Module 1',
+            'position' => 0,
         ]);
         $lesson1 = CourseLesson::create([
             'module_id' => $module->id,
-            'title'     => 'Lesson A',
-            'position'  => 0,
+            'title' => 'Lesson A',
+            'position' => 0,
         ]);
         $lesson2 = CourseLesson::create([
             'module_id' => $module->id,
-            'title'     => 'Lesson B',
-            'position'  => 1,
+            'title' => 'Lesson B',
+            'position' => 1,
         ]);
 
         LessonCompletion::create(['user_id' => $user->id, 'lesson_id' => $lesson1->id]);
@@ -107,37 +107,37 @@ class BuildAIContextTest extends TestCase
         $community = Community::factory()->create();
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Course',
-            'position'     => 0,
+            'title' => 'Course',
+            'position' => 0,
         ]);
         $module = CourseModule::create([
             'course_id' => $course->id,
-            'title'     => 'Module',
-            'position'  => 0,
+            'title' => 'Module',
+            'position' => 0,
         ]);
         $lesson = CourseLesson::create([
             'module_id' => $module->id,
-            'title'     => 'Quiz Lesson',
-            'position'  => 0,
+            'title' => 'Quiz Lesson',
+            'position' => 0,
         ]);
 
         $quiz = Quiz::create([
-            'lesson_id'  => $lesson->id,
-            'title'      => 'Final Quiz',
+            'lesson_id' => $lesson->id,
+            'title' => 'Final Quiz',
             'pass_score' => 70,
         ]);
 
         QuizAttempt::create([
-            'quiz_id'      => $quiz->id,
-            'user_id'      => $user->id,
-            'answers'      => [],
-            'score'        => 85,
-            'passed'       => true,
+            'quiz_id' => $quiz->id,
+            'user_id' => $user->id,
+            'answers' => [],
+            'score' => 85,
+            'passed' => true,
             'completed_at' => now(),
         ]);
 
@@ -157,27 +157,27 @@ class BuildAIContextTest extends TestCase
         $community = Community::factory()->create();
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Course',
-            'position'     => 0,
+            'title' => 'Course',
+            'position' => 0,
         ]);
         $module = CourseModule::create([
             'course_id' => $course->id,
-            'title'     => 'Module',
-            'position'  => 0,
+            'title' => 'Module',
+            'position' => 0,
         ]);
         $lesson = CourseLesson::create([
             'module_id' => $module->id,
-            'title'     => 'Lesson',
-            'position'  => 0,
+            'title' => 'Lesson',
+            'position' => 0,
         ]);
         Quiz::create([
-            'lesson_id'  => $lesson->id,
-            'title'      => 'Unattempted Quiz',
+            'lesson_id' => $lesson->id,
+            'title' => 'Unattempted Quiz',
             'pass_score' => 50,
         ]);
 
@@ -196,25 +196,25 @@ class BuildAIContextTest extends TestCase
         $community = Community::factory()->create();
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         $badge = Badge::create([
-            'key'             => 'first_post',
-            'type'            => 'member',
-            'community_id'    => $community->id,
-            'name'            => 'First Post',
-            'icon'            => '📝',
-            'description'     => 'Made your first post',
-            'condition_type'  => 'first_post',
+            'key' => 'first_post',
+            'type' => 'member',
+            'community_id' => $community->id,
+            'name' => 'First Post',
+            'icon' => '📝',
+            'description' => 'Made your first post',
+            'condition_type' => 'first_post',
             'condition_value' => 1,
         ]);
 
         UserBadge::create([
-            'user_id'      => $user->id,
-            'badge_id'     => $badge->id,
+            'user_id' => $user->id,
+            'badge_id' => $badge->id,
             'community_id' => $community->id,
-            'earned_at'    => now(),
+            'earned_at' => now(),
         ]);
 
         $result = $this->query->execute($user);
@@ -231,11 +231,11 @@ class BuildAIContextTest extends TestCase
 
         CommunityMember::factory()->create([
             'community_id' => $community1->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
         CommunityMember::factory()->create([
             'community_id' => $community2->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         $result = $this->query->execute($user);
@@ -252,44 +252,44 @@ class BuildAIContextTest extends TestCase
         $community = Community::factory()->create();
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Course',
-            'position'     => 0,
+            'title' => 'Course',
+            'position' => 0,
         ]);
         $module = CourseModule::create([
             'course_id' => $course->id,
-            'title'     => 'Module',
-            'position'  => 0,
+            'title' => 'Module',
+            'position' => 0,
         ]);
         $lesson = CourseLesson::create([
             'module_id' => $module->id,
-            'title'     => 'Lesson',
-            'position'  => 0,
+            'title' => 'Lesson',
+            'position' => 0,
         ]);
         $quiz = Quiz::create([
-            'lesson_id'  => $lesson->id,
-            'title'      => 'Retry Quiz',
+            'lesson_id' => $lesson->id,
+            'title' => 'Retry Quiz',
             'pass_score' => 70,
         ]);
 
         QuizAttempt::create([
-            'quiz_id'      => $quiz->id,
-            'user_id'      => $user->id,
-            'answers'      => [],
-            'score'        => 40,
-            'passed'       => false,
+            'quiz_id' => $quiz->id,
+            'user_id' => $user->id,
+            'answers' => [],
+            'score' => 40,
+            'passed' => false,
             'completed_at' => now()->subHour(),
         ]);
         QuizAttempt::create([
-            'quiz_id'      => $quiz->id,
-            'user_id'      => $user->id,
-            'answers'      => [],
-            'score'        => 90,
-            'passed'       => true,
+            'quiz_id' => $quiz->id,
+            'user_id' => $user->id,
+            'answers' => [],
+            'score' => 90,
+            'passed' => true,
             'completed_at' => now(),
         ]);
 

@@ -10,7 +10,8 @@ use Illuminate\Console\Command;
 
 class SyncPayoutStatuses extends Command
 {
-    protected $signature   = 'payouts:sync';
+    protected $signature = 'payouts:sync';
+
     protected $description = 'Sync approved payout requests with their actual Xendit disbursement status';
 
     public function handle(XenditService $xendit): int
@@ -21,6 +22,7 @@ class SyncPayoutStatuses extends Command
 
         if ($requests->isEmpty()) {
             $this->info('No approved payout requests to sync.');
+
             return self::SUCCESS;
         }
 
@@ -33,7 +35,7 @@ class SyncPayoutStatuses extends Command
 
                 if (in_array($status, ['succeeded', 'completed'])) {
                     if ($request->type === PayoutRequest::TYPE_AFFILIATE) {
-                        $mark      = app(MarkAffiliateConversionPaid::class);
+                        $mark = app(MarkAffiliateConversionPaid::class);
                         $remaining = (float) $request->amount;
 
                         AffiliateConversion::where('affiliate_id', $request->affiliate_id)
@@ -41,7 +43,9 @@ class SyncPayoutStatuses extends Command
                             ->orderBy('created_at')
                             ->get()
                             ->each(function ($conversion) use (&$remaining, $mark) {
-                                if ($remaining <= 0) return false;
+                                if ($remaining <= 0) {
+                                    return false;
+                                }
                                 $mark->execute($conversion);
                                 $remaining -= (float) $conversion->commission_amount;
                             });
@@ -61,6 +65,7 @@ class SyncPayoutStatuses extends Command
         }
 
         $this->info('Done.');
+
         return self::SUCCESS;
     }
 }

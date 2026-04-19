@@ -18,16 +18,16 @@ class GetAffiliateStatsTest extends TestCase
 
     public function test_get_affiliates_returns_user_affiliates(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
         Affiliate::create([
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
             'community_id' => $community->id,
-            'code'         => 'STAT001',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'code' => 'STAT001',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
-        $query  = new GetAffiliateStats();
+        $query = new GetAffiliateStats;
         $result = $query->getAffiliates($user);
 
         $this->assertCount(1, $result);
@@ -36,45 +36,45 @@ class GetAffiliateStatsTest extends TestCase
 
     public function test_summary_calculates_totals(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
         $affiliate = Affiliate::create([
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
             'community_id' => $community->id,
-            'code'         => 'STAT002',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'code' => 'STAT002',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         $sub = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => User::factory()->create()->id,
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->addMonth(),
+            'user_id' => User::factory()->create()->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addMonth(),
         ]);
         $payment = Payment::create([
             'subscription_id' => $sub->id,
-            'community_id'    => $community->id,
-            'user_id'         => $sub->user_id,
-            'amount'          => 500,
-            'currency'        => 'PHP',
-            'status'          => Payment::STATUS_PAID,
-            'metadata'        => [],
-            'paid_at'         => now(),
+            'community_id' => $community->id,
+            'user_id' => $sub->user_id,
+            'amount' => 500,
+            'currency' => 'PHP',
+            'status' => Payment::STATUS_PAID,
+            'metadata' => [],
+            'paid_at' => now(),
         ]);
 
         AffiliateConversion::create([
-            'affiliate_id'      => $affiliate->id,
-            'subscription_id'   => $sub->id,
-            'payment_id'        => $payment->id,
-            'referred_user_id'  => $sub->user_id,
-            'sale_amount'       => 500,
-            'platform_fee'      => 75,
+            'affiliate_id' => $affiliate->id,
+            'subscription_id' => $sub->id,
+            'payment_id' => $payment->id,
+            'referred_user_id' => $sub->user_id,
+            'sale_amount' => 500,
+            'platform_fee' => 75,
             'commission_amount' => 50,
-            'creator_amount'    => 375,
-            'status'            => AffiliateConversion::STATUS_PENDING,
+            'creator_amount' => 375,
+            'status' => AffiliateConversion::STATUS_PENDING,
         ]);
 
-        $query  = new GetAffiliateStats();
+        $query = new GetAffiliateStats;
         $result = $query->summary(collect([$affiliate->id]), 'month');
 
         $this->assertEquals(50, $result['total_earned']);
@@ -85,46 +85,46 @@ class GetAffiliateStatsTest extends TestCase
 
     public function test_summary_with_paid_conversions(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
         $affiliate = Affiliate::create([
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
             'community_id' => $community->id,
-            'code'         => 'STAT003',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'code' => 'STAT003',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         $sub = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => User::factory()->create()->id,
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->addMonth(),
+            'user_id' => User::factory()->create()->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addMonth(),
         ]);
         $payment = Payment::create([
             'subscription_id' => $sub->id,
-            'community_id'    => $community->id,
-            'user_id'         => $sub->user_id,
-            'amount'          => 500,
-            'currency'        => 'PHP',
-            'status'          => Payment::STATUS_PAID,
-            'metadata'        => [],
-            'paid_at'         => now(),
+            'community_id' => $community->id,
+            'user_id' => $sub->user_id,
+            'amount' => 500,
+            'currency' => 'PHP',
+            'status' => Payment::STATUS_PAID,
+            'metadata' => [],
+            'paid_at' => now(),
         ]);
 
         AffiliateConversion::create([
-            'affiliate_id'      => $affiliate->id,
-            'subscription_id'   => $sub->id,
-            'payment_id'        => $payment->id,
-            'referred_user_id'  => $sub->user_id,
-            'sale_amount'       => 500,
-            'platform_fee'      => 75,
+            'affiliate_id' => $affiliate->id,
+            'subscription_id' => $sub->id,
+            'payment_id' => $payment->id,
+            'referred_user_id' => $sub->user_id,
+            'sale_amount' => 500,
+            'platform_fee' => 75,
             'commission_amount' => 50,
-            'creator_amount'    => 375,
-            'status'            => AffiliateConversion::STATUS_PAID,
-            'paid_at'           => now(),
+            'creator_amount' => 375,
+            'status' => AffiliateConversion::STATUS_PAID,
+            'paid_at' => now(),
         ]);
 
-        $query  = new GetAffiliateStats();
+        $query = new GetAffiliateStats;
         $result = $query->summary(collect([$affiliate->id]), 'month');
 
         $this->assertEquals(50, $result['total_paid']);
@@ -132,44 +132,44 @@ class GetAffiliateStatsTest extends TestCase
 
     public function test_conversions_returns_formatted_list(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
         $affiliate = Affiliate::create([
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
             'community_id' => $community->id,
-            'code'         => 'STAT004',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'code' => 'STAT004',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         $sub = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => User::factory()->create()->id,
-            'status'       => Subscription::STATUS_ACTIVE,
+            'user_id' => User::factory()->create()->id,
+            'status' => Subscription::STATUS_ACTIVE,
         ]);
         $payment = Payment::create([
             'subscription_id' => $sub->id,
-            'community_id'    => $community->id,
-            'user_id'         => $sub->user_id,
-            'amount'          => 500,
-            'currency'        => 'PHP',
-            'status'          => Payment::STATUS_PAID,
-            'metadata'        => [],
-            'paid_at'         => now(),
+            'community_id' => $community->id,
+            'user_id' => $sub->user_id,
+            'amount' => 500,
+            'currency' => 'PHP',
+            'status' => Payment::STATUS_PAID,
+            'metadata' => [],
+            'paid_at' => now(),
         ]);
 
         AffiliateConversion::create([
-            'affiliate_id'      => $affiliate->id,
-            'subscription_id'   => $sub->id,
-            'payment_id'        => $payment->id,
-            'referred_user_id'  => $sub->user_id,
-            'sale_amount'       => 500,
-            'platform_fee'      => 75,
+            'affiliate_id' => $affiliate->id,
+            'subscription_id' => $sub->id,
+            'payment_id' => $payment->id,
+            'referred_user_id' => $sub->user_id,
+            'sale_amount' => 500,
+            'platform_fee' => 75,
             'commission_amount' => 50,
-            'creator_amount'    => 375,
-            'status'            => AffiliateConversion::STATUS_PENDING,
+            'creator_amount' => 375,
+            'status' => AffiliateConversion::STATUS_PENDING,
         ]);
 
-        $query  = new GetAffiliateStats();
+        $query = new GetAffiliateStats;
         $result = $query->conversions(collect([$affiliate->id]), 'month');
 
         $this->assertCount(1, $result);
@@ -180,20 +180,20 @@ class GetAffiliateStatsTest extends TestCase
 
     public function test_summary_with_different_periods(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
         $affiliate = Affiliate::create([
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
             'community_id' => $community->id,
-            'code'         => 'STAT005',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'code' => 'STAT005',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
-        $query = new GetAffiliateStats();
+        $query = new GetAffiliateStats;
 
         $weekResult = $query->summary(collect([$affiliate->id]), 'week');
         $yearResult = $query->summary(collect([$affiliate->id]), 'year');
-        $allResult  = $query->summary(collect([$affiliate->id]), 'all');
+        $allResult = $query->summary(collect([$affiliate->id]), 'all');
 
         $this->assertEquals(0, $weekResult['total_conversions']);
         $this->assertEquals(0, $yearResult['total_conversions']);

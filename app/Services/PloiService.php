@@ -10,12 +10,13 @@ use RuntimeException;
 class PloiService
 {
     private string $serverId;
+
     private string $siteId;
 
     public function __construct()
     {
         $this->serverId = (string) config('services.ploi.server_id');
-        $this->siteId   = (string) config('services.ploi.site_id');
+        $this->siteId = (string) config('services.ploi.site_id');
     }
 
     // ─── Tenant (custom domain) management ────────────────────────────────────

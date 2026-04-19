@@ -59,7 +59,7 @@ class CreatorAnalyticsService
                 $churn = $months->map(fn ($m) => (int) ($churnRaw[$m->format('Y-m')] ?? 0))->values()->toArray();
 
                 // Retention rate (last 30 days)
-                $active30  = Subscription::whereIn('community_id', $communityIds)
+                $active30 = Subscription::whereIn('community_id', $communityIds)
                     ->where('status', Subscription::STATUS_ACTIVE)
                     ->count();
                 $expired30 = Subscription::whereIn('community_id', $communityIds)
@@ -85,18 +85,18 @@ class CreatorAnalyticsService
                 $dailyRevenueRaw = Payment::whereIn('community_id', $communityIds)
                     ->where('status', Payment::STATUS_PAID)
                     ->where('paid_at', '>=', $thirtyDaysAgo)
-                    ->selectRaw("DATE(paid_at) as day, SUM(amount) as total")
+                    ->selectRaw('DATE(paid_at) as day, SUM(amount) as total')
                     ->groupBy('day')
                     ->pluck('total', 'day');
 
                 $dailyAffiliateRaw = AffiliateConversion::whereHas('affiliate', fn ($q) => $q->whereIn('community_id', $communityIds))
                     ->where('created_at', '>=', $thirtyDaysAgo)
-                    ->selectRaw("DATE(created_at) as day, SUM(commission_amount) as total")
+                    ->selectRaw('DATE(created_at) as day, SUM(commission_amount) as total')
                     ->groupBy('day')
                     ->pluck('total', 'day');
 
                 $dailySales = $days->map(fn ($d) => [
-                    'revenue'    => (float) ($dailyRevenueRaw[$d->format('Y-m-d')] ?? 0),
+                    'revenue' => (float) ($dailyRevenueRaw[$d->format('Y-m-d')] ?? 0),
                     'commission' => (float) ($dailyAffiliateRaw[$d->format('Y-m-d')] ?? 0),
                 ])->values()->toArray();
 

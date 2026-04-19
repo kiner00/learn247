@@ -60,30 +60,30 @@ class RecurringSubscriptionHandler extends AbstractRecurringCycleHandler
 
             return [
                 'affiliate_user' => null,
-                'creator'        => $community->owner,
-                'community'      => $community,
-                'sale_amount'    => (float) ($payload['amount'] ?? 0),
-                'commission'     => null,
-                'referred_by'    => null,
+                'creator' => $community->owner,
+                'community' => $community,
+                'sale_amount' => (float) ($payload['amount'] ?? 0),
+                'commission' => null,
+                'referred_by' => null,
             ];
         }
 
         $this->recordConversion->execute($entity->load('affiliate.community'), $payment);
 
-        $affiliate     = $entity->affiliate;
+        $affiliate = $entity->affiliate;
         $affiliateUser = $affiliate->user;
-        $community     = $entity->community;
-        $saleAmount    = (float) ($payload['amount'] ?? 0);
-        $rate          = $community->affiliate_commission_rate / 100;
-        $commission    = round($saleAmount * $rate, 2);
+        $community = $entity->community;
+        $saleAmount = (float) ($payload['amount'] ?? 0);
+        $rate = $community->affiliate_commission_rate / 100;
+        $commission = round($saleAmount * $rate, 2);
 
         return [
             'affiliate_user' => $affiliateUser,
-            'creator'        => $community->owner,
-            'community'      => $community,
-            'sale_amount'    => $saleAmount,
-            'commission'     => $commission,
-            'referred_by'    => $affiliateUser->name,
+            'creator' => $community->owner,
+            'community' => $community,
+            'sale_amount' => $saleAmount,
+            'commission' => $commission,
+            'referred_by' => $affiliateUser->name,
         ];
     }
 
@@ -100,9 +100,9 @@ class RecurringSubscriptionHandler extends AbstractRecurringCycleHandler
             if (! $alreadyAffiliate) {
                 Affiliate::create([
                     'community_id' => $community->id,
-                    'user_id'      => $entity->user_id,
-                    'code'         => AffiliateCodeGenerator::generate(),
-                    'status'       => Affiliate::STATUS_ACTIVE,
+                    'user_id' => $entity->user_id,
+                    'code' => AffiliateCodeGenerator::generate(),
+                    'status' => Affiliate::STATUS_ACTIVE,
                 ]);
             }
         }

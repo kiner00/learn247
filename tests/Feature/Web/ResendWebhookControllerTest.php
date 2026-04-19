@@ -16,12 +16,12 @@ class ResendWebhookControllerTest extends TestCase
     private function signPayload(string $secret, string $body, string $msgId = 'msg_123', ?string $timestamp = null): array
     {
         $timestamp = $timestamp ?? (string) time();
-        $toSign    = "{$msgId}.{$timestamp}.{$body}";
-        $decoded   = base64_decode(str_replace('whsec_', '', $secret));
-        $sig       = base64_encode(hash_hmac('sha256', $toSign, $decoded, true));
+        $toSign = "{$msgId}.{$timestamp}.{$body}";
+        $decoded = base64_decode(str_replace('whsec_', '', $secret));
+        $sig = base64_encode(hash_hmac('sha256', $toSign, $decoded, true));
 
         return [
-            'svix-id'        => $msgId,
+            'svix-id' => $msgId,
             'svix-timestamp' => $timestamp,
             'svix-signature' => "v1,{$sig}",
         ];
@@ -34,7 +34,7 @@ class ResendWebhookControllerTest extends TestCase
         config(['services.resend.webhook_secret' => 'whsec_dGVzdHNlY3JldA==']);
 
         $this->postJson('/webhooks/resend', ['type' => 'email.delivered', 'data' => []], [
-            'svix-id'        => 'msg_1',
+            'svix-id' => 'msg_1',
             'svix-timestamp' => (string) time(),
             'svix-signature' => 'v1,invalidsignature',
         ])->assertUnauthorized();
@@ -60,13 +60,13 @@ class ResendWebhookControllerTest extends TestCase
         config(['services.resend.webhook_secret' => null]);
 
         $community = Community::factory()->create();
-        $member    = CommunityMember::factory()->create(['community_id' => $community->id]);
+        $member = CommunityMember::factory()->create(['community_id' => $community->id]);
 
         $send = EmailSend::create([
-            'community_id'        => $community->id,
+            'community_id' => $community->id,
             'community_member_id' => $member->id,
-            'resend_email_id'     => 'resend_abc123',
-            'status'              => 'sent',
+            'resend_email_id' => 'resend_abc123',
+            'status' => 'sent',
         ]);
 
         $this->postJson('/webhooks/resend', [
@@ -83,13 +83,13 @@ class ResendWebhookControllerTest extends TestCase
         config(['services.resend.webhook_secret' => null]);
 
         $community = Community::factory()->create();
-        $member    = CommunityMember::factory()->create(['community_id' => $community->id]);
+        $member = CommunityMember::factory()->create(['community_id' => $community->id]);
 
         $send = EmailSend::create([
-            'community_id'        => $community->id,
+            'community_id' => $community->id,
             'community_member_id' => $member->id,
-            'resend_email_id'     => 'resend_open1',
-            'status'              => 'delivered',
+            'resend_email_id' => 'resend_open1',
+            'status' => 'delivered',
         ]);
 
         $this->postJson('/webhooks/resend', [
@@ -106,13 +106,13 @@ class ResendWebhookControllerTest extends TestCase
         config(['services.resend.webhook_secret' => null]);
 
         $community = Community::factory()->create();
-        $member    = CommunityMember::factory()->create(['community_id' => $community->id]);
+        $member = CommunityMember::factory()->create(['community_id' => $community->id]);
 
         $send = EmailSend::create([
-            'community_id'        => $community->id,
+            'community_id' => $community->id,
             'community_member_id' => $member->id,
-            'resend_email_id'     => 'resend_click1',
-            'status'              => 'delivered',
+            'resend_email_id' => 'resend_click1',
+            'status' => 'delivered',
         ]);
 
         $this->postJson('/webhooks/resend', [
@@ -129,13 +129,13 @@ class ResendWebhookControllerTest extends TestCase
         config(['services.resend.webhook_secret' => null]);
 
         $community = Community::factory()->create();
-        $member    = CommunityMember::factory()->create(['community_id' => $community->id]);
+        $member = CommunityMember::factory()->create(['community_id' => $community->id]);
 
         EmailSend::create([
-            'community_id'        => $community->id,
+            'community_id' => $community->id,
             'community_member_id' => $member->id,
-            'resend_email_id'     => 'resend_weird1',
-            'status'              => 'sent',
+            'resend_email_id' => 'resend_weird1',
+            'status' => 'sent',
         ]);
 
         $this->postJson('/webhooks/resend', [
@@ -148,18 +148,18 @@ class ResendWebhookControllerTest extends TestCase
     {
         config(['services.resend.webhook_secret' => null]);
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $member    = CommunityMember::factory()->create([
+        $member = CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         $send = EmailSend::create([
-            'community_id'        => $community->id,
+            'community_id' => $community->id,
             'community_member_id' => $member->id,
-            'resend_email_id'     => 'resend_bounce1',
-            'status'              => 'sent',
+            'resend_email_id' => 'resend_bounce1',
+            'status' => 'sent',
         ]);
 
         $this->postJson('/webhooks/resend', [
@@ -173,8 +173,8 @@ class ResendWebhookControllerTest extends TestCase
 
         $this->assertDatabaseHas('email_unsubscribes', [
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'reason'       => 'bounced',
+            'user_id' => $user->id,
+            'reason' => 'bounced',
         ]);
     }
 
@@ -182,18 +182,18 @@ class ResendWebhookControllerTest extends TestCase
     {
         config(['services.resend.webhook_secret' => null]);
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $member    = CommunityMember::factory()->create([
+        $member = CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         $send = EmailSend::create([
-            'community_id'        => $community->id,
+            'community_id' => $community->id,
             'community_member_id' => $member->id,
-            'resend_email_id'     => 'resend_complaint1',
-            'status'              => 'sent',
+            'resend_email_id' => 'resend_complaint1',
+            'status' => 'sent',
         ]);
 
         $this->postJson('/webhooks/resend', [
@@ -203,8 +203,8 @@ class ResendWebhookControllerTest extends TestCase
 
         $this->assertDatabaseHas('email_unsubscribes', [
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'reason'       => 'complained',
+            'user_id' => $user->id,
+            'reason' => 'complained',
         ]);
     }
 
@@ -234,7 +234,7 @@ class ResendWebhookControllerTest extends TestCase
     {
         $result = [];
         foreach ($headers as $key => $value) {
-            $result['HTTP_' . str_replace('-', '_', strtoupper($key))] = $value;
+            $result['HTTP_'.str_replace('-', '_', strtoupper($key))] = $value;
         }
 
         return $result;

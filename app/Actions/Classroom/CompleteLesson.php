@@ -14,7 +14,7 @@ class CompleteLesson
     public function execute(User $user, CourseLesson $lesson, ?int $communityId = null): LessonCompletion
     {
         $completion = LessonCompletion::firstOrCreate([
-            'user_id'   => $user->id,
+            'user_id' => $user->id,
             'lesson_id' => $lesson->id,
         ]);
 

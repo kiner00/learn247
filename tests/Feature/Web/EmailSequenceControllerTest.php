@@ -17,14 +17,14 @@ class EmailSequenceControllerTest extends TestCase
 
     private function ownerWithCommunity(array $extra = []): array
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(array_merge([
             'owner_id' => $owner->id,
-            'price'    => 0,
+            'price' => 0,
         ], $extra));
         CommunityMember::factory()->admin()->create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
+            'user_id' => $owner->id,
         ]);
 
         return [$owner, $community];
@@ -34,16 +34,16 @@ class EmailSequenceControllerTest extends TestCase
     {
         $campaign = EmailCampaign::create([
             'community_id' => $community->id,
-            'name'         => 'Test Campaign',
-            'type'         => EmailCampaign::TYPE_SEQUENCE,
-            'status'       => EmailCampaign::STATUS_DRAFT,
+            'name' => 'Test Campaign',
+            'type' => EmailCampaign::TYPE_SEQUENCE,
+            'status' => EmailCampaign::STATUS_DRAFT,
         ]);
 
         return EmailSequence::create([
-            'campaign_id'   => $campaign->id,
-            'community_id'  => $community->id,
+            'campaign_id' => $campaign->id,
+            'community_id' => $community->id,
             'trigger_event' => EmailSequence::TRIGGER_MEMBER_JOINED,
-            'status'        => $status,
+            'status' => $status,
         ]);
     }
 
@@ -85,19 +85,19 @@ class EmailSequenceControllerTest extends TestCase
     public function test_owner_can_store_sequence(): void
     {
         [$owner, $community] = $this->ownerWithCommunity([
-            'resend_api_key'    => 'test-key',
+            'resend_api_key' => 'test-key',
             'resend_from_email' => 'hello@example.com',
-            'resend_from_name'  => 'Test',
+            'resend_from_name' => 'Test',
         ]);
 
         $response = $this->actingAs($owner)
             ->post("/communities/{$community->slug}/email-sequences", [
-                'name'          => 'Welcome Series',
+                'name' => 'Welcome Series',
                 'trigger_event' => EmailSequence::TRIGGER_MEMBER_JOINED,
-                'steps'         => [
+                'steps' => [
                     [
-                        'subject'     => 'Welcome!',
-                        'html_body'   => '<p>Hello there</p>',
+                        'subject' => 'Welcome!',
+                        'html_body' => '<p>Hello there</p>',
                         'delay_hours' => 0,
                     ],
                 ],
@@ -105,7 +105,7 @@ class EmailSequenceControllerTest extends TestCase
 
         $response->assertRedirect();
         $this->assertDatabaseHas('email_sequences', [
-            'community_id'  => $community->id,
+            'community_id' => $community->id,
             'trigger_event' => EmailSequence::TRIGGER_MEMBER_JOINED,
         ]);
         $this->assertDatabaseHas('email_sequence_steps', [
@@ -119,9 +119,9 @@ class EmailSequenceControllerTest extends TestCase
 
         $response = $this->actingAs($owner)
             ->post("/communities/{$community->slug}/email-sequences", [
-                'name'          => 'Welcome',
+                'name' => 'Welcome',
                 'trigger_event' => EmailSequence::TRIGGER_MEMBER_JOINED,
-                'steps'         => [
+                'steps' => [
                     ['subject' => 'Hi', 'html_body' => '<p>Hi</p>', 'delay_hours' => 0],
                 ],
             ]);
@@ -169,12 +169,12 @@ class EmailSequenceControllerTest extends TestCase
 
         EmailSequenceStep::create([
             'sequence_id' => $sequence->id,
-            'position'    => 1,
+            'position' => 1,
             'delay_hours' => 0,
-            'subject'     => 'Step 1',
-            'html_body'   => '<p>Body</p>',
-            'from_email'  => 'test@example.com',
-            'from_name'   => 'Test',
+            'subject' => 'Step 1',
+            'html_body' => '<p>Body</p>',
+            'from_email' => 'test@example.com',
+            'from_name' => 'Test',
         ]);
 
         $response = $this->actingAs($owner)
@@ -182,7 +182,7 @@ class EmailSequenceControllerTest extends TestCase
 
         $response->assertRedirect();
         $this->assertDatabaseHas('email_sequences', [
-            'id'     => $sequence->id,
+            'id' => $sequence->id,
             'status' => EmailSequence::STATUS_ACTIVE,
         ]);
     }
@@ -209,7 +209,7 @@ class EmailSequenceControllerTest extends TestCase
 
         $response->assertRedirect();
         $this->assertDatabaseHas('email_sequences', [
-            'id'     => $sequence->id,
+            'id' => $sequence->id,
             'status' => EmailSequence::STATUS_PAUSED,
         ]);
     }
@@ -234,17 +234,17 @@ class EmailSequenceControllerTest extends TestCase
 
     public function test_regular_member_cannot_access_sequences(): void
     {
-        $owner   = User::factory()->create();
-        $member  = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
 
         CommunityMember::factory()->admin()->create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
+            'user_id' => $owner->id,
         ]);
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
+            'user_id' => $member->id,
         ]);
 
         $response = $this->actingAs($member)

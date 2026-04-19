@@ -10,7 +10,7 @@ class SetPassword
     public function execute(User $user, string $password): void
     {
         $user->forceFill([
-            'password'             => Hash::make($password),
+            'password' => Hash::make($password),
             'needs_password_setup' => false,
         ])->save();
     }

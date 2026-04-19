@@ -20,6 +20,7 @@ class SendSequenceStepEmail implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
+
     public array $backoff = [30, 120, 300];
 
     public function __construct(
@@ -35,9 +36,9 @@ class SendSequenceStepEmail implements ShouldQueue
             return;
         }
 
-        $step      = $enrollment->currentStep;
-        $sequence  = $enrollment->sequence;
-        $member    = $enrollment->member;
+        $step = $enrollment->currentStep;
+        $sequence = $enrollment->sequence;
+        $member = $enrollment->member;
         $community = $sequence->community;
 
         if (! $step || ! $member || ! $community) {
@@ -71,52 +72,52 @@ class SendSequenceStepEmail implements ShouldQueue
 
         $unsubscribeUrl = URL::signedRoute('email.unsubscribe', [
             'community' => $community->slug,
-            'member'    => $member->id,
+            'member' => $member->id,
         ]);
 
         $html = $this->interpolate($step->html_body, [
-            'user_name'       => $user->name ?? 'Member',
-            'user_email'      => $user->email,
-            'community_name'  => $community->name,
+            'user_name' => $user->name ?? 'Member',
+            'user_email' => $user->email,
+            'community_name' => $community->name,
             'unsubscribe_url' => $unsubscribeUrl,
         ]);
 
         $html .= '<p style="font-size:12px;color:#999;margin-top:32px;text-align:center;">'
-                . '<a href="' . e($unsubscribeUrl) . '" style="color:#999;">Unsubscribe</a></p>';
+                .'<a href="'.e($unsubscribeUrl).'" style="color:#999;">Unsubscribe</a></p>';
 
         $fromEmail = $step->from_email ?? $community->resend_from_email ?? 'onboarding@resend.dev';
-        $fromName  = $step->from_name ?? $community->resend_from_name ?? $community->name;
+        $fromName = $step->from_name ?? $community->resend_from_name ?? $community->name;
 
         try {
             $result = $provider->sendEmail($community, [
-                'from'     => "{$fromName} <{$fromEmail}>",
-                'to'       => [$user->email],
-                'subject'  => $step->subject,
-                'html'     => $html,
+                'from' => "{$fromName} <{$fromEmail}>",
+                'to' => [$user->email],
+                'subject' => $step->subject,
+                'html' => $html,
                 'reply_to' => $community->resend_reply_to ? [$community->resend_reply_to] : [],
             ]);
 
             // Track the send
             EmailSend::create([
-                'broadcast_id'        => null,
-                'community_id'        => $community->id,
+                'broadcast_id' => null,
+                'community_id' => $community->id,
                 'community_member_id' => $member->id,
-                'resend_email_id'     => $result['id'] ?? null,
-                'status'              => 'sent',
+                'resend_email_id' => $result['id'] ?? null,
+                'status' => 'sent',
             ]);
         } catch (\Exception $e) {
-            Log::error("SendSequenceStepEmail: send failed", [
+            Log::error('SendSequenceStepEmail: send failed', [
                 'enrollment_id' => $enrollment->id,
-                'step_id'       => $step->id,
-                'error'         => $e->getMessage(),
+                'step_id' => $step->id,
+                'error' => $e->getMessage(),
             ]);
 
             EmailSend::create([
-                'broadcast_id'        => null,
-                'community_id'        => $community->id,
+                'broadcast_id' => null,
+                'community_id' => $community->id,
                 'community_member_id' => $member->id,
-                'status'              => 'failed',
-                'failed_reason'       => $e->getMessage(),
+                'status' => 'failed',
+                'failed_reason' => $e->getMessage(),
             ]);
 
             return;
@@ -132,16 +133,16 @@ class SendSequenceStepEmail implements ShouldQueue
             $enrollment->update([
                 'current_step_id' => $nextStep->id,
                 'steps_completed' => $enrollment->steps_completed + 1,
-                'next_send_at'    => now()->addHours($nextStep->delay_hours),
+                'next_send_at' => now()->addHours($nextStep->delay_hours),
             ]);
         } else {
             // Sequence complete
             $enrollment->update([
                 'current_step_id' => null,
                 'steps_completed' => $enrollment->steps_completed + 1,
-                'status'          => EmailSequenceEnrollment::STATUS_COMPLETED,
-                'completed_at'    => now(),
-                'next_send_at'    => null,
+                'status' => EmailSequenceEnrollment::STATUS_COMPLETED,
+                'completed_at' => now(),
+                'next_send_at' => null,
             ]);
         }
     }
@@ -149,7 +150,7 @@ class SendSequenceStepEmail implements ShouldQueue
     private function interpolate(string $html, array $vars): string
     {
         foreach ($vars as $key => $value) {
-            $html = str_replace('{{' . $key . '}}', e($value), $html);
+            $html = str_replace('{{'.$key.'}}', e($value), $html);
         }
 
         return $html;

@@ -40,6 +40,7 @@ class FixCertificateCoverImages extends Command
     {
         if (! Schema::hasTable('certificates')) {
             $this->warn('certificates table not found.');
+
             return 0;
         }
 
@@ -48,6 +49,7 @@ class FixCertificateCoverImages extends Command
 
         if (! $bucket || ! $region) {
             $this->info('S3 not configured — skipping local path fix.');
+
             return 0;
         }
 
@@ -58,12 +60,13 @@ class FixCertificateCoverImages extends Command
             ->whereNotNull('cover_image')
             ->where(function ($q) use ($appUrl) {
                 $q->where('cover_image', 'LIKE', '/storage/%')
-                  ->orWhere('cover_image', 'LIKE', $appUrl . '/storage/%');
+                    ->orWhere('cover_image', 'LIKE', $appUrl.'/storage/%');
             })
             ->get(['id', 'uuid', 'cover_image']);
 
         if ($rows->isEmpty()) {
             $this->info('No certificates with old /storage/ paths found.');
+
             return 0;
         }
 
@@ -74,9 +77,9 @@ class FixCertificateCoverImages extends Command
             $value = $row->cover_image;
 
             if (str_starts_with($value, '/storage/')) {
-                $newValue = $s3BaseUrl . '/' . substr($value, 9);
-            } elseif (str_starts_with($value, $appUrl . '/storage/')) {
-                $newValue = $s3BaseUrl . '/' . substr($value, strlen($appUrl . '/storage/'));
+                $newValue = $s3BaseUrl.'/'.substr($value, 9);
+            } elseif (str_starts_with($value, $appUrl.'/storage/')) {
+                $newValue = $s3BaseUrl.'/'.substr($value, strlen($appUrl.'/storage/'));
             } else {
                 continue;
             }
@@ -101,13 +104,14 @@ class FixCertificateCoverImages extends Command
             ->whereNotNull('cc.cover_image')
             ->where(function ($q) {
                 $q->whereNull('c.cover_image')
-                  ->orWhereColumn('c.cover_image', '!=', 'cc.cover_image');
+                    ->orWhereColumn('c.cover_image', '!=', 'cc.cover_image');
             })
             ->select('c.id', 'c.uuid', 'c.cover_image as cert_cover', 'cc.cover_image as source_cover')
             ->get();
 
         if ($rows->isEmpty()) {
             $this->info('All certificate cover images match their certification source.');
+
             return 0;
         }
 
@@ -115,7 +119,7 @@ class FixCertificateCoverImages extends Command
 
         $count = 0;
         foreach ($rows as $row) {
-            $this->line("  [{$row->uuid}] " . ($row->cert_cover ?: '(empty)') . " → {$row->source_cover}");
+            $this->line("  [{$row->uuid}] ".($row->cert_cover ?: '(empty)')." → {$row->source_cover}");
 
             if (! $isDryRun) {
                 DB::table('certificates')->where('id', $row->id)->update(['cover_image' => $row->source_cover]);

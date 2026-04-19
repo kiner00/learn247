@@ -20,7 +20,7 @@ class GetCommunityCoursesTool implements Tool
     {
         $courses = Course::where('community_id', $this->communityId)
             ->with(['modules' => fn ($q) => $q->orderBy('position')->select('id', 'course_id', 'title', 'position'),
-                    'modules.lessons' => fn ($q) => $q->orderBy('position')->select('id', 'module_id', 'title', 'position')])
+                'modules.lessons' => fn ($q) => $q->orderBy('position')->select('id', 'module_id', 'title', 'position')])
             ->select('id', 'title', 'description', 'access_type', 'position')
             ->orderBy('position')
             ->get();
@@ -30,11 +30,11 @@ class GetCommunityCoursesTool implements Tool
         }
 
         $result = $courses->map(fn ($c) => [
-            'title'       => $c->title,
+            'title' => $c->title,
             'description' => \Illuminate\Support\Str::limit($c->description, 200),
-            'access'      => $c->access_type,
-            'modules'     => $c->modules->map(fn ($m) => [
-                'title'   => $m->title,
+            'access' => $c->access_type,
+            'modules' => $c->modules->map(fn ($m) => [
+                'title' => $m->title,
                 'lessons' => $m->lessons->pluck('title')->toArray(),
             ])->toArray(),
         ])->toArray();

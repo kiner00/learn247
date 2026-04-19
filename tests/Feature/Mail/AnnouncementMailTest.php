@@ -32,5 +32,4 @@ class AnnouncementMailTest extends TestCase
 
         $this->assertEquals('emails.announcement', $content->view);
     }
-
 }

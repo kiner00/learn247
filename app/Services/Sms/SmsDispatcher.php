@@ -8,13 +8,15 @@ use App\Models\Community;
 class SmsDispatcher implements SmsProvider
 {
     public const PROVIDER_SEMAPHORE = 'semaphore';
-    public const PROVIDER_XTREME    = 'xtreme_sms';
-    public const PROVIDER_PHILSMS   = 'philsms';
+
+    public const PROVIDER_XTREME = 'xtreme_sms';
+
+    public const PROVIDER_PHILSMS = 'philsms';
 
     public const PROVIDERS = [
         self::PROVIDER_SEMAPHORE => 'Semaphore',
-        self::PROVIDER_PHILSMS   => 'PhilSMS',
-        self::PROVIDER_XTREME    => 'Xtreme SMS',
+        self::PROVIDER_PHILSMS => 'PhilSMS',
+        self::PROVIDER_XTREME => 'Xtreme SMS',
     ];
 
     private array $providerMap;
@@ -26,8 +28,8 @@ class SmsDispatcher implements SmsProvider
     ) {
         $this->providerMap = [
             self::PROVIDER_SEMAPHORE => $semaphore,
-            self::PROVIDER_PHILSMS   => $philSms,
-            self::PROVIDER_XTREME    => $xtremeSms,
+            self::PROVIDER_PHILSMS => $philSms,
+            self::PROVIDER_XTREME => $xtremeSms,
         ];
     }
 

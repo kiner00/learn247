@@ -49,18 +49,18 @@ class TelegramWebhookController extends Controller
             return response('', 200);
         }
 
-        $text      = $chatMessage['text'] ?? $chatMessage['caption'] ?? null;
-        $mediaUrl  = null;
+        $text = $chatMessage['text'] ?? $chatMessage['caption'] ?? null;
+        $mediaUrl = null;
         $mediaType = null;
 
         if (isset($chatMessage['photo'])) {
             // Telegram sends multiple sizes; pick the largest
-            $photo    = end($chatMessage['photo']);
-            $fileId   = $photo['file_id'];
+            $photo = end($chatMessage['photo']);
+            $fileId = $photo['file_id'];
             $mediaUrl = $this->telegram->getFileUrl($community->telegram_bot_token, $fileId);
             $mediaType = 'image';
         } elseif (isset($chatMessage['video'])) {
-            $fileId   = $chatMessage['video']['file_id'];
+            $fileId = $chatMessage['video']['file_id'];
             $mediaUrl = $this->telegram->getFileUrl($community->telegram_bot_token, $fileId);
             $mediaType = 'video';
         }
@@ -73,34 +73,34 @@ class TelegramWebhookController extends Controller
         // Deduplicate: Telegram retries webhooks, so ignore already-processed messages
         $telegramMessageId = $chatMessage['message_id'] ?? null;
         if ($telegramMessageId && Message::where('community_id', $community->id)
-                ->where('telegram_message_id', $telegramMessageId)
-                ->exists()) {
+            ->where('telegram_message_id', $telegramMessageId)
+            ->exists()) {
             return response('', 200);
         }
 
-        $authorName = trim(($fromUser['first_name'] ?? '') . ' ' . ($fromUser['last_name'] ?? ''));
+        $authorName = trim(($fromUser['first_name'] ?? '').' '.($fromUser['last_name'] ?? ''));
         if (empty($authorName)) {
             $authorName = $fromUser['username'] ?? 'Telegram';
         }
 
         $message = Message::create([
-            'community_id'       => $community->id,
-            'user_id'            => $community->owner_id,
-            'content'            => $text ?? '',
-            'telegram_author'    => $authorName,
+            'community_id' => $community->id,
+            'user_id' => $community->owner_id,
+            'content' => $text ?? '',
+            'telegram_author' => $authorName,
             'telegram_message_id' => $telegramMessageId,
-            'media_url'          => $mediaUrl,
-            'media_type'         => $mediaType,
+            'media_url' => $mediaUrl,
+            'media_type' => $mediaType,
         ]);
 
         ChatMessageSent::dispatch($community->id, [
-            'id'              => $message->id,
-            'content'         => $message->content,
-            'created_at'      => $message->created_at,
+            'id' => $message->id,
+            'content' => $message->content,
+            'created_at' => $message->created_at,
             'telegram_author' => $message->telegram_author,
-            'media_url'       => $message->media_url,
-            'media_type'      => $message->media_type,
-            'user'            => null,
+            'media_url' => $message->media_url,
+            'media_type' => $message->media_type,
+            'user' => null,
         ]);
 
         return response('', 200);

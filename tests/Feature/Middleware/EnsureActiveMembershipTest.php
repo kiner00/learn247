@@ -19,7 +19,7 @@ class EnsureActiveMembershipTest extends TestCase
 
     public function test_member_of_free_community_can_access(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
@@ -30,7 +30,7 @@ class EnsureActiveMembershipTest extends TestCase
 
     public function test_non_member_of_free_community_is_denied(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['price' => 0]);
 
         $this->actingAs($user)
@@ -40,7 +40,7 @@ class EnsureActiveMembershipTest extends TestCase
 
     public function test_owner_can_always_access(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->paid()->create(['owner_id' => $owner->id]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
@@ -53,7 +53,7 @@ class EnsureActiveMembershipTest extends TestCase
 
     public function test_active_subscriber_of_paid_community_can_access(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
         Subscription::factory()->active()->create(['community_id' => $community->id, 'user_id' => $user->id]);
@@ -65,7 +65,7 @@ class EnsureActiveMembershipTest extends TestCase
 
     public function test_user_without_active_subscription_to_paid_community_is_denied(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid()->create();
 
         $this->actingAs($user)
@@ -83,7 +83,7 @@ class EnsureActiveMembershipTest extends TestCase
 
     public function test_returns_json_403_for_api_requests(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['price' => 0]);
 
         $this->actingAs($user)
@@ -93,7 +93,7 @@ class EnsureActiveMembershipTest extends TestCase
 
     public function test_expired_subscription_is_denied(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid()->create();
         Subscription::factory()->expired()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
@@ -104,13 +104,13 @@ class EnsureActiveMembershipTest extends TestCase
 
     public function test_free_tier_member_of_paid_community_can_access(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid()->create();
         CommunityMember::factory()->create([
-            'community_id'    => $community->id,
-            'user_id'         => $user->id,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
             'membership_type' => CommunityMember::MEMBERSHIP_FREE,
-            'expires_at'      => null,
+            'expires_at' => null,
         ]);
 
         $this->actingAs($user)
@@ -120,13 +120,13 @@ class EnsureActiveMembershipTest extends TestCase
 
     public function test_free_tier_member_of_paid_community_with_future_expiry_can_access(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid()->create();
         CommunityMember::factory()->create([
-            'community_id'    => $community->id,
-            'user_id'         => $user->id,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
             'membership_type' => CommunityMember::MEMBERSHIP_FREE,
-            'expires_at'      => now()->addMonths(12),
+            'expires_at' => now()->addMonths(12),
         ]);
 
         $this->actingAs($user)
@@ -136,13 +136,13 @@ class EnsureActiveMembershipTest extends TestCase
 
     public function test_free_tier_member_of_paid_community_with_past_expiry_is_denied(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid()->create();
         CommunityMember::factory()->create([
-            'community_id'    => $community->id,
-            'user_id'         => $user->id,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
             'membership_type' => CommunityMember::MEMBERSHIP_FREE,
-            'expires_at'      => now()->subDay(),
+            'expires_at' => now()->subDay(),
         ]);
 
         $this->actingAs($user)
@@ -160,7 +160,7 @@ class EnsureActiveMembershipTest extends TestCase
 
     public function test_non_subscriber_paid_community_json_returns_403(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid()->create();
 
         $this->actingAs($user)
@@ -174,7 +174,7 @@ class EnsureActiveMembershipTest extends TestCase
         Route::get('/test-slug/{slug}', fn () => response('OK'))
             ->middleware(['web', 'auth', EnsureActiveMembership::class]);
 
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner)
@@ -188,7 +188,7 @@ class EnsureActiveMembershipTest extends TestCase
             ->middleware(['web', 'auth', EnsureActiveMembership::class])
             ->withoutMiddleware(\Illuminate\Routing\Middleware\SubstituteBindings::class);
 
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner)
@@ -225,7 +225,7 @@ class EnsureActiveMembershipTest extends TestCase
         Route::get('/test-slug/{slug}', fn () => response('OK'))
             ->middleware(['web', 'auth', EnsureActiveMembership::class]);
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
@@ -239,7 +239,7 @@ class EnsureActiveMembershipTest extends TestCase
         Route::get('/test-slug/{slug}', fn () => response('OK'))
             ->middleware(['web', 'auth', EnsureActiveMembership::class]);
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['price' => 0]);
 
         $this->actingAs($user)
@@ -252,7 +252,7 @@ class EnsureActiveMembershipTest extends TestCase
         Route::get('/test-slug/{slug}', fn () => response('OK'))
             ->middleware(['web', 'auth', EnsureActiveMembership::class]);
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid()->create();
 
         $this->actingAs($user)
@@ -265,7 +265,7 @@ class EnsureActiveMembershipTest extends TestCase
         Route::get('/test-slug/{slug}', fn () => response('OK'))
             ->middleware(['web', 'auth', EnsureActiveMembership::class]);
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid()->create();
 
         $this->actingAs($user)
@@ -279,7 +279,7 @@ class EnsureActiveMembershipTest extends TestCase
         Route::get('/test-slug/{slug}', fn () => response('OK'))
             ->middleware(['web', 'auth', EnsureActiveMembership::class]);
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['price' => 0]);
 
         $this->actingAs($user)

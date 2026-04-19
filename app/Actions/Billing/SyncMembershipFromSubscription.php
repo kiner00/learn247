@@ -18,7 +18,7 @@ class SyncMembershipFromSubscription
     public function execute(Subscription $subscription): void
     {
         $communityId = $subscription->community_id;
-        $userId      = $subscription->user_id;
+        $userId = $subscription->user_id;
 
         if ($subscription->isActive()) {
             $member = CommunityMember::firstOrCreate(
@@ -51,8 +51,8 @@ class SyncMembershipFromSubscription
 
             Log::info('Membership synced: member removed (inactive subscription)', [
                 'community_id' => $communityId,
-                'user_id'      => $userId,
-                'status'       => $subscription->status,
+                'user_id' => $userId,
+                'status' => $subscription->status,
             ]);
         }
     }

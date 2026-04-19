@@ -45,16 +45,16 @@ class RequestOwnerPayout
         }
 
         if ($amount <= Community::PAYOUT_FEE) {
-            return ['success' => false, 'message' => 'Minimum payout amount is ₱' . (Community::PAYOUT_FEE + 1) . ' (must exceed the ₱' . Community::PAYOUT_FEE . ' processing fee).'];
+            return ['success' => false, 'message' => 'Minimum payout amount is ₱'.(Community::PAYOUT_FEE + 1).' (must exceed the ₱'.Community::PAYOUT_FEE.' processing fee).'];
         }
 
         PayoutRequest::create([
-            'user_id'         => $owner->id,
-            'type'            => PayoutRequest::TYPE_OWNER,
-            'community_id'    => $community->id,
-            'amount'          => $amount,
+            'user_id' => $owner->id,
+            'type' => PayoutRequest::TYPE_OWNER,
+            'community_id' => $community->id,
+            'amount' => $amount,
             'eligible_amount' => $eligibleNow,
-            'status'          => PayoutRequest::STATUS_PENDING,
+            'status' => PayoutRequest::STATUS_PENDING,
         ]);
 
         CacheKeys::flushCreator($owner->id);

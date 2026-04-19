@@ -14,7 +14,7 @@ class ProfileControllerTest extends TestCase
 
     public function test_get_profile_returns_own_profile_with_memberships_activity_map_badges(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
@@ -23,7 +23,7 @@ class ProfileControllerTest extends TestCase
 
         $response->assertOk()
             ->assertJsonStructure([
-                'user'        => ['id', 'name', 'username', 'bio', 'avatar', 'location', 'created_at'],
+                'user' => ['id', 'name', 'username', 'bio', 'avatar', 'location', 'created_at'],
                 'memberships',
                 'activity_map',
                 'badges',
@@ -34,7 +34,7 @@ class ProfileControllerTest extends TestCase
 
     public function test_get_users_username_returns_other_user_profile(): void
     {
-        $viewer  = User::factory()->create();
+        $viewer = User::factory()->create();
         $profile = User::factory()->create(['username' => 'johndoe']);
 
         $response = $this->actingAs($viewer, 'sanctum')
@@ -49,15 +49,15 @@ class ProfileControllerTest extends TestCase
     public function test_patch_profile_updates_name_bio_location(): void
     {
         $user = User::factory()->create([
-            'name'     => 'Old Name',
-            'bio'      => 'Old bio',
+            'name' => 'Old Name',
+            'bio' => 'Old bio',
             'location' => 'Old location',
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
             ->patchJson('/api/profile', [
-                'name'     => 'New Name',
-                'bio'      => 'New bio',
+                'name' => 'New Name',
+                'bio' => 'New bio',
                 'location' => 'Manila',
             ]);
 
@@ -80,7 +80,7 @@ class ProfileControllerTest extends TestCase
         $response = $this->actingAs($user, 'sanctum')
             ->patchJson('/api/profile', [
                 'name' => str_repeat('a', 256),
-                'bio'  => str_repeat('b', 501),
+                'bio' => str_repeat('b', 501),
             ]);
 
         $response->assertUnprocessable()

@@ -29,9 +29,9 @@ class TagController extends Controller
         $this->authorize('update', $community);
 
         $data = $request->validate([
-            'name'      => ['required', 'string', 'max:100'],
-            'color'     => ['nullable', 'string', 'max:7'],
-            'type'      => ['nullable', 'string', 'in:manual,automatic'],
+            'name' => ['required', 'string', 'max:100'],
+            'color' => ['nullable', 'string', 'max:7'],
+            'type' => ['nullable', 'string', 'in:manual,automatic'],
             'auto_rule' => ['nullable', 'array'],
         ]);
 
@@ -43,11 +43,11 @@ class TagController extends Controller
 
         Tag::create([
             'community_id' => $community->id,
-            'name'         => $data['name'],
-            'slug'         => $slug,
-            'color'        => $data['color'] ?? null,
-            'type'         => $data['type'] ?? 'manual',
-            'auto_rule'    => $data['auto_rule'] ?? null,
+            'name' => $data['name'],
+            'slug' => $slug,
+            'color' => $data['color'] ?? null,
+            'type' => $data['type'] ?? 'manual',
+            'auto_rule' => $data['auto_rule'] ?? null,
         ]);
 
         return back()->with('success', 'Tag created.');
@@ -59,9 +59,9 @@ class TagController extends Controller
         abort_unless($tag->community_id === $community->id, 404);
 
         $data = $request->validate([
-            'name'      => ['required', 'string', 'max:100'],
-            'color'     => ['nullable', 'string', 'max:7'],
-            'type'      => ['nullable', 'string', 'in:manual,automatic'],
+            'name' => ['required', 'string', 'max:100'],
+            'color' => ['nullable', 'string', 'max:7'],
+            'type' => ['nullable', 'string', 'in:manual,automatic'],
             'auto_rule' => ['nullable', 'array'],
         ]);
 
@@ -72,10 +72,10 @@ class TagController extends Controller
         }
 
         $tag->update([
-            'name'      => $data['name'],
-            'slug'      => $slug,
-            'color'     => $data['color'] ?? $tag->color,
-            'type'      => $data['type'] ?? $tag->type,
+            'name' => $data['name'],
+            'slug' => $slug,
+            'color' => $data['color'] ?? $tag->color,
+            'type' => $data['type'] ?? $tag->type,
             'auto_rule' => $data['auto_rule'] ?? $tag->auto_rule,
         ]);
 
@@ -99,9 +99,9 @@ class TagController extends Controller
         $data = $request->validate([
             'member_ids' => ['required', 'array'],
             'member_ids.*' => ['integer'],
-            'tag_ids'    => ['required', 'array'],
-            'tag_ids.*'  => ['integer'],
-            'action'     => ['required', 'string', 'in:attach,detach'],
+            'tag_ids' => ['required', 'array'],
+            'tag_ids.*' => ['integer'],
+            'action' => ['required', 'string', 'in:attach,detach'],
         ]);
 
         // Ensure tags belong to this community

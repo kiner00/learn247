@@ -16,30 +16,30 @@ class RefControllerTest extends TestCase
 
     public function test_valid_code_redirects_to_community_and_sets_cookie(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         $affiliate = Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
-            'code'         => 'TESTREF123',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => $owner->id,
+            'code' => 'TESTREF123',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         $response = $this->get('/ref/TESTREF123');
 
-        $response->assertRedirect(route('communities.about', $community->slug) . '?modal=true');
+        $response->assertRedirect(route('communities.about', $community->slug).'?modal=true');
         $response->assertCookie('ref_code', 'TESTREF123');
     }
 
     public function test_inactive_affiliate_code_redirects_to_communities_index(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
-            'code'         => 'INACTIVE01',
-            'status'       => Affiliate::STATUS_INACTIVE,
+            'user_id' => $owner->id,
+            'code' => 'INACTIVE01',
+            'status' => Affiliate::STATUS_INACTIVE,
         ]);
 
         $response = $this->get('/ref/INACTIVE01');
@@ -56,17 +56,17 @@ class RefControllerTest extends TestCase
 
     public function test_ref_route_is_accessible_without_auth(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
-            'code'         => 'PUBLIC01',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => $owner->id,
+            'code' => 'PUBLIC01',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         $response = $this->get('/ref/PUBLIC01');
 
-        $response->assertRedirect(route('communities.about', $community->slug) . '?modal=true');
+        $response->assertRedirect(route('communities.about', $community->slug).'?modal=true');
     }
 }

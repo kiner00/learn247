@@ -11,16 +11,17 @@ class GenerateLandingPage
 {
     /**
      * @return array The generated landing page data
+     *
      * @throws \RuntimeException on AI failure or unexpected format
      */
     public function execute(Community $community, User $user): array
     {
         $agent = new LandingPageBuilder([
-            'name'         => $community->name,
-            'category'     => $community->category,
-            'description'  => $community->description,
-            'price'        => $community->price,
-            'currency'     => $community->currency ?? 'PHP',
+            'name' => $community->name,
+            'category' => $community->category,
+            'description' => $community->description,
+            'price' => $community->price,
+            'currency' => $community->currency ?? 'PHP',
             'creator_name' => $user->name,
             'member_count' => $community->members_count ?? $community->members()->count(),
         ]);
@@ -38,7 +39,7 @@ class GenerateLandingPage
         if (! $copy || ! isset($copy['hero'], $copy['benefits'], $copy['faq'])) {
             Log::warning('LandingPageBuilder unexpected format', [
                 'community' => $community->slug,
-                'raw'       => substr($raw, 0, 500),
+                'raw' => substr($raw, 0, 500),
             ]);
 
             throw new \RuntimeException('AI returned an unexpected format. Please try again.');

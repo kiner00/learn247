@@ -17,7 +17,7 @@ class AuthenticateUserTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->action = new AuthenticateUser();
+        $this->action = new AuthenticateUser;
     }
 
     public function test_success_returns_user(): void

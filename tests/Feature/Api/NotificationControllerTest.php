@@ -16,8 +16,8 @@ class NotificationControllerTest extends TestCase
         $user = User::factory()->create();
         Notification::create([
             'user_id' => $user->id,
-            'type'    => 'test',
-            'data'    => ['message' => 'Test'],
+            'type' => 'test',
+            'data' => ['message' => 'Test'],
             'read_at' => null,
         ]);
 
@@ -35,8 +35,8 @@ class NotificationControllerTest extends TestCase
         $user = User::factory()->create();
         Notification::create([
             'user_id' => $user->id,
-            'type'    => 'test',
-            'data'    => ['message' => 'Test'],
+            'type' => 'test',
+            'data' => ['message' => 'Test'],
             'read_at' => null,
         ]);
 

@@ -5,7 +5,6 @@ namespace Tests\Feature\Api;
 use App\Models\Affiliate;
 use App\Models\AffiliateConversion;
 use App\Models\Community;
-use App\Models\CommunityLevelPerk;
 use App\Models\CommunityMember;
 use App\Models\Course;
 use App\Models\CourseLesson;
@@ -40,7 +39,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_show_returns_community_with_membership_and_access(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
@@ -71,7 +70,7 @@ class CommunityControllerTest extends TestCase
 
         $response = $this->actingAs($user, 'sanctum')
             ->post('/api/communities', [
-                'name'        => 'My New Community',
+                'name' => 'My New Community',
                 'description' => 'A test community description.',
                 'cover_image' => UploadedFile::fake()->image('cover.jpg'),
             ], ['Accept' => 'application/json']);
@@ -81,7 +80,7 @@ class CommunityControllerTest extends TestCase
             ->assertJsonStructure(['community']);
 
         $this->assertDatabaseHas('communities', [
-            'name'     => 'My New Community',
+            'name' => 'My New Community',
             'owner_id' => $user->id,
         ]);
     }
@@ -101,12 +100,12 @@ class CommunityControllerTest extends TestCase
 
     public function test_update_by_owner_returns_200(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $response = $this->actingAs($owner, 'sanctum')
             ->patchJson("/api/communities/{$community->slug}", [
-                'name'        => 'Updated Community Name',
+                'name' => 'Updated Community Name',
                 'description' => 'Updated description.',
             ]);
 
@@ -114,21 +113,21 @@ class CommunityControllerTest extends TestCase
             ->assertJsonPath('message', 'Community updated.');
 
         $this->assertDatabaseHas('communities', [
-            'id'          => $community->id,
-            'name'        => 'Updated Community Name',
+            'id' => $community->id,
+            'name' => 'Updated Community Name',
             'description' => 'Updated description.',
         ]);
     }
 
     public function test_update_by_non_owner_returns_403(): void
     {
-        $owner     = User::factory()->create();
-        $nonOwner  = User::factory()->create();
+        $owner = User::factory()->create();
+        $nonOwner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $response = $this->actingAs($nonOwner, 'sanctum')
             ->patchJson("/api/communities/{$community->slug}", [
-                'name'        => 'Hacked Name',
+                'name' => 'Hacked Name',
                 'description' => 'Should fail.',
             ]);
 
@@ -140,7 +139,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_destroy_by_owner_deletes_community(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $response = $this->actingAs($owner, 'sanctum')
@@ -154,8 +153,8 @@ class CommunityControllerTest extends TestCase
 
     public function test_destroy_by_non_owner_returns_403(): void
     {
-        $owner     = User::factory()->create();
-        $nonOwner  = User::factory()->create();
+        $owner = User::factory()->create();
+        $nonOwner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $response = $this->actingAs($nonOwner, 'sanctum')
@@ -169,7 +168,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_join_free_community(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['price' => 0]);
 
         $response = $this->actingAs($user, 'sanctum')
@@ -180,7 +179,7 @@ class CommunityControllerTest extends TestCase
 
         $this->assertDatabaseHas('community_members', [
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
     }
 
@@ -200,7 +199,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_members_returns_paginated_list(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
@@ -215,7 +214,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_settings_by_owner_returns_200(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $response = $this->actingAs($owner, 'sanctum')
@@ -227,8 +226,8 @@ class CommunityControllerTest extends TestCase
 
     public function test_settings_by_non_owner_returns_403(): void
     {
-        $owner     = User::factory()->create();
-        $nonOwner  = User::factory()->create();
+        $owner = User::factory()->create();
+        $nonOwner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $response = $this->actingAs($nonOwner, 'sanctum')
@@ -241,7 +240,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_analytics_by_owner_returns_200(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $response = $this->actingAs($owner, 'sanctum')
@@ -253,8 +252,8 @@ class CommunityControllerTest extends TestCase
 
     public function test_analytics_by_non_owner_returns_403(): void
     {
-        $owner     = User::factory()->create();
-        $nonOwner  = User::factory()->create();
+        $owner = User::factory()->create();
+        $nonOwner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $response = $this->actingAs($nonOwner, 'sanctum')
@@ -414,7 +413,7 @@ class CommunityControllerTest extends TestCase
     {
         Mail::fake();
 
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
@@ -430,7 +429,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_announce_validates_required_fields(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $response = $this->actingAs($owner, 'sanctum')
@@ -444,7 +443,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_update_level_perks_by_owner(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $response = $this->actingAs($owner, 'sanctum')
@@ -460,8 +459,8 @@ class CommunityControllerTest extends TestCase
 
         $this->assertDatabaseHas('community_level_perks', [
             'community_id' => $community->id,
-            'level'        => 1,
-            'description'  => 'First perk',
+            'level' => 1,
+            'description' => 'First perk',
         ]);
     }
 
@@ -469,12 +468,12 @@ class CommunityControllerTest extends TestCase
 
     public function test_leaderboard_returns_data(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'     => $user->id,
-            'points'      => 50,
+            'user_id' => $user->id,
+            'points' => 50,
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
@@ -511,7 +510,7 @@ class CommunityControllerTest extends TestCase
     public function test_owner_can_add_gallery_image(): void
     {
         Storage::fake('public');
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner, 'sanctum')
@@ -523,13 +522,13 @@ class CommunityControllerTest extends TestCase
 
     public function test_owner_can_remove_gallery_image(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         \App\Models\CommunityGalleryItem::create([
             'community_id' => $community->id,
-            'type'         => 'image',
-            'image_path'   => 'community-gallery/img1.jpg',
-            'position'     => 0,
+            'type' => 'image',
+            'image_path' => 'community-gallery/img1.jpg',
+            'position' => 0,
         ]);
 
         $this->actingAs($owner, 'sanctum')
@@ -541,7 +540,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_paid_community_join_returns_error(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['price' => 500]);
 
         $this->actingAs($user, 'sanctum')
@@ -551,7 +550,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_show_owner_has_access(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 500]);
 
         $this->actingAs($owner, 'sanctum')
@@ -562,14 +561,14 @@ class CommunityControllerTest extends TestCase
 
     public function test_show_paid_community_with_null_expires_at_subscription(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['price' => 500]);
         Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_null_exp',
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => null,
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_null_exp',
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => null,
         ]);
 
         $this->actingAs($user, 'sanctum')
@@ -580,7 +579,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_show_free_community_member_has_access(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
@@ -593,7 +592,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_analytics_course_with_empty_module_returns_zero_completions(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $course = Course::create(['community_id' => $community->id, 'title' => 'Empty Course']);
@@ -607,7 +606,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_show_free_community_non_member_no_access(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['price' => 0]);
 
         $this->actingAs($user, 'sanctum')
@@ -619,21 +618,21 @@ class CommunityControllerTest extends TestCase
 
     public function test_members_admin_filter_returns_only_admins(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
-        $admin  = User::factory()->create();
+        $admin = User::factory()->create();
         $member = User::factory()->create();
 
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $admin->id,
-            'role'         => 'admin',
+            'user_id' => $admin->id,
+            'role' => 'admin',
         ]);
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
-            'role'         => 'member',
+            'user_id' => $member->id,
+            'role' => 'member',
         ]);
 
         $this->actingAs($owner, 'sanctum')
@@ -649,15 +648,15 @@ class CommunityControllerTest extends TestCase
         $community = Community::factory()->create();
         \App\Models\CommunityGalleryItem::create([
             'community_id' => $community->id,
-            'type'         => 'image',
-            'image_path'   => 'gallery/img1.jpg',
-            'position'     => 0,
+            'type' => 'image',
+            'image_path' => 'gallery/img1.jpg',
+            'position' => 0,
         ]);
         \App\Models\CommunityGalleryItem::create([
             'community_id' => $community->id,
-            'type'         => 'image',
-            'image_path'   => 'gallery/img2.jpg',
-            'position'     => 1,
+            'type' => 'image',
+            'image_path' => 'gallery/img2.jpg',
+            'position' => 1,
         ]);
 
         $this->getJson("/api/communities/{$community->slug}/about")

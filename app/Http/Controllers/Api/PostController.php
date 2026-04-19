@@ -23,7 +23,7 @@ class PostController extends Controller
         $community = $request->validated('community_slug')
             ? Community::where('slug', $request->validated('community_slug'))->firstOrFail()
             : Community::findOrFail($request->validated('community_id'));
-        $post      = $action->execute($request->user(), $community, $request->validated());
+        $post = $action->execute($request->user(), $community, $request->validated());
 
         return new PostResource($post->load('author'));
     }
@@ -36,6 +36,7 @@ class PostController extends Controller
             return response()->json(['message' => 'Post updated.']);
         } catch (\Throwable $e) {
             Log::error('Api\PostController@update failed', ['error' => $e->getMessage(), 'post_id' => $post->id]);
+
             return response()->json(['message' => 'Failed to update post.'], 500);
         }
     }
@@ -50,6 +51,7 @@ class PostController extends Controller
             throw $e;
         } catch (\Throwable $e) {
             Log::error('Api\PostController@destroy failed', ['error' => $e->getMessage(), 'post_id' => $post->id]);
+
             return response()->json(['message' => 'Failed to delete post.'], 500);
         }
     }
@@ -60,13 +62,14 @@ class PostController extends Controller
             $updated = $action->execute(auth()->user(), $post);
 
             return response()->json([
-                'message'   => $updated->is_pinned ? 'Post pinned.' : 'Post unpinned.',
+                'message' => $updated->is_pinned ? 'Post pinned.' : 'Post unpinned.',
                 'is_pinned' => $updated->is_pinned,
             ]);
         } catch (AuthorizationException $e) {
             throw $e;
         } catch (\Throwable $e) {
             Log::error('Api\PostController@togglePin failed', ['error' => $e->getMessage(), 'post_id' => $post->id]);
+
             return response()->json(['message' => 'Failed to toggle pin.'], 500);
         }
     }

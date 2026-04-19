@@ -19,12 +19,12 @@ class RemindResolvedTicketsTest extends TestCase
 
         $user = User::factory()->create();
         Ticket::create([
-            'user_id'     => $user->id,
-            'subject'     => 'Old resolved ticket',
+            'user_id' => $user->id,
+            'subject' => 'Old resolved ticket',
             'description' => 'Test',
-            'type'        => 'bug',
-            'status'      => 'resolved',
-            'priority'    => 'medium',
+            'type' => 'bug',
+            'status' => 'resolved',
+            'priority' => 'medium',
         ]);
         // Manually set updated_at to 2.5 days ago
         Ticket::query()->update(['updated_at' => now()->subDays(2)->subHours(12)]);
@@ -42,12 +42,12 @@ class RemindResolvedTicketsTest extends TestCase
 
         $user = User::factory()->create();
         Ticket::create([
-            'user_id'     => $user->id,
-            'subject'     => 'Recent resolved ticket',
+            'user_id' => $user->id,
+            'subject' => 'Recent resolved ticket',
             'description' => 'Test',
-            'type'        => 'bug',
-            'status'      => 'resolved',
-            'priority'    => 'medium',
+            'type' => 'bug',
+            'status' => 'resolved',
+            'priority' => 'medium',
         ]);
         // Updated just now — too recent for reminder
 
@@ -64,12 +64,12 @@ class RemindResolvedTicketsTest extends TestCase
 
         $user = User::factory()->create();
         Ticket::create([
-            'user_id'     => $user->id,
-            'subject'     => 'Very old resolved ticket',
+            'user_id' => $user->id,
+            'subject' => 'Very old resolved ticket',
             'description' => 'Test',
-            'type'        => 'bug',
-            'status'      => 'resolved',
-            'priority'    => 'medium',
+            'type' => 'bug',
+            'status' => 'resolved',
+            'priority' => 'medium',
         ]);
         Ticket::query()->update(['updated_at' => now()->subDays(5)]);
 
@@ -86,12 +86,12 @@ class RemindResolvedTicketsTest extends TestCase
 
         $user = User::factory()->create();
         Ticket::create([
-            'user_id'     => $user->id,
-            'subject'     => 'Resolved ticket for missing user',
+            'user_id' => $user->id,
+            'subject' => 'Resolved ticket for missing user',
             'description' => 'Test',
-            'type'        => 'bug',
-            'status'      => 'resolved',
-            'priority'    => 'medium',
+            'type' => 'bug',
+            'status' => 'resolved',
+            'priority' => 'medium',
         ]);
         Ticket::query()->update(['updated_at' => now()->subDays(2)->subHours(12)]);
 
@@ -111,12 +111,12 @@ class RemindResolvedTicketsTest extends TestCase
 
         $user = User::factory()->create();
         Ticket::create([
-            'user_id'     => $user->id,
-            'subject'     => 'Open ticket',
+            'user_id' => $user->id,
+            'subject' => 'Open ticket',
             'description' => 'Test',
-            'type'        => 'bug',
-            'status'      => 'open',
-            'priority'    => 'medium',
+            'type' => 'bug',
+            'status' => 'open',
+            'priority' => 'medium',
         ]);
         Ticket::query()->update(['updated_at' => now()->subDays(2)->subHours(12)]);
 

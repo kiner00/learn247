@@ -19,10 +19,10 @@ class HandleCreatorPlanPaidTest extends TestCase
         $user = User::factory()->create();
 
         return CreatorSubscription::create(array_merge([
-            'user_id'    => $user->id,
-            'plan'       => CreatorSubscription::PLAN_BASIC,
-            'status'     => CreatorSubscription::STATUS_PENDING,
-            'xendit_id'  => 'inv_cs_' . uniqid(),
+            'user_id' => $user->id,
+            'plan' => CreatorSubscription::PLAN_BASIC,
+            'status' => CreatorSubscription::STATUS_PENDING,
+            'xendit_id' => 'inv_cs_'.uniqid(),
             'expires_at' => null,
         ], $overrides));
     }
@@ -31,7 +31,7 @@ class HandleCreatorPlanPaidTest extends TestCase
 
     public function test_matches_returns_true_when_creator_subscription_exists(): void
     {
-        $cs      = $this->makeCreatorSub(['xendit_id' => 'inv_cs_match']);
+        $cs = $this->makeCreatorSub(['xendit_id' => 'inv_cs_match']);
         $handler = app(HandleCreatorPlanPaid::class);
 
         $this->assertTrue($handler->matches('inv_cs_match'));
@@ -48,15 +48,15 @@ class HandleCreatorPlanPaidTest extends TestCase
 
     public function test_paid_status_activates_subscription_and_sets_expiry(): void
     {
-        $cs      = $this->makeCreatorSub(['xendit_id' => 'inv_cs_paid']);
+        $cs = $this->makeCreatorSub(['xendit_id' => 'inv_cs_paid']);
         $handler = app(HandleCreatorPlanPaid::class);
         $handler->matches('inv_cs_paid');
 
         $handler->handle([
-            'amount'          => 500,
+            'amount' => 500,
             'payment_channel' => 'GCASH',
-            'currency'        => 'PHP',
-            'payment_id'      => 'pay_123',
+            'currency' => 'PHP',
+            'payment_id' => 'pay_123',
         ], 'evt_cs_paid', 'PAID');
 
         $cs->refresh();
@@ -66,24 +66,24 @@ class HandleCreatorPlanPaidTest extends TestCase
 
         // Payment record should be created
         $this->assertDatabaseHas('payments', [
-            'user_id'         => $cs->user_id,
-            'status'          => Payment::STATUS_PAID,
-            'amount'          => 500,
+            'user_id' => $cs->user_id,
+            'status' => Payment::STATUS_PAID,
+            'amount' => 500,
             'xendit_event_id' => 'evt_cs_paid',
         ]);
     }
 
     public function test_settled_status_activates_subscription(): void
     {
-        $cs      = $this->makeCreatorSub(['xendit_id' => 'inv_cs_settled']);
+        $cs = $this->makeCreatorSub(['xendit_id' => 'inv_cs_settled']);
         $handler = app(HandleCreatorPlanPaid::class);
         $handler->matches('inv_cs_settled');
 
         $handler->handle([
-            'amount'          => 500,
+            'amount' => 500,
             'payment_channel' => 'GCASH',
-            'currency'        => 'PHP',
-            'external_id'     => 'ext_123',
+            'currency' => 'PHP',
+            'external_id' => 'ext_123',
         ], 'evt_cs_settled', 'SETTLED');
 
         $cs->refresh();
@@ -92,7 +92,7 @@ class HandleCreatorPlanPaidTest extends TestCase
 
         // Should use external_id as fallback provider_reference
         $this->assertDatabaseHas('payments', [
-            'xendit_event_id'    => 'evt_cs_settled',
+            'xendit_event_id' => 'evt_cs_settled',
             'provider_reference' => 'ext_123',
         ]);
     }
@@ -101,8 +101,8 @@ class HandleCreatorPlanPaidTest extends TestCase
     {
         $futureExpiry = now()->addDays(15);
         $cs = $this->makeCreatorSub([
-            'xendit_id'  => 'inv_cs_renew',
-            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'xendit_id' => 'inv_cs_renew',
+            'status' => CreatorSubscription::STATUS_ACTIVE,
             'expires_at' => $futureExpiry,
         ]);
 
@@ -110,10 +110,10 @@ class HandleCreatorPlanPaidTest extends TestCase
         $handler->matches('inv_cs_renew');
 
         $handler->handle([
-            'amount'          => 500,
+            'amount' => 500,
             'payment_channel' => 'GCASH',
-            'currency'        => 'PHP',
-            'payment_id'      => 'pay_renew',
+            'currency' => 'PHP',
+            'payment_id' => 'pay_renew',
         ], 'evt_cs_renew', 'PAID');
 
         $cs->refresh();
@@ -127,8 +127,8 @@ class HandleCreatorPlanPaidTest extends TestCase
     public function test_paid_sets_expiry_from_now_when_expired(): void
     {
         $cs = $this->makeCreatorSub([
-            'xendit_id'  => 'inv_cs_expired_renew',
-            'status'     => CreatorSubscription::STATUS_EXPIRED,
+            'xendit_id' => 'inv_cs_expired_renew',
+            'status' => CreatorSubscription::STATUS_EXPIRED,
             'expires_at' => now()->subDays(5),
         ]);
 
@@ -136,10 +136,10 @@ class HandleCreatorPlanPaidTest extends TestCase
         $handler->matches('inv_cs_expired_renew');
 
         $handler->handle([
-            'amount'          => 500,
+            'amount' => 500,
             'payment_channel' => 'GCASH',
-            'currency'        => 'PHP',
-            'payment_id'      => 'pay_exp_renew',
+            'currency' => 'PHP',
+            'payment_id' => 'pay_exp_renew',
         ], 'evt_cs_exp_renew', 'PAID');
 
         $cs->refresh();
@@ -156,7 +156,7 @@ class HandleCreatorPlanPaidTest extends TestCase
 
     public function test_expired_status_marks_subscription_expired(): void
     {
-        $cs      = $this->makeCreatorSub(['xendit_id' => 'inv_cs_exp']);
+        $cs = $this->makeCreatorSub(['xendit_id' => 'inv_cs_exp']);
         $handler = app(HandleCreatorPlanPaid::class);
         $handler->matches('inv_cs_exp');
 
@@ -171,7 +171,7 @@ class HandleCreatorPlanPaidTest extends TestCase
 
     public function test_failed_status_marks_subscription_cancelled(): void
     {
-        $cs      = $this->makeCreatorSub(['xendit_id' => 'inv_cs_fail']);
+        $cs = $this->makeCreatorSub(['xendit_id' => 'inv_cs_fail']);
         $handler = app(HandleCreatorPlanPaid::class);
         $handler->matches('inv_cs_fail');
 
@@ -186,7 +186,7 @@ class HandleCreatorPlanPaidTest extends TestCase
     {
         $cs = $this->makeCreatorSub([
             'xendit_id' => 'inv_cs_unk',
-            'status'    => CreatorSubscription::STATUS_ACTIVE,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
         ]);
 
         $handler = app(HandleCreatorPlanPaid::class);
@@ -203,36 +203,36 @@ class HandleCreatorPlanPaidTest extends TestCase
 
     public function test_processing_fee_calculated_from_payment_channel(): void
     {
-        $cs      = $this->makeCreatorSub(['xendit_id' => 'inv_cs_fee']);
+        $cs = $this->makeCreatorSub(['xendit_id' => 'inv_cs_fee']);
         $handler = app(HandleCreatorPlanPaid::class);
         $handler->matches('inv_cs_fee');
 
         $handler->handle([
-            'amount'          => 1000,
+            'amount' => 1000,
             'payment_channel' => 'GCASH',
-            'currency'        => 'PHP',
-            'payment_id'      => 'pay_fee',
+            'currency' => 'PHP',
+            'payment_id' => 'pay_fee',
         ], 'evt_cs_fee', 'PAID');
 
         // GCASH fee = 1000 * 0.023 = 23.00
         $this->assertDatabaseHas('payments', [
             'xendit_event_id' => 'evt_cs_fee',
-            'processing_fee'  => 23.00,
-            'platform_fee'    => 0,
+            'processing_fee' => 23.00,
+            'platform_fee' => 0,
         ]);
     }
 
     public function test_paid_with_null_expires_at_sets_from_now(): void
     {
-        $cs      = $this->makeCreatorSub(['xendit_id' => 'inv_cs_null_exp', 'expires_at' => null]);
+        $cs = $this->makeCreatorSub(['xendit_id' => 'inv_cs_null_exp', 'expires_at' => null]);
         $handler = app(HandleCreatorPlanPaid::class);
         $handler->matches('inv_cs_null_exp');
 
         $handler->handle([
-            'amount'          => 500,
+            'amount' => 500,
             'payment_channel' => 'GCASH',
-            'currency'        => 'PHP',
-            'payment_id'      => 'pay_null_exp',
+            'currency' => 'PHP',
+            'payment_id' => 'pay_null_exp',
         ], 'evt_cs_null_exp', 'PAID');
 
         $cs->refresh();
@@ -246,7 +246,7 @@ class HandleCreatorPlanPaidTest extends TestCase
 
     public function test_handle_logs_error_and_rethrows_on_exception(): void
     {
-        $cs      = $this->makeCreatorSub(['xendit_id' => 'inv_cs_err']);
+        $cs = $this->makeCreatorSub(['xendit_id' => 'inv_cs_err']);
         $handler = app(HandleCreatorPlanPaid::class);
         $handler->matches('inv_cs_err');
 
@@ -266,9 +266,9 @@ class HandleCreatorPlanPaidTest extends TestCase
         $this->expectExceptionMessage('forced update failure');
 
         $handler->handle([
-            'amount'          => 500,
+            'amount' => 500,
             'payment_channel' => 'GCASH',
-            'currency'        => 'PHP',
+            'currency' => 'PHP',
         ], 'evt_cs_err', 'PAID');
     }
 }

@@ -26,7 +26,7 @@ class RecurringCancellationController extends Controller
 
         $this->cancelAction->execute($subscription);
 
-        return back()->with('success', 'Auto-renewal cancelled. Your access continues until ' . $subscription->expires_at->format('M d, Y') . '.');
+        return back()->with('success', 'Auto-renewal cancelled. Your access continues until '.$subscription->expires_at->format('M d, Y').'.');
     }
 
     public function cancelCreatorPlan(Request $request): RedirectResponse
@@ -41,7 +41,7 @@ class RecurringCancellationController extends Controller
 
         $this->cancelAction->execute($creatorSub);
 
-        return back()->with('success', 'Auto-renewal cancelled. Your plan continues until ' . $creatorSub->expires_at->format('M d, Y') . '.');
+        return back()->with('success', 'Auto-renewal cancelled. Your plan continues until '.$creatorSub->expires_at->format('M d, Y').'.');
     }
 
     // ─── Enable Auto-Renew ──────────────────────────────────────────────────
@@ -82,7 +82,7 @@ class RecurringCancellationController extends Controller
 
         $this->cancelAction->execute($courseEnrollment);
 
-        return back()->with('success', 'Auto-renewal cancelled. Your access continues until ' . $courseEnrollment->expires_at->format('M d, Y') . '.');
+        return back()->with('success', 'Auto-renewal cancelled. Your access continues until '.$courseEnrollment->expires_at->format('M d, Y').'.');
     }
 
     public function cancelCurzzoPurchase(Request $request, CurzzoPurchase $curzzoPurchase): RedirectResponse
@@ -92,6 +92,6 @@ class RecurringCancellationController extends Controller
 
         $this->cancelAction->execute($curzzoPurchase);
 
-        return back()->with('success', 'Auto-renewal cancelled. Your access continues until ' . $curzzoPurchase->expires_at->format('M d, Y') . '.');
+        return back()->with('success', 'Auto-renewal cancelled. Your access continues until '.$curzzoPurchase->expires_at->format('M d, Y').'.');
     }
 }

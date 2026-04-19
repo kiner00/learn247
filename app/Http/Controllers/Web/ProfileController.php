@@ -18,7 +18,7 @@ class ProfileController extends Controller
 
     public function show(Request $request, string $username, GetProfileData $query): Response
     {
-        $user  = User::where('username', $username)->firstOrFail();
+        $user = User::where('username', $username)->firstOrFail();
         $isOwn = $request->user()?->id === $user->id;
 
         return $this->renderProfile($user, $request, isOwn: $isOwn, query: $query);
@@ -26,34 +26,34 @@ class ProfileController extends Controller
 
     private function renderProfile(User $user, Request $request, bool $isOwn, GetProfileData $query): Response
     {
-        $data               = $query->execute($user, $isOwn);
-        $membershipsMapped  = $query->getMappedMemberships($user);
+        $data = $query->execute($user, $isOwn);
+        $membershipsMapped = $query->getMappedMemberships($user);
 
-        $communitySlug       = $request->query('community');
-        $selectedMembership  = $membershipsMapped->firstWhere('slug', $communitySlug) ?? $membershipsMapped->first();
+        $communitySlug = $request->query('community');
+        $selectedMembership = $membershipsMapped->firstWhere('slug', $communitySlug) ?? $membershipsMapped->first();
         $selectedCommunityId = $selectedMembership['community_id'] ?? null;
-        $contributionsCount  = $query->getContributionsCount($user, $selectedCommunityId);
+        $contributionsCount = $query->getContributionsCount($user, $selectedCommunityId);
 
         return Inertia::render('Profile/Show', [
-            'profileUser'        => [
-                'id'                => $user->id,
-                'name'              => $user->name,
-                'username'          => $user->username,
-                'bio'               => $user->bio,
-                'avatar'            => $user->avatar,
-                'location'          => $user->location,
-                'created_at'        => $user->created_at,
+            'profileUser' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'username' => $user->username,
+                'bio' => $user->bio,
+                'avatar' => $user->avatar,
+                'location' => $user->location,
+                'created_at' => $user->created_at,
                 'crz_token_balance' => $isOwn ? (float) $user->crz_token_balance : null,
             ],
-            'isOwn'              => $isOwn,
-            'totalPoints'        => $data['total_points'],
-            'myLevel'            => $data['level'],
-            'pointsToNextLevel'  => $data['points_to_next'],
-            'memberships'        => $membershipsMapped->values(),
-            'activityMap'        => $data['activity_map'],
+            'isOwn' => $isOwn,
+            'totalPoints' => $data['total_points'],
+            'myLevel' => $data['level'],
+            'pointsToNextLevel' => $data['points_to_next'],
+            'memberships' => $membershipsMapped->values(),
+            'activityMap' => $data['activity_map'],
             'contributionsCount' => $contributionsCount,
-            'selectedCommunity'  => $selectedMembership ? $selectedMembership['name'] : null,
-            'badges'             => $data['badges'],
+            'selectedCommunity' => $selectedMembership ? $selectedMembership['name'] : null,
+            'badges' => $data['badges'],
         ]);
     }
 }

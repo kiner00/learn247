@@ -26,10 +26,10 @@ class AggregateEmailStats extends Command
         $stats = EmailSend::whereDate('created_at', $date)
             ->select(
                 'community_id',
-                DB::raw("COUNT(*) as sent"),
+                DB::raw('COUNT(*) as sent'),
                 DB::raw("SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END) as delivered"),
-                DB::raw("SUM(CASE WHEN opened_at IS NOT NULL THEN 1 ELSE 0 END) as opened"),
-                DB::raw("SUM(CASE WHEN clicked_at IS NOT NULL THEN 1 ELSE 0 END) as clicked"),
+                DB::raw('SUM(CASE WHEN opened_at IS NOT NULL THEN 1 ELSE 0 END) as opened'),
+                DB::raw('SUM(CASE WHEN clicked_at IS NOT NULL THEN 1 ELSE 0 END) as clicked'),
                 DB::raw("SUM(CASE WHEN status = 'bounced' THEN 1 ELSE 0 END) as bounced"),
                 DB::raw("SUM(CASE WHEN status = 'complained' THEN 1 ELSE 0 END) as complained"),
             )
@@ -48,15 +48,15 @@ class AggregateEmailStats extends Command
             EmailDailyStat::updateOrCreate(
                 [
                     'community_id' => $row->community_id,
-                    'date'         => $date,
+                    'date' => $date,
                 ],
                 [
-                    'sent'         => $row->sent,
-                    'delivered'    => $row->delivered,
-                    'opened'       => $row->opened,
-                    'clicked'      => $row->clicked,
-                    'bounced'      => $row->bounced,
-                    'complained'   => $row->complained,
+                    'sent' => $row->sent,
+                    'delivered' => $row->delivered,
+                    'opened' => $row->opened,
+                    'clicked' => $row->clicked,
+                    'bounced' => $row->bounced,
+                    'complained' => $row->complained,
                     'unsubscribed' => $unsubCounts[$row->community_id] ?? 0,
                 ]
             );

@@ -25,14 +25,14 @@ class EmailProviderFactoryTest extends TestCase
         $fake = $this->createMock(EmailProvider::class);
         EmailProviderFactory::$fakeProvider = $fake;
 
-        $community = new Community();
+        $community = new Community;
 
         $this->assertSame($fake, EmailProviderFactory::make($community));
     }
 
     public function test_make_defaults_to_resend_when_no_provider_set(): void
     {
-        $community = new Community();
+        $community = new Community;
 
         $provider = EmailProviderFactory::make($community);
 
@@ -42,15 +42,15 @@ class EmailProviderFactoryTest extends TestCase
     public function test_make_resolves_each_known_provider(): void
     {
         $mapping = [
-            'resend'   => ResendProvider::class,
+            'resend' => ResendProvider::class,
             'sendgrid' => SendGridProvider::class,
             'postmark' => PostmarkProvider::class,
-            'ses'      => SesProvider::class,
-            'mailgun'  => MailgunProvider::class,
+            'ses' => SesProvider::class,
+            'mailgun' => MailgunProvider::class,
         ];
 
         foreach ($mapping as $id => $class) {
-            $community = new Community();
+            $community = new Community;
             $community->email_provider = $id;
 
             $this->assertInstanceOf($class, EmailProviderFactory::make($community), "Failed for {$id}");
@@ -59,7 +59,7 @@ class EmailProviderFactoryTest extends TestCase
 
     public function test_make_throws_for_unknown_provider(): void
     {
-        $community = new Community();
+        $community = new Community;
         $community->email_provider = 'does-not-exist';
 
         $this->expectException(\RuntimeException::class);

@@ -5,7 +5,6 @@ namespace Tests\Feature\Actions\Billing;
 use App\Actions\Billing\WebhookHandlers\HandleCurzzoTopupPaid;
 use App\Models\Community;
 use App\Models\CurzzoTopup;
-use App\Models\Payment;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
@@ -18,17 +17,17 @@ class HandleCurzzoTopupPaidTest extends TestCase
     private function createPendingTopup(array $overrides = []): array
     {
         $community = Community::factory()->create();
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
 
         $topup = CurzzoTopup::create([
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
             'community_id' => $community->id,
-            'xendit_id'    => $overrides['xendit_id'] ?? 'inv_topup_123',
-            'status'       => CurzzoTopup::STATUS_PENDING,
-            'messages'     => $overrides['messages'] ?? 100,
+            'xendit_id' => $overrides['xendit_id'] ?? 'inv_topup_123',
+            'status' => CurzzoTopup::STATUS_PENDING,
+            'messages' => $overrides['messages'] ?? 100,
             'messages_used' => 0,
-            'paid_at'      => null,
-            'expires_at'   => null,
+            'paid_at' => null,
+            'expires_at' => null,
         ]);
 
         return compact('community', 'user', 'topup');
@@ -38,15 +37,15 @@ class HandleCurzzoTopupPaidTest extends TestCase
 
     public function test_matches_returns_true_for_existing_topup(): void
     {
-        $data    = $this->createPendingTopup();
-        $handler = new HandleCurzzoTopupPaid();
+        $data = $this->createPendingTopup();
+        $handler = new HandleCurzzoTopupPaid;
 
         $this->assertTrue($handler->matches('inv_topup_123'));
     }
 
     public function test_matches_returns_false_for_nonexistent_xendit_id(): void
     {
-        $handler = new HandleCurzzoTopupPaid();
+        $handler = new HandleCurzzoTopupPaid;
 
         $this->assertFalse($handler->matches('inv_does_not_exist'));
     }
@@ -55,8 +54,8 @@ class HandleCurzzoTopupPaidTest extends TestCase
 
     public function test_marks_message_pack_topup_as_paid(): void
     {
-        $data    = $this->createPendingTopup(['messages' => 50]);
-        $handler = new HandleCurzzoTopupPaid();
+        $data = $this->createPendingTopup(['messages' => 50]);
+        $handler = new HandleCurzzoTopupPaid;
         $handler->matches('inv_topup_123');
 
         $handler->handle([], 'evt_1', 'PAID');
@@ -72,8 +71,8 @@ class HandleCurzzoTopupPaidTest extends TestCase
 
     public function test_day_pass_gets_24_hour_expiry(): void
     {
-        $data    = $this->createPendingTopup(['messages' => 0]);
-        $handler = new HandleCurzzoTopupPaid();
+        $data = $this->createPendingTopup(['messages' => 0]);
+        $handler = new HandleCurzzoTopupPaid;
         $handler->matches('inv_topup_123');
 
         $handler->handle([], 'evt_1', 'PAID');
@@ -90,8 +89,8 @@ class HandleCurzzoTopupPaidTest extends TestCase
 
     public function test_settled_status_is_treated_as_paid(): void
     {
-        $data    = $this->createPendingTopup();
-        $handler = new HandleCurzzoTopupPaid();
+        $data = $this->createPendingTopup();
+        $handler = new HandleCurzzoTopupPaid;
         $handler->matches('inv_topup_123');
 
         $handler->handle([], 'evt_1', 'SETTLED');
@@ -104,8 +103,8 @@ class HandleCurzzoTopupPaidTest extends TestCase
 
     public function test_ignores_expired_status(): void
     {
-        $data    = $this->createPendingTopup();
-        $handler = new HandleCurzzoTopupPaid();
+        $data = $this->createPendingTopup();
+        $handler = new HandleCurzzoTopupPaid;
         $handler->matches('inv_topup_123');
 
         $handler->handle([], 'evt_1', 'EXPIRED');
@@ -117,8 +116,8 @@ class HandleCurzzoTopupPaidTest extends TestCase
 
     public function test_ignores_failed_status(): void
     {
-        $data    = $this->createPendingTopup();
-        $handler = new HandleCurzzoTopupPaid();
+        $data = $this->createPendingTopup();
+        $handler = new HandleCurzzoTopupPaid;
         $handler->matches('inv_topup_123');
 
         $handler->handle([], 'evt_1', 'FAILED');
@@ -129,8 +128,8 @@ class HandleCurzzoTopupPaidTest extends TestCase
 
     public function test_ignores_unknown_status(): void
     {
-        $data    = $this->createPendingTopup();
-        $handler = new HandleCurzzoTopupPaid();
+        $data = $this->createPendingTopup();
+        $handler = new HandleCurzzoTopupPaid;
         $handler->matches('inv_topup_123');
 
         $handler->handle([], 'evt_1', 'AUTHORISED');
@@ -144,7 +143,7 @@ class HandleCurzzoTopupPaidTest extends TestCase
     public function test_handle_without_matches_causes_error(): void
     {
         // Calling handle() without matches() means $topup is null
-        $handler = new HandleCurzzoTopupPaid();
+        $handler = new HandleCurzzoTopupPaid;
 
         $this->expectException(\Throwable::class);
 
@@ -165,15 +164,15 @@ class HandleCurzzoTopupPaidTest extends TestCase
                     && $context['day_pass'] === true;
             });
 
-        $handler = new HandleCurzzoTopupPaid();
+        $handler = new HandleCurzzoTopupPaid;
         $handler->matches('inv_topup_123');
         $handler->handle([], 'evt_1', 'PAID');
     }
 
     public function test_logs_error_and_rethrows_when_update_fails(): void
     {
-        $data    = $this->createPendingTopup();
-        $handler = new HandleCurzzoTopupPaid();
+        $data = $this->createPendingTopup();
+        $handler = new HandleCurzzoTopupPaid;
         $handler->matches('inv_topup_123');
 
         // Drop the curzzo_topups table to force the update to throw.

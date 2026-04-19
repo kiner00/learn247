@@ -17,23 +17,23 @@ class NotificationControllerTest extends TestCase
 
     public function test_mark_all_read_updates_unread_notifications(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $actor     = User::factory()->create();
+        $actor = User::factory()->create();
 
         Notification::create([
-            'user_id'      => $user->id,
-            'actor_id'     => $actor->id,
+            'user_id' => $user->id,
+            'actor_id' => $actor->id,
             'community_id' => $community->id,
-            'type'         => 'new_post',
-            'data'         => ['message' => 'Test notification 1'],
+            'type' => 'new_post',
+            'data' => ['message' => 'Test notification 1'],
         ]);
         Notification::create([
-            'user_id'      => $user->id,
-            'actor_id'     => $actor->id,
+            'user_id' => $user->id,
+            'actor_id' => $actor->id,
             'community_id' => $community->id,
-            'type'         => 'new_comment',
-            'data'         => ['message' => 'Test notification 2'],
+            'type' => 'new_comment',
+            'data' => ['message' => 'Test notification 2'],
         ]);
 
         $response = $this->actingAs($user)
@@ -50,24 +50,24 @@ class NotificationControllerTest extends TestCase
 
     public function test_mark_all_read_does_not_affect_other_users(): void
     {
-        $user      = User::factory()->create();
-        $other     = User::factory()->create();
+        $user = User::factory()->create();
+        $other = User::factory()->create();
         $community = Community::factory()->create();
-        $actor     = User::factory()->create();
+        $actor = User::factory()->create();
 
         Notification::create([
-            'user_id'      => $user->id,
-            'actor_id'     => $actor->id,
+            'user_id' => $user->id,
+            'actor_id' => $actor->id,
             'community_id' => $community->id,
-            'type'         => 'new_post',
-            'data'         => ['message' => 'User notification'],
+            'type' => 'new_post',
+            'data' => ['message' => 'User notification'],
         ]);
         Notification::create([
-            'user_id'      => $other->id,
-            'actor_id'     => $actor->id,
+            'user_id' => $other->id,
+            'actor_id' => $actor->id,
             'community_id' => $community->id,
-            'type'         => 'new_post',
-            'data'         => ['message' => 'Other notification'],
+            'type' => 'new_post',
+            'data' => ['message' => 'Other notification'],
         ]);
 
         $this->actingAs($user)
@@ -91,16 +91,16 @@ class NotificationControllerTest extends TestCase
 
     public function test_recent_returns_json_with_notifications(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $actor     = User::factory()->create();
+        $actor = User::factory()->create();
 
         Notification::create([
-            'user_id'      => $user->id,
-            'actor_id'     => $actor->id,
+            'user_id' => $user->id,
+            'actor_id' => $actor->id,
             'community_id' => $community->id,
-            'type'         => 'new_post',
-            'data'         => ['message' => 'Recent notification'],
+            'type' => 'new_post',
+            'data' => ['message' => 'Recent notification'],
         ]);
 
         $response = $this->actingAs($user)
@@ -124,17 +124,17 @@ class NotificationControllerTest extends TestCase
 
     public function test_recent_only_returns_own_notifications(): void
     {
-        $user      = User::factory()->create();
-        $other     = User::factory()->create();
+        $user = User::factory()->create();
+        $other = User::factory()->create();
         $community = Community::factory()->create();
-        $actor     = User::factory()->create();
+        $actor = User::factory()->create();
 
         Notification::create([
-            'user_id'      => $other->id,
-            'actor_id'     => $actor->id,
+            'user_id' => $other->id,
+            'actor_id' => $actor->id,
             'community_id' => $community->id,
-            'type'         => 'new_post',
-            'data'         => ['message' => 'Not for user'],
+            'type' => 'new_post',
+            'data' => ['message' => 'Not for user'],
         ]);
 
         $response = $this->actingAs($user)
@@ -153,18 +153,18 @@ class NotificationControllerTest extends TestCase
 
     public function test_mark_all_read_does_not_change_already_read_timestamps(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $actor     = User::factory()->create();
-        $readAt    = now()->subHour();
+        $actor = User::factory()->create();
+        $readAt = now()->subHour();
 
         $notification = Notification::create([
-            'user_id'      => $user->id,
-            'actor_id'     => $actor->id,
+            'user_id' => $user->id,
+            'actor_id' => $actor->id,
             'community_id' => $community->id,
-            'type'         => 'new_post',
-            'data'         => ['message' => 'Already read'],
-            'read_at'      => $readAt,
+            'type' => 'new_post',
+            'data' => ['message' => 'Already read'],
+            'read_at' => $readAt,
         ]);
 
         $this->actingAs($user)->post('/notifications/read-all');
@@ -178,16 +178,16 @@ class NotificationControllerTest extends TestCase
 
     public function test_recent_returns_correct_structure(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['name' => 'Test Community', 'slug' => 'test-community']);
-        $actor     = User::factory()->create(['name' => 'Actor Name']);
+        $actor = User::factory()->create(['name' => 'Actor Name']);
 
         Notification::create([
-            'user_id'      => $user->id,
-            'actor_id'     => $actor->id,
+            'user_id' => $user->id,
+            'actor_id' => $actor->id,
             'community_id' => $community->id,
-            'type'         => 'new_post',
-            'data'         => ['post_id' => 99],
+            'type' => 'new_post',
+            'data' => ['post_id' => 99],
         ]);
 
         $response = $this->actingAs($user)->getJson('/notifications/recent');
@@ -195,8 +195,8 @@ class NotificationControllerTest extends TestCase
         $response->assertOk()
             ->assertJsonCount(1)
             ->assertJsonFragment([
-                'type'           => 'new_post',
-                'actor_name'     => 'Actor Name',
+                'type' => 'new_post',
+                'actor_name' => 'Actor Name',
                 'community_name' => 'Test Community',
                 'community_slug' => 'test-community',
             ]);
@@ -204,16 +204,16 @@ class NotificationControllerTest extends TestCase
 
     public function test_recent_returns_notifications_ordered_latest_first(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $actor     = User::factory()->create();
+        $actor = User::factory()->create();
 
         $first = Notification::create([
-            'user_id'      => $user->id,
-            'actor_id'     => $actor->id,
+            'user_id' => $user->id,
+            'actor_id' => $actor->id,
             'community_id' => $community->id,
-            'type'         => 'new_post',
-            'data'         => ['order' => 1],
+            'type' => 'new_post',
+            'data' => ['order' => 1],
         ]);
 
         // Ensure second is created after first
@@ -221,11 +221,11 @@ class NotificationControllerTest extends TestCase
         $first->save();
 
         Notification::create([
-            'user_id'      => $user->id,
-            'actor_id'     => $actor->id,
+            'user_id' => $user->id,
+            'actor_id' => $actor->id,
             'community_id' => $community->id,
-            'type'         => 'new_comment',
-            'data'         => ['order' => 2],
+            'type' => 'new_comment',
+            'data' => ['order' => 2],
         ]);
 
         $response = $this->actingAs($user)->getJson('/notifications/recent');
@@ -250,21 +250,21 @@ class NotificationControllerTest extends TestCase
 
     public function test_paginated_returns_paginator_for_user(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $actor     = User::factory()->create();
+        $actor = User::factory()->create();
 
         for ($i = 0; $i < 3; $i++) {
             Notification::create([
-                'user_id'      => $user->id,
-                'actor_id'     => $actor->id,
+                'user_id' => $user->id,
+                'actor_id' => $actor->id,
                 'community_id' => $community->id,
-                'type'         => 'new_post',
-                'data'         => ['index' => $i],
+                'type' => 'new_post',
+                'data' => ['index' => $i],
             ]);
         }
 
-        $query  = app(GetNotifications::class);
+        $query = app(GetNotifications::class);
         $result = $query->paginated($user, 2);
 
         $this->assertEquals(3, $result->total());
@@ -273,20 +273,20 @@ class NotificationControllerTest extends TestCase
 
     public function test_paginated_only_returns_own_notifications(): void
     {
-        $user      = User::factory()->create();
-        $other     = User::factory()->create();
+        $user = User::factory()->create();
+        $other = User::factory()->create();
         $community = Community::factory()->create();
-        $actor     = User::factory()->create();
+        $actor = User::factory()->create();
 
         Notification::create([
-            'user_id'      => $other->id,
-            'actor_id'     => $actor->id,
+            'user_id' => $other->id,
+            'actor_id' => $actor->id,
             'community_id' => $community->id,
-            'type'         => 'new_post',
-            'data'         => [],
+            'type' => 'new_post',
+            'data' => [],
         ]);
 
-        $query  = app(GetNotifications::class);
+        $query = app(GetNotifications::class);
         $result = $query->paginated($user);
 
         $this->assertEquals(0, $result->total());

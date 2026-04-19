@@ -13,7 +13,8 @@ class CancelRecurringPlan
     /**
      * Deactivate a Xendit recurring plan. The entity keeps access until expires_at.
      *
-     * @param Model $entity Any model using the HasRecurringPlan trait
+     * @param  Model  $entity  Any model using the HasRecurringPlan trait
+     *
      * @throws \RuntimeException
      */
     public function execute(Model $entity): void
@@ -33,14 +34,14 @@ class CancelRecurringPlan
 
             Log::info('Recurring plan cancelled', [
                 'entity_type' => get_class($entity),
-                'entity_id'   => $entity->id,
-                'plan_id'     => $entity->xendit_plan_id,
+                'entity_id' => $entity->id,
+                'plan_id' => $entity->xendit_plan_id,
             ]);
         } catch (\Throwable $e) {
             Log::error('CancelRecurringPlan failed', [
                 'entity_type' => get_class($entity),
-                'entity_id'   => $entity->id,
-                'error'       => $e->getMessage(),
+                'entity_id' => $entity->id,
+                'error' => $e->getMessage(),
             ]);
             throw $e;
         }

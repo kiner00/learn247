@@ -22,9 +22,9 @@ class CommunityInviteMailTest extends TestCase
 
         return CommunityInvite::create([
             'community_id' => $community->id,
-            'email'        => 'invitee@example.com',
-            'token'        => 'test-token-abc123',
-            'expires_at'   => now()->addDays(7),
+            'email' => 'invitee@example.com',
+            'token' => 'test-token-abc123',
+            'expires_at' => now()->addDays(7),
         ]);
     }
 
@@ -96,7 +96,7 @@ class CommunityInviteMailTest extends TestCase
         $mailable = new CommunityInviteMail($invite);
         $content = $mailable->content();
 
-        $expectedUrl = config('app.url') . '/invite/test-token-abc123';
+        $expectedUrl = config('app.url').'/invite/test-token-abc123';
         $this->assertStringContainsString($expectedUrl, $content->htmlString);
     }
 

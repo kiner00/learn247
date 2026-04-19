@@ -2,7 +2,6 @@
 
 namespace App\Actions\Billing;
 
-use App\Models\Community;
 use App\Models\CreatorSubscription;
 use App\Models\Setting;
 use App\Models\Subscription;
@@ -25,7 +24,7 @@ class EnableAutoRenew
     {
         $this->validateNotAlreadyRecurring($subscription);
 
-        $user      = $subscription->user;
+        $user = $subscription->user;
         $community = $subscription->community;
 
         $plan = $this->createPlan(
@@ -33,16 +32,16 @@ class EnableAutoRenew
             amount: (float) $community->price,
             currency: $community->currency ?? 'PHP',
             description: "Auto-renew: {$community->name}",
-            referenceId: "{$community->slug}_autorenew_{$user->id}_" . time(),
+            referenceId: "{$community->slug}_autorenew_{$user->id}_".time(),
             anchorDate: $subscription->expires_at,
-            successUrl: config('app.url') . "/communities/{$community->slug}",
-            failureUrl: config('app.url') . "/communities/{$community->slug}",
+            successUrl: config('app.url')."/communities/{$community->slug}",
+            failureUrl: config('app.url')."/communities/{$community->slug}",
         );
 
         $subscription->update([
-            'xendit_plan_id'     => $plan['id'],
+            'xendit_plan_id' => $plan['id'],
             'xendit_customer_id' => $user->xendit_customer_id,
-            'recurring_status'   => $plan['status'] ?? 'REQUIRES_ACTION',
+            'recurring_status' => $plan['status'] ?? 'REQUIRES_ACTION',
         ]);
 
         return $plan['actions'][0]['url'] ?? '';
@@ -57,9 +56,9 @@ class EnableAutoRenew
     {
         $this->validateNotAlreadyRecurring($creatorSub);
 
-        $user      = $creatorSub->user;
+        $user = $creatorSub->user;
         $planLabel = $creatorSub->plan === CreatorSubscription::PLAN_PRO ? 'Pro' : 'Basic';
-        $priceKey  = $creatorSub->plan === CreatorSubscription::PLAN_PRO
+        $priceKey = $creatorSub->plan === CreatorSubscription::PLAN_PRO
             ? 'creator_plan_pro_price'
             : 'creator_plan_basic_price';
         $defaultPrice = $creatorSub->plan === CreatorSubscription::PLAN_PRO ? 1999 : 499;
@@ -70,16 +69,16 @@ class EnableAutoRenew
             amount: $price,
             currency: 'PHP',
             description: "Auto-renew: Creator {$planLabel} Plan",
-            referenceId: "creator_{$creatorSub->plan}_autorenew_{$user->id}_" . time(),
+            referenceId: "creator_{$creatorSub->plan}_autorenew_{$user->id}_".time(),
             anchorDate: $creatorSub->expires_at,
-            successUrl: config('app.url') . '/creator/plan?autorenew=1',
-            failureUrl: config('app.url') . '/creator/plan?autorenew=failed',
+            successUrl: config('app.url').'/creator/plan?autorenew=1',
+            failureUrl: config('app.url').'/creator/plan?autorenew=failed',
         );
 
         $creatorSub->update([
-            'xendit_plan_id'     => $plan['id'],
+            'xendit_plan_id' => $plan['id'],
             'xendit_customer_id' => $user->xendit_customer_id,
-            'recurring_status'   => $plan['status'] ?? 'REQUIRES_ACTION',
+            'recurring_status' => $plan['status'] ?? 'REQUIRES_ACTION',
         ]);
 
         return $plan['actions'][0]['url'] ?? '';
@@ -118,7 +117,7 @@ class EnableAutoRenew
         } catch (\Throwable $e) {
             Log::error('EnableAutoRenew failed', [
                 'reference_id' => $referenceId,
-                'error'        => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
             throw $e;
         }

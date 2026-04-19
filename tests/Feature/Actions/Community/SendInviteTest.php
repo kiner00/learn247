@@ -22,7 +22,7 @@ class SendInviteTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->action = new SendInvite();
+        $this->action = new SendInvite;
     }
 
     public function test_single_invite_returns_error_when_already_a_member(): void
@@ -31,7 +31,7 @@ class SendInviteTest extends TestCase
         $user = User::factory()->create(['email' => 'member@example.com']);
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         $result = $this->action->single($community, 'member@example.com');
@@ -54,7 +54,7 @@ class SendInviteTest extends TestCase
         });
         $this->assertDatabaseHas('community_invites', [
             'community_id' => $community->id,
-            'email'        => 'new@example.com',
+            'email' => 'new@example.com',
         ]);
     }
 

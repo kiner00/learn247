@@ -10,8 +10,10 @@ class EmailSequenceEnrollment extends Model
 {
     use HasFactory;
 
-    public const STATUS_ACTIVE    = 'active';
+    public const STATUS_ACTIVE = 'active';
+
     public const STATUS_COMPLETED = 'completed';
+
     public const STATUS_CANCELLED = 'cancelled';
 
     protected $fillable = [
@@ -22,9 +24,9 @@ class EmailSequenceEnrollment extends Model
     protected function casts(): array
     {
         return [
-            'next_send_at'  => 'datetime',
-            'enrolled_at'   => 'datetime',
-            'completed_at'  => 'datetime',
+            'next_send_at' => 'datetime',
+            'enrolled_at' => 'datetime',
+            'completed_at' => 'datetime',
         ];
     }
 

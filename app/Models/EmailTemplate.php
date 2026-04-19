@@ -19,15 +19,16 @@ class EmailTemplate extends Model
 
         return [
             'subject' => static::interpolate($template->subject, $vars),
-            'html'    => static::interpolate($template->html_body, $vars),
+            'html' => static::interpolate($template->html_body, $vars),
         ];
     }
 
     private static function interpolate(string $text, array $vars): string
     {
         foreach ($vars as $var => $value) {
-            $text = str_replace('{{' . $var . '}}', (string) $value, $text);
+            $text = str_replace('{{'.$var.'}}', (string) $value, $text);
         }
+
         return $text;
     }
 }

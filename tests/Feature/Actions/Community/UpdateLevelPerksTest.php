@@ -17,7 +17,7 @@ class UpdateLevelPerksTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->action = new UpdateLevelPerks();
+        $this->action = new UpdateLevelPerks;
     }
 
     public function test_creates_perks_for_levels(): void
@@ -31,13 +31,13 @@ class UpdateLevelPerksTest extends TestCase
 
         $this->assertDatabaseHas('community_level_perks', [
             'community_id' => $community->id,
-            'level'        => 1,
-            'description'  => 'Bronze perk',
+            'level' => 1,
+            'description' => 'Bronze perk',
         ]);
         $this->assertDatabaseHas('community_level_perks', [
             'community_id' => $community->id,
-            'level'        => 2,
-            'description'  => 'Silver perk',
+            'level' => 2,
+            'description' => 'Silver perk',
         ]);
     }
 
@@ -46,16 +46,16 @@ class UpdateLevelPerksTest extends TestCase
         $community = Community::factory()->create();
         CommunityLevelPerk::create([
             'community_id' => $community->id,
-            'level'        => 1,
-            'description'  => 'Old perk',
+            'level' => 1,
+            'description' => 'Old perk',
         ]);
 
         $this->action->execute($community, [1 => 'Updated perk']);
 
         $this->assertDatabaseHas('community_level_perks', [
             'community_id' => $community->id,
-            'level'        => 1,
-            'description'  => 'Updated perk',
+            'level' => 1,
+            'description' => 'Updated perk',
         ]);
         $this->assertDatabaseCount('community_level_perks', 1);
     }
@@ -65,15 +65,15 @@ class UpdateLevelPerksTest extends TestCase
         $community = Community::factory()->create();
         CommunityLevelPerk::create([
             'community_id' => $community->id,
-            'level'        => 1,
-            'description'  => 'Will be removed',
+            'level' => 1,
+            'description' => 'Will be removed',
         ]);
 
         $this->action->execute($community, [1 => '']);
 
         $this->assertDatabaseMissing('community_level_perks', [
             'community_id' => $community->id,
-            'level'        => 1,
+            'level' => 1,
         ]);
     }
 
@@ -82,15 +82,15 @@ class UpdateLevelPerksTest extends TestCase
         $community = Community::factory()->create();
         CommunityLevelPerk::create([
             'community_id' => $community->id,
-            'level'        => 3,
-            'description'  => 'Will be removed',
+            'level' => 3,
+            'description' => 'Will be removed',
         ]);
 
         $this->action->execute($community, [3 => null]);
 
         $this->assertDatabaseMissing('community_level_perks', [
             'community_id' => $community->id,
-            'level'        => 3,
+            'level' => 3,
         ]);
     }
 }

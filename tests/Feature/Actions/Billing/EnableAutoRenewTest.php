@@ -28,8 +28,8 @@ class EnableAutoRenewTest extends TestCase
 
         $xendit->shouldReceive('createRecurringPlan')
             ->andReturn([
-                'id'      => 'repl_auto_001',
-                'status'  => 'REQUIRES_ACTION',
+                'id' => 'repl_auto_001',
+                'status' => 'REQUIRES_ACTION',
                 'actions' => [
                     ['url' => 'https://linking.xendit.co/auto', 'action' => 'AUTH'],
                 ],
@@ -46,10 +46,10 @@ class EnableAutoRenewTest extends TestCase
         $community = Community::factory()->paid(499)->create();
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'status'       => Subscription::STATUS_ACTIVE,
-            'xendit_id'    => 'inv_legacy_001',
-            'expires_at'   => now()->addDays(20),
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'xendit_id' => 'inv_legacy_001',
+            'expires_at' => now()->addDays(20),
         ]);
 
         $action = app(EnableAutoRenew::class);
@@ -68,11 +68,11 @@ class EnableAutoRenewTest extends TestCase
         $user = User::factory()->create();
         $community = Community::factory()->paid()->create();
         $subscription = Subscription::create([
-            'community_id'   => $community->id,
-            'user_id'        => $user->id,
-            'status'         => Subscription::STATUS_ACTIVE,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_ACTIVE,
             'xendit_plan_id' => 'repl_existing',
-            'expires_at'     => now()->addDays(20),
+            'expires_at' => now()->addDays(20),
         ]);
 
         $action = app(EnableAutoRenew::class);
@@ -88,10 +88,10 @@ class EnableAutoRenewTest extends TestCase
 
         $user = User::factory()->create();
         $creatorSub = CreatorSubscription::create([
-            'user_id'    => $user->id,
-            'plan'       => CreatorSubscription::PLAN_BASIC,
-            'status'     => CreatorSubscription::STATUS_ACTIVE,
-            'xendit_id'  => 'inv_creator_legacy',
+            'user_id' => $user->id,
+            'plan' => CreatorSubscription::PLAN_BASIC,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
+            'xendit_id' => 'inv_creator_legacy',
             'expires_at' => now()->addDays(15),
         ]);
 
@@ -114,17 +114,17 @@ class EnableAutoRenewTest extends TestCase
         $community = Community::factory()->create();
         $originalExpiry = now()->addDays(20);
         $subscription = Subscription::create([
-            'community_id'     => $community->id,
-            'user_id'          => $user->id,
-            'status'           => Subscription::STATUS_ACTIVE,
-            'xendit_plan_id'   => 'repl_preserve_exp',
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'xendit_plan_id' => 'repl_preserve_exp',
             'recurring_status' => 'REQUIRES_ACTION',
-            'expires_at'       => $originalExpiry,
+            'expires_at' => $originalExpiry,
         ]);
 
         $request = Request::create('/xendit/webhook', 'POST', [
             'event' => 'recurring.plan.activated',
-            'data'  => ['id' => 'repl_preserve_exp'],
+            'data' => ['id' => 'repl_preserve_exp'],
         ]);
         $request->headers->set('x-callback-token', 'valid-token');
 
@@ -148,16 +148,16 @@ class EnableAutoRenewTest extends TestCase
         $user = User::factory()->create(['needs_password_setup' => false]);
         $community = Community::factory()->create();
         $subscription = Subscription::create([
-            'community_id'     => $community->id,
-            'user_id'          => $user->id,
-            'status'           => Subscription::STATUS_PENDING,
-            'xendit_plan_id'   => 'repl_new_exp',
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_PENDING,
+            'xendit_plan_id' => 'repl_new_exp',
             'recurring_status' => 'REQUIRES_ACTION',
         ]);
 
         $request = Request::create('/xendit/webhook', 'POST', [
             'event' => 'recurring.plan.activated',
-            'data'  => ['id' => 'repl_new_exp'],
+            'data' => ['id' => 'repl_new_exp'],
         ]);
         $request->headers->set('x-callback-token', 'valid-token');
 
@@ -181,10 +181,10 @@ class EnableAutoRenewTest extends TestCase
         $community = Community::factory()->paid()->create();
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'status'       => Subscription::STATUS_ACTIVE,
-            'xendit_id'    => 'inv_endpoint_test',
-            'expires_at'   => now()->addDays(20),
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'xendit_id' => 'inv_endpoint_test',
+            'expires_at' => now()->addDays(20),
         ]);
 
         $this->actingAs($user)
@@ -201,10 +201,10 @@ class EnableAutoRenewTest extends TestCase
         $community = Community::factory()->paid()->create();
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $otherUser->id,
-            'status'       => Subscription::STATUS_ACTIVE,
-            'xendit_id'    => 'inv_other_user',
-            'expires_at'   => now()->addDays(20),
+            'user_id' => $otherUser->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'xendit_id' => 'inv_other_user',
+            'expires_at' => now()->addDays(20),
         ]);
 
         $this->actingAs($user)
@@ -217,11 +217,11 @@ class EnableAutoRenewTest extends TestCase
         $user = User::factory()->create();
         $community = Community::factory()->paid()->create();
         $subscription = Subscription::create([
-            'community_id'   => $community->id,
-            'user_id'        => $user->id,
-            'status'         => Subscription::STATUS_ACTIVE,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_ACTIVE,
             'xendit_plan_id' => 'repl_already',
-            'expires_at'     => now()->addDays(20),
+            'expires_at' => now()->addDays(20),
         ]);
 
         $this->actingAs($user)
@@ -235,10 +235,10 @@ class EnableAutoRenewTest extends TestCase
 
         $user = User::factory()->create();
         CreatorSubscription::create([
-            'user_id'    => $user->id,
-            'plan'       => CreatorSubscription::PLAN_PRO,
-            'status'     => CreatorSubscription::STATUS_ACTIVE,
-            'xendit_id'  => 'inv_creator_endpoint',
+            'user_id' => $user->id,
+            'plan' => CreatorSubscription::PLAN_PRO,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
+            'xendit_id' => 'inv_creator_endpoint',
             'expires_at' => now()->addDays(15),
         ]);
 
@@ -254,10 +254,10 @@ class EnableAutoRenewTest extends TestCase
 
         $user = User::factory()->create();
         $creatorSub = CreatorSubscription::create([
-            'user_id'    => $user->id,
-            'plan'       => CreatorSubscription::PLAN_PRO,
-            'status'     => CreatorSubscription::STATUS_ACTIVE,
-            'xendit_id'  => 'inv_creator_pro_legacy',
+            'user_id' => $user->id,
+            'plan' => CreatorSubscription::PLAN_PRO,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
+            'xendit_id' => 'inv_creator_pro_legacy',
             'expires_at' => now()->addDays(15),
         ]);
 
@@ -275,11 +275,11 @@ class EnableAutoRenewTest extends TestCase
     {
         $user = User::factory()->create();
         $creatorSub = CreatorSubscription::create([
-            'user_id'        => $user->id,
-            'plan'           => CreatorSubscription::PLAN_BASIC,
-            'status'         => CreatorSubscription::STATUS_ACTIVE,
+            'user_id' => $user->id,
+            'plan' => CreatorSubscription::PLAN_BASIC,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
             'xendit_plan_id' => 'repl_existing_creator',
-            'expires_at'     => now()->addDays(15),
+            'expires_at' => now()->addDays(15),
         ]);
 
         $action = app(EnableAutoRenew::class);
@@ -303,10 +303,10 @@ class EnableAutoRenewTest extends TestCase
         $community = Community::factory()->paid(499)->create();
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'status'       => Subscription::STATUS_ACTIVE,
-            'xendit_id'    => 'inv_fail_test',
-            'expires_at'   => now()->addDays(20),
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'xendit_id' => 'inv_fail_test',
+            'expires_at' => now()->addDays(20),
         ]);
 
         $this->expectException(\RuntimeException::class);
@@ -323,8 +323,8 @@ class EnableAutoRenewTest extends TestCase
             ->andReturn(['id' => 'cust_no_url']);
         $xendit->shouldReceive('createRecurringPlan')
             ->andReturn([
-                'id'      => 'repl_no_url',
-                'status'  => 'REQUIRES_ACTION',
+                'id' => 'repl_no_url',
+                'status' => 'REQUIRES_ACTION',
                 'actions' => [['action' => 'AUTH']],
             ]);
 
@@ -334,10 +334,10 @@ class EnableAutoRenewTest extends TestCase
         $community = Community::factory()->paid(499)->create();
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'status'       => Subscription::STATUS_ACTIVE,
-            'xendit_id'    => 'inv_no_url_test',
-            'expires_at'   => now()->addDays(20),
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'xendit_id' => 'inv_no_url_test',
+            'expires_at' => now()->addDays(20),
         ]);
 
         $action = app(EnableAutoRenew::class);

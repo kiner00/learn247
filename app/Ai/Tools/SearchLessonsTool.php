@@ -14,7 +14,7 @@ class SearchLessonsTool implements Tool
 
     public function description(): string
     {
-        return "Search for lessons by keyword across all communities the user belongs to. Returns lesson title, module, course, and community.";
+        return 'Search for lessons by keyword across all communities the user belongs to. Returns lesson title, module, course, and community.';
     }
 
     public function handle(Request $request): string
@@ -39,9 +39,9 @@ class SearchLessonsTool implements Tool
         }
 
         $result = $lessons->map(fn ($l) => [
-            'lesson'    => $l->title,
-            'module'    => $l->module->title,
-            'course'    => $l->module->course->title,
+            'lesson' => $l->title,
+            'module' => $l->module->title,
+            'course' => $l->module->course->title,
             'community' => $l->module->course->community->name,
         ])->values()->toArray();
 

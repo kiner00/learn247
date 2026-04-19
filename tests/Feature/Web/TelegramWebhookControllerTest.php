@@ -14,6 +14,7 @@ class TelegramWebhookControllerTest extends TestCase
     use RefreshDatabase;
 
     private Community $community;
+
     private string $secret;
 
     protected function setUp(): void
@@ -22,10 +23,10 @@ class TelegramWebhookControllerTest extends TestCase
 
         $this->community = Community::factory()->create([
             'telegram_bot_token' => 'test-bot-token',
-            'telegram_chat_id'   => '-1001234567890',
+            'telegram_chat_id' => '-1001234567890',
         ]);
 
-        $this->secret = (new TelegramService())->webhookSecret('test-bot-token');
+        $this->secret = (new TelegramService)->webhookSecret('test-bot-token');
     }
 
     public function test_returns_200_for_unknown_slug(): void
@@ -39,10 +40,10 @@ class TelegramWebhookControllerTest extends TestCase
     {
         $community = Community::factory()->create([
             'telegram_bot_token' => null,
-            'telegram_chat_id'   => '-100999',
+            'telegram_chat_id' => '-100999',
         ]);
 
-        $response = $this->postJson('/webhooks/telegram/' . $community->slug, []);
+        $response = $this->postJson('/webhooks/telegram/'.$community->slug, []);
 
         $response->assertStatus(200);
     }
@@ -50,7 +51,7 @@ class TelegramWebhookControllerTest extends TestCase
     public function test_returns_200_when_secret_does_not_match(): void
     {
         $response = $this->postJson(
-            '/webhooks/telegram/' . $this->community->slug,
+            '/webhooks/telegram/'.$this->community->slug,
             ['message' => ['chat' => ['id' => '-1001234567890'], 'text' => 'Hello']],
             ['X-Telegram-Bot-Api-Secret-Token' => 'wrong-secret']
         );
@@ -67,25 +68,25 @@ class TelegramWebhookControllerTest extends TestCase
             'message' => [
                 'chat' => ['id' => -1001234567890],
                 'from' => [
-                    'id'         => 111,
-                    'is_bot'     => false,
+                    'id' => 111,
+                    'is_bot' => false,
                     'first_name' => 'John',
-                    'last_name'  => 'Doe',
+                    'last_name' => 'Doe',
                 ],
                 'text' => 'Hello from Telegram!',
             ],
         ];
 
         $response = $this->postJson(
-            '/webhooks/telegram/' . $this->community->slug,
+            '/webhooks/telegram/'.$this->community->slug,
             $payload,
             ['X-Telegram-Bot-Api-Secret-Token' => $this->secret]
         );
 
         $response->assertStatus(200);
         $this->assertDatabaseHas('messages', [
-            'community_id'    => $this->community->id,
-            'content'         => 'Hello from Telegram!',
+            'community_id' => $this->community->id,
+            'content' => 'Hello from Telegram!',
             'telegram_author' => 'John Doe',
         ]);
     }
@@ -94,7 +95,7 @@ class TelegramWebhookControllerTest extends TestCase
     {
         Http::fake([
             'https://api.telegram.org/bot*' => Http::response([
-                'ok'     => true,
+                'ok' => true,
                 'result' => ['file_path' => 'photos/file_99.jpg'],
             ], 200),
         ]);
@@ -103,12 +104,12 @@ class TelegramWebhookControllerTest extends TestCase
             'message' => [
                 'chat' => ['id' => -1001234567890],
                 'from' => [
-                    'id'         => 222,
-                    'is_bot'     => false,
+                    'id' => 222,
+                    'is_bot' => false,
                     'first_name' => 'Jane',
                 ],
                 'caption' => 'My photo caption',
-                'photo'   => [
+                'photo' => [
                     ['file_id' => 'small_id', 'width' => 90, 'height' => 90],
                     ['file_id' => 'large_id', 'width' => 800, 'height' => 600],
                 ],
@@ -116,17 +117,17 @@ class TelegramWebhookControllerTest extends TestCase
         ];
 
         $response = $this->postJson(
-            '/webhooks/telegram/' . $this->community->slug,
+            '/webhooks/telegram/'.$this->community->slug,
             $payload,
             ['X-Telegram-Bot-Api-Secret-Token' => $this->secret]
         );
 
         $response->assertStatus(200);
         $this->assertDatabaseHas('messages', [
-            'community_id'    => $this->community->id,
-            'content'         => 'My photo caption',
+            'community_id' => $this->community->id,
+            'content' => 'My photo caption',
             'telegram_author' => 'Jane',
-            'media_type'      => 'image',
+            'media_type' => 'image',
         ]);
     }
 
@@ -134,7 +135,7 @@ class TelegramWebhookControllerTest extends TestCase
     {
         Http::fake([
             'https://api.telegram.org/bot*' => Http::response([
-                'ok'     => true,
+                'ok' => true,
                 'result' => ['file_path' => 'videos/file_55.mp4'],
             ], 200),
         ]);
@@ -143,26 +144,26 @@ class TelegramWebhookControllerTest extends TestCase
             'message' => [
                 'chat' => ['id' => -1001234567890],
                 'from' => [
-                    'id'       => 333,
-                    'is_bot'   => false,
+                    'id' => 333,
+                    'is_bot' => false,
                     'username' => 'videoguy',
                 ],
                 'caption' => 'Check this video',
-                'video'   => ['file_id' => 'vid_file_id', 'duration' => 30],
+                'video' => ['file_id' => 'vid_file_id', 'duration' => 30],
             ],
         ];
 
         $response = $this->postJson(
-            '/webhooks/telegram/' . $this->community->slug,
+            '/webhooks/telegram/'.$this->community->slug,
             $payload,
             ['X-Telegram-Bot-Api-Secret-Token' => $this->secret]
         );
 
         $response->assertStatus(200);
         $this->assertDatabaseHas('messages', [
-            'community_id'    => $this->community->id,
+            'community_id' => $this->community->id,
             'telegram_author' => 'videoguy',
-            'media_type'      => 'video',
+            'media_type' => 'video',
         ]);
     }
 
@@ -174,7 +175,7 @@ class TelegramWebhookControllerTest extends TestCase
             'message' => [
                 'chat' => ['id' => -1001234567890],
                 'from' => [
-                    'id'     => 444,
+                    'id' => 444,
                     'is_bot' => true,
                 ],
                 'text' => 'Bot message',
@@ -182,7 +183,7 @@ class TelegramWebhookControllerTest extends TestCase
         ];
 
         $response = $this->postJson(
-            '/webhooks/telegram/' . $this->community->slug,
+            '/webhooks/telegram/'.$this->community->slug,
             $payload,
             ['X-Telegram-Bot-Api-Secret-Token' => $this->secret]
         );
@@ -204,7 +205,7 @@ class TelegramWebhookControllerTest extends TestCase
         ];
 
         $response = $this->postJson(
-            '/webhooks/telegram/' . $this->community->slug,
+            '/webhooks/telegram/'.$this->community->slug,
             $payload,
             ['X-Telegram-Bot-Api-Secret-Token' => $this->secret]
         );
@@ -218,7 +219,7 @@ class TelegramWebhookControllerTest extends TestCase
         Http::fake();
 
         $response = $this->postJson(
-            '/webhooks/telegram/' . $this->community->slug,
+            '/webhooks/telegram/'.$this->community->slug,
             ['update_id' => 12345],
             ['X-Telegram-Bot-Api-Secret-Token' => $this->secret]
         );
@@ -235,24 +236,24 @@ class TelegramWebhookControllerTest extends TestCase
             'channel_post' => [
                 'chat' => ['id' => -1001234567890],
                 'from' => [
-                    'id'         => 666,
-                    'is_bot'     => false,
+                    'id' => 666,
+                    'is_bot' => false,
                     'first_name' => 'Channel',
-                    'last_name'  => 'Admin',
+                    'last_name' => 'Admin',
                 ],
                 'text' => 'Channel announcement',
             ],
         ];
 
         $response = $this->postJson(
-            '/webhooks/telegram/' . $this->community->slug,
+            '/webhooks/telegram/'.$this->community->slug,
             $payload,
             ['X-Telegram-Bot-Api-Secret-Token' => $this->secret]
         );
 
         $response->assertStatus(200);
         $this->assertDatabaseHas('messages', [
-            'content'         => 'Channel announcement',
+            'content' => 'Channel announcement',
             'telegram_author' => 'Channel Admin',
         ]);
     }
@@ -265,8 +266,8 @@ class TelegramWebhookControllerTest extends TestCase
             'message' => [
                 'chat' => ['id' => -1001234567890],
                 'from' => [
-                    'id'       => 777,
-                    'is_bot'   => false,
+                    'id' => 777,
+                    'is_bot' => false,
                     'username' => 'cooluser',
                 ],
                 'text' => 'No name user',
@@ -274,7 +275,7 @@ class TelegramWebhookControllerTest extends TestCase
         ];
 
         $response = $this->postJson(
-            '/webhooks/telegram/' . $this->community->slug,
+            '/webhooks/telegram/'.$this->community->slug,
             $payload,
             ['X-Telegram-Bot-Api-Secret-Token' => $this->secret]
         );
@@ -291,24 +292,24 @@ class TelegramWebhookControllerTest extends TestCase
 
         // Pre-create a message with the same telegram_message_id
         Message::create([
-            'community_id'        => $this->community->id,
-            'user_id'             => $this->community->owner_id,
-            'content'             => 'Original',
-            'telegram_author'     => 'Someone',
+            'community_id' => $this->community->id,
+            'user_id' => $this->community->owner_id,
+            'content' => 'Original',
+            'telegram_author' => 'Someone',
             'telegram_message_id' => 9999,
         ]);
 
         $payload = [
             'message' => [
                 'message_id' => 9999,
-                'chat'       => ['id' => -1001234567890],
-                'from'       => ['id' => 101, 'is_bot' => false, 'first_name' => 'Dup'],
-                'text'       => 'Duplicate attempt',
+                'chat' => ['id' => -1001234567890],
+                'from' => ['id' => 101, 'is_bot' => false, 'first_name' => 'Dup'],
+                'text' => 'Duplicate attempt',
             ],
         ];
 
         $response = $this->postJson(
-            '/webhooks/telegram/' . $this->community->slug,
+            '/webhooks/telegram/'.$this->community->slug,
             $payload,
             ['X-Telegram-Bot-Api-Secret-Token' => $this->secret]
         );
@@ -332,7 +333,7 @@ class TelegramWebhookControllerTest extends TestCase
         ];
 
         $response = $this->postJson(
-            '/webhooks/telegram/' . $this->community->slug,
+            '/webhooks/telegram/'.$this->community->slug,
             $payload,
             ['X-Telegram-Bot-Api-Secret-Token' => $this->secret]
         );

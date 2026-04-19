@@ -30,11 +30,11 @@ class GetCourseDetail
                 ->map(fn ($comments) => $comments->values());
 
             return [
-                'completed_ids'   => [],
-                'progress'        => 0,
-                'quiz_attempts'   => collect(),
+                'completed_ids' => [],
+                'progress' => 0,
+                'quiz_attempts' => collect(),
                 'lesson_comments' => $lessonComments,
-                'enrollment'      => null,
+                'enrollment' => null,
             ];
         }
 
@@ -43,7 +43,7 @@ class GetCourseDetail
             ->pluck('lesson_id')
             ->all();
 
-        $total    = $lessonIds->count();
+        $total = $lessonIds->count();
         $progress = $total > 0 ? round(count($completedIds) / $total * 100) : 0;
 
         $quizAttempts = QuizAttempt::where('user_id', $userId)
@@ -66,11 +66,11 @@ class GetCourseDetail
             ->first();
 
         return [
-            'completed_ids'   => $completedIds,
-            'progress'        => $progress,
-            'quiz_attempts'   => $quizAttempts,
+            'completed_ids' => $completedIds,
+            'progress' => $progress,
+            'quiz_attempts' => $quizAttempts,
             'lesson_comments' => $lessonComments,
-            'enrollment'      => $enrollment ? ['status' => $enrollment->status] : null,
+            'enrollment' => $enrollment ? ['status' => $enrollment->status] : null,
         ];
     }
 }

@@ -37,8 +37,8 @@ class ForgotPasswordController extends Controller
     public function reset(Request $request): RedirectResponse
     {
         $request->validate([
-            'token'    => 'required',
-            'email'    => 'required|email',
+            'token' => 'required',
+            'email' => 'required|email',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
@@ -46,7 +46,7 @@ class ForgotPasswordController extends Controller
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function ($user, $password) {
                 $user->update([
-                    'password'             => bcrypt($password),
+                    'password' => bcrypt($password),
                     'needs_password_setup' => false,
                 ]);
             }

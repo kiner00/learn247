@@ -18,7 +18,7 @@ class BadgeControllerTest extends TestCase
             $mock->shouldReceive('execute')
                 ->once()
                 ->andReturn([
-                    'member'  => [['name' => 'First Post', 'earned' => true]],
+                    'member' => [['name' => 'First Post', 'earned' => true]],
                     'creator' => [['name' => 'Community Creator', 'earned' => false]],
                 ]);
         });

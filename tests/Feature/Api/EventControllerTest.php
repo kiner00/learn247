@@ -21,11 +21,11 @@ class EventControllerTest extends TestCase
         $community = Community::factory()->create();
         Event::create([
             'community_id' => $community->id,
-            'created_by'   => $community->owner_id,
-            'title'        => 'Test Event',
-            'description'  => 'Desc',
-            'start_at'     => now()->addDay(),
-            'end_at'       => now()->addDay()->addHour(),
+            'created_by' => $community->owner_id,
+            'title' => 'Test Event',
+            'description' => 'Desc',
+            'start_at' => now()->addDay(),
+            'end_at' => now()->addDay()->addHour(),
         ]);
 
         $response = $this->actingAs($community->owner)->getJson("/api/communities/{$community->slug}/events");
@@ -38,14 +38,14 @@ class EventControllerTest extends TestCase
     public function test_owner_can_create_event_returns_201(): void
     {
         $community = Community::factory()->create();
-        $owner     = $community->owner;
+        $owner = $community->owner;
 
         $response = $this->actingAs($owner)->postJson("/api/communities/{$community->slug}/events", [
-            'title'       => 'New Event',
+            'title' => 'New Event',
             'description' => 'Event description',
-            'start_at'    => now()->addDay()->toIso8601String(),
-            'end_at'      => now()->addDay()->addHour()->toIso8601String(),
-            'timezone'    => 'UTC',
+            'start_at' => now()->addDay()->toIso8601String(),
+            'end_at' => now()->addDay()->addHour()->toIso8601String(),
+            'timezone' => 'UTC',
         ]);
 
         $response->assertCreated()
@@ -53,21 +53,21 @@ class EventControllerTest extends TestCase
             ->assertJsonStructure(['event_id']);
         $this->assertDatabaseHas('events', [
             'community_id' => $community->id,
-            'title'        => 'New Event',
+            'title' => 'New Event',
         ]);
     }
 
     public function test_non_owner_cannot_create_event_returns_403(): void
     {
         $community = Community::factory()->create();
-        $nonOwner  = User::factory()->create();
+        $nonOwner = User::factory()->create();
 
         $response = $this->actingAs($nonOwner)->postJson("/api/communities/{$community->slug}/events", [
-            'title'       => 'New Event',
+            'title' => 'New Event',
             'description' => 'Event description',
-            'start_at'    => now()->addDay()->toIso8601String(),
-            'end_at'      => now()->addDay()->addHour()->toIso8601String(),
-            'timezone'    => 'UTC',
+            'start_at' => now()->addDay()->toIso8601String(),
+            'end_at' => now()->addDay()->addHour()->toIso8601String(),
+            'timezone' => 'UTC',
         ]);
 
         $response->assertForbidden();
@@ -77,23 +77,23 @@ class EventControllerTest extends TestCase
     public function test_owner_can_update_event(): void
     {
         $community = Community::factory()->create();
-        $event     = Event::create([
+        $event = Event::create([
             'community_id' => $community->id,
-            'created_by'   => $community->owner_id,
-            'title'        => 'Test Event',
-            'description'  => 'Desc',
-            'start_at'     => now()->addDay(),
-            'end_at'       => now()->addDay()->addHour(),
+            'created_by' => $community->owner_id,
+            'title' => 'Test Event',
+            'description' => 'Desc',
+            'start_at' => now()->addDay(),
+            'end_at' => now()->addDay()->addHour(),
         ]);
 
         $response = $this->actingAs($community->owner)->postJson(
             "/api/communities/{$community->slug}/events/{$event->id}",
             [
-                'title'       => 'Updated Event',
+                'title' => 'Updated Event',
                 'description' => 'Updated desc',
-                'start_at'    => now()->addDays(2)->toIso8601String(),
-                'end_at'      => now()->addDays(2)->addHour()->toIso8601String(),
-                'timezone'    => 'UTC',
+                'start_at' => now()->addDays(2)->toIso8601String(),
+                'end_at' => now()->addDays(2)->addHour()->toIso8601String(),
+                'timezone' => 'UTC',
             ]
         );
 
@@ -104,13 +104,13 @@ class EventControllerTest extends TestCase
     public function test_owner_can_delete_event(): void
     {
         $community = Community::factory()->create();
-        $event     = Event::create([
+        $event = Event::create([
             'community_id' => $community->id,
-            'created_by'   => $community->owner_id,
-            'title'        => 'Test Event',
-            'description'  => 'Desc',
-            'start_at'     => now()->addDay(),
-            'end_at'       => now()->addDay()->addHour(),
+            'created_by' => $community->owner_id,
+            'title' => 'Test Event',
+            'description' => 'Desc',
+            'start_at' => now()->addDay(),
+            'end_at' => now()->addDay()->addHour(),
         ]);
 
         $response = $this->actingAs($community->owner)->deleteJson(
@@ -126,7 +126,7 @@ class EventControllerTest extends TestCase
         $community = Community::factory()->create();
 
         $this->postJson("/api/communities/{$community->slug}/events", [
-            'title'    => 'Test',
+            'title' => 'Test',
             'start_at' => now()->addDay()->toIso8601String(),
             'timezone' => 'UTC',
         ])->assertUnauthorized();
@@ -135,24 +135,24 @@ class EventControllerTest extends TestCase
     public function test_non_member_only_sees_public_events(): void
     {
         $community = Community::factory()->create();
-        $outsider  = User::factory()->create();
+        $outsider = User::factory()->create();
 
         Event::create([
-            'community_id'    => $community->id,
-            'created_by'      => $community->owner_id,
-            'title'           => 'Public Event',
-            'start_at'        => now()->addDay(),
-            'end_at'          => now()->addDay()->addHour(),
-            'visibility'      => 'public',
+            'community_id' => $community->id,
+            'created_by' => $community->owner_id,
+            'title' => 'Public Event',
+            'start_at' => now()->addDay(),
+            'end_at' => now()->addDay()->addHour(),
+            'visibility' => 'public',
         ]);
 
         Event::create([
-            'community_id'    => $community->id,
-            'created_by'      => $community->owner_id,
-            'title'           => 'Members Only Event',
-            'start_at'        => now()->addDay(),
-            'end_at'          => now()->addDay()->addHour(),
-            'visibility'      => 'free',
+            'community_id' => $community->id,
+            'created_by' => $community->owner_id,
+            'title' => 'Members Only Event',
+            'start_at' => now()->addDay(),
+            'end_at' => now()->addDay()->addHour(),
+            'visibility' => 'free',
         ]);
 
         $this->actingAs($outsider)
@@ -165,25 +165,25 @@ class EventControllerTest extends TestCase
     public function test_member_sees_all_events_including_members_only(): void
     {
         $community = Community::factory()->create();
-        $member    = User::factory()->create();
+        $member = User::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         Event::create([
-            'community_id'    => $community->id,
-            'created_by'      => $community->owner_id,
-            'title'           => 'Public Event',
-            'start_at'        => now()->addDay(),
-            'end_at'          => now()->addDay()->addHour(),
-            'visibility'      => 'public',
+            'community_id' => $community->id,
+            'created_by' => $community->owner_id,
+            'title' => 'Public Event',
+            'start_at' => now()->addDay(),
+            'end_at' => now()->addDay()->addHour(),
+            'visibility' => 'public',
         ]);
 
         Event::create([
-            'community_id'    => $community->id,
-            'created_by'      => $community->owner_id,
-            'title'           => 'Members Only Event',
-            'start_at'        => now()->addDay(),
-            'end_at'          => now()->addDay()->addHour(),
-            'visibility'      => 'free',
+            'community_id' => $community->id,
+            'created_by' => $community->owner_id,
+            'title' => 'Members Only Event',
+            'start_at' => now()->addDay(),
+            'end_at' => now()->addDay()->addHour(),
+            'visibility' => 'free',
         ]);
 
         $this->actingAs($member)
@@ -199,15 +199,15 @@ class EventControllerTest extends TestCase
 
         $event = Event::create([
             'community_id' => $communityB->id,
-            'created_by'   => $communityA->owner_id,
-            'title'        => 'Wrong Community Event',
-            'start_at'     => now()->addDay(),
-            'end_at'       => now()->addDay()->addHour(),
+            'created_by' => $communityA->owner_id,
+            'title' => 'Wrong Community Event',
+            'start_at' => now()->addDay(),
+            'end_at' => now()->addDay()->addHour(),
         ]);
 
         $this->actingAs($communityA->owner)
             ->postJson("/api/communities/{$communityA->slug}/events/{$event->id}", [
-                'title'    => 'Hacked',
+                'title' => 'Hacked',
                 'start_at' => now()->addDays(2)->toIso8601String(),
                 'timezone' => 'UTC',
             ])
@@ -223,10 +223,10 @@ class EventControllerTest extends TestCase
 
         $event = Event::create([
             'community_id' => $communityB->id,
-            'created_by'   => $communityA->owner_id,
-            'title'        => 'Wrong Community Event',
-            'start_at'     => now()->addDay(),
-            'end_at'       => now()->addDay()->addHour(),
+            'created_by' => $communityA->owner_id,
+            'title' => 'Wrong Community Event',
+            'start_at' => now()->addDay(),
+            'end_at' => now()->addDay()->addHour(),
         ]);
 
         $this->actingAs($communityA->owner)
@@ -248,7 +248,7 @@ class EventControllerTest extends TestCase
 
         $this->actingAs($community->owner)
             ->postJson("/api/communities/{$community->slug}/events", [
-                'title'    => 'Failing Event',
+                'title' => 'Failing Event',
                 'start_at' => now()->addDay()->toIso8601String(),
                 'timezone' => 'UTC',
             ])
@@ -261,12 +261,12 @@ class EventControllerTest extends TestCase
     public function test_update_returns_500_when_action_throws(): void
     {
         $community = Community::factory()->create();
-        $event     = Event::create([
+        $event = Event::create([
             'community_id' => $community->id,
-            'created_by'   => $community->owner_id,
-            'title'        => 'Original',
-            'start_at'     => now()->addDay(),
-            'end_at'       => now()->addDay()->addHour(),
+            'created_by' => $community->owner_id,
+            'title' => 'Original',
+            'start_at' => now()->addDay(),
+            'end_at' => now()->addDay()->addHour(),
         ]);
 
         $mock = Mockery::mock(ManageEvent::class);
@@ -275,7 +275,7 @@ class EventControllerTest extends TestCase
 
         $this->actingAs($community->owner)
             ->postJson("/api/communities/{$community->slug}/events/{$event->id}", [
-                'title'    => 'Updated',
+                'title' => 'Updated',
                 'start_at' => now()->addDays(2)->toIso8601String(),
                 'timezone' => 'UTC',
             ])
@@ -288,12 +288,12 @@ class EventControllerTest extends TestCase
     public function test_destroy_returns_500_when_action_throws(): void
     {
         $community = Community::factory()->create();
-        $event     = Event::create([
+        $event = Event::create([
             'community_id' => $community->id,
-            'created_by'   => $community->owner_id,
-            'title'        => 'To Delete',
-            'start_at'     => now()->addDay(),
-            'end_at'       => now()->addDay()->addHour(),
+            'created_by' => $community->owner_id,
+            'title' => 'To Delete',
+            'start_at' => now()->addDay(),
+            'end_at' => now()->addDay()->addHour(),
         ]);
 
         $mock = Mockery::mock(ManageEvent::class);
@@ -311,18 +311,18 @@ class EventControllerTest extends TestCase
     public function test_non_owner_cannot_update_event(): void
     {
         $community = Community::factory()->create();
-        $nonOwner  = User::factory()->create();
-        $event     = Event::create([
+        $nonOwner = User::factory()->create();
+        $event = Event::create([
             'community_id' => $community->id,
-            'created_by'   => $community->owner_id,
-            'title'        => 'Protected',
-            'start_at'     => now()->addDay(),
-            'end_at'       => now()->addDay()->addHour(),
+            'created_by' => $community->owner_id,
+            'title' => 'Protected',
+            'start_at' => now()->addDay(),
+            'end_at' => now()->addDay()->addHour(),
         ]);
 
         $this->actingAs($nonOwner)
             ->postJson("/api/communities/{$community->slug}/events/{$event->id}", [
-                'title'    => 'Hacked',
+                'title' => 'Hacked',
                 'start_at' => now()->addDays(2)->toIso8601String(),
                 'timezone' => 'UTC',
             ])
@@ -334,13 +334,13 @@ class EventControllerTest extends TestCase
     public function test_non_owner_cannot_delete_event(): void
     {
         $community = Community::factory()->create();
-        $nonOwner  = User::factory()->create();
-        $event     = Event::create([
+        $nonOwner = User::factory()->create();
+        $event = Event::create([
             'community_id' => $community->id,
-            'created_by'   => $community->owner_id,
-            'title'        => 'Protected',
-            'start_at'     => now()->addDay(),
-            'end_at'       => now()->addDay()->addHour(),
+            'created_by' => $community->owner_id,
+            'title' => 'Protected',
+            'start_at' => now()->addDay(),
+            'end_at' => now()->addDay()->addHour(),
         ]);
 
         $this->actingAs($nonOwner)
@@ -355,17 +355,17 @@ class EventControllerTest extends TestCase
         Storage::fake(config('filesystems.default'));
 
         $community = Community::factory()->create();
-        $owner     = $community->owner;
+        $owner = $community->owner;
 
         Event::create([
             'community_id' => $community->id,
-            'created_by'   => $owner->id,
-            'title'        => 'Open-ended Event',
-            'start_at'     => now()->addDay(),
-            'end_at'       => null,
-            'timezone'     => 'UTC',
-            'cover_image'  => 'events/1/cover.jpg',
-            'visibility'   => 'public',
+            'created_by' => $owner->id,
+            'title' => 'Open-ended Event',
+            'start_at' => now()->addDay(),
+            'end_at' => null,
+            'timezone' => 'UTC',
+            'cover_image' => 'events/1/cover.jpg',
+            'visibility' => 'public',
         ]);
 
         $this->actingAs($owner)
@@ -381,28 +381,28 @@ class EventControllerTest extends TestCase
     public function test_index_filters_by_year_and_month_params(): void
     {
         $community = Community::factory()->create();
-        $owner     = $community->owner;
+        $owner = $community->owner;
 
         // Create an event in January 2025
         Event::create([
             'community_id' => $community->id,
-            'created_by'   => $owner->id,
-            'title'        => 'Jan Event',
-            'start_at'     => '2025-01-15 10:00:00',
-            'end_at'       => '2025-01-15 12:00:00',
-            'timezone'     => 'UTC',
-            'visibility'   => 'public',
+            'created_by' => $owner->id,
+            'title' => 'Jan Event',
+            'start_at' => '2025-01-15 10:00:00',
+            'end_at' => '2025-01-15 12:00:00',
+            'timezone' => 'UTC',
+            'visibility' => 'public',
         ]);
 
         // Create an event in February 2025
         Event::create([
             'community_id' => $community->id,
-            'created_by'   => $owner->id,
-            'title'        => 'Feb Event',
-            'start_at'     => '2025-02-15 10:00:00',
-            'end_at'       => '2025-02-15 12:00:00',
-            'timezone'     => 'UTC',
-            'visibility'   => 'public',
+            'created_by' => $owner->id,
+            'title' => 'Feb Event',
+            'start_at' => '2025-02-15 10:00:00',
+            'end_at' => '2025-02-15 12:00:00',
+            'timezone' => 'UTC',
+            'visibility' => 'public',
         ]);
 
         $this->actingAs($owner)
@@ -422,20 +422,20 @@ class EventControllerTest extends TestCase
 
         Event::create([
             'community_id' => $community->id,
-            'created_by'   => $community->owner_id,
-            'title'        => 'Public Event',
-            'start_at'     => now()->addDay(),
-            'end_at'       => now()->addDay()->addHour(),
-            'visibility'   => 'public',
+            'created_by' => $community->owner_id,
+            'title' => 'Public Event',
+            'start_at' => now()->addDay(),
+            'end_at' => now()->addDay()->addHour(),
+            'visibility' => 'public',
         ]);
 
         Event::create([
             'community_id' => $community->id,
-            'created_by'   => $community->owner_id,
-            'title'        => 'Free Event',
-            'start_at'     => now()->addDay(),
-            'end_at'       => now()->addDay()->addHour(),
-            'visibility'   => 'free',
+            'created_by' => $community->owner_id,
+            'title' => 'Free Event',
+            'start_at' => now()->addDay(),
+            'end_at' => now()->addDay()->addHour(),
+            'visibility' => 'free',
         ]);
 
         $this->getJson("/api/communities/{$community->slug}/events")

@@ -33,10 +33,10 @@ class GetCommunityPostsTool implements Tool
         }
 
         $result = $posts->map(fn ($p) => [
-            'title'     => $p->title,
-            'content'   => \Illuminate\Support\Str::limit($p->content, 300),
-            'author'    => $p->user->name,
-            'pinned'    => $p->is_pinned,
+            'title' => $p->title,
+            'content' => \Illuminate\Support\Str::limit($p->content, 300),
+            'author' => $p->user->name,
+            'pinned' => $p->is_pinned,
             'posted_at' => $p->created_at->diffForHumans(),
         ])->values()->toArray();
 

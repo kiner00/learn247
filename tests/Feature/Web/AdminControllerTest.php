@@ -9,9 +9,8 @@ use App\Models\Affiliate;
 use App\Models\AffiliateConversion;
 use App\Models\Community;
 use App\Models\CommunityMember;
-use App\Models\EmailTemplate;
 use App\Models\Coupon;
-use App\Models\OwnerPayout;
+use App\Models\EmailTemplate;
 use App\Models\Payment;
 use App\Models\PayoutRequest;
 use App\Models\Post;
@@ -183,21 +182,21 @@ class AdminControllerTest extends TestCase
         $affiliateUser = User::factory()->create();
         $community = Community::factory()->create();
         $affiliate = Affiliate::create([
-            'community_id'   => $community->id,
-            'user_id'        => $affiliateUser->id,
-            'code'           => 'AFF-PAYOUT',
-            'status'         => Affiliate::STATUS_ACTIVE,
-            'payout_method'  => 'maya',
+            'community_id' => $community->id,
+            'user_id' => $affiliateUser->id,
+            'code' => 'AFF-PAYOUT',
+            'status' => Affiliate::STATUS_ACTIVE,
+            'payout_method' => 'maya',
             'payout_details' => '09179876543',
         ]);
         PayoutRequest::create([
-            'user_id'         => $affiliateUser->id,
-            'type'            => PayoutRequest::TYPE_AFFILIATE,
-            'community_id'    => $community->id,
-            'affiliate_id'    => $affiliate->id,
-            'amount'          => 100,
+            'user_id' => $affiliateUser->id,
+            'type' => PayoutRequest::TYPE_AFFILIATE,
+            'community_id' => $community->id,
+            'affiliate_id' => $affiliate->id,
+            'amount' => 100,
             'eligible_amount' => 100,
-            'status'          => PayoutRequest::STATUS_PENDING,
+            'status' => PayoutRequest::STATUS_PENDING,
         ]);
 
         $response = $this->actingAs($admin)->get('/admin/payouts');
@@ -217,17 +216,17 @@ class AdminControllerTest extends TestCase
         $admin = $this->superAdmin();
 
         $owner = User::factory()->create([
-            'payout_method'  => 'gcash',
+            'payout_method' => 'gcash',
             'payout_details' => '09170001111',
         ]);
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         PayoutRequest::create([
-            'user_id'         => $owner->id,
-            'type'            => PayoutRequest::TYPE_OWNER,
-            'community_id'    => $community->id,
-            'amount'          => 300,
+            'user_id' => $owner->id,
+            'type' => PayoutRequest::TYPE_OWNER,
+            'community_id' => $community->id,
+            'amount' => 300,
             'eligible_amount' => 300,
-            'status'          => PayoutRequest::STATUS_PENDING,
+            'status' => PayoutRequest::STATUS_PENDING,
         ]);
 
         $response = $this->actingAs($admin)->get('/admin/payouts');
@@ -1314,7 +1313,7 @@ class AdminControllerTest extends TestCase
 
         $response = $this->actingAs($admin)->patch('/admin/creator-plan-pricing', [
             'basic_price' => 299,
-            'pro_price'   => 999,
+            'pro_price' => 999,
         ]);
 
         $response->assertRedirect();
@@ -1351,7 +1350,7 @@ class AdminControllerTest extends TestCase
 
         $response = $this->actingAs($admin)->patch('/admin/creator-plan-pricing', [
             'basic_price' => -10,
-            'pro_price'   => 999,
+            'pro_price' => 999,
         ]);
 
         $response->assertSessionHasErrors('basic_price');
@@ -1438,12 +1437,12 @@ class AdminControllerTest extends TestCase
         $user = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $user->id]);
         $payoutRequest = PayoutRequest::create([
-            'user_id'         => $user->id,
-            'type'            => PayoutRequest::TYPE_OWNER,
-            'community_id'    => $community->id,
-            'amount'          => 500,
+            'user_id' => $user->id,
+            'type' => PayoutRequest::TYPE_OWNER,
+            'community_id' => $community->id,
+            'amount' => 500,
             'eligible_amount' => 500,
-            'status'          => PayoutRequest::STATUS_APPROVED,
+            'status' => PayoutRequest::STATUS_APPROVED,
         ]);
 
         $response = $this->actingAs($admin)->post("/admin/payout-requests/{$payoutRequest->id}/mark-paid");
@@ -1451,7 +1450,7 @@ class AdminControllerTest extends TestCase
         $response->assertRedirect();
         $response->assertSessionHas('success');
         $this->assertDatabaseHas('payout_requests', [
-            'id'     => $payoutRequest->id,
+            'id' => $payoutRequest->id,
             'status' => PayoutRequest::STATUS_PAID,
         ]);
     }
@@ -1463,25 +1462,25 @@ class AdminControllerTest extends TestCase
         $affiliateUser = User::factory()->create();
         $community = Community::factory()->create(['price' => 500]);
         $affiliate = Affiliate::create([
-            'community_id'   => $community->id,
-            'user_id'        => $affiliateUser->id,
-            'code'           => 'AFF-MARK',
-            'status'         => Affiliate::STATUS_ACTIVE,
-            'total_earned'   => 50,
-            'total_paid'     => 0,
-            'payout_method'  => 'gcash',
+            'community_id' => $community->id,
+            'user_id' => $affiliateUser->id,
+            'code' => 'AFF-MARK',
+            'status' => Affiliate::STATUS_ACTIVE,
+            'total_earned' => 50,
+            'total_paid' => 0,
+            'payout_method' => 'gcash',
             'payout_details' => '09171234567',
         ]);
         $conversion = $this->createAffiliateConversion($affiliate, $community);
 
         $payoutRequest = PayoutRequest::create([
-            'user_id'         => $affiliateUser->id,
-            'type'            => PayoutRequest::TYPE_AFFILIATE,
-            'community_id'    => $community->id,
-            'affiliate_id'    => $affiliate->id,
-            'amount'          => 50,
+            'user_id' => $affiliateUser->id,
+            'type' => PayoutRequest::TYPE_AFFILIATE,
+            'community_id' => $community->id,
+            'affiliate_id' => $affiliate->id,
+            'amount' => 50,
             'eligible_amount' => 50,
-            'status'          => PayoutRequest::STATUS_APPROVED,
+            'status' => PayoutRequest::STATUS_APPROVED,
         ]);
 
         $response = $this->actingAs($admin)->post("/admin/payout-requests/{$payoutRequest->id}/mark-paid");
@@ -1489,7 +1488,7 @@ class AdminControllerTest extends TestCase
         $response->assertRedirect();
         $response->assertSessionHas('success');
         $this->assertDatabaseHas('payout_requests', [
-            'id'     => $payoutRequest->id,
+            'id' => $payoutRequest->id,
             'status' => PayoutRequest::STATUS_PAID,
         ]);
     }
@@ -1500,11 +1499,11 @@ class AdminControllerTest extends TestCase
 
         $user = User::factory()->create();
         $payoutRequest = PayoutRequest::create([
-            'user_id'         => $user->id,
-            'type'            => PayoutRequest::TYPE_OWNER,
-            'amount'          => 500,
+            'user_id' => $user->id,
+            'type' => PayoutRequest::TYPE_OWNER,
+            'amount' => 500,
             'eligible_amount' => 500,
-            'status'          => PayoutRequest::STATUS_PENDING,
+            'status' => PayoutRequest::STATUS_PENDING,
         ]);
 
         $response = $this->actingAs($admin)->post("/admin/payout-requests/{$payoutRequest->id}/mark-paid");
@@ -1518,11 +1517,11 @@ class AdminControllerTest extends TestCase
 
         $user = User::factory()->create();
         $payoutRequest = PayoutRequest::create([
-            'user_id'         => $user->id,
-            'type'            => PayoutRequest::TYPE_OWNER,
-            'amount'          => 500,
+            'user_id' => $user->id,
+            'type' => PayoutRequest::TYPE_OWNER,
+            'amount' => 500,
             'eligible_amount' => 500,
-            'status'          => PayoutRequest::STATUS_PAID,
+            'status' => PayoutRequest::STATUS_PAID,
         ]);
 
         $response = $this->actingAs($admin)->post("/admin/payout-requests/{$payoutRequest->id}/mark-paid");
@@ -1551,8 +1550,8 @@ class AdminControllerTest extends TestCase
         User::factory()->count(3)->create(['is_active' => true]);
 
         $response = $this->actingAs($admin)->post('/admin/announcements', [
-            'subject'  => 'Test Announcement',
-            'message'  => 'This is a test announcement body.',
+            'subject' => 'Test Announcement',
+            'message' => 'This is a test announcement body.',
             'audience' => 'all',
         ]);
 
@@ -1574,8 +1573,8 @@ class AdminControllerTest extends TestCase
         $admin = $this->superAdmin();
 
         $response = $this->actingAs($admin)->post('/admin/announcements', [
-            'subject'  => 'Test',
-            'message'  => 'Body',
+            'subject' => 'Test',
+            'message' => 'Body',
             'audience' => 'invalid_audience',
         ]);
 
@@ -1590,17 +1589,17 @@ class AdminControllerTest extends TestCase
         $affiliateUser = User::factory()->create();
         $community = Community::factory()->create();
         Affiliate::create([
-            'community_id'   => $community->id,
-            'user_id'        => $affiliateUser->id,
-            'code'           => 'AFF-ANN',
-            'status'         => Affiliate::STATUS_ACTIVE,
-            'payout_method'  => 'gcash',
+            'community_id' => $community->id,
+            'user_id' => $affiliateUser->id,
+            'code' => 'AFF-ANN',
+            'status' => Affiliate::STATUS_ACTIVE,
+            'payout_method' => 'gcash',
             'payout_details' => '09171234567',
         ]);
 
         $response = $this->actingAs($admin)->post('/admin/announcements', [
-            'subject'  => 'Affiliate News',
-            'message'  => 'News for affiliates.',
+            'subject' => 'Affiliate News',
+            'message' => 'News for affiliates.',
             'audience' => 'affiliates',
         ]);
 
@@ -1650,11 +1649,11 @@ class AdminControllerTest extends TestCase
         $admin = $this->superAdmin();
 
         Coupon::create([
-            'code'            => 'TESTCODE1',
-            'plan'            => 'basic',
+            'code' => 'TESTCODE1',
+            'plan' => 'basic',
             'duration_months' => 3,
             'max_redemptions' => 10,
-            'is_active'       => true,
+            'is_active' => true,
         ]);
 
         $response = $this->actingAs($admin)->get('/admin/coupons');
@@ -1674,18 +1673,18 @@ class AdminControllerTest extends TestCase
         $admin = $this->superAdmin();
 
         $response = $this->actingAs($admin)->post('/admin/coupons', [
-            'code'            => 'SAVE50',
-            'plan'            => 'pro',
+            'code' => 'SAVE50',
+            'plan' => 'pro',
             'duration_months' => 6,
             'max_redemptions' => 100,
-            'expires_at'      => now()->addMonth()->format('Y-m-d'),
+            'expires_at' => now()->addMonth()->format('Y-m-d'),
         ]);
 
         $response->assertRedirect();
         $response->assertSessionHas('success');
         $this->assertDatabaseHas('coupons', [
-            'code'            => 'SAVE50',
-            'plan'            => 'pro',
+            'code' => 'SAVE50',
+            'plan' => 'pro',
             'duration_months' => 6,
             'max_redemptions' => 100,
         ]);
@@ -1696,8 +1695,8 @@ class AdminControllerTest extends TestCase
         $admin = $this->superAdmin();
 
         $response = $this->actingAs($admin)->post('/admin/coupons', [
-            'code'            => 'lowercase',
-            'plan'            => 'basic',
+            'code' => 'lowercase',
+            'plan' => 'basic',
             'duration_months' => 1,
             'max_redemptions' => 5,
         ]);
@@ -1720,15 +1719,15 @@ class AdminControllerTest extends TestCase
         $admin = $this->superAdmin();
 
         Coupon::create([
-            'code'            => 'DUPE',
-            'plan'            => 'basic',
+            'code' => 'DUPE',
+            'plan' => 'basic',
             'duration_months' => 1,
             'max_redemptions' => 10,
         ]);
 
         $response = $this->actingAs($admin)->post('/admin/coupons', [
-            'code'            => 'DUPE',
-            'plan'            => 'pro',
+            'code' => 'DUPE',
+            'plan' => 'pro',
             'duration_months' => 3,
             'max_redemptions' => 5,
         ]);
@@ -1741,8 +1740,8 @@ class AdminControllerTest extends TestCase
         $admin = $this->superAdmin();
 
         $response = $this->actingAs($admin)->post('/admin/coupons', [
-            'code'            => 'BADPLAN',
-            'plan'            => 'enterprise',
+            'code' => 'BADPLAN',
+            'plan' => 'enterprise',
             'duration_months' => 1,
             'max_redemptions' => 5,
         ]);
@@ -1755,11 +1754,11 @@ class AdminControllerTest extends TestCase
         $admin = $this->superAdmin();
 
         $response = $this->actingAs($admin)->post('/admin/coupons', [
-            'code'            => 'EXPIRED',
-            'plan'            => 'basic',
+            'code' => 'EXPIRED',
+            'plan' => 'basic',
             'duration_months' => 1,
             'max_redemptions' => 5,
-            'expires_at'      => now()->subDay()->format('Y-m-d'),
+            'expires_at' => now()->subDay()->format('Y-m-d'),
         ]);
 
         $response->assertSessionHasErrors('expires_at');
@@ -1772,11 +1771,11 @@ class AdminControllerTest extends TestCase
         $admin = $this->superAdmin();
 
         $coupon = Coupon::create([
-            'code'            => 'TOGGLE1',
-            'plan'            => 'basic',
+            'code' => 'TOGGLE1',
+            'plan' => 'basic',
             'duration_months' => 1,
             'max_redemptions' => 10,
-            'is_active'       => true,
+            'is_active' => true,
         ]);
 
         $response = $this->actingAs($admin)->post("/admin/coupons/{$coupon->id}/toggle");
@@ -1791,11 +1790,11 @@ class AdminControllerTest extends TestCase
         $admin = $this->superAdmin();
 
         $coupon = Coupon::create([
-            'code'            => 'TOGGLE2',
-            'plan'            => 'pro',
+            'code' => 'TOGGLE2',
+            'plan' => 'pro',
             'duration_months' => 2,
             'max_redemptions' => 5,
-            'is_active'       => false,
+            'is_active' => false,
         ]);
 
         $response = $this->actingAs($admin)->post("/admin/coupons/{$coupon->id}/toggle");
@@ -1812,11 +1811,11 @@ class AdminControllerTest extends TestCase
         $admin = $this->superAdmin();
 
         $coupon = Coupon::create([
-            'code'            => 'DELETEME',
-            'plan'            => 'basic',
+            'code' => 'DELETEME',
+            'plan' => 'basic',
             'duration_months' => 1,
             'max_redemptions' => 10,
-            'times_redeemed'  => 0,
+            'times_redeemed' => 0,
         ]);
 
         $response = $this->actingAs($admin)->delete("/admin/coupons/{$coupon->id}");
@@ -1831,11 +1830,11 @@ class AdminControllerTest extends TestCase
         $admin = $this->superAdmin();
 
         $coupon = Coupon::create([
-            'code'            => 'REDEEMED',
-            'plan'            => 'basic',
+            'code' => 'REDEEMED',
+            'plan' => 'basic',
             'duration_months' => 1,
             'max_redemptions' => 10,
-            'times_redeemed'  => 3,
+            'times_redeemed' => 3,
         ]);
 
         $response = $this->actingAs($admin)->delete("/admin/coupons/{$coupon->id}");
@@ -1850,7 +1849,7 @@ class AdminControllerTest extends TestCase
     {
         $admin = $this->superAdmin();
         $user = User::factory()->create([
-            'kyc_status'      => User::KYC_NONE,
+            'kyc_status' => User::KYC_NONE,
             'kyc_verified_at' => null,
         ]);
 
@@ -1867,7 +1866,7 @@ class AdminControllerTest extends TestCase
     {
         $admin = $this->superAdmin();
         $user = User::factory()->create([
-            'kyc_status'      => User::KYC_APPROVED,
+            'kyc_status' => User::KYC_APPROVED,
             'kyc_verified_at' => now(),
         ]);
 
@@ -1938,7 +1937,7 @@ class AdminControllerTest extends TestCase
         Mail::fake();
         $admin = $this->superAdmin();
         $user = User::factory()->create([
-            'kyc_status'      => User::KYC_SUBMITTED,
+            'kyc_status' => User::KYC_SUBMITTED,
             'kyc_submitted_at' => now(),
         ]);
 
@@ -1960,9 +1959,9 @@ class AdminControllerTest extends TestCase
         Mail::fake();
         $admin = $this->superAdmin();
         $user = User::factory()->create([
-            'kyc_status'       => User::KYC_SUBMITTED,
+            'kyc_status' => User::KYC_SUBMITTED,
             'kyc_submitted_at' => now(),
-            'kyc_verified_at'  => now(),
+            'kyc_verified_at' => now(),
         ]);
 
         $response = $this->actingAs($admin)->patch("/admin/kyc-reviews/{$user->id}/reject", [
@@ -1982,7 +1981,7 @@ class AdminControllerTest extends TestCase
     {
         $admin = $this->superAdmin();
         $user = User::factory()->create([
-            'kyc_status'       => User::KYC_SUBMITTED,
+            'kyc_status' => User::KYC_SUBMITTED,
             'kyc_submitted_at' => now(),
         ]);
 

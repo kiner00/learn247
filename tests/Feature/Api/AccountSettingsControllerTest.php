@@ -73,8 +73,8 @@ class AccountSettingsControllerTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->patchJson('/api/account/settings/password', [
-            'current_password'      => 'password',
-            'password'              => 'new-secure-password',
+            'current_password' => 'password',
+            'password' => 'new-secure-password',
             'password_confirmation' => 'new-secure-password',
         ]);
 
@@ -133,7 +133,7 @@ class AccountSettingsControllerTest extends TestCase
 
     public function test_patch_community_notifications_updates_preferences(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
@@ -157,7 +157,7 @@ class AccountSettingsControllerTest extends TestCase
 
     public function test_patch_community_chat_updates_preferences(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
@@ -173,7 +173,7 @@ class AccountSettingsControllerTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user)->patchJson('/api/account/settings/payout', [
-            'payout_method'   => 'gcash',
+            'payout_method' => 'gcash',
             'payout_account' => '09123456789',
         ])
             ->assertOk()
@@ -198,10 +198,10 @@ class AccountSettingsControllerTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user)->postJson('/api/account/settings/profile', [
-            'username'   => 'updateduser',
+            'username' => 'updateduser',
             'first_name' => 'Updated',
-            'last_name'  => 'Name',
-            'bio'        => 'Updated bio',
+            'last_name' => 'Name',
+            'bio' => 'Updated bio',
         ])
             ->assertOk()
             ->assertJson(['message' => 'Profile updated.']);
@@ -209,7 +209,7 @@ class AccountSettingsControllerTest extends TestCase
 
     public function test_patch_membership_visibility(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 

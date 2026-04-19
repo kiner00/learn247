@@ -20,7 +20,7 @@ class CommunityGalleryItem extends Model implements Transcodeable
 
     protected $casts = [
         'transcode_percent' => 'integer',
-        'position'          => 'integer',
+        'position' => 'integer',
     ];
 
     protected $appends = ['url', 'poster_url', 'video_ready'];
@@ -59,6 +59,7 @@ class CommunityGalleryItem extends Model implements Transcodeable
         if (str_starts_with($value, '/storage/')) {
             return $value;
         }
+
         return Storage::url($value);
     }
 
@@ -77,7 +78,7 @@ class CommunityGalleryItem extends Model implements Transcodeable
     public function setTranscodeStatus(string $status, int $percent): void
     {
         $this->update([
-            'transcode_status'  => $status,
+            'transcode_status' => $status,
             'transcode_percent' => $percent,
         ]);
     }

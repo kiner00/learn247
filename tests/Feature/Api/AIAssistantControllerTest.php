@@ -9,7 +9,6 @@ use App\Models\User;
 use App\Queries\AI\BuildAIContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Ai\Ai;
-use Laravel\Ai\Image;
 use Mockery;
 use Tests\TestCase;
 
@@ -20,19 +19,19 @@ class AIAssistantControllerTest extends TestCase
     private function fullContext(User $user, Community $community): array
     {
         return [
-            'id'          => $user->id,
-            'name'        => $user->name,
-            'email'       => $user->email,
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
             'communities' => [[
-                'name'                  => $community->name,
-                'role'                  => 'member',
-                'points'                => 0,
-                'level'                 => 1,
-                'lessons_done'          => 0,
-                'lessons_total'         => 0,
+                'name' => $community->name,
+                'role' => 'member',
+                'points' => 0,
+                'level' => 1,
+                'lessons_done' => 0,
+                'lessons_total' => 0,
                 'lessons_pending_names' => [],
-                'quizzes'               => [],
-                'badges'                => [],
+                'quizzes' => [],
+                'badges' => [],
             ]],
         ];
     }
@@ -60,11 +59,11 @@ class AIAssistantControllerTest extends TestCase
     {
         Ai::fakeAgent(CommunityAssistant::class, ['Welcome back!']);
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         $mockContext = Mockery::mock(BuildAIContext::class);
@@ -119,11 +118,11 @@ class AIAssistantControllerTest extends TestCase
     {
         Ai::fakeAgent(CommunityAssistant::class, ['Here is some help.']);
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         $mockContext = Mockery::mock(BuildAIContext::class);
@@ -140,11 +139,11 @@ class AIAssistantControllerTest extends TestCase
     {
         Ai::fakeAgent(CommunityAssistant::class, ['Continued response.']);
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         $conversationId = fake()->uuid();
@@ -155,7 +154,7 @@ class AIAssistantControllerTest extends TestCase
 
         $this->actingAs($user, 'sanctum')
             ->postJson('/api/ai/chat', [
-                'message'         => 'Tell me more',
+                'message' => 'Tell me more',
                 'conversation_id' => $conversationId,
             ])
             ->assertOk()
@@ -164,23 +163,24 @@ class AIAssistantControllerTest extends TestCase
 
     /**
      * @runInSeparateProcess
+     *
      * @preserveGlobalState disabled
      */
     public function test_chat_returns_image_when_message_requests_image_generation(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         $mockContext = Mockery::mock(BuildAIContext::class);
         $mockContext->shouldReceive('execute')->once()->andReturn($this->fullContext($user, $community));
         $this->instance(BuildAIContext::class, $mockContext);
 
-        $fakeImg       = new \stdClass();
-        $fakeImg->mime  = 'image/png';
+        $fakeImg = new \stdClass;
+        $fakeImg->mime = 'image/png';
         $fakeImg->image = base64_encode('fake-image-data');
 
         $fakeResponse = Mockery::mock();
@@ -202,11 +202,11 @@ class AIAssistantControllerTest extends TestCase
     {
         Ai::fakeAgent(CommunityAssistant::class, ['Normal response.']);
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         $mockContext = Mockery::mock(BuildAIContext::class);
@@ -227,7 +227,7 @@ class AIAssistantControllerTest extends TestCase
 
         $this->actingAs($user, 'sanctum')
             ->postJson('/api/ai/chat', [
-                'message'         => 'Hello',
+                'message' => 'Hello',
                 'conversation_id' => 'not-a-uuid',
             ])
             ->assertUnprocessable()
@@ -236,15 +236,16 @@ class AIAssistantControllerTest extends TestCase
 
     /**
      * @runInSeparateProcess
+     *
      * @preserveGlobalState disabled
      */
     public function test_chat_returns_friendly_error_when_image_generation_fails(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         $mockContext = Mockery::mock(BuildAIContext::class);

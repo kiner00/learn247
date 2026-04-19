@@ -20,22 +20,22 @@ class CommunityFeatureTest extends TestCase
         // Active and not expired
         Subscription::factory()->create([
             'community_id' => $community->id,
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->addDays(30),
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addDays(30),
         ]);
 
         // Active but expired
         Subscription::factory()->create([
             'community_id' => $community->id,
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->subDay(),
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->subDay(),
         ]);
 
         // Inactive
         Subscription::factory()->create([
             'community_id' => $community->id,
-            'status'       => Subscription::STATUS_CANCELLED,
-            'expires_at'   => now()->addDays(30),
+            'status' => Subscription::STATUS_CANCELLED,
+            'expires_at' => now()->addDays(30),
         ]);
 
         $this->assertSame(1, $community->activeSubscribersCount());
@@ -43,7 +43,7 @@ class CommunityFeatureTest extends TestCase
 
     public function test_platform_fee_rate_returns_default_when_no_plan(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->assertSame(0.098, $community->platformFeeRate());
@@ -53,9 +53,9 @@ class CommunityFeatureTest extends TestCase
     {
         $owner = User::factory()->create();
         CreatorSubscription::create([
-            'user_id'   => $owner->id,
-            'plan'      => 'basic',
-            'status'    => CreatorSubscription::STATUS_ACTIVE,
+            'user_id' => $owner->id,
+            'plan' => 'basic',
+            'status' => CreatorSubscription::STATUS_ACTIVE,
             'xendit_id' => 'test',
         ]);
 
@@ -68,9 +68,9 @@ class CommunityFeatureTest extends TestCase
     {
         $owner = User::factory()->create();
         CreatorSubscription::create([
-            'user_id'   => $owner->id,
-            'plan'      => 'pro',
-            'status'    => CreatorSubscription::STATUS_ACTIVE,
+            'user_id' => $owner->id,
+            'plan' => 'pro',
+            'status' => CreatorSubscription::STATUS_ACTIVE,
             'xendit_id' => 'test',
         ]);
 
@@ -83,7 +83,7 @@ class CommunityFeatureTest extends TestCase
 
     public function test_url_returns_custom_domain_when_set(): void
     {
-        $community = new Community();
+        $community = new Community;
         $community->custom_domain = 'my.community.com';
 
         $this->assertSame('https://my.community.com', $community->url());
@@ -91,7 +91,7 @@ class CommunityFeatureTest extends TestCase
 
     public function test_url_returns_subdomain_url_when_set(): void
     {
-        $community = new Community();
+        $community = new Community;
         $community->custom_domain = null;
         $community->subdomain = 'test';
         $community->slug = 'test-community';
@@ -103,7 +103,7 @@ class CommunityFeatureTest extends TestCase
 
     public function test_url_returns_slug_url_as_fallback(): void
     {
-        $community = new Community();
+        $community = new Community;
         $community->custom_domain = null;
         $community->subdomain = null;
         $community->slug = 'my-community';
@@ -117,7 +117,7 @@ class CommunityFeatureTest extends TestCase
 
     public function test_is_pending_deletion_returns_true_when_date_is_set(): void
     {
-        $community = new Community();
+        $community = new Community;
         $community->deletion_requested_at = now();
 
         $this->assertTrue($community->isPendingDeletion());
@@ -125,7 +125,7 @@ class CommunityFeatureTest extends TestCase
 
     public function test_is_pending_deletion_returns_false_when_date_is_null(): void
     {
-        $community = new Community();
+        $community = new Community;
         $community->deletion_requested_at = null;
 
         $this->assertFalse($community->isPendingDeletion());

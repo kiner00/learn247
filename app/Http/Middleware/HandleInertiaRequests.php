@@ -3,7 +3,6 @@
 namespace App\Http\Middleware;
 
 use App\Models\Community;
-use App\Models\CreatorSubscription;
 use App\Models\DirectMessage;
 use App\Models\Notification;
 use App\Models\Setting;
@@ -32,12 +31,12 @@ class HandleInertiaRequests extends Middleware
         return (int) DB::table('messages')
             ->join('community_members', function ($join) use ($userId) {
                 $join->on('messages.community_id', '=', 'community_members.community_id')
-                     ->where('community_members.user_id', '=', $userId);
+                    ->where('community_members.user_id', '=', $userId);
             })
             ->where('messages.user_id', '!=', $userId)
             ->where(function ($q) {
                 $q->whereNull('community_members.messages_last_read_at')
-                  ->orWhereColumn('messages.created_at', '>', 'community_members.messages_last_read_at');
+                    ->orWhereColumn('messages.created_at', '>', 'community_members.messages_last_read_at');
             })
             ->count();
     }
@@ -60,13 +59,14 @@ class HandleInertiaRequests extends Middleware
             return null;
         }
 
-        $prefix = '/communities/' . $dc->slug;
+        $prefix = '/communities/'.$dc->slug;
 
         return function () use ($prefix) {
             $uri = request()->getRequestUri();
 
             if (str_starts_with($uri, $prefix)) {
                 $clean = substr($uri, strlen($prefix));
+
                 return $clean === '' || $clean === false ? '/' : $clean;
             }
 
@@ -87,17 +87,17 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'auth' => [
                 'user' => $request->user() ? [
-                    'id'             => $request->user()->id,
-                    'name'           => $request->user()->name,
-                    'email'          => $request->user()->email,
-                    'avatar'         => $request->user()->avatar,
+                    'id' => $request->user()->id,
+                    'name' => $request->user()->name,
+                    'email' => $request->user()->email,
+                    'avatar' => $request->user()->avatar,
                     'is_super_admin' => $request->user()->is_super_admin,
-                    'is_creator'     => $request->user()->is_super_admin || Community::where('owner_id', $request->user()->id)->where('price', '>', 0)->exists(),
-                    'creator_plan'   => $request->user()->creatorPlan(),
-                    'kyc_verified'   => $request->user()->isKycVerified(),
-                    'kyc_status'     => $request->user()->kyc_status ?? 'none',
-                    'theme'          => $request->user()->theme ?? 'light',
-                    'cxp_balance'    => 0, // placeholder for future CXP token system
+                    'is_creator' => $request->user()->is_super_admin || Community::where('owner_id', $request->user()->id)->where('price', '>', 0)->exists(),
+                    'creator_plan' => $request->user()->creatorPlan(),
+                    'kyc_verified' => $request->user()->isKycVerified(),
+                    'kyc_status' => $request->user()->kyc_status ?? 'none',
+                    'theme' => $request->user()->theme ?? 'light',
+                    'cxp_balance' => 0, // placeholder for future CXP token system
                 ] : null,
                 'communities' => $request->user()
                     ? $request->user()->communityMemberships()
@@ -106,25 +106,25 @@ class HandleInertiaRequests extends Middleware
                         ->get()
                         ->filter(fn ($m) => $m->community !== null)
                         ->map(fn ($m) => [
-                            'id'     => $m->community->id,
-                            'name'   => $m->community->name,
-                            'slug'   => $m->community->slug,
+                            'id' => $m->community->id,
+                            'name' => $m->community->name,
+                            'slug' => $m->community->slug,
                             'avatar' => $m->community->avatar,
                         ])
                         ->values()
                     : [],
             ],
             'flash' => [
-                'success'          => $request->session()->get('success'),
-                'error'            => $request->session()->get('error'),
-                'quiz_result'      => $request->session()->get('quiz_result'),
+                'success' => $request->session()->get('success'),
+                'error' => $request->session()->get('error'),
+                'quiz_result' => $request->session()->get('quiz_result'),
                 'show_ai_greeting' => $request->session()->pull('show_ai_greeting', false),
             ],
-            'unread_messages'       => $request->user() ? $this->unreadMessageCount($request->user()->id) : 0,
-            'unread_dms'            => $request->user()
+            'unread_messages' => $request->user() ? $this->unreadMessageCount($request->user()->id) : 0,
+            'unread_dms' => $request->user()
                 ? DirectMessage::where('receiver_id', $request->user()->id)->whereNull('read_at')->count()
                 : 0,
-            'unread_notifications'  => $request->user()
+            'unread_notifications' => $request->user()
                 ? Notification::where('user_id', $request->user()->id)->whereNull('read_at')->count()
                 : 0,
             'app_theme' => Setting::get('app_theme', 'green'),

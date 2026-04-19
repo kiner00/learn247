@@ -29,7 +29,7 @@ class DirectMessageSent implements ShouldBroadcastNow
     {
         return [
             'sender_id' => $this->senderId,
-            'message'   => $this->message,
+            'message' => $this->message,
         ];
     }
 }

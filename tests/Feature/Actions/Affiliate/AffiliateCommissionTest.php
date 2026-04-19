@@ -39,6 +39,7 @@ class AffiliateCommissionTest extends TestCase
     private function community(array $attrs = []): Community
     {
         $owner = User::factory()->create();
+
         return Community::factory()->create(array_merge(['owner_id' => $owner->id], $attrs));
     }
 
@@ -46,9 +47,9 @@ class AffiliateCommissionTest extends TestCase
     {
         return Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'code'         => $code,
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => $user->id,
+            'code' => $code,
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
     }
 
@@ -56,33 +57,33 @@ class AffiliateCommissionTest extends TestCase
     {
         return Subscription::create(array_merge([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_' . uniqid(),
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->addMonth(),
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_'.uniqid(),
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addMonth(),
         ], $attrs));
     }
 
     private function course(Community $community, array $attrs = []): Course
     {
         return Course::create(array_merge([
-            'community_id'              => $community->id,
-            'title'                     => 'Test Course',
-            'access_type'               => Course::ACCESS_PAID_ONCE,
-            'price'                     => 1000,
+            'community_id' => $community->id,
+            'title' => 'Test Course',
+            'access_type' => Course::ACCESS_PAID_ONCE,
+            'price' => 1000,
             'affiliate_commission_rate' => 30,
-            'position'                  => 1,
+            'position' => 1,
         ], $attrs));
     }
 
     private function enrollment(Course $course, User $user, ?Affiliate $affiliate = null, array $attrs = []): CourseEnrollment
     {
         return CourseEnrollment::create(array_merge([
-            'user_id'      => $user->id,
-            'course_id'    => $course->id,
+            'user_id' => $user->id,
+            'course_id' => $course->id,
             'affiliate_id' => $affiliate?->id,
-            'xendit_id'    => 'inv_' . uniqid(),
-            'status'       => CourseEnrollment::STATUS_PENDING,
+            'xendit_id' => 'inv_'.uniqid(),
+            'status' => CourseEnrollment::STATUS_PENDING,
         ], $attrs));
     }
 
@@ -90,14 +91,14 @@ class AffiliateCommissionTest extends TestCase
     {
         return Payment::create([
             'subscription_id' => $subscription->id,
-            'community_id'    => $subscription->community_id,
-            'user_id'         => $subscription->user_id,
-            'amount'          => $amount,
-            'currency'        => 'PHP',
-            'status'          => Payment::STATUS_PAID,
-            'xendit_event_id' => 'evt_' . uniqid(),
-            'metadata'        => [],
-            'paid_at'         => now(),
+            'community_id' => $subscription->community_id,
+            'user_id' => $subscription->user_id,
+            'amount' => $amount,
+            'currency' => 'PHP',
+            'status' => Payment::STATUS_PAID,
+            'xendit_event_id' => 'evt_'.uniqid(),
+            'metadata' => [],
+            'paid_at' => now(),
         ]);
     }
 
@@ -106,6 +107,7 @@ class AffiliateCommissionTest extends TestCase
         config(['services.xendit.callback_token' => 'valid-token', 'services.xendit.secret_key' => 'test']);
         $request = Request::create('/xendit/webhook', 'POST', $body);
         $request->headers->set('x-callback-token', 'valid-token');
+
         return $request;
     }
 
@@ -116,47 +118,47 @@ class AffiliateCommissionTest extends TestCase
     /** User A is active → B subscribes → A earns subscription commission */
     public function test_subscription_commission_recorded_when_affiliate_is_active(): void
     {
-        $community     = $this->community(['affiliate_commission_rate' => 20]);
+        $community = $this->community(['affiliate_commission_rate' => 20]);
         $affiliateUser = User::factory()->create();
-        $affiliate     = $this->affiliate($community, $affiliateUser);
+        $affiliate = $this->affiliate($community, $affiliateUser);
 
         // A is active member
         $this->subscription($community, $affiliateUser);
 
         $referredUser = User::factory()->create();
-        $sub          = $this->subscription($community, $referredUser, ['affiliate_id' => $affiliate->id, 'status' => Subscription::STATUS_ACTIVE]);
-        $payment      = $this->payment($sub, 1000);
+        $sub = $this->subscription($community, $referredUser, ['affiliate_id' => $affiliate->id, 'status' => Subscription::STATUS_ACTIVE]);
+        $payment = $this->payment($sub, 1000);
 
         $action = app(RecordAffiliateConversion::class);
         $action->execute($sub->load('affiliate.community'), $payment);
 
         $this->assertDatabaseHas('affiliate_conversions', [
-            'affiliate_id'     => $affiliate->id,
-            'subscription_id'  => $sub->id,
+            'affiliate_id' => $affiliate->id,
+            'subscription_id' => $sub->id,
             'referred_user_id' => $referredUser->id,
-            'sale_amount'      => 1000,
-            'commission_amount'=> 200.00,  // 20% of 1000
-            'platform_fee'     => 98.00,   // 9.8% of 1000 (free plan)
-            'creator_amount'   => 702.00,  // 1000 - 98 - 200
+            'sale_amount' => 1000,
+            'commission_amount' => 200.00,  // 20% of 1000
+            'platform_fee' => 98.00,   // 9.8% of 1000 (free plan)
+            'creator_amount' => 702.00,  // 1000 - 98 - 200
         ]);
     }
 
     /** User A's membership expired → B's subscription payment → A earns nothing */
     public function test_subscription_commission_skipped_when_affiliate_membership_expired(): void
     {
-        $community     = $this->community(['affiliate_commission_rate' => 20]);
+        $community = $this->community(['affiliate_commission_rate' => 20]);
         $affiliateUser = User::factory()->create();
-        $affiliate     = $this->affiliate($community, $affiliateUser);
+        $affiliate = $this->affiliate($community, $affiliateUser);
 
         // A's membership expired
         $this->subscription($community, $affiliateUser, [
-            'status'     => Subscription::STATUS_EXPIRED,
+            'status' => Subscription::STATUS_EXPIRED,
             'expires_at' => now()->subDay(),
         ]);
 
         $referredUser = User::factory()->create();
-        $sub          = $this->subscription($community, $referredUser, ['affiliate_id' => $affiliate->id]);
-        $payment      = $this->payment($sub, 1000);
+        $sub = $this->subscription($community, $referredUser, ['affiliate_id' => $affiliate->id]);
+        $payment = $this->payment($sub, 1000);
 
         $action = app(RecordAffiliateConversion::class);
         $action->execute($sub->load('affiliate.community'), $payment);
@@ -168,16 +170,16 @@ class AffiliateCommissionTest extends TestCase
     /** User A has a lifetime (one-time billing, null expires_at) membership → A still earns */
     public function test_subscription_commission_earned_with_lifetime_membership(): void
     {
-        $community     = $this->community(['affiliate_commission_rate' => 10]);
+        $community = $this->community(['affiliate_commission_rate' => 10]);
         $affiliateUser = User::factory()->create();
-        $affiliate     = $this->affiliate($community, $affiliateUser);
+        $affiliate = $this->affiliate($community, $affiliateUser);
 
         // A has one-time/lifetime membership (null expires_at)
         $this->subscription($community, $affiliateUser, ['expires_at' => null]);
 
         $referredUser = User::factory()->create();
-        $sub          = $this->subscription($community, $referredUser, ['affiliate_id' => $affiliate->id]);
-        $payment      = $this->payment($sub, 500);
+        $sub = $this->subscription($community, $referredUser, ['affiliate_id' => $affiliate->id]);
+        $payment = $this->payment($sub, 500);
 
         $action = app(RecordAffiliateConversion::class);
         $action->execute($sub->load('affiliate.community'), $payment);
@@ -189,14 +191,14 @@ class AffiliateCommissionTest extends TestCase
     /** Affiliate has no subscription at all → no commission */
     public function test_subscription_commission_skipped_when_affiliate_has_no_subscription(): void
     {
-        $community     = $this->community(['affiliate_commission_rate' => 20]);
+        $community = $this->community(['affiliate_commission_rate' => 20]);
         $affiliateUser = User::factory()->create();
-        $affiliate     = $this->affiliate($community, $affiliateUser);
+        $affiliate = $this->affiliate($community, $affiliateUser);
         // No subscription for affiliateUser
 
         $referredUser = User::factory()->create();
-        $sub          = $this->subscription($community, $referredUser, ['affiliate_id' => $affiliate->id]);
-        $payment      = $this->payment($sub, 1000);
+        $sub = $this->subscription($community, $referredUser, ['affiliate_id' => $affiliate->id]);
+        $payment = $this->payment($sub, 1000);
 
         $action = app(RecordAffiliateConversion::class);
         $action->execute($sub->load('affiliate.community'), $payment);
@@ -207,22 +209,22 @@ class AffiliateCommissionTest extends TestCase
     /** Commission maths: 9.8% platform fee (free plan), rate% to affiliate, rest to creator */
     public function test_subscription_commission_math_is_correct(): void
     {
-        $community     = $this->community(['affiliate_commission_rate' => 30]);
+        $community = $this->community(['affiliate_commission_rate' => 30]);
         $affiliateUser = User::factory()->create();
-        $affiliate     = $this->affiliate($community, $affiliateUser);
+        $affiliate = $this->affiliate($community, $affiliateUser);
         $this->subscription($community, $affiliateUser, ['expires_at' => null]);
 
         $referredUser = User::factory()->create();
-        $sub          = $this->subscription($community, $referredUser, ['affiliate_id' => $affiliate->id]);
-        $payment      = $this->payment($sub, 1000);
+        $sub = $this->subscription($community, $referredUser, ['affiliate_id' => $affiliate->id]);
+        $payment = $this->payment($sub, 1000);
 
         app(RecordAffiliateConversion::class)->execute($sub->load('affiliate.community'), $payment);
 
         $conversion = AffiliateConversion::first();
         $this->assertEquals(1000.00, (float) $conversion->sale_amount);
-        $this->assertEquals(98.00,   (float) $conversion->platform_fee);      // 9.8% (free plan)
-        $this->assertEquals(300.00,  (float) $conversion->commission_amount); // 30%
-        $this->assertEquals(602.00,  (float) $conversion->creator_amount);    // 1000 - 98 - 300
+        $this->assertEquals(98.00, (float) $conversion->platform_fee);      // 9.8% (free plan)
+        $this->assertEquals(300.00, (float) $conversion->commission_amount); // 30%
+        $this->assertEquals(602.00, (float) $conversion->creator_amount);    // 1000 - 98 - 300
         $this->assertEquals(
             (float) $conversion->sale_amount,
             round((float) $conversion->platform_fee + (float) $conversion->commission_amount + (float) $conversion->creator_amount, 2),
@@ -233,15 +235,15 @@ class AffiliateCommissionTest extends TestCase
     /** total_earned on affiliate increments with each conversion */
     public function test_subscription_total_earned_increments(): void
     {
-        $community     = $this->community(['affiliate_commission_rate' => 10]);
+        $community = $this->community(['affiliate_commission_rate' => 10]);
         $affiliateUser = User::factory()->create();
-        $affiliate     = $this->affiliate($community, $affiliateUser);
+        $affiliate = $this->affiliate($community, $affiliateUser);
         $this->subscription($community, $affiliateUser, ['expires_at' => null]);
 
         foreach (['ref1', 'ref2', 'ref3'] as $i => $xenditId) {
             $referredUser = User::factory()->create();
-            $sub          = $this->subscription($community, $referredUser, ['affiliate_id' => $affiliate->id]);
-            $payment      = $this->payment($sub, 1000);
+            $sub = $this->subscription($community, $referredUser, ['affiliate_id' => $affiliate->id]);
+            $payment = $this->payment($sub, 1000);
             app(RecordAffiliateConversion::class)->execute($sub->load('affiliate.community'), $payment);
         }
 
@@ -255,26 +257,26 @@ class AffiliateCommissionTest extends TestCase
     /** User A active → B buys paid course → A earns course commission rate */
     public function test_course_commission_recorded_when_affiliate_is_active(): void
     {
-        $community     = $this->community();
+        $community = $this->community();
         $affiliateUser = User::factory()->create();
-        $affiliate     = $this->affiliate($community, $affiliateUser);
+        $affiliate = $this->affiliate($community, $affiliateUser);
         $this->subscription($community, $affiliateUser); // A is active
 
-        $buyer      = User::factory()->create();
-        $course     = $this->course($community, ['price' => 1000, 'affiliate_commission_rate' => 30]);
+        $buyer = User::factory()->create();
+        $course = $this->course($community, ['price' => 1000, 'affiliate_commission_rate' => 30]);
         $enrollment = $this->enrollment($course, $buyer, $affiliate);
         $enrollment->load(['affiliate', 'course']);
 
         app(RecordAffiliateConversion::class)->executeForCourse($enrollment);
 
         $this->assertDatabaseHas('affiliate_conversions', [
-            'affiliate_id'          => $affiliate->id,
-            'course_enrollment_id'  => $enrollment->id,
-            'referred_user_id'      => $buyer->id,
-            'sale_amount'           => 1000,
-            'commission_amount'     => 300.00,  // 30% of 1000
-            'platform_fee'          => 98.00,   // 9.8% of 1000 (free plan)
-            'creator_amount'        => 602.00,  // 1000 - 98 - 300
+            'affiliate_id' => $affiliate->id,
+            'course_enrollment_id' => $enrollment->id,
+            'referred_user_id' => $buyer->id,
+            'sale_amount' => 1000,
+            'commission_amount' => 300.00,  // 30% of 1000
+            'platform_fee' => 98.00,   // 9.8% of 1000 (free plan)
+            'creator_amount' => 602.00,  // 1000 - 98 - 300
         ]);
 
         $this->assertEquals(300.00, (float) $affiliate->fresh()->total_earned);
@@ -283,16 +285,16 @@ class AffiliateCommissionTest extends TestCase
     /** User A's membership expired → B buys course → A earns nothing */
     public function test_course_commission_skipped_when_affiliate_membership_expired(): void
     {
-        $community     = $this->community();
+        $community = $this->community();
         $affiliateUser = User::factory()->create();
-        $affiliate     = $this->affiliate($community, $affiliateUser);
+        $affiliate = $this->affiliate($community, $affiliateUser);
         $this->subscription($community, $affiliateUser, [
-            'status'     => Subscription::STATUS_EXPIRED,
+            'status' => Subscription::STATUS_EXPIRED,
             'expires_at' => now()->subDay(),
         ]);
 
-        $buyer      = User::factory()->create();
-        $course     = $this->course($community, ['affiliate_commission_rate' => 30]);
+        $buyer = User::factory()->create();
+        $course = $this->course($community, ['affiliate_commission_rate' => 30]);
         $enrollment = $this->enrollment($course, $buyer, $affiliate);
         $enrollment->load(['affiliate', 'course']);
 
@@ -305,13 +307,13 @@ class AffiliateCommissionTest extends TestCase
     /** User A has cancelled membership → B buys course → A earns nothing */
     public function test_course_commission_skipped_when_affiliate_membership_cancelled(): void
     {
-        $community     = $this->community();
+        $community = $this->community();
         $affiliateUser = User::factory()->create();
-        $affiliate     = $this->affiliate($community, $affiliateUser);
+        $affiliate = $this->affiliate($community, $affiliateUser);
         $this->subscription($community, $affiliateUser, ['status' => Subscription::STATUS_CANCELLED]);
 
-        $buyer      = User::factory()->create();
-        $course     = $this->course($community, ['affiliate_commission_rate' => 30]);
+        $buyer = User::factory()->create();
+        $course = $this->course($community, ['affiliate_commission_rate' => 30]);
         $enrollment = $this->enrollment($course, $buyer, $affiliate);
         $enrollment->load(['affiliate', 'course']);
 
@@ -323,13 +325,13 @@ class AffiliateCommissionTest extends TestCase
     /** User A has no subscription at all → B buys course → A earns nothing */
     public function test_course_commission_skipped_when_affiliate_has_no_subscription(): void
     {
-        $community     = $this->community();
+        $community = $this->community();
         $affiliateUser = User::factory()->create();
-        $affiliate     = $this->affiliate($community, $affiliateUser);
+        $affiliate = $this->affiliate($community, $affiliateUser);
         // no subscription for A
 
-        $buyer      = User::factory()->create();
-        $course     = $this->course($community, ['affiliate_commission_rate' => 30]);
+        $buyer = User::factory()->create();
+        $course = $this->course($community, ['affiliate_commission_rate' => 30]);
         $enrollment = $this->enrollment($course, $buyer, $affiliate);
         $enrollment->load(['affiliate', 'course']);
 
@@ -341,13 +343,13 @@ class AffiliateCommissionTest extends TestCase
     /** User A has lifetime membership (null expires_at) → B buys course → A earns */
     public function test_course_commission_earned_with_lifetime_membership(): void
     {
-        $community     = $this->community();
+        $community = $this->community();
         $affiliateUser = User::factory()->create();
-        $affiliate     = $this->affiliate($community, $affiliateUser);
+        $affiliate = $this->affiliate($community, $affiliateUser);
         $this->subscription($community, $affiliateUser, ['expires_at' => null]);
 
-        $buyer      = User::factory()->create();
-        $course     = $this->course($community, ['price' => 500, 'affiliate_commission_rate' => 20]);
+        $buyer = User::factory()->create();
+        $course = $this->course($community, ['price' => 500, 'affiliate_commission_rate' => 20]);
         $enrollment = $this->enrollment($course, $buyer, $affiliate);
         $enrollment->load(['affiliate', 'course']);
 
@@ -360,13 +362,13 @@ class AffiliateCommissionTest extends TestCase
     /** Course has no commission rate set (null) → no commission recorded */
     public function test_course_commission_skipped_when_rate_is_null(): void
     {
-        $community     = $this->community();
+        $community = $this->community();
         $affiliateUser = User::factory()->create();
-        $affiliate     = $this->affiliate($community, $affiliateUser);
+        $affiliate = $this->affiliate($community, $affiliateUser);
         $this->subscription($community, $affiliateUser);
 
-        $buyer      = User::factory()->create();
-        $course     = $this->course($community, ['affiliate_commission_rate' => null]);
+        $buyer = User::factory()->create();
+        $course = $this->course($community, ['affiliate_commission_rate' => null]);
         $enrollment = $this->enrollment($course, $buyer, $affiliate);
         $enrollment->load(['affiliate', 'course']);
 
@@ -378,13 +380,13 @@ class AffiliateCommissionTest extends TestCase
     /** Course commission rate is 0% → no commission recorded */
     public function test_course_commission_skipped_when_rate_is_zero(): void
     {
-        $community     = $this->community();
+        $community = $this->community();
         $affiliateUser = User::factory()->create();
-        $affiliate     = $this->affiliate($community, $affiliateUser);
+        $affiliate = $this->affiliate($community, $affiliateUser);
         $this->subscription($community, $affiliateUser);
 
-        $buyer      = User::factory()->create();
-        $course     = $this->course($community, ['affiliate_commission_rate' => 0]);
+        $buyer = User::factory()->create();
+        $course = $this->course($community, ['affiliate_commission_rate' => 0]);
         $enrollment = $this->enrollment($course, $buyer, $affiliate);
         $enrollment->load(['affiliate', 'course']);
 
@@ -396,9 +398,9 @@ class AffiliateCommissionTest extends TestCase
     /** Enrollment has no affiliate_id → executeForCourse returns null, no conversion */
     public function test_course_commission_skipped_when_enrollment_has_no_affiliate(): void
     {
-        $community  = $this->community();
-        $buyer      = User::factory()->create();
-        $course     = $this->course($community, ['affiliate_commission_rate' => 30]);
+        $community = $this->community();
+        $buyer = User::factory()->create();
+        $course = $this->course($community, ['affiliate_commission_rate' => 30]);
         $enrollment = $this->enrollment($course, $buyer, null); // no affiliate
         $enrollment->load(['affiliate', 'course']);
 
@@ -411,13 +413,13 @@ class AffiliateCommissionTest extends TestCase
     /** Course commission maths: 9.8% platform (free plan), rate% affiliate, rest to creator */
     public function test_course_commission_math_is_correct(): void
     {
-        $community     = $this->community();
+        $community = $this->community();
         $affiliateUser = User::factory()->create();
-        $affiliate     = $this->affiliate($community, $affiliateUser);
+        $affiliate = $this->affiliate($community, $affiliateUser);
         $this->subscription($community, $affiliateUser, ['expires_at' => null]);
 
-        $buyer      = User::factory()->create();
-        $course     = $this->course($community, ['price' => 1000, 'affiliate_commission_rate' => 30]);
+        $buyer = User::factory()->create();
+        $course = $this->course($community, ['price' => 1000, 'affiliate_commission_rate' => 30]);
         $enrollment = $this->enrollment($course, $buyer, $affiliate);
         $enrollment->load(['affiliate', 'course']);
 
@@ -425,9 +427,9 @@ class AffiliateCommissionTest extends TestCase
 
         $conversion = AffiliateConversion::first();
         $this->assertEquals(1000.00, (float) $conversion->sale_amount);
-        $this->assertEquals(98.00,   (float) $conversion->platform_fee);      // 9.8% (free plan)
-        $this->assertEquals(300.00,  (float) $conversion->commission_amount); // 30%
-        $this->assertEquals(602.00,  (float) $conversion->creator_amount);    // 1000 - 98 - 300
+        $this->assertEquals(98.00, (float) $conversion->platform_fee);      // 9.8% (free plan)
+        $this->assertEquals(300.00, (float) $conversion->commission_amount); // 30%
+        $this->assertEquals(602.00, (float) $conversion->creator_amount);    // 1000 - 98 - 300
         $this->assertEquals(
             (float) $conversion->sale_amount,
             round((float) $conversion->platform_fee + (float) $conversion->commission_amount + (float) $conversion->creator_amount, 2),
@@ -438,13 +440,13 @@ class AffiliateCommissionTest extends TestCase
     /** executeForCourse conversion is linked to course_enrollment_id, not subscription_id */
     public function test_course_conversion_is_linked_to_enrollment_not_subscription(): void
     {
-        $community     = $this->community();
+        $community = $this->community();
         $affiliateUser = User::factory()->create();
-        $affiliate     = $this->affiliate($community, $affiliateUser);
+        $affiliate = $this->affiliate($community, $affiliateUser);
         $this->subscription($community, $affiliateUser, ['expires_at' => null]);
 
-        $buyer      = User::factory()->create();
-        $course     = $this->course($community);
+        $buyer = User::factory()->create();
+        $course = $this->course($community);
         $enrollment = $this->enrollment($course, $buyer, $affiliate);
         $enrollment->load(['affiliate', 'course']);
 
@@ -466,15 +468,15 @@ class AffiliateCommissionTest extends TestCase
      */
     public function test_affiliate_misses_payout_when_lapsed_then_resumes_when_reactivated_subscription(): void
     {
-        $community     = $this->community(['affiliate_commission_rate' => 10]);
+        $community = $this->community(['affiliate_commission_rate' => 10]);
         $affiliateUser = User::factory()->create();
-        $affiliate     = $this->affiliate($community, $affiliateUser);
+        $affiliate = $this->affiliate($community, $affiliateUser);
 
         $referredUser = User::factory()->create();
 
         // ── Month 1: A is active ──────────────────────────────────────────────
         $affSub = $this->subscription($community, $affiliateUser, ['expires_at' => now()->addMonth()]);
-        $sub    = $this->subscription($community, $referredUser, ['affiliate_id' => $affiliate->id]);
+        $sub = $this->subscription($community, $referredUser, ['affiliate_id' => $affiliate->id]);
         app(RecordAffiliateConversion::class)->execute($sub->load('affiliate.community'), $this->payment($sub, 1000));
         $this->assertEquals(100.00, (float) $affiliate->fresh()->total_earned, 'Month 1: should earn');
 
@@ -499,10 +501,10 @@ class AffiliateCommissionTest extends TestCase
      */
     public function test_affiliate_misses_course_payout_when_lapsed_then_resumes(): void
     {
-        $community     = $this->community();
+        $community = $this->community();
         $affiliateUser = User::factory()->create();
-        $affiliate     = $this->affiliate($community, $affiliateUser);
-        $buyer         = User::factory()->create();
+        $affiliate = $this->affiliate($community, $affiliateUser);
+        $buyer = User::factory()->create();
 
         $courseA = $this->course($community, ['title' => 'Course A', 'affiliate_commission_rate' => 20]);
         $courseB = $this->course($community, ['title' => 'Course B', 'affiliate_commission_rate' => 20, 'position' => 2]);
@@ -538,20 +540,20 @@ class AffiliateCommissionTest extends TestCase
     /** A earns on both a subscription AND a course bought by the same referred user */
     public function test_affiliate_earns_on_both_subscription_and_course(): void
     {
-        $community     = $this->community(['affiliate_commission_rate' => 50]);
+        $community = $this->community(['affiliate_commission_rate' => 50]);
         $affiliateUser = User::factory()->create();
-        $affiliate     = $this->affiliate($community, $affiliateUser);
+        $affiliate = $this->affiliate($community, $affiliateUser);
         $this->subscription($community, $affiliateUser, ['expires_at' => null]);
 
         $buyer = User::factory()->create();
 
         // Subscription commission: 50% of ₱1000 = ₱500
-        $sub     = $this->subscription($community, $buyer, ['affiliate_id' => $affiliate->id]);
+        $sub = $this->subscription($community, $buyer, ['affiliate_id' => $affiliate->id]);
         $payment = $this->payment($sub, 1000);
         app(RecordAffiliateConversion::class)->execute($sub->load('affiliate.community'), $payment);
 
         // Course commission: 30% of ₱1000 = ₱300
-        $course     = $this->course($community, ['price' => 1000, 'affiliate_commission_rate' => 30]);
+        $course = $this->course($community, ['price' => 1000, 'affiliate_commission_rate' => 30]);
         $enrollment = $this->enrollment($course, $buyer, $affiliate);
         $enrollment->load(['affiliate', 'course']);
         app(RecordAffiliateConversion::class)->executeForCourse($enrollment);
@@ -563,19 +565,19 @@ class AffiliateCommissionTest extends TestCase
     /** A earns on multiple different courses bought by the same referred user */
     public function test_affiliate_earns_on_multiple_courses_from_same_buyer(): void
     {
-        $community     = $this->community();
+        $community = $this->community();
         $affiliateUser = User::factory()->create();
-        $affiliate     = $this->affiliate($community, $affiliateUser);
+        $affiliate = $this->affiliate($community, $affiliateUser);
         $this->subscription($community, $affiliateUser, ['expires_at' => null]);
 
         $buyer = User::factory()->create();
 
         foreach (range(1, 3) as $i) {
-            $course     = $this->course($community, [
-                'title'                     => "Course {$i}",
-                'price'                     => 1000,
+            $course = $this->course($community, [
+                'title' => "Course {$i}",
+                'price' => 1000,
                 'affiliate_commission_rate' => 10,
-                'position'                  => $i,
+                'position' => $i,
             ]);
             $enrollment = $this->enrollment($course, $buyer, $affiliate);
             $enrollment->load(['affiliate', 'course']);
@@ -597,9 +599,9 @@ class AffiliateCommissionTest extends TestCase
         Mail::fake();
         config(['services.xendit.secret_key' => 'test']);
 
-        $community     = $this->community();
+        $community = $this->community();
         $affiliateUser = User::factory()->create();
-        $affiliate     = $this->affiliate($community, $affiliateUser);
+        $affiliate = $this->affiliate($community, $affiliateUser);
 
         $buyer = User::factory()->create();
         $this->subscription($community, $buyer, ['affiliate_id' => $affiliate->id]);
@@ -609,7 +611,7 @@ class AffiliateCommissionTest extends TestCase
         // Mock Xendit so we don't make real HTTP calls
         $mockXendit = $this->createMock(\App\Services\XenditService::class);
         $mockXendit->method('createInvoice')->willReturn([
-            'id'          => 'inv_test_capture',
+            'id' => 'inv_test_capture',
             'invoice_url' => 'https://checkout.xendit.co/test',
         ]);
         $this->app->instance(\App\Services\XenditService::class, $mockXendit);
@@ -624,8 +626,8 @@ class AffiliateCommissionTest extends TestCase
 
         $this->assertEquals($affiliate->id, $result['enrollment']->affiliate_id);
         $this->assertDatabaseHas('course_enrollments', [
-            'user_id'      => $buyer->id,
-            'course_id'    => $course->id,
+            'user_id' => $buyer->id,
+            'course_id' => $course->id,
             'affiliate_id' => $affiliate->id,
         ]);
     }
@@ -637,12 +639,12 @@ class AffiliateCommissionTest extends TestCase
         config(['services.xendit.secret_key' => 'test']);
 
         $community = $this->community();
-        $buyer     = User::factory()->create();
-        $course    = $this->course($community);
+        $buyer = User::factory()->create();
+        $course = $this->course($community);
 
         $mockXendit = $this->createMock(\App\Services\XenditService::class);
         $mockXendit->method('createInvoice')->willReturn([
-            'id'          => 'inv_test_no_aff',
+            'id' => 'inv_test_no_aff',
             'invoice_url' => 'https://checkout.xendit.co/test',
         ]);
         $this->app->instance(\App\Services\XenditService::class, $mockXendit);
@@ -665,13 +667,13 @@ class AffiliateCommissionTest extends TestCase
         config(['services.xendit.secret_key' => 'test']);
 
         $community = $this->community();
-        $buyer     = User::factory()->create();
+        $buyer = User::factory()->create();
         $this->subscription($community, $buyer, ['affiliate_id' => null]);
         $course = $this->course($community);
 
         $mockXendit = $this->createMock(\App\Services\XenditService::class);
         $mockXendit->method('createInvoice')->willReturn([
-            'id'          => 'inv_test_sub_no_aff',
+            'id' => 'inv_test_sub_no_aff',
             'invoice_url' => 'https://checkout.xendit.co/test',
         ]);
         $this->app->instance(\App\Services\XenditService::class, $mockXendit);
@@ -696,26 +698,26 @@ class AffiliateCommissionTest extends TestCase
     {
         Mail::fake();
 
-        $community     = $this->community();
+        $community = $this->community();
         $affiliateUser = User::factory()->create();
-        $affiliate     = $this->affiliate($community, $affiliateUser);
+        $affiliate = $this->affiliate($community, $affiliateUser);
         $this->subscription($community, $affiliateUser, ['expires_at' => null]);
 
-        $buyer      = User::factory()->create();
-        $course     = $this->course($community, ['price' => 1000, 'affiliate_commission_rate' => 30]);
+        $buyer = User::factory()->create();
+        $course = $this->course($community, ['price' => 1000, 'affiliate_commission_rate' => 30]);
         $enrollment = $this->enrollment($course, $buyer, $affiliate, ['xendit_id' => 'inv_wh_course_1']);
 
         $request = $this->webhookRequest(['id' => 'inv_wh_course_1', 'status' => 'PAID', 'amount' => 1000]);
         app(HandleXenditWebhook::class)->execute($request);
 
         $this->assertDatabaseHas('course_enrollments', [
-            'id'     => $enrollment->id,
+            'id' => $enrollment->id,
             'status' => CourseEnrollment::STATUS_PAID,
         ]);
         $this->assertDatabaseHas('affiliate_conversions', [
-            'affiliate_id'         => $affiliate->id,
+            'affiliate_id' => $affiliate->id,
             'course_enrollment_id' => $enrollment->id,
-            'commission_amount'    => 300.00,
+            'commission_amount' => 300.00,
         ]);
     }
 
@@ -724,16 +726,16 @@ class AffiliateCommissionTest extends TestCase
     {
         Mail::fake();
 
-        $community     = $this->community();
+        $community = $this->community();
         $affiliateUser = User::factory()->create();
-        $affiliate     = $this->affiliate($community, $affiliateUser);
+        $affiliate = $this->affiliate($community, $affiliateUser);
         $this->subscription($community, $affiliateUser, [
-            'status'     => Subscription::STATUS_EXPIRED,
+            'status' => Subscription::STATUS_EXPIRED,
             'expires_at' => now()->subDay(),
         ]);
 
-        $buyer      = User::factory()->create();
-        $course     = $this->course($community, ['affiliate_commission_rate' => 30]);
+        $buyer = User::factory()->create();
+        $course = $this->course($community, ['affiliate_commission_rate' => 30]);
         $enrollment = $this->enrollment($course, $buyer, $affiliate, ['xendit_id' => 'inv_wh_lapsed']);
 
         $request = $this->webhookRequest(['id' => 'inv_wh_lapsed', 'status' => 'PAID', 'amount' => 1000]);
@@ -748,9 +750,9 @@ class AffiliateCommissionTest extends TestCase
     {
         Mail::fake();
 
-        $community  = $this->community();
-        $buyer      = User::factory()->create();
-        $course     = $this->course($community, ['affiliate_commission_rate' => 30]);
+        $community = $this->community();
+        $buyer = User::factory()->create();
+        $course = $this->course($community, ['affiliate_commission_rate' => 30]);
         $enrollment = $this->enrollment($course, $buyer, null, ['xendit_id' => 'inv_wh_noaff']);
 
         $request = $this->webhookRequest(['id' => 'inv_wh_noaff', 'status' => 'PAID', 'amount' => 1000]);
@@ -764,21 +766,21 @@ class AffiliateCommissionTest extends TestCase
     {
         Mail::fake();
 
-        $owner         = User::factory()->create();
-        $community     = Community::factory()->create(['owner_id' => $owner->id]);
+        $owner = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
         $affiliateUser = User::factory()->create();
-        $affiliate     = $this->affiliate($community, $affiliateUser);
+        $affiliate = $this->affiliate($community, $affiliateUser);
         $this->subscription($community, $affiliateUser, ['expires_at' => null]);
 
-        $buyer      = User::factory()->create();
-        $course     = $this->course($community, ['price' => 1000, 'affiliate_commission_rate' => 30]);
+        $buyer = User::factory()->create();
+        $course = $this->course($community, ['price' => 1000, 'affiliate_commission_rate' => 30]);
         $enrollment = $this->enrollment($course, $buyer, $affiliate, ['xendit_id' => 'inv_wh_email']);
 
         $request = $this->webhookRequest(['id' => 'inv_wh_email', 'status' => 'PAID', 'amount' => 1000]);
         app(HandleXenditWebhook::class)->execute($request);
 
         Mail::assertQueued(AffiliateChaChing::class, fn ($m) => $m->hasTo($affiliateUser->email));
-        Mail::assertQueued(CreatorChaChing::class,   fn ($m) => $m->hasTo($owner->email));
+        Mail::assertQueued(CreatorChaChing::class, fn ($m) => $m->hasTo($owner->email));
     }
 
     /** Webhook: no cha-ching emails sent when affiliate lapsed and no commission */
@@ -786,16 +788,16 @@ class AffiliateCommissionTest extends TestCase
     {
         Mail::fake();
 
-        $community     = $this->community();
+        $community = $this->community();
         $affiliateUser = User::factory()->create();
-        $affiliate     = $this->affiliate($community, $affiliateUser);
+        $affiliate = $this->affiliate($community, $affiliateUser);
         $this->subscription($community, $affiliateUser, [
-            'status'     => Subscription::STATUS_EXPIRED,
+            'status' => Subscription::STATUS_EXPIRED,
             'expires_at' => now()->subDay(),
         ]);
 
-        $buyer      = User::factory()->create();
-        $course     = $this->course($community, ['affiliate_commission_rate' => 30]);
+        $buyer = User::factory()->create();
+        $course = $this->course($community, ['affiliate_commission_rate' => 30]);
         $enrollment = $this->enrollment($course, $buyer, $affiliate, ['xendit_id' => 'inv_wh_no_email']);
 
         $request = $this->webhookRequest(['id' => 'inv_wh_no_email', 'status' => 'PAID', 'amount' => 1000]);
@@ -815,9 +817,9 @@ class AffiliateCommissionTest extends TestCase
     {
         Mail::fake();
 
-        $owner         = User::factory()->create();
-        $community     = Community::factory()->create([
-            'owner_id'                  => $owner->id,
+        $owner = User::factory()->create();
+        $community = Community::factory()->create([
+            'owner_id' => $owner->id,
             'affiliate_commission_rate' => 50,
         ]);
 
@@ -831,11 +833,11 @@ class AffiliateCommissionTest extends TestCase
         // ── Step 1: B subscribes via A's link ─────────────────────────────────
         $bSub = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $userB->id,
-            'xendit_id'    => 'inv_bsub_1',
+            'user_id' => $userB->id,
+            'xendit_id' => 'inv_bsub_1',
             'affiliate_id' => $affiliate->id,
-            'status'       => Subscription::STATUS_PENDING,
-            'expires_at'   => null,
+            'status' => Subscription::STATUS_PENDING,
+            'expires_at' => null,
         ]);
 
         $request = $this->webhookRequest(['id' => 'inv_bsub_1', 'status' => 'PAID', 'amount' => 1000]);
@@ -844,7 +846,7 @@ class AffiliateCommissionTest extends TestCase
         $this->assertEquals(500.00, (float) $affiliate->fresh()->total_earned, 'A earns ₱500 from B subscription (50%)');
 
         // ── Step 2: B buys the paid course ────────────────────────────────────
-        $course     = $this->course($community, ['price' => 1000, 'affiliate_commission_rate' => 30]);
+        $course = $this->course($community, ['price' => 1000, 'affiliate_commission_rate' => 30]);
         $enrollment = $this->enrollment($course, $userB, $affiliate, ['xendit_id' => 'inv_bcourse_1']);
 
         $request = $this->webhookRequest(['id' => 'inv_bcourse_1', 'status' => 'PAID', 'amount' => 1000]);

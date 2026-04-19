@@ -26,20 +26,20 @@ class EmailSequenceController extends Controller
             ->orderByDesc('created_at')
             ->get()
             ->map(fn ($seq) => [
-                'id'                => $seq->id,
-                'campaign_name'     => $seq->campaign->name ?? '—',
-                'campaign_id'       => $seq->campaign_id,
-                'trigger_event'     => $seq->trigger_event,
-                'trigger_filter'    => $seq->trigger_filter,
-                'status'            => $seq->status,
-                'steps_count'       => $seq->steps_count,
+                'id' => $seq->id,
+                'campaign_name' => $seq->campaign->name ?? '—',
+                'campaign_id' => $seq->campaign_id,
+                'trigger_event' => $seq->trigger_event,
+                'trigger_filter' => $seq->trigger_filter,
+                'status' => $seq->status,
+                'steps_count' => $seq->steps_count,
                 'enrollments_count' => $seq->enrollments_count,
-                'created_at'        => $seq->created_at,
+                'created_at' => $seq->created_at,
             ]);
 
         return Inertia::render('Communities/Email/Sequences', [
-            'community'    => $community,
-            'sequences'    => $sequences,
+            'community' => $community,
+            'sequences' => $sequences,
             'hasResendKey' => (bool) $community->resend_api_key,
         ]);
     }
@@ -53,9 +53,9 @@ class EmailSequenceController extends Controller
 
         return Inertia::render('Communities/Email/SequenceCreate', [
             'community' => $community,
-            'tags'      => $tags,
-            'courses'   => $courses,
-            'triggers'  => EmailSequence::TRIGGERS,
+            'tags' => $tags,
+            'courses' => $courses,
+            'triggers' => EmailSequence::TRIGGERS,
         ]);
     }
 
@@ -68,39 +68,39 @@ class EmailSequenceController extends Controller
         }
 
         $data = $request->validate([
-            'name'           => ['required', 'string', 'max:255'],
-            'trigger_event'  => ['required', 'string', Rule::in(EmailSequence::TRIGGERS)],
+            'name' => ['required', 'string', 'max:255'],
+            'trigger_event' => ['required', 'string', Rule::in(EmailSequence::TRIGGERS)],
             'trigger_filter' => ['nullable', 'array'],
-            'steps'          => ['required', 'array', 'min:1'],
-            'steps.*.subject'     => ['required', 'string', 'max:255'],
-            'steps.*.html_body'   => ['required', 'string', 'max:100000'],
+            'steps' => ['required', 'array', 'min:1'],
+            'steps.*.subject' => ['required', 'string', 'max:255'],
+            'steps.*.html_body' => ['required', 'string', 'max:100000'],
             'steps.*.delay_hours' => ['required', 'integer', 'min:0', 'max:8760'],
         ]);
 
         $campaign = EmailCampaign::create([
             'community_id' => $community->id,
-            'name'         => $data['name'],
-            'type'         => EmailCampaign::TYPE_SEQUENCE,
-            'status'       => EmailCampaign::STATUS_DRAFT,
+            'name' => $data['name'],
+            'type' => EmailCampaign::TYPE_SEQUENCE,
+            'status' => EmailCampaign::STATUS_DRAFT,
         ]);
 
         $sequence = EmailSequence::create([
-            'campaign_id'    => $campaign->id,
-            'community_id'   => $community->id,
-            'trigger_event'  => $data['trigger_event'],
+            'campaign_id' => $campaign->id,
+            'community_id' => $community->id,
+            'trigger_event' => $data['trigger_event'],
             'trigger_filter' => $data['trigger_filter'] ?? null,
-            'status'         => EmailSequence::STATUS_DRAFT,
+            'status' => EmailSequence::STATUS_DRAFT,
         ]);
 
         foreach ($data['steps'] as $i => $stepData) {
             EmailSequenceStep::create([
                 'sequence_id' => $sequence->id,
-                'position'    => $i + 1,
+                'position' => $i + 1,
                 'delay_hours' => $stepData['delay_hours'],
-                'subject'     => $stepData['subject'],
-                'html_body'   => $stepData['html_body'],
-                'from_email'  => $community->resend_from_email,
-                'from_name'   => $community->resend_from_name ?? $community->name,
+                'subject' => $stepData['subject'],
+                'html_body' => $stepData['html_body'],
+                'from_email' => $community->resend_from_email,
+                'from_name' => $community->resend_from_name ?? $community->name,
             ]);
         }
 
@@ -116,14 +116,14 @@ class EmailSequenceController extends Controller
         $sequence->load(['steps', 'campaign:id,name']);
 
         $enrollmentStats = [
-            'active'    => $sequence->enrollments()->where('status', 'active')->count(),
+            'active' => $sequence->enrollments()->where('status', 'active')->count(),
             'completed' => $sequence->enrollments()->where('status', 'completed')->count(),
             'cancelled' => $sequence->enrollments()->where('status', 'cancelled')->count(),
         ];
 
         return Inertia::render('Communities/Email/SequenceShow', [
-            'community'       => $community,
-            'sequence'        => $sequence,
+            'community' => $community,
+            'sequence' => $sequence,
             'enrollmentStats' => $enrollmentStats,
         ]);
     }

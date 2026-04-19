@@ -20,9 +20,9 @@ class QuizControllerTest extends TestCase
     private function createClassroomStructure(User $owner): array
     {
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $course    = Course::factory()->create(['community_id' => $community->id]);
-        $module    = CourseModule::factory()->create(['course_id' => $course->id]);
-        $lesson    = CourseLesson::factory()->create(['module_id' => $module->id]);
+        $course = Course::factory()->create(['community_id' => $community->id]);
+        $module = CourseModule::factory()->create(['course_id' => $course->id]);
+        $lesson = CourseLesson::factory()->create(['module_id' => $module->id]);
 
         return [$community, $course, $lesson];
     }
@@ -30,21 +30,21 @@ class QuizControllerTest extends TestCase
     private function quizPayload(): array
     {
         return [
-            'title'      => 'Chapter 1 Quiz',
+            'title' => 'Chapter 1 Quiz',
             'pass_score' => 70,
-            'questions'  => [
+            'questions' => [
                 [
                     'question' => 'What is Laravel?',
-                    'type'     => 'multiple_choice',
-                    'options'  => [
+                    'type' => 'multiple_choice',
+                    'options' => [
                         ['label' => 'A PHP framework', 'is_correct' => true],
                         ['label' => 'A JavaScript library', 'is_correct' => false],
                     ],
                 ],
                 [
                     'question' => 'Laravel uses MVC pattern.',
-                    'type'     => 'true_false',
-                    'options'  => [
+                    'type' => 'true_false',
+                    'options' => [
                         ['label' => 'True', 'is_correct' => true],
                         ['label' => 'False', 'is_correct' => false],
                     ],
@@ -103,9 +103,9 @@ class QuizControllerTest extends TestCase
             ->postJson(
                 "/api/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/quiz",
                 [
-                    'title'      => 'Quiz',
+                    'title' => 'Quiz',
                     'pass_score' => 70,
-                    'questions'  => [
+                    'questions' => [
                         ['question' => '', 'type' => 'invalid', 'options' => []],
                     ],
                 ]
@@ -129,15 +129,15 @@ class QuizControllerTest extends TestCase
             ->assertJsonStructure(['quiz_id']);
 
         $this->assertDatabaseHas('quizzes', [
-            'lesson_id'  => $lesson->id,
-            'title'      => 'Chapter 1 Quiz',
+            'lesson_id' => $lesson->id,
+            'title' => 'Chapter 1 Quiz',
             'pass_score' => 70,
         ]);
 
         $this->assertDatabaseHas('quiz_questions', [
-            'quiz_id'  => $response->json('quiz_id'),
+            'quiz_id' => $response->json('quiz_id'),
             'question' => 'What is Laravel?',
-            'type'     => 'multiple_choice',
+            'type' => 'multiple_choice',
         ]);
     }
 
@@ -147,8 +147,8 @@ class QuizControllerTest extends TestCase
         [$community, $course, $lesson] = $this->createClassroomStructure($owner);
 
         Quiz::create([
-            'lesson_id'  => $lesson->id,
-            'title'      => 'Old Quiz',
+            'lesson_id' => $lesson->id,
+            'title' => 'Old Quiz',
             'pass_score' => 50,
         ]);
 

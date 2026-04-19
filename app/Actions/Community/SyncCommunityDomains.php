@@ -10,9 +10,9 @@ class SyncCommunityDomains
 {
     public function execute(Community $community, ?string $oldSubdomain, ?string $oldCustomDomain): void
     {
-        $fresh       = $community->fresh();
-        $appHost     = parse_url(config('app.url'), PHP_URL_HOST) ?? 'curzzo.com';
-        $baseDomain  = explode(':', $appHost)[0];
+        $fresh = $community->fresh();
+        $appHost = parse_url(config('app.url'), PHP_URL_HOST) ?? 'curzzo.com';
+        $baseDomain = explode(':', $appHost)[0];
 
         $newSubdomain = $fresh->subdomain;
         if ($oldSubdomain !== $newSubdomain) {

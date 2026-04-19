@@ -18,23 +18,24 @@ class ResolveCustomDomainTest extends TestCase
      */
     private function runMiddleware(string $url): array
     {
-        $parts   = parse_url($url);
-        $host    = $parts['host'] ?? 'localhost';
-        $path    = $parts['path'] ?? '/';
-        $query   = $parts['query'] ?? '';
-        $uri     = $query ? "{$path}?{$query}" : $path;
+        $parts = parse_url($url);
+        $host = $parts['host'] ?? 'localhost';
+        $path = $parts['path'] ?? '/';
+        $query = $parts['query'] ?? '';
+        $uri = $query ? "{$path}?{$query}" : $path;
 
         $request = Request::create($uri, 'GET');
         $request->headers->set('HOST', $host);
         $request->server->set('HTTP_HOST', $host);
 
         $communitySlug = null;
-        $finalUri      = null;
+        $finalUri = null;
 
-        $middleware = new ResolveCustomDomain();
+        $middleware = new ResolveCustomDomain;
         $middleware->handle($request, function (Request $req) use (&$communitySlug, &$finalUri) {
             $communitySlug = $req->attributes->get('domain_community')?->slug;
-            $finalUri      = $req->getRequestUri();
+            $finalUri = $req->getRequestUri();
+
             return response()->json(['ok' => true]);
         });
 
@@ -221,5 +222,4 @@ class ResolveCustomDomainTest extends TestCase
         $this->assertEquals('certs-slug', $community);
         $this->assertEquals('/certificates/abc', $uri);
     }
-
 }

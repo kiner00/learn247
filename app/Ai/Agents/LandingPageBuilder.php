@@ -18,11 +18,11 @@ class LandingPageBuilder implements Agent
 
     public function instructions(): string
     {
-        $name        = $this->context['name'];
-        $category    = $this->context['category'] ?? 'General';
+        $name = $this->context['name'];
+        $category = $this->context['category'] ?? 'General';
         $description = $this->context['description'] ?? '';
-        $price       = $this->context['price'] ?? 0;
-        $currency    = $this->context['currency'] ?? 'PHP';
+        $price = $this->context['price'] ?? 0;
+        $currency = $this->context['currency'] ?? 'PHP';
         $creatorName = $this->context['creator_name'] ?? 'the creator';
         $memberCount = $this->context['member_count'] ?? 0;
 
@@ -31,21 +31,21 @@ class LandingPageBuilder implements Agent
             : 'Free';
 
         return implode("\n", [
-            "You are an elite funnel copywriter who specializes in high-converting landing pages for online communities, courses, and coaching programs.",
-            "You write in the style of top marketers: clear, confident, benefit-driven, and emotionally compelling.",
-            "",
-            "Community details:",
+            'You are an elite funnel copywriter who specializes in high-converting landing pages for online communities, courses, and coaching programs.',
+            'You write in the style of top marketers: clear, confident, benefit-driven, and emotionally compelling.',
+            '',
+            'Community details:',
             "  Name: {$name}",
             "  Category: {$category}",
             "  Description: {$description}",
             "  Creator: {$creatorName}",
             "  Price: {$priceLabel}",
             "  Members: {$memberCount}",
-            "",
-            "Generate a complete, high-converting funnel landing page as a single JSON object.",
-            "Return ONLY valid JSON (no markdown, no code fences, no commentary).",
-            "",
-            "Required JSON structure:",
+            '',
+            'Generate a complete, high-converting funnel landing page as a single JSON object.',
+            'Return ONLY valid JSON (no markdown, no code fences, no commentary).',
+            '',
+            'Required JSON structure:',
             '{',
             '  "hero": {',
             '    "headline": "Bold, benefit-driven headline (max 80 chars)",',
@@ -85,13 +85,13 @@ class LandingPageBuilder implements Agent
             '    "cta_label": "Final CTA button text (max 30 chars)"',
             '  }',
             '}',
-            "",
-            "Rules:",
-            "- Be specific to the community name and category. Never be generic.",
-            "- Use active voice and strong verbs.",
-            "- Make it feel premium and professional.",
-            "- Testimonials should feel real and specific, not generic.",
-            "- Output ONLY the JSON object.",
+            '',
+            'Rules:',
+            '- Be specific to the community name and category. Never be generic.',
+            '- Use active voice and strong verbs.',
+            '- Make it feel premium and professional.',
+            '- Testimonials should feel real and specific, not generic.',
+            '- Output ONLY the JSON object.',
         ]);
     }
 }

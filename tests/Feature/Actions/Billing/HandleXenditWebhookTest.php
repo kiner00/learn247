@@ -6,7 +6,6 @@ use App\Actions\Billing\HandleXenditWebhook;
 use App\Mail\TempPasswordMail;
 use App\Models\Affiliate;
 use App\Models\Community;
-use App\Models\CommunityMember;
 use App\Models\Course;
 use App\Models\CourseEnrollment;
 use App\Models\Payment;
@@ -28,6 +27,7 @@ class HandleXenditWebhookTest extends TestCase
         if ($callbackToken) {
             $request->headers->set('x-callback-token', $callbackToken);
         }
+
         return $request;
     }
 
@@ -51,16 +51,16 @@ class HandleXenditWebhookTest extends TestCase
         $community = Community::factory()->create();
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_paid_123',
-            'status'       => Subscription::STATUS_PENDING,
-            'expires_at'   => null,
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_paid_123',
+            'status' => Subscription::STATUS_PENDING,
+            'expires_at' => null,
         ]);
 
         $request = $this->makeRequest([
-            'id'       => 'inv_paid_123',
-            'status'   => 'PAID',
-            'amount'   => 500,
+            'id' => 'inv_paid_123',
+            'status' => 'PAID',
+            'amount' => 500,
             'currency' => 'PHP',
         ], 'valid-token');
 
@@ -69,18 +69,18 @@ class HandleXenditWebhookTest extends TestCase
 
         $this->assertDatabaseHas('payments', [
             'subscription_id' => $subscription->id,
-            'status'          => Payment::STATUS_PAID,
-            'amount'          => 500,
+            'status' => Payment::STATUS_PAID,
+            'amount' => 500,
         ]);
 
         $this->assertDatabaseHas('subscriptions', [
-            'id'     => $subscription->id,
+            'id' => $subscription->id,
             'status' => Subscription::STATUS_ACTIVE,
         ]);
 
         $this->assertDatabaseHas('community_members', [
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
     }
 
@@ -93,26 +93,26 @@ class HandleXenditWebhookTest extends TestCase
         $community = Community::factory()->create();
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_dup_123',
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->addMonth(),
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_dup_123',
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addMonth(),
         ]);
 
         Payment::create([
             'subscription_id' => $subscription->id,
-            'community_id'    => $community->id,
-            'user_id'         => $user->id,
-            'amount'          => 500,
-            'currency'        => 'PHP',
-            'status'          => Payment::STATUS_PAID,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'amount' => 500,
+            'currency' => 'PHP',
+            'status' => Payment::STATUS_PAID,
             'xendit_event_id' => 'inv_dup_123_PAID',
-            'metadata'        => [],
-            'paid_at'         => now(),
+            'metadata' => [],
+            'paid_at' => now(),
         ]);
 
         $request = $this->makeRequest([
-            'id'     => 'inv_dup_123',
+            'id' => 'inv_dup_123',
             'status' => 'PAID',
             'amount' => 500,
         ], 'valid-token');
@@ -129,7 +129,7 @@ class HandleXenditWebhookTest extends TestCase
 
         $request = $this->makeRequest([
             'event' => 'disbursement.completed',
-            'data'  => ['id' => 'dis_123', 'status' => 'COMPLETED'],
+            'data' => ['id' => 'dis_123', 'status' => 'COMPLETED'],
         ], 'valid-token');
 
         $action = app(HandleXenditWebhook::class);
@@ -143,7 +143,7 @@ class HandleXenditWebhookTest extends TestCase
         config(['services.xendit.callback_token' => 'valid-token']);
 
         $request = $this->makeRequest([
-            'id'     => 'inv_nonexistent',
+            'id' => 'inv_nonexistent',
             'status' => 'PAID',
             'amount' => 100,
         ], 'valid-token');
@@ -163,14 +163,14 @@ class HandleXenditWebhookTest extends TestCase
         $community = Community::factory()->create();
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_aff_auto',
-            'status'       => Subscription::STATUS_PENDING,
-            'expires_at'   => null,
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_aff_auto',
+            'status' => Subscription::STATUS_PENDING,
+            'expires_at' => null,
         ]);
 
         $request = $this->makeRequest([
-            'id'     => 'inv_aff_auto',
+            'id' => 'inv_aff_auto',
             'status' => 'PAID',
             'amount' => 500,
         ], 'valid-token');
@@ -180,8 +180,8 @@ class HandleXenditWebhookTest extends TestCase
 
         $this->assertDatabaseHas('affiliates', [
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => $user->id,
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
     }
 
@@ -193,14 +193,14 @@ class HandleXenditWebhookTest extends TestCase
         $community = Community::factory()->create();
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_fail_123',
-            'status'       => Subscription::STATUS_PENDING,
-            'expires_at'   => null,
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_fail_123',
+            'status' => Subscription::STATUS_PENDING,
+            'expires_at' => null,
         ]);
 
         $request = $this->makeRequest([
-            'id'     => 'inv_fail_123',
+            'id' => 'inv_fail_123',
             'status' => 'FAILED',
             'amount' => 500,
         ], 'valid-token');
@@ -209,13 +209,13 @@ class HandleXenditWebhookTest extends TestCase
         $action->execute($request);
 
         $this->assertDatabaseHas('subscriptions', [
-            'id'     => $subscription->id,
+            'id' => $subscription->id,
             'status' => Subscription::STATUS_CANCELLED,
         ]);
 
         $this->assertDatabaseHas('payments', [
             'subscription_id' => $subscription->id,
-            'status'          => Payment::STATUS_FAILED,
+            'status' => Payment::STATUS_FAILED,
         ]);
     }
 
@@ -228,14 +228,14 @@ class HandleXenditWebhookTest extends TestCase
         $community = Community::factory()->create();
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_guest_123',
-            'status'       => Subscription::STATUS_PENDING,
-            'expires_at'   => null,
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_guest_123',
+            'status' => Subscription::STATUS_PENDING,
+            'expires_at' => null,
         ]);
 
         $request = $this->makeRequest([
-            'id'     => 'inv_guest_123',
+            'id' => 'inv_guest_123',
             'status' => 'PAID',
             'amount' => 500,
         ], 'valid-token');
@@ -257,16 +257,16 @@ class HandleXenditWebhookTest extends TestCase
         $community = Community::factory()->create();
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_settled_1',
-            'status'       => Subscription::STATUS_PENDING,
-            'expires_at'   => null,
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_settled_1',
+            'status' => Subscription::STATUS_PENDING,
+            'expires_at' => null,
         ]);
 
         $request = $this->makeRequest([
-            'id'       => 'inv_settled_1',
-            'status'   => 'SETTLED',
-            'amount'   => 750,
+            'id' => 'inv_settled_1',
+            'status' => 'SETTLED',
+            'amount' => 750,
             'currency' => 'PHP',
         ], 'valid-token');
 
@@ -274,14 +274,14 @@ class HandleXenditWebhookTest extends TestCase
         $action->execute($request);
 
         $this->assertDatabaseHas('subscriptions', [
-            'id'     => $subscription->id,
+            'id' => $subscription->id,
             'status' => Subscription::STATUS_ACTIVE,
         ]);
 
         $this->assertDatabaseHas('payments', [
             'subscription_id' => $subscription->id,
-            'status'          => Payment::STATUS_PAID,
-            'amount'          => 750,
+            'status' => Payment::STATUS_PAID,
+            'amount' => 750,
         ]);
     }
 
@@ -293,14 +293,14 @@ class HandleXenditWebhookTest extends TestCase
         $community = Community::factory()->create();
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_exp_1',
-            'status'       => Subscription::STATUS_PENDING,
-            'expires_at'   => null,
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_exp_1',
+            'status' => Subscription::STATUS_PENDING,
+            'expires_at' => null,
         ]);
 
         $request = $this->makeRequest([
-            'id'     => 'inv_exp_1',
+            'id' => 'inv_exp_1',
             'status' => 'EXPIRED',
             'amount' => 500,
         ], 'valid-token');
@@ -309,13 +309,13 @@ class HandleXenditWebhookTest extends TestCase
         $action->execute($request);
 
         $this->assertDatabaseHas('subscriptions', [
-            'id'     => $subscription->id,
+            'id' => $subscription->id,
             'status' => Subscription::STATUS_EXPIRED,
         ]);
 
         $this->assertDatabaseHas('payments', [
             'subscription_id' => $subscription->id,
-            'status'          => Payment::STATUS_EXPIRED,
+            'status' => Payment::STATUS_EXPIRED,
         ]);
     }
 
@@ -327,14 +327,14 @@ class HandleXenditWebhookTest extends TestCase
         $community = Community::factory()->create();
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_unk_1',
-            'status'       => Subscription::STATUS_PENDING,
-            'expires_at'   => null,
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_unk_1',
+            'status' => Subscription::STATUS_PENDING,
+            'expires_at' => null,
         ]);
 
         $request = $this->makeRequest([
-            'id'     => 'inv_unk_1',
+            'id' => 'inv_unk_1',
             'status' => 'PENDING',
             'amount' => 500,
         ], 'valid-token');
@@ -343,7 +343,7 @@ class HandleXenditWebhookTest extends TestCase
         $action->execute($request);
 
         $this->assertDatabaseHas('subscriptions', [
-            'id'     => $subscription->id,
+            'id' => $subscription->id,
             'status' => Subscription::STATUS_PENDING,
         ]);
 
@@ -359,18 +359,18 @@ class HandleXenditWebhookTest extends TestCase
         $community = Community::factory()->create();
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_v2_1',
-            'status'       => Subscription::STATUS_PENDING,
-            'expires_at'   => null,
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_v2_1',
+            'status' => Subscription::STATUS_PENDING,
+            'expires_at' => null,
         ]);
 
         $request = $this->makeRequest([
             'event' => 'invoice.paid',
-            'data'  => [
-                'id'       => 'inv_v2_1',
-                'status'   => 'PAID',
-                'amount'   => 600,
+            'data' => [
+                'id' => 'inv_v2_1',
+                'status' => 'PAID',
+                'amount' => 600,
                 'currency' => 'PHP',
             ],
         ], 'valid-token');
@@ -380,12 +380,12 @@ class HandleXenditWebhookTest extends TestCase
 
         $this->assertDatabaseHas('payments', [
             'subscription_id' => $subscription->id,
-            'status'          => Payment::STATUS_PAID,
-            'amount'          => 600,
+            'status' => Payment::STATUS_PAID,
+            'amount' => 600,
         ]);
 
         $this->assertDatabaseHas('subscriptions', [
-            'id'     => $subscription->id,
+            'id' => $subscription->id,
             'status' => Subscription::STATUS_ACTIVE,
         ]);
     }
@@ -400,14 +400,14 @@ class HandleXenditWebhookTest extends TestCase
         $futureExpiry = now()->addDays(15);
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_renew_1',
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => $futureExpiry,
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_renew_1',
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => $futureExpiry,
         ]);
 
         $request = $this->makeRequest([
-            'id'     => 'inv_renew_1',
+            'id' => 'inv_renew_1',
             'status' => 'PAID',
             'amount' => 500,
         ], 'valid-token');
@@ -434,38 +434,38 @@ class HandleXenditWebhookTest extends TestCase
 
         $owner = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'                  => $owner->id,
+            'owner_id' => $owner->id,
             'affiliate_commission_rate' => 10,
         ]);
 
         $affiliateUser = User::factory()->create(['needs_password_setup' => false]);
         $affiliate = Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => $affiliateUser->id,
-            'code'         => 'AFF_CONV_TEST',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => $affiliateUser->id,
+            'code' => 'AFF_CONV_TEST',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $affiliateUser->id,
-            'xendit_id'    => 'inv_aff_sub',
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->addMonth(),
+            'user_id' => $affiliateUser->id,
+            'xendit_id' => 'inv_aff_sub',
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addMonth(),
         ]);
 
         $referredUser = User::factory()->create(['needs_password_setup' => false]);
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $referredUser->id,
+            'user_id' => $referredUser->id,
             'affiliate_id' => $affiliate->id,
-            'xendit_id'    => 'inv_aff_conv_1',
-            'status'       => Subscription::STATUS_PENDING,
-            'expires_at'   => null,
+            'xendit_id' => 'inv_aff_conv_1',
+            'status' => Subscription::STATUS_PENDING,
+            'expires_at' => null,
         ]);
 
         $request = $this->makeRequest([
-            'id'     => 'inv_aff_conv_1',
+            'id' => 'inv_aff_conv_1',
             'status' => 'PAID',
             'amount' => 500,
         ], 'valid-token');
@@ -474,8 +474,8 @@ class HandleXenditWebhookTest extends TestCase
         $action->execute($request);
 
         $this->assertDatabaseHas('affiliate_conversions', [
-            'affiliate_id'     => $affiliate->id,
-            'subscription_id'  => $subscription->id,
+            'affiliate_id' => $affiliate->id,
+            'subscription_id' => $subscription->id,
             'referred_user_id' => $referredUser->id,
         ]);
     }
@@ -491,14 +491,14 @@ class HandleXenditWebhookTest extends TestCase
         $community = Community::factory()->create();
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_mail_fail',
-            'status'       => Subscription::STATUS_PENDING,
-            'expires_at'   => null,
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_mail_fail',
+            'status' => Subscription::STATUS_PENDING,
+            'expires_at' => null,
         ]);
 
         $request = $this->makeRequest([
-            'id'     => 'inv_mail_fail',
+            'id' => 'inv_mail_fail',
             'status' => 'PAID',
             'amount' => 500,
         ], 'valid-token');
@@ -508,11 +508,11 @@ class HandleXenditWebhookTest extends TestCase
 
         $this->assertDatabaseHas('payments', [
             'subscription_id' => $subscription->id,
-            'status'          => Payment::STATUS_PAID,
+            'status' => Payment::STATUS_PAID,
         ]);
 
         $this->assertDatabaseHas('subscriptions', [
-            'id'     => $subscription->id,
+            'id' => $subscription->id,
             'status' => Subscription::STATUS_ACTIVE,
         ]);
     }
@@ -527,21 +527,21 @@ class HandleXenditWebhookTest extends TestCase
 
         Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'code'         => 'EXISTING_CODE',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => $user->id,
+            'code' => 'EXISTING_CODE',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_aff_dup',
-            'status'       => Subscription::STATUS_PENDING,
-            'expires_at'   => null,
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_aff_dup',
+            'status' => Subscription::STATUS_PENDING,
+            'expires_at' => null,
         ]);
 
         $request = $this->makeRequest([
-            'id'     => 'inv_aff_dup',
+            'id' => 'inv_aff_dup',
             'status' => 'PAID',
             'amount' => 500,
         ], 'valid-token');
@@ -562,25 +562,25 @@ class HandleXenditWebhookTest extends TestCase
     {
         config(['services.xendit.callback_token' => 'valid-token']);
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $course    = Course::create([
+        $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Paid Course',
-            'access_type'  => Course::ACCESS_PAID_ONCE,
-            'price'        => 500,
-            'position'     => 1,
+            'title' => 'Paid Course',
+            'access_type' => Course::ACCESS_PAID_ONCE,
+            'price' => 500,
+            'position' => 1,
         ]);
 
         $enrollment = CourseEnrollment::create([
-            'user_id'   => $user->id,
+            'user_id' => $user->id,
             'course_id' => $course->id,
             'xendit_id' => 'inv_course_paid_1',
-            'status'    => CourseEnrollment::STATUS_PENDING,
+            'status' => CourseEnrollment::STATUS_PENDING,
         ]);
 
         $request = $this->makeRequest([
-            'id'     => 'inv_course_paid_1',
+            'id' => 'inv_course_paid_1',
             'status' => 'PAID',
             'amount' => 500,
         ], 'valid-token');
@@ -589,7 +589,7 @@ class HandleXenditWebhookTest extends TestCase
         $action->execute($request);
 
         $this->assertDatabaseHas('course_enrollments', [
-            'id'     => $enrollment->id,
+            'id' => $enrollment->id,
             'status' => CourseEnrollment::STATUS_PAID,
         ]);
 
@@ -602,25 +602,25 @@ class HandleXenditWebhookTest extends TestCase
     {
         config(['services.xendit.callback_token' => 'valid-token']);
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $course    = Course::create([
+        $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Monthly Course',
-            'access_type'  => Course::ACCESS_PAID_MONTHLY,
-            'price'        => 200,
-            'position'     => 1,
+            'title' => 'Monthly Course',
+            'access_type' => Course::ACCESS_PAID_MONTHLY,
+            'price' => 200,
+            'position' => 1,
         ]);
 
         $enrollment = CourseEnrollment::create([
-            'user_id'   => $user->id,
+            'user_id' => $user->id,
             'course_id' => $course->id,
             'xendit_id' => 'inv_course_monthly_1',
-            'status'    => CourseEnrollment::STATUS_PENDING,
+            'status' => CourseEnrollment::STATUS_PENDING,
         ]);
 
         $request = $this->makeRequest([
-            'id'     => 'inv_course_monthly_1',
+            'id' => 'inv_course_monthly_1',
             'status' => 'PAID',
             'amount' => 200,
         ], 'valid-token');
@@ -638,25 +638,25 @@ class HandleXenditWebhookTest extends TestCase
     {
         config(['services.xendit.callback_token' => 'valid-token']);
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $course    = Course::create([
+        $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Paid Course',
-            'access_type'  => Course::ACCESS_PAID_ONCE,
-            'price'        => 500,
-            'position'     => 1,
+            'title' => 'Paid Course',
+            'access_type' => Course::ACCESS_PAID_ONCE,
+            'price' => 500,
+            'position' => 1,
         ]);
 
         $enrollment = CourseEnrollment::create([
-            'user_id'   => $user->id,
+            'user_id' => $user->id,
             'course_id' => $course->id,
             'xendit_id' => 'inv_course_failed_1',
-            'status'    => CourseEnrollment::STATUS_PENDING,
+            'status' => CourseEnrollment::STATUS_PENDING,
         ]);
 
         $request = $this->makeRequest([
-            'id'     => 'inv_course_failed_1',
+            'id' => 'inv_course_failed_1',
             'status' => 'FAILED',
             'amount' => 500,
         ], 'valid-token');
@@ -666,7 +666,7 @@ class HandleXenditWebhookTest extends TestCase
 
         // Status should remain pending (not paid)
         $this->assertDatabaseHas('course_enrollments', [
-            'id'     => $enrollment->id,
+            'id' => $enrollment->id,
             'status' => CourseEnrollment::STATUS_PENDING,
         ]);
 
@@ -681,20 +681,20 @@ class HandleXenditWebhookTest extends TestCase
         Mail::fake();
         config(['services.xendit.callback_token' => 'valid-token', 'services.xendit.secret_key' => 'test']);
 
-        $user      = User::factory()->create(['needs_password_setup' => false]);
+        $user = User::factory()->create(['needs_password_setup' => false]);
         $community = Community::factory()->create(['billing_type' => 'one_time']);
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_onetime_1',
-            'status'       => Subscription::STATUS_PENDING,
-            'expires_at'   => null,
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_onetime_1',
+            'status' => Subscription::STATUS_PENDING,
+            'expires_at' => null,
         ]);
 
         $request = $this->makeRequest([
-            'id'       => 'inv_onetime_1',
-            'status'   => 'PAID',
-            'amount'   => 500,
+            'id' => 'inv_onetime_1',
+            'status' => 'PAID',
+            'amount' => 500,
             'currency' => 'PHP',
         ], 'valid-token');
 
@@ -717,38 +717,38 @@ class HandleXenditWebhookTest extends TestCase
 
         config(['services.xendit.callback_token' => 'valid-token', 'services.xendit.secret_key' => 'test']);
 
-        $owner         = User::factory()->create();
+        $owner = User::factory()->create();
         $affiliateUser = User::factory()->create(['needs_password_setup' => true]);
-        $community     = Community::factory()->create(['owner_id' => $owner->id, 'affiliate_commission_rate' => 10]);
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'affiliate_commission_rate' => 10]);
 
         $affiliate = \App\Models\Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => $affiliateUser->id,
-            'code'         => 'AFF-CATCH-1',
-            'status'       => \App\Models\Affiliate::STATUS_ACTIVE,
+            'user_id' => $affiliateUser->id,
+            'code' => 'AFF-CATCH-1',
+            'status' => \App\Models\Affiliate::STATUS_ACTIVE,
         ]);
 
         // Affiliate must be subscribed to earn commission
         Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $affiliateUser->id,
-            'xendit_id'    => 'inv_aff_active',
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => null,
+            'user_id' => $affiliateUser->id,
+            'xendit_id' => 'inv_aff_active',
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => null,
         ]);
 
         $referredUser = User::factory()->create(['needs_password_setup' => true]);
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $referredUser->id,
+            'user_id' => $referredUser->id,
             'affiliate_id' => $affiliate->id,
-            'xendit_id'    => 'inv_cha_catch_1',
-            'status'       => Subscription::STATUS_PENDING,
-            'expires_at'   => null,
+            'xendit_id' => 'inv_cha_catch_1',
+            'status' => Subscription::STATUS_PENDING,
+            'expires_at' => null,
         ]);
 
         $request = $this->makeRequest([
-            'id'     => 'inv_cha_catch_1',
+            'id' => 'inv_cha_catch_1',
             'status' => 'PAID',
             'amount' => 500,
         ], 'valid-token');
@@ -759,7 +759,7 @@ class HandleXenditWebhookTest extends TestCase
 
         $this->assertDatabaseHas('payments', [
             'subscription_id' => $subscription->id,
-            'status'          => Payment::STATUS_PAID,
+            'status' => Payment::STATUS_PAID,
         ]);
     }
 
@@ -772,45 +772,45 @@ class HandleXenditWebhookTest extends TestCase
 
         config(['services.xendit.callback_token' => 'valid-token', 'services.xendit.secret_key' => 'test']);
 
-        $owner         = User::factory()->create();
+        $owner = User::factory()->create();
         $affiliateUser = User::factory()->create(['needs_password_setup' => false]);
-        $community     = Community::factory()->create(['owner_id' => $owner->id, 'affiliate_commission_rate' => 10]);
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'affiliate_commission_rate' => 10]);
 
         $affiliate = \App\Models\Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => $affiliateUser->id,
-            'code'         => 'AFF-COURSE-CATCH',
-            'status'       => \App\Models\Affiliate::STATUS_ACTIVE,
+            'user_id' => $affiliateUser->id,
+            'code' => 'AFF-COURSE-CATCH',
+            'status' => \App\Models\Affiliate::STATUS_ACTIVE,
         ]);
 
         // Affiliate must be subscribed to earn commission
         Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $affiliateUser->id,
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => null,
+            'user_id' => $affiliateUser->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => null,
         ]);
 
         $course = Course::create([
-            'community_id'              => $community->id,
-            'title'                     => 'Course With Commission',
-            'access_type'               => Course::ACCESS_PAID_ONCE,
-            'price'                     => 500,
+            'community_id' => $community->id,
+            'title' => 'Course With Commission',
+            'access_type' => Course::ACCESS_PAID_ONCE,
+            'price' => 500,
             'affiliate_commission_rate' => 10,
-            'position'                  => 1,
+            'position' => 1,
         ]);
 
-        $buyer      = User::factory()->create(['needs_password_setup' => false]);
+        $buyer = User::factory()->create(['needs_password_setup' => false]);
         $enrollment = CourseEnrollment::create([
-            'user_id'      => $buyer->id,
-            'course_id'    => $course->id,
+            'user_id' => $buyer->id,
+            'course_id' => $course->id,
             'affiliate_id' => $affiliate->id,
-            'xendit_id'    => 'inv_course_catch_1',
-            'status'       => CourseEnrollment::STATUS_PENDING,
+            'xendit_id' => 'inv_course_catch_1',
+            'status' => CourseEnrollment::STATUS_PENDING,
         ]);
 
         $request = $this->makeRequest([
-            'id'     => 'inv_course_catch_1',
+            'id' => 'inv_course_catch_1',
             'status' => 'PAID',
             'amount' => 500,
         ], 'valid-token');
@@ -820,7 +820,7 @@ class HandleXenditWebhookTest extends TestCase
         $action->execute($request);
 
         $this->assertDatabaseHas('course_enrollments', [
-            'id'     => $enrollment->id,
+            'id' => $enrollment->id,
             'status' => CourseEnrollment::STATUS_PAID,
         ]);
     }
@@ -829,25 +829,25 @@ class HandleXenditWebhookTest extends TestCase
     {
         config(['services.xendit.callback_token' => 'valid-token']);
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $course    = Course::create([
+        $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Paid Course',
-            'access_type'  => Course::ACCESS_PAID_ONCE,
-            'price'        => 500,
-            'position'     => 1,
+            'title' => 'Paid Course',
+            'access_type' => Course::ACCESS_PAID_ONCE,
+            'price' => 500,
+            'position' => 1,
         ]);
 
         CourseEnrollment::create([
-            'user_id'   => $user->id,
+            'user_id' => $user->id,
             'course_id' => $course->id,
             'xendit_id' => 'inv_course_no_sub',
-            'status'    => CourseEnrollment::STATUS_PENDING,
+            'status' => CourseEnrollment::STATUS_PENDING,
         ]);
 
         $request = $this->makeRequest([
-            'id'     => 'inv_course_no_sub',
+            'id' => 'inv_course_no_sub',
             'status' => 'PAID',
             'amount' => 500,
         ], 'valid-token');
@@ -866,19 +866,19 @@ class HandleXenditWebhookTest extends TestCase
         Mail::fake();
         config(['services.xendit.callback_token' => 'valid-token', 'services.xendit.secret_key' => 'test']);
 
-        $user      = User::factory()->create(['needs_password_setup' => false]);
+        $user = User::factory()->create(['needs_password_setup' => false]);
         $community = Community::factory()->paid()->create(['deletion_requested_at' => now()]);
         $existingExpiry = now()->addDays(15);
-        $subscription  = Subscription::create([
+        $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_pd_monthly',
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => $existingExpiry,
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_pd_monthly',
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => $existingExpiry,
         ]);
 
         $request = $this->makeRequest([
-            'id'     => 'inv_pd_monthly',
+            'id' => 'inv_pd_monthly',
             'status' => 'PAID',
             'amount' => 500,
         ], 'valid-token');
@@ -898,18 +898,18 @@ class HandleXenditWebhookTest extends TestCase
     {
         config(['services.xendit.callback_token' => 'valid-token', 'services.xendit.secret_key' => 'test']);
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid()->create(['deletion_requested_at' => now()]);
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_graceful_del',
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->addDay(),
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_graceful_del',
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addDay(),
         ]);
 
         $request = $this->makeRequest([
-            'id'     => 'inv_graceful_del',
+            'id' => 'inv_graceful_del',
             'status' => 'EXPIRED',
             'amount' => 500,
         ], 'valid-token');

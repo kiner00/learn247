@@ -21,7 +21,7 @@ class EnrollInCourseTest extends TestCase
     {
         return $this->mock(XenditService::class, function (MockInterface $mock) {
             $mock->shouldReceive('createInvoice')->andReturn([
-                'id'          => 'inv_course_test_123',
+                'id' => 'inv_course_test_123',
                 'invoice_url' => 'https://checkout.xendit.co/inv_course_test_123',
             ]);
         });
@@ -33,14 +33,14 @@ class EnrollInCourseTest extends TestCase
     {
         $this->mockXendit();
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $course    = Course::create([
+        $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Paid Course',
-            'access_type'  => Course::ACCESS_PAID_ONCE,
-            'price'        => 500,
-            'position'     => 1,
+            'title' => 'Paid Course',
+            'access_type' => Course::ACCESS_PAID_ONCE,
+            'price' => 500,
+            'position' => 1,
         ]);
 
         $action = app(EnrollInCourse::class);
@@ -51,9 +51,9 @@ class EnrollInCourseTest extends TestCase
         $this->assertEquals('https://checkout.xendit.co/inv_course_test_123', $result['checkout_url']);
 
         $this->assertDatabaseHas('course_enrollments', [
-            'user_id'   => $user->id,
+            'user_id' => $user->id,
             'course_id' => $course->id,
-            'status'    => CourseEnrollment::STATUS_PENDING,
+            'status' => CourseEnrollment::STATUS_PENDING,
         ]);
     }
 
@@ -61,23 +61,23 @@ class EnrollInCourseTest extends TestCase
     {
         $this->mockXendit();
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $course    = Course::create([
+        $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Monthly Course',
-            'access_type'  => Course::ACCESS_PAID_MONTHLY,
-            'price'        => 200,
-            'position'     => 1,
+            'title' => 'Monthly Course',
+            'access_type' => Course::ACCESS_PAID_MONTHLY,
+            'price' => 200,
+            'position' => 1,
         ]);
 
         $action = app(EnrollInCourse::class);
         $result = $action->execute($user, $community, $course, 'https://example.com/success');
 
         $this->assertDatabaseHas('course_enrollments', [
-            'user_id'   => $user->id,
+            'user_id' => $user->id,
             'course_id' => $course->id,
-            'status'    => CourseEnrollment::STATUS_PENDING,
+            'status' => CourseEnrollment::STATUS_PENDING,
         ]);
         $this->assertEquals('https://checkout.xendit.co/inv_course_test_123', $result['checkout_url']);
     }
@@ -86,13 +86,13 @@ class EnrollInCourseTest extends TestCase
 
     public function test_throws_when_course_is_free(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $course    = Course::create([
+        $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Free Course',
-            'access_type'  => Course::ACCESS_FREE,
-            'position'     => 1,
+            'title' => 'Free Course',
+            'access_type' => Course::ACCESS_FREE,
+            'position' => 1,
         ]);
 
         $action = app(EnrollInCourse::class);
@@ -103,13 +103,13 @@ class EnrollInCourseTest extends TestCase
 
     public function test_throws_when_course_is_inclusive(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $course    = Course::create([
+        $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Inclusive Course',
-            'access_type'  => Course::ACCESS_INCLUSIVE,
-            'position'     => 1,
+            'title' => 'Inclusive Course',
+            'access_type' => Course::ACCESS_INCLUSIVE,
+            'position' => 1,
         ]);
 
         $action = app(EnrollInCourse::class);
@@ -120,20 +120,20 @@ class EnrollInCourseTest extends TestCase
 
     public function test_throws_when_user_already_has_active_paid_enrollment(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $course    = Course::create([
+        $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Paid Course',
-            'access_type'  => Course::ACCESS_PAID_ONCE,
-            'price'        => 500,
-            'position'     => 1,
+            'title' => 'Paid Course',
+            'access_type' => Course::ACCESS_PAID_ONCE,
+            'price' => 500,
+            'position' => 1,
         ]);
 
         CourseEnrollment::create([
-            'user_id'    => $user->id,
-            'course_id'  => $course->id,
-            'status'     => CourseEnrollment::STATUS_PAID,
+            'user_id' => $user->id,
+            'course_id' => $course->id,
+            'status' => CourseEnrollment::STATUS_PAID,
             'expires_at' => null,
         ]);
 
@@ -145,20 +145,20 @@ class EnrollInCourseTest extends TestCase
 
     public function test_throws_when_user_has_active_monthly_enrollment_not_expired(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $course    = Course::create([
+        $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Monthly Course',
-            'access_type'  => Course::ACCESS_PAID_MONTHLY,
-            'price'        => 200,
-            'position'     => 1,
+            'title' => 'Monthly Course',
+            'access_type' => Course::ACCESS_PAID_MONTHLY,
+            'price' => 200,
+            'position' => 1,
         ]);
 
         CourseEnrollment::create([
-            'user_id'    => $user->id,
-            'course_id'  => $course->id,
-            'status'     => CourseEnrollment::STATUS_PAID,
+            'user_id' => $user->id,
+            'course_id' => $course->id,
+            'status' => CourseEnrollment::STATUS_PAID,
             'expires_at' => now()->addDays(15),
         ]);
 
@@ -172,20 +172,20 @@ class EnrollInCourseTest extends TestCase
     {
         $this->mockXendit();
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $course    = Course::create([
+        $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Monthly Course',
-            'access_type'  => Course::ACCESS_PAID_MONTHLY,
-            'price'        => 200,
-            'position'     => 1,
+            'title' => 'Monthly Course',
+            'access_type' => Course::ACCESS_PAID_MONTHLY,
+            'price' => 200,
+            'position' => 1,
         ]);
 
         CourseEnrollment::create([
-            'user_id'    => $user->id,
-            'course_id'  => $course->id,
-            'status'     => CourseEnrollment::STATUS_PAID,
+            'user_id' => $user->id,
+            'course_id' => $course->id,
+            'status' => CourseEnrollment::STATUS_PAID,
             'expires_at' => now()->subDay(),
         ]);
 
@@ -199,22 +199,22 @@ class EnrollInCourseTest extends TestCase
     {
         $this->mockXendit();
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $course    = Course::create([
+        $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Paid Course',
-            'access_type'  => Course::ACCESS_PAID_ONCE,
-            'price'        => 500,
-            'position'     => 1,
+            'title' => 'Paid Course',
+            'access_type' => Course::ACCESS_PAID_ONCE,
+            'price' => 500,
+            'position' => 1,
         ]);
 
         // Pre-existing pending enrollment
         CourseEnrollment::create([
-            'user_id'   => $user->id,
+            'user_id' => $user->id,
             'course_id' => $course->id,
             'xendit_id' => 'old_inv_123',
-            'status'    => CourseEnrollment::STATUS_PENDING,
+            'status' => CourseEnrollment::STATUS_PENDING,
         ]);
 
         $action = app(EnrollInCourse::class);
@@ -223,7 +223,7 @@ class EnrollInCourseTest extends TestCase
         // Should upsert, not create a second record
         $this->assertEquals(1, CourseEnrollment::where('user_id', $user->id)->where('course_id', $course->id)->count());
         $this->assertDatabaseHas('course_enrollments', [
-            'user_id'   => $user->id,
+            'user_id' => $user->id,
             'course_id' => $course->id,
             'xendit_id' => 'inv_course_test_123',
         ]);
@@ -235,25 +235,25 @@ class EnrollInCourseTest extends TestCase
     {
         $this->mockXendit();
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $course    = Course::create([
+        $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Paid Course',
-            'access_type'  => Course::ACCESS_PAID_ONCE,
-            'price'        => 500,
-            'position'     => 1,
+            'title' => 'Paid Course',
+            'access_type' => Course::ACCESS_PAID_ONCE,
+            'price' => 500,
+            'position' => 1,
         ]);
 
         $affiliate = \App\Models\Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => $community->owner_id,
-            'code'         => 'REF-TRACK',
-            'status'       => \App\Models\Affiliate::STATUS_ACTIVE,
+            'user_id' => $community->owner_id,
+            'code' => 'REF-TRACK',
+            'status' => \App\Models\Affiliate::STATUS_ACTIVE,
         ]);
 
         \App\Models\Subscription::factory()->active()->create([
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
             'community_id' => $community->id,
             'affiliate_id' => $affiliate->id,
         ]);
@@ -262,8 +262,8 @@ class EnrollInCourseTest extends TestCase
         $action->execute($user, $community, $course, 'https://example.com/success');
 
         $this->assertDatabaseHas('course_enrollments', [
-            'user_id'      => $user->id,
-            'course_id'    => $course->id,
+            'user_id' => $user->id,
+            'course_id' => $course->id,
             'affiliate_id' => $affiliate->id,
         ]);
     }
@@ -272,22 +272,22 @@ class EnrollInCourseTest extends TestCase
     {
         $this->mockXendit();
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $course    = Course::create([
+        $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Paid Course',
-            'access_type'  => Course::ACCESS_PAID_ONCE,
-            'price'        => 500,
-            'position'     => 1,
+            'title' => 'Paid Course',
+            'access_type' => Course::ACCESS_PAID_ONCE,
+            'price' => 500,
+            'position' => 1,
         ]);
 
         $action = app(EnrollInCourse::class);
         $action->execute($user, $community, $course, 'https://example.com/success');
 
         $this->assertDatabaseHas('course_enrollments', [
-            'user_id'      => $user->id,
-            'course_id'    => $course->id,
+            'user_id' => $user->id,
+            'course_id' => $course->id,
             'affiliate_id' => null,
         ]);
     }
@@ -301,19 +301,19 @@ class EnrollInCourseTest extends TestCase
                 })
                 ->once()
                 ->andReturn([
-                    'id'          => 'inv_usd_123',
+                    'id' => 'inv_usd_123',
                     'invoice_url' => 'https://checkout.xendit.co/inv_usd_123',
                 ]);
         });
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['currency' => 'USD']);
-        $course    = Course::create([
+        $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'USD Course',
-            'access_type'  => Course::ACCESS_PAID_ONCE,
-            'price'        => 999,
-            'position'     => 1,
+            'title' => 'USD Course',
+            'access_type' => Course::ACCESS_PAID_ONCE,
+            'price' => 999,
+            'position' => 1,
         ]);
 
         $action = app(EnrollInCourse::class);
@@ -329,20 +329,20 @@ class EnrollInCourseTest extends TestCase
                 })
                 ->once()
                 ->andReturn([
-                    'id'          => 'inv_php_123',
+                    'id' => 'inv_php_123',
                     'invoice_url' => 'https://checkout.xendit.co/inv_php_123',
                 ]);
         });
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         // Community factory defaults to 'PHP' currency
         $community = Community::factory()->create(['currency' => 'PHP']);
-        $course    = Course::create([
+        $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'PHP Course',
-            'access_type'  => Course::ACCESS_PAID_ONCE,
-            'price'        => 500,
-            'position'     => 1,
+            'title' => 'PHP Course',
+            'access_type' => Course::ACCESS_PAID_ONCE,
+            'price' => 500,
+            'position' => 1,
         ]);
 
         $action = app(EnrollInCourse::class);

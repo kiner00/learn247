@@ -21,8 +21,8 @@ class CommunitySettingsController extends Controller
         $this->authorize('update', $community);
 
         return [
-            'community'          => $community,
-            'isPro'              => auth()->user()->creatorPlan() === 'pro',
+            'community' => $community,
+            'isPro' => auth()->user()->creatorPlan() === 'pro',
             'canUseIntegrations' => app(PlanLimitService::class)->canSendAnnouncement(auth()->user()),
         ];
     }
@@ -74,14 +74,14 @@ class CommunitySettingsController extends Controller
 
     public function domain(Community $community): Response
     {
-        $appHost    = parse_url(config('app.url'), PHP_URL_HOST) ?? 'curzzo.com';
+        $appHost = parse_url(config('app.url'), PHP_URL_HOST) ?? 'curzzo.com';
         $baseDomain = explode(':', $appHost)[0];
 
         return Inertia::render('Communities/Settings/Domain', array_merge(
             $this->baseProps($community),
             [
                 'baseDomain' => $baseDomain,
-                'serverIp'   => config('app.server_ip', ''),
+                'serverIp' => config('app.server_ip', ''),
             ]
         ));
     }
@@ -96,14 +96,14 @@ class CommunitySettingsController extends Controller
         return Inertia::render('Communities/Settings/Email', array_merge(
             $this->baseProps($community),
             [
-                'hasApiKey'         => (bool) $community->resend_api_key,
-                'emailProvider'     => $community->email_provider ?? '',
-                'fromEmail'         => $community->resend_from_email,
-                'fromName'          => $community->resend_from_name,
-                'replyTo'           => $community->resend_reply_to,
-                'domainId'          => $community->resend_domain_id,
-                'domainStatus'      => $community->resend_domain_status,
-                'providers'         => EmailProviderFactory::all(),
+                'hasApiKey' => (bool) $community->resend_api_key,
+                'emailProvider' => $community->email_provider ?? '',
+                'fromEmail' => $community->resend_from_email,
+                'fromName' => $community->resend_from_name,
+                'replyTo' => $community->resend_reply_to,
+                'domainId' => $community->resend_domain_id,
+                'domainStatus' => $community->resend_domain_status,
+                'providers' => EmailProviderFactory::all(),
             ]
         ));
     }
@@ -139,8 +139,8 @@ class CommunitySettingsController extends Controller
             $this->baseProps($community),
             [
                 'workflows' => $workflows,
-                'tags'      => $tags,
-                'courses'   => $courses,
+                'tags' => $tags,
+                'courses' => $courses,
             ]
         ));
     }
@@ -163,10 +163,10 @@ class CommunitySettingsController extends Controller
             ->with('user:id,name,avatar')
             ->get()
             ->map(fn ($row) => [
-                'id'            => $row->user_id,
-                'name'          => $row->user->name,
-                'avatar'        => $row->user->avatar,
-                'last_chat_at'  => $row->last_chat_at,
+                'id' => $row->user_id,
+                'name' => $row->user->name,
+                'avatar' => $row->user->avatar,
+                'last_chat_at' => $row->last_chat_at,
                 'message_count' => $row->message_count,
             ]);
 
@@ -197,19 +197,19 @@ class CommunitySettingsController extends Controller
             ->with('user:id,name,avatar')
             ->get()
             ->map(fn ($row) => [
-                'id'            => $row->user_id,
-                'name'          => $row->user->name,
-                'avatar'        => $row->user->avatar,
-                'last_chat_at'  => $row->last_chat_at,
+                'id' => $row->user_id,
+                'name' => $row->user->name,
+                'avatar' => $row->user->avatar,
+                'last_chat_at' => $row->last_chat_at,
                 'message_count' => $row->message_count,
             ]);
 
         return Inertia::render('Communities/Settings/ChatHistory', array_merge(
             $this->baseProps($community),
             [
-                'chatUsers'      => $users,
-                'selectedUser'   => $user,
-                'chatMessages'   => $messages,
+                'chatUsers' => $users,
+                'selectedUser' => $user,
+                'chatMessages' => $messages,
             ]
         ));
     }

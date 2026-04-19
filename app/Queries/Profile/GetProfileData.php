@@ -30,14 +30,14 @@ class GetProfileData
         $levelData = $this->getLevelData($user);
 
         return [
-            'user'           => $user,
-            'is_own'         => $isOwn,
-            'memberships'    => $this->getMemberships($user),
-            'total_points'   => $levelData['total_points'],
-            'level'          => $levelData['level'],
+            'user' => $user,
+            'is_own' => $isOwn,
+            'memberships' => $this->getMemberships($user),
+            'total_points' => $levelData['total_points'],
+            'level' => $levelData['level'],
             'points_to_next' => $levelData['points_to_next'],
-            'activity_map'   => $this->getActivityMap($user),
-            'badges'         => $this->getBadges($user, $isOwn),
+            'activity_map' => $this->getActivityMap($user),
+            'badges' => $this->getBadges($user, $isOwn),
         ];
     }
 
@@ -55,13 +55,13 @@ class GetProfileData
             ->withCount(['community as members_count' => fn ($q) => $q->join('community_members as cm2', 'cm2.community_id', '=', 'communities.id')])
             ->get()
             ->map(fn ($m) => [
-                'community_id'  => $m->community_id,
-                'name'          => $m->community?->name,
-                'slug'          => $m->community?->slug,
-                'avatar'        => $m->community?->avatar,
-                'price'         => $m->community?->price,
+                'community_id' => $m->community_id,
+                'name' => $m->community?->name,
+                'slug' => $m->community?->slug,
+                'avatar' => $m->community?->avatar,
+                'price' => $m->community?->price,
                 'members_count' => CommunityMember::where('community_id', $m->community_id)->count(),
-                'joined_at'     => $m->joined_at,
+                'joined_at' => $m->joined_at,
             ]);
     }
 
@@ -71,13 +71,13 @@ class GetProfileData
     public function getLevelData(User $user): array
     {
         $totalPoints = CommunityMember::where('user_id', $user->id)->sum('points');
-        $level       = CommunityMember::computeLevel((int) $totalPoints);
-        $thresholds  = CommunityMember::LEVEL_THRESHOLDS;
-        $nextThresh  = $thresholds[$level] ?? null;
+        $level = CommunityMember::computeLevel((int) $totalPoints);
+        $thresholds = CommunityMember::LEVEL_THRESHOLDS;
+        $nextThresh = $thresholds[$level] ?? null;
 
         return [
-            'total_points'   => (int) $totalPoints,
-            'level'          => $level,
+            'total_points' => (int) $totalPoints,
+            'level' => $level,
             'points_to_next' => $nextThresh !== null ? $nextThresh - $totalPoints : null,
         ];
     }
@@ -101,9 +101,9 @@ class GetProfileData
             ->pluck('cnt', 'date');
 
         $activityMap = [];
-        $cursor      = $since->copy();
+        $cursor = $since->copy();
         while ($cursor <= now()) {
-            $d     = $cursor->toDateString();
+            $d = $cursor->toDateString();
             $count = (int) ($postDates[$d] ?? 0) + (int) ($commentDates[$d] ?? 0);
             if ($count > 0) {
                 $activityMap[$d] = $count;
@@ -125,14 +125,14 @@ class GetProfileData
                 ->orderBy('sort_order')
                 ->get()
                 ->map(fn ($b) => [
-                    'key'         => $b->key,
-                    'name'        => $b->name,
-                    'icon'        => $b->icon,
+                    'key' => $b->key,
+                    'name' => $b->name,
+                    'icon' => $b->icon,
                     'description' => $b->description,
                     'how_to_earn' => $b->how_to_earn,
-                    'type'        => $b->type,
-                    'earned'      => $earnedBadgeIds->has($b->id),
-                    'earned_at'   => $earnedBadgeIds->get($b->id)?->toDateString(),
+                    'type' => $b->type,
+                    'earned' => $earnedBadgeIds->has($b->id),
+                    'earned_at' => $earnedBadgeIds->get($b->id)?->toDateString(),
                 ])->values();
         }
 
@@ -142,14 +142,14 @@ class GetProfileData
             ->orderBy('sort_order')
             ->get()
             ->map(fn ($b) => [
-                'key'         => $b->key,
-                'name'        => $b->name,
-                'icon'        => $b->icon,
+                'key' => $b->key,
+                'name' => $b->name,
+                'icon' => $b->icon,
                 'description' => $b->description,
                 'how_to_earn' => $b->how_to_earn,
-                'type'        => $b->type,
-                'earned'      => true,
-                'earned_at'   => $earnedBadgeIds->get($b->id)?->toDateString(),
+                'type' => $b->type,
+                'earned' => true,
+                'earned_at' => $earnedBadgeIds->get($b->id)?->toDateString(),
             ])->values();
     }
 

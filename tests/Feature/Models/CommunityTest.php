@@ -19,22 +19,22 @@ class CommunityTest extends TestCase
 
         Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'expires_at'   => now()->addMonth(),
+            'expires_at' => now()->addMonth(),
         ]);
         Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'expires_at'   => now()->addMonth(),
+            'expires_at' => now()->addMonth(),
         ]);
         // Expired — should not count
         Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'expires_at'   => now()->subDay(),
+            'expires_at' => now()->subDay(),
         ]);
         // Cancelled — should not count
         Subscription::factory()->create([
             'community_id' => $community->id,
-            'status'       => Subscription::STATUS_CANCELLED,
-            'expires_at'   => now()->addMonth(),
+            'status' => Subscription::STATUS_CANCELLED,
+            'expires_at' => now()->addMonth(),
         ]);
 
         $this->assertSame(2, $community->activeSubscribersCount());

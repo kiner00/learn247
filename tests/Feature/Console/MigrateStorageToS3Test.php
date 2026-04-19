@@ -208,7 +208,7 @@ class MigrateStorageToS3Test extends TestCase
         $this->artisan('storage:migrate-to-s3')
             ->assertExitCode(0);
 
-        $row     = \DB::table('communities')->where('id', $community->id)->first();
+        $row = \DB::table('communities')->where('id', $community->id)->first();
         $gallery = json_decode($row->gallery_images, true);
 
         $this->assertEquals(

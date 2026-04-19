@@ -36,37 +36,37 @@ class SendEmailBroadcastBatchTest extends TestCase
     private function createBroadcastWithMembers(int $memberCount = 3, array $broadcastOverrides = []): array
     {
         $community = Community::factory()->create([
-            'email_provider'    => 'resend',
-            'resend_api_key'    => 'test-key',
+            'email_provider' => 'resend',
+            'resend_api_key' => 'test-key',
             'resend_from_email' => 'noreply@test.com',
-            'resend_from_name'  => 'Test Community',
-            'resend_reply_to'   => 'reply@test.com',
+            'resend_from_name' => 'Test Community',
+            'resend_reply_to' => 'reply@test.com',
         ]);
 
         $campaign = EmailCampaign::create([
             'community_id' => $community->id,
-            'name'         => 'Batch Campaign',
-            'type'         => EmailCampaign::TYPE_BROADCAST,
-            'status'       => 'sending',
+            'name' => 'Batch Campaign',
+            'type' => EmailCampaign::TYPE_BROADCAST,
+            'status' => 'sending',
         ]);
 
         $broadcast = EmailBroadcast::create(array_merge([
-            'campaign_id'      => $campaign->id,
-            'community_id'     => $community->id,
-            'subject'          => 'Batch Subject',
-            'html_body'        => '<p>Hello {{user_name}}</p>',
-            'status'           => EmailBroadcast::STATUS_SENDING,
+            'campaign_id' => $campaign->id,
+            'community_id' => $community->id,
+            'subject' => 'Batch Subject',
+            'html_body' => '<p>Hello {{user_name}}</p>',
+            'status' => EmailBroadcast::STATUS_SENDING,
             'total_recipients' => $memberCount,
-            'total_sent'       => 0,
-            'total_failed'     => 0,
+            'total_sent' => 0,
+            'total_failed' => 0,
         ], $broadcastOverrides));
 
         $members = [];
         for ($i = 0; $i < $memberCount; $i++) {
-            $user      = User::factory()->create();
+            $user = User::factory()->create();
             $members[] = CommunityMember::factory()->create([
                 'community_id' => $community->id,
-                'user_id'      => $user->id,
+                'user_id' => $user->id,
             ]);
         }
 
@@ -77,7 +77,7 @@ class SendEmailBroadcastBatchTest extends TestCase
 
     public function test_sends_batch_and_creates_send_records(): void
     {
-        $data      = $this->createBroadcastWithMembers(2);
+        $data = $this->createBroadcastWithMembers(2);
         $memberIds = collect($data['members'])->pluck('id')->all();
 
         $this->fakeProvider()
@@ -93,9 +93,9 @@ class SendEmailBroadcastBatchTest extends TestCase
 
         $this->assertEquals(2, EmailSend::where('status', 'sent')->count());
         $this->assertDatabaseHas('email_sends', [
-            'broadcast_id'    => $data['broadcast']->id,
+            'broadcast_id' => $data['broadcast']->id,
             'resend_email_id' => 'email_1',
-            'status'          => 'sent',
+            'status' => 'sent',
         ]);
 
         $data['broadcast']->refresh();
@@ -104,7 +104,7 @@ class SendEmailBroadcastBatchTest extends TestCase
 
     public function test_marks_broadcast_as_sent_when_all_complete(): void
     {
-        $data      = $this->createBroadcastWithMembers(2);
+        $data = $this->createBroadcastWithMembers(2);
         $memberIds = collect($data['members'])->pluck('id')->all();
 
         $this->fakeProvider()
@@ -136,6 +136,7 @@ class SendEmailBroadcastBatchTest extends TestCase
             ->once()
             ->withArgs(function ($community, $emails) use (&$capturedBatch) {
                 $capturedBatch = $emails;
+
                 return true;
             })
             ->andReturn([['id' => 'e1']]);
@@ -208,7 +209,7 @@ class SendEmailBroadcastBatchTest extends TestCase
 
     public function test_marks_sends_as_failed_when_batch_throws(): void
     {
-        $data      = $this->createBroadcastWithMembers(2);
+        $data = $this->createBroadcastWithMembers(2);
         $memberIds = collect($data['members'])->pluck('id')->all();
 
         $this->fakeProvider()
@@ -225,7 +226,7 @@ class SendEmailBroadcastBatchTest extends TestCase
 
         $this->assertEquals(2, EmailSend::where('status', 'failed')->count());
         $this->assertDatabaseHas('email_sends', [
-            'status'        => 'failed',
+            'status' => 'failed',
             'failed_reason' => 'API error',
         ]);
 
@@ -239,8 +240,8 @@ class SendEmailBroadcastBatchTest extends TestCase
     {
         $data = $this->createBroadcastWithMembers(1, [
             'from_email' => 'broadcast@custom.com',
-            'from_name'  => 'Broadcast Sender',
-            'reply_to'   => 'broadcast-reply@custom.com',
+            'from_name' => 'Broadcast Sender',
+            'reply_to' => 'broadcast-reply@custom.com',
         ]);
         $memberIds = collect($data['members'])->pluck('id')->all();
 
@@ -250,6 +251,7 @@ class SendEmailBroadcastBatchTest extends TestCase
             ->once()
             ->withArgs(function ($community, $emails) use (&$capturedBatch) {
                 $capturedBatch = $emails;
+
                 return true;
             })
             ->andReturn([['id' => 'e1']]);
@@ -265,8 +267,8 @@ class SendEmailBroadcastBatchTest extends TestCase
     {
         $data = $this->createBroadcastWithMembers(1, [
             'from_email' => null,
-            'from_name'  => null,
-            'reply_to'   => null,
+            'from_name' => null,
+            'reply_to' => null,
         ]);
         $memberIds = collect($data['members'])->pluck('id')->all();
 
@@ -276,6 +278,7 @@ class SendEmailBroadcastBatchTest extends TestCase
             ->once()
             ->withArgs(function ($community, $emails) use (&$capturedBatch) {
                 $capturedBatch = $emails;
+
                 return true;
             })
             ->andReturn([['id' => 'e1']]);

@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::table('subscriptions', function (Blueprint $table) {
             $table->foreignId('affiliate_id')->nullable()->after('user_id')
-                  ->constrained('affiliates')->nullOnDelete();
+                ->constrained('affiliates')->nullOnDelete();
         });
     }
 

@@ -16,10 +16,10 @@ class AffiliateChaChing extends Mailable
     use Queueable, SerializesModels;
 
     public function __construct(
-        public readonly User      $affiliate,
+        public readonly User $affiliate,
         public readonly Community $community,
-        public readonly float     $saleAmount,
-        public readonly float     $commissionAmount,
+        public readonly float $saleAmount,
+        public readonly float $commissionAmount,
     ) {}
 
     public function envelope(): Envelope
@@ -47,9 +47,9 @@ class AffiliateChaChing extends Mailable
     private function vars(): array
     {
         return [
-            'affiliate_name'    => $this->affiliate->name,
-            'community_name'    => $this->community->name,
-            'sale_amount'       => number_format($this->saleAmount, 2),
+            'affiliate_name' => $this->affiliate->name,
+            'community_name' => $this->community->name,
+            'sale_amount' => number_format($this->saleAmount, 2),
             'commission_amount' => number_format($this->commissionAmount, 2),
         ];
     }

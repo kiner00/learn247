@@ -29,7 +29,7 @@ class EmailTemplateController extends Controller
     public function update(Request $request, string $key): RedirectResponse
     {
         $data = $request->validate([
-            'subject'   => 'required|string|max:255',
+            'subject' => 'required|string|max:255',
             'html_body' => 'required|string',
         ]);
 
@@ -41,7 +41,7 @@ class EmailTemplateController extends Controller
     public function preview(Request $request, string $key, EmailTemplateService $service): \Illuminate\Http\Response
     {
         $data = $request->validate([
-            'subject'   => 'required|string|max:255',
+            'subject' => 'required|string|max:255',
             'html_body' => 'required|string',
         ]);
 

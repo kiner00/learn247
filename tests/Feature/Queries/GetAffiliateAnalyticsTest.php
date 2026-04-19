@@ -28,11 +28,12 @@ class GetAffiliateAnalyticsTest extends TestCase
             $pdo = DB::connection()->getPdo();
             $pdo->sqliteCreateFunction('DATE_FORMAT', function ($date, $format) {
                 $map = ['%Y' => 'Y', '%m' => 'm', '%d' => 'd', '%Y-%m' => 'Y-m'];
+
                 return date($map[$format] ?? 'Y-m-d', strtotime($date));
             }, 2);
         }
 
-        $this->query = new GetAffiliateAnalytics();
+        $this->query = new GetAffiliateAnalytics;
     }
 
     // ─── helpers ───────────────────────────────────────────────────────────────
@@ -40,36 +41,36 @@ class GetAffiliateAnalyticsTest extends TestCase
     private function createConversion(Affiliate $affiliate, float $saleAmount, float $commission, string $status = AffiliateConversion::STATUS_PENDING, ?Carbon $createdAt = null): AffiliateConversion
     {
         $sub = Subscription::create([
-            'community_id'       => $affiliate->community_id,
-            'user_id'            => User::factory()->create()->id,
-            'status'             => Subscription::STATUS_ACTIVE,
-            'xendit_id'          => 'inv_' . fake()->unique()->uuid(),
-            'xendit_invoice_url' => 'https://checkout.xendit.co/' . fake()->uuid(),
-            'expires_at'         => now()->addMonth(),
+            'community_id' => $affiliate->community_id,
+            'user_id' => User::factory()->create()->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'xendit_id' => 'inv_'.fake()->unique()->uuid(),
+            'xendit_invoice_url' => 'https://checkout.xendit.co/'.fake()->uuid(),
+            'expires_at' => now()->addMonth(),
         ]);
 
         $payment = Payment::create([
-            'subscription_id'    => $sub->id,
-            'community_id'       => $affiliate->community_id,
-            'user_id'            => $sub->user_id,
-            'amount'             => $saleAmount,
-            'currency'           => 'PHP',
-            'status'             => Payment::STATUS_PAID,
-            'metadata'           => [],
-            'paid_at'            => now(),
+            'subscription_id' => $sub->id,
+            'community_id' => $affiliate->community_id,
+            'user_id' => $sub->user_id,
+            'amount' => $saleAmount,
+            'currency' => 'PHP',
+            'status' => Payment::STATUS_PAID,
+            'metadata' => [],
+            'paid_at' => now(),
         ]);
 
         $conversion = AffiliateConversion::create([
-            'affiliate_id'      => $affiliate->id,
-            'subscription_id'   => $sub->id,
-            'payment_id'        => $payment->id,
-            'referred_user_id'  => $sub->user_id,
-            'sale_amount'       => $saleAmount,
-            'platform_fee'      => $saleAmount * 0.15,
+            'affiliate_id' => $affiliate->id,
+            'subscription_id' => $sub->id,
+            'payment_id' => $payment->id,
+            'referred_user_id' => $sub->user_id,
+            'sale_amount' => $saleAmount,
+            'platform_fee' => $saleAmount * 0.15,
             'commission_amount' => $commission,
-            'creator_amount'    => $saleAmount - ($saleAmount * 0.15) - $commission,
-            'status'            => $status,
-            'paid_at'           => $status === AffiliateConversion::STATUS_PAID ? now() : null,
+            'creator_amount' => $saleAmount - ($saleAmount * 0.15) - $commission,
+            'status' => $status,
+            'paid_at' => $status === AffiliateConversion::STATUS_PAID ? now() : null,
         ]);
 
         if ($createdAt) {
@@ -83,9 +84,9 @@ class GetAffiliateAnalyticsTest extends TestCase
     {
         return Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'code'         => $code,
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => $user->id,
+            'code' => $code,
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
     }
 
@@ -93,7 +94,7 @@ class GetAffiliateAnalyticsTest extends TestCase
 
     public function test_returns_correct_structure(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
         $this->createAffiliate($user, $community, 'STRUCT01');
 
@@ -108,7 +109,7 @@ class GetAffiliateAnalyticsTest extends TestCase
 
     public function test_summary_with_no_conversions(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
         $this->createAffiliate($user, $community, 'EMPTY01');
 
@@ -124,7 +125,7 @@ class GetAffiliateAnalyticsTest extends TestCase
 
     public function test_summary_totals_are_calculated_correctly(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
         $affiliate = $this->createAffiliate($user, $community, 'TOTAL01');
 
@@ -143,11 +144,11 @@ class GetAffiliateAnalyticsTest extends TestCase
 
     public function test_summary_best_month_across_all_affiliates(): void
     {
-        $user  = User::factory()->create();
+        $user = User::factory()->create();
         $comm1 = Community::factory()->create(['affiliate_commission_rate' => 10]);
         $comm2 = Community::factory()->create(['affiliate_commission_rate' => 10]);
-        $aff1  = $this->createAffiliate($user, $comm1, 'BEST01');
-        $aff2  = $this->createAffiliate($user, $comm2, 'BEST02');
+        $aff1 = $this->createAffiliate($user, $comm1, 'BEST01');
+        $aff2 = $this->createAffiliate($user, $comm2, 'BEST02');
 
         $lastMonth = Carbon::now()->subMonth()->startOfMonth()->addDays(5);
         $this->createConversion($aff1, 2000, 200, AffiliateConversion::STATUS_PAID, $lastMonth);
@@ -164,11 +165,11 @@ class GetAffiliateAnalyticsTest extends TestCase
 
     public function test_filters_by_community_id(): void
     {
-        $user  = User::factory()->create();
+        $user = User::factory()->create();
         $comm1 = Community::factory()->create(['affiliate_commission_rate' => 10]);
         $comm2 = Community::factory()->create(['affiliate_commission_rate' => 10]);
-        $aff1  = $this->createAffiliate($user, $comm1, 'FILT01');
-        $aff2  = $this->createAffiliate($user, $comm2, 'FILT02');
+        $aff1 = $this->createAffiliate($user, $comm1, 'FILT01');
+        $aff2 = $this->createAffiliate($user, $comm2, 'FILT02');
 
         $this->createConversion($aff1, 1000, 100, AffiliateConversion::STATUS_PENDING);
         $this->createConversion($aff2, 2000, 200, AffiliateConversion::STATUS_PENDING);
@@ -183,7 +184,7 @@ class GetAffiliateAnalyticsTest extends TestCase
 
     public function test_week_period_excludes_old_conversions(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
         $affiliate = $this->createAffiliate($user, $community, 'WEEK01');
 
@@ -198,7 +199,7 @@ class GetAffiliateAnalyticsTest extends TestCase
 
     public function test_year_period_excludes_old_conversions(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
         $affiliate = $this->createAffiliate($user, $community, 'YEAR01');
 
@@ -212,7 +213,7 @@ class GetAffiliateAnalyticsTest extends TestCase
 
     public function test_all_time_period_includes_everything(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
         $affiliate = $this->createAffiliate($user, $community, 'ALLTIME');
 
@@ -229,7 +230,7 @@ class GetAffiliateAnalyticsTest extends TestCase
 
     public function test_chart_data_for_week_period(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
         $affiliate = $this->createAffiliate($user, $community, 'CHART01');
 
@@ -244,7 +245,7 @@ class GetAffiliateAnalyticsTest extends TestCase
 
     public function test_chart_data_for_month_period(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
         $affiliate = $this->createAffiliate($user, $community, 'CHART02');
 
@@ -257,7 +258,7 @@ class GetAffiliateAnalyticsTest extends TestCase
 
     public function test_chart_data_for_year_has_monthly_labels(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
         $affiliate = $this->createAffiliate($user, $community, 'CHART03');
 
@@ -274,7 +275,7 @@ class GetAffiliateAnalyticsTest extends TestCase
 
     public function test_conversions_list_structure(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
         $affiliate = $this->createAffiliate($user, $community, 'LIST01');
 
@@ -295,7 +296,7 @@ class GetAffiliateAnalyticsTest extends TestCase
 
     public function test_conversions_limited_to_100(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
         $affiliate = $this->createAffiliate($user, $community, 'LIM100');
 
@@ -312,7 +313,7 @@ class GetAffiliateAnalyticsTest extends TestCase
 
     public function test_communities_list_returned(): void
     {
-        $user  = User::factory()->create();
+        $user = User::factory()->create();
         $comm1 = Community::factory()->create(['affiliate_commission_rate' => 10]);
         $comm2 = Community::factory()->create(['affiliate_commission_rate' => 10]);
         $this->createAffiliate($user, $comm1, 'COMML01');
@@ -329,11 +330,11 @@ class GetAffiliateAnalyticsTest extends TestCase
 
     public function test_by_community_breakdown(): void
     {
-        $user  = User::factory()->create();
+        $user = User::factory()->create();
         $comm1 = Community::factory()->create(['affiliate_commission_rate' => 10]);
         $comm2 = Community::factory()->create(['affiliate_commission_rate' => 10]);
-        $aff1  = $this->createAffiliate($user, $comm1, 'BYCOM01');
-        $aff2  = $this->createAffiliate($user, $comm2, 'BYCOM02');
+        $aff1 = $this->createAffiliate($user, $comm1, 'BYCOM01');
+        $aff2 = $this->createAffiliate($user, $comm2, 'BYCOM02');
 
         $this->createConversion($aff1, 1000, 100, AffiliateConversion::STATUS_PENDING);
         $this->createConversion($aff2, 2000, 200, AffiliateConversion::STATUS_PENDING);

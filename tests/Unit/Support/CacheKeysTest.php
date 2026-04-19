@@ -60,14 +60,14 @@ class CacheKeysTest extends TestCase
     public function test_admin_creator_analytics_key_uses_md5(): void
     {
         $key = CacheKeys::adminCreatorAnalytics('search', 'pro');
-        $expected = 'admin_creator_analytics:' . md5('search:pro');
+        $expected = 'admin_creator_analytics:'.md5('search:pro');
         $this->assertSame($expected, $key);
     }
 
     public function test_affiliate_chart_key_uses_md5(): void
     {
         $key = CacheKeys::affiliateChart('1,2,3', '30d');
-        $expected = 'affiliate_chart:' . md5('1,2,3:30d');
+        $expected = 'affiliate_chart:'.md5('1,2,3:30d');
         $this->assertSame($expected, $key);
     }
 }

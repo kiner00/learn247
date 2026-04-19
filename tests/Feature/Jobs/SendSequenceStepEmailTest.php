@@ -7,7 +7,6 @@ use App\Jobs\SendSequenceStepEmail;
 use App\Models\Community;
 use App\Models\CommunityMember;
 use App\Models\EmailCampaign;
-use App\Models\EmailSend;
 use App\Models\EmailSequence;
 use App\Models\EmailSequenceEnrollment;
 use App\Models\EmailSequenceStep;
@@ -39,49 +38,49 @@ class SendSequenceStepEmailTest extends TestCase
     private function createEnrollmentWithStep(array $overrides = []): array
     {
         $community = Community::factory()->create([
-            'email_provider'     => 'resend',
-            'resend_api_key'     => 'test-key',
-            'resend_from_email'  => 'noreply@test.com',
-            'resend_from_name'   => 'Test Community',
-            'resend_reply_to'    => 'reply@test.com',
+            'email_provider' => 'resend',
+            'resend_api_key' => 'test-key',
+            'resend_from_email' => 'noreply@test.com',
+            'resend_from_name' => 'Test Community',
+            'resend_reply_to' => 'reply@test.com',
         ]);
 
-        $user   = User::factory()->create(['email' => 'member@example.com', 'name' => 'John']);
+        $user = User::factory()->create(['email' => 'member@example.com', 'name' => 'John']);
         $member = CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         $campaign = EmailCampaign::create([
             'community_id' => $community->id,
-            'name'         => 'Test Sequence Campaign',
-            'type'         => EmailCampaign::TYPE_SEQUENCE,
-            'status'       => 'draft',
+            'name' => 'Test Sequence Campaign',
+            'type' => EmailCampaign::TYPE_SEQUENCE,
+            'status' => 'draft',
         ]);
 
         $sequence = EmailSequence::create([
-            'campaign_id'    => $campaign->id,
-            'community_id'   => $community->id,
-            'trigger_event'  => EmailSequence::TRIGGER_MEMBER_JOINED,
-            'status'         => EmailSequence::STATUS_ACTIVE,
+            'campaign_id' => $campaign->id,
+            'community_id' => $community->id,
+            'trigger_event' => EmailSequence::TRIGGER_MEMBER_JOINED,
+            'status' => EmailSequence::STATUS_ACTIVE,
         ]);
 
         $step = EmailSequenceStep::create(array_merge([
             'sequence_id' => $sequence->id,
-            'position'    => 1,
+            'position' => 1,
             'delay_hours' => 0,
-            'subject'     => 'Welcome!',
-            'html_body'   => '<p>Hello {{user_name}}, welcome to {{community_name}}!</p>',
+            'subject' => 'Welcome!',
+            'html_body' => '<p>Hello {{user_name}}, welcome to {{community_name}}!</p>',
         ], $overrides['step'] ?? []));
 
         $enrollment = EmailSequenceEnrollment::create([
-            'sequence_id'         => $sequence->id,
+            'sequence_id' => $sequence->id,
             'community_member_id' => $member->id,
-            'current_step_id'     => $step->id,
-            'steps_completed'     => 0,
-            'status'              => EmailSequenceEnrollment::STATUS_ACTIVE,
-            'next_send_at'        => now(),
-            'enrolled_at'         => now(),
+            'current_step_id' => $step->id,
+            'steps_completed' => 0,
+            'status' => EmailSequenceEnrollment::STATUS_ACTIVE,
+            'next_send_at' => now(),
+            'enrolled_at' => now(),
         ]);
 
         return compact('community', 'user', 'member', 'campaign', 'sequence', 'step', 'enrollment');
@@ -102,10 +101,10 @@ class SendSequenceStepEmailTest extends TestCase
         $job->handle();
 
         $this->assertDatabaseHas('email_sends', [
-            'community_id'        => $data['community']->id,
+            'community_id' => $data['community']->id,
             'community_member_id' => $data['member']->id,
-            'resend_email_id'     => 'resend_123',
-            'status'              => 'sent',
+            'resend_email_id' => 'resend_123',
+            'status' => 'sent',
         ]);
     }
 
@@ -121,6 +120,7 @@ class SendSequenceStepEmailTest extends TestCase
             ->once()
             ->withArgs(function ($community, $params) use (&$capturedHtml) {
                 $capturedHtml = $params['html'];
+
                 return true;
             })
             ->andReturn(['id' => 'email_456']);
@@ -140,10 +140,10 @@ class SendSequenceStepEmailTest extends TestCase
 
         $nextStep = EmailSequenceStep::create([
             'sequence_id' => $data['sequence']->id,
-            'position'    => 2,
+            'position' => 2,
             'delay_hours' => 24,
-            'subject'     => 'Follow up',
-            'html_body'   => '<p>Follow up email</p>',
+            'subject' => 'Follow up',
+            'html_body' => '<p>Follow up email</p>',
         ]);
 
         $this->fakeProvider()
@@ -206,8 +206,8 @@ class SendSequenceStepEmailTest extends TestCase
         $data = $this->createEnrollmentWithStep();
 
         EmailUnsubscribe::create([
-            'community_id'    => $data['community']->id,
-            'user_id'         => $data['user']->id,
+            'community_id' => $data['community']->id,
+            'user_id' => $data['user']->id,
             'unsubscribed_at' => now(),
         ]);
 
@@ -265,9 +265,9 @@ class SendSequenceStepEmailTest extends TestCase
         $job->handle();
 
         $this->assertDatabaseHas('email_sends', [
-            'community_id'        => $data['community']->id,
+            'community_id' => $data['community']->id,
             'community_member_id' => $data['member']->id,
-            'status'              => 'failed',
+            'status' => 'failed',
         ]);
 
         $data['enrollment']->refresh();
@@ -281,7 +281,7 @@ class SendSequenceStepEmailTest extends TestCase
         $data = $this->createEnrollmentWithStep([
             'step' => [
                 'from_email' => 'custom@sender.com',
-                'from_name'  => 'Custom Sender',
+                'from_name' => 'Custom Sender',
             ],
         ]);
 
@@ -291,6 +291,7 @@ class SendSequenceStepEmailTest extends TestCase
             ->once()
             ->withArgs(function ($community, $params) use (&$capturedFrom) {
                 $capturedFrom = $params['from'];
+
                 return true;
             })
             ->andReturn(['id' => 'email_from']);
@@ -306,7 +307,7 @@ class SendSequenceStepEmailTest extends TestCase
         $data = $this->createEnrollmentWithStep([
             'step' => [
                 'from_email' => null,
-                'from_name'  => null,
+                'from_name' => null,
             ],
         ]);
 
@@ -316,6 +317,7 @@ class SendSequenceStepEmailTest extends TestCase
             ->once()
             ->withArgs(function ($community, $params) use (&$capturedFrom) {
                 $capturedFrom = $params['from'];
+
                 return true;
             })
             ->andReturn(['id' => 'email_fb']);

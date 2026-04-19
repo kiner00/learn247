@@ -10,9 +10,11 @@ class CartEvent extends Model
 {
     use HasFactory;
 
-    public const TYPE_CHECKOUT_STARTED   = 'checkout_started';
-    public const TYPE_PAYMENT_COMPLETED  = 'payment_completed';
-    public const TYPE_ABANDONED          = 'abandoned';
+    public const TYPE_CHECKOUT_STARTED = 'checkout_started';
+
+    public const TYPE_PAYMENT_COMPLETED = 'payment_completed';
+
+    public const TYPE_ABANDONED = 'abandoned';
 
     protected $fillable = [
         'community_id', 'user_id', 'email', 'event_type',
@@ -22,7 +24,7 @@ class CartEvent extends Model
     protected function casts(): array
     {
         return [
-            'metadata'             => 'array',
+            'metadata' => 'array',
             'abandoned_email_sent' => 'boolean',
         ];
     }

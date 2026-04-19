@@ -29,7 +29,7 @@ class SendPasswordRemindersTest extends TestCase
 
         $user = User::factory()->create([
             'needs_password_setup' => true,
-            'created_at'           => now()->subDays(3)->subHours(2),
+            'created_at' => now()->subDays(3)->subHours(2),
         ]);
 
         $this->artisan('passwords:send-reminders')
@@ -46,7 +46,7 @@ class SendPasswordRemindersTest extends TestCase
 
         User::factory()->create([
             'needs_password_setup' => false,
-            'created_at'           => now()->subDays(3)->subHours(2),
+            'created_at' => now()->subDays(3)->subHours(2),
         ]);
 
         $this->artisan('passwords:send-reminders')
@@ -59,17 +59,17 @@ class SendPasswordRemindersTest extends TestCase
     {
         Mail::fake();
 
-        $user      = User::factory()->create([
+        $user = User::factory()->create([
             'needs_password_setup' => true,
-            'created_at'           => now()->subDays(5)->subHours(2),
+            'created_at' => now()->subDays(5)->subHours(2),
         ]);
         $community = Community::factory()->create();
 
         Subscription::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->addMonth(),
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addMonth(),
         ]);
 
         $this->artisan('passwords:send-reminders')
@@ -86,7 +86,7 @@ class SendPasswordRemindersTest extends TestCase
 
         User::factory()->create([
             'needs_password_setup' => true,
-            'created_at'           => now()->subDays(5)->subHours(2),
+            'created_at' => now()->subDays(5)->subHours(2),
         ]);
 
         $this->artisan('passwords:send-reminders')
@@ -99,17 +99,17 @@ class SendPasswordRemindersTest extends TestCase
     {
         Mail::fake();
 
-        $user      = User::factory()->create([
+        $user = User::factory()->create([
             'needs_password_setup' => true,
-            'created_at'           => now()->subDays(5)->subHours(2),
+            'created_at' => now()->subDays(5)->subHours(2),
         ]);
         $community = Community::factory()->create();
 
         Subscription::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->addMonth(),
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addMonth(),
         ]);
 
         $originalPassword = $user->password;
@@ -127,7 +127,7 @@ class SendPasswordRemindersTest extends TestCase
 
         User::factory()->create([
             'needs_password_setup' => true,
-            'created_at'           => now()->subDays(3)->subHours(2),
+            'created_at' => now()->subDays(3)->subHours(2),
         ]);
 
         $this->artisan('passwords:send-reminders')
@@ -141,12 +141,12 @@ class SendPasswordRemindersTest extends TestCase
 
         User::factory()->create([
             'needs_password_setup' => true,
-            'created_at'           => now()->subDays(1),
+            'created_at' => now()->subDays(1),
         ]);
 
         User::factory()->create([
             'needs_password_setup' => true,
-            'created_at'           => now()->subDays(10),
+            'created_at' => now()->subDays(10),
         ]);
 
         $this->artisan('passwords:send-reminders')

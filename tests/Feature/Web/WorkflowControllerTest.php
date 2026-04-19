@@ -16,7 +16,7 @@ class WorkflowControllerTest extends TestCase
 
     private function ownerWithCommunity(): array
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         return [$owner, $community];
@@ -30,10 +30,10 @@ class WorkflowControllerTest extends TestCase
 
         $tag = Tag::create(['community_id' => $community->id, 'name' => 'LEAD', 'slug' => 'lead']);
         Workflow::create([
-            'community_id'  => $community->id,
-            'name'          => 'Tag new members',
+            'community_id' => $community->id,
+            'name' => 'Tag new members',
             'trigger_event' => Workflow::TRIGGER_MEMBER_JOINED,
-            'action_type'   => Workflow::ACTION_APPLY_TAG,
+            'action_type' => Workflow::ACTION_APPLY_TAG,
             'action_config' => ['tag_id' => $tag->id],
         ]);
 
@@ -56,19 +56,19 @@ class WorkflowControllerTest extends TestCase
 
         $this->actingAs($owner)
             ->post(route('communities.workflows.store', $community), [
-                'name'          => 'Tag paid members',
+                'name' => 'Tag paid members',
                 'trigger_event' => 'member_joined',
-                'action_type'   => 'apply_tag',
-                'tag_id'        => $tag->id,
+                'action_type' => 'apply_tag',
+                'tag_id' => $tag->id,
                 'membership_type' => 'paid',
             ])
             ->assertRedirect();
 
         $this->assertDatabaseHas('workflows', [
-            'community_id'  => $community->id,
-            'name'          => 'Tag paid members',
+            'community_id' => $community->id,
+            'name' => 'Tag paid members',
             'trigger_event' => 'member_joined',
-            'is_active'     => true,
+            'is_active' => true,
         ]);
 
         $wf = Workflow::where('community_id', $community->id)->first();
@@ -79,16 +79,16 @@ class WorkflowControllerTest extends TestCase
     public function test_store_builds_course_filter(): void
     {
         [$owner, $community] = $this->ownerWithCommunity();
-        $tag    = Tag::create(['community_id' => $community->id, 'name' => 'Enrolled', 'slug' => 'enrolled']);
+        $tag = Tag::create(['community_id' => $community->id, 'name' => 'Enrolled', 'slug' => 'enrolled']);
         $course = Course::factory()->create(['community_id' => $community->id]);
 
         $this->actingAs($owner)
             ->post(route('communities.workflows.store', $community), [
-                'name'          => 'Tag on course',
+                'name' => 'Tag on course',
                 'trigger_event' => 'course_enrolled',
-                'action_type'   => 'apply_tag',
-                'tag_id'        => $tag->id,
-                'course_id'     => $course->id,
+                'action_type' => 'apply_tag',
+                'tag_id' => $tag->id,
+                'course_id' => $course->id,
             ])
             ->assertRedirect();
 
@@ -103,10 +103,10 @@ class WorkflowControllerTest extends TestCase
 
         $this->actingAs($owner)
             ->post(route('communities.workflows.store', $community), [
-                'name'          => 'Bad',
+                'name' => 'Bad',
                 'trigger_event' => 'bogus',
-                'action_type'   => 'apply_tag',
-                'tag_id'        => $tag->id,
+                'action_type' => 'apply_tag',
+                'tag_id' => $tag->id,
             ])
             ->assertSessionHasErrors('trigger_event');
     }
@@ -119,10 +119,10 @@ class WorkflowControllerTest extends TestCase
 
         $this->actingAs($owner)
             ->post(route('communities.workflows.store', $community), [
-                'name'          => 'X',
+                'name' => 'X',
                 'trigger_event' => 'member_joined',
-                'action_type'   => 'apply_tag',
-                'tag_id'        => $foreignTag->id,
+                'action_type' => 'apply_tag',
+                'tag_id' => $foreignTag->id,
             ])
             ->assertSessionHasErrors('tag_id');
     }
@@ -135,10 +135,10 @@ class WorkflowControllerTest extends TestCase
 
         $this->actingAs($stranger)
             ->post(route('communities.workflows.store', $community), [
-                'name'          => 'Nope',
+                'name' => 'Nope',
                 'trigger_event' => 'member_joined',
-                'action_type'   => 'apply_tag',
-                'tag_id'        => $tag->id,
+                'action_type' => 'apply_tag',
+                'tag_id' => $tag->id,
             ])
             ->assertForbidden();
     }
@@ -152,19 +152,19 @@ class WorkflowControllerTest extends TestCase
         $tag2 = Tag::create(['community_id' => $community->id, 'name' => 'B', 'slug' => 'b']);
 
         $wf = Workflow::create([
-            'community_id'  => $community->id,
-            'name'          => 'Original',
+            'community_id' => $community->id,
+            'name' => 'Original',
             'trigger_event' => 'member_joined',
-            'action_type'   => 'apply_tag',
+            'action_type' => 'apply_tag',
             'action_config' => ['tag_id' => $tag1->id],
         ]);
 
         $this->actingAs($owner)
             ->patch(route('communities.workflows.update', [$community, $wf]), [
-                'name'          => 'Renamed',
+                'name' => 'Renamed',
                 'trigger_event' => 'subscription_paid',
-                'action_type'   => 'apply_tag',
-                'tag_id'        => $tag2->id,
+                'action_type' => 'apply_tag',
+                'tag_id' => $tag2->id,
             ])
             ->assertRedirect();
 
@@ -181,10 +181,10 @@ class WorkflowControllerTest extends TestCase
         $tag = Tag::create(['community_id' => $other->id, 'name' => 'X', 'slug' => 'x']);
 
         $wf = Workflow::create([
-            'community_id'  => $other->id,
-            'name'          => 'Other',
+            'community_id' => $other->id,
+            'name' => 'Other',
             'trigger_event' => 'member_joined',
-            'action_type'   => 'apply_tag',
+            'action_type' => 'apply_tag',
             'action_config' => ['tag_id' => $tag->id],
         ]);
 
@@ -192,10 +192,10 @@ class WorkflowControllerTest extends TestCase
 
         $this->actingAs($owner)
             ->patch(route('communities.workflows.update', [$community, $wf]), [
-                'name'          => 'Hacked',
+                'name' => 'Hacked',
                 'trigger_event' => 'member_joined',
-                'action_type'   => 'apply_tag',
-                'tag_id'        => $myTag->id,
+                'action_type' => 'apply_tag',
+                'tag_id' => $myTag->id,
             ])
             ->assertNotFound();
     }
@@ -208,12 +208,12 @@ class WorkflowControllerTest extends TestCase
         $tag = Tag::create(['community_id' => $community->id, 'name' => 'T', 'slug' => 't']);
 
         $wf = Workflow::create([
-            'community_id'  => $community->id,
-            'name'          => 'Wf',
+            'community_id' => $community->id,
+            'name' => 'Wf',
             'trigger_event' => 'member_joined',
-            'action_type'   => 'apply_tag',
+            'action_type' => 'apply_tag',
             'action_config' => ['tag_id' => $tag->id],
-            'is_active'     => true,
+            'is_active' => true,
         ]);
 
         $this->actingAs($owner)
@@ -231,10 +231,10 @@ class WorkflowControllerTest extends TestCase
         $tag = Tag::create(['community_id' => $community->id, 'name' => 'T', 'slug' => 't']);
 
         $wf = Workflow::create([
-            'community_id'  => $community->id,
-            'name'          => 'Wf',
+            'community_id' => $community->id,
+            'name' => 'Wf',
             'trigger_event' => 'member_joined',
-            'action_type'   => 'apply_tag',
+            'action_type' => 'apply_tag',
             'action_config' => ['tag_id' => $tag->id],
         ]);
 
@@ -252,10 +252,10 @@ class WorkflowControllerTest extends TestCase
         $tag = Tag::create(['community_id' => $community->id, 'name' => 'T', 'slug' => 't']);
 
         $wf = Workflow::create([
-            'community_id'  => $community->id,
-            'name'          => 'Wf',
+            'community_id' => $community->id,
+            'name' => 'Wf',
             'trigger_event' => 'member_joined',
-            'action_type'   => 'apply_tag',
+            'action_type' => 'apply_tag',
             'action_config' => ['tag_id' => $tag->id],
         ]);
 

@@ -37,20 +37,20 @@ class HandleCourseEnrollmentPaid implements WebhookHandler
         }
 
         try {
-            $isMonthly  = $enrollment->course?->access_type === \App\Models\Course::ACCESS_PAID_MONTHLY;
-            $expiresAt  = $isMonthly
+            $isMonthly = $enrollment->course?->access_type === \App\Models\Course::ACCESS_PAID_MONTHLY;
+            $expiresAt = $isMonthly
                 ? ($enrollment->expires_at?->isFuture() ? $enrollment->expires_at->addMonth() : now()->addMonth())
                 : null;
 
             $enrollment->update([
-                'status'     => CourseEnrollment::STATUS_PAID,
-                'paid_at'    => now(),
+                'status' => CourseEnrollment::STATUS_PAID,
+                'paid_at' => now(),
                 'expires_at' => $expiresAt,
             ]);
 
             Log::info('Xendit webhook: course enrollment paid', [
                 'enrollment_id' => $enrollment->id,
-                'monthly'       => $isMonthly,
+                'monthly' => $isMonthly,
             ]);
 
             // Record affiliate commission for course purchase
@@ -69,7 +69,7 @@ class HandleCourseEnrollmentPaid implements WebhookHandler
         } catch (\Throwable $e) {
             Log::error('HandleCourseEnrollmentPaid failed', [
                 'enrollment_id' => $enrollment->id,
-                'error'         => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
             throw $e;
         }
@@ -79,9 +79,9 @@ class HandleCourseEnrollmentPaid implements WebhookHandler
     {
         return match (strtoupper($status)) {
             'PAID', 'SETTLED' => Payment::STATUS_PAID,
-            'EXPIRED'         => Payment::STATUS_EXPIRED,
-            'FAILED'          => Payment::STATUS_FAILED,
-            default           => Payment::STATUS_PENDING,
+            'EXPIRED' => Payment::STATUS_EXPIRED,
+            'FAILED' => Payment::STATUS_FAILED,
+            default => Payment::STATUS_PENDING,
         };
     }
 }

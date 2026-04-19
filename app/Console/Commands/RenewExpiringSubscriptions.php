@@ -12,7 +12,8 @@ use Illuminate\Support\Facades\URL;
 
 class RenewExpiringSubscriptions extends Command
 {
-    protected $signature   = 'subscriptions:renew';
+    protected $signature = 'subscriptions:renew';
+
     protected $description = 'Send renewal reminders at 5 days and 1 day before expiry';
 
     public function handle(CreateRenewalInvoice $action): int
@@ -59,7 +60,7 @@ class RenewExpiringSubscriptions extends Command
                 $this->error("Failed for subscription #{$subscription->id}: {$e->getMessage()}");
                 Log::error("Renewal {$days}d reminder failed", [
                     'subscription_id' => $subscription->id,
-                    'error'           => $e->getMessage(),
+                    'error' => $e->getMessage(),
                 ]);
             }
         }

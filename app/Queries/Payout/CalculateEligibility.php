@@ -27,7 +27,7 @@ class CalculateEligibility
             ->selectRaw('SUM(amount) as gross')
             ->first();
 
-        $eligibleGross       = (float) $eligiblePayments->gross;
+        $eligibleGross = (float) $eligiblePayments->gross;
         $eligiblePlatformFee = round($eligibleGross * $community->platformFeeRate(), 2);
 
         $lockedPayments = Payment::where('community_id', $community->id)
@@ -36,7 +36,7 @@ class CalculateEligibility
             ->selectRaw('SUM(amount) as gross')
             ->first();
 
-        $lockedGross       = (float) $lockedPayments->gross;
+        $lockedGross = (float) $lockedPayments->gross;
         $lockedPlatformFee = round($lockedGross * $community->platformFeeRate(), 2);
 
         $affiliateCommission = (float) AffiliateConversion::whereHas(
@@ -48,14 +48,14 @@ class CalculateEligibility
         $totalGross = $eligibleGross + $lockedGross;
         if ($totalGross > 0) {
             $eligibleCommission = round($affiliateCommission * ($eligibleGross / $totalGross), 2);
-            $lockedCommission   = round($affiliateCommission * ($lockedGross / $totalGross), 2);
+            $lockedCommission = round($affiliateCommission * ($lockedGross / $totalGross), 2);
         } else {
             $eligibleCommission = 0.0;
-            $lockedCommission   = 0.0;
+            $lockedCommission = 0.0;
         }
 
         $eligibleEarned = round($eligibleGross - $eligiblePlatformFee - $eligibleCommission, 2);
-        $lockedEarned   = round($lockedGross - $lockedPlatformFee - $lockedCommission, 2);
+        $lockedEarned = round($lockedGross - $lockedPlatformFee - $lockedCommission, 2);
 
         $alreadyPaid = (float) OwnerPayout::where('community_id', $community->id)
             ->where('status', '!=', 'failed')

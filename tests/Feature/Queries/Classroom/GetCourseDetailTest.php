@@ -17,18 +17,18 @@ class GetCourseDetailTest extends TestCase
 
     public function test_returns_enrollment_for_authenticated_user_with_access(): void
     {
-        $user   = User::factory()->create();
+        $user = User::factory()->create();
         $course = Course::factory()->create();
         $module = CourseModule::factory()->create(['course_id' => $course->id]);
         CourseLesson::factory()->create(['module_id' => $module->id]);
 
         $enrollment = CourseEnrollment::create([
-            'user_id'   => $user->id,
+            'user_id' => $user->id,
             'course_id' => $course->id,
-            'status'    => CourseEnrollment::STATUS_PAID,
+            'status' => CourseEnrollment::STATUS_PAID,
         ]);
 
-        $query  = new GetCourseDetail();
+        $query = new GetCourseDetail;
         $result = $query->execute($course, $user->id, true);
 
         $this->assertNotNull($result['enrollment']);

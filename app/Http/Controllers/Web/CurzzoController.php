@@ -26,15 +26,15 @@ class CurzzoController extends Controller
         $curzzos = $community->curzzos()->orderBy('position')->get();
 
         $modelTiers = collect(config('curzzos.tiers'))->map(fn ($tier, $key) => [
-            'value'       => $key,
-            'label'       => $tier['label'],
+            'value' => $key,
+            'label' => $tier['label'],
             'description' => $tier['description'],
         ])->values();
 
         return Inertia::render('Communities/Settings/Curzzos', [
-            'community'  => $community,
-            'isPro'      => auth()->user()->creatorPlan() === 'pro',
-            'curzzos'    => $curzzos,
+            'community' => $community,
+            'isPro' => auth()->user()->creatorPlan() === 'pro',
+            'curzzos' => $curzzos,
             'modelTiers' => $modelTiers,
         ]);
     }
@@ -50,23 +50,23 @@ class CurzzoController extends Controller
         }
 
         $data = $request->validate([
-            'name'         => ['required', 'string', 'max:100'],
-            'description'  => ['nullable', 'string', 'max:500'],
+            'name' => ['required', 'string', 'max:100'],
+            'description' => ['nullable', 'string', 'max:500'],
             'instructions' => ['required', 'string', 'max:20000'],
-            'personality'  => ['nullable', 'array'],
-            'personality.tone'           => ['nullable', 'string', 'in:friendly,professional,casual,formal'],
-            'personality.expertise'      => ['nullable', 'string', 'max:5000'],
+            'personality' => ['nullable', 'array'],
+            'personality.tone' => ['nullable', 'string', 'in:friendly,professional,casual,formal'],
+            'personality.expertise' => ['nullable', 'string', 'max:5000'],
             'personality.response_style' => ['nullable', 'string', 'in:concise,detailed,conversational'],
-            'avatar'                     => ['nullable', 'image', 'max:2048'],
-            'cover_image'                => ['nullable', 'image', 'max:10240'],
-            'preview_video'              => ['nullable', 'string', 'max:1000'],
-            'preview_video_sound'        => ['nullable', 'boolean'],
-            'access_type'                => ['required', 'string', 'in:free,inclusive,paid_once,paid_monthly,member_once'],
-            'model_tier'                 => ['sometimes', 'string', Rule::in(array_keys(config('curzzos.tiers')))],
-            'price'                      => ['nullable', 'numeric', 'min:0', 'required_if:access_type,paid_once', 'required_if:access_type,paid_monthly'],
-            'currency'                   => ['nullable', 'string', 'in:PHP,USD'],
-            'billing_type'               => ['nullable', 'string', 'in:one_time,monthly'],
-            'affiliate_commission_rate'  => ['nullable', 'integer', 'min:0', 'max:100'],
+            'avatar' => ['nullable', 'image', 'max:2048'],
+            'cover_image' => ['nullable', 'image', 'max:10240'],
+            'preview_video' => ['nullable', 'string', 'max:1000'],
+            'preview_video_sound' => ['nullable', 'boolean'],
+            'access_type' => ['required', 'string', 'in:free,inclusive,paid_once,paid_monthly,member_once'],
+            'model_tier' => ['sometimes', 'string', Rule::in(array_keys(config('curzzos.tiers')))],
+            'price' => ['nullable', 'numeric', 'min:0', 'required_if:access_type,paid_once', 'required_if:access_type,paid_monthly'],
+            'currency' => ['nullable', 'string', 'in:PHP,USD'],
+            'billing_type' => ['nullable', 'string', 'in:one_time,monthly'],
+            'affiliate_commission_rate' => ['nullable', 'integer', 'min:0', 'max:100'],
         ]);
 
         if ($request->hasFile('avatar')) {
@@ -95,27 +95,27 @@ class CurzzoController extends Controller
         abort_unless($curzzo->community_id === $community->id, 404);
 
         $data = $request->validate([
-            'name'         => ['sometimes', 'required', 'string', 'max:100'],
-            'description'  => ['nullable', 'string', 'max:500'],
+            'name' => ['sometimes', 'required', 'string', 'max:100'],
+            'description' => ['nullable', 'string', 'max:500'],
             'instructions' => ['sometimes', 'required', 'string', 'max:20000'],
-            'personality'  => ['nullable', 'array'],
-            'personality.tone'           => ['nullable', 'string', 'in:friendly,professional,casual,formal'],
-            'personality.expertise'      => ['nullable', 'string', 'max:5000'],
+            'personality' => ['nullable', 'array'],
+            'personality.tone' => ['nullable', 'string', 'in:friendly,professional,casual,formal'],
+            'personality.expertise' => ['nullable', 'string', 'max:5000'],
             'personality.response_style' => ['nullable', 'string', 'in:concise,detailed,conversational'],
-            'avatar'                     => ['nullable', 'image', 'max:2048'],
-            'cover_image'                => ['nullable', 'image', 'max:10240'],
-            'preview_video'              => ['nullable', 'string', 'max:1000'],
-            'preview_video_sound'        => ['nullable', 'boolean'],
-            'access_type'                => ['sometimes', 'required', 'string', 'in:free,inclusive,paid_once,paid_monthly,member_once'],
-            'model_tier'                 => ['sometimes', 'string', Rule::in(array_keys(config('curzzos.tiers')))],
-            'remove_avatar'              => ['sometimes', 'boolean'],
-            'remove_cover_image'         => ['sometimes', 'boolean'],
-            'remove_preview_video'       => ['sometimes', 'boolean'],
-            'is_active'                  => ['sometimes', 'boolean'],
-            'price'                      => ['nullable', 'numeric', 'min:0'],
-            'currency'                   => ['nullable', 'string', 'in:PHP,USD'],
-            'billing_type'               => ['nullable', 'string', 'in:one_time,monthly'],
-            'affiliate_commission_rate'  => ['nullable', 'integer', 'min:0', 'max:100'],
+            'avatar' => ['nullable', 'image', 'max:2048'],
+            'cover_image' => ['nullable', 'image', 'max:10240'],
+            'preview_video' => ['nullable', 'string', 'max:1000'],
+            'preview_video_sound' => ['nullable', 'boolean'],
+            'access_type' => ['sometimes', 'required', 'string', 'in:free,inclusive,paid_once,paid_monthly,member_once'],
+            'model_tier' => ['sometimes', 'string', Rule::in(array_keys(config('curzzos.tiers')))],
+            'remove_avatar' => ['sometimes', 'boolean'],
+            'remove_cover_image' => ['sometimes', 'boolean'],
+            'remove_preview_video' => ['sometimes', 'boolean'],
+            'is_active' => ['sometimes', 'boolean'],
+            'price' => ['nullable', 'numeric', 'min:0'],
+            'currency' => ['nullable', 'string', 'in:PHP,USD'],
+            'billing_type' => ['nullable', 'string', 'in:one_time,monthly'],
+            'affiliate_commission_rate' => ['nullable', 'integer', 'min:0', 'max:100'],
         ]);
 
         // Avatar
@@ -168,7 +168,7 @@ class CurzzoController extends Controller
         $this->authorize('update', $community);
 
         $request->validate([
-            'ids'   => ['required', 'array'],
+            'ids' => ['required', 'array'],
             'ids.*' => ['integer'],
         ]);
 
@@ -200,26 +200,26 @@ class CurzzoController extends Controller
             }
 
             $request->validate([
-                'filename'     => ['required', 'string', 'max:255'],
+                'filename' => ['required', 'string', 'max:255'],
                 'content_type' => ['required', 'string', 'in:video/mp4,video/quicktime,video/webm'],
-                'size'         => ['required', 'integer', 'min:1'],
+                'size' => ['required', 'integer', 'min:1'],
             ]);
 
             $maxBytes = $planLimit->maxVideoSizeMb($owner->creatorPlan()) * 1024 * 1024;
 
             if ($request->size > $maxBytes) {
                 return response()->json([
-                    'error' => 'File too large. Maximum size is ' . $planLimit->maxVideoSizeMb($owner->creatorPlan()) . 'MB.',
+                    'error' => 'File too large. Maximum size is '.$planLimit->maxVideoSizeMb($owner->creatorPlan()).'MB.',
                 ], 422);
             }
 
             $extension = pathinfo($request->filename, PATHINFO_EXTENSION) ?: 'mp4';
-            $key       = 'curzzo-previews/' . Str::uuid() . '.' . $extension;
+            $key = 'curzzo-previews/'.Str::uuid().'.'.$extension;
 
-            $client  = Storage::disk('s3')->getClient();
+            $client = Storage::disk('s3')->getClient();
             $command = $client->getCommand('PutObject', [
-                'Bucket'      => config('filesystems.disks.s3.bucket'),
-                'Key'         => $key,
+                'Bucket' => config('filesystems.disks.s3.bucket'),
+                'Key' => $key,
                 'ContentType' => $request->content_type,
             ]);
 
@@ -227,7 +227,7 @@ class CurzzoController extends Controller
 
             return response()->json([
                 'upload_url' => (string) $presigned->getUri(),
-                'key'        => $key,
+                'key' => $key,
             ]);
         } catch (\Throwable $e) {
             Log::error('CurzzoController@uploadPreviewVideo failed', ['error' => $e->getMessage(), 'community' => $community->id]);

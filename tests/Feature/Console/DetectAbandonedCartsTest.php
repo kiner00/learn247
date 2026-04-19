@@ -18,13 +18,13 @@ class DetectAbandonedCartsTest extends TestCase
     private function insertCartEvent(int $communityId, int $userId, string $email, string $eventType, string $createdAt): int
     {
         return DB::table('cart_events')->insertGetId([
-            'community_id'         => $communityId,
-            'user_id'              => $userId,
-            'email'                => $email,
-            'event_type'           => $eventType,
+            'community_id' => $communityId,
+            'user_id' => $userId,
+            'email' => $email,
+            'event_type' => $eventType,
             'abandoned_email_sent' => false,
-            'created_at'           => $createdAt,
-            'updated_at'           => $createdAt,
+            'created_at' => $createdAt,
+            'updated_at' => $createdAt,
         ]);
     }
 
@@ -48,9 +48,9 @@ class DetectAbandonedCartsTest extends TestCase
         Event::assertDispatched(CartAbandoned::class, 1);
 
         $this->assertDatabaseHas('cart_events', [
-            'community_id'         => $community->id,
-            'user_id'              => $user->id,
-            'event_type'           => CartEvent::TYPE_ABANDONED,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'event_type' => CartEvent::TYPE_ABANDONED,
             'abandoned_email_sent' => true,
         ]);
     }

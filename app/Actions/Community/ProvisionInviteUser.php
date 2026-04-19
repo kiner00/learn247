@@ -22,9 +22,9 @@ class ProvisionInviteUser
         if (! $user) {
             $tempPassword = Str::random(12);
             $user = User::create([
-                'name'                 => explode('@', $invite->email)[0],
-                'email'                => $invite->email,
-                'password'             => bcrypt($tempPassword),
+                'name' => explode('@', $invite->email)[0],
+                'email' => $invite->email,
+                'password' => bcrypt($tempPassword),
                 'needs_password_setup' => true,
             ]);
             Mail::to($user)->send(new TempPasswordMail($user, $tempPassword, $invite->community));

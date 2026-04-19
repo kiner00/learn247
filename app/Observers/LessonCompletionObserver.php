@@ -14,7 +14,9 @@ class LessonCompletionObserver
         $completion->loadMissing('lesson.module.course');
         $communityId = $completion->lesson?->module?->course?->community_id;
 
-        if (! $communityId) return;
+        if (! $communityId) {
+            return;
+        }
 
         $member = CommunityMember::where('community_id', $communityId)
             ->where('user_id', $completion->user_id)

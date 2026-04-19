@@ -13,9 +13,9 @@ class CommunityAssistantTest extends TestCase
     private function baseContext(array $overrides = []): array
     {
         return array_merge([
-            'id'          => 1,
-            'name'        => 'Test User',
-            'email'       => 'test@example.com',
+            'id' => 1,
+            'name' => 'Test User',
+            'email' => 'test@example.com',
             'communities' => [],
         ], $overrides);
     }

@@ -25,13 +25,14 @@ class OwnerPayoutDispatcher
 
     /**
      * @return array{amount: float, reference: string}
+     *
      * @throws RuntimeException
      */
     public function dispatch(Community $community): array
     {
-        $owner    = $community->owner;
+        $owner = $community->owner;
         $earnings = $this->calculator->forCommunity($community);
-        $pending  = $earnings['pending'];
+        $pending = $earnings['pending'];
 
         if ($pending <= 0) {
             throw new RuntimeException('No pending amount for this community.');
@@ -40,31 +41,31 @@ class OwnerPayoutDispatcher
         $disbursementAmount = round($pending - Community::PAYOUT_FEE, 2);
 
         if ($disbursementAmount <= 0) {
-            throw new RuntimeException('Pending amount must exceed the ₱' . Community::PAYOUT_FEE . ' processing fee.');
+            throw new RuntimeException('Pending amount must exceed the ₱'.Community::PAYOUT_FEE.' processing fee.');
         }
 
         $channelCode = PayoutChannelMap::resolve($owner->payout_method);
-        $referenceId = 'owner-' . $community->id . '-' . time();
+        $referenceId = 'owner-'.$community->id.'-'.time();
 
         $result = $this->xendit->createPayout([
-            'reference_id'       => $referenceId,
-            'currency'           => 'PHP',
-            'channel_code'       => $channelCode,
+            'reference_id' => $referenceId,
+            'currency' => 'PHP',
+            'channel_code' => $channelCode,
             'channel_properties' => [
                 'account_holder_name' => $owner->name,
-                'account_number'      => $owner->payout_details,
+                'account_number' => $owner->payout_details,
             ],
-            'amount'      => $disbursementAmount,
+            'amount' => $disbursementAmount,
             'description' => "Owner earnings – {$community->name}",
         ]);
 
         OwnerPayout::create([
-            'community_id'     => $community->id,
-            'user_id'          => $owner->id,
-            'amount'           => $pending,
-            'status'           => 'accepted',
+            'community_id' => $community->id,
+            'user_id' => $owner->id,
+            'amount' => $pending,
+            'status' => 'accepted',
             'xendit_reference' => $result['id'] ?? $referenceId,
-            'paid_at'          => now(),
+            'paid_at' => now(),
         ]);
 
         // Resolve any pending payout requests for this community
@@ -72,10 +73,10 @@ class OwnerPayoutDispatcher
             ->where('type', PayoutRequest::TYPE_OWNER)
             ->where('status', PayoutRequest::STATUS_PENDING)
             ->update([
-                'status'           => PayoutRequest::STATUS_PAID,
+                'status' => PayoutRequest::STATUS_PAID,
                 'xendit_reference' => $result['id'] ?? $referenceId,
-                'processed_at'     => now(),
-                'processed_by'     => auth()->id(),
+                'processed_at' => now(),
+                'processed_by' => auth()->id(),
             ]);
 
         return ['amount' => $pending, 'reference' => $result['id'] ?? $referenceId];
@@ -84,6 +85,7 @@ class OwnerPayoutDispatcher
     public function canDispatch(Community $community): bool
     {
         $owner = $community->owner;
+
         return PayoutChannelMap::supports($owner->payout_method) && $owner->payout_details;
     }
 
@@ -98,7 +100,7 @@ class OwnerPayoutDispatcher
      */
     public function batchDispatch($communities, string $label = 'community owner(s)'): array
     {
-        $paid   = 0;
+        $paid = 0;
         $errors = [];
 
         $process = function ($community) use (&$paid, &$errors) {
@@ -110,7 +112,7 @@ class OwnerPayoutDispatcher
                 $paid++;
             } catch (RuntimeException $e) {
                 if ($e->getMessage() !== 'No pending amount for this community.') {
-                    $errors[] = "{$community->name}: " . $e->getMessage();
+                    $errors[] = "{$community->name}: ".$e->getMessage();
                 }
             }
         };
@@ -126,7 +128,7 @@ class OwnerPayoutDispatcher
 
         $message = "Paid {$paid} {$label}.";
         if ($errors) {
-            $message .= ' Errors: ' . implode('; ', $errors);
+            $message .= ' Errors: '.implode('; ', $errors);
         }
 
         return compact('paid', 'errors', 'message');

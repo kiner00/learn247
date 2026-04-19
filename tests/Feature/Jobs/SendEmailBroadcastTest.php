@@ -24,16 +24,16 @@ class SendEmailBroadcastTest extends TestCase
         $community = Community::factory()->create();
         $campaign = EmailCampaign::create([
             'community_id' => $community->id,
-            'name'         => 'Test Campaign',
-            'type'         => EmailCampaign::TYPE_BROADCAST,
-            'status'       => 'draft',
+            'name' => 'Test Campaign',
+            'type' => EmailCampaign::TYPE_BROADCAST,
+            'status' => 'draft',
         ]);
         $broadcast = EmailBroadcast::create(array_merge([
-            'campaign_id'  => $campaign->id,
+            'campaign_id' => $campaign->id,
             'community_id' => $community->id,
-            'subject'      => 'Test Subject',
-            'html_body'    => '<p>Hello</p>',
-            'status'       => EmailBroadcast::STATUS_DRAFT,
+            'subject' => 'Test Subject',
+            'html_body' => '<p>Hello</p>',
+            'status' => EmailBroadcast::STATUS_DRAFT,
         ], $broadcastOverrides));
 
         $members = [];
@@ -41,8 +41,8 @@ class SendEmailBroadcastTest extends TestCase
             $user = User::factory()->create();
             $members[] = CommunityMember::factory()->create([
                 'community_id' => $community->id,
-                'user_id'      => $user->id,
-                'is_blocked'   => false,
+                'user_id' => $user->id,
+                'is_blocked' => false,
             ]);
         }
 
@@ -72,16 +72,16 @@ class SendEmailBroadcastTest extends TestCase
         $community = Community::factory()->create();
         $campaign = EmailCampaign::create([
             'community_id' => $community->id,
-            'name'         => 'Empty Campaign',
-            'type'         => EmailCampaign::TYPE_BROADCAST,
-            'status'       => 'draft',
+            'name' => 'Empty Campaign',
+            'type' => EmailCampaign::TYPE_BROADCAST,
+            'status' => 'draft',
         ]);
         $broadcast = EmailBroadcast::create([
-            'campaign_id'  => $campaign->id,
+            'campaign_id' => $campaign->id,
             'community_id' => $community->id,
-            'subject'      => 'No recipients',
-            'html_body'    => '<p>Nobody</p>',
-            'status'       => EmailBroadcast::STATUS_DRAFT,
+            'subject' => 'No recipients',
+            'html_body' => '<p>Nobody</p>',
+            'status' => EmailBroadcast::STATUS_DRAFT,
         ]);
 
         $job = new SendEmailBroadcast($broadcast);
@@ -102,8 +102,8 @@ class SendEmailBroadcastTest extends TestCase
 
         // Unsubscribe the first member's user
         EmailUnsubscribe::create([
-            'community_id'    => $community->id,
-            'user_id'         => $members[0]->user_id,
+            'community_id' => $community->id,
+            'user_id' => $members[0]->user_id,
             'unsubscribed_at' => now(),
         ]);
 
@@ -138,10 +138,10 @@ class SendEmailBroadcastTest extends TestCase
 
         $tag = Tag::create([
             'community_id' => $community->id,
-            'name'         => 'VIP',
-            'slug'         => 'vip',
-            'color'        => '#ff0000',
-            'type'         => 'manual',
+            'name' => 'VIP',
+            'slug' => 'vip',
+            'color' => '#ff0000',
+            'type' => 'manual',
         ]);
 
         // Tag only the first two members
@@ -165,10 +165,10 @@ class SendEmailBroadcastTest extends TestCase
 
         $tag = Tag::create([
             'community_id' => $community->id,
-            'name'         => 'Spammer',
-            'slug'         => 'spammer',
-            'color'        => '#000000',
-            'type'         => 'manual',
+            'name' => 'Spammer',
+            'slug' => 'spammer',
+            'color' => '#000000',
+            'type' => 'manual',
         ]);
 
         // Exclude the first member

@@ -78,30 +78,33 @@ class HandleXenditWebhook
 
         // Xendit v2 event-based format: { event: "invoice.paid", data: { id, status, ... } }
         // Fall back to v1 flat format: { id, status, ... }
-        $event   = $raw['event'] ?? null;
+        $event = $raw['event'] ?? null;
         $payload = isset($raw['data']) && is_array($raw['data']) ? $raw['data'] : $raw;
 
         // -- 2. Route recurring events to recurring handlers --
         if ($event && str_starts_with($event, 'recurring.')) {
             $this->handleRecurringEvent($event, $payload);
+
             return;
         }
 
         // Skip non-invoice events (e.g. disbursement.completed, balance.updated)
         if ($event && ! str_starts_with($event, 'invoice.') && ! str_starts_with($event, 'payment.')) {
             Log::info('Xendit webhook: skipping non-invoice event', ['event' => $event]);
+
             return;
         }
 
-        $status   = $payload['status']  ?? 'UNKNOWN';
-        $xenditId = $payload['id']      ?? null;
-        $eventId  = $xenditId ? "{$xenditId}_{$status}" : null;
+        $status = $payload['status'] ?? 'UNKNOWN';
+        $xenditId = $payload['id'] ?? null;
+        $eventId = $xenditId ? "{$xenditId}_{$status}" : null;
 
         Log::info('Xendit webhook received', compact('xenditId', 'status', 'eventId', 'event'));
 
         // -- 3. Idempotency guard --
         if ($eventId && Payment::where('xendit_event_id', $eventId)->exists()) {
             Log::info('Xendit webhook: already processed', compact('eventId'));
+
             return;
         }
 
@@ -110,6 +113,7 @@ class HandleXenditWebhook
             foreach ($this->handlers as $handler) {
                 if ($handler->matches($xenditId)) {
                     $handler->handle($payload, $eventId, $status);
+
                     return;
                 }
             }
@@ -127,6 +131,7 @@ class HandleXenditWebhook
 
         if (! $planId) {
             Log::warning('Xendit recurring webhook: no plan_id in payload', ['event' => $event]);
+
             return;
         }
 
@@ -138,8 +143,8 @@ class HandleXenditWebhook
             }
 
             match ($event) {
-                'recurring.cycle.succeeded'  => $handler->handleCycleSucceeded($payload),
-                'recurring.plan.activated'   => $handler->handlePlanActivated($payload),
+                'recurring.cycle.succeeded' => $handler->handleCycleSucceeded($payload),
+                'recurring.plan.activated' => $handler->handlePlanActivated($payload),
                 'recurring.plan.inactivated' => $handler->handlePlanInactivated($payload),
                 default => Log::info('Xendit recurring webhook: ignoring event', ['event' => $event]),
             };

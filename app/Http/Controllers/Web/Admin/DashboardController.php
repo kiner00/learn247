@@ -20,10 +20,10 @@ class DashboardController extends Controller
     public function index(XenditService $xendit, AdminDashboardService $service): Response
     {
         return Inertia::render('Admin/Dashboard', array_merge($service->build(), [
-            'xenditBalance'      => $xendit->getBalance(),
+            'xenditBalance' => $xendit->getBalance(),
             'creatorPlanPricing' => [
                 'basic_price' => (float) Setting::get('creator_plan_basic_price', 499),
-                'pro_price'   => (float) Setting::get('creator_plan_pro_price', 1999),
+                'pro_price' => (float) Setting::get('creator_plan_pro_price', 1999),
             ],
         ]));
     }
@@ -40,11 +40,11 @@ class DashboardController extends Controller
     {
         $data = $request->validate([
             'basic_price' => 'required|numeric|min:0',
-            'pro_price'   => 'required|numeric|min:0',
+            'pro_price' => 'required|numeric|min:0',
         ]);
 
         Setting::set('creator_plan_basic_price', (string) $data['basic_price']);
-        Setting::set('creator_plan_pro_price',   (string) $data['pro_price']);
+        Setting::set('creator_plan_pro_price', (string) $data['pro_price']);
 
         return back()->with('success', 'Creator plan pricing updated.');
     }
@@ -54,7 +54,7 @@ class DashboardController extends Controller
         $community->update(['is_featured' => ! $community->is_featured]);
         CacheKeys::flushAdmin();
 
-        return back()->with('success', "{$community->name} is now " . ($community->is_featured ? 'featured' : 'unfeatured') . ".");
+        return back()->with('success', "{$community->name} is now ".($community->is_featured ? 'featured' : 'unfeatured').'.');
     }
 
     public function creatorAnalytics(Request $request, CreatorAnalytics $query): Response

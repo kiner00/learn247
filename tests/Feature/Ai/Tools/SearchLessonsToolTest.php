@@ -57,9 +57,9 @@ class SearchLessonsToolTest extends TestCase
         $user = User::factory()->create();
         $this->seedLessons($user);
 
-        $tool   = new SearchLessonsTool($user->id);
+        $tool = new SearchLessonsTool($user->id);
         $result = $tool->handle(new Request(['query' => 'PHP']));
-        $json   = json_decode($result, true);
+        $json = json_decode($result, true);
 
         $this->assertCount(2, $json);
 
@@ -73,9 +73,9 @@ class SearchLessonsToolTest extends TestCase
         $user = User::factory()->create();
         $this->seedLessons($user);
 
-        $tool   = new SearchLessonsTool($user->id);
+        $tool = new SearchLessonsTool($user->id);
         $result = $tool->handle(new Request(['query' => 'Introduction']));
-        $json   = json_decode($result, true);
+        $json = json_decode($result, true);
 
         $this->assertSame('Basics', $json[0]['module']);
         $this->assertSame('PHP Course', $json[0]['course']);
@@ -87,7 +87,7 @@ class SearchLessonsToolTest extends TestCase
         $user = User::factory()->create();
         $this->seedLessons($user);
 
-        $tool   = new SearchLessonsTool($user->id);
+        $tool = new SearchLessonsTool($user->id);
         $result = $tool->handle(new Request(['query' => 'Quantum']));
 
         $this->assertStringContainsString('No lessons found', $result);
@@ -96,7 +96,7 @@ class SearchLessonsToolTest extends TestCase
 
     public function test_only_searches_user_communities(): void
     {
-        $user  = User::factory()->create();
+        $user = User::factory()->create();
         $other = User::factory()->create();
 
         // User's community
@@ -105,11 +105,11 @@ class SearchLessonsToolTest extends TestCase
         // Other user's community with a lesson
         $otherCommunity = Community::factory()->create(['name' => 'Other']);
         CommunityMember::factory()->create(['community_id' => $otherCommunity->id, 'user_id' => $other->id]);
-        $course  = Course::factory()->create(['community_id' => $otherCommunity->id]);
-        $module  = CourseModule::factory()->create(['course_id' => $course->id]);
+        $course = Course::factory()->create(['community_id' => $otherCommunity->id]);
+        $module = CourseModule::factory()->create(['course_id' => $course->id]);
         CourseLesson::factory()->create(['module_id' => $module->id, 'title' => 'Secret PHP Lesson']);
 
-        $tool   = new SearchLessonsTool($user->id);
+        $tool = new SearchLessonsTool($user->id);
         $result = $tool->handle(new Request(['query' => 'Secret']));
 
         $this->assertStringContainsString('No lessons found', $result);
@@ -117,7 +117,7 @@ class SearchLessonsToolTest extends TestCase
 
     public function test_limits_results_to_ten(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
         $course = Course::factory()->create(['community_id' => $community->id]);
@@ -127,9 +127,9 @@ class SearchLessonsToolTest extends TestCase
             CourseLesson::factory()->create(['module_id' => $module->id, 'title' => "Topic Lesson {$i}"]);
         }
 
-        $tool   = new SearchLessonsTool($user->id);
+        $tool = new SearchLessonsTool($user->id);
         $result = $tool->handle(new Request(['query' => 'Topic']));
-        $json   = json_decode($result, true);
+        $json = json_decode($result, true);
 
         $this->assertCount(10, $json);
     }
@@ -142,12 +142,20 @@ class SearchLessonsToolTest extends TestCase
 
     public function test_schema_has_query_key(): void
     {
-        $tool   = new SearchLessonsTool(1);
+        $tool = new SearchLessonsTool(1);
         $schema = $this->createMock(\Illuminate\Contracts\JsonSchema\JsonSchema::class);
 
-        $builder = new class {
-            public function description($d) { return $this; }
-            public function required() { return $this; }
+        $builder = new class
+        {
+            public function description($d)
+            {
+                return $this;
+            }
+
+            public function required()
+            {
+                return $this;
+            }
         };
 
         $schema->method('string')->willReturn($builder);

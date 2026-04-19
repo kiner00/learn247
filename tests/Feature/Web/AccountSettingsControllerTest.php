@@ -60,11 +60,11 @@ class AccountSettingsControllerTest extends TestCase
         $user = User::factory()->create(['name' => 'Old Name', 'username' => 'oldusername']);
 
         $response = $this->actingAs($user)->patch('/account/settings/profile', [
-            'username'   => 'newusername',
+            'username' => 'newusername',
             'first_name' => 'John',
-            'last_name'  => 'Doe',
-            'bio'        => 'My bio',
-            'location'   => 'Manila',
+            'last_name' => 'Doe',
+            'bio' => 'My bio',
+            'location' => 'Manila',
         ]);
 
         $response->assertRedirect();
@@ -83,10 +83,10 @@ class AccountSettingsControllerTest extends TestCase
         $user = User::factory()->create(['username' => 'janedoe']);
 
         $response = $this->actingAs($user)->post('/account/settings/profile', [
-            'username'   => 'janedoe',
+            'username' => 'janedoe',
             'first_name' => 'Jane',
-            'last_name'  => 'Doe',
-            'avatar'     => UploadedFile::fake()->image('avatar.jpg', 200, 200),
+            'last_name' => 'Doe',
+            'avatar' => UploadedFile::fake()->image('avatar.jpg', 200, 200),
         ]);
 
         $response->assertRedirect();
@@ -111,8 +111,8 @@ class AccountSettingsControllerTest extends TestCase
 
         $response = $this->actingAs($user)->patch('/account/settings/profile', [
             'first_name' => 'Jane',
-            'last_name'  => 'Doe',
-            'avatar'     => UploadedFile::fake()->create('doc.pdf', 100, 'application/pdf'),
+            'last_name' => 'Doe',
+            'avatar' => UploadedFile::fake()->create('doc.pdf', 100, 'application/pdf'),
         ]);
 
         $response->assertSessionHasErrors(['avatar']);
@@ -122,11 +122,11 @@ class AccountSettingsControllerTest extends TestCase
 
     public function test_update_membership_visibility(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         $response = $this->actingAs($user)
@@ -140,11 +140,11 @@ class AccountSettingsControllerTest extends TestCase
 
     public function test_update_membership_visibility_requires_boolean(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         $response = $this->actingAs($user)
@@ -212,8 +212,8 @@ class AccountSettingsControllerTest extends TestCase
         $user = User::factory()->create(['password' => Hash::make('old-password')]);
 
         $response = $this->actingAs($user)->patch('/account/settings/password', [
-            'current_password'      => 'old-password',
-            'password'              => 'new-secure-password',
+            'current_password' => 'old-password',
+            'password' => 'new-secure-password',
             'password_confirmation' => 'new-secure-password',
         ]);
 
@@ -228,7 +228,7 @@ class AccountSettingsControllerTest extends TestCase
 
         $response = $this->actingAs($user)->patch('/account/settings/password', [
             'current_password' => 'old-password',
-            'password'         => 'new-secure-password',
+            'password' => 'new-secure-password',
         ]);
 
         $response->assertSessionHasErrors(['password']);
@@ -297,9 +297,9 @@ class AccountSettingsControllerTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->patch('/account/settings/notifications', [
-            'follower'  => true,
-            'likes'     => false,
-            'kaching'   => true,
+            'follower' => true,
+            'likes' => false,
+            'kaching' => true,
             'affiliate' => false,
         ]);
 
@@ -322,18 +322,18 @@ class AccountSettingsControllerTest extends TestCase
 
     public function test_update_community_notifications(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         $response = $this->actingAs($user)
             ->patch("/account/settings/notifications/{$community->id}", [
                 'new_posts' => true,
-                'comments'  => false,
-                'mentions'  => true,
+                'comments' => false,
+                'mentions' => true,
             ]);
 
         $response->assertRedirect();
@@ -342,11 +342,11 @@ class AccountSettingsControllerTest extends TestCase
 
     public function test_update_community_notifications_requires_all_fields(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         $response = $this->actingAs($user)
@@ -364,7 +364,7 @@ class AccountSettingsControllerTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->patch('/account/settings/chat', [
-            'notifications'       => true,
+            'notifications' => true,
             'email_notifications' => false,
         ]);
 
@@ -387,11 +387,11 @@ class AccountSettingsControllerTest extends TestCase
 
     public function test_update_community_chat(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         $response = $this->actingAs($user)
@@ -405,11 +405,11 @@ class AccountSettingsControllerTest extends TestCase
 
     public function test_update_community_chat_requires_boolean(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         $response = $this->actingAs($user)
@@ -466,7 +466,7 @@ class AccountSettingsControllerTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->patch('/account/settings/payout', [
-            'payout_method'  => 'gcash',
+            'payout_method' => 'gcash',
             'payout_details' => '09171234567',
         ]);
 
@@ -481,7 +481,7 @@ class AccountSettingsControllerTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->patch('/account/settings/payout', [
-            'payout_method'  => 'venmo',
+            'payout_method' => 'venmo',
             'payout_details' => 'user@venmo',
         ]);
 
@@ -503,8 +503,8 @@ class AccountSettingsControllerTest extends TestCase
 
         foreach (['gcash', 'maya', 'bank', 'paypal'] as $method) {
             $response = $this->actingAs($user)->patch('/account/settings/payout', [
-                'payout_method'  => $method,
-                'payout_details' => 'details-for-' . $method,
+                'payout_method' => $method,
+                'payout_details' => 'details-for-'.$method,
             ]);
 
             $response->assertRedirect();
@@ -562,7 +562,7 @@ class AccountSettingsControllerTest extends TestCase
 
         $response = $this->actingAs($user)->post('/account/settings/kyc', [
             'id_document' => UploadedFile::fake()->image('id.jpg', 400, 300),
-            'selfie'      => UploadedFile::fake()->image('selfie.jpg', 400, 300),
+            'selfie' => UploadedFile::fake()->image('selfie.jpg', 400, 300),
         ]);
 
         $response->assertRedirect();
@@ -581,7 +581,7 @@ class AccountSettingsControllerTest extends TestCase
 
         $response = $this->actingAs($user)->post('/account/settings/kyc', [
             'id_document' => UploadedFile::fake()->image('id.jpg', 400, 300),
-            'selfie'      => UploadedFile::fake()->image('selfie.jpg', 400, 300),
+            'selfie' => UploadedFile::fake()->image('selfie.jpg', 400, 300),
         ]);
 
         $response->assertRedirect();
@@ -594,7 +594,7 @@ class AccountSettingsControllerTest extends TestCase
 
         $response = $this->actingAs($user)->post('/account/settings/kyc', [
             'id_document' => UploadedFile::fake()->image('id.jpg', 400, 300),
-            'selfie'      => UploadedFile::fake()->image('selfie.jpg', 400, 300),
+            'selfie' => UploadedFile::fake()->image('selfie.jpg', 400, 300),
         ]);
 
         $response->assertRedirect();
@@ -616,7 +616,7 @@ class AccountSettingsControllerTest extends TestCase
 
         $response = $this->actingAs($user)->post('/account/settings/kyc', [
             'id_document' => UploadedFile::fake()->create('doc.pdf', 100, 'application/pdf'),
-            'selfie'      => UploadedFile::fake()->create('text.txt', 100, 'text/plain'),
+            'selfie' => UploadedFile::fake()->create('text.txt', 100, 'text/plain'),
         ]);
 
         $response->assertSessionHasErrors(['id_document', 'selfie']);
@@ -627,7 +627,7 @@ class AccountSettingsControllerTest extends TestCase
     public function test_request_manual_kyc_review_after_three_ai_rejections(): void
     {
         $user = User::factory()->create([
-            'kyc_status'        => User::KYC_REJECTED,
+            'kyc_status' => User::KYC_REJECTED,
             'kyc_ai_rejections' => 3,
         ]);
 
@@ -644,7 +644,7 @@ class AccountSettingsControllerTest extends TestCase
     public function test_request_manual_kyc_review_denied_under_three_rejections(): void
     {
         $user = User::factory()->create([
-            'kyc_status'        => User::KYC_REJECTED,
+            'kyc_status' => User::KYC_REJECTED,
             'kyc_ai_rejections' => 2,
         ]);
 
@@ -657,7 +657,7 @@ class AccountSettingsControllerTest extends TestCase
     public function test_request_manual_kyc_review_denied_when_already_submitted(): void
     {
         $user = User::factory()->create([
-            'kyc_status'        => User::KYC_SUBMITTED,
+            'kyc_status' => User::KYC_SUBMITTED,
             'kyc_ai_rejections' => 5,
         ]);
 

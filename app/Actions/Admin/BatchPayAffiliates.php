@@ -18,7 +18,7 @@ class BatchPayAffiliates
     ) {}
 
     /**
-     * @param  int[]|null $affiliateIds  null = all pending conversions
+     * @param  int[]|null  $affiliateIds  null = all pending conversions
      * @return array{paid: int, errors: string[], message: string}
      */
     public function execute(?array $affiliateIds = null): array
@@ -33,7 +33,7 @@ class BatchPayAffiliates
         $conversions = $query->get()
             ->filter(fn ($c) => DisbursePayout::supports($c->affiliate->payout_method ?? ''));
 
-        $paid   = 0;
+        $paid = 0;
         $errors = [];
 
         foreach ($conversions as $conversion) {
@@ -42,14 +42,14 @@ class BatchPayAffiliates
                 $this->mark->execute($conversion);
                 $paid++;
             } catch (\RuntimeException $e) {
-                $errors[] = "Conversion #{$conversion->id}: " . $e->getMessage();
+                $errors[] = "Conversion #{$conversion->id}: ".$e->getMessage();
             }
         }
 
-        $noun    = $affiliateIds !== null ? 'selected affiliate conversion(s)' : 'affiliate conversion(s)';
+        $noun = $affiliateIds !== null ? 'selected affiliate conversion(s)' : 'affiliate conversion(s)';
         $message = "Paid {$paid} {$noun}.";
         if ($errors) {
-            $message .= ' Errors: ' . implode('; ', $errors);
+            $message .= ' Errors: '.implode('; ', $errors);
         }
 
         return compact('paid', 'errors', 'message');

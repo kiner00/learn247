@@ -15,6 +15,7 @@ class StartSubscriptionCheckout
 {
     /**
      * @return array{subscription: Subscription, checkout_url: string}
+     *
      * @throws ValidationException|\RuntimeException
      */
     public function execute(User $user, Community $community, ?string $affiliateCode = null, ?string $successRedirectUrl = null): array
@@ -45,9 +46,9 @@ class StartSubscriptionCheckout
                 amount: (float) $community->price,
                 currency: $community->currency,
                 description: "Subscription to {$community->name}",
-                referenceId: "{$community->slug}_sub_{$user->id}_" . time(),
-                successUrl: $successRedirectUrl ?? config('app.url') . "/communities/{$community->slug}",
-                failureUrl: config('app.url') . "/communities/{$community->slug}",
+                referenceId: "{$community->slug}_sub_{$user->id}_".time(),
+                successUrl: $successRedirectUrl ?? config('app.url')."/communities/{$community->slug}",
+                failureUrl: config('app.url')."/communities/{$community->slug}",
                 itemName: "Community: {$community->name}",
                 itemCategory: 'Community Subscription',
             ));
@@ -63,23 +64,23 @@ class StartSubscriptionCheckout
             }
 
             $subscription = Subscription::create([
-                'community_id'       => $community->id,
-                'user_id'            => $user->id,
-                'affiliate_id'       => $affiliateId,
-                'status'             => Subscription::STATUS_PENDING,
-                'xendit_id'          => $result->invoiceId,
+                'community_id' => $community->id,
+                'user_id' => $user->id,
+                'affiliate_id' => $affiliateId,
+                'status' => Subscription::STATUS_PENDING,
+                'xendit_id' => $result->invoiceId,
                 'xendit_invoice_url' => $result->invoiceUrl,
-                'xendit_plan_id'     => $result->planId,
+                'xendit_plan_id' => $result->planId,
                 'xendit_customer_id' => $result->customerId,
-                'recurring_status'   => $result->recurringStatus,
+                'recurring_status' => $result->recurringStatus,
             ]);
 
             return ['subscription' => $subscription, 'checkout_url' => $result->checkoutUrl];
         } catch (\Throwable $e) {
             Log::error('StartSubscriptionCheckout failed', [
-                'user_id'      => $user->id,
+                'user_id' => $user->id,
                 'community_id' => $community->id,
-                'error'        => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
 
             throw $e;

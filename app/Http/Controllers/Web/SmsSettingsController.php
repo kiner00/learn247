@@ -16,10 +16,10 @@ class SmsSettingsController extends Controller
         $this->authorize('update', $community);
 
         $data = $request->validate([
-            'sms_provider'    => ['nullable', 'string', 'in:semaphore,philsms,xtreme_sms'],
-            'sms_api_key'     => ['nullable', 'string', 'max:255'],
+            'sms_provider' => ['nullable', 'string', 'in:semaphore,philsms,xtreme_sms'],
+            'sms_api_key' => ['nullable', 'string', 'max:255'],
             'sms_sender_name' => ['nullable', 'string', 'max:11'],
-            'sms_device_url'  => ['nullable', 'string', 'url', 'max:500'],
+            'sms_device_url' => ['nullable', 'string', 'url', 'max:500'],
         ]);
 
         $community->update($data);
@@ -35,7 +35,7 @@ class SmsSettingsController extends Controller
             return back()->withErrors(['sms_test' => 'Save your SMS settings first before testing.']);
         }
 
-        $data  = $request->validate(['phone' => ['required', 'string', 'max:20']]);
+        $data = $request->validate(['phone' => ['required', 'string', 'max:20']]);
         $phone = preg_replace('/\D/', '', $data['phone']);
 
         if (strlen($phone) < 10) {
@@ -48,7 +48,7 @@ class SmsSettingsController extends Controller
             return back()->with('success', "Test SMS sent to {$data['phone']}.");
         }
 
-        return back()->withErrors(['sms_test' => 'Test failed: ' . ($result['errors'][0] ?? 'Unknown error.')]);
+        return back()->withErrors(['sms_test' => 'Test failed: '.($result['errors'][0] ?? 'Unknown error.')]);
     }
 
     public function blast(Request $request, Community $community, SendSmsBlast $action): RedirectResponse
@@ -56,9 +56,9 @@ class SmsSettingsController extends Controller
         $this->authorize('update', $community);
 
         $data = $request->validate([
-            'message'          => ['required', 'string', 'max:1600'],
-            'filter_type'      => ['required', 'string', 'in:all,new_members,course'],
-            'filter_days'      => ['nullable', 'integer', 'in:7,14,30'],
+            'message' => ['required', 'string', 'max:1600'],
+            'filter_type' => ['required', 'string', 'in:all,new_members,course'],
+            'filter_days' => ['nullable', 'integer', 'in:7,14,30'],
             'filter_course_id' => ['nullable', 'integer', 'exists:courses,id'],
         ]);
 

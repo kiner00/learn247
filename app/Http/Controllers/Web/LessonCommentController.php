@@ -28,6 +28,7 @@ class LessonCommentController extends Controller
             return back();
         } catch (\Throwable $e) {
             Log::error('LessonCommentController@store failed', ['error' => $e->getMessage(), 'lesson_id' => $lesson->id]);
+
             return back()->with('error', 'Failed to post comment.');
         }
     }
@@ -43,6 +44,7 @@ class LessonCommentController extends Controller
             return back();
         } catch (\Throwable $e) {
             Log::error('LessonCommentController@destroy failed', ['error' => $e->getMessage(), 'comment_id' => $comment->id]);
+
             return back()->with('error', 'Failed to delete comment.');
         }
     }

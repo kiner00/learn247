@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Actions\Classroom\ManageQuiz;
-use App\Actions\Classroom\SubmitQuiz;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreQuizRequest;
 use App\Models\Community;
@@ -26,6 +25,7 @@ class QuizController extends Controller
             return response()->json(['message' => 'Quiz saved.', 'quiz_id' => $quiz->id], 201);
         } catch (\Throwable $e) {
             Log::error('Api\QuizController@store failed', ['error' => $e->getMessage(), 'lesson_id' => $lesson->id]);
+
             return response()->json(['message' => 'Failed to save quiz.'], 500);
         }
     }
@@ -40,6 +40,7 @@ class QuizController extends Controller
             return response()->json(['message' => 'Quiz deleted.']);
         } catch (\Throwable $e) {
             Log::error('Api\QuizController@destroy failed', ['error' => $e->getMessage(), 'quiz_id' => $quiz->id]);
+
             return response()->json(['message' => 'Failed to delete quiz.'], 500);
         }
     }

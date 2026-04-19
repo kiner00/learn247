@@ -24,7 +24,9 @@ class PostObserver
             ->where('user_id', $post->user_id)
             ->first();
 
-        if (! $member) return;
+        if (! $member) {
+            return;
+        }
 
         if ($pts > 0) {
             $member->awardPoints($pts);

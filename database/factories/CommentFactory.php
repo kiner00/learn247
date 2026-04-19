@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Models\Community;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -14,10 +13,10 @@ class CommentFactory extends Factory
         $post = Post::factory()->create();
 
         return [
-            'post_id'      => $post->id,
+            'post_id' => $post->id,
             'community_id' => $post->community_id,
-            'user_id'      => User::factory(),
-            'content'      => fake()->paragraph(),
+            'user_id' => User::factory(),
+            'content' => fake()->paragraph(),
         ];
     }
 }

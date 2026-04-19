@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -66,10 +66,10 @@ body{font-family:sans-serif;color:#1f2937;background:#f9fafb;margin:0;padding:40
 </html>',
                 'variables' => json_encode([
                     'community_name' => 'Name of the community',
-                    'user_name'      => 'Member\'s full name',
-                    'user_email'     => 'Member\'s login email',
-                    'temp_password'  => 'Temporary password',
-                    'login_url'      => 'URL to the login page',
+                    'user_name' => 'Member\'s full name',
+                    'user_email' => 'Member\'s login email',
+                    'temp_password' => 'Temporary password',
+                    'login_url' => 'URL to the login page',
                 ]),
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -102,8 +102,8 @@ body{font-family:sans-serif;color:#1f2937;background:#f9fafb;margin:0;padding:40
 </body>
 </html>',
                 'variables' => json_encode([
-                    'user_name'  => 'Member\'s full name',
-                    'login_url'  => 'URL to the login page',
+                    'user_name' => 'Member\'s full name',
+                    'login_url' => 'URL to the login page',
                 ]),
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -135,10 +135,10 @@ body{font-family:sans-serif;color:#1f2937;background:#f9fafb;margin:0;padding:40
 </body>
 </html>',
                 'variables' => json_encode([
-                    'user_name'      => 'Member\'s full name',
+                    'user_name' => 'Member\'s full name',
                     'community_name' => 'Name of the community',
-                    'expiry_date'    => 'Formatted expiry date (e.g. March 20, 2026)',
-                    'renewal_url'    => 'URL to renew the subscription',
+                    'expiry_date' => 'Formatted expiry date (e.g. March 20, 2026)',
+                    'renewal_url' => 'URL to renew the subscription',
                 ]),
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -171,10 +171,10 @@ body{font-family:sans-serif;color:#1f2937;background:#f9fafb;margin:0;padding:40
 </body>
 </html>',
                 'variables' => json_encode([
-                    'user_name'      => 'Member\'s full name',
+                    'user_name' => 'Member\'s full name',
                     'community_name' => 'Name of the community',
-                    'expiry_date'    => 'Formatted expiry date (e.g. March 20, 2026)',
-                    'renewal_url'    => 'URL to renew the subscription',
+                    'expiry_date' => 'Formatted expiry date (e.g. March 20, 2026)',
+                    'renewal_url' => 'URL to renew the subscription',
                 ]),
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -208,11 +208,11 @@ body{font-family:sans-serif;color:#1f2937;background:#f9fafb;margin:0;padding:40
 </body>
 </html>',
                 'variables' => json_encode([
-                    'community_name'       => 'Name of the community',
+                    'community_name' => 'Name of the community',
                     'community_name_upper' => 'Community name in uppercase (for badge)',
-                    'community_description'=> 'Community description',
-                    'invite_url'           => 'Invitation acceptance URL',
-                    'invite_email'         => 'Email address the invite was sent to',
+                    'community_description' => 'Community description',
+                    'invite_url' => 'Invitation acceptance URL',
+                    'invite_email' => 'Email address the invite was sent to',
                 ]),
                 'created_at' => $now,
                 'updated_at' => $now,

@@ -20,23 +20,23 @@ class BadgeConditionChecker
     {
         return match ($badge->condition_type) {
             'lessons_completed' => $this->countLessonsCompleted($user->id, $communityId) >= $badge->condition_value,
-            'posts_created'     => $user->posts()
-                                        ->when($communityId, fn ($q) => $q->where('community_id', $communityId))
-                                        ->count() >= $badge->condition_value,
-            'level_reached'     => $this->getMemberLevel($user->id, $communityId) >= $badge->condition_value,
-            'quiz_passed'       => $this->countQuizzesPassed($user->id, $communityId) >= $badge->condition_value,
+            'posts_created' => $user->posts()
+                ->when($communityId, fn ($q) => $q->where('community_id', $communityId))
+                ->count() >= $badge->condition_value,
+            'level_reached' => $this->getMemberLevel($user->id, $communityId) >= $badge->condition_value,
+            'quiz_passed' => $this->countQuizzesPassed($user->id, $communityId) >= $badge->condition_value,
 
-            'early_bird'            => $this->isEarlyBird($user),
-            'early_builder'         => $this->isEarlyBuilder($user),
-            'pioneer_member'        => $this->isPioneerMember($user),
-            'course_crusader'       => $this->hasCompletedCourseIn30Days($user->id),
-            'affiliate_referrals'   => $this->countPaidReferrals($user->id) >= $badge->condition_value,
-            'affiliate_commission'  => $this->totalAffiliateCommission($user->id) >= $badge->condition_value,
-            'pioneer_creator'       => $this->isPioneerCreator($user),
+            'early_bird' => $this->isEarlyBird($user),
+            'early_builder' => $this->isEarlyBuilder($user),
+            'pioneer_member' => $this->isPioneerMember($user),
+            'course_crusader' => $this->hasCompletedCourseIn30Days($user->id),
+            'affiliate_referrals' => $this->countPaidReferrals($user->id) >= $badge->condition_value,
+            'affiliate_commission' => $this->totalAffiliateCommission($user->id) >= $badge->condition_value,
+            'pioneer_creator' => $this->isPioneerCreator($user),
             'certified_completions' => $this->countCertifiedCompletions($user->id) >= $badge->condition_value,
-            'affiliate_overlord'    => $this->countActiveAffiliatesWithSale($user->id) >= $badge->condition_value,
-            'pinned_posts'          => $this->countPinnedPosts($user->id) >= $badge->condition_value,
-            'total_payout'          => $this->totalOwnerPayout($user->id) >= $badge->condition_value,
+            'affiliate_overlord' => $this->countActiveAffiliatesWithSale($user->id) >= $badge->condition_value,
+            'pinned_posts' => $this->countPinnedPosts($user->id) >= $badge->condition_value,
+            'total_payout' => $this->totalOwnerPayout($user->id) >= $badge->condition_value,
 
             'seven_day_streak', 'helpful_reaction', 'solution_accepted',
             'social_connector', 'bridge_builder' => false,
@@ -58,7 +58,9 @@ class BadgeConditionChecker
 
     private function getMemberLevel(int $userId, ?int $communityId): int
     {
-        if (! $communityId) return 1;
+        if (! $communityId) {
+            return 1;
+        }
 
         $member = CommunityMember::where('user_id', $userId)
             ->where('community_id', $communityId)
@@ -80,10 +82,14 @@ class BadgeConditionChecker
 
     private function isEarlyBird(User $user): bool
     {
-        if ($this->countPaidReferrals($user->id) < 1) return false;
+        if ($this->countPaidReferrals($user->id) < 1) {
+            return false;
+        }
 
         $earlyBirdBadgeId = Badge::where('key', 'early_bird')->value('id');
-        if (! $earlyBirdBadgeId) return false;
+        if (! $earlyBirdBadgeId) {
+            return false;
+        }
 
         return UserBadge::where('badge_id', $earlyBirdBadgeId)->count() < 100000;
     }
@@ -91,16 +97,22 @@ class BadgeConditionChecker
     private function isEarlyBuilder(User $user): bool
     {
         $ownedCommunityIds = Community::where('owner_id', $user->id)->pluck('id');
-        if ($ownedCommunityIds->isEmpty()) return false;
+        if ($ownedCommunityIds->isEmpty()) {
+            return false;
+        }
 
         $hasEnoughPayingMembers = Subscription::whereIn('community_id', $ownedCommunityIds)
             ->where('status', 'active')
             ->count() >= 10;
 
-        if (! $hasEnoughPayingMembers) return false;
+        if (! $hasEnoughPayingMembers) {
+            return false;
+        }
 
         $earlyBuilderBadgeId = Badge::where('key', 'early_builder')->value('id');
-        if (! $earlyBuilderBadgeId) return false;
+        if (! $earlyBuilderBadgeId) {
+            return false;
+        }
 
         return UserBadge::where('badge_id', $earlyBuilderBadgeId)->count() < 1000;
     }
@@ -117,9 +129,11 @@ class BadgeConditionChecker
             ->get();
 
         foreach ($courses as $course) {
-            $lessonIds    = $course->modules->flatMap(fn ($m) => $m->lessons->pluck('id'));
+            $lessonIds = $course->modules->flatMap(fn ($m) => $m->lessons->pluck('id'));
             $totalLessons = $lessonIds->count();
-            if ($totalLessons === 0) continue;
+            if ($totalLessons === 0) {
+                continue;
+            }
 
             $completions = LessonCompletion::where('user_id', $userId)
                 ->whereIn('lesson_id', $lessonIds)
@@ -152,13 +166,17 @@ class BadgeConditionChecker
     private function isPioneerCreator(User $user): bool
     {
         $ownedCommunityIds = Community::where('owner_id', $user->id)->pluck('id');
-        if ($ownedCommunityIds->isEmpty()) return false;
+        if ($ownedCommunityIds->isEmpty()) {
+            return false;
+        }
 
         $has100Subs = Subscription::whereIn('community_id', $ownedCommunityIds)
             ->where('status', 'active')
             ->count() >= 100;
 
-        if (! $has100Subs) return false;
+        if (! $has100Subs) {
+            return false;
+        }
 
         $pioneerCreatorIds = Community::selectRaw('owner_id, count(*) as active_subs')
             ->join('subscriptions', 'subscriptions.community_id', '=', 'communities.id')

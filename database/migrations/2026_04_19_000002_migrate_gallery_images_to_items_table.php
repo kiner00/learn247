@@ -12,7 +12,7 @@ return new class extends Migration
             ->orderBy('id')
             ->chunkById(200, function ($communities) {
                 $rows = [];
-                $now  = now();
+                $now = now();
 
                 foreach ($communities as $community) {
                     $items = json_decode($community->gallery_images, true) ?: [];
@@ -21,13 +21,13 @@ return new class extends Migration
                             continue;
                         }
                         $rows[] = [
-                            'community_id'      => $community->id,
-                            'type'              => 'image',
-                            'image_path'        => $url,
+                            'community_id' => $community->id,
+                            'type' => 'image',
+                            'image_path' => $url,
                             'transcode_percent' => 0,
-                            'position'          => $position,
-                            'created_at'        => $now,
-                            'updated_at'        => $now,
+                            'position' => $position,
+                            'created_at' => $now,
+                            'updated_at' => $now,
                         ];
                     }
                 }

@@ -10,8 +10,8 @@ class QuizAttempt extends Model
     protected $fillable = ['quiz_id', 'user_id', 'answers', 'score', 'passed', 'completed_at'];
 
     protected $casts = [
-        'answers'      => 'array',
-        'passed'       => 'boolean',
+        'answers' => 'array',
+        'passed' => 'boolean',
         'completed_at' => 'datetime',
     ];
 

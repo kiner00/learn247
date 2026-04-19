@@ -16,7 +16,7 @@ class EmailTemplateServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new EmailTemplateService();
+        $this->service = new EmailTemplateService;
     }
 
     private function makeTemplate(string $key, array $overrides = []): EmailTemplate
@@ -24,8 +24,8 @@ class EmailTemplateServiceTest extends TestCase
         return EmailTemplate::updateOrCreate(
             ['key' => $key],
             array_merge([
-                'name'      => "Template {$key}",
-                'subject'   => 'Subject',
+                'name' => "Template {$key}",
+                'subject' => 'Subject',
                 'html_body' => '<p>Body</p>',
                 'variables' => [],
             ], $overrides)

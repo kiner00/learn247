@@ -14,7 +14,7 @@ class FreeSubscribeControllerTest extends TestCase
 
     public function test_authenticated_user_can_free_subscribe(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['price' => 0]);
 
         $response = $this->actingAs($user)
@@ -24,24 +24,24 @@ class FreeSubscribeControllerTest extends TestCase
         $response->assertSessionHas('success', "You've subscribed for free! Enjoy the courses.");
 
         $this->assertDatabaseHas('community_members', [
-            'community_id'    => $community->id,
-            'user_id'         => $user->id,
-            'role'            => CommunityMember::ROLE_MEMBER,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'role' => CommunityMember::ROLE_MEMBER,
             'membership_type' => CommunityMember::MEMBERSHIP_FREE,
         ]);
     }
 
     public function test_existing_member_is_redirected_without_creating_duplicate(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['price' => 0]);
 
         CommunityMember::create([
-            'community_id'    => $community->id,
-            'user_id'         => $user->id,
-            'role'            => CommunityMember::ROLE_MEMBER,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'role' => CommunityMember::ROLE_MEMBER,
             'membership_type' => CommunityMember::MEMBERSHIP_FREE,
-            'joined_at'       => now(),
+            'joined_at' => now(),
         ]);
 
         $response = $this->actingAs($user)
@@ -69,7 +69,7 @@ class FreeSubscribeControllerTest extends TestCase
 
     public function test_creates_member_with_correct_joined_at_timestamp(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['price' => 0]);
 
         $this->actingAs($user)
@@ -87,15 +87,15 @@ class FreeSubscribeControllerTest extends TestCase
 
     public function test_existing_paid_member_is_not_duplicated(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
 
         CommunityMember::create([
-            'community_id'    => $community->id,
-            'user_id'         => $user->id,
-            'role'            => CommunityMember::ROLE_MEMBER,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'role' => CommunityMember::ROLE_MEMBER,
             'membership_type' => CommunityMember::MEMBERSHIP_PAID,
-            'joined_at'       => now(),
+            'joined_at' => now(),
         ]);
 
         $response = $this->actingAs($user)
@@ -113,15 +113,15 @@ class FreeSubscribeControllerTest extends TestCase
 
     public function test_admin_member_is_not_duplicated(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
 
         CommunityMember::create([
-            'community_id'    => $community->id,
-            'user_id'         => $user->id,
-            'role'            => CommunityMember::ROLE_ADMIN,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'role' => CommunityMember::ROLE_ADMIN,
             'membership_type' => CommunityMember::MEMBERSHIP_FREE,
-            'joined_at'       => now(),
+            'joined_at' => now(),
         ]);
 
         $response = $this->actingAs($user)

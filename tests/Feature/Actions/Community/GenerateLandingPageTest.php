@@ -18,9 +18,9 @@ class GenerateLandingPageTest extends TestCase
     {
         return json_encode([
             'hero' => [
-                'headline'    => 'Transform Your Skills Today',
+                'headline' => 'Transform Your Skills Today',
                 'subheadline' => 'Join thousands of learners',
-                'cta_label'   => 'Join Now',
+                'cta_label' => 'Join Now',
             ],
             'social_proof' => [
                 'stat_label' => '500+ members and growing',
@@ -28,7 +28,7 @@ class GenerateLandingPageTest extends TestCase
             ],
             'benefits' => [
                 'headline' => 'Why Join Us',
-                'items'    => [
+                'items' => [
                     ['icon' => '🚀', 'title' => 'Fast', 'body' => 'Learn fast'],
                     ['icon' => '💡', 'title' => 'Smart', 'body' => 'Learn smart'],
                     ['icon' => '🎯', 'title' => 'Focus', 'body' => 'Stay focused'],
@@ -37,11 +37,11 @@ class GenerateLandingPageTest extends TestCase
             ],
             'for_you' => [
                 'headline' => 'This is for you if...',
-                'points'   => ['You want growth', 'You want community', 'You want results'],
+                'points' => ['You want growth', 'You want community', 'You want results'],
             ],
             'creator' => [
                 'headline' => 'Meet Your Coach',
-                'bio'      => 'An expert in the field.',
+                'bio' => 'An expert in the field.',
             ],
             'testimonials' => [
                 ['name' => 'Alice', 'role' => 'Developer', 'quote' => 'Amazing community!'],
@@ -55,8 +55,8 @@ class GenerateLandingPageTest extends TestCase
                 ['question' => 'Who is this for?',  'answer' => 'Everyone.'],
             ],
             'cta_section' => [
-                'headline'  => 'Ready to Start?',
-                'subtext'   => 'No risk, cancel anytime.',
+                'headline' => 'Ready to Start?',
+                'subtext' => 'No risk, cancel anytime.',
                 'cta_label' => 'Get Started',
             ],
         ]);
@@ -66,7 +66,7 @@ class GenerateLandingPageTest extends TestCase
     {
         LandingPageBuilder::fake([$this->validLandingPageJson()]);
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $user->id, 'category' => 'Tech']);
 
         $action = app(GenerateLandingPage::class);
@@ -94,10 +94,10 @@ class GenerateLandingPageTest extends TestCase
 
     public function test_execute_strips_markdown_code_fences_from_response(): void
     {
-        $jsonWithFences = "```json\n" . $this->validLandingPageJson() . "\n```";
+        $jsonWithFences = "```json\n".$this->validLandingPageJson()."\n```";
         LandingPageBuilder::fake([$jsonWithFences]);
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $user->id]);
 
         $action = app(GenerateLandingPage::class);
@@ -111,7 +111,7 @@ class GenerateLandingPageTest extends TestCase
     {
         LandingPageBuilder::fake(['this is not json at all']);
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $user->id]);
 
         Log::shouldReceive('warning')->once();
@@ -128,7 +128,7 @@ class GenerateLandingPageTest extends TestCase
         // Valid JSON but missing required keys (hero, benefits, faq)
         LandingPageBuilder::fake([json_encode(['some_key' => 'value'])]);
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $user->id]);
 
         Log::shouldReceive('warning')->once();
@@ -149,7 +149,7 @@ class GenerateLandingPageTest extends TestCase
 
         LandingPageBuilder::fake([json_encode($data)]);
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $user->id]);
 
         $action = app(GenerateLandingPage::class);
@@ -173,7 +173,7 @@ class GenerateLandingPageTest extends TestCase
     {
         LandingPageBuilder::fake([$this->validLandingPageJson()]);
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $user->id]);
         // Preload members_count
         $community->loadCount('members');

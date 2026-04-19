@@ -4,7 +4,6 @@ namespace App\Services\Email;
 
 use App\Contracts\EmailProvider;
 use App\Models\Community;
-use Illuminate\Support\Facades\Http;
 
 class SesProvider implements EmailProvider
 {
@@ -37,11 +36,11 @@ class SesProvider implements EmailProvider
 
         $payload = [
             'FromEmailAddress' => $from,
-            'Destination'      => ['ToAddresses' => $params['to']],
-            'Content'          => [
+            'Destination' => ['ToAddresses' => $params['to']],
+            'Content' => [
                 'Simple' => [
                     'Subject' => ['Data' => $params['subject'], 'Charset' => 'UTF-8'],
-                    'Body'    => ['Html' => ['Data' => $params['html'], 'Charset' => 'UTF-8']],
+                    'Body' => ['Html' => ['Data' => $params['html'], 'Charset' => 'UTF-8']],
                 ],
             ],
         ];
@@ -83,16 +82,16 @@ class SesProvider implements EmailProvider
         $records = [];
         foreach ($result['DkimAttributes']['Tokens'] ?? [] as $token) {
             $records[] = [
-                'type'   => 'CNAME',
-                'name'   => "{$token}._domainkey.{$domain}",
-                'value'  => "{$token}.dkim.amazonses.com",
+                'type' => 'CNAME',
+                'name' => "{$token}._domainkey.{$domain}",
+                'value' => "{$token}.dkim.amazonses.com",
                 'status' => 'pending',
             ];
         }
 
         return [
-            'id'      => $domain,
-            'status'  => ($result['DkimAttributes']['Status'] ?? '') === 'SUCCESS' ? 'verified' : 'pending',
+            'id' => $domain,
+            'status' => ($result['DkimAttributes']['Status'] ?? '') === 'SUCCESS' ? 'verified' : 'pending',
             'records' => $records,
         ];
     }
@@ -108,17 +107,17 @@ class SesProvider implements EmailProvider
         $records = [];
         foreach ($result['DkimAttributes']['Tokens'] ?? [] as $token) {
             $records[] = [
-                'type'   => 'CNAME',
-                'name'   => "{$token}._domainkey.{$domainId}",
-                'value'  => "{$token}.dkim.amazonses.com",
+                'type' => 'CNAME',
+                'name' => "{$token}._domainkey.{$domainId}",
+                'value' => "{$token}.dkim.amazonses.com",
                 'status' => ($result['DkimAttributes']['Status'] ?? '') === 'SUCCESS' ? 'verified' : 'pending',
             ];
         }
 
         return [
-            'id'      => $domainId,
-            'name'    => $domainId,
-            'status'  => ($result['DkimAttributes']['Status'] ?? '') === 'SUCCESS' ? 'verified' : 'pending',
+            'id' => $domainId,
+            'name' => $domainId,
+            'status' => ($result['DkimAttributes']['Status'] ?? '') === 'SUCCESS' ? 'verified' : 'pending',
             'records' => $records,
         ];
     }
@@ -129,7 +128,7 @@ class SesProvider implements EmailProvider
         $info = $this->getDomain($community, $domainId);
 
         return [
-            'id'     => $domainId,
+            'id' => $domainId,
             'status' => $info['status'],
         ];
     }
@@ -150,10 +149,10 @@ class SesProvider implements EmailProvider
         }
 
         return new \Aws\SesV2\SesV2Client([
-            'version'     => 'latest',
-            'region'      => $parts[2],
+            'version' => 'latest',
+            'region' => $parts[2],
             'credentials' => [
-                'key'    => $parts[0],
+                'key' => $parts[0],
                 'secret' => $parts[1],
             ],
         ]);

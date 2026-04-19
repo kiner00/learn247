@@ -28,13 +28,13 @@ class CreatorController extends Controller
             ->first();
 
         return Inertia::render('Creator/Plan', [
-            'basicPrice'      => (float) Setting::get('creator_plan_basic_price', 499),
-            'proPrice'        => (float) Setting::get('creator_plan_pro_price', 1999),
-            'currentPlan'     => $user->creatorPlan(),
-            'isAutoRenewing'  => $activeSub?->isAutoRenewing() ?? false,
-            'isRecurring'     => $activeSub?->isRecurring() ?? false,
+            'basicPrice' => (float) Setting::get('creator_plan_basic_price', 499),
+            'proPrice' => (float) Setting::get('creator_plan_pro_price', 1999),
+            'currentPlan' => $user->creatorPlan(),
+            'isAutoRenewing' => $activeSub?->isAutoRenewing() ?? false,
+            'isRecurring' => $activeSub?->isRecurring() ?? false,
             'recurringStatus' => $activeSub?->recurring_status,
-            'expiresAt'       => $activeSub?->expires_at?->toDateTimeString(),
+            'expiresAt' => $activeSub?->expires_at?->toDateTimeString(),
         ]);
     }
 
@@ -49,6 +49,7 @@ class CreatorController extends Controller
             return response()->json(['checkout_url' => $result['checkout_url']]);
         } catch (\Throwable $e) {
             Log::error('CreatorController@planCheckout failed', ['error' => $e->getMessage(), 'user_id' => $user->id]);
+
             return response()->json(['error' => 'Failed to start checkout.'], 500);
         }
     }
@@ -71,20 +72,21 @@ class CreatorController extends Controller
         $user = Auth::user();
 
         try {
-            $data        = $query->execute($user);
+            $data = $query->execute($user);
             $currentPlan = $user->creatorPlan();
-            $analytics   = in_array($currentPlan, ['basic', 'pro']) ? $analyticsService->build($user->id) : null;
+            $analytics = in_array($currentPlan, ['basic', 'pro']) ? $analyticsService->build($user->id) : null;
 
             return Inertia::render('Creator/Dashboard', array_merge($data, [
-                'analytics'   => $analytics,
+                'analytics' => $analytics,
                 'currentPlan' => $currentPlan,
             ]));
         } catch (\Throwable $e) {
             Log::error('CreatorController@dashboard failed', ['error' => $e->getMessage(), 'user_id' => $user->id]);
+
             return Inertia::render('Creator/Dashboard', [
-                'communities'    => [],
+                'communities' => [],
                 'requestHistory' => [],
-                'error'          => 'Failed to load dashboard data.',
+                'error' => 'Failed to load dashboard data.',
             ]);
         }
     }

@@ -3,7 +3,6 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Inertia\Inertia;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -56,8 +55,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 ];
 
                 return Inertia::render('Error', [
-                    'status'  => $status,
-                    'title'   => $titles[$status] ?? 'Error',
+                    'status' => $status,
+                    'title' => $titles[$status] ?? 'Error',
                 ])
                     ->toResponse($request)
                     ->setStatusCode($status);

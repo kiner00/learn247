@@ -14,7 +14,7 @@ class GetEnrolledCoursesTool implements Tool
 
     public function description(): string
     {
-        return "Get all courses the user has individually enrolled in (paid one-time courses), including their progress in each course.";
+        return 'Get all courses the user has individually enrolled in (paid one-time courses), including their progress in each course.';
     }
 
     public function handle(Request $request): string
@@ -36,11 +36,11 @@ class GetEnrolledCoursesTool implements Tool
             $done = $allLessons->whereIn('id', $completedIds)->count();
 
             return [
-                'course'     => $course->title,
-                'community'  => $course->community->name,
+                'course' => $course->title,
+                'community' => $course->community->name,
                 'enrolled_at' => $enrollment->paid_at?->toDateString(),
                 'expires_at' => $enrollment->expires_at?->toDateString(),
-                'lessons_done'  => $done,
+                'lessons_done' => $done,
                 'lessons_total' => $allLessons->count(),
             ];
         })->values()->toArray();

@@ -2,9 +2,9 @@
 
 namespace App\Actions\Classroom;
 
-use App\Models\CourseCertification;
-use App\Models\Community;
 use App\Contracts\FileStorage;
+use App\Models\Community;
+use App\Models\CourseCertification;
 
 class ManageCertificationExam
 {
@@ -27,27 +27,27 @@ class ManageCertificationExam
             $existing->questions()->delete();
 
             $existing->update([
-                'title'                     => $data['title'],
-                'cert_title'                => $data['cert_title'],
-                'description'               => $data['description'] ?? null,
-                'cover_image'               => $coverImage,
-                'pass_score'                => $data['pass_score'],
-                'randomize_questions'       => $data['randomize_questions'] ?? false,
-                'price'                     => $data['price'] ?? 0,
+                'title' => $data['title'],
+                'cert_title' => $data['cert_title'],
+                'description' => $data['description'] ?? null,
+                'cover_image' => $coverImage,
+                'pass_score' => $data['pass_score'],
+                'randomize_questions' => $data['randomize_questions'] ?? false,
+                'price' => $data['price'] ?? 0,
                 'affiliate_commission_rate' => $data['affiliate_commission_rate'] ?? null,
             ]);
 
             $certification = $existing;
         } else {
             $certification = CourseCertification::create([
-                'community_id'              => $community->id,
-                'title'                     => $data['title'],
-                'cert_title'                => $data['cert_title'],
-                'description'               => $data['description'] ?? null,
-                'cover_image'               => $coverImage,
-                'pass_score'                => $data['pass_score'],
-                'randomize_questions'       => $data['randomize_questions'] ?? false,
-                'price'                     => $data['price'] ?? 0,
+                'community_id' => $community->id,
+                'title' => $data['title'],
+                'cert_title' => $data['cert_title'],
+                'description' => $data['description'] ?? null,
+                'cover_image' => $coverImage,
+                'pass_score' => $data['pass_score'],
+                'randomize_questions' => $data['randomize_questions'] ?? false,
+                'price' => $data['price'] ?? 0,
                 'affiliate_commission_rate' => $data['affiliate_commission_rate'] ?? null,
             ]);
         }
@@ -55,13 +55,13 @@ class ManageCertificationExam
         foreach ($data['questions'] as $position => $qData) {
             $question = $certification->questions()->create([
                 'question' => $qData['question'],
-                'type'     => $qData['type'] ?? 'multiple_choice',
+                'type' => $qData['type'] ?? 'multiple_choice',
                 'position' => $position,
             ]);
 
             foreach ($qData['options'] as $optData) {
                 $question->options()->create([
-                    'label'      => $optData['label'],
+                    'label' => $optData['label'],
                     'is_correct' => $optData['is_correct'],
                 ]);
             }

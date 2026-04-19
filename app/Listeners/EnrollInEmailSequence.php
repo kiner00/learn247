@@ -114,13 +114,13 @@ class EnrollInEmailSequence implements ShouldQueue
             $nextSendAt = now()->addHours($firstStep->delay_hours);
 
             EmailSequenceEnrollment::create([
-                'sequence_id'         => $sequence->id,
+                'sequence_id' => $sequence->id,
                 'community_member_id' => $member->id,
-                'current_step_id'     => $firstStep->id,
-                'steps_completed'     => 0,
-                'status'              => EmailSequenceEnrollment::STATUS_ACTIVE,
-                'next_send_at'        => $nextSendAt,
-                'enrolled_at'         => now(),
+                'current_step_id' => $firstStep->id,
+                'steps_completed' => 0,
+                'status' => EmailSequenceEnrollment::STATUS_ACTIVE,
+                'next_send_at' => $nextSendAt,
+                'enrolled_at' => now(),
             ]);
         }
     }
@@ -152,11 +152,11 @@ class EnrollInEmailSequence implements ShouldQueue
     public function subscribe($events): array
     {
         return [
-            MemberJoined::class     => 'handleMemberJoined',
+            MemberJoined::class => 'handleMemberJoined',
             SubscriptionPaid::class => 'handleSubscriptionPaid',
-            CourseEnrolled::class   => 'handleCourseEnrolled',
-            CartAbandoned::class    => 'handleCartAbandoned',
-            MemberTagged::class     => 'handleMemberTagged',
+            CourseEnrolled::class => 'handleCourseEnrolled',
+            CartAbandoned::class => 'handleCartAbandoned',
+            MemberTagged::class => 'handleMemberTagged',
         ];
     }
 }

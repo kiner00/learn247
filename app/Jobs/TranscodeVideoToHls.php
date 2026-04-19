@@ -38,38 +38,39 @@ class TranscodeVideoToHls implements ShouldQueue
                 'target' => $target->getTranscodeIdentifier(),
             ]);
             $target->setTranscodeStatus('failed', 0);
+
             return;
         }
 
         // Handle legacy full URLs
         if (str_starts_with($s3Key, 'http')) {
             $parsed = parse_url($s3Key);
-            $s3Key  = ltrim($parsed['path'] ?? '', '/');
+            $s3Key = ltrim($parsed['path'] ?? '', '/');
         }
 
         try {
-            $bucket   = config('filesystems.disks.s3.bucket');
-            $region   = config('services.mediaconvert.region');
+            $bucket = config('filesystems.disks.s3.bucket');
+            $region = config('services.mediaconvert.region');
             $endpoint = config('services.mediaconvert.endpoint');
-            $roleArn  = config('services.mediaconvert.role_arn');
-            $queue    = config('services.mediaconvert.queue');
+            $roleArn = config('services.mediaconvert.role_arn');
+            $queue = config('services.mediaconvert.queue');
 
-            $hlsPrefix = $target->getHlsPathPrefix() . '/' . Str::uuid();
-            $posterKey = $hlsPrefix . '/poster.0000000.jpg';
+            $hlsPrefix = $target->getHlsPathPrefix().'/'.Str::uuid();
+            $posterKey = $hlsPrefix.'/poster.0000000.jpg';
 
             $client = new MediaConvertClient([
-                'version'  => '2017-08-29',
-                'region'   => $region,
+                'version' => '2017-08-29',
+                'region' => $region,
                 'endpoint' => $endpoint,
             ]);
 
             $result = $client->createJob([
-                'Role'     => $roleArn,
-                'Queue'    => $queue === 'Default' ? ('arn:aws:mediaconvert:' . $region . ':' . $this->getAccountId($roleArn) . ':queues/Default') : $queue,
+                'Role' => $roleArn,
+                'Queue' => $queue === 'Default' ? ('arn:aws:mediaconvert:'.$region.':'.$this->getAccountId($roleArn).':queues/Default') : $queue,
                 'Settings' => [
                     'Inputs' => [
                         [
-                            'FileInput'      => "s3://{$bucket}/{$s3Key}",
+                            'FileInput' => "s3://{$bucket}/{$s3Key}",
                             'AudioSelectors' => [
                                 'Audio Selector 1' => ['DefaultSelection' => 'DEFAULT'],
                             ],
@@ -86,9 +87,9 @@ class TranscodeVideoToHls implements ShouldQueue
             $mcJobId = $result['Job']['Id'];
 
             Log::info('MediaConvert job submitted', [
-                'target'           => $target->getTranscodeIdentifier(),
+                'target' => $target->getTranscodeIdentifier(),
                 'mediaconvert_job' => $mcJobId,
-                'hls_prefix'       => $hlsPrefix,
+                'hls_prefix' => $hlsPrefix,
             ]);
 
             $target->setTranscodeStatus('processing', 10);
@@ -98,7 +99,7 @@ class TranscodeVideoToHls implements ShouldQueue
         } catch (\Throwable $e) {
             Log::error('MediaConvert job submission failed', [
                 'target' => $target->getTranscodeIdentifier(),
-                'error'  => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
 
             $target->setTranscodeStatus('failed', 0);
@@ -110,12 +111,12 @@ class TranscodeVideoToHls implements ShouldQueue
     private function hlsOutputGroup(string $bucket, string $hlsPrefix): array
     {
         return [
-            'Name'                => 'HLS',
+            'Name' => 'HLS',
             'OutputGroupSettings' => [
-                'Type'             => 'HLS_GROUP_SETTINGS',
+                'Type' => 'HLS_GROUP_SETTINGS',
                 'HlsGroupSettings' => [
-                    'Destination'      => "s3://{$bucket}/{$hlsPrefix}/video",
-                    'SegmentLength'    => 6,
+                    'Destination' => "s3://{$bucket}/{$hlsPrefix}/video",
+                    'SegmentLength' => 6,
                     'MinSegmentLength' => 0,
                 ],
             ],
@@ -130,28 +131,28 @@ class TranscodeVideoToHls implements ShouldQueue
     private function hlsRendition(string $name, int $w, int $h, int $videoBitrate, int $audioBitrate, string $profile): array
     {
         return [
-            'NameModifier'      => $name,
+            'NameModifier' => $name,
             'ContainerSettings' => ['Container' => 'M3U8'],
-            'VideoDescription'  => [
-                'Width'         => $w,
-                'Height'        => $h,
+            'VideoDescription' => [
+                'Width' => $w,
+                'Height' => $h,
                 'CodecSettings' => [
-                    'Codec'        => 'H_264',
+                    'Codec' => 'H_264',
                     'H264Settings' => [
                         'RateControlMode' => 'CBR',
-                        'Bitrate'         => $videoBitrate,
-                        'CodecProfile'    => $profile,
-                        'CodecLevel'      => 'LEVEL_4',
+                        'Bitrate' => $videoBitrate,
+                        'CodecProfile' => $profile,
+                        'CodecLevel' => 'LEVEL_4',
                     ],
                 ],
             ],
             'AudioDescriptions' => [
                 [
                     'AudioSourceName' => 'Audio Selector 1',
-                    'CodecSettings'   => [
-                        'Codec'       => 'AAC',
+                    'CodecSettings' => [
+                        'Codec' => 'AAC',
                         'AacSettings' => [
-                            'Bitrate'    => $audioBitrate,
+                            'Bitrate' => $audioBitrate,
                             'CodingMode' => 'CODING_MODE_2_0',
                             'SampleRate' => 48000,
                         ],
@@ -164,25 +165,25 @@ class TranscodeVideoToHls implements ShouldQueue
     private function posterOutputGroup(string $bucket, string $hlsPrefix): array
     {
         return [
-            'Name'                => 'Poster',
+            'Name' => 'Poster',
             'OutputGroupSettings' => [
-                'Type'                    => 'FILE_GROUP_SETTINGS',
-                'FileGroupSettings'       => [
+                'Type' => 'FILE_GROUP_SETTINGS',
+                'FileGroupSettings' => [
                     'Destination' => "s3://{$bucket}/{$hlsPrefix}/poster",
                 ],
             ],
             'Outputs' => [
                 [
-                    'NameModifier'      => '',
+                    'NameModifier' => '',
                     'ContainerSettings' => ['Container' => 'RAW'],
-                    'VideoDescription'  => [
+                    'VideoDescription' => [
                         'CodecSettings' => [
-                            'Codec'                => 'FRAME_CAPTURE',
+                            'Codec' => 'FRAME_CAPTURE',
                             'FrameCaptureSettings' => [
-                                'FramerateNumerator'   => 1,
+                                'FramerateNumerator' => 1,
                                 'FramerateDenominator' => 2,
-                                'MaxCaptures'          => 1,
-                                'Quality'              => 80,
+                                'MaxCaptures' => 1,
+                                'Quality' => 80,
                             ],
                         ],
                     ],
@@ -204,7 +205,7 @@ class TranscodeVideoToHls implements ShouldQueue
 
         Log::error('TranscodeVideoToHls job failed permanently', [
             'target' => $this->target->getTranscodeIdentifier(),
-            'error'  => $exception->getMessage(),
+            'error' => $exception->getMessage(),
         ]);
     }
 }

@@ -25,7 +25,7 @@ class UserController extends Controller
     {
         $action->execute($user);
 
-        return back()->with('success', "User {$user->name} has been " . ($user->is_active ? 'enabled' : 'disabled') . ".");
+        return back()->with('success', "User {$user->name} has been ".($user->is_active ? 'enabled' : 'disabled').'.');
     }
 
     public function resendOnboardingEmail(User $user, ResendOnboardingEmail $action): RedirectResponse

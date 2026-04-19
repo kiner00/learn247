@@ -23,28 +23,28 @@ class CreatorControllerTest extends TestCase
     {
         $subscription = Subscription::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $payer->id,
-            'status'       => Subscription::STATUS_ACTIVE,
+            'user_id' => $payer->id,
+            'status' => Subscription::STATUS_ACTIVE,
         ]);
 
         return Payment::factory()->create([
             'subscription_id' => $subscription->id,
-            'community_id'    => $community->id,
-            'user_id'         => $payer->id,
-            'amount'          => $amount,
-            'status'          => Payment::STATUS_PAID,
-            'paid_at'         => $paidAt ?? now()->subDays(20),
+            'community_id' => $community->id,
+            'user_id' => $payer->id,
+            'amount' => $amount,
+            'status' => Payment::STATUS_PAID,
+            'paid_at' => $paidAt ?? now()->subDays(20),
         ]);
     }
 
     private function createPayoutRequest(User $owner, Community $community, float $amount, string $status = PayoutRequest::STATUS_PENDING): PayoutRequest
     {
         return PayoutRequest::create([
-            'user_id'         => $owner->id,
-            'community_id'    => $community->id,
-            'type'            => PayoutRequest::TYPE_OWNER,
-            'status'          => $status,
-            'amount'          => $amount,
+            'user_id' => $owner->id,
+            'community_id' => $community->id,
+            'type' => PayoutRequest::TYPE_OWNER,
+            'status' => $status,
+            'amount' => $amount,
             'eligible_amount' => $amount,
         ]);
     }
@@ -53,10 +53,10 @@ class CreatorControllerTest extends TestCase
 
     public function test_owner_can_view_creator_dashboard(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
             'owner_id' => $owner->id,
-            'price'    => 100,
+            'price' => 100,
         ]);
 
         $response = $this->actingAs($owner)->get('/creator/dashboard');
@@ -72,10 +72,10 @@ class CreatorControllerTest extends TestCase
 
     public function test_dashboard_shows_community_revenue_data(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
             'owner_id' => $owner->id,
-            'price'    => 200,
+            'price' => 200,
         ]);
 
         $payer = User::factory()->create();
@@ -95,30 +95,30 @@ class CreatorControllerTest extends TestCase
 
     public function test_dashboard_includes_affiliate_commissions_in_calculations(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
             'owner_id' => $owner->id,
-            'price'    => 100,
+            'price' => 100,
         ]);
 
-        $payer   = User::factory()->create();
+        $payer = User::factory()->create();
         $payment = $this->createPaidPayment($community, $payer, 100.00);
 
         $affiliate = Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => User::factory()->create()->id,
-            'code'         => 'TEST123',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => User::factory()->create()->id,
+            'code' => 'TEST123',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         AffiliateConversion::create([
-            'affiliate_id'      => $affiliate->id,
-            'subscription_id'   => $payment->subscription_id,
-            'referred_user_id'  => $payer->id,
+            'affiliate_id' => $affiliate->id,
+            'subscription_id' => $payment->subscription_id,
+            'referred_user_id' => $payer->id,
             'commission_amount' => 10.00,
-            'sale_amount'       => 100.00,
-            'platform_fee'      => 15.00,
-            'creator_amount'    => 75.00,
+            'sale_amount' => 100.00,
+            'platform_fee' => 15.00,
+            'creator_amount' => 75.00,
         ]);
 
         $response = $this->actingAs($owner)->get('/creator/dashboard');
@@ -132,10 +132,10 @@ class CreatorControllerTest extends TestCase
 
     public function test_dashboard_includes_paid_and_eligible_amounts(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
             'owner_id' => $owner->id,
-            'price'    => 100,
+            'price' => 100,
         ]);
 
         $payer = User::factory()->create();
@@ -143,9 +143,9 @@ class CreatorControllerTest extends TestCase
 
         OwnerPayout::create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
-            'amount'       => 50.00,
-            'status'       => 'completed',
+            'user_id' => $owner->id,
+            'amount' => 50.00,
+            'status' => 'completed',
         ]);
 
         $response = $this->actingAs($owner)->get('/creator/dashboard');
@@ -158,10 +158,10 @@ class CreatorControllerTest extends TestCase
 
     public function test_dashboard_includes_pending_payout_request(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
             'owner_id' => $owner->id,
-            'price'    => 100,
+            'price' => 100,
         ]);
 
         $request = $this->createPayoutRequest($owner, $community, 25.00);
@@ -177,10 +177,10 @@ class CreatorControllerTest extends TestCase
 
     public function test_dashboard_includes_recent_payments(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
             'owner_id' => $owner->id,
-            'price'    => 50,
+            'price' => 50,
         ]);
 
         $payer = User::factory()->create(['name' => 'Test Payer']);
@@ -196,10 +196,10 @@ class CreatorControllerTest extends TestCase
 
     public function test_dashboard_includes_request_history(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
             'owner_id' => $owner->id,
-            'price'    => 100,
+            'price' => 100,
         ]);
 
         $this->createPayoutRequest($owner, $community, 40.00, PayoutRequest::STATUS_APPROVED);
@@ -240,7 +240,7 @@ class CreatorControllerTest extends TestCase
 
     public function test_owner_does_not_see_other_owners_communities(): void
     {
-        $owner      = User::factory()->create();
+        $owner = User::factory()->create();
         $otherOwner = User::factory()->create();
 
         Community::factory()->create(['owner_id' => $owner->id, 'price' => 100]);
@@ -257,7 +257,7 @@ class CreatorControllerTest extends TestCase
     public function test_dashboard_shows_payout_method_and_details(): void
     {
         $owner = User::factory()->create([
-            'payout_method'  => 'bank_transfer',
+            'payout_method' => 'bank_transfer',
             'payout_details' => 'BCA 1234567890',
         ]);
         Community::factory()->create(['owner_id' => $owner->id, 'price' => 100]);
@@ -321,7 +321,7 @@ class CreatorControllerTest extends TestCase
     {
         Http::fake([
             '*' => Http::response([
-                'id'          => 'inv_creator_123',
+                'id' => 'inv_creator_123',
                 'invoice_url' => 'https://checkout.xendit.co/inv_creator_123',
             ]),
         ]);
@@ -388,9 +388,9 @@ class CreatorControllerTest extends TestCase
         Community::factory()->create(['owner_id' => $owner->id, 'price' => 100]);
 
         \App\Models\CreatorSubscription::create([
-            'user_id'   => $owner->id,
-            'plan'      => 'basic',
-            'status'    => \App\Models\CreatorSubscription::STATUS_ACTIVE,
+            'user_id' => $owner->id,
+            'plan' => 'basic',
+            'status' => \App\Models\CreatorSubscription::STATUS_ACTIVE,
             'xendit_id' => 'test',
         ]);
 
@@ -399,12 +399,12 @@ class CreatorControllerTest extends TestCase
             ->with($owner->id)
             ->once()
             ->andReturn([
-                'labels'        => [],
-                'revenue'       => [],
-                'newMembers'    => [],
-                'churn'         => [],
+                'labels' => [],
+                'revenue' => [],
+                'newMembers' => [],
+                'churn' => [],
                 'retentionRate' => 100.0,
-                'mrr'           => 0,
+                'mrr' => 0,
             ]);
 
         $response = $this->actingAs($owner)->get('/creator/dashboard');
@@ -422,9 +422,9 @@ class CreatorControllerTest extends TestCase
         Community::factory()->create(['owner_id' => $owner->id, 'price' => 100]);
 
         \App\Models\CreatorSubscription::create([
-            'user_id'   => $owner->id,
-            'plan'      => 'pro',
-            'status'    => \App\Models\CreatorSubscription::STATUS_ACTIVE,
+            'user_id' => $owner->id,
+            'plan' => 'pro',
+            'status' => \App\Models\CreatorSubscription::STATUS_ACTIVE,
             'xendit_id' => 'test_pro',
         ]);
 
@@ -433,12 +433,12 @@ class CreatorControllerTest extends TestCase
             ->with($owner->id)
             ->once()
             ->andReturn([
-                'labels'        => [],
-                'revenue'       => [],
-                'newMembers'    => [],
-                'churn'         => [],
+                'labels' => [],
+                'revenue' => [],
+                'newMembers' => [],
+                'churn' => [],
                 'retentionRate' => 100.0,
-                'mrr'           => 0,
+                'mrr' => 0,
             ]);
 
         $response = $this->actingAs($owner)->get('/creator/dashboard');
@@ -472,9 +472,9 @@ class CreatorControllerTest extends TestCase
 
         $mockAction = $this->mock(\App\Actions\Coupon\RedeemCoupon::class);
         $fakeSub = \App\Models\CreatorSubscription::create([
-            'user_id'    => $user->id,
-            'plan'       => 'basic',
-            'status'     => \App\Models\CreatorSubscription::STATUS_ACTIVE,
+            'user_id' => $user->id,
+            'plan' => 'basic',
+            'status' => \App\Models\CreatorSubscription::STATUS_ACTIVE,
             'expires_at' => now()->addMonth(),
         ]);
         $mockAction->shouldReceive('execute')
@@ -535,12 +535,12 @@ class CreatorControllerTest extends TestCase
     {
         $user = User::factory()->create();
         \App\Models\CreatorSubscription::create([
-            'user_id'          => $user->id,
-            'plan'             => 'basic',
-            'status'           => \App\Models\CreatorSubscription::STATUS_ACTIVE,
-            'xendit_plan_id'   => 'repl_test',
+            'user_id' => $user->id,
+            'plan' => 'basic',
+            'status' => \App\Models\CreatorSubscription::STATUS_ACTIVE,
+            'xendit_plan_id' => 'repl_test',
             'recurring_status' => 'ACTIVE',
-            'expires_at'       => now()->addMonth(),
+            'expires_at' => now()->addMonth(),
         ]);
 
         $response = $this->actingAs($user)->get('/creator/plan');

@@ -6,7 +6,6 @@ use App\Actions\Classroom\EnrollInCourse;
 use App\Http\Controllers\Controller;
 use App\Models\Community;
 use App\Models\Course;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 

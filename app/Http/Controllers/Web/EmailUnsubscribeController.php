@@ -20,9 +20,9 @@ class EmailUnsubscribeController extends Controller
 
         EmailUnsubscribe::firstOrCreate([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ], [
-            'reason'          => 'manual',
+            'reason' => 'manual',
             'unsubscribed_at' => now(),
         ]);
 

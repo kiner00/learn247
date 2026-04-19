@@ -14,10 +14,13 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, HasRoles, Notifiable;
 
-    public const KYC_NONE      = 'none';
+    public const KYC_NONE = 'none';
+
     public const KYC_SUBMITTED = 'submitted';
-    public const KYC_APPROVED  = 'approved';
-    public const KYC_REJECTED  = 'rejected';
+
+    public const KYC_APPROVED = 'approved';
+
+    public const KYC_REJECTED = 'rejected';
 
     protected $fillable = [
         'name', 'username', 'bio', 'email', 'password', 'needs_password_setup', 'phone', 'is_super_admin', 'is_active',
@@ -35,20 +38,20 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at'      => 'datetime',
-            'password'               => 'hashed',
-            'needs_password_setup'   => 'boolean',
-            'is_super_admin'         => 'boolean',
-            'is_active'              => 'boolean',
-            'notification_prefs'     => 'array',
-            'chat_prefs'             => 'array',
-            'social_links'           => 'array',
-            'hide_from_search'       => 'boolean',
-            'crz_token_balance'      => 'decimal:8',
-            'kyc_verified_at'        => 'datetime',
-            'kyc_submitted_at'       => 'datetime',
-            'kyc_ai_result'          => 'array',
-            'kyc_ai_rejections'      => 'integer',
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+            'needs_password_setup' => 'boolean',
+            'is_super_admin' => 'boolean',
+            'is_active' => 'boolean',
+            'notification_prefs' => 'array',
+            'chat_prefs' => 'array',
+            'social_links' => 'array',
+            'hide_from_search' => 'boolean',
+            'crz_token_balance' => 'decimal:8',
+            'kyc_verified_at' => 'datetime',
+            'kyc_submitted_at' => 'datetime',
+            'kyc_ai_result' => 'array',
+            'kyc_ai_rejections' => 'integer',
         ];
     }
 
@@ -128,9 +131,9 @@ class User extends Authenticatable
         }
 
         $customer = $xendit->createCustomer([
-            'reference_id'      => "user_{$this->id}",
-            'email'             => $this->email,
-            'type'              => 'INDIVIDUAL',
+            'reference_id' => "user_{$this->id}",
+            'email' => $this->email,
+            'type' => 'INDIVIDUAL',
             'individual_detail' => [
                 'given_names' => $this->name,
             ],

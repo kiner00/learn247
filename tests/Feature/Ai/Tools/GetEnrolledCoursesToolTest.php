@@ -30,25 +30,25 @@ class GetEnrolledCoursesToolTest extends TestCase
 
     public function test_returns_enrolled_courses_with_progress(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $course    = Course::factory()->create(['community_id' => $community->id, 'title' => 'Advanced PHP']);
-        $module    = CourseModule::factory()->create(['course_id' => $course->id]);
-        $lesson1   = CourseLesson::factory()->create(['module_id' => $module->id]);
-        $lesson2   = CourseLesson::factory()->create(['module_id' => $module->id]);
+        $course = Course::factory()->create(['community_id' => $community->id, 'title' => 'Advanced PHP']);
+        $module = CourseModule::factory()->create(['course_id' => $course->id]);
+        $lesson1 = CourseLesson::factory()->create(['module_id' => $module->id]);
+        $lesson2 = CourseLesson::factory()->create(['module_id' => $module->id]);
 
         CourseEnrollment::create([
-            'user_id'   => $user->id,
+            'user_id' => $user->id,
             'course_id' => $course->id,
-            'status'    => CourseEnrollment::STATUS_PAID,
-            'paid_at'   => now()->subDays(5),
+            'status' => CourseEnrollment::STATUS_PAID,
+            'paid_at' => now()->subDays(5),
         ]);
 
         LessonCompletion::create(['user_id' => $user->id, 'lesson_id' => $lesson1->id]);
 
-        $tool   = new GetEnrolledCoursesTool($user->id);
+        $tool = new GetEnrolledCoursesTool($user->id);
         $result = $tool->handle(new Request([]));
-        $json   = json_decode($result, true);
+        $json = json_decode($result, true);
 
         $this->assertCount(1, $json);
         $this->assertSame('Advanced PHP', $json[0]['course']);
@@ -59,16 +59,16 @@ class GetEnrolledCoursesToolTest extends TestCase
 
     public function test_excludes_pending_enrollments(): void
     {
-        $user   = User::factory()->create();
+        $user = User::factory()->create();
         $course = Course::factory()->create();
 
         CourseEnrollment::create([
-            'user_id'   => $user->id,
+            'user_id' => $user->id,
             'course_id' => $course->id,
-            'status'    => CourseEnrollment::STATUS_PENDING,
+            'status' => CourseEnrollment::STATUS_PENDING,
         ]);
 
-        $tool   = new GetEnrolledCoursesTool($user->id);
+        $tool = new GetEnrolledCoursesTool($user->id);
         $result = $tool->handle(new Request([]));
 
         $this->assertStringContainsString('not enrolled', $result);
@@ -76,20 +76,20 @@ class GetEnrolledCoursesToolTest extends TestCase
 
     public function test_includes_expiry_date(): void
     {
-        $user   = User::factory()->create();
+        $user = User::factory()->create();
         $course = Course::factory()->create();
 
         CourseEnrollment::create([
-            'user_id'    => $user->id,
-            'course_id'  => $course->id,
-            'status'     => CourseEnrollment::STATUS_PAID,
-            'paid_at'    => now()->subDays(10),
+            'user_id' => $user->id,
+            'course_id' => $course->id,
+            'status' => CourseEnrollment::STATUS_PAID,
+            'paid_at' => now()->subDays(10),
             'expires_at' => now()->addDays(20),
         ]);
 
-        $tool   = new GetEnrolledCoursesTool($user->id);
+        $tool = new GetEnrolledCoursesTool($user->id);
         $result = $tool->handle(new Request([]));
-        $json   = json_decode($result, true);
+        $json = json_decode($result, true);
 
         $this->assertNotNull($json[0]['expires_at']);
         $this->assertNotNull($json[0]['enrolled_at']);
@@ -102,16 +102,16 @@ class GetEnrolledCoursesToolTest extends TestCase
         for ($i = 0; $i < 3; $i++) {
             $course = Course::factory()->create();
             CourseEnrollment::create([
-                'user_id'   => $user->id,
+                'user_id' => $user->id,
                 'course_id' => $course->id,
-                'status'    => CourseEnrollment::STATUS_PAID,
-                'paid_at'   => now(),
+                'status' => CourseEnrollment::STATUS_PAID,
+                'paid_at' => now(),
             ]);
         }
 
-        $tool   = new GetEnrolledCoursesTool($user->id);
+        $tool = new GetEnrolledCoursesTool($user->id);
         $result = $tool->handle(new Request([]));
-        $json   = json_decode($result, true);
+        $json = json_decode($result, true);
 
         $this->assertCount(3, $json);
     }
@@ -124,7 +124,7 @@ class GetEnrolledCoursesToolTest extends TestCase
 
     public function test_schema_returns_empty_array(): void
     {
-        $tool   = new GetEnrolledCoursesTool(1);
+        $tool = new GetEnrolledCoursesTool(1);
         $schema = $this->createMock(\Illuminate\Contracts\JsonSchema\JsonSchema::class);
 
         $this->assertSame([], $tool->schema($schema));

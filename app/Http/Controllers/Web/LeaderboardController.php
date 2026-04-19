@@ -14,25 +14,25 @@ class LeaderboardController extends Controller
     {
         $userId = auth()->id();
 
-        $data              = $query->execute($community, $userId);
+        $data = $query->execute($community, $userId);
         $levelDistribution = $query->levelDistribution($community);
-        $myMembership      = $community->members()
+        $myMembership = $community->members()
             ->where('user_id', $userId)
             ->with('user:id,name,username,avatar')
             ->first();
 
         return Inertia::render('Communities/Leaderboard', [
-            'community'         => $community,
-            'myName'            => $myMembership?->user?->name,
-            'myAvatar'          => $myMembership?->user?->avatar,
-            'myPoints'          => $data['my_points'],
-            'myLevel'           => $data['my_level'],
+            'community' => $community,
+            'myName' => $myMembership?->user?->name,
+            'myAvatar' => $myMembership?->user?->avatar,
+            'myPoints' => $data['my_points'],
+            'myLevel' => $data['my_level'],
             'pointsToNextLevel' => $data['points_to_next'],
             'levelDistribution' => $levelDistribution,
-            'leaderboard'       => $data['leaderboard'],
-            'leaderboard30'     => $data['leaderboard_30_days'],
-            'leaderboard7'      => $data['leaderboard_7_days'],
-            'updatedAt'         => now()->format('M j, Y g:ia'),
+            'leaderboard' => $data['leaderboard'],
+            'leaderboard30' => $data['leaderboard_30_days'],
+            'leaderboard7' => $data['leaderboard_7_days'],
+            'updatedAt' => now()->format('M j, Y g:ia'),
         ]);
     }
 }

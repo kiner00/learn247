@@ -3,8 +3,6 @@
 namespace Tests\Feature\Web;
 
 use App\Models\Comment;
-use App\Models\Community;
-use App\Models\CommunityMember;
 use App\Models\Like;
 use App\Models\Post;
 use App\Models\User;
@@ -27,9 +25,9 @@ class LikeControllerTest extends TestCase
             ->assertRedirect();
 
         $this->assertDatabaseHas('likes', [
-            'user_id'       => $user->id,
+            'user_id' => $user->id,
             'likeable_type' => Post::class,
-            'likeable_id'   => $post->id,
+            'likeable_id' => $post->id,
         ]);
     }
 
@@ -44,9 +42,9 @@ class LikeControllerTest extends TestCase
             ->assertRedirect();
 
         $this->assertDatabaseMissing('likes', [
-            'user_id'       => $user->id,
+            'user_id' => $user->id,
             'likeable_type' => Post::class,
-            'likeable_id'   => $post->id,
+            'likeable_id' => $post->id,
         ]);
     }
 
@@ -62,7 +60,7 @@ class LikeControllerTest extends TestCase
 
     public function test_authenticated_user_can_like_a_comment(): void
     {
-        $user    = User::factory()->create();
+        $user = User::factory()->create();
         $comment = Comment::factory()->create();
 
         $this->actingAs($user)
@@ -70,15 +68,15 @@ class LikeControllerTest extends TestCase
             ->assertRedirect();
 
         $this->assertDatabaseHas('likes', [
-            'user_id'       => $user->id,
+            'user_id' => $user->id,
             'likeable_type' => Comment::class,
-            'likeable_id'   => $comment->id,
+            'likeable_id' => $comment->id,
         ]);
     }
 
     public function test_authenticated_user_can_unlike_a_comment(): void
     {
-        $user    = User::factory()->create();
+        $user = User::factory()->create();
         $comment = Comment::factory()->create();
         Like::create(['user_id' => $user->id, 'likeable_type' => Comment::class, 'likeable_id' => $comment->id]);
 
@@ -87,9 +85,9 @@ class LikeControllerTest extends TestCase
             ->assertRedirect();
 
         $this->assertDatabaseMissing('likes', [
-            'user_id'       => $user->id,
+            'user_id' => $user->id,
             'likeable_type' => Comment::class,
-            'likeable_id'   => $comment->id,
+            'likeable_id' => $comment->id,
         ]);
     }
 

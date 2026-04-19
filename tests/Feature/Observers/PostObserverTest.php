@@ -15,12 +15,12 @@ class PostObserverTest extends TestCase
 
     public function test_creating_post_awards_points(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $member    = CommunityMember::factory()->create([
+        $member = CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'points'       => 0,
+            'user_id' => $user->id,
+            'points' => 0,
         ]);
 
         Post::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
@@ -30,15 +30,15 @@ class PostObserverTest extends TestCase
 
     public function test_deleting_post_deducts_points(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $member    = CommunityMember::factory()->create([
+        $member = CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'points'       => 100,
+            'user_id' => $user->id,
+            'points' => 100,
         ]);
 
-        $post             = Post::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+        $post = Post::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
         $pointsAfterCreate = $member->fresh()->points;
 
         $post->delete();

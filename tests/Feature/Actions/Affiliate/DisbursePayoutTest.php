@@ -11,7 +11,6 @@ use App\Models\Subscription;
 use App\Models\User;
 use App\Services\XenditService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Mockery;
 use Mockery\MockInterface;
 use Tests\TestCase;
 
@@ -41,49 +40,49 @@ class DisbursePayoutTest extends TestCase
 
     public function test_execute_calls_xendit_and_returns_payout_data(): void
     {
-        $user      = User::factory()->create([
-            'payout_method'  => 'gcash',
+        $user = User::factory()->create([
+            'payout_method' => 'gcash',
             'payout_details' => '09171234567',
         ]);
         $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
         $affiliate = Affiliate::create([
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
             'community_id' => $community->id,
-            'code'         => 'DIS001',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'code' => 'DIS001',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         $sub = Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => User::factory()->create()->id,
+            'user_id' => User::factory()->create()->id,
         ]);
         $payment = Payment::create([
             'subscription_id' => $sub->id,
-            'community_id'    => $community->id,
-            'user_id'         => $sub->user_id,
-            'amount'          => 500,
-            'currency'        => 'PHP',
-            'status'          => Payment::STATUS_PAID,
-            'metadata'        => [],
-            'paid_at'         => now(),
+            'community_id' => $community->id,
+            'user_id' => $sub->user_id,
+            'amount' => 500,
+            'currency' => 'PHP',
+            'status' => Payment::STATUS_PAID,
+            'metadata' => [],
+            'paid_at' => now(),
         ]);
         $conversion = AffiliateConversion::create([
-            'affiliate_id'      => $affiliate->id,
-            'subscription_id'   => $sub->id,
-            'payment_id'        => $payment->id,
-            'referred_user_id'  => $sub->user_id,
-            'sale_amount'       => 500,
-            'platform_fee'      => 75,
+            'affiliate_id' => $affiliate->id,
+            'subscription_id' => $sub->id,
+            'payment_id' => $payment->id,
+            'referred_user_id' => $sub->user_id,
+            'sale_amount' => 500,
+            'platform_fee' => 75,
             'commission_amount' => 50,
-            'creator_amount'    => 375,
-            'status'            => AffiliateConversion::STATUS_PENDING,
+            'creator_amount' => 375,
+            'status' => AffiliateConversion::STATUS_PENDING,
         ]);
 
         $expectedResponse = [
-            'id'           => 'payout_abc123',
-            'reference_id' => 'payout-' . $conversion->id,
-            'status'       => 'ACCEPTED',
-            'amount'       => 50,
+            'id' => 'payout_abc123',
+            'reference_id' => 'payout-'.$conversion->id,
+            'status' => 'ACCEPTED',
+            'amount' => 50,
         ];
 
         $this->mock(XenditService::class, function (MockInterface $mock) use ($expectedResponse) {

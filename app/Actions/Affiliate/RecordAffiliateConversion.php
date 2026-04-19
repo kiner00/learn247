@@ -28,8 +28,8 @@ class RecordAffiliateConversion
         $rate = $affiliate->community->affiliate_commission_rate / 100;
 
         $this->record($affiliate, $rate, (float) $payment->amount, [
-            'subscription_id'  => $subscription->id,
-            'payment_id'       => $payment->id,
+            'subscription_id' => $subscription->id,
+            'payment_id' => $payment->id,
             'referred_user_id' => $subscription->user_id,
         ], 'Affiliate commission skipped');
     }
@@ -46,16 +46,17 @@ class RecordAffiliateConversion
         }
 
         $course = $enrollment->course;
-        $rate   = ($course->affiliate_commission_rate ?? 0) / 100;
+        $rate = ($course->affiliate_commission_rate ?? 0) / 100;
 
         if ($rate <= 0) {
             Log::info('Course affiliate commission skipped — no commission rate set', ['course_id' => $course->id]);
+
             return null;
         }
 
         return $this->record($affiliate, $rate, (float) $course->price, [
             'course_enrollment_id' => $enrollment->id,
-            'referred_user_id'     => $enrollment->user_id,
+            'referred_user_id' => $enrollment->user_id,
         ], 'Course affiliate commission skipped');
     }
 
@@ -75,17 +76,19 @@ class RecordAffiliateConversion
 
         if ($rate <= 0) {
             Log::info('Certification affiliate commission skipped — no commission rate set', ['certification_id' => $certification->id]);
+
             return null;
         }
 
         if (AffiliateConversion::where('certification_purchase_id', $purchase->id)->exists()) {
             Log::info('Certification affiliate commission skipped — already recorded', ['purchase_id' => $purchase->id]);
+
             return null;
         }
 
         return $this->record($affiliate, $rate, (float) $certification->price, [
             'certification_purchase_id' => $purchase->id,
-            'referred_user_id'          => $purchase->user_id,
+            'referred_user_id' => $purchase->user_id,
         ], 'Certification affiliate commission skipped');
     }
 
@@ -101,21 +104,23 @@ class RecordAffiliateConversion
         }
 
         $curzzo = $purchase->curzzo;
-        $rate   = ($curzzo->affiliate_commission_rate ?? 0) / 100;
+        $rate = ($curzzo->affiliate_commission_rate ?? 0) / 100;
 
         if ($rate <= 0) {
             Log::info('Curzzo affiliate commission skipped — no commission rate set', ['curzzo_id' => $curzzo->id]);
+
             return null;
         }
 
         if (AffiliateConversion::where('curzzo_purchase_id', $purchase->id)->exists()) {
             Log::info('Curzzo affiliate commission skipped — already recorded', ['purchase_id' => $purchase->id]);
+
             return null;
         }
 
         return $this->record($affiliate, $rate, (float) $curzzo->price, [
             'curzzo_purchase_id' => $purchase->id,
-            'referred_user_id'   => $purchase->user_id,
+            'referred_user_id' => $purchase->user_id,
         ], 'Curzzo affiliate commission skipped');
     }
 
@@ -128,20 +133,21 @@ class RecordAffiliateConversion
     {
         if (! AffiliateSubscriptionChecker::isActivelySubscribed($affiliate->user_id, $affiliate->community_id)) {
             Log::info("{$logPrefix} — affiliate not subscribed", ['affiliate_id' => $affiliate->id]);
+
             return null;
         }
 
-        $platformFee   = round($saleAmount * $affiliate->community->platformFeeRate(), 2);
-        $commission    = round($saleAmount * $rate, 2);
+        $platformFee = round($saleAmount * $affiliate->community->platformFeeRate(), 2);
+        $commission = round($saleAmount * $rate, 2);
         $creatorAmount = round($saleAmount - $platformFee - $commission, 2);
 
         AffiliateConversion::create(array_merge($extraData, [
-            'affiliate_id'      => $affiliate->id,
-            'sale_amount'       => $saleAmount,
-            'platform_fee'      => $platformFee,
+            'affiliate_id' => $affiliate->id,
+            'sale_amount' => $saleAmount,
+            'platform_fee' => $platformFee,
             'commission_amount' => $commission,
-            'creator_amount'    => $creatorAmount,
-            'status'            => AffiliateConversion::STATUS_PENDING,
+            'creator_amount' => $creatorAmount,
+            'status' => AffiliateConversion::STATUS_PENDING,
         ]));
 
         $affiliate->increment('total_earned', $commission);

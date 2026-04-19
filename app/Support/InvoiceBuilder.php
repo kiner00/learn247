@@ -7,11 +7,12 @@ use App\Models\User;
 class InvoiceBuilder
 {
     private array $data = [];
+
     private array $items = [];
 
     public static function make(): self
     {
-        return new self();
+        return new self;
     }
 
     public function externalId(string $id): self
@@ -46,12 +47,12 @@ class InvoiceBuilder
     {
         $this->data['customer'] = [
             'given_names' => $user->name,
-            'email'       => $user->email,
+            'email' => $user->email,
         ];
 
         $this->data['customer_notification_preference'] = [
             'invoice_created' => ['email'],
-            'invoice_paid'    => ['email'],
+            'invoice_paid' => ['email'],
         ];
 
         return $this;
@@ -74,9 +75,9 @@ class InvoiceBuilder
     public function item(string $name, float $price, string $category): self
     {
         $this->items[] = [
-            'name'     => $name,
+            'name' => $name,
             'quantity' => 1,
-            'price'    => $price,
+            'price' => $price,
             'category' => $category,
         ];
 

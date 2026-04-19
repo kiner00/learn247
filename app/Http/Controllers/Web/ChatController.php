@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Actions\Chat\DeleteChatMessage;
 use App\Actions\Chat\SendChatMessage;
+use App\Contracts\TelegramGateway;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SendMessageRequest;
 use App\Models\ChatbotMessage;
@@ -11,10 +12,9 @@ use App\Models\Community;
 use App\Models\CommunityMember;
 use App\Models\Message;
 use App\Queries\Chat\GetChatMessages;
+use App\Services\StorageService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Contracts\TelegramGateway;
-use App\Services\StorageService;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -22,7 +22,7 @@ class ChatController extends Controller
 {
     public function index(Community $community, GetChatMessages $query): Response
     {
-        $userId   = auth()->id();
+        $userId = auth()->id();
         $messages = $query->latest($community);
 
         if ($userId) {
@@ -47,14 +47,14 @@ class ChatController extends Controller
                 ->orderByDesc('last_chat_at')
                 ->get();
 
-            $userIds  = $rows->pluck('user_id');
-            $userMap  = \App\Models\User::whereIn('id', $userIds)->select('id', 'name', 'avatar')->get()->keyBy('id');
+            $userIds = $rows->pluck('user_id');
+            $userMap = \App\Models\User::whereIn('id', $userIds)->select('id', 'name', 'avatar')->get()->keyBy('id');
 
             $chatbotUsers = $rows->map(fn ($row) => [
-                'id'            => $row->user_id,
-                'name'          => $userMap[$row->user_id]->name ?? 'Unknown',
-                'avatar'        => $userMap[$row->user_id]->avatar ?? null,
-                'last_chat_at'  => $row->last_chat_at,
+                'id' => $row->user_id,
+                'name' => $userMap[$row->user_id]->name ?? 'Unknown',
+                'avatar' => $userMap[$row->user_id]->avatar ?? null,
+                'last_chat_at' => $row->last_chat_at,
                 'message_count' => $row->message_count,
             ])->values();
         }
@@ -66,8 +66,8 @@ class ChatController extends Controller
             $targetUser = \App\Models\User::select('id', 'name', 'avatar')->find($targetUserId);
             if ($targetUser) {
                 $selectedChatUser = [
-                    'id'     => $targetUser->id,
-                    'name'   => $targetUser->name,
+                    'id' => $targetUser->id,
+                    'name' => $targetUser->name,
                     'avatar' => $targetUser->avatar,
                 ];
             }
@@ -88,12 +88,12 @@ class ChatController extends Controller
             return response()->json(['error' => 'You have been blocked from chatting in this community.'], 403);
         }
 
-        $mediaUrl  = null;
+        $mediaUrl = null;
         $mediaType = null;
 
         if ($request->hasFile('media')) {
-            $file      = $request->file('media');
-            $mediaUrl  = app(StorageService::class)->upload($file, 'chat-media');
+            $file = $request->file('media');
+            $mediaUrl = app(StorageService::class)->upload($file, 'chat-media');
             $mediaType = str_starts_with($file->getMimeType(), 'video/') ? 'video' : 'image';
         }
 
@@ -101,15 +101,15 @@ class ChatController extends Controller
 
         return response()->json([
             'message' => [
-                'id'              => $message->id,
-                'content'         => $message->content,
-                'created_at'      => $message->created_at,
+                'id' => $message->id,
+                'content' => $message->content,
+                'created_at' => $message->created_at,
                 'telegram_author' => null,
-                'media_url'       => $message->media_url,
-                'media_type'      => $message->media_type,
-                'user'            => [
-                    'id'       => $message->user->id,
-                    'name'     => $message->user->name,
+                'media_url' => $message->media_url,
+                'media_type' => $message->media_type,
+                'user' => [
+                    'id' => $message->user->id,
+                    'name' => $message->user->name,
                     'username' => $message->user->username,
                 ],
             ],
@@ -118,17 +118,17 @@ class ChatController extends Controller
 
     public function poll(Request $request, Community $community, GetChatMessages $query): JsonResponse
     {
-        $after    = (int) $request->query('after', 0);
+        $after = (int) $request->query('after', 0);
         $messages = $query->after($community, $after)->map(fn ($m) => [
-            'id'              => $m->id,
-            'content'         => $m->content,
-            'created_at'      => $m->created_at,
+            'id' => $m->id,
+            'content' => $m->content,
+            'created_at' => $m->created_at,
             'telegram_author' => $m->telegram_author,
-            'media_url'       => $m->media_url,
-            'media_type'      => $m->media_type,
-            'user'            => $m->user ? [
-                'id'       => $m->user->id,
-                'name'     => $m->user->name,
+            'media_url' => $m->media_url,
+            'media_type' => $m->media_type,
+            'user' => $m->user ? [
+                'id' => $m->user->id,
+                'name' => $m->user->name,
                 'username' => $m->user->username,
             ] : null,
         ]);

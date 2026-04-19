@@ -8,7 +8,6 @@ use App\Actions\Account\UpdateCommunityChat;
 use App\Actions\Account\UpdateCommunityNotificationPrefs;
 use App\Actions\Account\UpdateCrypto;
 use App\Actions\Account\UpdateEmail;
-use App\Models\User;
 use App\Actions\Account\UpdateMembershipVisibility;
 use App\Actions\Account\UpdateNotificationPrefs;
 use App\Actions\Account\UpdatePassword;
@@ -20,6 +19,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateEmailRequest;
 use App\Http\Requests\UpdatePasswordRequest;
 use App\Http\Requests\UpdateProfileRequest;
+use App\Models\User;
 use App\Queries\Account\GetAccountSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -85,9 +85,9 @@ class AccountSettingsController extends Controller
     public function updateNotifications(Request $request, UpdateNotificationPrefs $action): RedirectResponse
     {
         $data = $request->validate([
-            'follower'  => ['required', 'boolean'],
-            'likes'     => ['required', 'boolean'],
-            'kaching'   => ['required', 'boolean'],
+            'follower' => ['required', 'boolean'],
+            'likes' => ['required', 'boolean'],
+            'kaching' => ['required', 'boolean'],
             'affiliate' => ['required', 'boolean'],
         ]);
 
@@ -100,8 +100,8 @@ class AccountSettingsController extends Controller
     {
         $data = $request->validate([
             'new_posts' => ['required', 'boolean'],
-            'comments'  => ['required', 'boolean'],
-            'mentions'  => ['required', 'boolean'],
+            'comments' => ['required', 'boolean'],
+            'mentions' => ['required', 'boolean'],
         ]);
 
         $action->execute($request->user(), $communityId, $data);
@@ -112,7 +112,7 @@ class AccountSettingsController extends Controller
     public function updateChat(Request $request, UpdateChatPrefs $action): RedirectResponse
     {
         $data = $request->validate([
-            'notifications'       => ['required', 'boolean'],
+            'notifications' => ['required', 'boolean'],
             'email_notifications' => ['required', 'boolean'],
         ]);
 
@@ -142,9 +142,9 @@ class AccountSettingsController extends Controller
     public function updatePayout(Request $request, UpdatePayout $action): RedirectResponse
     {
         $data = $request->validate([
-            'payout_method'  => ['required', 'string', 'in:gcash,maya,bank,paypal'],
+            'payout_method' => ['required', 'string', 'in:gcash,maya,bank,paypal'],
             'payout_details' => ['required', 'string', 'max:255'],
-            'bank_name'      => ['nullable', 'string', 'max:100'],
+            'bank_name' => ['nullable', 'string', 'max:100'],
         ]);
 
         $action->execute($request->user(), $data);
@@ -175,26 +175,26 @@ class AccountSettingsController extends Controller
 
         $request->validate([
             'id_document' => ['required', 'image', 'max:10240'],
-            'selfie'      => ['required', 'image', 'max:10240'],
+            'selfie' => ['required', 'image', 'max:10240'],
         ], [
             'id_document.required' => 'Please upload your government-issued ID.',
-            'id_document.image'    => 'The ID document must be an image file (JPG, PNG, GIF, BMP, SVG, or WebP).',
-            'id_document.max'      => 'The ID document must be smaller than 10 MB.',
-            'selfie.required'      => 'Please upload a selfie holding your ID.',
-            'selfie.image'         => 'The selfie must be an image file (JPG, PNG, GIF, BMP, SVG, or WebP).',
-            'selfie.max'           => 'The selfie must be smaller than 10 MB.',
+            'id_document.image' => 'The ID document must be an image file (JPG, PNG, GIF, BMP, SVG, or WebP).',
+            'id_document.max' => 'The ID document must be smaller than 10 MB.',
+            'selfie.required' => 'Please upload a selfie holding your ID.',
+            'selfie.image' => 'The selfie must be an image file (JPG, PNG, GIF, BMP, SVG, or WebP).',
+            'selfie.max' => 'The selfie must be smaller than 10 MB.',
             'id_document.uploaded' => 'The ID document failed to upload. The file may be too large — please use an image under 10 MB.',
-            'selfie.uploaded'      => 'The selfie failed to upload. The file may be too large — please use an image under 10 MB.',
+            'selfie.uploaded' => 'The selfie failed to upload. The file may be too large — please use an image under 10 MB.',
         ]);
 
-        $idUrl     = $storage->upload($request->file('id_document'), 'kyc-documents');
+        $idUrl = $storage->upload($request->file('id_document'), 'kyc-documents');
         $selfieUrl = $storage->upload($request->file('selfie'), 'kyc-documents');
 
         $user->update([
-            'kyc_status'          => User::KYC_SUBMITTED,
-            'kyc_id_document'     => $idUrl,
-            'kyc_selfie'          => $selfieUrl,
-            'kyc_submitted_at'    => now(),
+            'kyc_status' => User::KYC_SUBMITTED,
+            'kyc_id_document' => $idUrl,
+            'kyc_selfie' => $selfieUrl,
+            'kyc_submitted_at' => now(),
             'kyc_rejected_reason' => null,
         ]);
 
@@ -217,8 +217,8 @@ class AccountSettingsController extends Controller
         }
 
         $user->update([
-            'kyc_status'          => User::KYC_SUBMITTED,
-            'kyc_submitted_at'    => now(),
+            'kyc_status' => User::KYC_SUBMITTED,
+            'kyc_submitted_at' => now(),
             'kyc_rejected_reason' => null,
         ]);
 

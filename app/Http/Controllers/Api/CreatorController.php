@@ -20,6 +20,7 @@ class CreatorController extends Controller
             return response()->json($data);
         } catch (\Throwable $e) {
             Log::error('Api\CreatorController@dashboard failed', ['error' => $e->getMessage(), 'user_id' => $user->id]);
+
             return response()->json(['message' => 'Failed to load dashboard data.'], 500);
         }
     }

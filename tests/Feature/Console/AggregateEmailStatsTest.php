@@ -5,7 +5,6 @@ namespace Tests\Feature\Console;
 use App\Models\Community;
 use App\Models\CommunityMember;
 use App\Models\EmailDailyStat;
-use App\Models\EmailSend;
 use App\Models\EmailUnsubscribe;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -21,15 +20,15 @@ class AggregateEmailStatsTest extends TestCase
         $user = User::factory()->create();
         $member = CommunityMember::factory()->create([
             'community_id' => $communityId,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         DB::table('email_sends')->insert(array_merge([
-            'community_id'        => $communityId,
+            'community_id' => $communityId,
             'community_member_id' => $member->id,
-            'status'              => 'delivered',
-            'created_at'          => $createdAt,
-            'updated_at'          => $createdAt,
+            'status' => 'delivered',
+            'created_at' => $createdAt,
+            'updated_at' => $createdAt,
         ], $overrides));
     }
 
@@ -39,7 +38,7 @@ class AggregateEmailStatsTest extends TestCase
         $yesterday = now()->subDay()->toDateString();
 
         $this->insertEmailSend($community->id, $yesterday, [
-            'status'    => 'delivered',
+            'status' => 'delivered',
             'opened_at' => $yesterday,
         ]);
         $this->insertEmailSend($community->id, $yesterday, [
@@ -55,10 +54,10 @@ class AggregateEmailStatsTest extends TestCase
         $this->assertEquals($yesterday, $stat->date->toDateString());
         $this->assertDatabaseHas('email_daily_stats', [
             'community_id' => $community->id,
-            'sent'         => 2,
-            'delivered'    => 1,
-            'opened'       => 1,
-            'bounced'      => 1,
+            'sent' => 2,
+            'delivered' => 1,
+            'opened' => 1,
+            'bounced' => 1,
         ]);
     }
 
@@ -68,8 +67,8 @@ class AggregateEmailStatsTest extends TestCase
         $date = '2025-06-15';
 
         $this->insertEmailSend($community->id, $date, [
-            'status'     => 'delivered',
-            'opened_at'  => $date,
+            'status' => 'delivered',
+            'opened_at' => $date,
             'clicked_at' => $date,
         ]);
 
@@ -95,8 +94,8 @@ class AggregateEmailStatsTest extends TestCase
         $this->insertEmailSend($community->id, $yesterday);
 
         EmailUnsubscribe::create([
-            'community_id'    => $community->id,
-            'user_id'         => $user->id,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
             'unsubscribed_at' => $yesterday,
         ]);
 

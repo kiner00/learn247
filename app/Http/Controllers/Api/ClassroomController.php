@@ -32,34 +32,34 @@ class ClassroomController extends Controller
     {
         $membership->assertMembership($request->user(), $community);
 
-        $detail       = $query->execute($course, $request->user()->id, true);
+        $detail = $query->execute($course, $request->user()->id, true);
         $completedIds = $detail['completed_ids'];
         $quizAttempts = $detail['quiz_attempts']->map(fn ($a) => [
-            'score'  => $a->score,
+            'score' => $a->score,
             'passed' => $a->passed,
         ]);
 
         $modules = $course->modules->map(fn ($module) => [
-            'id'       => $module->id,
-            'title'    => $module->title,
+            'id' => $module->id,
+            'title' => $module->title,
             'position' => $module->position,
-            'lessons'  => $module->lessons->map(fn ($lesson) => [
-                'id'        => $lesson->id,
-                'title'     => $lesson->title,
-                'position'  => $lesson->position,
+            'lessons' => $module->lessons->map(fn ($lesson) => [
+                'id' => $lesson->id,
+                'title' => $lesson->title,
+                'position' => $lesson->position,
                 'video_url' => $lesson->video_url,
-                'content'   => $lesson->content,
+                'content' => $lesson->content,
                 'completed' => in_array($lesson->id, $completedIds),
-                'quiz'      => $lesson->quiz ? [
-                    'id'           => $lesson->quiz->id,
-                    'title'        => $lesson->quiz->title,
-                    'pass_score'   => $lesson->quiz->pass_score,
-                    'questions'    => $lesson->quiz->questions->map(fn ($q) => [
-                        'id'       => $q->id,
+                'quiz' => $lesson->quiz ? [
+                    'id' => $lesson->quiz->id,
+                    'title' => $lesson->quiz->title,
+                    'pass_score' => $lesson->quiz->pass_score,
+                    'questions' => $lesson->quiz->questions->map(fn ($q) => [
+                        'id' => $q->id,
                         'question' => $q->question,
-                        'type'     => $q->type,
-                        'options'  => $q->options->map(fn ($o) => [
-                            'id'    => $o->id,
+                        'type' => $q->type,
+                        'options' => $q->options->map(fn ($o) => [
+                            'id' => $o->id,
                             'label' => $o->label,
                         ]),
                     ]),
@@ -69,13 +69,13 @@ class ClassroomController extends Controller
         ])->values();
 
         return response()->json([
-            'course'      => [
-                'id'          => $course->id,
-                'title'       => $course->title,
+            'course' => [
+                'id' => $course->id,
+                'title' => $course->title,
                 'description' => $course->description,
             ],
-            'modules'     => $modules,
-            'progress'    => $detail['progress'],
+            'modules' => $modules,
+            'progress' => $detail['progress'],
             'certificate' => null,
         ]);
     }
@@ -90,16 +90,16 @@ class ClassroomController extends Controller
     public function submitQuiz(Request $request, Community $community, Course $course, CourseLesson $lesson, Quiz $quiz, SubmitQuiz $action): JsonResponse
     {
         $request->validate([
-            'answers'   => ['required', 'array'],
+            'answers' => ['required', 'array'],
             'answers.*' => ['required', 'integer'],
         ]);
 
         $result = $action->execute($request->user(), $quiz, $request->answers, $community->id);
 
         return response()->json([
-            'score'   => $result['score'],
-            'passed'  => $result['passed'],
-            'total'   => $result['total'],
+            'score' => $result['score'],
+            'passed' => $result['passed'],
+            'total' => $result['total'],
             'correct' => $result['correct'],
         ]);
     }
@@ -109,11 +109,11 @@ class ClassroomController extends Controller
         abort_unless($request->user()->id === $community->owner_id, 403);
 
         $data = $request->validate([
-            'title'                     => ['required', 'string', 'max:255'],
-            'description'               => ['nullable', 'string', 'max:2000'],
-            'cover_image'               => ['nullable', 'image', 'max:10240'],
-            'access_type'               => ['nullable', 'in:free,inclusive,paid_once,paid_monthly'],
-            'price'                     => ['nullable', 'numeric', 'min:0'],
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:2000'],
+            'cover_image' => ['nullable', 'image', 'max:10240'],
+            'access_type' => ['nullable', 'in:free,inclusive,paid_once,paid_monthly'],
+            'price' => ['nullable', 'numeric', 'min:0'],
             'affiliate_commission_rate' => ['nullable', 'integer', 'min:0', 'max:100'],
         ]);
 
@@ -127,11 +127,11 @@ class ClassroomController extends Controller
         abort_unless($request->user()->id === $community->owner_id, 403);
 
         $data = $request->validate([
-            'title'                     => ['required', 'string', 'max:255'],
-            'description'               => ['nullable', 'string', 'max:2000'],
-            'cover_image'               => ['nullable', 'image', 'max:10240'],
-            'access_type'               => ['nullable', 'in:free,inclusive,paid_once,paid_monthly'],
-            'price'                     => ['nullable', 'numeric', 'min:0'],
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:2000'],
+            'cover_image' => ['nullable', 'image', 'max:10240'],
+            'access_type' => ['nullable', 'in:free,inclusive,paid_once,paid_monthly'],
+            'price' => ['nullable', 'numeric', 'min:0'],
             'affiliate_commission_rate' => ['nullable', 'integer', 'min:0', 'max:100'],
         ]);
 
@@ -154,7 +154,7 @@ class ClassroomController extends Controller
         abort_unless($request->user()->id === $community->owner_id, 403);
 
         $data = $request->validate([
-            'title'   => ['required', 'string', 'max:255'],
+            'title' => ['required', 'string', 'max:255'],
             'is_free' => ['sometimes', 'boolean'],
         ]);
         $module = $action->store($course, $data);
@@ -167,7 +167,7 @@ class ClassroomController extends Controller
         abort_unless($request->user()->id === $community->owner_id, 403);
 
         $data = $request->validate([
-            'title'   => ['required', 'string', 'max:255'],
+            'title' => ['required', 'string', 'max:255'],
             'is_free' => ['sometimes', 'boolean'],
         ]);
         $action->update($module, $data);
@@ -180,8 +180,8 @@ class ClassroomController extends Controller
         abort_unless($request->user()->id === $community->owner_id, 403);
 
         $data = $request->validate([
-            'title'     => ['required', 'string', 'max:255'],
-            'content'   => ['nullable', 'string'],
+            'title' => ['required', 'string', 'max:255'],
+            'content' => ['nullable', 'string'],
             'video_url' => ['nullable', 'url', 'max:500'],
         ]);
 
@@ -195,8 +195,8 @@ class ClassroomController extends Controller
         abort_unless($request->user()->id === $community->owner_id, 403);
 
         $data = $request->validate([
-            'title'     => ['sometimes', 'string', 'max:255'],
-            'content'   => ['nullable', 'string'],
+            'title' => ['sometimes', 'string', 'max:255'],
+            'content' => ['nullable', 'string'],
             'video_url' => ['nullable', 'url', 'max:500'],
         ]);
 
@@ -223,7 +223,7 @@ class ClassroomController extends Controller
         abort_unless($request->user()->id === $community->owner_id, 403);
 
         $request->validate([
-            'lesson_ids'   => ['required', 'array'],
+            'lesson_ids' => ['required', 'array'],
             'lesson_ids.*' => ['required', 'integer', 'exists:course_lessons,id'],
         ]);
 
@@ -231,5 +231,4 @@ class ClassroomController extends Controller
 
         return response()->json(['message' => 'Lessons reordered.']);
     }
-
 }

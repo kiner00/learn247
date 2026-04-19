@@ -166,7 +166,7 @@ class ModelRelationshipsTest extends TestCase
 
     public function test_community_route_key_name(): void
     {
-        $community = new Community();
+        $community = new Community;
         $this->assertSame('slug', $community->getRouteKeyName());
     }
 
@@ -174,19 +174,19 @@ class ModelRelationshipsTest extends TestCase
 
     public function test_payout_request_user_relationship(): void
     {
-        $model = new PayoutRequest();
+        $model = new PayoutRequest;
         $this->assertInstanceOf(BelongsTo::class, $model->user());
     }
 
     public function test_payout_request_community_relationship(): void
     {
-        $model = new PayoutRequest();
+        $model = new PayoutRequest;
         $this->assertInstanceOf(BelongsTo::class, $model->community());
     }
 
     public function test_payout_request_affiliate_relationship(): void
     {
-        $model = new PayoutRequest();
+        $model = new PayoutRequest;
         $this->assertInstanceOf(BelongsTo::class, $model->affiliate());
     }
 
@@ -203,19 +203,19 @@ class ModelRelationshipsTest extends TestCase
 
     public function test_payment_subscription_relationship(): void
     {
-        $model = new Payment();
+        $model = new Payment;
         $this->assertInstanceOf(BelongsTo::class, $model->subscription());
     }
 
     public function test_payment_community_relationship(): void
     {
-        $model = new Payment();
+        $model = new Payment;
         $this->assertInstanceOf(BelongsTo::class, $model->community());
     }
 
     public function test_payment_user_relationship(): void
     {
-        $model = new Payment();
+        $model = new Payment;
         $this->assertInstanceOf(BelongsTo::class, $model->user());
     }
 
@@ -223,13 +223,13 @@ class ModelRelationshipsTest extends TestCase
 
     public function test_owner_payout_community_relationship(): void
     {
-        $model = new OwnerPayout();
+        $model = new OwnerPayout;
         $this->assertInstanceOf(BelongsTo::class, $model->community());
     }
 
     public function test_owner_payout_user_relationship(): void
     {
-        $model = new OwnerPayout();
+        $model = new OwnerPayout;
         $this->assertInstanceOf(BelongsTo::class, $model->user());
     }
 
@@ -237,19 +237,19 @@ class ModelRelationshipsTest extends TestCase
 
     public function test_notification_user_relationship(): void
     {
-        $model = new Notification();
+        $model = new Notification;
         $this->assertInstanceOf(BelongsTo::class, $model->user());
     }
 
     public function test_notification_actor_relationship(): void
     {
-        $model = new Notification();
+        $model = new Notification;
         $this->assertInstanceOf(BelongsTo::class, $model->actor());
     }
 
     public function test_notification_community_relationship(): void
     {
-        $model = new Notification();
+        $model = new Notification;
         $this->assertInstanceOf(BelongsTo::class, $model->community());
     }
 
@@ -266,13 +266,13 @@ class ModelRelationshipsTest extends TestCase
 
     public function test_event_community_relationship(): void
     {
-        $model = new Event();
+        $model = new Event;
         $this->assertInstanceOf(BelongsTo::class, $model->community());
     }
 
     public function test_event_creator_relationship(): void
     {
-        $model = new Event();
+        $model = new Event;
         $this->assertInstanceOf(BelongsTo::class, $model->creator());
     }
 
@@ -280,13 +280,13 @@ class ModelRelationshipsTest extends TestCase
 
     public function test_direct_message_sender_relationship(): void
     {
-        $model = new DirectMessage();
+        $model = new DirectMessage;
         $this->assertInstanceOf(BelongsTo::class, $model->sender());
     }
 
     public function test_direct_message_receiver_relationship(): void
     {
-        $model = new DirectMessage();
+        $model = new DirectMessage;
         $this->assertInstanceOf(BelongsTo::class, $model->receiver());
     }
 
@@ -294,25 +294,25 @@ class ModelRelationshipsTest extends TestCase
 
     public function test_affiliate_conversion_affiliate_relationship(): void
     {
-        $model = new AffiliateConversion();
+        $model = new AffiliateConversion;
         $this->assertInstanceOf(BelongsTo::class, $model->affiliate());
     }
 
     public function test_affiliate_conversion_subscription_relationship(): void
     {
-        $model = new AffiliateConversion();
+        $model = new AffiliateConversion;
         $this->assertInstanceOf(BelongsTo::class, $model->subscription());
     }
 
     public function test_affiliate_conversion_payment_relationship(): void
     {
-        $model = new AffiliateConversion();
+        $model = new AffiliateConversion;
         $this->assertInstanceOf(BelongsTo::class, $model->payment());
     }
 
     public function test_affiliate_conversion_referred_user_relationship(): void
     {
-        $model = new AffiliateConversion();
+        $model = new AffiliateConversion;
         $this->assertInstanceOf(BelongsTo::class, $model->referredUser());
     }
 
@@ -320,13 +320,13 @@ class ModelRelationshipsTest extends TestCase
 
     public function test_community_member_community_relationship(): void
     {
-        $model = new CommunityMember();
+        $model = new CommunityMember;
         $this->assertInstanceOf(BelongsTo::class, $model->community());
     }
 
     public function test_community_member_user_relationship(): void
     {
-        $model = new CommunityMember();
+        $model = new CommunityMember;
         $this->assertInstanceOf(BelongsTo::class, $model->user());
     }
 
@@ -364,13 +364,13 @@ class ModelRelationshipsTest extends TestCase
 
     public function test_course_community_relationship(): void
     {
-        $model = new Course();
+        $model = new Course;
         $this->assertInstanceOf(BelongsTo::class, $model->community());
     }
 
     public function test_course_modules_relationship(): void
     {
-        $model = new Course();
+        $model = new Course;
         $this->assertInstanceOf(HasMany::class, $model->modules());
     }
 
@@ -385,25 +385,25 @@ class ModelRelationshipsTest extends TestCase
 
     public function test_course_lesson_module_relationship(): void
     {
-        $model = new CourseLesson();
+        $model = new CourseLesson;
         $this->assertInstanceOf(BelongsTo::class, $model->module());
     }
 
     public function test_course_lesson_completions_relationship(): void
     {
-        $model = new CourseLesson();
+        $model = new CourseLesson;
         $this->assertInstanceOf(HasMany::class, $model->completions());
     }
 
     public function test_course_lesson_quiz_relationship(): void
     {
-        $model = new CourseLesson();
+        $model = new CourseLesson;
         $this->assertInstanceOf(HasOne::class, $model->quiz());
     }
 
     public function test_course_lesson_comments_relationship(): void
     {
-        $model = new CourseLesson();
+        $model = new CourseLesson;
         $this->assertInstanceOf(HasMany::class, $model->comments());
     }
 
@@ -411,7 +411,7 @@ class ModelRelationshipsTest extends TestCase
 
     public function test_crz_token_transaction_user_relationship(): void
     {
-        $model = new CrzTokenTransaction();
+        $model = new CrzTokenTransaction;
         $this->assertInstanceOf(BelongsTo::class, $model->user());
     }
 
@@ -419,13 +419,13 @@ class ModelRelationshipsTest extends TestCase
 
     public function test_lesson_completion_user_relationship(): void
     {
-        $model = new LessonCompletion();
+        $model = new LessonCompletion;
         $this->assertInstanceOf(BelongsTo::class, $model->user());
     }
 
     public function test_lesson_completion_lesson_relationship(): void
     {
-        $model = new LessonCompletion();
+        $model = new LessonCompletion;
         $this->assertInstanceOf(BelongsTo::class, $model->lesson());
     }
 
@@ -433,13 +433,13 @@ class ModelRelationshipsTest extends TestCase
 
     public function test_message_community_relationship(): void
     {
-        $model = new Message();
+        $model = new Message;
         $this->assertInstanceOf(BelongsTo::class, $model->community());
     }
 
     public function test_message_user_relationship(): void
     {
-        $model = new Message();
+        $model = new Message;
         $this->assertInstanceOf(BelongsTo::class, $model->user());
     }
 
@@ -447,19 +447,19 @@ class ModelRelationshipsTest extends TestCase
 
     public function test_quiz_lesson_relationship(): void
     {
-        $model = new Quiz();
+        $model = new Quiz;
         $this->assertInstanceOf(BelongsTo::class, $model->lesson());
     }
 
     public function test_quiz_questions_relationship(): void
     {
-        $model = new Quiz();
+        $model = new Quiz;
         $this->assertInstanceOf(HasMany::class, $model->questions());
     }
 
     public function test_quiz_attempts_relationship(): void
     {
-        $model = new Quiz();
+        $model = new Quiz;
         $this->assertInstanceOf(HasMany::class, $model->attempts());
     }
 
@@ -467,13 +467,13 @@ class ModelRelationshipsTest extends TestCase
 
     public function test_quiz_attempt_quiz_relationship(): void
     {
-        $model = new QuizAttempt();
+        $model = new QuizAttempt;
         $this->assertInstanceOf(BelongsTo::class, $model->quiz());
     }
 
     public function test_quiz_attempt_user_relationship(): void
     {
-        $model = new QuizAttempt();
+        $model = new QuizAttempt;
         $this->assertInstanceOf(BelongsTo::class, $model->user());
     }
 
@@ -481,13 +481,13 @@ class ModelRelationshipsTest extends TestCase
 
     public function test_quiz_question_quiz_relationship(): void
     {
-        $model = new QuizQuestion();
+        $model = new QuizQuestion;
         $this->assertInstanceOf(BelongsTo::class, $model->quiz());
     }
 
     public function test_quiz_question_options_relationship(): void
     {
-        $model = new QuizQuestion();
+        $model = new QuizQuestion;
         $this->assertInstanceOf(HasMany::class, $model->options());
     }
 
@@ -525,19 +525,19 @@ class ModelRelationshipsTest extends TestCase
 
     public function test_badge_community_relationship(): void
     {
-        $model = new Badge();
+        $model = new Badge;
         $this->assertInstanceOf(BelongsTo::class, $model->community());
     }
 
     public function test_badge_user_badges_relationship(): void
     {
-        $model = new Badge();
+        $model = new Badge;
         $this->assertInstanceOf(HasMany::class, $model->userBadges());
     }
 
     public function test_badge_fillable(): void
     {
-        $model = new Badge();
+        $model = new Badge;
         $expected = [
             'key', 'type', 'community_id',
             'name', 'description', 'how_to_earn', 'icon',
@@ -550,20 +550,20 @@ class ModelRelationshipsTest extends TestCase
 
     public function test_community_invite_community_relationship(): void
     {
-        $model = new CommunityInvite();
+        $model = new CommunityInvite;
         $this->assertInstanceOf(BelongsTo::class, $model->community());
     }
 
     public function test_community_invite_fillable(): void
     {
-        $model = new CommunityInvite();
+        $model = new CommunityInvite;
         $expected = ['community_id', 'email', 'token', 'accepted_at', 'expires_at', 'free_access_months'];
         $this->assertSame($expected, $model->getFillable());
     }
 
     public function test_community_invite_casts_dates(): void
     {
-        $model = new CommunityInvite();
+        $model = new CommunityInvite;
         $casts = $model->getCasts();
         $this->assertSame('datetime', $casts['accepted_at']);
         $this->assertSame('datetime', $casts['expires_at']);
@@ -591,13 +591,13 @@ class ModelRelationshipsTest extends TestCase
 
     public function test_community_level_perk_community_relationship(): void
     {
-        $model = new CommunityLevelPerk();
+        $model = new CommunityLevelPerk;
         $this->assertInstanceOf(BelongsTo::class, $model->community());
     }
 
     public function test_community_level_perk_fillable(): void
     {
-        $model = new CommunityLevelPerk();
+        $model = new CommunityLevelPerk;
         $expected = ['community_id', 'level', 'description'];
         $this->assertSame($expected, $model->getFillable());
     }
@@ -606,20 +606,20 @@ class ModelRelationshipsTest extends TestCase
 
     public function test_quiz_question_option_question_relationship(): void
     {
-        $model = new QuizQuestionOption();
+        $model = new QuizQuestionOption;
         $this->assertInstanceOf(BelongsTo::class, $model->question());
     }
 
     public function test_quiz_question_option_fillable(): void
     {
-        $model = new QuizQuestionOption();
+        $model = new QuizQuestionOption;
         $expected = ['question_id', 'label', 'is_correct'];
         $this->assertSame($expected, $model->getFillable());
     }
 
     public function test_quiz_question_option_casts_is_correct_to_boolean(): void
     {
-        $model = new QuizQuestionOption();
+        $model = new QuizQuestionOption;
         $casts = $model->getCasts();
         $this->assertSame('boolean', $casts['is_correct']);
     }
@@ -628,32 +628,32 @@ class ModelRelationshipsTest extends TestCase
 
     public function test_user_badge_user_relationship(): void
     {
-        $model = new UserBadge();
+        $model = new UserBadge;
         $this->assertInstanceOf(BelongsTo::class, $model->user());
     }
 
     public function test_user_badge_badge_relationship(): void
     {
-        $model = new UserBadge();
+        $model = new UserBadge;
         $this->assertInstanceOf(BelongsTo::class, $model->badge());
     }
 
     public function test_user_badge_community_relationship(): void
     {
-        $model = new UserBadge();
+        $model = new UserBadge;
         $this->assertInstanceOf(BelongsTo::class, $model->community());
     }
 
     public function test_user_badge_fillable(): void
     {
-        $model = new UserBadge();
+        $model = new UserBadge;
         $expected = ['user_id', 'badge_id', 'community_id', 'earned_at'];
         $this->assertSame($expected, $model->getFillable());
     }
 
     public function test_user_badge_casts_earned_at_to_datetime(): void
     {
-        $model = new UserBadge();
+        $model = new UserBadge;
         $casts = $model->getCasts();
         $this->assertSame('datetime', $casts['earned_at']);
     }

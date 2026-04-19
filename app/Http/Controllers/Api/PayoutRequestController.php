@@ -61,19 +61,23 @@ class PayoutRequestController extends Controller
                 ->whereIn('status', [PayoutRequest::STATUS_PENDING, PayoutRequest::STATUS_APPROVED])
                 ->exists();
 
-            if ($hasPending) continue;
+            if ($hasPending) {
+                continue;
+            }
 
             $eligibleNow = $eligibility->forAffiliate($affiliate);
-            if ($eligibleNow <= 0) continue;
+            if ($eligibleNow <= 0) {
+                continue;
+            }
 
             PayoutRequest::create([
-                'user_id'         => $affiliate->user_id,
-                'type'            => PayoutRequest::TYPE_AFFILIATE,
-                'community_id'    => $affiliate->community_id,
-                'affiliate_id'    => $affiliate->id,
-                'amount'          => $eligibleNow,
+                'user_id' => $affiliate->user_id,
+                'type' => PayoutRequest::TYPE_AFFILIATE,
+                'community_id' => $affiliate->community_id,
+                'affiliate_id' => $affiliate->id,
+                'amount' => $eligibleNow,
                 'eligible_amount' => $eligibleNow,
-                'status'          => PayoutRequest::STATUS_PENDING,
+                'status' => PayoutRequest::STATUS_PENDING,
             ]);
 
             $submitted++;

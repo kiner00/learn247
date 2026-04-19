@@ -14,7 +14,7 @@ class BadgeController extends Controller
         $badges = $query->execute($request->user()?->id);
 
         return response()->json([
-            'member_badges'  => $badges['member'],
+            'member_badges' => $badges['member'],
             'creator_badges' => $badges['creator'],
         ]);
     }

@@ -13,14 +13,14 @@ class CommunityFactory extends Factory
         $name = fake()->unique()->words(3, true);
 
         return [
-            'name'        => ucwords($name),
-            'slug'        => Str::slug($name),
-            'owner_id'    => User::factory()->kycVerified(),
+            'name' => ucwords($name),
+            'slug' => Str::slug($name),
+            'owner_id' => User::factory()->kycVerified(),
             'description' => fake()->paragraph(),
-            'avatar'      => null,
-            'is_private'  => false,
-            'price'       => 0,
-            'currency'    => 'PHP',
+            'avatar' => null,
+            'is_private' => false,
+            'price' => 0,
+            'currency' => 'PHP',
         ];
     }
 

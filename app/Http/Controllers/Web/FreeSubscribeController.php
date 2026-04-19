@@ -26,11 +26,11 @@ class FreeSubscribeController extends Controller
         }
 
         $member = CommunityMember::create([
-            'community_id'    => $community->id,
-            'user_id'         => $user->id,
-            'role'            => CommunityMember::ROLE_MEMBER,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'role' => CommunityMember::ROLE_MEMBER,
             'membership_type' => CommunityMember::MEMBERSHIP_FREE,
-            'joined_at'       => now(),
+            'joined_at' => now(),
         ]);
 
         CacheKeys::flushUserMembership($user->id);

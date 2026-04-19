@@ -16,6 +16,7 @@ class SendEmailBroadcast implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
+
     public array $backoff = [60, 300, 900];
 
     public function __construct(
@@ -63,13 +64,13 @@ class SendEmailBroadcast implements ShouldQueue
         $memberIds = $query->pluck('id')->toArray();
 
         $broadcast->update([
-            'status'           => EmailBroadcast::STATUS_SENDING,
+            'status' => EmailBroadcast::STATUS_SENDING,
             'total_recipients' => count($memberIds),
         ]);
 
         if (empty($memberIds)) {
             $broadcast->update([
-                'status'  => EmailBroadcast::STATUS_SENT,
+                'status' => EmailBroadcast::STATUS_SENT,
                 'sent_at' => now(),
             ]);
             $broadcast->campaign->update(['status' => 'sent']);

@@ -29,12 +29,13 @@ abstract class AbstractRecurringCycleHandler
      */
     final public function handleCycleSucceeded(array $payload): void
     {
-        $planId  = $payload['plan_id'] ?? $payload['id'] ?? null;
+        $planId = $payload['plan_id'] ?? $payload['id'] ?? null;
         $cycleId = $payload['cycle_id'] ?? $payload['id'] ?? null;
-        $entity  = $this->findEntityByPlanId($planId);
+        $entity = $this->findEntityByPlanId($planId);
 
         if (! $entity) {
             Log::warning('Recurring cycle succeeded: no matching entity', compact('planId'));
+
             return;
         }
 
@@ -42,6 +43,7 @@ abstract class AbstractRecurringCycleHandler
         $eventId = "{$cycleId}_SUCCEEDED";
         if (Payment::where('xendit_event_id', $eventId)->exists()) {
             Log::info('Recurring cycle succeeded: already processed', compact('eventId'));
+
             return;
         }
 
@@ -61,10 +63,10 @@ abstract class AbstractRecurringCycleHandler
             $this->afterCommit($entity, $payload, $sideEffects);
         } catch (\Throwable $e) {
             Log::error('Recurring cycle succeeded handler failed', [
-                'handler'  => static::class,
-                'plan_id'  => $planId,
+                'handler' => static::class,
+                'plan_id' => $planId,
                 'cycle_id' => $cycleId,
-                'error'    => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
             throw $e;
         }
@@ -92,8 +94,8 @@ abstract class AbstractRecurringCycleHandler
         } else {
             $entity->update([
                 'recurring_status' => 'ACTIVE',
-                'status'           => $this->activeStatus(),
-                'expires_at'       => now()->addMonth(),
+                'status' => $this->activeStatus(),
+                'expires_at' => now()->addMonth(),
             ]);
         }
 
@@ -147,24 +149,24 @@ abstract class AbstractRecurringCycleHandler
     /** Create a Payment record for the cycle. */
     protected function createPaymentRecord(Model $entity, array $payload, string $eventId): Payment
     {
-        $gross         = (float) ($payload['amount'] ?? 0);
-        $channel       = $payload['payment_method']['type'] ?? 'CREDIT_CARD';
+        $gross = (float) ($payload['amount'] ?? 0);
+        $channel = $payload['payment_method']['type'] ?? 'CREDIT_CARD';
         $processingFee = XenditService::collectionFee($channel, $gross);
-        $platformFee   = $this->calculatePlatformFee($entity, $gross);
+        $platformFee = $this->calculatePlatformFee($entity, $gross);
 
         return Payment::create([
-            'subscription_id'    => $this->subscriptionId($entity),
-            'community_id'       => $this->communityId($entity),
-            'user_id'            => $entity->user_id,
-            'amount'             => $gross,
-            'processing_fee'     => $processingFee,
-            'platform_fee'       => $platformFee,
-            'currency'           => $payload['currency'] ?? 'PHP',
-            'status'             => Payment::STATUS_PAID,
+            'subscription_id' => $this->subscriptionId($entity),
+            'community_id' => $this->communityId($entity),
+            'user_id' => $entity->user_id,
+            'amount' => $gross,
+            'processing_fee' => $processingFee,
+            'platform_fee' => $platformFee,
+            'currency' => $payload['currency'] ?? 'PHP',
+            'status' => Payment::STATUS_PAID,
             'provider_reference' => $payload['id'] ?? null,
-            'xendit_event_id'    => $eventId,
-            'metadata'           => $payload,
-            'paid_at'            => now(),
+            'xendit_event_id' => $eventId,
+            'metadata' => $payload,
+            'paid_at' => now(),
         ]);
     }
 

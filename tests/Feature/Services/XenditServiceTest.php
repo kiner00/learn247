@@ -21,12 +21,12 @@ class XenditServiceTest extends TestCase
         ]);
 
         config(['services.xendit.secret_key' => 'test_key', 'services.xendit.callback_token' => 'cb_token']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $result = $service->createInvoice([
             'external_id' => 'order-001',
-            'amount'       => 500,
-            'currency'     => 'PHP',
+            'amount' => 500,
+            'currency' => 'PHP',
         ]);
 
         $this->assertEquals('inv_123', $result['id']);
@@ -39,7 +39,7 @@ class XenditServiceTest extends TestCase
         ]);
 
         config(['services.xendit.secret_key' => 'test_key', 'services.xendit.callback_token' => 'cb_token']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $this->expectException(\RuntimeException::class);
         $service->createInvoice(['external_id' => 'fail']);
@@ -55,7 +55,7 @@ class XenditServiceTest extends TestCase
         ]);
 
         config(['services.xendit.secret_key' => 'test_key', 'services.xendit.callback_token' => 'cb_token']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $result = $service->getInvoice('inv_123');
 
@@ -72,11 +72,11 @@ class XenditServiceTest extends TestCase
         ]);
 
         config(['services.xendit.secret_key' => 'test_key', 'services.xendit.callback_token' => 'cb_token']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $result = $service->createPayout([
             'reference_id' => 'payout-001',
-            'amount'       => 1000,
+            'amount' => 1000,
         ]);
 
         $this->assertEquals('po_123', $result['id']);
@@ -89,7 +89,7 @@ class XenditServiceTest extends TestCase
         ]);
 
         config(['services.xendit.secret_key' => 'test_key', 'services.xendit.callback_token' => 'cb_token']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $result = $service->getBalance();
 
@@ -103,7 +103,7 @@ class XenditServiceTest extends TestCase
         ]);
 
         config(['services.xendit.secret_key' => 'test_key', 'services.xendit.callback_token' => 'cb_token']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $result = $service->getBalance();
 
@@ -113,7 +113,7 @@ class XenditServiceTest extends TestCase
     public function test_verify_callback_token_valid(): void
     {
         config(['services.xendit.secret_key' => 'test_key', 'services.xendit.callback_token' => 'my-secret-token']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $this->assertTrue($service->verifyCallbackToken('my-secret-token'));
     }
@@ -121,7 +121,7 @@ class XenditServiceTest extends TestCase
     public function test_verify_callback_token_invalid(): void
     {
         config(['services.xendit.secret_key' => 'test_key', 'services.xendit.callback_token' => 'my-secret-token']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $this->assertFalse($service->verifyCallbackToken('wrong-token'));
     }
@@ -129,7 +129,7 @@ class XenditServiceTest extends TestCase
     public function test_verify_callback_token_empty(): void
     {
         config(['services.xendit.secret_key' => 'test_key', 'services.xendit.callback_token' => 'my-secret-token']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $this->assertFalse($service->verifyCallbackToken(null));
         $this->assertFalse($service->verifyCallbackToken(''));
@@ -142,7 +142,7 @@ class XenditServiceTest extends TestCase
         ]);
 
         config(['services.xendit.secret_key' => 'test_key', 'services.xendit.callback_token' => 'cb_token']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Failed to fetch Xendit invoice');
@@ -159,13 +159,13 @@ class XenditServiceTest extends TestCase
         ]);
 
         config(['services.xendit.secret_key' => 'test_key', 'services.xendit.callback_token' => 'cb_token']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Xendit payout failed');
         $service->createPayout([
             'reference_id' => 'payout-fail',
-            'amount'       => 999999,
+            'amount' => 999999,
         ]);
     }
 
@@ -179,7 +179,7 @@ class XenditServiceTest extends TestCase
         ]);
 
         config(['services.xendit.secret_key' => 'test_key', 'services.xendit.callback_token' => 'cb_token']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $result = $service->createPayout(['amount' => 500]);
 
@@ -193,7 +193,7 @@ class XenditServiceTest extends TestCase
     public function test_verify_callback_token_returns_false_when_config_empty(): void
     {
         config(['services.xendit.secret_key' => 'test_key', 'services.xendit.callback_token' => '']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $this->assertFalse($service->verifyCallbackToken('some-token'));
     }
@@ -205,7 +205,7 @@ class XenditServiceTest extends TestCase
         ]);
 
         config(['services.xendit.secret_key' => 'test_key', 'services.xendit.callback_token' => 'cb_token']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $result = $service->getBalance('HOLDING');
 
@@ -228,7 +228,7 @@ class XenditServiceTest extends TestCase
         ]);
 
         config(['services.xendit.secret_key' => 'test_key', 'services.xendit.callback_token' => 'cb_token']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $result = $service->getPayout('po_123');
 
@@ -243,7 +243,7 @@ class XenditServiceTest extends TestCase
         ]);
 
         config(['services.xendit.secret_key' => 'test_key', 'services.xendit.callback_token' => 'cb_token']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Failed to fetch Xendit payout');

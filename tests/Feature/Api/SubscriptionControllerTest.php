@@ -16,14 +16,14 @@ class SubscriptionControllerTest extends TestCase
 
     public function test_checkout_creates_subscription_and_returns_url(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid(499)->create(['billing_type' => 'one_time']);
 
         $this->mock(XenditService::class, function ($mock): void {
             $mock->shouldReceive('createInvoice')
                 ->once()
                 ->andReturn([
-                    'id'          => 'xendit_inv_123',
+                    'id' => 'xendit_inv_123',
                     'invoice_url' => 'https://checkout.xendit.co/example',
                 ]);
         });
@@ -37,14 +37,14 @@ class SubscriptionControllerTest extends TestCase
 
         $this->assertDatabaseHas('subscriptions', [
             'community_id' => $community->id,
-            'user_id'     => $user->id,
-            'status'      => Subscription::STATUS_PENDING,
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_PENDING,
         ]);
     }
 
     public function test_checkout_free_community_returns_422(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['price' => 0]);
 
         $response = $this->actingAs($user, 'sanctum')
@@ -56,12 +56,12 @@ class SubscriptionControllerTest extends TestCase
 
     public function test_checkout_with_existing_active_subscription_returns_422(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid(499)->create(['billing_type' => 'one_time']);
         Subscription::factory()->create([
             'community_id' => $community->id,
-            'user_id'     => $user->id,
-            'status'      => Subscription::STATUS_ACTIVE,
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_ACTIVE,
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
@@ -81,20 +81,20 @@ class SubscriptionControllerTest extends TestCase
 
     public function test_checkout_with_affiliate_code(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid(499)->create(['billing_type' => 'one_time']);
         $affiliate = Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => User::factory()->create()->id,
-            'code'         => 'REF123ABC',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => User::factory()->create()->id,
+            'code' => 'REF123ABC',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         $this->mock(XenditService::class, function ($mock): void {
             $mock->shouldReceive('createInvoice')
                 ->once()
                 ->andReturn([
-                    'id'          => 'xendit_inv_aff',
+                    'id' => 'xendit_inv_aff',
                     'invoice_url' => 'https://checkout.xendit.co/aff',
                 ]);
         });

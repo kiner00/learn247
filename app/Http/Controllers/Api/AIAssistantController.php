@@ -13,19 +13,19 @@ class AIAssistantController extends Controller
 {
     public function greet(Request $request, BuildAIContext $contextQuery): JsonResponse
     {
-        $user    = $request->user();
+        $user = $request->user();
         $context = $contextQuery->execute($user);
 
         if (empty($context['communities'])) {
             return response()->json(['message' => "Hi {$user->name}! Join a community to get started.", 'conversation_id' => null]);
         }
 
-        $agent    = new CommunityAssistant($context);
-        $prompt   = "The user just logged in. Introduce yourself as Curzzo, greet the user warmly by first name, then give ONE specific actionable recommendation based on their current progress (e.g. a pending lesson, a failed quiz to retake, or a badge to earn). Keep it to 2-3 sentences. No bullet points.";
+        $agent = new CommunityAssistant($context);
+        $prompt = 'The user just logged in. Introduce yourself as Curzzo, greet the user warmly by first name, then give ONE specific actionable recommendation based on their current progress (e.g. a pending lesson, a failed quiz to retake, or a badge to earn). Keep it to 2-3 sentences. No bullet points.';
         $response = $agent->forUser($user)->prompt($prompt);
 
         return response()->json([
-            'message'         => $response->text,
+            'message' => $response->text,
             'conversation_id' => $response->conversationId,
         ]);
     }
@@ -33,11 +33,11 @@ class AIAssistantController extends Controller
     public function chat(Request $request, BuildAIContext $contextQuery): JsonResponse
     {
         $request->validate([
-            'message'         => ['required', 'string', 'max:1000'],
+            'message' => ['required', 'string', 'max:1000'],
             'conversation_id' => ['nullable', 'string', 'uuid'],
         ]);
 
-        $user    = $request->user();
+        $user = $request->user();
         $context = $contextQuery->execute($user);
 
         if (empty($context['communities'])) {
@@ -47,17 +47,17 @@ class AIAssistantController extends Controller
         if ($this->isImageRequest($request->message)) {
             try {
                 $imageResponse = Image::of($request->message)->size('3:2')->generate();
-                $img           = $imageResponse->firstImage();
+                $img = $imageResponse->firstImage();
 
                 return response()->json([
-                    'type'    => 'image',
+                    'type' => 'image',
                     'message' => "data:{$img->mime};base64,{$img->image}",
                 ]);
             } catch (\Throwable $e) {
                 \Illuminate\Support\Facades\Log::error('AI image generation failed', ['error' => $e->getMessage()]);
 
                 return response()->json([
-                    'type'    => 'text',
+                    'type' => 'text',
                     'message' => "Sorry, I couldn't generate that image right now. Please try again later.",
                 ]);
             }
@@ -70,8 +70,8 @@ class AIAssistantController extends Controller
             : $agent->forUser($user)->prompt($request->message);
 
         return response()->json([
-            'type'            => 'text',
-            'message'         => $response->text,
+            'type' => 'text',
+            'message' => $response->text,
             'conversation_id' => $response->conversationId,
         ]);
     }

@@ -18,9 +18,9 @@ class SmsDispatcherTest extends TestCase
     private function makeDispatcher(): SmsDispatcher
     {
         return new SmsDispatcher(
-            new SemaphoreProvider(),
-            new PhilSmsProvider(),
-            new XtremeSmsProvider(),
+            new SemaphoreProvider,
+            new PhilSmsProvider,
+            new XtremeSmsProvider,
         );
     }
 
@@ -51,7 +51,7 @@ class SmsDispatcherTest extends TestCase
 
         $community = Community::factory()->create([
             'sms_provider' => SmsDispatcher::PROVIDER_SEMAPHORE,
-            'sms_api_key'  => 'sem-key',
+            'sms_api_key' => 'sem-key',
         ]);
 
         $result = $this->makeDispatcher()->blast($community, ['639170000001'], 'Test');
@@ -68,7 +68,7 @@ class SmsDispatcherTest extends TestCase
 
         $community = Community::factory()->create([
             'sms_provider' => SmsDispatcher::PROVIDER_PHILSMS,
-            'sms_api_key'  => 'phil-key',
+            'sms_api_key' => 'phil-key',
         ]);
 
         $result = $this->makeDispatcher()->blast($community, ['639170000001'], 'Test');
@@ -83,8 +83,8 @@ class SmsDispatcherTest extends TestCase
         ]);
 
         $community = Community::factory()->create([
-            'sms_provider'   => SmsDispatcher::PROVIDER_XTREME,
-            'sms_api_key'    => 'xt-key',
+            'sms_provider' => SmsDispatcher::PROVIDER_XTREME,
+            'sms_api_key' => 'xt-key',
             'sms_device_url' => 'https://xtreme.example.com',
         ]);
 

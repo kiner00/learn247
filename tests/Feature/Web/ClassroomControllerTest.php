@@ -12,7 +12,6 @@ use App\Models\CreatorSubscription;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Queries\Classroom\GetCourseList;
-use App\Services\Community\PlanLimitService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
@@ -27,7 +26,7 @@ class ClassroomControllerTest extends TestCase
 
     public function test_owner_can_view_classroom_index(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
@@ -39,8 +38,8 @@ class ClassroomControllerTest extends TestCase
 
     public function test_member_can_view_classroom_index_on_free_community(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
@@ -52,13 +51,13 @@ class ClassroomControllerTest extends TestCase
 
     public function test_member_with_active_subscription_can_view_classroom_index_on_paid_community(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->paid()->create(['owner_id' => $owner->id]);
 
         Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
+            'user_id' => $member->id,
         ]);
 
         $response = $this->actingAs($member)
@@ -69,8 +68,8 @@ class ClassroomControllerTest extends TestCase
 
     public function test_non_member_can_view_classroom_index_on_free_community(): void
     {
-        $owner     = User::factory()->create();
-        $user      = User::factory()->create();
+        $owner = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
 
         $response = $this->actingAs($user)
@@ -81,8 +80,8 @@ class ClassroomControllerTest extends TestCase
 
     public function test_non_subscriber_can_view_classroom_index_on_paid_community(): void
     {
-        $owner     = User::factory()->create();
-        $user      = User::factory()->create();
+        $owner = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid()->create(['owner_id' => $owner->id]);
 
         $response = $this->actingAs($user)
@@ -104,13 +103,13 @@ class ClassroomControllerTest extends TestCase
 
     public function test_owner_can_store_course(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $response = $this->actingAs($owner)
             ->post("/communities/{$community->slug}/classroom/courses", [
-                'title'       => 'New Course Title',
+                'title' => 'New Course Title',
                 'description' => 'Course description here',
                 'access_type' => 'inclusive',
             ]);
@@ -119,8 +118,8 @@ class ClassroomControllerTest extends TestCase
         $response->assertSessionHas('success', 'Course created!');
         $this->assertDatabaseHas('courses', [
             'community_id' => $community->id,
-            'title'        => 'New Course Title',
-            'description'  => 'Course description here',
+            'title' => 'New Course Title',
+            'description' => 'Course description here',
         ]);
     }
 
@@ -128,7 +127,7 @@ class ClassroomControllerTest extends TestCase
     {
         Storage::fake('public');
 
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
@@ -136,7 +135,7 @@ class ClassroomControllerTest extends TestCase
 
         $response = $this->actingAs($owner)
             ->post("/communities/{$community->slug}/classroom/courses", [
-                'title'       => 'Course With Cover',
+                'title' => 'Course With Cover',
                 'description' => 'Desc',
                 'access_type' => 'inclusive',
                 'cover_image' => $file,
@@ -146,33 +145,33 @@ class ClassroomControllerTest extends TestCase
         $response->assertSessionHas('success', 'Course created!');
         $this->assertDatabaseHas('courses', [
             'community_id' => $community->id,
-            'title'        => 'Course With Cover',
+            'title' => 'Course With Cover',
         ]);
     }
 
     public function test_regular_member_cannot_store_course(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $response = $this->actingAs($member)
             ->post("/communities/{$community->slug}/classroom/courses", [
-                'title'       => 'Hacked Course',
+                'title' => 'Hacked Course',
                 'description' => 'Should not work',
             ]);
 
         $response->assertForbidden();
         $this->assertDatabaseMissing('courses', [
             'community_id' => $community->id,
-            'title'        => 'Hacked Course',
+            'title' => 'Hacked Course',
         ]);
     }
 
     public function test_store_course_requires_title(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
@@ -188,20 +187,20 @@ class ClassroomControllerTest extends TestCase
 
     public function test_owner_can_update_course(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'       => 'Old Title',
+            'title' => 'Old Title',
             'description' => 'Old Desc',
-            'position'    => 1,
+            'position' => 1,
         ]);
 
         $response = $this->actingAs($owner)
             ->post("/communities/{$community->slug}/classroom/courses/{$course->id}/update", [
-                'title'       => 'Updated Title',
+                'title' => 'Updated Title',
                 'description' => 'Updated Desc',
                 'access_type' => 'inclusive',
             ]);
@@ -209,8 +208,8 @@ class ClassroomControllerTest extends TestCase
         $response->assertRedirect();
         $response->assertSessionHas('success', 'Course updated!');
         $this->assertDatabaseHas('courses', [
-            'id'          => $course->id,
-            'title'       => 'Updated Title',
+            'id' => $course->id,
+            'title' => 'Updated Title',
             'description' => 'Updated Desc',
         ]);
     }
@@ -219,22 +218,22 @@ class ClassroomControllerTest extends TestCase
     {
         Storage::fake('public');
 
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'       => 'Course To Update',
+            'title' => 'Course To Update',
             'description' => 'Desc',
-            'position'    => 1,
+            'position' => 1,
         ]);
 
         $file = UploadedFile::fake()->image('new-cover.jpg', 600, 400);
 
         $response = $this->actingAs($owner)
             ->post("/communities/{$community->slug}/classroom/courses/{$course->id}/update", [
-                'title'       => 'Updated Title',
+                'title' => 'Updated Title',
                 'description' => 'Desc',
                 'access_type' => 'inclusive',
                 'cover_image' => $file,
@@ -246,21 +245,21 @@ class ClassroomControllerTest extends TestCase
 
     public function test_regular_member_cannot_update_course(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'       => 'Original Title',
+            'title' => 'Original Title',
             'description' => 'Desc',
-            'position'    => 1,
+            'position' => 1,
         ]);
 
         $response = $this->actingAs($member)
             ->post("/communities/{$community->slug}/classroom/courses/{$course->id}/update", [
-                'title'       => 'Hacked Title',
+                'title' => 'Hacked Title',
                 'description' => 'Hacked',
             ]);
 
@@ -272,15 +271,15 @@ class ClassroomControllerTest extends TestCase
 
     public function test_owner_can_view_course_detail(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'       => 'Test Course',
+            'title' => 'Test Course',
             'description' => 'Desc',
-            'position'    => 1,
+            'position' => 1,
         ]);
         $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module 1', 'position' => 1]);
         CourseLesson::create(['module_id' => $module->id, 'title' => 'Lesson 1', 'position' => 1]);
@@ -293,16 +292,16 @@ class ClassroomControllerTest extends TestCase
 
     public function test_member_can_view_course_detail(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'       => 'Member Course',
+            'title' => 'Member Course',
             'description' => 'Desc',
-            'position'    => 1,
+            'position' => 1,
         ]);
         $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module 1', 'position' => 1]);
         CourseLesson::create(['module_id' => $module->id, 'title' => 'Lesson 1', 'position' => 1]);
@@ -315,20 +314,20 @@ class ClassroomControllerTest extends TestCase
 
     public function test_paid_subscriber_can_view_course_detail(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->paid()->create(['owner_id' => $owner->id]);
 
         Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
+            'user_id' => $member->id,
         ]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'       => 'Paid Course',
+            'title' => 'Paid Course',
             'description' => 'Desc',
-            'position'    => 1,
+            'position' => 1,
         ]);
 
         $response = $this->actingAs($member)
@@ -341,15 +340,15 @@ class ClassroomControllerTest extends TestCase
 
     public function test_owner_can_store_module(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'       => 'Test Course',
+            'title' => 'Test Course',
             'description' => 'Desc',
-            'position'    => 1,
+            'position' => 1,
         ]);
 
         $response = $this->actingAs($owner)
@@ -361,22 +360,22 @@ class ClassroomControllerTest extends TestCase
         $response->assertSessionHas('success', 'Module added!');
         $this->assertDatabaseHas('course_modules', [
             'course_id' => $course->id,
-            'title'     => 'New Module',
+            'title' => 'New Module',
         ]);
     }
 
     public function test_regular_member_cannot_store_module(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'       => 'Test Course',
+            'title' => 'Test Course',
             'description' => 'Desc',
-            'position'    => 1,
+            'position' => 1,
         ]);
 
         $response = $this->actingAs($member)
@@ -387,21 +386,21 @@ class ClassroomControllerTest extends TestCase
         $response->assertForbidden();
         $this->assertDatabaseMissing('course_modules', [
             'course_id' => $course->id,
-            'title'     => 'Hacked Module',
+            'title' => 'Hacked Module',
         ]);
     }
 
     public function test_store_module_requires_title(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'       => 'Course',
+            'title' => 'Course',
             'description' => 'Desc',
-            'position'    => 1,
+            'position' => 1,
         ]);
 
         $response = $this->actingAs($owner)
@@ -414,20 +413,20 @@ class ClassroomControllerTest extends TestCase
 
     public function test_owner_can_update_module(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'       => 'Course',
+            'title' => 'Course',
             'description' => 'Desc',
-            'position'    => 1,
+            'position' => 1,
         ]);
         $module = CourseModule::create([
             'course_id' => $course->id,
-            'title'     => 'Old Module Title',
-            'position'  => 1,
+            'title' => 'Old Module Title',
+            'position' => 1,
         ]);
 
         $response = $this->actingAs($owner)
@@ -438,27 +437,27 @@ class ClassroomControllerTest extends TestCase
         $response->assertRedirect();
         $response->assertSessionHas('success', 'Module updated!');
         $this->assertDatabaseHas('course_modules', [
-            'id'    => $module->id,
+            'id' => $module->id,
             'title' => 'Updated Module Title',
         ]);
     }
 
     public function test_owner_can_update_module_via_post(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'       => 'Course',
+            'title' => 'Course',
             'description' => 'Desc',
-            'position'    => 1,
+            'position' => 1,
         ]);
         $module = CourseModule::create([
             'course_id' => $course->id,
-            'title'     => 'Module',
-            'position'  => 1,
+            'title' => 'Module',
+            'position' => 1,
         ]);
 
         $response = $this->actingAs($owner)
@@ -469,28 +468,28 @@ class ClassroomControllerTest extends TestCase
         $response->assertRedirect();
         $response->assertSessionHas('success', 'Module updated!');
         $this->assertDatabaseHas('course_modules', [
-            'id'    => $module->id,
+            'id' => $module->id,
             'title' => 'Post Updated Module',
         ]);
     }
 
     public function test_regular_member_cannot_update_module(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'       => 'Course',
+            'title' => 'Course',
             'description' => 'Desc',
-            'position'    => 1,
+            'position' => 1,
         ]);
         $module = CourseModule::create([
             'course_id' => $course->id,
-            'title'     => 'Original Title',
-            'position'  => 1,
+            'title' => 'Original Title',
+            'position' => 1,
         ]);
 
         $response = $this->actingAs($member)
@@ -506,56 +505,56 @@ class ClassroomControllerTest extends TestCase
 
     public function test_owner_can_store_lesson(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'       => 'Course',
+            'title' => 'Course',
             'description' => 'Desc',
-            'position'    => 1,
+            'position' => 1,
         ]);
         $module = CourseModule::create([
             'course_id' => $course->id,
-            'title'     => 'Module 1',
-            'position'  => 1,
+            'title' => 'Module 1',
+            'position' => 1,
         ]);
 
         $response = $this->actingAs($owner)
             ->post("/communities/{$community->slug}/classroom/courses/{$course->id}/modules/{$module->id}/lessons", [
-                'title'     => 'New Lesson',
-                'content'   => 'Lesson content here',
+                'title' => 'New Lesson',
+                'content' => 'Lesson content here',
                 'video_url' => 'https://example.com/video.mp4',
             ]);
 
         $response->assertRedirect();
         $response->assertSessionHas('success', 'Lesson added!');
         $this->assertDatabaseHas('course_lessons', [
-            'module_id'  => $module->id,
-            'title'      => 'New Lesson',
-            'content'    => 'Lesson content here',
-            'video_url'  => 'https://example.com/video.mp4',
+            'module_id' => $module->id,
+            'title' => 'New Lesson',
+            'content' => 'Lesson content here',
+            'video_url' => 'https://example.com/video.mp4',
         ]);
     }
 
     public function test_regular_member_cannot_store_lesson(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'       => 'Course',
+            'title' => 'Course',
             'description' => 'Desc',
-            'position'    => 1,
+            'position' => 1,
         ]);
         $module = CourseModule::create([
             'course_id' => $course->id,
-            'title'     => 'Module 1',
-            'position'  => 1,
+            'title' => 'Module 1',
+            'position' => 1,
         ]);
 
         $response = $this->actingAs($member)
@@ -566,26 +565,26 @@ class ClassroomControllerTest extends TestCase
         $response->assertForbidden();
         $this->assertDatabaseMissing('course_lessons', [
             'module_id' => $module->id,
-            'title'     => 'Hacked Lesson',
+            'title' => 'Hacked Lesson',
         ]);
     }
 
     public function test_store_lesson_requires_title(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'       => 'Course',
+            'title' => 'Course',
             'description' => 'Desc',
-            'position'    => 1,
+            'position' => 1,
         ]);
         $module = CourseModule::create([
             'course_id' => $course->id,
-            'title'     => 'Module',
-            'position'  => 1,
+            'title' => 'Module',
+            'position' => 1,
         ]);
 
         $response = $this->actingAs($owner)
@@ -600,26 +599,26 @@ class ClassroomControllerTest extends TestCase
 
     public function test_member_can_complete_lesson(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'       => 'Course',
+            'title' => 'Course',
             'description' => 'Desc',
-            'position'    => 1,
+            'position' => 1,
         ]);
         $module = CourseModule::create([
             'course_id' => $course->id,
-            'title'     => 'Module 1',
-            'position'  => 1,
+            'title' => 'Module 1',
+            'position' => 1,
         ]);
         $lesson = CourseLesson::create([
             'module_id' => $module->id,
-            'title'     => 'Lesson 1',
-            'position'  => 1,
+            'title' => 'Lesson 1',
+            'position' => 1,
         ]);
 
         $response = $this->actingAs($member)
@@ -628,32 +627,32 @@ class ClassroomControllerTest extends TestCase
         $response->assertRedirect();
         $response->assertSessionHas('success', 'Lesson marked as complete!');
         $this->assertDatabaseHas('lesson_completions', [
-            'user_id'   => $member->id,
+            'user_id' => $member->id,
             'lesson_id' => $lesson->id,
         ]);
     }
 
     public function test_owner_can_complete_lesson(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'       => 'Course',
+            'title' => 'Course',
             'description' => 'Desc',
-            'position'    => 1,
+            'position' => 1,
         ]);
         $module = CourseModule::create([
             'course_id' => $course->id,
-            'title'     => 'Module 1',
-            'position'  => 1,
+            'title' => 'Module 1',
+            'position' => 1,
         ]);
         $lesson = CourseLesson::create([
             'module_id' => $module->id,
-            'title'     => 'Lesson 1',
-            'position'  => 1,
+            'title' => 'Lesson 1',
+            'position' => 1,
         ]);
 
         $response = $this->actingAs($owner)
@@ -665,30 +664,30 @@ class ClassroomControllerTest extends TestCase
 
     public function test_paid_subscriber_can_complete_lesson(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->paid()->create(['owner_id' => $owner->id]);
 
         Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
+            'user_id' => $member->id,
         ]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'       => 'Course',
+            'title' => 'Course',
             'description' => 'Desc',
-            'position'    => 1,
+            'position' => 1,
         ]);
         $module = CourseModule::create([
             'course_id' => $course->id,
-            'title'     => 'Module',
-            'position'  => 1,
+            'title' => 'Module',
+            'position' => 1,
         ]);
         $lesson = CourseLesson::create([
             'module_id' => $module->id,
-            'title'     => 'Lesson',
-            'position'  => 1,
+            'title' => 'Lesson',
+            'position' => 1,
         ]);
 
         $response = $this->actingAs($member)
@@ -702,65 +701,65 @@ class ClassroomControllerTest extends TestCase
 
     public function test_owner_can_update_lesson(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'       => 'Course',
+            'title' => 'Course',
             'description' => 'Desc',
-            'position'    => 1,
+            'position' => 1,
         ]);
         $module = CourseModule::create([
             'course_id' => $course->id,
-            'title'     => 'Module',
-            'position'  => 1,
+            'title' => 'Module',
+            'position' => 1,
         ]);
         $lesson = CourseLesson::create([
             'module_id' => $module->id,
-            'title'     => 'Lesson',
-            'content'   => 'Old content',
-            'position'  => 1,
+            'title' => 'Lesson',
+            'content' => 'Old content',
+            'position' => 1,
         ]);
 
         $response = $this->actingAs($owner)
             ->patch("/communities/{$community->slug}/classroom/courses/{$course->id}/modules/{$module->id}/lessons/{$lesson->id}", [
-                'content'   => 'Updated lesson content',
+                'content' => 'Updated lesson content',
                 'video_url' => 'https://example.com/updated.mp4',
             ]);
 
         $response->assertRedirect();
         $response->assertSessionHas('success', 'Lesson updated!');
         $this->assertDatabaseHas('course_lessons', [
-            'id'         => $lesson->id,
-            'content'    => 'Updated lesson content',
-            'video_url'  => 'https://example.com/updated.mp4',
+            'id' => $lesson->id,
+            'content' => 'Updated lesson content',
+            'video_url' => 'https://example.com/updated.mp4',
         ]);
     }
 
     public function test_owner_can_update_lesson_via_post(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'       => 'Course',
+            'title' => 'Course',
             'description' => 'Desc',
-            'position'    => 1,
+            'position' => 1,
         ]);
         $module = CourseModule::create([
             'course_id' => $course->id,
-            'title'     => 'Module',
-            'position'  => 1,
+            'title' => 'Module',
+            'position' => 1,
         ]);
         $lesson = CourseLesson::create([
             'module_id' => $module->id,
-            'title'     => 'Lesson',
-            'content'   => 'Content',
-            'position'  => 1,
+            'title' => 'Lesson',
+            'content' => 'Content',
+            'position' => 1,
         ]);
 
         $response = $this->actingAs($owner)
@@ -771,34 +770,34 @@ class ClassroomControllerTest extends TestCase
         $response->assertRedirect();
         $response->assertSessionHas('success', 'Lesson updated!');
         $this->assertDatabaseHas('course_lessons', [
-            'id'      => $lesson->id,
+            'id' => $lesson->id,
             'content' => 'Post updated content',
         ]);
     }
 
     public function test_regular_member_cannot_update_lesson(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'       => 'Course',
+            'title' => 'Course',
             'description' => 'Desc',
-            'position'    => 1,
+            'position' => 1,
         ]);
         $module = CourseModule::create([
             'course_id' => $course->id,
-            'title'     => 'Module',
-            'position'  => 1,
+            'title' => 'Module',
+            'position' => 1,
         ]);
         $lesson = CourseLesson::create([
             'module_id' => $module->id,
-            'title'     => 'Lesson',
-            'content'   => 'Original content',
-            'position'  => 1,
+            'title' => 'Lesson',
+            'content' => 'Original content',
+            'position' => 1,
         ]);
 
         $response = $this->actingAs($member)
@@ -814,15 +813,15 @@ class ClassroomControllerTest extends TestCase
 
     public function test_owner_can_destroy_course(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'       => 'To Delete',
+            'title' => 'To Delete',
             'description' => 'Desc',
-            'position'    => 1,
+            'position' => 1,
         ]);
         $module = CourseModule::create(['course_id' => $course->id, 'title' => 'M1', 'position' => 1]);
         CourseLesson::create(['module_id' => $module->id, 'title' => 'L1', 'position' => 1]);
@@ -837,16 +836,16 @@ class ClassroomControllerTest extends TestCase
 
     public function test_regular_member_cannot_destroy_course(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'       => 'Course',
+            'title' => 'Course',
             'description' => 'Desc',
-            'position'    => 1,
+            'position' => 1,
         ]);
 
         $response = $this->actingAs($member)
@@ -862,7 +861,7 @@ class ClassroomControllerTest extends TestCase
     {
         Storage::fake(config('filesystems.default'));
 
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
@@ -879,8 +878,8 @@ class ClassroomControllerTest extends TestCase
 
     public function test_regular_member_cannot_upload_lesson_image(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
@@ -898,12 +897,12 @@ class ClassroomControllerTest extends TestCase
 
     public function test_owner_can_reorder_lessons(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
-        $course  = Course::create(['community_id' => $community->id, 'title' => 'C', 'description' => 'D', 'position' => 1]);
-        $module  = CourseModule::create(['course_id' => $course->id, 'title' => 'M', 'position' => 1]);
+        $course = Course::create(['community_id' => $community->id, 'title' => 'C', 'description' => 'D', 'position' => 1]);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'M', 'position' => 1]);
         $lesson1 = CourseLesson::create(['module_id' => $module->id, 'title' => 'L1', 'position' => 0]);
         $lesson2 = CourseLesson::create(['module_id' => $module->id, 'title' => 'L2', 'position' => 1]);
         $lesson3 = CourseLesson::create(['module_id' => $module->id, 'title' => 'L3', 'position' => 2]);
@@ -922,13 +921,13 @@ class ClassroomControllerTest extends TestCase
 
     public function test_regular_member_cannot_reorder_lessons(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
-        $course  = Course::create(['community_id' => $community->id, 'title' => 'C', 'description' => 'D', 'position' => 1]);
-        $module  = CourseModule::create(['course_id' => $course->id, 'title' => 'M', 'position' => 1]);
+        $course = Course::create(['community_id' => $community->id, 'title' => 'C', 'description' => 'D', 'position' => 1]);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'M', 'position' => 1]);
         $lesson1 = CourseLesson::create(['module_id' => $module->id, 'title' => 'L1', 'position' => 0]);
         $lesson2 = CourseLesson::create(['module_id' => $module->id, 'title' => 'L2', 'position' => 1]);
 
@@ -944,14 +943,14 @@ class ClassroomControllerTest extends TestCase
 
     public function test_guest_can_view_free_course_detail(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Free Course',
-            'access_type'  => Course::ACCESS_FREE,
-            'position'     => 1,
+            'title' => 'Free Course',
+            'access_type' => Course::ACCESS_FREE,
+            'position' => 1,
         ]);
 
         $response = $this->get("/communities/{$community->slug}/classroom/courses/{$course->id}");
@@ -961,20 +960,20 @@ class ClassroomControllerTest extends TestCase
 
     public function test_active_subscriber_has_access_to_inclusive_course(): void
     {
-        $owner  = User::factory()->create();
+        $owner = User::factory()->create();
         $member = User::factory()->create();
         $community = Community::factory()->paid()->create(['owner_id' => $owner->id]);
 
         Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
+            'user_id' => $member->id,
         ]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Inclusive Course',
-            'access_type'  => Course::ACCESS_INCLUSIVE,
-            'position'     => 1,
+            'title' => 'Inclusive Course',
+            'access_type' => Course::ACCESS_INCLUSIVE,
+            'position' => 1,
         ]);
 
         $response = $this->actingAs($member)
@@ -985,15 +984,15 @@ class ClassroomControllerTest extends TestCase
 
     public function test_user_without_subscription_does_not_have_access_to_inclusive_course(): void
     {
-        $owner  = User::factory()->create();
-        $user   = User::factory()->create();
+        $owner = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid()->create(['owner_id' => $owner->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Inclusive Course',
-            'access_type'  => Course::ACCESS_INCLUSIVE,
-            'position'     => 1,
+            'title' => 'Inclusive Course',
+            'access_type' => Course::ACCESS_INCLUSIVE,
+            'position' => 1,
         ]);
 
         $response = $this->actingAs($user)
@@ -1005,22 +1004,22 @@ class ClassroomControllerTest extends TestCase
 
     public function test_enrolled_user_has_access_to_paid_once_course(): void
     {
-        $owner  = User::factory()->create();
-        $user   = User::factory()->create();
+        $owner = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Paid Once Course',
-            'access_type'  => Course::ACCESS_PAID_ONCE,
-            'price'        => 500,
-            'position'     => 1,
+            'title' => 'Paid Once Course',
+            'access_type' => Course::ACCESS_PAID_ONCE,
+            'price' => 500,
+            'position' => 1,
         ]);
 
         \App\Models\CourseEnrollment::create([
-            'user_id'    => $user->id,
-            'course_id'  => $course->id,
-            'status'     => \App\Models\CourseEnrollment::STATUS_PAID,
+            'user_id' => $user->id,
+            'course_id' => $course->id,
+            'status' => \App\Models\CourseEnrollment::STATUS_PAID,
             'expires_at' => null,
         ]);
 
@@ -1032,36 +1031,36 @@ class ClassroomControllerTest extends TestCase
 
     public function test_store_course_with_paid_once_access_type_and_price(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $response = $this->actingAs($owner)
             ->post("/communities/{$community->slug}/classroom/courses", [
-                'title'       => 'Paid Once Course',
+                'title' => 'Paid Once Course',
                 'description' => 'Pay once to access',
                 'access_type' => 'paid_once',
-                'price'       => 499.00,
+                'price' => 499.00,
             ]);
 
         $response->assertRedirect();
         $response->assertSessionHas('success', 'Course created!');
         $this->assertDatabaseHas('courses', [
             'community_id' => $community->id,
-            'title'        => 'Paid Once Course',
-            'access_type'  => 'paid_once',
+            'title' => 'Paid Once Course',
+            'access_type' => 'paid_once',
         ]);
     }
 
     public function test_store_course_requires_price_for_paid_once(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $response = $this->actingAs($owner)
             ->post("/communities/{$community->slug}/classroom/courses", [
-                'title'       => 'Paid Without Price',
+                'title' => 'Paid Without Price',
                 'access_type' => 'paid_once',
             ]);
 
@@ -1072,7 +1071,7 @@ class ClassroomControllerTest extends TestCase
 
     public function test_owner_can_reorder_courses(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
@@ -1094,8 +1093,8 @@ class ClassroomControllerTest extends TestCase
 
     public function test_regular_member_cannot_reorder_courses(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
@@ -1114,14 +1113,14 @@ class ClassroomControllerTest extends TestCase
 
     public function test_owner_can_toggle_publish_course(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Draft Course',
-            'position'     => 1,
+            'title' => 'Draft Course',
+            'position' => 1,
             'is_published' => false,
         ]);
 
@@ -1135,14 +1134,14 @@ class ClassroomControllerTest extends TestCase
 
     public function test_owner_can_unpublish_course(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Published Course',
-            'position'     => 1,
+            'title' => 'Published Course',
+            'position' => 1,
             'is_published' => true,
         ]);
 
@@ -1156,15 +1155,15 @@ class ClassroomControllerTest extends TestCase
 
     public function test_regular_member_cannot_toggle_publish(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Course',
-            'position'     => 1,
+            'title' => 'Course',
+            'position' => 1,
             'is_published' => false,
         ]);
 
@@ -1179,15 +1178,15 @@ class ClassroomControllerTest extends TestCase
 
     public function test_non_manager_cannot_view_unpublished_course(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Unpublished Course',
-            'position'     => 1,
+            'title' => 'Unpublished Course',
+            'position' => 1,
             'is_published' => false,
         ]);
 
@@ -1199,13 +1198,13 @@ class ClassroomControllerTest extends TestCase
 
     public function test_guest_cannot_view_unpublished_course(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Unpublished Course',
-            'position'     => 1,
+            'title' => 'Unpublished Course',
+            'position' => 1,
             'is_published' => false,
         ]);
 
@@ -1216,14 +1215,14 @@ class ClassroomControllerTest extends TestCase
 
     public function test_owner_can_view_unpublished_course(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Unpublished Course',
-            'position'     => 1,
+            'title' => 'Unpublished Course',
+            'position' => 1,
             'is_published' => false,
         ]);
         CourseModule::create(['course_id' => $course->id, 'title' => 'Module 1', 'position' => 1]);
@@ -1238,7 +1237,7 @@ class ClassroomControllerTest extends TestCase
 
     public function test_store_course_blocked_when_plan_limit_reached(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
@@ -1249,7 +1248,7 @@ class ClassroomControllerTest extends TestCase
 
         $response = $this->actingAs($owner)
             ->post("/communities/{$community->slug}/classroom/courses", [
-                'title'       => 'Fourth Course',
+                'title' => 'Fourth Course',
                 'access_type' => 'free',
             ]);
 
@@ -1262,21 +1261,21 @@ class ClassroomControllerTest extends TestCase
 
     public function test_stream_lesson_video_returns_404_when_no_video_path(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Course',
-            'position'     => 1,
+            'title' => 'Course',
+            'position' => 1,
             'is_published' => true,
         ]);
         $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
         $lesson = CourseLesson::create([
-            'module_id'  => $module->id,
-            'title'      => 'Lesson No Video',
-            'position'   => 1,
+            'module_id' => $module->id,
+            'title' => 'Lesson No Video',
+            'position' => 1,
             'video_path' => null,
         ]);
 
@@ -1288,22 +1287,22 @@ class ClassroomControllerTest extends TestCase
 
     public function test_stream_lesson_video_returns_404_for_unpublished_course_non_manager(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Unpublished',
-            'position'     => 1,
+            'title' => 'Unpublished',
+            'position' => 1,
             'is_published' => false,
         ]);
         $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
         $lesson = CourseLesson::create([
-            'module_id'  => $module->id,
-            'title'      => 'Lesson',
-            'position'   => 1,
+            'module_id' => $module->id,
+            'title' => 'Lesson',
+            'position' => 1,
             'video_path' => 'lesson-videos/test.mp4',
         ]);
 
@@ -1315,27 +1314,27 @@ class ClassroomControllerTest extends TestCase
 
     public function test_stream_lesson_video_returns_403_when_no_course_access(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->paid()->create(['owner_id' => $owner->id]);
         Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
+            'user_id' => $member->id,
         ]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Paid Once Course',
-            'access_type'  => Course::ACCESS_PAID_ONCE,
-            'price'        => 100,
-            'position'     => 1,
+            'title' => 'Paid Once Course',
+            'access_type' => Course::ACCESS_PAID_ONCE,
+            'price' => 100,
+            'position' => 1,
             'is_published' => true,
         ]);
         $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
         $lesson = CourseLesson::create([
-            'module_id'  => $module->id,
-            'title'      => 'Lesson',
-            'position'   => 1,
+            'module_id' => $module->id,
+            'title' => 'Lesson',
+            'position' => 1,
             'video_path' => 'lesson-videos/test.mp4',
         ]);
 
@@ -1350,21 +1349,21 @@ class ClassroomControllerTest extends TestCase
     {
         Storage::fake(config('filesystems.default'));
 
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Course',
-            'position'     => 1,
+            'title' => 'Course',
+            'position' => 1,
             'is_published' => true,
         ]);
         $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
         $lesson = CourseLesson::create([
-            'module_id'  => $module->id,
-            'title'      => 'Lesson With Video',
-            'position'   => 1,
+            'module_id' => $module->id,
+            'title' => 'Lesson With Video',
+            'position' => 1,
             'video_path' => 'lesson-videos/test.mp4',
         ]);
 
@@ -1379,15 +1378,15 @@ class ClassroomControllerTest extends TestCase
 
     public function test_upload_lesson_video_requires_pro_plan(): void
     {
-        $owner     = User::factory()->create(); // free plan by default
+        $owner = User::factory()->create(); // free plan by default
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $response = $this->actingAs($owner)
             ->postJson("/communities/{$community->slug}/classroom/lesson-videos", [
-                'filename'     => 'video.mp4',
+                'filename' => 'video.mp4',
                 'content_type' => 'video/mp4',
-                'size'         => 1024,
+                'size' => 1024,
             ]);
 
         $response->assertForbidden();
@@ -1396,16 +1395,16 @@ class ClassroomControllerTest extends TestCase
 
     public function test_regular_member_cannot_upload_lesson_video(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $response = $this->actingAs($member)
             ->postJson("/communities/{$community->slug}/classroom/lesson-videos", [
-                'filename'     => 'video.mp4',
+                'filename' => 'video.mp4',
                 'content_type' => 'video/mp4',
-                'size'         => 1024,
+                'size' => 1024,
             ]);
 
         $response->assertForbidden();
@@ -1415,7 +1414,7 @@ class ClassroomControllerTest extends TestCase
 
     public function test_upload_lesson_image_requires_image_file(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
@@ -1430,38 +1429,38 @@ class ClassroomControllerTest extends TestCase
 
     public function test_owner_can_store_lesson_with_embed_and_cta(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Course',
-            'position'     => 1,
+            'title' => 'Course',
+            'position' => 1,
         ]);
         $module = CourseModule::create([
             'course_id' => $course->id,
-            'title'     => 'Module 1',
-            'position'  => 1,
+            'title' => 'Module 1',
+            'position' => 1,
         ]);
 
         $response = $this->actingAs($owner)
             ->post("/communities/{$community->slug}/classroom/courses/{$course->id}/modules/{$module->id}/lessons", [
-                'title'      => 'Rich Lesson',
-                'content'    => 'Content here',
+                'title' => 'Rich Lesson',
+                'content' => 'Content here',
                 'embed_html' => '<iframe src="https://example.com"></iframe>',
-                'cta_label'  => 'Buy Now',
-                'cta_url'    => 'https://example.com/buy',
+                'cta_label' => 'Buy Now',
+                'cta_url' => 'https://example.com/buy',
             ]);
 
         $response->assertRedirect();
         $response->assertSessionHas('success', 'Lesson added!');
         $this->assertDatabaseHas('course_lessons', [
-            'module_id'  => $module->id,
-            'title'      => 'Rich Lesson',
+            'module_id' => $module->id,
+            'title' => 'Rich Lesson',
             'embed_html' => '<iframe src="https://example.com"></iframe>',
-            'cta_label'  => 'Buy Now',
-            'cta_url'    => 'https://example.com/buy',
+            'cta_label' => 'Buy Now',
+            'cta_url' => 'https://example.com/buy',
         ]);
     }
 
@@ -1469,19 +1468,19 @@ class ClassroomControllerTest extends TestCase
 
     public function test_owner_can_store_module_with_is_free(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Course',
-            'position'     => 1,
+            'title' => 'Course',
+            'position' => 1,
         ]);
 
         $response = $this->actingAs($owner)
             ->post("/communities/{$community->slug}/classroom/courses/{$course->id}/modules", [
-                'title'   => 'Free Preview Module',
+                'title' => 'Free Preview Module',
                 'is_free' => true,
             ]);
 
@@ -1489,8 +1488,8 @@ class ClassroomControllerTest extends TestCase
         $response->assertSessionHas('success', 'Module added!');
         $this->assertDatabaseHas('course_modules', [
             'course_id' => $course->id,
-            'title'     => 'Free Preview Module',
-            'is_free'   => true,
+            'title' => 'Free Preview Module',
+            'is_free' => true,
         ]);
     }
 
@@ -1498,24 +1497,24 @@ class ClassroomControllerTest extends TestCase
 
     public function test_owner_can_update_lesson_with_video_path(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Course',
-            'position'     => 1,
+            'title' => 'Course',
+            'position' => 1,
         ]);
         $module = CourseModule::create([
             'course_id' => $course->id,
-            'title'     => 'Module',
-            'position'  => 1,
+            'title' => 'Module',
+            'position' => 1,
         ]);
         $lesson = CourseLesson::create([
             'module_id' => $module->id,
-            'title'     => 'Lesson',
-            'position'  => 1,
+            'title' => 'Lesson',
+            'position' => 1,
         ]);
 
         $response = $this->actingAs($owner)
@@ -1526,7 +1525,7 @@ class ClassroomControllerTest extends TestCase
         $response->assertRedirect();
         $response->assertSessionHas('success', 'Lesson updated!');
         $this->assertDatabaseHas('course_lessons', [
-            'id'         => $lesson->id,
+            'id' => $lesson->id,
             'video_path' => 'lesson-videos/uploaded-video.mp4',
         ]);
     }
@@ -1535,15 +1534,15 @@ class ClassroomControllerTest extends TestCase
     {
         // The final `return false` in CourseAccessService::hasAccess() is unreachable via normal
         // DB insertion (CHECK constraint), so we test via an in-memory Course with unknown access_type.
-        $owner     = User::factory()->create();
-        $user      = User::factory()->create();
+        $owner = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
-        $course = new Course();
+        $course = new Course;
         $course->access_type = 'unknown_type';
 
-        $service = new \App\Services\Classroom\CourseAccessService();
-        $result  = $service->hasAccess($user, $community, $course);
+        $service = new \App\Services\Classroom\CourseAccessService;
+        $result = $service->hasAccess($user, $community, $course);
 
         $this->assertFalse($result);
     }
@@ -1552,14 +1551,14 @@ class ClassroomControllerTest extends TestCase
 
     public function test_guest_cannot_access_inclusive_course_but_page_renders(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->paid()->create(['owner_id' => $owner->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Inclusive Course',
-            'access_type'  => Course::ACCESS_INCLUSIVE,
-            'position'     => 1,
+            'title' => 'Inclusive Course',
+            'access_type' => Course::ACCESS_INCLUSIVE,
+            'position' => 1,
         ]);
 
         // Guest (not authenticated) gets the page but with hasAccess = false
@@ -1572,10 +1571,10 @@ class ClassroomControllerTest extends TestCase
 
     public function test_owner_can_destroy_module(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $course    = Course::create(['community_id' => $community->id, 'title' => 'Course', 'position' => 1]);
-        $module    = CourseModule::create(['course_id' => $course->id, 'title' => 'Module to Delete', 'position' => 1]);
+        $course = Course::create(['community_id' => $community->id, 'title' => 'Course', 'position' => 1]);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module to Delete', 'position' => 1]);
         CourseLesson::create(['module_id' => $module->id, 'title' => 'Lesson in Module', 'position' => 1]);
 
         $response = $this->actingAs($owner)
@@ -1589,8 +1588,8 @@ class ClassroomControllerTest extends TestCase
 
     public function test_non_owner_cannot_destroy_module(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
         $course = Course::create(['community_id' => $community->id, 'title' => 'Course', 'position' => 1]);
@@ -1607,11 +1606,11 @@ class ClassroomControllerTest extends TestCase
 
     public function test_owner_can_destroy_lesson(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $course    = Course::create(['community_id' => $community->id, 'title' => 'Course', 'position' => 1]);
-        $module    = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
-        $lesson    = CourseLesson::create(['module_id' => $module->id, 'title' => 'Lesson to Delete', 'position' => 1]);
+        $course = Course::create(['community_id' => $community->id, 'title' => 'Course', 'position' => 1]);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
+        $lesson = CourseLesson::create(['module_id' => $module->id, 'title' => 'Lesson to Delete', 'position' => 1]);
 
         $response = $this->actingAs($owner)
             ->delete("/communities/{$community->slug}/classroom/courses/{$course->id}/modules/{$module->id}/lessons/{$lesson->id}");
@@ -1623,8 +1622,8 @@ class ClassroomControllerTest extends TestCase
 
     public function test_non_owner_cannot_destroy_lesson(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
         $course = Course::create(['community_id' => $community->id, 'title' => 'Course', 'position' => 1]);
@@ -1642,7 +1641,7 @@ class ClassroomControllerTest extends TestCase
 
     public function test_store_course_requires_access_type(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
@@ -1656,13 +1655,13 @@ class ClassroomControllerTest extends TestCase
 
     public function test_store_course_requires_price_for_paid_monthly(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $response = $this->actingAs($owner)
             ->post("/communities/{$community->slug}/classroom/courses", [
-                'title'       => 'Monthly Course Without Price',
+                'title' => 'Monthly Course Without Price',
                 'access_type' => 'paid_monthly',
             ]);
 
@@ -1671,13 +1670,13 @@ class ClassroomControllerTest extends TestCase
 
     public function test_store_course_rejects_invalid_access_type(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $response = $this->actingAs($owner)
             ->post("/communities/{$community->slug}/classroom/courses", [
-                'title'       => 'Bad Access Type',
+                'title' => 'Bad Access Type',
                 'access_type' => 'invalid_type',
             ]);
 
@@ -1686,36 +1685,36 @@ class ClassroomControllerTest extends TestCase
 
     public function test_store_course_with_paid_monthly_access_type_and_price(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $response = $this->actingAs($owner)
             ->post("/communities/{$community->slug}/classroom/courses", [
-                'title'       => 'Monthly Course',
+                'title' => 'Monthly Course',
                 'description' => 'Monthly subscription course',
                 'access_type' => 'paid_monthly',
-                'price'       => 99.00,
+                'price' => 99.00,
             ]);
 
         $response->assertRedirect();
         $response->assertSessionHas('success', 'Course created!');
         $this->assertDatabaseHas('courses', [
             'community_id' => $community->id,
-            'title'        => 'Monthly Course',
-            'access_type'  => 'paid_monthly',
+            'title' => 'Monthly Course',
+            'access_type' => 'paid_monthly',
         ]);
     }
 
     public function test_store_course_with_member_once_access_type(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $response = $this->actingAs($owner)
             ->post("/communities/{$community->slug}/classroom/courses", [
-                'title'       => 'Member Once Course',
+                'title' => 'Member Once Course',
                 'access_type' => 'member_once',
             ]);
 
@@ -1723,8 +1722,8 @@ class ClassroomControllerTest extends TestCase
         $response->assertSessionHas('success', 'Course created!');
         $this->assertDatabaseHas('courses', [
             'community_id' => $community->id,
-            'title'        => 'Member Once Course',
-            'access_type'  => 'member_once',
+            'title' => 'Member Once Course',
+            'access_type' => 'member_once',
         ]);
     }
 
@@ -1734,9 +1733,9 @@ class ClassroomControllerTest extends TestCase
     {
         $owner = User::factory()->create();
         CreatorSubscription::create([
-            'user_id'    => $owner->id,
-            'plan'       => CreatorSubscription::PLAN_PRO,
-            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'user_id' => $owner->id,
+            'plan' => CreatorSubscription::PLAN_PRO,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
             'expires_at' => now()->addYear(),
         ]);
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
@@ -1744,9 +1743,9 @@ class ClassroomControllerTest extends TestCase
 
         $response = $this->actingAs($owner)
             ->postJson("/communities/{$community->slug}/classroom/lesson-videos", [
-                'filename'     => 'video.avi',
+                'filename' => 'video.avi',
                 'content_type' => 'video/x-flv',
-                'size'         => 1024,
+                'size' => 1024,
             ]);
 
         $response->assertUnprocessable();
@@ -1757,9 +1756,9 @@ class ClassroomControllerTest extends TestCase
     {
         $owner = User::factory()->create();
         CreatorSubscription::create([
-            'user_id'    => $owner->id,
-            'plan'       => CreatorSubscription::PLAN_PRO,
-            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'user_id' => $owner->id,
+            'plan' => CreatorSubscription::PLAN_PRO,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
             'expires_at' => now()->addYear(),
         ]);
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
@@ -1776,9 +1775,9 @@ class ClassroomControllerTest extends TestCase
     {
         $owner = User::factory()->create();
         CreatorSubscription::create([
-            'user_id'    => $owner->id,
-            'plan'       => CreatorSubscription::PLAN_PRO,
-            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'user_id' => $owner->id,
+            'plan' => CreatorSubscription::PLAN_PRO,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
             'expires_at' => now()->addYear(),
         ]);
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
@@ -1787,9 +1786,9 @@ class ClassroomControllerTest extends TestCase
         // Pro plan max is 5120MB = 5GB, send more
         $response = $this->actingAs($owner)
             ->postJson("/communities/{$community->slug}/classroom/lesson-videos", [
-                'filename'     => 'large-video.mp4',
+                'filename' => 'large-video.mp4',
                 'content_type' => 'video/mp4',
-                'size'         => 6000 * 1024 * 1024, // 6000 MB > 5120 MB
+                'size' => 6000 * 1024 * 1024, // 6000 MB > 5120 MB
             ]);
 
         $response->assertStatus(422);
@@ -1800,9 +1799,9 @@ class ClassroomControllerTest extends TestCase
     {
         $owner = User::factory()->create();
         CreatorSubscription::create([
-            'user_id'    => $owner->id,
-            'plan'       => CreatorSubscription::PLAN_PRO,
-            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'user_id' => $owner->id,
+            'plan' => CreatorSubscription::PLAN_PRO,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
             'expires_at' => now()->addYear(),
         ]);
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
@@ -1821,9 +1820,9 @@ class ClassroomControllerTest extends TestCase
 
         $response = $this->actingAs($owner)
             ->postJson("/communities/{$community->slug}/classroom/lesson-videos", [
-                'filename'     => 'my-video.mp4',
+                'filename' => 'my-video.mp4',
                 'content_type' => 'video/mp4',
-                'size'         => 10 * 1024 * 1024, // 10 MB
+                'size' => 10 * 1024 * 1024, // 10 MB
             ]);
 
         $response->assertOk();
@@ -1836,21 +1835,21 @@ class ClassroomControllerTest extends TestCase
     {
         Storage::fake(config('filesystems.default'));
 
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Course',
-            'position'     => 1,
+            'title' => 'Course',
+            'position' => 1,
             'is_published' => true,
         ]);
         $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
         $lesson = CourseLesson::create([
-            'module_id'  => $module->id,
-            'title'      => 'Lesson Legacy URL',
-            'position'   => 1,
+            'module_id' => $module->id,
+            'title' => 'Lesson Legacy URL',
+            'position' => 1,
             'video_path' => 'https://s3.amazonaws.com/my-bucket/lesson-videos/old-video.mp4',
         ]);
 
@@ -1865,23 +1864,23 @@ class ClassroomControllerTest extends TestCase
     {
         Storage::fake(config('filesystems.default'));
 
-        $owner  = User::factory()->create();
+        $owner = User::factory()->create();
         $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Free Course',
-            'access_type'  => Course::ACCESS_FREE,
-            'position'     => 1,
+            'title' => 'Free Course',
+            'access_type' => Course::ACCESS_FREE,
+            'position' => 1,
             'is_published' => true,
         ]);
         $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
         $lesson = CourseLesson::create([
-            'module_id'  => $module->id,
-            'title'      => 'Lesson',
-            'position'   => 1,
+            'module_id' => $module->id,
+            'title' => 'Lesson',
+            'position' => 1,
             'video_path' => 'lesson-videos/test.mp4',
         ]);
 
@@ -1896,22 +1895,22 @@ class ClassroomControllerTest extends TestCase
 
     public function test_stream_lesson_video_returns_404_for_guest_on_unpublished_course(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Unpublished',
-            'position'     => 1,
+            'title' => 'Unpublished',
+            'position' => 1,
             'is_published' => false,
         ]);
         $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
         $lesson = CourseLesson::create([
-            'module_id'  => $module->id,
-            'title'      => 'Lesson',
-            'position'   => 1,
+            'module_id' => $module->id,
+            'title' => 'Lesson',
+            'position' => 1,
             'video_path' => 'lesson-videos/test.mp4',
         ]);
 
@@ -1925,14 +1924,14 @@ class ClassroomControllerTest extends TestCase
 
     public function test_update_course_requires_title(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Original',
-            'position'     => 1,
+            'title' => 'Original',
+            'position' => 1,
         ]);
 
         $response = $this->actingAs($owner)
@@ -1945,14 +1944,14 @@ class ClassroomControllerTest extends TestCase
 
     public function test_update_course_requires_access_type(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Original',
-            'position'     => 1,
+            'title' => 'Original',
+            'position' => 1,
         ]);
 
         $response = $this->actingAs($owner)
@@ -1967,7 +1966,7 @@ class ClassroomControllerTest extends TestCase
 
     public function test_reorder_courses_requires_course_ids(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
@@ -1981,7 +1980,7 @@ class ClassroomControllerTest extends TestCase
 
     public function test_reorder_lessons_requires_lesson_ids(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
@@ -2000,9 +1999,9 @@ class ClassroomControllerTest extends TestCase
     {
         $owner = User::factory()->create();
         CreatorSubscription::create([
-            'user_id'    => $owner->id,
-            'plan'       => CreatorSubscription::PLAN_PRO,
-            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'user_id' => $owner->id,
+            'plan' => CreatorSubscription::PLAN_PRO,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
             'expires_at' => now()->addYear(),
         ]);
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
@@ -2010,8 +2009,8 @@ class ClassroomControllerTest extends TestCase
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Pro Course',
-            'position'     => 1,
+            'title' => 'Pro Course',
+            'position' => 1,
             'is_published' => true,
         ]);
 
@@ -2027,14 +2026,14 @@ class ClassroomControllerTest extends TestCase
 
     public function test_show_course_disables_video_upload_for_free_owner(): void
     {
-        $owner     = User::factory()->create(); // free plan
+        $owner = User::factory()->create(); // free plan
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Free Plan Course',
-            'position'     => 1,
+            'title' => 'Free Plan Course',
+            'position' => 1,
             'is_published' => true,
         ]);
 
@@ -2052,16 +2051,16 @@ class ClassroomControllerTest extends TestCase
 
     public function test_index_returns_affiliate_when_user_has_one(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         // Create affiliate for the member
         $community->affiliates()->create([
             'user_id' => $member->id,
-            'code'    => 'TESTCODE123',
-            'status'  => 'active',
+            'code' => 'TESTCODE123',
+            'status' => 'active',
         ]);
 
         $response = $this->actingAs($member)
@@ -2074,7 +2073,7 @@ class ClassroomControllerTest extends TestCase
 
     public function test_store_lesson_rejects_invalid_video_url(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
@@ -2083,7 +2082,7 @@ class ClassroomControllerTest extends TestCase
 
         $response = $this->actingAs($owner)
             ->post("/communities/{$community->slug}/classroom/courses/{$course->id}/modules/{$module->id}/lessons", [
-                'title'     => 'Bad URL Lesson',
+                'title' => 'Bad URL Lesson',
                 'video_url' => 'not-a-url',
             ]);
 
@@ -2092,7 +2091,7 @@ class ClassroomControllerTest extends TestCase
 
     public function test_store_lesson_rejects_invalid_cta_url(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
@@ -2101,7 +2100,7 @@ class ClassroomControllerTest extends TestCase
 
         $response = $this->actingAs($owner)
             ->post("/communities/{$community->slug}/classroom/courses/{$course->id}/modules/{$module->id}/lessons", [
-                'title'   => 'Bad CTA Lesson',
+                'title' => 'Bad CTA Lesson',
                 'cta_url' => 'not-a-url',
             ]);
 
@@ -2112,7 +2111,7 @@ class ClassroomControllerTest extends TestCase
 
     public function test_update_lesson_rejects_invalid_video_url(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
@@ -2130,7 +2129,7 @@ class ClassroomControllerTest extends TestCase
 
     public function test_update_lesson_rejects_invalid_cta_url(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
@@ -2150,7 +2149,7 @@ class ClassroomControllerTest extends TestCase
 
     public function test_upload_lesson_image_rejects_non_image_file(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
@@ -2169,7 +2168,7 @@ class ClassroomControllerTest extends TestCase
 
     public function test_store_course_rejects_non_image_cover(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
@@ -2177,7 +2176,7 @@ class ClassroomControllerTest extends TestCase
 
         $response = $this->actingAs($owner)
             ->post("/communities/{$community->slug}/classroom/courses", [
-                'title'       => 'Course With Bad Cover',
+                'title' => 'Course With Bad Cover',
                 'access_type' => 'free',
                 'cover_image' => $file,
             ]);
@@ -2191,9 +2190,9 @@ class ClassroomControllerTest extends TestCase
     {
         $owner = User::factory()->create();
         CreatorSubscription::create([
-            'user_id'    => $owner->id,
-            'plan'       => CreatorSubscription::PLAN_PRO,
-            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'user_id' => $owner->id,
+            'plan' => CreatorSubscription::PLAN_PRO,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
             'expires_at' => now()->addYear(),
         ]);
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
@@ -2211,9 +2210,9 @@ class ClassroomControllerTest extends TestCase
 
         $response = $this->actingAs($owner)
             ->postJson("/communities/{$community->slug}/classroom/lesson-videos", [
-                'filename'     => 'my-video.mov',
+                'filename' => 'my-video.mov',
                 'content_type' => 'video/quicktime',
-                'size'         => 5 * 1024 * 1024,
+                'size' => 5 * 1024 * 1024,
             ]);
 
         $response->assertOk();
@@ -2224,15 +2223,15 @@ class ClassroomControllerTest extends TestCase
 
     public function test_show_course_sets_can_manage_false_for_regular_member(): void
     {
-        $owner  = User::factory()->create();
+        $owner = User::factory()->create();
         $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Course',
-            'position'     => 1,
+            'title' => 'Course',
+            'position' => 1,
             'is_published' => true,
         ]);
 
@@ -2253,7 +2252,7 @@ class ClassroomControllerTest extends TestCase
     {
         Log::spy();
 
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
@@ -2277,26 +2276,26 @@ class ClassroomControllerTest extends TestCase
     {
         Log::spy();
 
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Course',
-            'description'  => 'Desc',
-            'position'     => 1,
+            'title' => 'Course',
+            'description' => 'Desc',
+            'position' => 1,
         ]);
         $module = CourseModule::create([
             'course_id' => $course->id,
-            'title'     => 'Module 1',
-            'position'  => 1,
+            'title' => 'Module 1',
+            'position' => 1,
         ]);
         $lesson = CourseLesson::create([
             'module_id' => $module->id,
-            'title'     => 'Lesson 1',
-            'position'  => 1,
+            'title' => 'Lesson 1',
+            'position' => 1,
         ]);
 
         $this->mock(CompleteLesson::class, function ($mock) {
@@ -2317,15 +2316,15 @@ class ClassroomControllerTest extends TestCase
 
     public function test_track_preview_play_increments_counters(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
 
         $course = Course::create([
-            'community_id'         => $community->id,
-            'title'                => 'Course With Preview',
-            'position'             => 1,
-            'is_published'         => true,
-            'preview_play_count'   => 0,
+            'community_id' => $community->id,
+            'title' => 'Course With Preview',
+            'position' => 1,
+            'is_published' => true,
+            'preview_play_count' => 0,
             'preview_watch_seconds' => 0,
         ]);
 
@@ -2343,13 +2342,13 @@ class ClassroomControllerTest extends TestCase
 
     public function test_track_preview_play_validates_seconds(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Course',
-            'position'     => 1,
+            'title' => 'Course',
+            'position' => 1,
             'is_published' => true,
         ]);
 
@@ -2364,13 +2363,13 @@ class ClassroomControllerTest extends TestCase
 
     public function test_track_preview_play_rejects_seconds_over_max(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Course',
-            'position'     => 1,
+            'title' => 'Course',
+            'position' => 1,
             'is_published' => true,
         ]);
 
@@ -2387,22 +2386,22 @@ class ClassroomControllerTest extends TestCase
 
     public function test_track_lesson_video_play_increments_counters(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Course',
-            'position'     => 1,
+            'title' => 'Course',
+            'position' => 1,
             'is_published' => true,
         ]);
         $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
         $lesson = CourseLesson::create([
-            'module_id'           => $module->id,
-            'title'               => 'Lesson',
-            'position'            => 1,
-            'video_play_count'    => 0,
+            'module_id' => $module->id,
+            'title' => 'Lesson',
+            'position' => 1,
+            'video_play_count' => 0,
             'video_watch_seconds' => 0,
         ]);
 
@@ -2420,14 +2419,14 @@ class ClassroomControllerTest extends TestCase
 
     public function test_track_lesson_video_play_validates_seconds(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Course',
-            'position'     => 1,
+            'title' => 'Course',
+            'position' => 1,
             'is_published' => true,
         ]);
         $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
@@ -2444,22 +2443,22 @@ class ClassroomControllerTest extends TestCase
 
     public function test_transcode_status_returns_lesson_transcode_info(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Course',
-            'position'     => 1,
+            'title' => 'Course',
+            'position' => 1,
             'is_published' => true,
         ]);
         $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
         $lesson = CourseLesson::create([
-            'module_id'               => $module->id,
-            'title'                   => 'Lesson',
-            'position'                => 1,
-            'video_transcode_status'  => 'processing',
+            'module_id' => $module->id,
+            'title' => 'Lesson',
+            'position' => 1,
+            'video_transcode_status' => 'processing',
             'video_transcode_percent' => 45,
         ]);
 
@@ -2468,7 +2467,7 @@ class ClassroomControllerTest extends TestCase
 
         $response->assertOk();
         $response->assertJson([
-            'status'  => 'processing',
+            'status' => 'processing',
             'percent' => 45,
         ]);
     }
@@ -2477,15 +2476,15 @@ class ClassroomControllerTest extends TestCase
 
     public function test_upload_preview_video_requires_pro_plan(): void
     {
-        $owner     = User::factory()->create(); // free plan
+        $owner = User::factory()->create(); // free plan
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $response = $this->actingAs($owner)
             ->postJson("/communities/{$community->slug}/classroom/preview-videos", [
-                'filename'     => 'preview.mp4',
+                'filename' => 'preview.mp4',
                 'content_type' => 'video/mp4',
-                'size'         => 1024,
+                'size' => 1024,
             ]);
 
         $response->assertForbidden();
@@ -2496,9 +2495,9 @@ class ClassroomControllerTest extends TestCase
     {
         $owner = User::factory()->create();
         CreatorSubscription::create([
-            'user_id'    => $owner->id,
-            'plan'       => CreatorSubscription::PLAN_PRO,
-            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'user_id' => $owner->id,
+            'plan' => CreatorSubscription::PLAN_PRO,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
             'expires_at' => now()->addYear(),
         ]);
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
@@ -2506,9 +2505,9 @@ class ClassroomControllerTest extends TestCase
 
         $response = $this->actingAs($owner)
             ->postJson("/communities/{$community->slug}/classroom/preview-videos", [
-                'filename'     => 'large-preview.mp4',
+                'filename' => 'large-preview.mp4',
                 'content_type' => 'video/mp4',
-                'size'         => 6000 * 1024 * 1024,
+                'size' => 6000 * 1024 * 1024,
             ]);
 
         $response->assertStatus(422);
@@ -2519,9 +2518,9 @@ class ClassroomControllerTest extends TestCase
     {
         $owner = User::factory()->create();
         CreatorSubscription::create([
-            'user_id'    => $owner->id,
-            'plan'       => CreatorSubscription::PLAN_PRO,
-            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'user_id' => $owner->id,
+            'plan' => CreatorSubscription::PLAN_PRO,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
             'expires_at' => now()->addYear(),
         ]);
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
@@ -2539,9 +2538,9 @@ class ClassroomControllerTest extends TestCase
 
         $response = $this->actingAs($owner)
             ->postJson("/communities/{$community->slug}/classroom/preview-videos", [
-                'filename'     => 'preview.mp4',
+                'filename' => 'preview.mp4',
                 'content_type' => 'video/mp4',
-                'size'         => 10 * 1024 * 1024,
+                'size' => 10 * 1024 * 1024,
             ]);
 
         $response->assertOk();
@@ -2552,9 +2551,9 @@ class ClassroomControllerTest extends TestCase
     {
         $owner = User::factory()->create();
         CreatorSubscription::create([
-            'user_id'    => $owner->id,
-            'plan'       => CreatorSubscription::PLAN_PRO,
-            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'user_id' => $owner->id,
+            'plan' => CreatorSubscription::PLAN_PRO,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
             'expires_at' => now()->addYear(),
         ]);
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
@@ -2562,9 +2561,9 @@ class ClassroomControllerTest extends TestCase
 
         $response = $this->actingAs($owner)
             ->postJson("/communities/{$community->slug}/classroom/preview-videos", [
-                'filename'     => 'preview.avi',
+                'filename' => 'preview.avi',
                 'content_type' => 'video/x-msvideo',
-                'size'         => 1024,
+                'size' => 1024,
             ]);
 
         $response->assertUnprocessable();
@@ -2573,16 +2572,16 @@ class ClassroomControllerTest extends TestCase
 
     public function test_regular_member_cannot_upload_preview_video(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $response = $this->actingAs($member)
             ->postJson("/communities/{$community->slug}/classroom/preview-videos", [
-                'filename'     => 'preview.mp4',
+                'filename' => 'preview.mp4',
                 'content_type' => 'video/mp4',
-                'size'         => 1024,
+                'size' => 1024,
             ]);
 
         $response->assertForbidden();
@@ -2592,15 +2591,15 @@ class ClassroomControllerTest extends TestCase
 
     public function test_initiate_multipart_upload_requires_pro_plan(): void
     {
-        $owner     = User::factory()->create(); // free plan
+        $owner = User::factory()->create(); // free plan
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $response = $this->actingAs($owner)
             ->postJson("/communities/{$community->slug}/classroom/multipart/initiate", [
-                'filename'     => 'big-video.mp4',
+                'filename' => 'big-video.mp4',
                 'content_type' => 'video/mp4',
-                'size'         => 100 * 1024 * 1024,
+                'size' => 100 * 1024 * 1024,
             ]);
 
         $response->assertForbidden();
@@ -2611,9 +2610,9 @@ class ClassroomControllerTest extends TestCase
     {
         $owner = User::factory()->create();
         CreatorSubscription::create([
-            'user_id'    => $owner->id,
-            'plan'       => CreatorSubscription::PLAN_PRO,
-            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'user_id' => $owner->id,
+            'plan' => CreatorSubscription::PLAN_PRO,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
             'expires_at' => now()->addYear(),
         ]);
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
@@ -2621,9 +2620,9 @@ class ClassroomControllerTest extends TestCase
 
         $response = $this->actingAs($owner)
             ->postJson("/communities/{$community->slug}/classroom/multipart/initiate", [
-                'filename'     => 'huge-video.mp4',
+                'filename' => 'huge-video.mp4',
                 'content_type' => 'video/mp4',
-                'size'         => 6000 * 1024 * 1024,
+                'size' => 6000 * 1024 * 1024,
             ]);
 
         $response->assertStatus(422);
@@ -2634,9 +2633,9 @@ class ClassroomControllerTest extends TestCase
     {
         $owner = User::factory()->create();
         CreatorSubscription::create([
-            'user_id'    => $owner->id,
-            'plan'       => CreatorSubscription::PLAN_PRO,
-            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'user_id' => $owner->id,
+            'plan' => CreatorSubscription::PLAN_PRO,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
             'expires_at' => now()->addYear(),
         ]);
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
@@ -2654,9 +2653,9 @@ class ClassroomControllerTest extends TestCase
 
         $response = $this->actingAs($owner)
             ->postJson("/communities/{$community->slug}/classroom/multipart/initiate", [
-                'filename'     => 'big-video.mp4',
+                'filename' => 'big-video.mp4',
                 'content_type' => 'video/mp4',
-                'size'         => 100 * 1024 * 1024,
+                'size' => 100 * 1024 * 1024,
             ]);
 
         $response->assertOk();
@@ -2668,9 +2667,9 @@ class ClassroomControllerTest extends TestCase
     {
         $owner = User::factory()->create();
         CreatorSubscription::create([
-            'user_id'    => $owner->id,
-            'plan'       => CreatorSubscription::PLAN_PRO,
-            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'user_id' => $owner->id,
+            'plan' => CreatorSubscription::PLAN_PRO,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
             'expires_at' => now()->addYear(),
         ]);
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
@@ -2688,10 +2687,10 @@ class ClassroomControllerTest extends TestCase
 
         $response = $this->actingAs($owner)
             ->postJson("/communities/{$community->slug}/classroom/multipart/initiate", [
-                'filename'     => 'preview.mp4',
+                'filename' => 'preview.mp4',
                 'content_type' => 'video/mp4',
-                'size'         => 50 * 1024 * 1024,
-                'type'         => 'preview',
+                'size' => 50 * 1024 * 1024,
+                'type' => 'preview',
             ]);
 
         $response->assertOk();
@@ -2700,16 +2699,16 @@ class ClassroomControllerTest extends TestCase
 
     public function test_regular_member_cannot_initiate_multipart_upload(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $response = $this->actingAs($member)
             ->postJson("/communities/{$community->slug}/classroom/multipart/initiate", [
-                'filename'     => 'video.mp4',
+                'filename' => 'video.mp4',
                 'content_type' => 'video/mp4',
-                'size'         => 1024,
+                'size' => 1024,
             ]);
 
         $response->assertForbidden();
@@ -2719,7 +2718,7 @@ class ClassroomControllerTest extends TestCase
 
     public function test_get_part_upload_url_success(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
@@ -2735,8 +2734,8 @@ class ClassroomControllerTest extends TestCase
 
         $response = $this->actingAs($owner)
             ->postJson("/communities/{$community->slug}/classroom/multipart/part-url", [
-                'key'         => 'lesson-videos/test-uuid.mp4',
-                'upload_id'   => 'test-upload-id',
+                'key' => 'lesson-videos/test-uuid.mp4',
+                'upload_id' => 'test-upload-id',
                 'part_number' => 1,
             ]);
 
@@ -2746,7 +2745,7 @@ class ClassroomControllerTest extends TestCase
 
     public function test_get_part_upload_url_validates_required_fields(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
@@ -2759,15 +2758,15 @@ class ClassroomControllerTest extends TestCase
 
     public function test_regular_member_cannot_get_part_upload_url(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $response = $this->actingAs($member)
             ->postJson("/communities/{$community->slug}/classroom/multipart/part-url", [
-                'key'         => 'lesson-videos/test.mp4',
-                'upload_id'   => 'upload-id',
+                'key' => 'lesson-videos/test.mp4',
+                'upload_id' => 'upload-id',
                 'part_number' => 1,
             ]);
 
@@ -2778,7 +2777,7 @@ class ClassroomControllerTest extends TestCase
 
     public function test_complete_multipart_upload_success(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
@@ -2793,9 +2792,9 @@ class ClassroomControllerTest extends TestCase
 
         $response = $this->actingAs($owner)
             ->postJson("/communities/{$community->slug}/classroom/multipart/complete", [
-                'key'       => 'lesson-videos/test-uuid.mp4',
+                'key' => 'lesson-videos/test-uuid.mp4',
                 'upload_id' => 'test-upload-id',
-                'parts'     => [
+                'parts' => [
                     ['PartNumber' => 1, 'ETag' => '"etag1"'],
                     ['PartNumber' => 2, 'ETag' => '"etag2"'],
                 ],
@@ -2807,7 +2806,7 @@ class ClassroomControllerTest extends TestCase
 
     public function test_complete_multipart_upload_validates_required_fields(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
@@ -2820,16 +2819,16 @@ class ClassroomControllerTest extends TestCase
 
     public function test_regular_member_cannot_complete_multipart_upload(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $response = $this->actingAs($member)
             ->postJson("/communities/{$community->slug}/classroom/multipart/complete", [
-                'key'       => 'lesson-videos/test.mp4',
+                'key' => 'lesson-videos/test.mp4',
                 'upload_id' => 'upload-id',
-                'parts'     => [['PartNumber' => 1, 'ETag' => '"etag"']],
+                'parts' => [['PartNumber' => 1, 'ETag' => '"etag"']],
             ]);
 
         $response->assertForbidden();
@@ -2839,7 +2838,7 @@ class ClassroomControllerTest extends TestCase
 
     public function test_abort_multipart_upload_success(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
@@ -2853,7 +2852,7 @@ class ClassroomControllerTest extends TestCase
 
         $response = $this->actingAs($owner)
             ->postJson("/communities/{$community->slug}/classroom/multipart/abort", [
-                'key'       => 'lesson-videos/test-uuid.mp4',
+                'key' => 'lesson-videos/test-uuid.mp4',
                 'upload_id' => 'test-upload-id',
             ]);
 
@@ -2863,7 +2862,7 @@ class ClassroomControllerTest extends TestCase
 
     public function test_abort_multipart_upload_validates_required_fields(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
@@ -2876,14 +2875,14 @@ class ClassroomControllerTest extends TestCase
 
     public function test_regular_member_cannot_abort_multipart_upload(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $response = $this->actingAs($member)
             ->postJson("/communities/{$community->slug}/classroom/multipart/abort", [
-                'key'       => 'lesson-videos/test.mp4',
+                'key' => 'lesson-videos/test.mp4',
                 'upload_id' => 'upload-id',
             ]);
 
@@ -2894,23 +2893,23 @@ class ClassroomControllerTest extends TestCase
 
     public function test_stream_lesson_video_returns_hls_url_when_transcode_completed(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Course',
-            'position'     => 1,
+            'title' => 'Course',
+            'position' => 1,
             'is_published' => true,
         ]);
         $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
         $lesson = CourseLesson::create([
-            'module_id'              => $module->id,
-            'title'                  => 'Lesson',
-            'position'               => 1,
-            'video_path'             => 'lesson-videos/raw.mp4',
-            'video_hls_path'         => 'lesson-videos/hls/master.m3u8',
+            'module_id' => $module->id,
+            'title' => 'Lesson',
+            'position' => 1,
+            'video_path' => 'lesson-videos/raw.mp4',
+            'video_hls_path' => 'lesson-videos/hls/master.m3u8',
             'video_transcode_status' => 'completed',
         ]);
 
@@ -2926,23 +2925,23 @@ class ClassroomControllerTest extends TestCase
 
     public function test_hls_file_returns_404_for_unpublished_course_non_manager(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Course',
-            'position'     => 1,
+            'title' => 'Course',
+            'position' => 1,
             'is_published' => false,
         ]);
         $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
         $lesson = CourseLesson::create([
-            'module_id'              => $module->id,
-            'title'                  => 'Lesson',
-            'position'               => 1,
-            'video_hls_path'         => 'lesson-videos/hls/master.m3u8',
+            'module_id' => $module->id,
+            'title' => 'Lesson',
+            'position' => 1,
+            'video_hls_path' => 'lesson-videos/hls/master.m3u8',
             'video_transcode_status' => 'completed',
         ]);
 
@@ -2953,28 +2952,28 @@ class ClassroomControllerTest extends TestCase
 
     public function test_hls_file_returns_403_without_course_access(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->paid()->create(['owner_id' => $owner->id]);
         Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
+            'user_id' => $member->id,
         ]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Course',
-            'position'     => 1,
+            'title' => 'Course',
+            'position' => 1,
             'is_published' => true,
-            'access_type'  => 'paid_once',
-            'price'        => 50,
+            'access_type' => 'paid_once',
+            'price' => 50,
         ]);
         $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
         $lesson = CourseLesson::create([
-            'module_id'              => $module->id,
-            'title'                  => 'Lesson',
-            'position'               => 1,
-            'video_hls_path'         => 'lesson-videos/hls/master.m3u8',
+            'module_id' => $module->id,
+            'title' => 'Lesson',
+            'position' => 1,
+            'video_hls_path' => 'lesson-videos/hls/master.m3u8',
             'video_transcode_status' => 'completed',
         ]);
 
@@ -2985,22 +2984,22 @@ class ClassroomControllerTest extends TestCase
 
     public function test_hls_file_returns_404_when_transcode_not_completed(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Course',
-            'position'     => 1,
+            'title' => 'Course',
+            'position' => 1,
             'is_published' => true,
         ]);
         $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
         $lesson = CourseLesson::create([
-            'module_id'              => $module->id,
-            'title'                  => 'Lesson',
-            'position'               => 1,
-            'video_hls_path'         => null,
+            'module_id' => $module->id,
+            'title' => 'Lesson',
+            'position' => 1,
+            'video_hls_path' => null,
             'video_transcode_status' => 'pending',
         ]);
 
@@ -3017,22 +3016,22 @@ class ClassroomControllerTest extends TestCase
             "#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=800000\nvideo_720p.m3u8\n"
         );
 
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Course',
-            'position'     => 1,
+            'title' => 'Course',
+            'position' => 1,
             'is_published' => true,
         ]);
         $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
         $lesson = CourseLesson::create([
-            'module_id'              => $module->id,
-            'title'                  => 'Lesson',
-            'position'               => 1,
-            'video_hls_path'         => 'lesson-videos/hls/master.m3u8',
+            'module_id' => $module->id,
+            'title' => 'Lesson',
+            'position' => 1,
+            'video_hls_path' => 'lesson-videos/hls/master.m3u8',
             'video_transcode_status' => 'completed',
         ]);
 

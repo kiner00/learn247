@@ -43,7 +43,7 @@ class DetectAbandonedCarts extends Command
         foreach ($abandonedCarts as $cartEvent) {
             // Mark as abandoned and dispatched
             $cartEvent->update([
-                'event_type'          => CartEvent::TYPE_ABANDONED,
+                'event_type' => CartEvent::TYPE_ABANDONED,
                 'abandoned_email_sent' => true,
             ]);
 

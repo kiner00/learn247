@@ -6,7 +6,7 @@ class PayoutChannelMap
 {
     private const MAP = [
         'gcash' => 'PH_GCASH',
-        'maya'  => 'PH_PAYMAYA',
+        'maya' => 'PH_PAYMAYA',
     ];
 
     public static function resolve(string $method): string

@@ -17,9 +17,9 @@ class AffiliateChartService
     public function periodStart(?string $period): ?Carbon
     {
         return match ($period) {
-            'week'  => Carbon::now()->startOfWeek(),
+            'week' => Carbon::now()->startOfWeek(),
             'month' => Carbon::now()->startOfMonth(),
-            'year'  => Carbon::now()->startOfYear(),
+            'year' => Carbon::now()->startOfYear(),
             default => null,
         };
     }
@@ -34,15 +34,16 @@ class AffiliateChartService
             $days = $period === 'week' ? 7 : Carbon::now()->daysInMonth;
             $rows = AffiliateConversion::whereIn('affiliate_id', $affiliateIds)
                 ->where('created_at', '>=', $from)
-                ->selectRaw("DATE(created_at) as label, SUM(commission_amount) as total")
+                ->selectRaw('DATE(created_at) as label, SUM(commission_amount) as total')
                 ->groupBy('label')
                 ->pluck('total', 'label');
 
             $result = [];
             for ($i = 0; $i < $days; $i++) {
-                $d        = $from->copy()->addDays($i)->toDateString();
+                $d = $from->copy()->addDays($i)->toDateString();
                 $result[] = ['label' => Carbon::parse($d)->format('M j'), 'total' => (float) ($rows[$d] ?? 0)];
             }
+
             return $result;
         }
 
@@ -55,10 +56,11 @@ class AffiliateChartService
         $result = [];
         $cursor = $from->copy()->startOfMonth();
         while ($cursor <= Carbon::now()) {
-            $key      = $cursor->format('Y-m');
+            $key = $cursor->format('Y-m');
             $result[] = ['label' => $cursor->format('M Y'), 'total' => (float) ($rows[$key] ?? 0)];
             $cursor->addMonth();
         }
+
         return $result;
     }
 

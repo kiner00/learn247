@@ -22,7 +22,7 @@ class RecurringCheckoutStrategyTest extends TestCase
             amount: 499.00,
             currency: 'PHP',
             description: 'Test subscription',
-            referenceId: 'test_ref_' . time(),
+            referenceId: 'test_ref_'.time(),
             successUrl: 'https://example.com/success',
             failureUrl: 'https://example.com/failure',
             itemName: 'Test Item',
@@ -42,8 +42,8 @@ class RecurringCheckoutStrategyTest extends TestCase
         $xendit->shouldReceive('createRecurringPlan')
             ->once()
             ->andReturn([
-                'id'      => 'repl_test_001',
-                'status'  => 'REQUIRES_ACTION',
+                'id' => 'repl_test_001',
+                'status' => 'REQUIRES_ACTION',
                 'actions' => [
                     ['url' => 'https://linking.xendit.co/test', 'action' => 'AUTH'],
                 ],
@@ -72,8 +72,8 @@ class RecurringCheckoutStrategyTest extends TestCase
         $xendit->shouldReceive('createRecurringPlan')
             ->once()
             ->andReturn([
-                'id'      => 'repl_reuse',
-                'status'  => 'REQUIRES_ACTION',
+                'id' => 'repl_reuse',
+                'status' => 'REQUIRES_ACTION',
                 'actions' => [
                     ['url' => 'https://linking.xendit.co/reuse', 'action' => 'AUTH'],
                 ],
@@ -98,8 +98,8 @@ class RecurringCheckoutStrategyTest extends TestCase
         $xendit->shouldReceive('createRecurringPlan')
             ->once()
             ->andReturn([
-                'id'      => 'repl_save',
-                'status'  => 'REQUIRES_ACTION',
+                'id' => 'repl_save',
+                'status' => 'REQUIRES_ACTION',
                 'actions' => [['url' => 'https://linking.xendit.co/save', 'action' => 'AUTH']],
             ]);
 
@@ -119,7 +119,7 @@ class RecurringCheckoutStrategyTest extends TestCase
         $xendit->shouldReceive('createInvoice')
             ->once()
             ->andReturn([
-                'id'          => 'inv_strat_001',
+                'id' => 'inv_strat_001',
                 'invoice_url' => 'https://checkout.xendit.co/strat',
             ]);
 

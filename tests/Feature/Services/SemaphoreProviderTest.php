@@ -17,7 +17,7 @@ class SemaphoreProviderTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->provider = new SemaphoreProvider();
+        $this->provider = new SemaphoreProvider;
     }
 
     public function test_send_success(): void
@@ -27,7 +27,7 @@ class SemaphoreProviderTest extends TestCase
         ]);
 
         $community = Community::factory()->create([
-            'sms_api_key'     => 'sem-key',
+            'sms_api_key' => 'sem-key',
             'sms_sender_name' => 'MySender',
         ]);
 
@@ -52,7 +52,7 @@ class SemaphoreProviderTest extends TestCase
         ]);
 
         $community = Community::factory()->create([
-            'sms_api_key'     => 'sem-key',
+            'sms_api_key' => 'sem-key',
             'sms_sender_name' => null,
         ]);
 
@@ -88,7 +88,7 @@ class SemaphoreProviderTest extends TestCase
 
         $community = Community::factory()->create(['sms_api_key' => 'sem-key']);
 
-        $numbers = array_map(fn ($i) => '63917' . str_pad($i, 7, '0', STR_PAD_LEFT), range(1, 250));
+        $numbers = array_map(fn ($i) => '63917'.str_pad($i, 7, '0', STR_PAD_LEFT), range(1, 250));
 
         $result = $this->provider->send($community, $numbers, 'Batch test');
 

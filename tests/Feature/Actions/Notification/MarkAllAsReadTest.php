@@ -17,7 +17,7 @@ class MarkAllAsReadTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->action = new MarkAllAsRead();
+        $this->action = new MarkAllAsRead;
     }
 
     public function test_marks_all_unread_notifications_as_read(): void
@@ -47,7 +47,7 @@ class MarkAllAsReadTest extends TestCase
 
     public function test_does_not_affect_other_users_notifications(): void
     {
-        $user  = User::factory()->create();
+        $user = User::factory()->create();
         $other = User::factory()->create();
 
         Notification::create(['user_id' => $user->id, 'type' => 'test', 'data' => []]);

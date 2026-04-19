@@ -4,7 +4,6 @@ namespace App\Actions\Community;
 
 use App\Ai\Agents\LandingPageSectionBuilder;
 use App\Models\Community;
-use Illuminate\Support\Facades\Log;
 
 class RegenerateLandingSection
 {
@@ -16,6 +15,7 @@ class RegenerateLandingSection
 
     /**
      * @return array{section: string, data: array}
+     *
      * @throws \RuntimeException on AI failure
      */
     public function execute(Community $community, string $section): array
@@ -27,14 +27,14 @@ class RegenerateLandingSection
         $community->load('owner')->loadCount('members');
 
         $agent = new LandingPageSectionBuilder([
-            'name'         => $community->name,
-            'category'     => $community->category,
-            'description'  => $community->description,
-            'price'        => $community->price,
-            'currency'     => $community->currency ?? 'PHP',
+            'name' => $community->name,
+            'category' => $community->category,
+            'description' => $community->description,
+            'price' => $community->price,
+            'currency' => $community->currency ?? 'PHP',
             'creator_name' => $community->owner->name ?? 'Creator',
             'member_count' => $community->members_count ?? 0,
-            'section'      => $section,
+            'section' => $section,
         ]);
 
         $response = $agent->prompt("Regenerate the '{$section}' section now. Return ONLY valid JSON for this section, no markdown.");

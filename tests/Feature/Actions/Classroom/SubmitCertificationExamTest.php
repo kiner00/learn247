@@ -22,31 +22,31 @@ class SubmitCertificationExamTest extends TestCase
         $community = Community::factory()->create();
         $cert = CourseCertification::factory()->create([
             'community_id' => $community->id,
-            'pass_score'   => $passScore,
+            'pass_score' => $passScore,
         ]);
 
         // Question 1: correct answer = option A
         $q1 = CertificationQuestion::factory()->create([
             'certification_id' => $cert->id,
-            'position'         => 0,
+            'position' => 0,
         ]);
         $q1CorrectOption = CertificationQuestionOption::factory()->correct()->create(['question_id' => $q1->id, 'label' => 'A']);
-        $q1WrongOption   = CertificationQuestionOption::factory()->create(['question_id' => $q1->id, 'label' => 'B']);
+        $q1WrongOption = CertificationQuestionOption::factory()->create(['question_id' => $q1->id, 'label' => 'B']);
 
         // Question 2: correct answer = option C
         $q2 = CertificationQuestion::factory()->create([
             'certification_id' => $cert->id,
-            'position'         => 1,
+            'position' => 1,
         ]);
         $q2CorrectOption = CertificationQuestionOption::factory()->correct()->create(['question_id' => $q2->id, 'label' => 'C']);
-        $q2WrongOption   = CertificationQuestionOption::factory()->create(['question_id' => $q2->id, 'label' => 'D']);
+        $q2WrongOption = CertificationQuestionOption::factory()->create(['question_id' => $q2->id, 'label' => 'D']);
 
         return [
-            'cert'    => $cert,
-            'q1'      => $q1,
+            'cert' => $cert,
+            'q1' => $q1,
             'q1Right' => $q1CorrectOption,
             'q1Wrong' => $q1WrongOption,
-            'q2'      => $q2,
+            'q2' => $q2,
             'q2Right' => $q2CorrectOption,
             'q2Wrong' => $q2WrongOption,
         ];
@@ -70,14 +70,14 @@ class SubmitCertificationExamTest extends TestCase
         $this->assertNotNull($result['certificate_uuid']);
 
         $this->assertDatabaseHas('certification_attempts', [
-            'user_id'          => $user->id,
+            'user_id' => $user->id,
             'certification_id' => $data['cert']->id,
-            'score'            => 100,
-            'passed'           => true,
+            'score' => 100,
+            'passed' => true,
         ]);
 
         $this->assertDatabaseHas('certificates', [
-            'user_id'          => $user->id,
+            'user_id' => $user->id,
             'certification_id' => $data['cert']->id,
         ]);
     }
@@ -99,7 +99,7 @@ class SubmitCertificationExamTest extends TestCase
         $this->assertNull($result['certificate_uuid']);
 
         $this->assertDatabaseMissing('certificates', [
-            'user_id'          => $user->id,
+            'user_id' => $user->id,
             'certification_id' => $data['cert']->id,
         ]);
     }

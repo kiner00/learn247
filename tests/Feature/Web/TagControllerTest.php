@@ -15,7 +15,7 @@ class TagControllerTest extends TestCase
 
     private function ownerWithCommunity(): array
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         return [$owner, $community];
@@ -62,17 +62,17 @@ class TagControllerTest extends TestCase
 
         $this->actingAs($owner)
             ->post(route('communities.tags.store', $community), [
-                'name'  => 'Premium',
+                'name' => 'Premium',
                 'color' => '#FF0000',
-                'type'  => 'manual',
+                'type' => 'manual',
             ])
             ->assertRedirect();
 
         $this->assertDatabaseHas('tags', [
             'community_id' => $community->id,
-            'name'         => 'Premium',
-            'slug'         => 'premium',
-            'color'        => '#FF0000',
+            'name' => 'Premium',
+            'slug' => 'premium',
+            'color' => '#FF0000',
         ]);
     }
 
@@ -110,7 +110,7 @@ class TagControllerTest extends TestCase
 
         $this->actingAs($owner)
             ->patch(route('communities.tags.update', [$community, $tag]), [
-                'name'  => 'New Name',
+                'name' => 'New Name',
                 'color' => '#00FF00',
             ])
             ->assertRedirect();
@@ -168,20 +168,20 @@ class TagControllerTest extends TestCase
     {
         [$owner, $community] = $this->ownerWithCommunity();
 
-        $tag    = Tag::create(['community_id' => $community->id, 'name' => 'VIP', 'slug' => 'vip']);
+        $tag = Tag::create(['community_id' => $community->id, 'name' => 'VIP', 'slug' => 'vip']);
         $member = CommunityMember::factory()->create(['community_id' => $community->id]);
 
         $this->actingAs($owner)
             ->post(route('communities.tags.assign', $community), [
                 'member_ids' => [$member->id],
-                'tag_ids'    => [$tag->id],
-                'action'     => 'attach',
+                'tag_ids' => [$tag->id],
+                'action' => 'attach',
             ])
             ->assertRedirect();
 
         $this->assertDatabaseHas('community_member_tag', [
             'community_member_id' => $member->id,
-            'tag_id'              => $tag->id,
+            'tag_id' => $tag->id,
         ]);
     }
 
@@ -189,21 +189,21 @@ class TagControllerTest extends TestCase
     {
         [$owner, $community] = $this->ownerWithCommunity();
 
-        $tag    = Tag::create(['community_id' => $community->id, 'name' => 'VIP', 'slug' => 'vip']);
+        $tag = Tag::create(['community_id' => $community->id, 'name' => 'VIP', 'slug' => 'vip']);
         $member = CommunityMember::factory()->create(['community_id' => $community->id]);
         $member->tags()->attach($tag->id, ['tagged_at' => now()]);
 
         $this->actingAs($owner)
             ->post(route('communities.tags.assign', $community), [
                 'member_ids' => [$member->id],
-                'tag_ids'    => [$tag->id],
-                'action'     => 'detach',
+                'tag_ids' => [$tag->id],
+                'action' => 'detach',
             ])
             ->assertRedirect();
 
         $this->assertDatabaseMissing('community_member_tag', [
             'community_member_id' => $member->id,
-            'tag_id'              => $tag->id,
+            'tag_id' => $tag->id,
         ]);
     }
 
@@ -214,8 +214,8 @@ class TagControllerTest extends TestCase
         $this->actingAs($owner)
             ->post(route('communities.tags.assign', $community), [
                 'member_ids' => [1],
-                'tag_ids'    => [1],
-                'action'     => 'invalid',
+                'tag_ids' => [1],
+                'action' => 'invalid',
             ])
             ->assertSessionHasErrors('action');
     }

@@ -8,7 +8,6 @@ use App\Models\CommunityDirectMessage;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class CommunityDmController extends Controller
@@ -58,11 +57,11 @@ class CommunityDmController extends Controller
                 ->value('created_at');
 
             return [
-                'id'              => $user->id,
-                'name'            => $user->name,
-                'avatar'          => $user->avatar,
+                'id' => $user->id,
+                'name' => $user->name,
+                'avatar' => $user->avatar,
                 'last_message_at' => $lastMessage,
-                'message_count'   => $count,
+                'message_count' => $count,
             ];
         })->sortByDesc('last_message_at')->values();
 
@@ -86,10 +85,10 @@ class CommunityDmController extends Controller
             ->limit(200)
             ->get()
             ->map(fn ($m) => [
-                'id'         => $m->id,
-                'sender_id'  => $m->sender_id,
-                'content'    => $m->content,
-                'is_mine'    => $m->sender_id === $myId,
+                'id' => $m->id,
+                'sender_id' => $m->sender_id,
+                'content' => $m->content,
+                'is_mine' => $m->sender_id === $myId,
                 'created_at' => $m->created_at,
             ]);
 
@@ -103,24 +102,24 @@ class CommunityDmController extends Controller
     {
         $request->validate([
             'receiver_id' => ['required', 'integer', 'exists:users,id'],
-            'content'     => ['required', 'string', 'max:2000'],
+            'content' => ['required', 'string', 'max:2000'],
         ]);
 
         $message = CommunityDirectMessage::create([
             'community_id' => $community->id,
-            'sender_id'    => $request->user()->id,
-            'receiver_id'  => $request->receiver_id,
-            'content'      => $request->content,
+            'sender_id' => $request->user()->id,
+            'receiver_id' => $request->receiver_id,
+            'content' => $request->content,
         ]);
 
         Log::info('DM sent', ['id' => $message->id, 'community' => $community->id, 'from' => $request->user()->id, 'to' => $request->receiver_id]);
 
         return response()->json([
             'message' => [
-                'id'         => $message->id,
-                'sender_id'  => $message->sender_id,
-                'content'    => $message->content,
-                'is_mine'    => true,
+                'id' => $message->id,
+                'sender_id' => $message->sender_id,
+                'content' => $message->content,
+                'is_mine' => true,
                 'created_at' => $message->created_at,
             ],
         ]);
@@ -131,7 +130,7 @@ class CommunityDmController extends Controller
      */
     public function poll(Request $request, Community $community, int $userId): JsonResponse
     {
-        $myId  = $request->user()->id;
+        $myId = $request->user()->id;
         $after = (int) $request->query('after', 0);
 
         $messages = CommunityDirectMessage::where('community_id', $community->id)
@@ -144,10 +143,10 @@ class CommunityDmController extends Controller
             ->select('id', 'sender_id', 'receiver_id', 'content', 'created_at')
             ->get()
             ->map(fn ($m) => [
-                'id'         => $m->id,
-                'sender_id'  => $m->sender_id,
-                'content'    => $m->content,
-                'is_mine'    => $m->sender_id === $myId,
+                'id' => $m->id,
+                'sender_id' => $m->sender_id,
+                'content' => $m->content,
+                'is_mine' => $m->sender_id === $myId,
                 'created_at' => $m->created_at,
             ]);
 

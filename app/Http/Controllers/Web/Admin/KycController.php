@@ -18,8 +18,8 @@ class KycController extends Controller
         $wasVerified = $user->isKycVerified();
 
         $user->update([
-            'kyc_verified_at'     => $wasVerified ? null : now(),
-            'kyc_status'          => $wasVerified ? User::KYC_NONE : User::KYC_APPROVED,
+            'kyc_verified_at' => $wasVerified ? null : now(),
+            'kyc_status' => $wasVerified ? User::KYC_NONE : User::KYC_APPROVED,
             'kyc_rejected_reason' => null,
         ]);
 
@@ -37,37 +37,37 @@ class KycController extends Controller
             ->paginate(20)
             ->withQueryString()
             ->through(fn ($u) => [
-                'id'              => $u->id,
-                'name'            => $u->name,
-                'email'           => $u->email,
-                'username'        => $u->username,
-                'kyc_status'      => $u->kyc_status,
+                'id' => $u->id,
+                'name' => $u->name,
+                'email' => $u->email,
+                'username' => $u->username,
+                'kyc_status' => $u->kyc_status,
                 'kyc_id_document' => $u->kyc_id_document,
-                'kyc_selfie'      => $u->kyc_selfie,
-                'submitted_at'    => $u->kyc_submitted_at?->diffForHumans(),
+                'kyc_selfie' => $u->kyc_selfie,
+                'submitted_at' => $u->kyc_submitted_at?->diffForHumans(),
                 'rejected_reason' => $u->kyc_rejected_reason,
-                'ai_result'       => $u->kyc_ai_result,
-                'ai_rejections'   => $u->kyc_ai_rejections ?? 0,
+                'ai_result' => $u->kyc_ai_result,
+                'ai_rejections' => $u->kyc_ai_rejections ?? 0,
             ]);
 
         $counts = [
             'submitted' => User::where('kyc_status', User::KYC_SUBMITTED)->count(),
-            'approved'  => User::where('kyc_status', User::KYC_APPROVED)->count(),
-            'rejected'  => User::where('kyc_status', User::KYC_REJECTED)->count(),
+            'approved' => User::where('kyc_status', User::KYC_APPROVED)->count(),
+            'rejected' => User::where('kyc_status', User::KYC_REJECTED)->count(),
         ];
 
         return Inertia::render('Admin/KycReviews', [
-            'users'   => $users,
+            'users' => $users,
             'filters' => ['status' => $status],
-            'counts'  => $counts,
+            'counts' => $counts,
         ]);
     }
 
     public function approve(User $user): RedirectResponse
     {
         $user->update([
-            'kyc_status'          => User::KYC_APPROVED,
-            'kyc_verified_at'     => now(),
+            'kyc_status' => User::KYC_APPROVED,
+            'kyc_verified_at' => now(),
             'kyc_rejected_reason' => null,
         ]);
 
@@ -86,8 +86,8 @@ class KycController extends Controller
         ]);
 
         $user->update([
-            'kyc_status'          => User::KYC_REJECTED,
-            'kyc_verified_at'     => null,
+            'kyc_status' => User::KYC_REJECTED,
+            'kyc_verified_at' => null,
             'kyc_rejected_reason' => $data['reason'],
         ]);
 

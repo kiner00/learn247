@@ -18,7 +18,7 @@ class CourseModuleController extends Controller
         try {
             $this->authorize('manage', $community);
             $data = $request->validate([
-                'title'   => ['required', 'string', 'max:255'],
+                'title' => ['required', 'string', 'max:255'],
                 'is_free' => ['sometimes', 'boolean'],
             ]);
             $action->store($course, $data);
@@ -35,7 +35,7 @@ class CourseModuleController extends Controller
         try {
             $this->authorize('manage', $community);
             $data = $request->validate([
-                'title'   => ['required', 'string', 'max:255'],
+                'title' => ['required', 'string', 'max:255'],
                 'is_free' => ['sometimes', 'boolean'],
             ]);
             $action->update($module, $data);

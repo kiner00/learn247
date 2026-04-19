@@ -15,7 +15,7 @@ class CommunityDmControllerTest extends TestCase
 
     private function membersInCommunity(): array
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
 
         $userA = User::factory()->create();
@@ -23,15 +23,15 @@ class CommunityDmControllerTest extends TestCase
 
         CommunityMember::factory()->admin()->create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
+            'user_id' => $owner->id,
         ]);
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $userA->id,
+            'user_id' => $userA->id,
         ]);
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $userB->id,
+            'user_id' => $userB->id,
         ]);
 
         return [$community, $userA, $userB];
@@ -45,9 +45,9 @@ class CommunityDmControllerTest extends TestCase
 
         CommunityDirectMessage::create([
             'community_id' => $community->id,
-            'sender_id'    => $userA->id,
-            'receiver_id'  => $userB->id,
-            'content'      => 'Hello!',
+            'sender_id' => $userA->id,
+            'receiver_id' => $userB->id,
+            'content' => 'Hello!',
         ]);
 
         $response = $this->actingAs($userA)
@@ -77,15 +77,15 @@ class CommunityDmControllerTest extends TestCase
 
         CommunityDirectMessage::create([
             'community_id' => $community->id,
-            'sender_id'    => $userA->id,
-            'receiver_id'  => $userB->id,
-            'content'      => 'Hey',
+            'sender_id' => $userA->id,
+            'receiver_id' => $userB->id,
+            'content' => 'Hey',
         ]);
         CommunityDirectMessage::create([
             'community_id' => $community->id,
-            'sender_id'    => $userB->id,
-            'receiver_id'  => $userA->id,
-            'content'      => 'Hi back',
+            'sender_id' => $userB->id,
+            'receiver_id' => $userA->id,
+            'content' => 'Hi back',
         ]);
 
         $response = $this->actingAs($userA)
@@ -107,7 +107,7 @@ class CommunityDmControllerTest extends TestCase
         $response = $this->actingAs($userA)
             ->postJson("/communities/{$community->slug}/dm/send", [
                 'receiver_id' => $userB->id,
-                'content'     => 'Test message',
+                'content' => 'Test message',
             ]);
 
         $response->assertOk();
@@ -116,9 +116,9 @@ class CommunityDmControllerTest extends TestCase
 
         $this->assertDatabaseHas('community_direct_messages', [
             'community_id' => $community->id,
-            'sender_id'    => $userA->id,
-            'receiver_id'  => $userB->id,
-            'content'      => 'Test message',
+            'sender_id' => $userA->id,
+            'receiver_id' => $userB->id,
+            'content' => 'Test message',
         ]);
     }
 
@@ -141,15 +141,15 @@ class CommunityDmControllerTest extends TestCase
 
         $msg1 = CommunityDirectMessage::create([
             'community_id' => $community->id,
-            'sender_id'    => $userB->id,
-            'receiver_id'  => $userA->id,
-            'content'      => 'First',
+            'sender_id' => $userB->id,
+            'receiver_id' => $userA->id,
+            'content' => 'First',
         ]);
         $msg2 = CommunityDirectMessage::create([
             'community_id' => $community->id,
-            'sender_id'    => $userB->id,
-            'receiver_id'  => $userA->id,
-            'content'      => 'Second',
+            'sender_id' => $userB->id,
+            'receiver_id' => $userA->id,
+            'content' => 'Second',
         ]);
 
         $response = $this->actingAs($userA)
@@ -164,8 +164,8 @@ class CommunityDmControllerTest extends TestCase
 
     public function test_non_member_cannot_access_dm_conversations(): void
     {
-        $owner     = User::factory()->create();
-        $outsider  = User::factory()->create();
+        $owner = User::factory()->create();
+        $outsider = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
 
         $response = $this->actingAs($outsider)

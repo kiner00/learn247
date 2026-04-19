@@ -4,7 +4,6 @@ namespace Tests\Feature\Web;
 
 use App\Actions\Community\GenerateLandingPage;
 use App\Actions\Community\RegenerateLandingSection;
-use App\Actions\Community\SendAnnouncement;
 use App\Contracts\SmsProvider;
 use App\Models\Affiliate;
 use App\Models\Community;
@@ -29,22 +28,49 @@ class CommunityControllerTest extends TestCase
 
     private function createFakeEmailProvider(bool $validKey = true): \App\Contracts\EmailProvider
     {
-        return new class($validKey) implements \App\Contracts\EmailProvider {
+        return new class($validKey) implements \App\Contracts\EmailProvider
+        {
             public function __construct(private bool $validKey = true) {}
-            public function validateApiKey(\App\Models\Community $community): bool { return $this->validKey; }
-            public function sendEmail(\App\Models\Community $community, array $params): array { return ['id' => 'msg_1']; }
-            public function sendBatch(\App\Models\Community $community, array $emails): array { return []; }
-            public function addDomain(\App\Models\Community $community, string $domain): array {
+
+            public function validateApiKey(\App\Models\Community $community): bool
+            {
+                return $this->validKey;
+            }
+
+            public function sendEmail(\App\Models\Community $community, array $params): array
+            {
+                return ['id' => 'msg_1'];
+            }
+
+            public function sendBatch(\App\Models\Community $community, array $emails): array
+            {
+                return [];
+            }
+
+            public function addDomain(\App\Models\Community $community, string $domain): array
+            {
                 return ['id' => 'dom_123', 'status' => 'pending', 'records' => []];
             }
-            public function getDomain(\App\Models\Community $community, string $domainId): array {
+
+            public function getDomain(\App\Models\Community $community, string $domainId): array
+            {
                 return ['id' => 'dom_123', 'name' => 'mail.example.com', 'status' => 'verified', 'records' => []];
             }
-            public function verifyDomain(\App\Models\Community $community, string $domainId): array {
+
+            public function verifyDomain(\App\Models\Community $community, string $domainId): array
+            {
                 return ['id' => 'dom_123', 'status' => 'verified'];
             }
-            public static function id(): string { return 'fake'; }
-            public static function label(): string { return 'Fake'; }
+
+            public static function id(): string
+            {
+                return 'fake';
+            }
+
+            public static function label(): string
+            {
+                return 'Fake';
+            }
         };
     }
 
@@ -65,7 +91,7 @@ class CommunityControllerTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post('/communities', [
-            'name'        => 'My Community',
+            'name' => 'My Community',
             'description' => 'A test community.',
             'cover_image' => UploadedFile::fake()->image('cover.jpg'),
         ]);
@@ -92,7 +118,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_authenticated_user_can_view_a_public_community(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['is_private' => false]);
 
         $this->actingAs($user)
@@ -110,8 +136,8 @@ class CommunityControllerTest extends TestCase
 
     public function test_private_community_show_page_denied_for_non_member(): void
     {
-        $owner   = User::factory()->create();
-        $other   = User::factory()->create();
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'is_private' => true]);
 
         $this->actingAs($other)
@@ -123,7 +149,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_authenticated_user_can_join_free_community(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['price' => 0]);
 
         $this->actingAs($user)
@@ -132,7 +158,7 @@ class CommunityControllerTest extends TestCase
 
         $this->assertDatabaseHas('community_members', [
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
     }
 
@@ -148,7 +174,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_member_can_view_members_page(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
@@ -161,7 +187,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_owner_can_view_settings_page(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
@@ -172,8 +198,8 @@ class CommunityControllerTest extends TestCase
 
     public function test_non_owner_cannot_view_settings_page(): void
     {
-        $owner     = User::factory()->create();
-        $other     = User::factory()->create();
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $other->id]);
 
@@ -186,7 +212,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_owner_can_update_community(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $response = $this->actingAs($owner)->patch("/communities/{$community->slug}", [
@@ -199,8 +225,8 @@ class CommunityControllerTest extends TestCase
 
     public function test_non_owner_cannot_update_community(): void
     {
-        $owner     = User::factory()->create();
-        $other     = User::factory()->create();
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($other)
@@ -214,7 +240,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_owner_can_delete_community(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $response = $this->actingAs($owner)->delete("/communities/{$community->slug}");
@@ -225,8 +251,8 @@ class CommunityControllerTest extends TestCase
 
     public function test_non_owner_cannot_delete_community(): void
     {
-        $owner     = User::factory()->create();
-        $other     = User::factory()->create();
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($other)
@@ -238,13 +264,13 @@ class CommunityControllerTest extends TestCase
 
     public function test_deleting_community_with_active_subscribers_schedules_deletion(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->paid()->create(['owner_id' => $owner->id]);
         $subscriber = User::factory()->create();
 
         Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $subscriber->id,
+            'user_id' => $subscriber->id,
         ]);
 
         $response = $this->actingAs($owner)->delete("/communities/{$community->slug}");
@@ -270,7 +296,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_owner_can_view_analytics_page(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
@@ -285,7 +311,7 @@ class CommunityControllerTest extends TestCase
     {
         Mail::fake();
 
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
@@ -301,7 +327,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_owner_can_update_level_perks(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner)
@@ -314,7 +340,7 @@ class CommunityControllerTest extends TestCase
     public function test_owner_can_add_gallery_image(): void
     {
         Storage::fake();
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner)
@@ -325,19 +351,19 @@ class CommunityControllerTest extends TestCase
 
         $this->assertDatabaseHas('community_gallery_items', [
             'community_id' => $community->id,
-            'type'         => 'image',
+            'type' => 'image',
         ]);
     }
 
     public function test_owner_can_remove_gallery_item(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $item      = \App\Models\CommunityGalleryItem::create([
+        $item = \App\Models\CommunityGalleryItem::create([
             'community_id' => $community->id,
-            'type'         => 'image',
-            'image_path'   => 'community-gallery/img1.jpg',
-            'position'     => 0,
+            'type' => 'image',
+            'image_path' => 'community-gallery/img1.jpg',
+            'position' => 0,
         ]);
 
         $this->actingAs($owner)
@@ -349,7 +375,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_about_page_with_authenticated_user(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
@@ -360,7 +386,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_members_page_with_admin_filter(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
@@ -429,15 +455,15 @@ class CommunityControllerTest extends TestCase
 
     public function test_show_auto_creates_affiliate_for_active_subscriber(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['price' => 500]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
         Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_auto_aff',
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->addMonth(),
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_auto_aff',
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addMonth(),
         ]);
 
         $this->actingAs($user)
@@ -446,19 +472,19 @@ class CommunityControllerTest extends TestCase
 
         $this->assertDatabaseHas('affiliates', [
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
     }
 
     public function test_about_page_with_ref_code_cookie(): void
     {
         $affiliateUser = User::factory()->create();
-        $community     = Community::factory()->create(['affiliate_commission_rate' => 10]);
-        $affiliate     = \App\Models\Affiliate::create([
-            'user_id'      => $affiliateUser->id,
+        $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
+        $affiliate = \App\Models\Affiliate::create([
+            'user_id' => $affiliateUser->id,
             'community_id' => $community->id,
-            'code'         => 'REFTEST1',
-            'status'       => \App\Models\Affiliate::STATUS_ACTIVE,
+            'code' => 'REFTEST1',
+            'status' => \App\Models\Affiliate::STATUS_ACTIVE,
         ]);
 
         $this->withCookie('ref_code', 'REFTEST1')
@@ -484,38 +510,38 @@ class CommunityControllerTest extends TestCase
         $affUser = User::factory()->create();
         $affiliate = \App\Models\Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => $affUser->id,
-            'code'         => 'WEBANAFF',
-            'status'       => \App\Models\Affiliate::STATUS_ACTIVE,
+            'user_id' => $affUser->id,
+            'code' => 'WEBANAFF',
+            'status' => \App\Models\Affiliate::STATUS_ACTIVE,
         ]);
 
         $subscriber = User::factory()->create();
         $sub = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $subscriber->id,
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->addMonth(),
+            'user_id' => $subscriber->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addMonth(),
         ]);
         $payment = Payment::create([
             'subscription_id' => $sub->id,
-            'community_id'    => $community->id,
-            'user_id'         => $subscriber->id,
-            'amount'          => 500,
-            'currency'        => 'PHP',
-            'status'          => Payment::STATUS_PAID,
-            'metadata'        => [],
-            'paid_at'         => now()->subDays(20),
+            'community_id' => $community->id,
+            'user_id' => $subscriber->id,
+            'amount' => 500,
+            'currency' => 'PHP',
+            'status' => Payment::STATUS_PAID,
+            'metadata' => [],
+            'paid_at' => now()->subDays(20),
         ]);
         \App\Models\AffiliateConversion::create([
-            'affiliate_id'    => $affiliate->id,
+            'affiliate_id' => $affiliate->id,
             'subscription_id' => $sub->id,
-            'payment_id'      => $payment->id,
+            'payment_id' => $payment->id,
             'referred_user_id' => $subscriber->id,
-            'sale_amount'     => 500,
-            'platform_fee'    => 75,
+            'sale_amount' => 500,
+            'platform_fee' => 75,
             'commission_amount' => 100,
-            'creator_amount'  => 325,
-            'status'          => \App\Models\AffiliateConversion::STATUS_PENDING,
+            'creator_amount' => 325,
+            'status' => \App\Models\AffiliateConversion::STATUS_PENDING,
         ]);
 
         $this->actingAs($owner)->get("/communities/{$community->slug}/analytics")->assertOk();
@@ -529,10 +555,10 @@ class CommunityControllerTest extends TestCase
 
         \App\Models\OwnerPayout::create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
-            'amount'       => 500,
-            'status'       => 'paid',
-            'paid_at'      => now()->subDays(5),
+            'user_id' => $owner->id,
+            'amount' => 500,
+            'status' => 'paid',
+            'paid_at' => now()->subDays(5),
         ]);
 
         $this->actingAs($owner)->get("/communities/{$community->slug}/analytics")->assertOk();
@@ -545,11 +571,11 @@ class CommunityControllerTest extends TestCase
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         \App\Models\PayoutRequest::create([
-            'user_id'        => $owner->id,
-            'community_id'   => $community->id,
-            'type'           => \App\Models\PayoutRequest::TYPE_OWNER,
-            'status'         => \App\Models\PayoutRequest::STATUS_PENDING,
-            'amount'         => 300,
+            'user_id' => $owner->id,
+            'community_id' => $community->id,
+            'type' => \App\Models\PayoutRequest::TYPE_OWNER,
+            'status' => \App\Models\PayoutRequest::STATUS_PENDING,
+            'amount' => 300,
             'eligible_amount' => 300,
         ]);
 
@@ -572,9 +598,9 @@ class CommunityControllerTest extends TestCase
 
     public function test_owner_can_cancel_scheduled_deletion(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'              => $owner->id,
+            'owner_id' => $owner->id,
             'deletion_requested_at' => now()->addDays(7),
         ]);
 
@@ -588,10 +614,10 @@ class CommunityControllerTest extends TestCase
 
     public function test_non_owner_cannot_cancel_scheduled_deletion(): void
     {
-        $owner     = User::factory()->create();
-        $other     = User::factory()->create();
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'              => $owner->id,
+            'owner_id' => $owner->id,
             'deletion_requested_at' => now()->addDays(7),
         ]);
 
@@ -620,7 +646,7 @@ class CommunityControllerTest extends TestCase
         Community::factory()->create(['owner_id' => $user->id]);
 
         $response = $this->actingAs($user)->post('/communities', [
-            'name'        => 'Second Community',
+            'name' => 'Second Community',
             'cover_image' => UploadedFile::fake()->image('cover.jpg'),
         ]);
 
@@ -632,11 +658,11 @@ class CommunityControllerTest extends TestCase
 
     public function test_members_page_with_free_filter(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         CommunityMember::factory()->create([
-            'community_id'    => $community->id,
-            'user_id'         => $owner->id,
+            'community_id' => $community->id,
+            'user_id' => $owner->id,
             'membership_type' => CommunityMember::MEMBERSHIP_FREE,
         ]);
 
@@ -647,11 +673,11 @@ class CommunityControllerTest extends TestCase
 
     public function test_members_page_with_paid_filter(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         CommunityMember::factory()->create([
-            'community_id'    => $community->id,
-            'user_id'         => $owner->id,
+            'community_id' => $community->id,
+            'user_id' => $owner->id,
             'membership_type' => CommunityMember::MEMBERSHIP_PAID,
         ]);
 
@@ -664,7 +690,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_announce_fails_without_plan(): void
     {
-        $owner     = User::factory()->create(); // free plan
+        $owner = User::factory()->create(); // free plan
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner)
@@ -694,22 +720,22 @@ class CommunityControllerTest extends TestCase
 
     public function test_owner_can_update_sms_config(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner)
             ->post("/communities/{$community->slug}/sms-config", [
-                'sms_provider'    => 'semaphore',
-                'sms_api_key'     => 'test-key-123',
+                'sms_provider' => 'semaphore',
+                'sms_api_key' => 'test-key-123',
                 'sms_sender_name' => 'TestSender',
             ])
             ->assertRedirect()
             ->assertSessionHas('success');
 
         $this->assertDatabaseHas('communities', [
-            'id'              => $community->id,
-            'sms_provider'    => 'semaphore',
-            'sms_api_key'     => 'test-key-123',
+            'id' => $community->id,
+            'sms_provider' => 'semaphore',
+            'sms_api_key' => 'test-key-123',
             'sms_sender_name' => 'TestSender',
         ]);
     }
@@ -723,14 +749,14 @@ class CommunityControllerTest extends TestCase
         $this->actingAs($other)
             ->post("/communities/{$community->slug}/sms-config", [
                 'sms_provider' => 'semaphore',
-                'sms_api_key'  => 'hack-key',
+                'sms_api_key' => 'hack-key',
             ])
             ->assertForbidden();
     }
 
     public function test_sms_config_validates_provider(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner)
@@ -744,11 +770,11 @@ class CommunityControllerTest extends TestCase
 
     public function test_sms_test_requires_config_first(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'     => $owner->id,
+            'owner_id' => $owner->id,
             'sms_provider' => null,
-            'sms_api_key'  => null,
+            'sms_api_key' => null,
         ]);
 
         $this->actingAs($owner)
@@ -761,11 +787,11 @@ class CommunityControllerTest extends TestCase
 
     public function test_sms_test_validates_phone_length(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'     => $owner->id,
+            'owner_id' => $owner->id,
             'sms_provider' => 'semaphore',
-            'sms_api_key'  => 'test-key',
+            'sms_api_key' => 'test-key',
         ]);
 
         $this->actingAs($owner)
@@ -778,11 +804,11 @@ class CommunityControllerTest extends TestCase
 
     public function test_sms_test_sends_successfully(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'     => $owner->id,
+            'owner_id' => $owner->id,
             'sms_provider' => 'semaphore',
-            'sms_api_key'  => 'test-key',
+            'sms_api_key' => 'test-key',
         ]);
 
         $mock = $this->mock(SmsProvider::class);
@@ -800,11 +826,11 @@ class CommunityControllerTest extends TestCase
 
     public function test_sms_test_returns_error_on_failure(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'     => $owner->id,
+            'owner_id' => $owner->id,
             'sms_provider' => 'semaphore',
-            'sms_api_key'  => 'test-key',
+            'sms_api_key' => 'test-key',
         ]);
 
         $mock = $this->mock(SmsProvider::class);
@@ -835,16 +861,16 @@ class CommunityControllerTest extends TestCase
 
     public function test_sms_blast_fails_without_sms_config(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'     => $owner->id,
+            'owner_id' => $owner->id,
             'sms_provider' => null,
-            'sms_api_key'  => null,
+            'sms_api_key' => null,
         ]);
 
         $this->actingAs($owner)
             ->post("/communities/{$community->slug}/sms-blast", [
-                'message'     => 'Hello members!',
+                'message' => 'Hello members!',
                 'filter_type' => 'all',
             ])
             ->assertRedirect()
@@ -853,17 +879,17 @@ class CommunityControllerTest extends TestCase
 
     public function test_sms_blast_no_recipients(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'     => $owner->id,
+            'owner_id' => $owner->id,
             'sms_provider' => 'semaphore',
-            'sms_api_key'  => 'test-key',
+            'sms_api_key' => 'test-key',
         ]);
 
         // No members with phone numbers
         $this->actingAs($owner)
             ->post("/communities/{$community->slug}/sms-blast", [
-                'message'     => 'Hello members!',
+                'message' => 'Hello members!',
                 'filter_type' => 'all',
             ])
             ->assertRedirect()
@@ -872,16 +898,16 @@ class CommunityControllerTest extends TestCase
 
     public function test_sms_blast_success(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create(['phone' => '09171234567']);
+        $owner = User::factory()->create();
+        $member = User::factory()->create(['phone' => '09171234567']);
         $community = Community::factory()->create([
-            'owner_id'     => $owner->id,
+            'owner_id' => $owner->id,
             'sms_provider' => 'semaphore',
-            'sms_api_key'  => 'test-key',
+            'sms_api_key' => 'test-key',
         ]);
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
+            'user_id' => $member->id,
         ]);
 
         $mock = $this->mock(SmsProvider::class);
@@ -891,7 +917,7 @@ class CommunityControllerTest extends TestCase
 
         $this->actingAs($owner)
             ->post("/communities/{$community->slug}/sms-blast", [
-                'message'     => 'Hello members!',
+                'message' => 'Hello members!',
                 'filter_type' => 'all',
             ])
             ->assertRedirect()
@@ -900,16 +926,16 @@ class CommunityControllerTest extends TestCase
 
     public function test_sms_blast_with_failures(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create(['phone' => '09171234567']);
+        $owner = User::factory()->create();
+        $member = User::factory()->create(['phone' => '09171234567']);
         $community = Community::factory()->create([
-            'owner_id'     => $owner->id,
+            'owner_id' => $owner->id,
             'sms_provider' => 'semaphore',
-            'sms_api_key'  => 'test-key',
+            'sms_api_key' => 'test-key',
         ]);
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
+            'user_id' => $member->id,
         ]);
 
         $mock = $this->mock(SmsProvider::class);
@@ -919,7 +945,7 @@ class CommunityControllerTest extends TestCase
 
         $this->actingAs($owner)
             ->post("/communities/{$community->slug}/sms-blast", [
-                'message'     => 'Hello members!',
+                'message' => 'Hello members!',
                 'filter_type' => 'all',
             ])
             ->assertRedirect()
@@ -934,7 +960,7 @@ class CommunityControllerTest extends TestCase
 
         $this->actingAs($other)
             ->post("/communities/{$community->slug}/sms-blast", [
-                'message'     => 'Hello',
+                'message' => 'Hello',
                 'filter_type' => 'all',
             ])
             ->assertForbidden();
@@ -942,16 +968,16 @@ class CommunityControllerTest extends TestCase
 
     public function test_sms_blast_validates_filter_type(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'     => $owner->id,
+            'owner_id' => $owner->id,
             'sms_provider' => 'semaphore',
-            'sms_api_key'  => 'test-key',
+            'sms_api_key' => 'test-key',
         ]);
 
         $this->actingAs($owner)
             ->post("/communities/{$community->slug}/sms-blast", [
-                'message'     => 'Hello',
+                'message' => 'Hello',
                 'filter_type' => 'invalid',
             ])
             ->assertSessionHasErrors('filter_type');
@@ -961,9 +987,9 @@ class CommunityControllerTest extends TestCase
 
     public function test_landing_page_returns_200_for_owner(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'     => $owner->id,
+            'owner_id' => $owner->id,
             'landing_page' => ['hero' => ['headline' => 'Test']],
         ]);
 
@@ -974,7 +1000,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_landing_page_redirects_non_owner_when_no_landing_page(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['landing_page' => null]);
 
         $this->actingAs($user)
@@ -984,9 +1010,9 @@ class CommunityControllerTest extends TestCase
 
     public function test_landing_page_with_ref_sets_cookie(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'     => $owner->id,
+            'owner_id' => $owner->id,
             'landing_page' => ['hero' => ['headline' => 'Test']],
         ]);
 
@@ -998,7 +1024,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_landing_page_non_owner_redirect_with_ref_queues_cookie(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['landing_page' => null]);
 
         $response = $this->actingAs($user)
@@ -1010,7 +1036,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_landing_page_accessible_when_landing_exists(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create([
             'landing_page' => ['hero' => ['headline' => 'Welcome']],
         ]);
@@ -1034,18 +1060,18 @@ class CommunityControllerTest extends TestCase
 
     public function test_owner_can_update_landing_page(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'     => $owner->id,
+            'owner_id' => $owner->id,
             'landing_page' => ['hero' => ['headline' => 'Old']],
         ]);
 
         $response = $this->actingAs($owner)
             ->patchJson("/communities/{$community->slug}/landing-page", [
                 'hero' => [
-                    'headline'    => 'New Headline',
+                    'headline' => 'New Headline',
                     'subheadline' => 'New Sub',
-                    'cta_label'   => 'Join Now',
+                    'cta_label' => 'Join Now',
                 ],
             ]);
 
@@ -1063,9 +1089,9 @@ class CommunityControllerTest extends TestCase
         $this->actingAs($other)
             ->patchJson("/communities/{$community->slug}/landing-page", [
                 'hero' => [
-                    'headline'    => 'Hacked',
+                    'headline' => 'Hacked',
                     'subheadline' => 'Hacked',
-                    'cta_label'   => 'Hacked',
+                    'cta_label' => 'Hacked',
                 ],
             ])
             ->assertForbidden();
@@ -1073,7 +1099,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_super_admin_can_update_landing_page(): void
     {
-        $admin     = User::factory()->create(['is_super_admin' => true]);
+        $admin = User::factory()->create(['is_super_admin' => true]);
         $community = Community::factory()->create([
             'landing_page' => ['hero' => ['headline' => 'Old']],
         ]);
@@ -1081,9 +1107,9 @@ class CommunityControllerTest extends TestCase
         $response = $this->actingAs($admin)
             ->patchJson("/communities/{$community->slug}/landing-page", [
                 'hero' => [
-                    'headline'    => 'Admin Headline',
+                    'headline' => 'Admin Headline',
                     'subheadline' => 'Admin Sub',
-                    'cta_label'   => 'Go',
+                    'cta_label' => 'Go',
                 ],
             ]);
 
@@ -1092,21 +1118,21 @@ class CommunityControllerTest extends TestCase
 
     public function test_update_landing_page_merges_with_existing(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'     => $owner->id,
+            'owner_id' => $owner->id,
             'landing_page' => [
                 'hero' => ['headline' => 'Original', 'subheadline' => 'Keep', 'cta_label' => 'Click'],
-                'faq'  => [['question' => 'Q1', 'answer' => 'A1']],
+                'faq' => [['question' => 'Q1', 'answer' => 'A1']],
             ],
         ]);
 
         $response = $this->actingAs($owner)
             ->patchJson("/communities/{$community->slug}/landing-page", [
                 'hero' => [
-                    'headline'    => 'Updated',
+                    'headline' => 'Updated',
                     'subheadline' => 'Keep',
-                    'cta_label'   => 'Click',
+                    'cta_label' => 'Click',
                 ],
             ]);
 
@@ -1119,9 +1145,9 @@ class CommunityControllerTest extends TestCase
 
     public function test_update_landing_page_with_sections_metadata(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'     => $owner->id,
+            'owner_id' => $owner->id,
             'landing_page' => ['hero' => ['headline' => 'H', 'subheadline' => 'S', 'cta_label' => 'C']],
         ]);
 
@@ -1141,7 +1167,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_update_landing_page_validates_hero_required(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner)
@@ -1156,7 +1182,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_owner_can_generate_landing_page(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $mockAction = $this->mock(GenerateLandingPage::class);
@@ -1184,7 +1210,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_generate_landing_page_handles_runtime_exception(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $mockAction = $this->mock(GenerateLandingPage::class);
@@ -1201,7 +1227,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_generate_landing_page_handles_generic_exception(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $mockAction = $this->mock(GenerateLandingPage::class);
@@ -1220,7 +1246,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_owner_can_regenerate_section(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $mockAction = $this->mock(RegenerateLandingSection::class);
@@ -1253,7 +1279,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_regenerate_section_validates_section_name(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner)
@@ -1266,7 +1292,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_regenerate_section_handles_runtime_exception(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $mockAction = $this->mock(RegenerateLandingSection::class);
@@ -1284,7 +1310,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_regenerate_section_handles_generic_exception(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $mockAction = $this->mock(RegenerateLandingSection::class);
@@ -1306,7 +1332,7 @@ class CommunityControllerTest extends TestCase
     {
         Storage::fake(config('filesystems.default'));
 
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $response = $this->actingAs($owner)
@@ -1333,7 +1359,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_upload_section_image_requires_image(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner)
@@ -1344,7 +1370,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_upload_section_image_rejects_non_image(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner)
@@ -1361,12 +1387,12 @@ class CommunityControllerTest extends TestCase
     {
         Storage::fake(config('filesystems.default'));
 
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $response = $this->actingAs($owner)->patch("/communities/{$community->slug}", [
-            'name'        => 'Updated Name',
-            'avatar'      => UploadedFile::fake()->image('avatar.jpg'),
+            'name' => 'Updated Name',
+            'avatar' => UploadedFile::fake()->image('avatar.jpg'),
             'cover_image' => UploadedFile::fake()->image('cover.jpg'),
         ]);
 
@@ -1376,7 +1402,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_update_validates_name_required(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner)
@@ -1419,11 +1445,11 @@ class CommunityControllerTest extends TestCase
         $owner = User::factory()->create();
         $other = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $item      = \App\Models\CommunityGalleryItem::create([
+        $item = \App\Models\CommunityGalleryItem::create([
             'community_id' => $community->id,
-            'type'         => 'image',
-            'image_path'   => 'community-gallery/img1.jpg',
-            'position'     => 0,
+            'type' => 'image',
+            'image_path' => 'community-gallery/img1.jpg',
+            'position' => 0,
         ]);
 
         $this->actingAs($other)
@@ -1435,7 +1461,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_add_gallery_image_requires_image(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner)
@@ -1447,12 +1473,12 @@ class CommunityControllerTest extends TestCase
 
     public function test_show_nulls_out_membership_for_free_member_on_paid_community(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 500]);
-        $member    = User::factory()->create();
+        $member = User::factory()->create();
         CommunityMember::factory()->create([
-            'community_id'    => $community->id,
-            'user_id'         => $member->id,
+            'community_id' => $community->id,
+            'user_id' => $member->id,
             'membership_type' => CommunityMember::MEMBERSHIP_FREE,
         ]);
 
@@ -1470,17 +1496,17 @@ class CommunityControllerTest extends TestCase
 
     public function test_show_keeps_membership_for_active_subscriber_on_paid_community(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 500]);
-        $member    = User::factory()->create();
+        $member = User::factory()->create();
         CommunityMember::factory()->create([
-            'community_id'    => $community->id,
-            'user_id'         => $member->id,
+            'community_id' => $community->id,
+            'user_id' => $member->id,
             'membership_type' => CommunityMember::MEMBERSHIP_PAID,
         ]);
         Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
+            'user_id' => $member->id,
         ]);
 
         $response = $this->actingAs($member)
@@ -1497,9 +1523,9 @@ class CommunityControllerTest extends TestCase
 
     public function test_landing_page_does_not_duplicate_cookie_when_already_set(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'     => $owner->id,
+            'owner_id' => $owner->id,
             'landing_page' => ['hero' => ['headline' => 'Test']],
         ]);
 
@@ -1516,7 +1542,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_about_page_as_owner_does_not_show_invited_by(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner)
@@ -1534,11 +1560,11 @@ class CommunityControllerTest extends TestCase
     public function test_update_registers_telegram_webhook_when_token_changes(): void
     {
         // Use super_admin to bypass plan check (creatorPlan returns 'pro')
-        $owner     = User::factory()->create(['is_super_admin' => true]);
+        $owner = User::factory()->create(['is_super_admin' => true]);
         $community = Community::factory()->create([
-            'owner_id'           => $owner->id,
+            'owner_id' => $owner->id,
             'telegram_bot_token' => null,
-            'telegram_chat_id'   => null,
+            'telegram_chat_id' => null,
         ]);
 
         $telegramMock = $this->mock(\App\Services\TelegramService::class);
@@ -1546,9 +1572,9 @@ class CommunityControllerTest extends TestCase
         $telegramMock->shouldReceive('webhookSecret')->once()->andReturn('secret');
 
         $this->actingAs($owner)->patch("/communities/{$community->slug}", [
-            'name'               => $community->name,
+            'name' => $community->name,
             'telegram_bot_token' => 'new-token-123',
-            'telegram_chat_id'   => '-100123456',
+            'telegram_chat_id' => '-100123456',
         ]);
 
         $community->refresh();
@@ -1559,17 +1585,17 @@ class CommunityControllerTest extends TestCase
     {
         $owner = User::factory()->create(['is_super_admin' => true]);
         $community = Community::factory()->create([
-            'owner_id'           => $owner->id,
+            'owner_id' => $owner->id,
             'telegram_bot_token' => 'old-token',
-            'telegram_chat_id'   => '-100123456',
+            'telegram_chat_id' => '-100123456',
         ]);
 
         $telegramMock = $this->mock(\App\Services\TelegramService::class);
         $telegramMock->shouldReceive('deleteWebhook')->once()->with('old-token');
 
         $this->actingAs($owner)->patch("/communities/{$community->slug}", [
-            'name'            => $community->name,
-            'telegram_clear'  => true,
+            'name' => $community->name,
+            'telegram_clear' => true,
         ]);
 
         $community->refresh();
@@ -1580,12 +1606,12 @@ class CommunityControllerTest extends TestCase
 
     public function test_show_indicates_free_courses_available(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 500]);
         Course::create([
             'community_id' => $community->id,
-            'title'        => 'Free Course',
-            'access_type'  => 'free',
+            'title' => 'Free Course',
+            'access_type' => 'free',
         ]);
 
         $this->actingAs($owner)
@@ -1599,9 +1625,9 @@ class CommunityControllerTest extends TestCase
 
     public function test_show_indicates_landing_page_exists(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'     => $owner->id,
+            'owner_id' => $owner->id,
             'landing_page' => ['hero' => ['headline' => 'Test']],
         ]);
 
@@ -1625,19 +1651,19 @@ class CommunityControllerTest extends TestCase
 
         $owner = User::factory()->create();
         CreatorSubscription::create([
-            'user_id'    => $owner->id,
-            'plan'       => CreatorSubscription::PLAN_PRO,
-            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'user_id' => $owner->id,
+            'plan' => CreatorSubscription::PLAN_PRO,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
             'expires_at' => now()->addYear(),
         ]);
 
         $community = Community::factory()->create([
-            'owner_id'      => $owner->id,
+            'owner_id' => $owner->id,
             'custom_domain' => 'old.example.com',
         ]);
 
         $this->actingAs($owner)->patch("/communities/{$community->slug}", [
-            'name'          => $community->name,
+            'name' => $community->name,
             'custom_domain' => 'new.example.com',
         ]);
 
@@ -1654,19 +1680,19 @@ class CommunityControllerTest extends TestCase
 
         $owner = User::factory()->create();
         CreatorSubscription::create([
-            'user_id'    => $owner->id,
-            'plan'       => CreatorSubscription::PLAN_PRO,
-            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'user_id' => $owner->id,
+            'plan' => CreatorSubscription::PLAN_PRO,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
             'expires_at' => now()->addYear(),
         ]);
 
         $community = Community::factory()->create([
-            'owner_id'      => $owner->id,
+            'owner_id' => $owner->id,
             'custom_domain' => 'old.example.com',
         ]);
 
         $this->actingAs($owner)->patch("/communities/{$community->slug}", [
-            'name'          => $community->name,
+            'name' => $community->name,
             'custom_domain' => null,
         ]);
 
@@ -1683,19 +1709,19 @@ class CommunityControllerTest extends TestCase
 
         $owner = User::factory()->create();
         CreatorSubscription::create([
-            'user_id'    => $owner->id,
-            'plan'       => CreatorSubscription::PLAN_PRO,
-            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'user_id' => $owner->id,
+            'plan' => CreatorSubscription::PLAN_PRO,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
             'expires_at' => now()->addYear(),
         ]);
 
         $community = Community::factory()->create([
-            'owner_id'      => $owner->id,
+            'owner_id' => $owner->id,
             'custom_domain' => null,
         ]);
 
         $this->actingAs($owner)->patch("/communities/{$community->slug}", [
-            'name'          => $community->name,
+            'name' => $community->name,
             'custom_domain' => 'new.example.com',
         ]);
 
@@ -1714,19 +1740,19 @@ class CommunityControllerTest extends TestCase
 
         $owner = User::factory()->create();
         CreatorSubscription::create([
-            'user_id'    => $owner->id,
-            'plan'       => CreatorSubscription::PLAN_PRO,
-            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'user_id' => $owner->id,
+            'plan' => CreatorSubscription::PLAN_PRO,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
             'expires_at' => now()->addYear(),
         ]);
 
         $community = Community::factory()->create([
-            'owner_id'  => $owner->id,
+            'owner_id' => $owner->id,
             'subdomain' => null,
         ]);
 
         $this->actingAs($owner)->patch("/communities/{$community->slug}", [
-            'name'      => $community->name,
+            'name' => $community->name,
             'subdomain' => 'testshop',
         ]);
 
@@ -1743,19 +1769,19 @@ class CommunityControllerTest extends TestCase
 
         $owner = User::factory()->create();
         CreatorSubscription::create([
-            'user_id'    => $owner->id,
-            'plan'       => CreatorSubscription::PLAN_PRO,
-            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'user_id' => $owner->id,
+            'plan' => CreatorSubscription::PLAN_PRO,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
             'expires_at' => now()->addYear(),
         ]);
 
         $community = Community::factory()->create([
-            'owner_id'  => $owner->id,
+            'owner_id' => $owner->id,
             'subdomain' => 'oldshop',
         ]);
 
         $this->actingAs($owner)->patch("/communities/{$community->slug}", [
-            'name'      => $community->name,
+            'name' => $community->name,
             'subdomain' => 'newshop',
         ]);
 
@@ -1772,19 +1798,19 @@ class CommunityControllerTest extends TestCase
 
         $owner = User::factory()->create();
         CreatorSubscription::create([
-            'user_id'    => $owner->id,
-            'plan'       => CreatorSubscription::PLAN_PRO,
-            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'user_id' => $owner->id,
+            'plan' => CreatorSubscription::PLAN_PRO,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
             'expires_at' => now()->addYear(),
         ]);
 
         $community = Community::factory()->create([
-            'owner_id'  => $owner->id,
+            'owner_id' => $owner->id,
             'subdomain' => 'oldshop',
         ]);
 
         $this->actingAs($owner)->patch("/communities/{$community->slug}", [
-            'name'      => $community->name,
+            'name' => $community->name,
             'subdomain' => null,
         ]);
 
@@ -1796,23 +1822,23 @@ class CommunityControllerTest extends TestCase
 
     public function test_owner_can_update_resend_config(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         \App\Services\Email\EmailProviderFactory::$fakeProvider = $this->createFakeEmailProvider();
 
         $this->actingAs($owner)
             ->post("/communities/{$community->slug}/resend-config", [
-                'email_provider'    => 'resend',
-                'resend_api_key'    => 're_test_key_123',
+                'email_provider' => 'resend',
+                'resend_api_key' => 're_test_key_123',
                 'resend_from_email' => 'hello@example.com',
-                'resend_from_name'  => 'Test Sender',
+                'resend_from_name' => 'Test Sender',
             ])
             ->assertRedirect()
             ->assertSessionHas('success');
 
         $this->assertDatabaseHas('communities', [
-            'id'             => $community->id,
+            'id' => $community->id,
             'email_provider' => 'resend',
         ]);
         // API key is encrypted at rest, so verify via model accessor
@@ -1837,7 +1863,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_resend_config_rejects_invalid_api_key(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         \App\Services\Email\EmailProviderFactory::$fakeProvider = $this->createFakeEmailProvider(validKey: false);
@@ -1857,9 +1883,9 @@ class CommunityControllerTest extends TestCase
 
     public function test_owner_can_add_resend_domain(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'      => $owner->id,
+            'owner_id' => $owner->id,
             'resend_api_key' => 're_test_key',
         ]);
 
@@ -1873,8 +1899,8 @@ class CommunityControllerTest extends TestCase
             ->assertSessionHas('success');
 
         $this->assertDatabaseHas('communities', [
-            'id'                   => $community->id,
-            'resend_domain_id'     => 'dom_123',
+            'id' => $community->id,
+            'resend_domain_id' => 'dom_123',
             'resend_domain_status' => 'pending',
         ]);
 
@@ -1883,9 +1909,9 @@ class CommunityControllerTest extends TestCase
 
     public function test_resend_add_domain_fails_without_api_key(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'       => $owner->id,
+            'owner_id' => $owner->id,
             'resend_api_key' => null,
         ]);
 
@@ -1901,10 +1927,10 @@ class CommunityControllerTest extends TestCase
 
     public function test_owner_can_verify_resend_domain(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'         => $owner->id,
-            'resend_api_key'   => 're_test_key',
+            'owner_id' => $owner->id,
+            'resend_api_key' => 're_test_key',
             'resend_domain_id' => 'dom_123',
         ]);
 
@@ -1922,10 +1948,10 @@ class CommunityControllerTest extends TestCase
 
     public function test_resend_verify_domain_fails_without_domain_id(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'         => $owner->id,
-            'resend_api_key'   => 're_test_key',
+            'owner_id' => $owner->id,
+            'resend_api_key' => 're_test_key',
             'resend_domain_id' => null,
         ]);
 
@@ -1939,10 +1965,10 @@ class CommunityControllerTest extends TestCase
 
     public function test_owner_can_get_resend_domain_info(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'         => $owner->id,
-            'resend_api_key'   => 're_test_key',
+            'owner_id' => $owner->id,
+            'resend_api_key' => 're_test_key',
             'resend_domain_id' => 'dom_123',
         ]);
 
@@ -1959,10 +1985,10 @@ class CommunityControllerTest extends TestCase
 
     public function test_resend_get_domain_fails_without_config(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'         => $owner->id,
-            'resend_api_key'   => null,
+            'owner_id' => $owner->id,
+            'resend_api_key' => null,
             'resend_domain_id' => null,
         ]);
 
@@ -1975,9 +2001,9 @@ class CommunityControllerTest extends TestCase
 
     public function test_owner_can_send_resend_test_email(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'       => $owner->id,
+            'owner_id' => $owner->id,
             'resend_api_key' => 're_test_key',
         ]);
 
@@ -1995,9 +2021,9 @@ class CommunityControllerTest extends TestCase
 
     public function test_resend_test_email_fails_without_api_key(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'       => $owner->id,
+            'owner_id' => $owner->id,
             'resend_api_key' => null,
         ]);
 
@@ -2013,7 +2039,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_ai_generate_gallery_requires_pro_plan(): void
     {
-        $owner     = User::factory()->create(); // free plan
+        $owner = User::factory()->create(); // free plan
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner)
@@ -2026,17 +2052,17 @@ class CommunityControllerTest extends TestCase
         $owner = User::factory()->create();
         CreatorSubscription::create([
             'user_id' => $owner->id,
-            'plan'    => CreatorSubscription::PLAN_PRO,
-            'status'  => CreatorSubscription::STATUS_ACTIVE,
+            'plan' => CreatorSubscription::PLAN_PRO,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
         ]);
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         for ($i = 0; $i < 8; $i++) {
             \App\Models\CommunityGalleryItem::create([
                 'community_id' => $community->id,
-                'type'         => 'image',
-                'image_path'   => "community-gallery/img-{$i}.jpg",
-                'position'     => $i,
+                'type' => 'image',
+                'image_path' => "community-gallery/img-{$i}.jpg",
+                'position' => $i,
             ]);
         }
 
@@ -2052,8 +2078,8 @@ class CommunityControllerTest extends TestCase
         $owner = User::factory()->create();
         CreatorSubscription::create([
             'user_id' => $owner->id,
-            'plan'    => CreatorSubscription::PLAN_PRO,
-            'status'  => CreatorSubscription::STATUS_ACTIVE,
+            'plan' => CreatorSubscription::PLAN_PRO,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
         ]);
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
@@ -2069,7 +2095,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_ai_gallery_status_returns_idle_by_default(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $response = $this->actingAs($owner)
@@ -2083,7 +2109,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_owner_can_reorder_gallery(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         $a = \App\Models\CommunityGalleryItem::create(['community_id' => $community->id, 'type' => 'image', 'image_path' => 'community-gallery/a.jpg', 'position' => 0]);
         $b = \App\Models\CommunityGalleryItem::create(['community_id' => $community->id, 'type' => 'image', 'image_path' => 'community-gallery/b.jpg', 'position' => 1]);
@@ -2102,7 +2128,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_reorder_gallery_rejects_invalid_order(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         \App\Models\CommunityGalleryItem::create(['community_id' => $community->id, 'type' => 'image', 'image_path' => 'community-gallery/a.jpg', 'position' => 0]);
         \App\Models\CommunityGalleryItem::create(['community_id' => $community->id, 'type' => 'image', 'image_path' => 'community-gallery/b.jpg', 'position' => 1]);
@@ -2133,16 +2159,16 @@ class CommunityControllerTest extends TestCase
 
     public function test_owner_can_update_brand_context(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner)->patch("/communities/{$community->slug}", [
-            'name'          => $community->name,
+            'name' => $community->name,
             'brand_context' => [
                 'brand_personality' => 'Professional yet friendly',
-                'target_audience'   => 'Aspiring developers',
-                'tone_of_voice'     => 'we',
-                'color_primary'     => '#FF5733',
+                'target_audience' => 'Aspiring developers',
+                'tone_of_voice' => 'we',
+                'color_primary' => '#FF5733',
             ],
         ])->assertRedirect();
 
@@ -2153,11 +2179,11 @@ class CommunityControllerTest extends TestCase
 
     public function test_update_validates_brand_context_color_format(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner)->patch("/communities/{$community->slug}", [
-            'name'          => $community->name,
+            'name' => $community->name,
             'brand_context' => [
                 'color_primary' => 'not-a-hex',
             ],
@@ -2166,11 +2192,11 @@ class CommunityControllerTest extends TestCase
 
     public function test_update_validates_brand_context_tone_values(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner)->patch("/communities/{$community->slug}", [
-            'name'          => $community->name,
+            'name' => $community->name,
             'brand_context' => [
                 'tone_of_voice' => 'invalid_tone',
             ],
@@ -2181,11 +2207,11 @@ class CommunityControllerTest extends TestCase
 
     public function test_owner_can_update_ai_chatbot_instructions(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner)->patch("/communities/{$community->slug}", [
-            'name'                    => $community->name,
+            'name' => $community->name,
             'ai_chatbot_instructions' => 'Always be helpful and kind.',
         ])->assertRedirect();
 
@@ -2196,11 +2222,11 @@ class CommunityControllerTest extends TestCase
 
     public function test_update_prohibits_pixel_fields_on_free_plan(): void
     {
-        $owner     = User::factory()->create(); // free plan
+        $owner = User::factory()->create(); // free plan
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner)->patch("/communities/{$community->slug}", [
-            'name'              => $community->name,
+            'name' => $community->name,
             'facebook_pixel_id' => '12345678901234',
         ])->assertSessionHasErrors('facebook_pixel_id');
     }
@@ -2209,15 +2235,15 @@ class CommunityControllerTest extends TestCase
     {
         $owner = User::factory()->create();
         CreatorSubscription::create([
-            'user_id'    => $owner->id,
-            'plan'       => CreatorSubscription::PLAN_BASIC,
-            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'user_id' => $owner->id,
+            'plan' => CreatorSubscription::PLAN_BASIC,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
             'expires_at' => now()->addYear(),
         ]);
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner)->patch("/communities/{$community->slug}", [
-            'name'               => $community->name,
+            'name' => $community->name,
             'telegram_bot_token' => 'some-token',
         ])->assertSessionHasErrors('telegram_bot_token');
     }
@@ -2230,16 +2256,16 @@ class CommunityControllerTest extends TestCase
 
         $owner = User::factory()->create();
         CreatorSubscription::create([
-            'user_id'    => $owner->id,
-            'plan'       => CreatorSubscription::PLAN_BASIC,
-            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'user_id' => $owner->id,
+            'plan' => CreatorSubscription::PLAN_BASIC,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
             'expires_at' => now()->addYear(),
         ]);
 
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
+            'user_id' => $owner->id,
         ]);
 
         $this->actingAs($owner)
@@ -2255,9 +2281,9 @@ class CommunityControllerTest extends TestCase
     {
         $owner = User::factory()->create();
         CreatorSubscription::create([
-            'user_id'    => $owner->id,
-            'plan'       => CreatorSubscription::PLAN_BASIC,
-            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'user_id' => $owner->id,
+            'plan' => CreatorSubscription::PLAN_BASIC,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
             'expires_at' => now()->addYear(),
         ]);
 
@@ -2272,18 +2298,18 @@ class CommunityControllerTest extends TestCase
 
     public function test_landing_page_resolves_affiliate_from_ref_code(): void
     {
-        $owner     = User::factory()->create();
-        $referrer  = User::factory()->create();
+        $owner = User::factory()->create();
+        $referrer = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'     => $owner->id,
+            'owner_id' => $owner->id,
             'landing_page' => ['hero' => ['headline' => 'Welcome']],
         ]);
 
         $affiliate = Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => $referrer->id,
-            'code'         => 'TESTREF123',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => $referrer->id,
+            'code' => 'TESTREF123',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         // Visit as unauthenticated guest with ref code
@@ -2296,7 +2322,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_owner_can_update_ai_instructions_via_dedicated_route(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner)
@@ -2323,7 +2349,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_update_ai_instructions_validates_max_length(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner)
@@ -2337,7 +2363,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_owner_can_view_curzzos_page(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $response = $this->actingAs($owner)->get("/communities/{$community->slug}/curzzos");
@@ -2347,12 +2373,12 @@ class CommunityControllerTest extends TestCase
 
     public function test_member_can_view_curzzos_page(): void
     {
-        $owner  = User::factory()->create();
+        $owner = User::factory()->create();
         $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         CommunityMember::create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
+            'user_id' => $member->id,
         ]);
 
         $response = $this->actingAs($member)->get("/communities/{$community->slug}/curzzos");
@@ -2370,23 +2396,23 @@ class CommunityControllerTest extends TestCase
 
         $this->actingAs($other)
             ->postJson("/communities/{$community->slug}/landing-page/upload-video", [
-                'filename'     => 'video.mp4',
+                'filename' => 'video.mp4',
                 'content_type' => 'video/mp4',
-                'size'         => 1024,
+                'size' => 1024,
             ])
             ->assertForbidden();
     }
 
     public function test_upload_section_video_requires_pro_plan(): void
     {
-        $owner     = User::factory()->create(); // free plan
+        $owner = User::factory()->create(); // free plan
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $response = $this->actingAs($owner)
             ->postJson("/communities/{$community->slug}/landing-page/upload-video", [
-                'filename'     => 'video.mp4',
+                'filename' => 'video.mp4',
                 'content_type' => 'video/mp4',
-                'size'         => 1024,
+                'size' => 1024,
             ]);
 
         $response->assertStatus(403);
@@ -2398,16 +2424,16 @@ class CommunityControllerTest extends TestCase
         $owner = User::factory()->create();
         CreatorSubscription::create([
             'user_id' => $owner->id,
-            'plan'    => CreatorSubscription::PLAN_PRO,
-            'status'  => CreatorSubscription::STATUS_ACTIVE,
+            'plan' => CreatorSubscription::PLAN_PRO,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
         ]);
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner)
             ->postJson("/communities/{$community->slug}/landing-page/upload-video", [
-                'filename'     => 'video.mkv',
+                'filename' => 'video.mkv',
                 'content_type' => 'video/x-matroska',
-                'size'         => 1024,
+                'size' => 1024,
             ])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('content_type');
@@ -2418,8 +2444,8 @@ class CommunityControllerTest extends TestCase
         $owner = User::factory()->create();
         CreatorSubscription::create([
             'user_id' => $owner->id,
-            'plan'    => CreatorSubscription::PLAN_PRO,
-            'status'  => CreatorSubscription::STATUS_ACTIVE,
+            'plan' => CreatorSubscription::PLAN_PRO,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
         ]);
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
@@ -2428,9 +2454,9 @@ class CommunityControllerTest extends TestCase
 
         $response = $this->actingAs($owner)
             ->postJson("/communities/{$community->slug}/landing-page/upload-video", [
-                'filename'     => 'video.mp4',
+                'filename' => 'video.mp4',
                 'content_type' => 'video/mp4',
-                'size'         => $tooBig,
+                'size' => $tooBig,
             ]);
 
         $response->assertStatus(422);
@@ -2444,8 +2470,8 @@ class CommunityControllerTest extends TestCase
         $owner = User::factory()->create();
         CreatorSubscription::create([
             'user_id' => $owner->id,
-            'plan'    => CreatorSubscription::PLAN_PRO,
-            'status'  => CreatorSubscription::STATUS_ACTIVE,
+            'plan' => CreatorSubscription::PLAN_PRO,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
         ]);
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
@@ -2462,7 +2488,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_ai_gallery_status_returns_generating_when_in_progress(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         \Illuminate\Support\Facades\Cache::put(
@@ -2482,7 +2508,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_owner_can_hard_delete_community_with_no_subscribers(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner)
@@ -2496,12 +2522,12 @@ class CommunityControllerTest extends TestCase
 
     public function test_members_page_search_as_owner_matches_email(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $alice = User::factory()->create(['name' => 'Alice', 'username' => 'alice', 'email' => 'alice@example.com']);
-        $bob   = User::factory()->create(['name' => 'Bob', 'username' => 'bob', 'email' => 'bob@example.com']);
+        $bob = User::factory()->create(['name' => 'Bob', 'username' => 'bob', 'email' => 'bob@example.com']);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $alice->id]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $bob->id]);
 
@@ -2512,8 +2538,8 @@ class CommunityControllerTest extends TestCase
 
     public function test_members_page_search_as_non_owner_skips_email_branch(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
@@ -2529,13 +2555,13 @@ class CommunityControllerTest extends TestCase
 
     public function test_curzzos_page_attaches_has_access_flag(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         \App\Models\Curzzo::create([
             'community_id' => $community->id,
-            'name'         => 'Test Bot',
+            'name' => 'Test Bot',
             'instructions' => 'Be helpful.',
-            'is_active'    => true,
+            'is_active' => true,
         ]);
 
         $response = $this->actingAs($owner)->get("/communities/{$community->slug}/curzzos");
@@ -2552,18 +2578,50 @@ class CommunityControllerTest extends TestCase
 
     public function test_update_resend_config_handles_validation_exception(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
-        \App\Services\Email\EmailProviderFactory::$fakeProvider = new class implements \App\Contracts\EmailProvider {
-            public function validateApiKey(\App\Models\Community $community): bool { throw new \RuntimeException('network down'); }
-            public function sendEmail(\App\Models\Community $community, array $params): array { return []; }
-            public function sendBatch(\App\Models\Community $community, array $emails): array { return []; }
-            public function addDomain(\App\Models\Community $community, string $domain): array { return []; }
-            public function getDomain(\App\Models\Community $community, string $domainId): array { return []; }
-            public function verifyDomain(\App\Models\Community $community, string $domainId): array { return []; }
-            public static function id(): string { return 'fake'; }
-            public static function label(): string { return 'Fake'; }
+        \App\Services\Email\EmailProviderFactory::$fakeProvider = new class implements \App\Contracts\EmailProvider
+        {
+            public function validateApiKey(\App\Models\Community $community): bool
+            {
+                throw new \RuntimeException('network down');
+            }
+
+            public function sendEmail(\App\Models\Community $community, array $params): array
+            {
+                return [];
+            }
+
+            public function sendBatch(\App\Models\Community $community, array $emails): array
+            {
+                return [];
+            }
+
+            public function addDomain(\App\Models\Community $community, string $domain): array
+            {
+                return [];
+            }
+
+            public function getDomain(\App\Models\Community $community, string $domainId): array
+            {
+                return [];
+            }
+
+            public function verifyDomain(\App\Models\Community $community, string $domainId): array
+            {
+                return [];
+            }
+
+            public static function id(): string
+            {
+                return 'fake';
+            }
+
+            public static function label(): string
+            {
+                return 'Fake';
+            }
         };
 
         $this->actingAs($owner)
@@ -2581,21 +2639,53 @@ class CommunityControllerTest extends TestCase
 
     public function test_resend_add_domain_handles_exception(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'       => $owner->id,
+            'owner_id' => $owner->id,
             'resend_api_key' => 're_test_key',
         ]);
 
-        \App\Services\Email\EmailProviderFactory::$fakeProvider = new class implements \App\Contracts\EmailProvider {
-            public function validateApiKey(\App\Models\Community $community): bool { return true; }
-            public function sendEmail(\App\Models\Community $community, array $params): array { return []; }
-            public function sendBatch(\App\Models\Community $community, array $emails): array { return []; }
-            public function addDomain(\App\Models\Community $community, string $domain): array { throw new \RuntimeException('domain already exists'); }
-            public function getDomain(\App\Models\Community $community, string $domainId): array { return []; }
-            public function verifyDomain(\App\Models\Community $community, string $domainId): array { return []; }
-            public static function id(): string { return 'fake'; }
-            public static function label(): string { return 'Fake'; }
+        \App\Services\Email\EmailProviderFactory::$fakeProvider = new class implements \App\Contracts\EmailProvider
+        {
+            public function validateApiKey(\App\Models\Community $community): bool
+            {
+                return true;
+            }
+
+            public function sendEmail(\App\Models\Community $community, array $params): array
+            {
+                return [];
+            }
+
+            public function sendBatch(\App\Models\Community $community, array $emails): array
+            {
+                return [];
+            }
+
+            public function addDomain(\App\Models\Community $community, string $domain): array
+            {
+                throw new \RuntimeException('domain already exists');
+            }
+
+            public function getDomain(\App\Models\Community $community, string $domainId): array
+            {
+                return [];
+            }
+
+            public function verifyDomain(\App\Models\Community $community, string $domainId): array
+            {
+                return [];
+            }
+
+            public static function id(): string
+            {
+                return 'fake';
+            }
+
+            public static function label(): string
+            {
+                return 'Fake';
+            }
         };
 
         $this->actingAs($owner)
@@ -2610,22 +2700,54 @@ class CommunityControllerTest extends TestCase
 
     public function test_resend_verify_domain_handles_exception(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'         => $owner->id,
-            'resend_api_key'   => 're_test_key',
+            'owner_id' => $owner->id,
+            'resend_api_key' => 're_test_key',
             'resend_domain_id' => 'dom_123',
         ]);
 
-        \App\Services\Email\EmailProviderFactory::$fakeProvider = new class implements \App\Contracts\EmailProvider {
-            public function validateApiKey(\App\Models\Community $community): bool { return true; }
-            public function sendEmail(\App\Models\Community $community, array $params): array { return []; }
-            public function sendBatch(\App\Models\Community $community, array $emails): array { return []; }
-            public function addDomain(\App\Models\Community $community, string $domain): array { return []; }
-            public function getDomain(\App\Models\Community $community, string $domainId): array { return []; }
-            public function verifyDomain(\App\Models\Community $community, string $domainId): array { throw new \RuntimeException('verify failed'); }
-            public static function id(): string { return 'fake'; }
-            public static function label(): string { return 'Fake'; }
+        \App\Services\Email\EmailProviderFactory::$fakeProvider = new class implements \App\Contracts\EmailProvider
+        {
+            public function validateApiKey(\App\Models\Community $community): bool
+            {
+                return true;
+            }
+
+            public function sendEmail(\App\Models\Community $community, array $params): array
+            {
+                return [];
+            }
+
+            public function sendBatch(\App\Models\Community $community, array $emails): array
+            {
+                return [];
+            }
+
+            public function addDomain(\App\Models\Community $community, string $domain): array
+            {
+                return [];
+            }
+
+            public function getDomain(\App\Models\Community $community, string $domainId): array
+            {
+                return [];
+            }
+
+            public function verifyDomain(\App\Models\Community $community, string $domainId): array
+            {
+                throw new \RuntimeException('verify failed');
+            }
+
+            public static function id(): string
+            {
+                return 'fake';
+            }
+
+            public static function label(): string
+            {
+                return 'Fake';
+            }
         };
 
         $this->actingAs($owner)
@@ -2640,22 +2762,54 @@ class CommunityControllerTest extends TestCase
 
     public function test_resend_get_domain_handles_exception(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'         => $owner->id,
-            'resend_api_key'   => 're_test_key',
+            'owner_id' => $owner->id,
+            'resend_api_key' => 're_test_key',
             'resend_domain_id' => 'dom_123',
         ]);
 
-        \App\Services\Email\EmailProviderFactory::$fakeProvider = new class implements \App\Contracts\EmailProvider {
-            public function validateApiKey(\App\Models\Community $community): bool { return true; }
-            public function sendEmail(\App\Models\Community $community, array $params): array { return []; }
-            public function sendBatch(\App\Models\Community $community, array $emails): array { return []; }
-            public function addDomain(\App\Models\Community $community, string $domain): array { return []; }
-            public function getDomain(\App\Models\Community $community, string $domainId): array { throw new \RuntimeException('not found'); }
-            public function verifyDomain(\App\Models\Community $community, string $domainId): array { return []; }
-            public static function id(): string { return 'fake'; }
-            public static function label(): string { return 'Fake'; }
+        \App\Services\Email\EmailProviderFactory::$fakeProvider = new class implements \App\Contracts\EmailProvider
+        {
+            public function validateApiKey(\App\Models\Community $community): bool
+            {
+                return true;
+            }
+
+            public function sendEmail(\App\Models\Community $community, array $params): array
+            {
+                return [];
+            }
+
+            public function sendBatch(\App\Models\Community $community, array $emails): array
+            {
+                return [];
+            }
+
+            public function addDomain(\App\Models\Community $community, string $domain): array
+            {
+                return [];
+            }
+
+            public function getDomain(\App\Models\Community $community, string $domainId): array
+            {
+                throw new \RuntimeException('not found');
+            }
+
+            public function verifyDomain(\App\Models\Community $community, string $domainId): array
+            {
+                return [];
+            }
+
+            public static function id(): string
+            {
+                return 'fake';
+            }
+
+            public static function label(): string
+            {
+                return 'Fake';
+            }
         };
 
         $this->actingAs($owner)
@@ -2670,30 +2824,62 @@ class CommunityControllerTest extends TestCase
 
     public function test_resend_test_email_falls_back_to_sandbox_on_unverified_domain(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'        => $owner->id,
-            'email_provider'  => 'resend',
-            'resend_api_key'  => 're_test_key',
+            'owner_id' => $owner->id,
+            'email_provider' => 'resend',
+            'resend_api_key' => 're_test_key',
             'resend_from_email' => 'hello@unverified.example',
         ]);
 
-        \App\Services\Email\EmailProviderFactory::$fakeProvider = new class implements \App\Contracts\EmailProvider {
+        \App\Services\Email\EmailProviderFactory::$fakeProvider = new class implements \App\Contracts\EmailProvider
+        {
             public int $calls = 0;
-            public function validateApiKey(\App\Models\Community $community): bool { return true; }
-            public function sendEmail(\App\Models\Community $community, array $params): array {
+
+            public function validateApiKey(\App\Models\Community $community): bool
+            {
+                return true;
+            }
+
+            public function sendEmail(\App\Models\Community $community, array $params): array
+            {
                 $this->calls++;
                 if ($this->calls === 1) {
                     throw new \RuntimeException('The domain is not verified');
                 }
+
                 return ['id' => 'msg_sandbox'];
             }
-            public function sendBatch(\App\Models\Community $community, array $emails): array { return []; }
-            public function addDomain(\App\Models\Community $community, string $domain): array { return []; }
-            public function getDomain(\App\Models\Community $community, string $domainId): array { return []; }
-            public function verifyDomain(\App\Models\Community $community, string $domainId): array { return []; }
-            public static function id(): string { return 'fake'; }
-            public static function label(): string { return 'Fake'; }
+
+            public function sendBatch(\App\Models\Community $community, array $emails): array
+            {
+                return [];
+            }
+
+            public function addDomain(\App\Models\Community $community, string $domain): array
+            {
+                return [];
+            }
+
+            public function getDomain(\App\Models\Community $community, string $domainId): array
+            {
+                return [];
+            }
+
+            public function verifyDomain(\App\Models\Community $community, string $domainId): array
+            {
+                return [];
+            }
+
+            public static function id(): string
+            {
+                return 'fake';
+            }
+
+            public static function label(): string
+            {
+                return 'Fake';
+            }
         };
 
         $this->actingAs($owner)
@@ -2706,22 +2892,54 @@ class CommunityControllerTest extends TestCase
 
     public function test_resend_test_email_handles_generic_failure(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'       => $owner->id,
+            'owner_id' => $owner->id,
             'email_provider' => 'sendgrid',
             'resend_api_key' => 'sg_test_key',
         ]);
 
-        \App\Services\Email\EmailProviderFactory::$fakeProvider = new class implements \App\Contracts\EmailProvider {
-            public function validateApiKey(\App\Models\Community $community): bool { return true; }
-            public function sendEmail(\App\Models\Community $community, array $params): array { throw new \RuntimeException('API key revoked'); }
-            public function sendBatch(\App\Models\Community $community, array $emails): array { return []; }
-            public function addDomain(\App\Models\Community $community, string $domain): array { return []; }
-            public function getDomain(\App\Models\Community $community, string $domainId): array { return []; }
-            public function verifyDomain(\App\Models\Community $community, string $domainId): array { return []; }
-            public static function id(): string { return 'fake'; }
-            public static function label(): string { return 'Fake'; }
+        \App\Services\Email\EmailProviderFactory::$fakeProvider = new class implements \App\Contracts\EmailProvider
+        {
+            public function validateApiKey(\App\Models\Community $community): bool
+            {
+                return true;
+            }
+
+            public function sendEmail(\App\Models\Community $community, array $params): array
+            {
+                throw new \RuntimeException('API key revoked');
+            }
+
+            public function sendBatch(\App\Models\Community $community, array $emails): array
+            {
+                return [];
+            }
+
+            public function addDomain(\App\Models\Community $community, string $domain): array
+            {
+                return [];
+            }
+
+            public function getDomain(\App\Models\Community $community, string $domainId): array
+            {
+                return [];
+            }
+
+            public function verifyDomain(\App\Models\Community $community, string $domainId): array
+            {
+                return [];
+            }
+
+            public static function id(): string
+            {
+                return 'fake';
+            }
+
+            public static function label(): string
+            {
+                return 'Fake';
+            }
         };
 
         $this->actingAs($owner)
@@ -2736,7 +2954,7 @@ class CommunityControllerTest extends TestCase
 
     public function test_landing_page_filters_courses_and_curzzos_by_selected_ids(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $includedCourse = Course::factory()->create(['community_id' => $community->id, 'is_published' => true, 'access_type' => 'paid_once', 'price' => 10]);
@@ -2744,22 +2962,22 @@ class CommunityControllerTest extends TestCase
 
         $includedCurzzo = \App\Models\Curzzo::create([
             'community_id' => $community->id,
-            'name'         => 'Included Bot',
+            'name' => 'Included Bot',
             'instructions' => 'Help.',
-            'is_active'    => true,
+            'is_active' => true,
         ]);
         \App\Models\Curzzo::create([
             'community_id' => $community->id,
-            'name'         => 'Excluded Bot',
+            'name' => 'Excluded Bot',
             'instructions' => 'Help.',
-            'is_active'    => true,
+            'is_active' => true,
         ]);
 
         $community->update([
             'landing_page' => [
-                'hero'                        => ['headline' => 'Welcome'],
-                'included_courses_selected'   => [$includedCourse->id],
-                'curzzos_selected'            => [$includedCurzzo->id],
+                'hero' => ['headline' => 'Welcome'],
+                'included_courses_selected' => [$includedCourse->id],
+                'curzzos_selected' => [$includedCurzzo->id],
             ],
         ]);
 
@@ -2780,9 +2998,9 @@ class CommunityControllerTest extends TestCase
     {
         $owner = User::factory()->create();
         CreatorSubscription::create([
-            'user_id'    => $owner->id,
-            'plan'       => CreatorSubscription::PLAN_PRO,
-            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'user_id' => $owner->id,
+            'plan' => CreatorSubscription::PLAN_PRO,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
             'expires_at' => now()->addYear(),
         ]);
         $community = Community::factory()->create(['owner_id' => $owner->id]);
@@ -2800,9 +3018,9 @@ class CommunityControllerTest extends TestCase
 
         $response = $this->actingAs($owner)
             ->postJson("/communities/{$community->slug}/landing-page/upload-video", [
-                'filename'     => 'promo.mp4',
+                'filename' => 'promo.mp4',
                 'content_type' => 'video/mp4',
-                'size'         => 5 * 1024 * 1024,
+                'size' => 5 * 1024 * 1024,
             ]);
 
         $response->assertOk();

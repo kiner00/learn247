@@ -19,7 +19,7 @@ class PlanLimitServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new PlanLimitService();
+        $this->service = new PlanLimitService;
     }
 
     // ── communityLimit ────────────────────────────────────────────────────────
@@ -103,7 +103,7 @@ class PlanLimitServiceTest extends TestCase
 
     public function test_free_limit_error_mentions_upgrade_to_basic_or_pro(): void
     {
-        $user  = User::factory()->create();
+        $user = User::factory()->create();
         $error = $this->service->communityLimitError($user);
 
         $this->assertStringContainsString('1 community', $error);
@@ -144,7 +144,7 @@ class PlanLimitServiceTest extends TestCase
 
     public function test_free_user_below_course_limit_can_create(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $user->id]);
 
         Course::factory()->count(2)->create(['community_id' => $community->id]);
@@ -154,7 +154,7 @@ class PlanLimitServiceTest extends TestCase
 
     public function test_free_user_at_course_limit_cannot_create(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $user->id]);
 
         Course::factory()->count(3)->create(['community_id' => $community->id]);
@@ -191,9 +191,9 @@ class PlanLimitServiceTest extends TestCase
 
     public function test_pricing_gate_requires_five_paid_modules(): void
     {
-        $owner     = User::factory()->create(['name' => 'John', 'bio' => 'Some bio', 'avatar' => '/img.jpg']);
+        $owner = User::factory()->create(['name' => 'John', 'bio' => 'Some bio', 'avatar' => '/img.jpg']);
         $community = Community::factory()->create([
-            'owner_id'    => $owner->id,
+            'owner_id' => $owner->id,
             'cover_image' => '/cover.jpg',
             'description' => 'A community',
         ]);
@@ -206,9 +206,9 @@ class PlanLimitServiceTest extends TestCase
 
     public function test_pricing_gate_satisfied_when_all_requirements_met(): void
     {
-        $owner     = User::factory()->create(['name' => 'Jane', 'bio' => 'My bio', 'avatar' => '/av.jpg']);
+        $owner = User::factory()->create(['name' => 'Jane', 'bio' => 'My bio', 'avatar' => '/av.jpg']);
         $community = Community::factory()->create([
-            'owner_id'    => $owner->id,
+            'owner_id' => $owner->id,
             'cover_image' => '/cover.jpg',
             'description' => 'A great community',
         ]);
@@ -218,9 +218,9 @@ class PlanLimitServiceTest extends TestCase
         for ($i = 0; $i < 5; $i++) {
             \App\Models\CourseModule::create([
                 'course_id' => $course->id,
-                'title'     => "Module {$i}",
-                'is_free'   => false,
-                'position'  => $i,
+                'title' => "Module {$i}",
+                'is_free' => false,
+                'position' => $i,
             ]);
         }
 
@@ -235,9 +235,9 @@ class PlanLimitServiceTest extends TestCase
 
     public function test_pricing_gate_fails_without_banner(): void
     {
-        $owner     = User::factory()->create(['name' => 'Jane', 'bio' => 'My bio', 'avatar' => '/av.jpg']);
+        $owner = User::factory()->create(['name' => 'Jane', 'bio' => 'My bio', 'avatar' => '/av.jpg']);
         $community = Community::factory()->create([
-            'owner_id'    => $owner->id,
+            'owner_id' => $owner->id,
             'cover_image' => null,
             'description' => 'A community',
         ]);
@@ -250,9 +250,9 @@ class PlanLimitServiceTest extends TestCase
 
     public function test_pricing_gate_description_whitespace_only_fails(): void
     {
-        $owner     = User::factory()->create(['name' => 'Jane', 'bio' => 'My bio', 'avatar' => '/av.jpg']);
+        $owner = User::factory()->create(['name' => 'Jane', 'bio' => 'My bio', 'avatar' => '/av.jpg']);
         $community = Community::factory()->create([
-            'owner_id'    => $owner->id,
+            'owner_id' => $owner->id,
             'cover_image' => '/cover.jpg',
             'description' => '   ',
         ]);
@@ -264,9 +264,9 @@ class PlanLimitServiceTest extends TestCase
 
     public function test_free_modules_do_not_count_toward_pricing_gate(): void
     {
-        $owner     = User::factory()->create(['name' => 'Jane', 'bio' => 'My bio', 'avatar' => '/av.jpg']);
+        $owner = User::factory()->create(['name' => 'Jane', 'bio' => 'My bio', 'avatar' => '/av.jpg']);
         $community = Community::factory()->create([
-            'owner_id'    => $owner->id,
+            'owner_id' => $owner->id,
             'cover_image' => '/cover.jpg',
             'description' => 'A community',
         ]);
@@ -275,9 +275,9 @@ class PlanLimitServiceTest extends TestCase
         for ($i = 0; $i < 5; $i++) {
             \App\Models\CourseModule::create([
                 'course_id' => $course->id,
-                'title'     => "Free Module {$i}",
-                'is_free'   => true,
-                'position'  => $i,
+                'title' => "Free Module {$i}",
+                'is_free' => true,
+                'position' => $i,
             ]);
         }
 
@@ -434,10 +434,10 @@ class PlanLimitServiceTest extends TestCase
         for ($i = 0; $i < 5; $i++) {
             \App\Models\Curzzo::create([
                 'community_id' => $community->id,
-                'name'         => "Curzzo {$i}",
-                'access_type'  => 'free',
+                'name' => "Curzzo {$i}",
+                'access_type' => 'free',
                 'instructions' => 'Test instructions',
-                'position'     => $i,
+                'position' => $i,
             ]);
         }
 
@@ -449,9 +449,9 @@ class PlanLimitServiceTest extends TestCase
     private function giveCreatorPlan(User $user, string $plan): void
     {
         CreatorSubscription::create([
-            'user_id'    => $user->id,
-            'plan'       => $plan,
-            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'user_id' => $user->id,
+            'plan' => $plan,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
             'expires_at' => now()->addYear(),
         ]);
     }

@@ -2,7 +2,6 @@
 
 namespace App\Actions\Classroom;
 
-use App\Jobs\TranscodeVideoToHls;
 use App\Models\CourseLesson;
 use App\Models\CourseModule;
 use App\Services\StorageService;
@@ -25,35 +24,35 @@ class ManageLesson
         $videoPathChanged = false;
 
         // When setting a video URL, clear the uploaded video
-        if (!empty($data['video_url']) && $lesson->video_path) {
+        if (! empty($data['video_url']) && $lesson->video_path) {
             $this->deleteVideoFiles($lesson);
-            $data['video_path']     = null;
+            $data['video_path'] = null;
             $data['video_hls_path'] = null;
-            $data['video_transcode_status']  = null;
+            $data['video_transcode_status'] = null;
             $data['video_transcode_percent'] = 0;
         }
 
         // When explicitly removing the video (video_path sent as empty)
         if (array_key_exists('video_path', $data) && empty($data['video_path']) && $lesson->video_path) {
             $this->deleteVideoFiles($lesson);
-            $data['video_path']              = null;
-            $data['video_hls_path']          = null;
-            $data['video_transcode_status']  = null;
+            $data['video_path'] = null;
+            $data['video_hls_path'] = null;
+            $data['video_transcode_status'] = null;
             $data['video_transcode_percent'] = 0;
         }
 
         // When uploading a new video, clear old uploaded video and external URL
-        if (!empty($data['video_path']) && $lesson->video_path && $data['video_path'] !== $lesson->video_path) {
+        if (! empty($data['video_path']) && $lesson->video_path && $data['video_path'] !== $lesson->video_path) {
             $this->deleteVideoFiles($lesson);
             $videoPathChanged = true;
-        } elseif (!empty($data['video_path']) && !$lesson->video_path) {
+        } elseif (! empty($data['video_path']) && ! $lesson->video_path) {
             $videoPathChanged = true;
         }
 
         // Reset HLS fields when a new video is being uploaded
         if ($videoPathChanged) {
-            $data['video_hls_path']          = null;
-            $data['video_transcode_status']  = null;
+            $data['video_hls_path'] = null;
+            $data['video_transcode_status'] = null;
             $data['video_transcode_percent'] = 0;
         }
 
@@ -73,7 +72,7 @@ class ManageLesson
         if ($lesson->video_hls_path) {
             $hlsPrefix = dirname($lesson->video_hls_path);
             $files = Storage::files($hlsPrefix);
-            $dirs  = Storage::allFiles($hlsPrefix);
+            $dirs = Storage::allFiles($hlsPrefix);
             foreach ($dirs as $file) {
                 Storage::delete($file);
             }

@@ -19,8 +19,8 @@ class CommentControllerTest extends TestCase
     public function test_member_can_post_comment(): void
     {
         $community = Community::factory()->create();
-        $user      = User::factory()->create();
-        $post      = Post::factory()->create(['community_id' => $community->id]);
+        $user = User::factory()->create();
+        $post = Post::factory()->create(['community_id' => $community->id]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         $this->actingAs($user)
@@ -33,9 +33,9 @@ class CommentControllerTest extends TestCase
     public function test_member_can_reply_to_comment(): void
     {
         $community = Community::factory()->create();
-        $user      = User::factory()->create();
-        $post      = Post::factory()->create(['community_id' => $community->id]);
-        $parent    = Comment::factory()->create(['post_id' => $post->id, 'community_id' => $community->id]);
+        $user = User::factory()->create();
+        $post = Post::factory()->create(['community_id' => $community->id]);
+        $parent = Comment::factory()->create(['post_id' => $post->id, 'community_id' => $community->id]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         $this->actingAs($user)
@@ -48,8 +48,8 @@ class CommentControllerTest extends TestCase
     public function test_store_requires_content(): void
     {
         $community = Community::factory()->create();
-        $user      = User::factory()->create();
-        $post      = Post::factory()->create(['community_id' => $community->id]);
+        $user = User::factory()->create();
+        $post = Post::factory()->create(['community_id' => $community->id]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         $this->actingAs($user)
@@ -60,8 +60,8 @@ class CommentControllerTest extends TestCase
     public function test_store_rejects_nonexistent_parent_id(): void
     {
         $community = Community::factory()->create();
-        $user      = User::factory()->create();
-        $post      = Post::factory()->create(['community_id' => $community->id]);
+        $user = User::factory()->create();
+        $post = Post::factory()->create(['community_id' => $community->id]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         $this->actingAs($user)
@@ -80,8 +80,8 @@ class CommentControllerTest extends TestCase
     public function test_non_member_gets_403_when_posting_comment(): void
     {
         $community = Community::factory()->create();
-        $user      = User::factory()->create();
-        $post      = Post::factory()->create(['community_id' => $community->id]);
+        $user = User::factory()->create();
+        $post = Post::factory()->create(['community_id' => $community->id]);
 
         $this->actingAs($user)
             ->post("/posts/{$post->id}/comments", ['content' => 'Hi'])
@@ -92,7 +92,7 @@ class CommentControllerTest extends TestCase
 
     public function test_author_can_delete_own_comment(): void
     {
-        $user    = User::factory()->create();
+        $user = User::factory()->create();
         $comment = Comment::factory()->create(['user_id' => $user->id]);
 
         $this->actingAs($user)

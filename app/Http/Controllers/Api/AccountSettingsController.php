@@ -33,6 +33,7 @@ class AccountSettingsController extends Controller
     public function updateProfile(UpdateProfileRequest $request, UpdateProfile $action): JsonResponse
     {
         $action->execute($request->user(), $request->validated(), $request->file('avatar'));
+
         return response()->json(['message' => 'Profile updated.']);
     }
 
@@ -40,12 +41,14 @@ class AccountSettingsController extends Controller
     {
         $request->validate(['is_public' => ['required', 'boolean']]);
         $action->execute($request->user(), $communityId, $request->boolean('is_public'));
+
         return response()->json(['message' => 'Visibility updated.']);
     }
 
     public function updateEmail(UpdateEmailRequest $request, UpdateEmail $action): JsonResponse
     {
         $action->execute($request->user(), $request->validated()['email']);
+
         return response()->json(['message' => 'Email updated.']);
     }
 
@@ -53,6 +56,7 @@ class AccountSettingsController extends Controller
     {
         $validated = $request->validated();
         $action->execute($request->user(), $validated['current_password'], $validated['password']);
+
         return response()->json(['message' => 'Password updated.']);
     }
 
@@ -60,30 +64,35 @@ class AccountSettingsController extends Controller
     {
         $request->validate(['timezone' => ['required', 'string', 'timezone']]);
         $action->execute($request->user(), $request->input('timezone'));
+
         return response()->json(['message' => 'Timezone updated.']);
     }
 
     public function logoutEverywhere(Request $request, LogoutEverywhere $action): JsonResponse
     {
         $action->execute($request->user());
+
         return response()->json(['message' => 'All other sessions have been logged out.']);
     }
 
     public function updateNotifications(Request $request, UpdateNotificationPrefs $action): JsonResponse
     {
         $action->execute($request->user(), $request->all());
+
         return response()->json(['message' => 'Notification preferences updated.']);
     }
 
     public function updateCommunityNotifications(Request $request, int $communityId, UpdateCommunityNotificationPrefs $action): JsonResponse
     {
         $action->execute($request->user(), $communityId, $request->all());
+
         return response()->json(['message' => 'Community notification preferences updated.']);
     }
 
     public function updateChat(Request $request, UpdateChatPrefs $action): JsonResponse
     {
         $action->execute($request->user(), $request->all());
+
         return response()->json(['message' => 'Chat preferences updated.']);
     }
 
@@ -91,6 +100,7 @@ class AccountSettingsController extends Controller
     {
         $request->validate(['chat_enabled' => ['required', 'boolean']]);
         $action->execute($request->user(), $communityId, $request->boolean('chat_enabled'));
+
         return response()->json(['message' => 'Community chat preferences updated.']);
     }
 
@@ -98,12 +108,14 @@ class AccountSettingsController extends Controller
     {
         $request->validate(['theme' => ['required', 'string', 'in:light,dark,system']]);
         $action->execute($request->user(), $request->input('theme'));
+
         return response()->json(['message' => 'Theme updated.']);
     }
 
     public function updatePayout(Request $request, UpdatePayout $action): JsonResponse
     {
         $action->execute($request->user(), $request->all());
+
         return response()->json(['message' => 'Payout details updated.']);
     }
 
@@ -111,6 +123,7 @@ class AccountSettingsController extends Controller
     {
         $request->validate(['crypto_wallet' => ['nullable', 'string', 'max:255']]);
         $action->execute($request->user(), $request->input('crypto_wallet'));
+
         return response()->json(['message' => 'Crypto wallet updated.']);
     }
 }

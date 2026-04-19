@@ -16,21 +16,21 @@ class CertificateControllerTest extends TestCase
 
     public function test_get_certificate_by_uuid_returns_public_data(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
         $certification = CourseCertification::create([
             'community_id' => $community->id,
-            'title'        => 'Test Exam',
-            'cert_title'   => 'Test Certificate',
-            'pass_score'   => 70,
+            'title' => 'Test Exam',
+            'cert_title' => 'Test Certificate',
+            'pass_score' => 70,
         ]);
 
         $uuid = (string) Str::uuid();
         Certificate::create([
-            'user_id'          => $user->id,
+            'user_id' => $user->id,
             'certification_id' => $certification->id,
-            'uuid'             => $uuid,
-            'issued_at'        => now(),
+            'uuid' => $uuid,
+            'issued_at' => now(),
         ]);
 
         $this->getJson("/api/certificates/{$uuid}")

@@ -16,12 +16,12 @@ class ResendWebhookController extends Controller
         $signingSecret = config('services.resend.webhook_secret');
         if ($signingSecret) {
             $signature = $request->header('svix-signature', '');
-            $msgId     = $request->header('svix-id', '');
+            $msgId = $request->header('svix-id', '');
             $timestamp = $request->header('svix-timestamp', '');
-            $body      = $request->getContent();
+            $body = $request->getContent();
 
-            $toSign    = "{$msgId}.{$timestamp}.{$body}";
-            $expected  = base64_encode(hash_hmac('sha256', $toSign, base64_decode(str_replace('whsec_', '', $signingSecret)), true));
+            $toSign = "{$msgId}.{$timestamp}.{$body}";
+            $expected = base64_encode(hash_hmac('sha256', $toSign, base64_decode(str_replace('whsec_', '', $signingSecret)), true));
 
             // Svix sends multiple signatures separated by spaces (v1,<sig>)
             $valid = false;
@@ -35,13 +35,14 @@ class ResendWebhookController extends Controller
 
             if (! $valid) {
                 Log::warning('ResendWebhook: invalid signature');
+
                 return response()->json(['message' => 'invalid signature'], 401);
             }
         }
 
         $payload = $request->all();
-        $type    = $payload['type'] ?? null;
-        $data    = $payload['data'] ?? [];
+        $type = $payload['type'] ?? null;
+        $data = $payload['data'] ?? [];
 
         $emailId = $data['email_id'] ?? null;
 
@@ -81,7 +82,7 @@ class ResendWebhookController extends Controller
     private function handleBounce(EmailSend $send): void
     {
         $send->update([
-            'status'     => 'bounced',
+            'status' => 'bounced',
             'bounced_at' => now(),
         ]);
 
@@ -90,9 +91,9 @@ class ResendWebhookController extends Controller
         if ($member?->user) {
             EmailUnsubscribe::firstOrCreate([
                 'community_id' => $send->community_id,
-                'user_id'      => $member->user->id,
+                'user_id' => $member->user->id,
             ], [
-                'reason'          => 'bounced',
+                'reason' => 'bounced',
                 'unsubscribed_at' => now(),
             ]);
         }
@@ -106,9 +107,9 @@ class ResendWebhookController extends Controller
         if ($member?->user) {
             EmailUnsubscribe::firstOrCreate([
                 'community_id' => $send->community_id,
-                'user_id'      => $member->user->id,
+                'user_id' => $member->user->id,
             ], [
-                'reason'          => 'complained',
+                'reason' => 'complained',
                 'unsubscribed_at' => now(),
             ]);
         }

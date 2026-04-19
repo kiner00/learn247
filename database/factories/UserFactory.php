@@ -46,7 +46,7 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'kyc_verified_at' => now(),
-            'kyc_status'      => 'approved',
+            'kyc_status' => 'approved',
         ]);
     }
 }

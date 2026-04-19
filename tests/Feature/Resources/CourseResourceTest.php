@@ -19,9 +19,9 @@ class CourseResourceTest extends TestCase
         $community = Community::factory()->create();
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Test Course',
-            'description'  => 'A description',
-            'position'     => 1,
+            'title' => 'Test Course',
+            'description' => 'A description',
+            'position' => 1,
         ]);
 
         $resource = (new CourseResource($course))->toArray(request());
@@ -38,9 +38,9 @@ class CourseResourceTest extends TestCase
         $community = Community::factory()->create();
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Laravel Basics',
-            'description'  => 'Learn Laravel',
-            'position'     => 3,
+            'title' => 'Laravel Basics',
+            'description' => 'Learn Laravel',
+            'position' => 3,
         ]);
 
         $resource = (new CourseResource($course))->toArray(request());
@@ -56,9 +56,9 @@ class CourseResourceTest extends TestCase
         $community = Community::factory()->create();
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Test',
-            'description'  => 'Desc',
-            'position'     => 0,
+            'title' => 'Test',
+            'description' => 'Desc',
+            'position' => 0,
         ]);
 
         $resource = (new CourseResource($course))->resolve();
@@ -71,9 +71,9 @@ class CourseResourceTest extends TestCase
         $community = Community::factory()->create();
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'With Modules',
-            'description'  => 'Desc',
-            'position'     => 0,
+            'title' => 'With Modules',
+            'description' => 'Desc',
+            'position' => 0,
         ]);
 
         $course->load('modules');
@@ -87,19 +87,19 @@ class CourseResourceTest extends TestCase
         $community = Community::factory()->create();
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Full Course',
-            'description'  => 'With modules and lessons',
-            'position'     => 0,
+            'title' => 'Full Course',
+            'description' => 'With modules and lessons',
+            'position' => 0,
         ]);
         $module = CourseModule::create([
             'course_id' => $course->id,
-            'title'     => 'Module 1',
-            'position'  => 1,
+            'title' => 'Module 1',
+            'position' => 1,
         ]);
         CourseLesson::create([
             'module_id' => $module->id,
-            'title'     => 'Lesson 1',
-            'position'  => 1,
+            'title' => 'Lesson 1',
+            'position' => 1,
             'video_url' => 'https://example.com/video.mp4',
         ]);
 

@@ -14,7 +14,7 @@ Broadcast::channel('community.{communityId}.chat', function ($user, $communityId
     }
 
     return [
-        'id'   => $user->id,
+        'id' => $user->id,
         'name' => $user->name,
     ];
 });

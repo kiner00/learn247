@@ -30,14 +30,14 @@ class HandleInertiaRequestsTest extends TestCase
 
     public function test_share_includes_domain_community_when_attribute_is_set(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
 
         $request = $this->makeRequest($user);
         $request->attributes->set('domain_community', $community);
 
-        $middleware = new HandleInertiaRequests();
-        $shared    = $middleware->share($request);
+        $middleware = new HandleInertiaRequests;
+        $shared = $middleware->share($request);
 
         $this->assertNotNull($shared['domain_community']);
         $this->assertEquals($community->id, $shared['domain_community']['id']);
@@ -48,9 +48,9 @@ class HandleInertiaRequestsTest extends TestCase
 
     public function test_share_returns_null_auth_user_and_zero_counters_when_guest(): void
     {
-        $request    = $this->makeRequest(null);
-        $middleware = new HandleInertiaRequests();
-        $shared     = $middleware->share($request);
+        $request = $this->makeRequest(null);
+        $middleware = new HandleInertiaRequests;
+        $shared = $middleware->share($request);
 
         $this->assertNull($shared['auth']['user']);
         $this->assertEquals([], $shared['auth']['communities']);
@@ -62,16 +62,16 @@ class HandleInertiaRequestsTest extends TestCase
 
     public function test_share_includes_auth_user_data_and_communities(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $user->id, 'price' => 10]);
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
-        $request    = $this->makeRequest($user);
-        $middleware = new HandleInertiaRequests();
-        $shared     = $middleware->share($request);
+        $request = $this->makeRequest($user);
+        $middleware = new HandleInertiaRequests;
+        $shared = $middleware->share($request);
 
         $this->assertEquals($user->id, $shared['auth']['user']['id']);
         $this->assertEquals($user->email, $shared['auth']['user']['email']);
@@ -84,37 +84,37 @@ class HandleInertiaRequestsTest extends TestCase
 
     public function test_share_counts_unread_messages_dms_and_notifications(): void
     {
-        $user   = User::factory()->create();
-        $other  = User::factory()->create();
+        $user = User::factory()->create();
+        $other = User::factory()->create();
         $community = Community::factory()->create();
         CommunityMember::factory()->create([
-            'community_id'          => $community->id,
-            'user_id'               => $user->id,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
             'messages_last_read_at' => null,
         ]);
         Message::create([
             'community_id' => $community->id,
-            'user_id'      => $other->id,
-            'content'      => 'Hi',
+            'user_id' => $other->id,
+            'content' => 'Hi',
         ]);
 
         DirectMessage::create([
-            'sender_id'   => $other->id,
+            'sender_id' => $other->id,
             'receiver_id' => $user->id,
-            'content'     => 'Hello',
-            'read_at'     => null,
+            'content' => 'Hello',
+            'read_at' => null,
         ]);
 
         Notification::create([
             'user_id' => $user->id,
-            'type'    => 'test',
-            'data'    => ['title' => 'Test'],
+            'type' => 'test',
+            'data' => ['title' => 'Test'],
             'read_at' => null,
         ]);
 
-        $request    = $this->makeRequest($user);
-        $middleware = new HandleInertiaRequests();
-        $shared     = $middleware->share($request);
+        $request = $this->makeRequest($user);
+        $middleware = new HandleInertiaRequests;
+        $shared = $middleware->share($request);
 
         $this->assertEquals(1, $shared['unread_messages']);
         $this->assertEquals(1, $shared['unread_dms']);
@@ -123,14 +123,14 @@ class HandleInertiaRequestsTest extends TestCase
 
     public function test_share_flash_includes_session_values(): void
     {
-        $user    = User::factory()->create();
+        $user = User::factory()->create();
         $request = $this->makeRequest($user);
         $request->session()->put('success', 'Done');
         $request->session()->put('error', 'Oops');
         $request->session()->put('show_ai_greeting', true);
 
-        $middleware = new HandleInertiaRequests();
-        $shared     = $middleware->share($request);
+        $middleware = new HandleInertiaRequests;
+        $shared = $middleware->share($request);
 
         $this->assertEquals('Done', $shared['flash']['success']);
         $this->assertEquals('Oops', $shared['flash']['error']);
@@ -139,8 +139,8 @@ class HandleInertiaRequestsTest extends TestCase
 
     public function test_version_returns_parent_version(): void
     {
-        $request    = $this->makeRequest();
-        $middleware = new HandleInertiaRequests();
+        $request = $this->makeRequest();
+        $middleware = new HandleInertiaRequests;
 
         // Just assert it executes and returns either null or string without error
         $version = $middleware->version($request);
@@ -149,7 +149,7 @@ class HandleInertiaRequestsTest extends TestCase
 
     public function test_url_resolver_returns_null_when_no_domain_community(): void
     {
-        $middleware = new HandleInertiaRequests();
+        $middleware = new HandleInertiaRequests;
         $this->assertNull($middleware->urlResolver());
     }
 
@@ -162,8 +162,8 @@ class HandleInertiaRequestsTest extends TestCase
         $request->attributes->set('domain_community', $community);
         $this->app->instance('request', $request);
 
-        $middleware = new HandleInertiaRequests();
-        $resolver   = $middleware->urlResolver();
+        $middleware = new HandleInertiaRequests;
+        $resolver = $middleware->urlResolver();
 
         $this->assertIsCallable($resolver);
         $this->assertEquals('/classroom', $resolver());
@@ -177,8 +177,8 @@ class HandleInertiaRequestsTest extends TestCase
         $request->attributes->set('domain_community', $community);
         $this->app->instance('request', $request);
 
-        $middleware = new HandleInertiaRequests();
-        $resolver   = $middleware->urlResolver();
+        $middleware = new HandleInertiaRequests;
+        $resolver = $middleware->urlResolver();
 
         $this->assertEquals('/', $resolver());
     }
@@ -191,8 +191,8 @@ class HandleInertiaRequestsTest extends TestCase
         $request->attributes->set('domain_community', $community);
         $this->app->instance('request', $request);
 
-        $middleware = new HandleInertiaRequests();
-        $resolver   = $middleware->urlResolver();
+        $middleware = new HandleInertiaRequests;
+        $resolver = $middleware->urlResolver();
 
         $this->assertEquals('/other/path', $resolver());
     }

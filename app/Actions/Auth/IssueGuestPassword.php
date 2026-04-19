@@ -17,7 +17,7 @@ class IssueGuestPassword
      *
      * Safe to call inside a DB transaction -- no mail is sent here.
      *
-     * @return string|null  The temporary password, or null if the user does not need one.
+     * @return string|null The temporary password, or null if the user does not need one.
      */
     public function generate(User $user): ?string
     {
@@ -25,11 +25,11 @@ class IssueGuestPassword
             return null;
         }
 
-        $tempPassword = 'Tmp@' . Str::upper(Str::random(3)) . Str::random(3);
+        $tempPassword = 'Tmp@'.Str::upper(Str::random(3)).Str::random(3);
         $user->forceFill(['password' => Hash::make($tempPassword)])->save();
 
         Log::info('Guest temp password issued', [
-            'email'    => $user->email,
+            'email' => $user->email,
             'password' => $tempPassword,
         ]);
 
@@ -61,7 +61,7 @@ class IssueGuestPassword
      *
      * Convenience method -- should be called OUTSIDE a DB transaction.
      *
-     * @return string|null  The temporary password, or null if the user does not need one.
+     * @return string|null The temporary password, or null if the user does not need one.
      */
     public function execute(User $user, Community $community): ?string
     {

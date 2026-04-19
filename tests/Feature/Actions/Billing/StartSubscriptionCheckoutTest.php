@@ -18,6 +18,7 @@ class StartSubscriptionCheckoutTest extends TestCase
     use RefreshDatabase;
 
     private XenditService $xendit;
+
     private StartSubscriptionCheckout $action;
 
     protected function setUp(): void
@@ -31,7 +32,7 @@ class StartSubscriptionCheckoutTest extends TestCase
 
     public function test_creates_pending_subscription_and_returns_checkout_url(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid(499)->create();
 
         $this->xendit->shouldReceive('createInvoice')
@@ -45,15 +46,15 @@ class StartSubscriptionCheckoutTest extends TestCase
         $this->assertEquals('https://checkout.xendit.co/abc', $result['checkout_url']);
         $this->assertDatabaseHas('subscriptions', [
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'status'       => Subscription::STATUS_PENDING,
-            'xendit_id'    => 'inv_123',
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_PENDING,
+            'xendit_id' => 'inv_123',
         ]);
     }
 
     public function test_throws_validation_exception_for_free_community(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['price' => 0]);
 
         $this->expectException(ValidationException::class);
@@ -62,7 +63,7 @@ class StartSubscriptionCheckoutTest extends TestCase
 
     public function test_throws_if_active_subscription_exists(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid()->create();
         Subscription::factory()->active()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
@@ -72,15 +73,15 @@ class StartSubscriptionCheckoutTest extends TestCase
 
     public function test_resolves_valid_affiliate_code_and_links_to_subscription(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid(499)->create();
 
         $affiliateUser = User::factory()->create();
         $affiliate = Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => $affiliateUser->id,
-            'code'         => 'VALID_AFF_CODE',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => $affiliateUser->id,
+            'code' => 'VALID_AFF_CODE',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         $this->xendit->shouldReceive('createInvoice')
@@ -91,15 +92,15 @@ class StartSubscriptionCheckoutTest extends TestCase
 
         $this->assertDatabaseHas('subscriptions', [
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
             'affiliate_id' => $affiliate->id,
-            'status'       => Subscription::STATUS_PENDING,
+            'status' => Subscription::STATUS_PENDING,
         ]);
     }
 
     public function test_ignores_invalid_affiliate_code(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid(499)->create();
 
         $this->xendit->shouldReceive('createInvoice')
@@ -110,15 +111,15 @@ class StartSubscriptionCheckoutTest extends TestCase
 
         $this->assertDatabaseHas('subscriptions', [
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
             'affiliate_id' => null,
-            'status'       => Subscription::STATUS_PENDING,
+            'status' => Subscription::STATUS_PENDING,
         ]);
     }
 
     public function test_uses_custom_success_redirect_url(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid(499)->create();
         $customUrl = 'https://example.com/thank-you';
 
@@ -136,16 +137,16 @@ class StartSubscriptionCheckoutTest extends TestCase
 
     public function test_ignores_affiliate_code_from_different_community(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid(499)->create();
         $otherCommunity = Community::factory()->paid(299)->create();
 
         $affiliateUser = User::factory()->create();
         Affiliate::create([
             'community_id' => $otherCommunity->id,
-            'user_id'      => $affiliateUser->id,
-            'code'         => 'OTHER_COMM_AFF',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => $affiliateUser->id,
+            'code' => 'OTHER_COMM_AFF',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         $this->xendit->shouldReceive('createInvoice')
@@ -156,7 +157,7 @@ class StartSubscriptionCheckoutTest extends TestCase
 
         $this->assertDatabaseHas('subscriptions', [
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
             'affiliate_id' => null,
         ]);
     }

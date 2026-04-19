@@ -18,7 +18,7 @@ class ListCommunities
             ->whereHas('owner', fn ($q) => $q->where('kyc_status', User::KYC_APPROVED)->orWhereNotNull('kyc_verified_at'))
             ->when($search, fn ($q) => $q->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%");
             }))
             ->when($category && $category !== 'All', fn ($q) => $q->where('category', $category))
             ->when($sort === 'popular', fn ($q) => $q->orderByDesc('members_count'))

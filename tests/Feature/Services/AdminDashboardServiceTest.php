@@ -22,7 +22,7 @@ class AdminDashboardServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new AdminDashboardService();
+        $this->service = new AdminDashboardService;
     }
 
     // ── Structure ─────────────────────────────────────────────────────────────
@@ -83,24 +83,24 @@ class AdminDashboardServiceTest extends TestCase
 
     public function test_counts_active_subscriptions_with_paid_payments(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $member    = User::factory()->create();
+        $member = User::factory()->create();
 
         $sub = Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
+            'user_id' => $member->id,
         ]);
 
         Payment::create([
             'subscription_id' => $sub->id,
-            'community_id'    => $community->id,
-            'user_id'         => $member->id,
-            'amount'          => 500,
-            'currency'        => 'PHP',
-            'status'          => Payment::STATUS_PAID,
-            'metadata'        => [],
-            'paid_at'         => now(),
+            'community_id' => $community->id,
+            'user_id' => $member->id,
+            'amount' => 500,
+            'currency' => 'PHP',
+            'status' => Payment::STATUS_PAID,
+            'metadata' => [],
+            'paid_at' => now(),
         ]);
 
         $result = $this->service->build();
@@ -110,13 +110,13 @@ class AdminDashboardServiceTest extends TestCase
 
     public function test_does_not_count_active_subscriptions_without_paid_payments(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $member    = User::factory()->create();
+        $member = User::factory()->create();
 
         Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
+            'user_id' => $member->id,
         ]);
         // No payment created
 
@@ -129,10 +129,10 @@ class AdminDashboardServiceTest extends TestCase
 
     public function test_gross_revenue_sums_paid_payments(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $member    = User::factory()->create();
-        $sub       = Subscription::factory()->active()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+        $member = User::factory()->create();
+        $sub = Subscription::factory()->active()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         Payment::create(['subscription_id' => $sub->id, 'community_id' => $community->id, 'user_id' => $member->id,
             'amount' => 1000, 'currency' => 'PHP', 'status' => Payment::STATUS_PAID, 'metadata' => [], 'paid_at' => now()]);
@@ -147,12 +147,12 @@ class AdminDashboardServiceTest extends TestCase
 
     public function test_affiliate_commission_total_is_sum_across_all_conversions(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $affUser   = User::factory()->create();
+        $affUser = User::factory()->create();
         $affiliate = Affiliate::create(['community_id' => $community->id, 'user_id' => $affUser->id, 'code' => 'AFF', 'status' => Affiliate::STATUS_ACTIVE]);
-        $member    = User::factory()->create();
-        $sub       = Subscription::factory()->active()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+        $member = User::factory()->create();
+        $sub = Subscription::factory()->active()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         AffiliateConversion::create(['affiliate_id' => $affiliate->id, 'subscription_id' => $sub->id, 'referred_user_id' => $member->id,
             'sale_amount' => 1000, 'platform_fee' => 98, 'commission_amount' => 100, 'creator_amount' => 802]);
@@ -167,12 +167,12 @@ class AdminDashboardServiceTest extends TestCase
 
     public function test_affiliate_pending_commission_excludes_paid_ones(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $affUser   = User::factory()->create();
+        $affUser = User::factory()->create();
         $affiliate = Affiliate::create(['community_id' => $community->id, 'user_id' => $affUser->id, 'code' => 'AFF2', 'status' => Affiliate::STATUS_ACTIVE]);
-        $member    = User::factory()->create();
-        $sub       = Subscription::factory()->active()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+        $member = User::factory()->create();
+        $sub = Subscription::factory()->active()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         AffiliateConversion::create(['affiliate_id' => $affiliate->id, 'subscription_id' => $sub->id, 'referred_user_id' => $member->id,
             'sale_amount' => 1000, 'platform_fee' => 98, 'commission_amount' => 200, 'creator_amount' => 702,
@@ -189,15 +189,15 @@ class AdminDashboardServiceTest extends TestCase
 
     public function test_creator_net_equals_gross_minus_fees_and_commissions(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $member    = User::factory()->create();
-        $sub       = Subscription::factory()->active()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+        $member = User::factory()->create();
+        $sub = Subscription::factory()->active()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         Payment::create(['subscription_id' => $sub->id, 'community_id' => $community->id, 'user_id' => $member->id,
             'amount' => 1000, 'currency' => 'PHP', 'status' => Payment::STATUS_PAID, 'metadata' => [], 'paid_at' => now()]);
 
-        $result  = $this->service->build();
+        $result = $this->service->build();
         $revenue = $result['revenue'];
 
         $this->assertEquals(

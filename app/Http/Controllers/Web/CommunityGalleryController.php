@@ -33,9 +33,9 @@ class CommunityGalleryController extends Controller
 
         CommunityGalleryItem::create([
             'community_id' => $community->id,
-            'type'         => 'image',
-            'image_path'   => $this->keyFromStoredUrl($url),
-            'position'     => $this->nextPosition($community),
+            'type' => 'image',
+            'image_path' => $this->keyFromStoredUrl($url),
+            'position' => $this->nextPosition($community),
         ]);
 
         return back()->with('success', 'Image added!');
@@ -51,15 +51,15 @@ class CommunityGalleryController extends Controller
         }
 
         $request->validate([
-            'filename'     => ['required', 'string', 'max:255'],
+            'filename' => ['required', 'string', 'max:255'],
             'content_type' => ['required', 'string', 'in:video/mp4,video/quicktime,video/webm'],
-            'size'         => ['required', 'integer', 'min:1'],
+            'size' => ['required', 'integer', 'min:1'],
         ]);
 
         $maxBytes = $planLimit->maxVideoSizeMb($owner->creatorPlan()) * 1024 * 1024;
         if ($request->size > $maxBytes) {
             return response()->json([
-                'error' => 'File too large. Maximum is ' . $planLimit->maxVideoSizeMb($owner->creatorPlan()) . ' MB.',
+                'error' => 'File too large. Maximum is '.$planLimit->maxVideoSizeMb($owner->creatorPlan()).' MB.',
             ], 422);
         }
 
@@ -75,8 +75,8 @@ class CommunityGalleryController extends Controller
         $this->authorize('update', $community);
 
         $request->validate([
-            'key'         => ['required', 'string'],
-            'upload_id'   => ['required', 'string'],
+            'key' => ['required', 'string'],
+            'upload_id' => ['required', 'string'],
             'part_number' => ['required', 'integer', 'min:1', 'max:10000'],
         ]);
 
@@ -90,22 +90,22 @@ class CommunityGalleryController extends Controller
         $this->authorize('update', $community);
 
         $request->validate([
-            'key'                => ['required', 'string'],
-            'upload_id'          => ['required', 'string'],
-            'parts'              => ['required', 'array', 'min:1'],
+            'key' => ['required', 'string'],
+            'upload_id' => ['required', 'string'],
+            'parts' => ['required', 'array', 'min:1'],
             'parts.*.PartNumber' => ['required', 'integer'],
-            'parts.*.ETag'       => ['required', 'string'],
+            'parts.*.ETag' => ['required', 'string'],
         ]);
 
         $multipart->complete($request->key, $request->upload_id, $request->parts);
 
         $item = CommunityGalleryItem::create([
-            'community_id'      => $community->id,
-            'type'              => 'video',
-            'video_path'        => $request->key,
-            'transcode_status'  => 'pending',
+            'community_id' => $community->id,
+            'type' => 'video',
+            'video_path' => $request->key,
+            'transcode_status' => 'pending',
             'transcode_percent' => 0,
-            'position'          => $this->nextPosition($community),
+            'position' => $this->nextPosition($community),
         ]);
 
         TranscodeVideoToHls::dispatch($item);
@@ -120,7 +120,7 @@ class CommunityGalleryController extends Controller
         $this->authorize('update', $community);
 
         $request->validate([
-            'key'       => ['required', 'string'],
+            'key' => ['required', 'string'],
             'upload_id' => ['required', 'string'],
         ]);
 
@@ -149,8 +149,8 @@ class CommunityGalleryController extends Controller
             $file,
             fn (string $relative) => route('communities.gallery.hls', [
                 'community' => $community,
-                'item'      => $item->id,
-                'file'      => $relative,
+                'item' => $item->id,
+                'file' => $relative,
             ]),
         );
     }
@@ -189,12 +189,12 @@ class CommunityGalleryController extends Controller
         $this->authorize('update', $community);
 
         $request->validate([
-            'order'   => ['required', 'array'],
+            'order' => ['required', 'array'],
             'order.*' => ['integer'],
         ]);
 
         $itemIds = $community->galleryItems()->pluck('id')->all();
-        $order   = $request->input('order');
+        $order = $request->input('order');
 
         if (count($order) !== count($itemIds) || array_diff($order, $itemIds)) {
             return response()->json(['error' => 'Invalid order.'], 422);
@@ -249,21 +249,21 @@ class CommunityGalleryController extends Controller
     private function presentItem(CommunityGalleryItem $item): array
     {
         return [
-            'id'                => $item->id,
-            'type'              => $item->type,
-            'url'               => $item->url,
-            'poster_url'        => $item->poster_url,
-            'hls_url'           => $item->video_ready
+            'id' => $item->id,
+            'type' => $item->type,
+            'url' => $item->url,
+            'poster_url' => $item->poster_url,
+            'hls_url' => $item->video_ready
                 ? route('communities.gallery.hls', [
                     'community' => $item->community->slug,
-                    'item'      => $item->id,
-                    'file'      => 'video.m3u8',
+                    'item' => $item->id,
+                    'file' => 'video.m3u8',
                 ])
                 : null,
-            'transcode_status'  => $item->transcode_status,
+            'transcode_status' => $item->transcode_status,
             'transcode_percent' => $item->transcode_percent,
-            'video_ready'       => $item->video_ready,
-            'position'          => $item->position,
+            'video_ready' => $item->video_ready,
+            'position' => $item->position,
         ];
     }
 }

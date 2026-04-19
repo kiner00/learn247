@@ -18,7 +18,7 @@ class ToggleLike
         $type = in_array($type, self::ALLOWED_TYPES) ? $type : 'like';
 
         /** @var MorphMany $likes */
-        $likes    = $likeable->likes();
+        $likes = $likeable->likes();
         $existing = $likes->where('user_id', $user->id)->first();
 
         if ($existing && $existing->type === $type) {
@@ -33,8 +33,8 @@ class ToggleLike
         }
 
         return [
-            'action'      => $action,
-            'type'        => $type,
+            'action' => $action,
+            'type' => $type,
             'likes_count' => $likes->count(),
         ];
     }

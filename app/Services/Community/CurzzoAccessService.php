@@ -19,7 +19,7 @@ class CurzzoAccessService
      */
     public function buildContext(?User $user, Community $community, Collection $curzzoIds): array
     {
-        $userId  = $user?->id;
+        $userId = $user?->id;
         $isOwner = $userId !== null && $userId === $community->owner_id;
 
         $isMember = $userId !== null && CommunityMember::query()
@@ -56,10 +56,10 @@ class CurzzoAccessService
         }
 
         return [
-            'user_id'         => $userId,
-            'is_owner'        => $isOwner,
-            'is_member'       => $isMember,
-            'is_paid_member'  => $isPaidMember,
+            'user_id' => $userId,
+            'is_owner' => $isOwner,
+            'is_member' => $isMember,
+            'is_paid_member' => $isPaidMember,
             'was_ever_member' => $wasEverMember,
             'paid_curzzo_ids' => $paidCurzzoIds,
         ];
@@ -72,12 +72,12 @@ class CurzzoAccessService
         }
 
         return match ($curzzo->access_type ?? 'free') {
-            'free'                       => $context['is_member'],
-            'inclusive'                  => $context['is_paid_member'],
-            'paid_once', 'paid_monthly'  => $context['user_id'] !== null
+            'free' => $context['is_member'],
+            'inclusive' => $context['is_paid_member'],
+            'paid_once', 'paid_monthly' => $context['user_id'] !== null
                 && $context['paid_curzzo_ids']->contains($curzzo->id),
-            'member_once'                => $context['was_ever_member'],
-            default                      => false,
+            'member_once' => $context['was_ever_member'],
+            default => false,
         };
     }
 }

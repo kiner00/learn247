@@ -14,8 +14,8 @@ class SubmitCertificationExam
         $certification->load('questions.options');
 
         $questions = $certification->questions;
-        $total     = $questions->count();
-        $correct   = 0;
+        $total = $questions->count();
+        $correct = 0;
 
         foreach ($questions as $question) {
             $submittedOptionId = $answers[$question->id] ?? null;
@@ -29,16 +29,16 @@ class SubmitCertificationExam
             }
         }
 
-        $score  = $total > 0 ? (int) round(($correct / $total) * 100) : 0;
+        $score = $total > 0 ? (int) round(($correct / $total) * 100) : 0;
         $passed = $score >= $certification->pass_score;
 
         $attempt = CertificationAttempt::create([
             'certification_id' => $certification->id,
-            'user_id'          => $user->id,
-            'answers'          => $answers,
-            'score'            => $score,
-            'passed'           => $passed,
-            'completed_at'     => now(),
+            'user_id' => $user->id,
+            'answers' => $answers,
+            'score' => $score,
+            'passed' => $passed,
+            'completed_at' => now(),
         ]);
 
         $certificateUuid = null;
@@ -46,12 +46,12 @@ class SubmitCertificationExam
         if ($passed) {
             $certificate = Certificate::firstOrCreate(
                 [
-                    'user_id'          => $user->id,
+                    'user_id' => $user->id,
                     'certification_id' => $certification->id,
                 ],
                 [
-                    'issued_at'   => now(),
-                    'cert_title'  => $certification->cert_title,
+                    'issued_at' => now(),
+                    'cert_title' => $certification->cert_title,
                     'description' => $certification->description,
                     'cover_image' => $certification->cover_image,
                 ]
@@ -60,7 +60,7 @@ class SubmitCertificationExam
             // Update cert fields if this is a re-issue after exam changes
             if (! $certificate->wasRecentlyCreated) {
                 $certificate->update([
-                    'cert_title'  => $certification->cert_title,
+                    'cert_title' => $certification->cert_title,
                     'description' => $certification->description,
                     'cover_image' => $certification->cover_image,
                 ]);
@@ -70,10 +70,10 @@ class SubmitCertificationExam
         }
 
         return [
-            'score'            => $score,
-            'passed'           => $passed,
-            'total'            => $total,
-            'correct'          => $correct,
+            'score' => $score,
+            'passed' => $passed,
+            'total' => $total,
+            'correct' => $correct,
             'certificate_uuid' => $certificateUuid,
         ];
     }

@@ -21,9 +21,9 @@ class GuestCheckoutTest extends TestCase
 
         $user = $action->findOrCreateUser([
             'first_name' => 'Juan',
-            'last_name'  => 'Cruz',
-            'email'      => 'juan@example.com',
-            'phone'      => '09171234567',
+            'last_name' => 'Cruz',
+            'email' => 'juan@example.com',
+            'phone' => '09171234567',
         ]);
 
         $this->assertTrue($user->needs_password_setup);
@@ -36,17 +36,17 @@ class GuestCheckoutTest extends TestCase
     public function test_returns_existing_user_without_modifying_it(): void
     {
         $existing = User::factory()->create([
-            'email'                => 'existing@example.com',
-            'name'                 => 'Old Name',
+            'email' => 'existing@example.com',
+            'name' => 'Old Name',
             'needs_password_setup' => false,
         ]);
 
         $action = app(GuestCheckout::class);
-        $user   = $action->findOrCreateUser([
+        $user = $action->findOrCreateUser([
             'first_name' => 'New',
-            'last_name'  => 'Name',
-            'email'      => 'existing@example.com',
-            'phone'      => '09170000000',
+            'last_name' => 'Name',
+            'email' => 'existing@example.com',
+            'phone' => '09170000000',
         ]);
 
         $this->assertEquals($existing->id, $user->id);
@@ -59,9 +59,9 @@ class GuestCheckoutTest extends TestCase
 
         $user = $action->findOrCreateUser([
             'first_name' => 'Maria',
-            'last_name'  => 'Santos',
-            'email'      => 'maria@example.com',
-            'phone'      => '09181234567',
+            'last_name' => 'Santos',
+            'email' => 'maria@example.com',
+            'phone' => '09181234567',
         ]);
 
         $this->assertStringStartsWith('maria-santos-', $user->username);
@@ -73,9 +73,9 @@ class GuestCheckoutTest extends TestCase
 
         $user = $action->findOrCreateUser([
             'first_name' => 'José',
-            'last_name'  => 'García',
-            'email'      => 'jose@example.com',
-            'phone'      => '09191234567',
+            'last_name' => 'García',
+            'email' => 'jose@example.com',
+            'phone' => '09191234567',
         ]);
 
         // Username should only contain alphanumeric and dashes
@@ -90,9 +90,9 @@ class GuestCheckoutTest extends TestCase
         // Last name with only special characters should not crash
         $user = $action->findOrCreateUser([
             'first_name' => 'Test',
-            'last_name'  => '!!!',
-            'email'      => 'test-special@example.com',
-            'phone'      => '09001234567',
+            'last_name' => '!!!',
+            'email' => 'test-special@example.com',
+            'phone' => '09001234567',
         ]);
 
         $this->assertNotNull($user->username);
@@ -103,11 +103,11 @@ class GuestCheckoutTest extends TestCase
 
     public function test_returns_true_when_user_has_active_subscription(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid()->create();
 
         Subscription::factory()->active()->create([
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
             'community_id' => $community->id,
         ]);
 
@@ -118,7 +118,7 @@ class GuestCheckoutTest extends TestCase
 
     public function test_returns_false_when_user_has_no_subscription(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid()->create();
 
         $action = app(GuestCheckout::class);
@@ -128,13 +128,13 @@ class GuestCheckoutTest extends TestCase
 
     public function test_returns_false_when_subscription_is_pending(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid()->create();
 
         Subscription::factory()->create([
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
             'community_id' => $community->id,
-            'status'       => Subscription::STATUS_PENDING,
+            'status' => Subscription::STATUS_PENDING,
         ]);
 
         $action = app(GuestCheckout::class);
@@ -144,11 +144,11 @@ class GuestCheckoutTest extends TestCase
 
     public function test_returns_false_when_subscription_is_expired(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid()->create();
 
         Subscription::factory()->expired()->create([
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
             'community_id' => $community->id,
         ]);
 
@@ -159,12 +159,12 @@ class GuestCheckoutTest extends TestCase
 
     public function test_returns_false_for_active_subscription_to_different_community(): void
     {
-        $user       = User::factory()->create();
+        $user = User::factory()->create();
         $community1 = Community::factory()->paid()->create();
         $community2 = Community::factory()->paid()->create();
 
         Subscription::factory()->active()->create([
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
             'community_id' => $community1->id,
         ]);
 

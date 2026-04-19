@@ -20,7 +20,7 @@ class AcceptInviteTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->action = new AcceptInvite();
+        $this->action = new AcceptInvite;
     }
 
     public function test_expired_invite_returns_failure(): void
@@ -29,9 +29,9 @@ class AcceptInviteTest extends TestCase
         $community = Community::factory()->create();
         $invite = CommunityInvite::create([
             'community_id' => $community->id,
-            'email'        => $user->email,
-            'token'        => 'abc',
-            'expires_at'   => now()->subDay(),
+            'email' => $user->email,
+            'token' => 'abc',
+            'expires_at' => now()->subDay(),
         ]);
 
         $result = $this->action->execute($user, $invite);
@@ -47,10 +47,10 @@ class AcceptInviteTest extends TestCase
         $community = Community::factory()->create();
         $invite = CommunityInvite::create([
             'community_id' => $community->id,
-            'email'        => $user->email,
-            'token'        => 'abc',
-            'accepted_at'  => now(),
-            'expires_at'   => now()->addDays(7),
+            'email' => $user->email,
+            'token' => 'abc',
+            'accepted_at' => now(),
+            'expires_at' => now()->addDays(7),
         ]);
 
         $result = $this->action->execute($user, $invite);
@@ -66,9 +66,9 @@ class AcceptInviteTest extends TestCase
         $community = Community::factory()->create();
         $invite = CommunityInvite::create([
             'community_id' => $community->id,
-            'email'        => 'bob@example.com',
-            'token'        => 'abc',
-            'expires_at'   => now()->addDays(7),
+            'email' => 'bob@example.com',
+            'token' => 'abc',
+            'expires_at' => now()->addDays(7),
         ]);
 
         $result = $this->action->execute($user, $invite);
@@ -84,9 +84,9 @@ class AcceptInviteTest extends TestCase
         $community = Community::factory()->create(['price' => 0]);
         $invite = CommunityInvite::create([
             'community_id' => $community->id,
-            'email'        => 'test@example.com',
-            'token'        => 'abc',
-            'expires_at'   => now()->addDays(7),
+            'email' => 'test@example.com',
+            'token' => 'abc',
+            'expires_at' => now()->addDays(7),
         ]);
 
         $result = $this->action->execute($user, $invite);
@@ -95,11 +95,11 @@ class AcceptInviteTest extends TestCase
         $this->assertSame('show', $result['redirect']);
         $this->assertDatabaseHas('community_members', [
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
         $this->assertDatabaseMissing('subscriptions', [
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
     }
 
@@ -109,9 +109,9 @@ class AcceptInviteTest extends TestCase
         $community = Community::factory()->create(['price' => 500]);
         $invite = CommunityInvite::create([
             'community_id' => $community->id,
-            'email'        => 'test@example.com',
-            'token'        => 'abc',
-            'expires_at'   => now()->addDays(7),
+            'email' => 'test@example.com',
+            'token' => 'abc',
+            'expires_at' => now()->addDays(7),
         ]);
 
         $result = $this->action->execute($user, $invite);
@@ -122,14 +122,14 @@ class AcceptInviteTest extends TestCase
 
         $this->assertDatabaseHas('community_members', [
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'role'         => CommunityMember::ROLE_MEMBER,
+            'user_id' => $user->id,
+            'role' => CommunityMember::ROLE_MEMBER,
         ]);
         $this->assertDatabaseHas('subscriptions', [
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => null,
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => null,
         ]);
 
         $invite->refresh();

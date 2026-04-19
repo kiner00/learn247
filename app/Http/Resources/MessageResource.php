@@ -12,10 +12,10 @@ class MessageResource extends JsonResource
         $myId = $request->user()?->id;
 
         return [
-            'id'         => $this->id,
-            'content'    => $this->content,
-            'is_mine'    => $this->sender_id === $myId,
-            'read_at'    => $this->read_at,
+            'id' => $this->id,
+            'content' => $this->content,
+            'is_mine' => $this->sender_id === $myId,
+            'read_at' => $this->read_at,
             'created_at' => $this->created_at,
         ];
     }

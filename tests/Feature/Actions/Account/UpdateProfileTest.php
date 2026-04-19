@@ -27,7 +27,7 @@ class UpdateProfileTest extends TestCase
 
         $result = $this->action->execute($user, [
             'first_name' => 'Jane',
-            'last_name'  => 'Doe',
+            'last_name' => 'Doe',
         ]);
 
         $this->assertEquals('Jane Doe', $result->name);
@@ -42,7 +42,7 @@ class UpdateProfileTest extends TestCase
         $avatar = UploadedFile::fake()->image('avatar.jpg');
         $result = $this->action->execute($user, [
             'first_name' => 'Jane',
-            'last_name'  => 'Doe',
+            'last_name' => 'Doe',
         ], $avatar);
 
         $this->assertNotNull($result->avatar);
@@ -59,7 +59,7 @@ class UpdateProfileTest extends TestCase
         $newAvatar = UploadedFile::fake()->image('new-avatar.jpg');
         $result = $this->action->execute($user, [
             'first_name' => 'Jane',
-            'last_name'  => 'Doe',
+            'last_name' => 'Doe',
         ], $newAvatar);
 
         $this->assertNotNull($result->avatar);

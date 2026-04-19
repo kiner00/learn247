@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Api;
 
-use App\Models\AffiliateConversion;
 use App\Models\Community;
 use App\Models\CommunityMember;
 use App\Models\OwnerPayout;
@@ -39,31 +38,31 @@ class CreatorControllerTest extends TestCase
 
     public function test_dashboard_returns_community_revenue_data(): void
     {
-        $owner     = User::factory()->create(['payout_method' => 'gcash', 'payout_details' => '09171234567']);
+        $owner = User::factory()->create(['payout_method' => 'gcash', 'payout_details' => '09171234567']);
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 499]);
 
-        $subscriber   = User::factory()->create();
+        $subscriber = User::factory()->create();
         $subscription = Subscription::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $subscriber->id,
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->addMonth(),
+            'user_id' => $subscriber->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addMonth(),
         ]);
 
         Payment::create([
-            'subscription_id'    => $subscription->id,
-            'community_id'       => $community->id,
-            'user_id'            => $subscriber->id,
-            'amount'             => 499,
-            'currency'           => 'PHP',
-            'status'             => Payment::STATUS_PAID,
+            'subscription_id' => $subscription->id,
+            'community_id' => $community->id,
+            'user_id' => $subscriber->id,
+            'amount' => 499,
+            'currency' => 'PHP',
+            'status' => Payment::STATUS_PAID,
             'provider_reference' => 'pay_test',
-            'paid_at'            => now()->subDays(20),
+            'paid_at' => now()->subDays(20),
         ]);
 
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $subscriber->id,
+            'user_id' => $subscriber->id,
         ]);
 
         $response = $this->actingAs($owner, 'sanctum')
@@ -101,16 +100,16 @@ class CreatorControllerTest extends TestCase
 
     public function test_dashboard_includes_payout_request_history(): void
     {
-        $owner     = User::factory()->create(['payout_method' => 'gcash', 'payout_details' => '09171234567']);
+        $owner = User::factory()->create(['payout_method' => 'gcash', 'payout_details' => '09171234567']);
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 499]);
 
         PayoutRequest::create([
-            'user_id'         => $owner->id,
-            'type'            => PayoutRequest::TYPE_OWNER,
-            'community_id'    => $community->id,
-            'amount'          => 100,
+            'user_id' => $owner->id,
+            'type' => PayoutRequest::TYPE_OWNER,
+            'community_id' => $community->id,
+            'amount' => 100,
             'eligible_amount' => 200,
-            'status'          => PayoutRequest::STATUS_PENDING,
+            'status' => PayoutRequest::STATUS_PENDING,
         ]);
 
         $response = $this->actingAs($owner, 'sanctum')
@@ -122,37 +121,37 @@ class CreatorControllerTest extends TestCase
 
     public function test_dashboard_shows_correct_paid_amount(): void
     {
-        $owner     = User::factory()->create(['payout_method' => 'gcash', 'payout_details' => '09171234567']);
+        $owner = User::factory()->create(['payout_method' => 'gcash', 'payout_details' => '09171234567']);
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 499]);
 
-        $subscriber   = User::factory()->create();
+        $subscriber = User::factory()->create();
         $subscription = Subscription::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $subscriber->id,
-            'status'       => Subscription::STATUS_ACTIVE,
+            'user_id' => $subscriber->id,
+            'status' => Subscription::STATUS_ACTIVE,
         ]);
 
         Payment::create([
-            'subscription_id'    => $subscription->id,
-            'community_id'       => $community->id,
-            'user_id'            => $subscriber->id,
-            'amount'             => 499,
-            'currency'           => 'PHP',
-            'status'             => Payment::STATUS_PAID,
+            'subscription_id' => $subscription->id,
+            'community_id' => $community->id,
+            'user_id' => $subscriber->id,
+            'amount' => 499,
+            'currency' => 'PHP',
+            'status' => Payment::STATUS_PAID,
             'provider_reference' => 'pay_test',
-            'paid_at'            => now()->subDays(20),
+            'paid_at' => now()->subDays(20),
         ]);
 
         OwnerPayout::create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
-            'amount'       => 100,
-            'status'       => 'completed',
+            'user_id' => $owner->id,
+            'amount' => 100,
+            'status' => 'completed',
         ]);
 
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $subscriber->id,
+            'user_id' => $subscriber->id,
         ]);
 
         $response = $this->actingAs($owner, 'sanctum')

@@ -23,37 +23,37 @@ class ProcessEmailSequencesTest extends TestCase
         $community = Community::factory()->create();
         $campaign = EmailCampaign::create([
             'community_id' => $community->id,
-            'name'         => 'Seq Campaign',
-            'type'         => EmailCampaign::TYPE_SEQUENCE,
-            'status'       => 'draft',
+            'name' => 'Seq Campaign',
+            'type' => EmailCampaign::TYPE_SEQUENCE,
+            'status' => 'draft',
         ]);
         $sequence = EmailSequence::create([
-            'campaign_id'   => $campaign->id,
-            'community_id'  => $community->id,
+            'campaign_id' => $campaign->id,
+            'community_id' => $community->id,
             'trigger_event' => EmailSequence::TRIGGER_MEMBER_JOINED,
-            'status'        => $sequenceStatus,
+            'status' => $sequenceStatus,
         ]);
         $step = EmailSequenceStep::create([
             'sequence_id' => $sequence->id,
-            'position'    => 1,
+            'position' => 1,
             'delay_hours' => 0,
-            'subject'     => 'Welcome',
-            'html_body'   => '<p>Hi</p>',
+            'subject' => 'Welcome',
+            'html_body' => '<p>Hi</p>',
         ]);
 
         $user = User::factory()->create();
         $member = CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         return EmailSequenceEnrollment::create([
-            'sequence_id'         => $sequence->id,
+            'sequence_id' => $sequence->id,
             'community_member_id' => $member->id,
-            'current_step_id'     => $step->id,
-            'status'              => EmailSequenceEnrollment::STATUS_ACTIVE,
-            'next_send_at'        => $nextSendAt ?? now()->subMinute(),
-            'enrolled_at'         => now(),
+            'current_step_id' => $step->id,
+            'status' => EmailSequenceEnrollment::STATUS_ACTIVE,
+            'next_send_at' => $nextSendAt ?? now()->subMinute(),
+            'enrolled_at' => now(),
         ]);
     }
 

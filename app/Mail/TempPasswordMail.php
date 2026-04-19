@@ -37,6 +37,7 @@ class TempPasswordMail extends Mailable
         if ($rendered) {
             return new Content(htmlString: $rendered['html']);
         }
+
         return new Content(view: 'emails.temp-password');
     }
 
@@ -44,10 +45,10 @@ class TempPasswordMail extends Mailable
     {
         return [
             'community_name' => $this->community->name,
-            'user_name'      => $this->user->name,
-            'user_email'     => $this->user->email,
-            'temp_password'  => $this->tempPassword,
-            'login_url'      => config('app.url') . '/login',
+            'user_name' => $this->user->name,
+            'user_email' => $this->user->email,
+            'temp_password' => $this->tempPassword,
+            'login_url' => config('app.url').'/login',
         ];
     }
 }

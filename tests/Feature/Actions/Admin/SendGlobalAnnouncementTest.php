@@ -22,12 +22,12 @@ class SendGlobalAnnouncementTest extends TestCase
         Mail::fake();
 
         $sender = User::factory()->create();
-        $user1  = User::factory()->create(['email' => 'user1@example.com', 'is_active' => true]);
-        $user2  = User::factory()->create(['email' => 'user2@example.com', 'is_active' => true]);
+        $user1 = User::factory()->create(['email' => 'user1@example.com', 'is_active' => true]);
+        $user2 = User::factory()->create(['email' => 'user2@example.com', 'is_active' => true]);
         User::factory()->create(['email' => 'inactive@example.com', 'is_active' => false]);
 
-        $action = new SendGlobalAnnouncement();
-        $count  = $action->execute($sender, 'Test Subject', 'Test Message', 'all');
+        $action = new SendGlobalAnnouncement;
+        $count = $action->execute($sender, 'Test Subject', 'Test Message', 'all');
 
         // sender + user1 + user2 are active (sender is also active by default)
         $this->assertGreaterThanOrEqual(2, $count);
@@ -39,19 +39,19 @@ class SendGlobalAnnouncementTest extends TestCase
     {
         Mail::fake();
 
-        $sender        = User::factory()->create();
+        $sender = User::factory()->create();
         $affiliateUser = User::factory()->create(['email' => 'affiliate@example.com']);
-        $normalUser    = User::factory()->create(['email' => 'normal@example.com']);
+        $normalUser = User::factory()->create(['email' => 'normal@example.com']);
 
         Affiliate::create([
             'community_id' => Community::factory()->create()->id,
-            'user_id'      => $affiliateUser->id,
-            'code'         => 'AFF001',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => $affiliateUser->id,
+            'code' => 'AFF001',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
-        $action = new SendGlobalAnnouncement();
-        $count  = $action->execute($sender, 'Affiliate News', 'Commission updates!', 'affiliates');
+        $action = new SendGlobalAnnouncement;
+        $count = $action->execute($sender, 'Affiliate News', 'Commission updates!', 'affiliates');
 
         $this->assertSame(1, $count);
 
@@ -63,19 +63,19 @@ class SendGlobalAnnouncementTest extends TestCase
     {
         Mail::fake();
 
-        $sender      = User::factory()->create();
+        $sender = User::factory()->create();
         $creatorUser = User::factory()->create(['email' => 'creator@example.com']);
         User::factory()->create(['email' => 'noncreator@example.com']);
 
         CreatorSubscription::create([
-            'user_id'   => $creatorUser->id,
-            'plan'      => 'basic',
-            'status'    => CreatorSubscription::STATUS_ACTIVE,
+            'user_id' => $creatorUser->id,
+            'plan' => 'basic',
+            'status' => CreatorSubscription::STATUS_ACTIVE,
             'xendit_id' => 'test',
         ]);
 
-        $action = new SendGlobalAnnouncement();
-        $count  = $action->execute($sender, 'Creator Update', 'New features!', 'creators');
+        $action = new SendGlobalAnnouncement;
+        $count = $action->execute($sender, 'Creator Update', 'New features!', 'creators');
 
         $this->assertSame(1, $count);
 
@@ -87,15 +87,15 @@ class SendGlobalAnnouncementTest extends TestCase
     {
         Mail::fake();
 
-        $sender     = User::factory()->create();
+        $sender = User::factory()->create();
         $memberUser = User::factory()->create(['email' => 'member@example.com']);
         User::factory()->create(['email' => 'nonmember@example.com']);
 
         $community = Community::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $memberUser->id]);
 
-        $action = new SendGlobalAnnouncement();
-        $count  = $action->execute($sender, 'Member News', 'Community updates!', 'members');
+        $action = new SendGlobalAnnouncement;
+        $count = $action->execute($sender, 'Member News', 'Community updates!', 'members');
 
         $this->assertSame(1, $count);
 
@@ -112,7 +112,7 @@ class SendGlobalAnnouncementTest extends TestCase
         $noEmail = User::factory()->create(['email' => '', 'is_active' => true]);
         User::factory()->create(['email' => 'valid@example.com', 'is_active' => true]);
 
-        $action = new SendGlobalAnnouncement();
+        $action = new SendGlobalAnnouncement;
         $action->execute($sender, 'Subject', 'Message', 'all');
 
         // Should send to valid@example.com (and possibly the sender), but not to empty email
@@ -126,8 +126,8 @@ class SendGlobalAnnouncementTest extends TestCase
         $sender = User::factory()->create();
 
         // No active affiliates
-        $action = new SendGlobalAnnouncement();
-        $count  = $action->execute($sender, 'Subject', 'Message', 'affiliates');
+        $action = new SendGlobalAnnouncement;
+        $count = $action->execute($sender, 'Subject', 'Message', 'affiliates');
 
         $this->assertSame(0, $count);
         Mail::assertNothingQueued();

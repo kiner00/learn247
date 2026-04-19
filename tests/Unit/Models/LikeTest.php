@@ -34,9 +34,9 @@ class LikeTest extends TestCase
 
     public function test_likeable_resolves_to_comment(): void
     {
-        $user    = User::factory()->create();
+        $user = User::factory()->create();
         $comment = Comment::factory()->create();
-        $like    = Like::create(['user_id' => $user->id, 'likeable_type' => Comment::class, 'likeable_id' => $comment->id]);
+        $like = Like::create(['user_id' => $user->id, 'likeable_type' => Comment::class, 'likeable_id' => $comment->id]);
 
         $this->assertInstanceOf(Comment::class, $like->likeable);
         $this->assertTrue($like->likeable->is($comment));

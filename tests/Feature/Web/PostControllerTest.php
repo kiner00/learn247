@@ -22,9 +22,9 @@ class PostControllerTest extends TestCase
 
     public function test_member_can_create_post(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $member    = User::factory()->create();
+        $member = User::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $response = $this->actingAs($member)
@@ -35,16 +35,16 @@ class PostControllerTest extends TestCase
         $response->assertRedirect();
         $this->assertDatabaseHas('posts', [
             'community_id' => $community->id,
-            'user_id'      => $member->id,
-            'content'      => 'Hello community!',
+            'user_id' => $member->id,
+            'content' => 'Hello community!',
         ]);
     }
 
     public function test_store_requires_content(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $member    = User::factory()->create();
+        $member = User::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $response = $this->actingAs($member)
@@ -57,22 +57,22 @@ class PostControllerTest extends TestCase
 
     public function test_store_with_title_and_content(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $member    = User::factory()->create();
+        $member = User::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $response = $this->actingAs($member)
             ->post("/communities/{$community->slug}/posts", [
-                'title'   => 'My First Post',
+                'title' => 'My First Post',
                 'content' => 'With a title!',
             ]);
 
         $response->assertRedirect();
         $this->assertDatabaseHas('posts', [
             'community_id' => $community->id,
-            'title'        => 'My First Post',
-            'content'      => 'With a title!',
+            'title' => 'My First Post',
+            'content' => 'With a title!',
         ]);
     }
 
@@ -91,14 +91,14 @@ class PostControllerTest extends TestCase
 
     public function test_author_can_delete_own_post(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $member    = User::factory()->create();
+        $member = User::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $post = Post::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
+            'user_id' => $member->id,
         ]);
 
         $response = $this->actingAs($member)
@@ -110,16 +110,16 @@ class PostControllerTest extends TestCase
 
     public function test_admin_member_can_delete_others_post(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $member    = User::factory()->create();
-        $admin     = User::factory()->create();
+        $member = User::factory()->create();
+        $admin = User::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $admin->id]);
 
         $post = Post::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
+            'user_id' => $member->id,
         ]);
 
         $response = $this->actingAs($admin)
@@ -131,16 +131,16 @@ class PostControllerTest extends TestCase
 
     public function test_regular_member_cannot_delete_others_post(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $author    = User::factory()->create();
-        $other     = User::factory()->create();
+        $author = User::factory()->create();
+        $other = User::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $author->id]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $other->id]);
 
         $post = Post::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $author->id,
+            'user_id' => $author->id,
         ]);
 
         $response = $this->actingAs($other)
@@ -153,13 +153,13 @@ class PostControllerTest extends TestCase
 
     public function test_owner_can_pin_post(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $post = Post::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
-            'is_pinned'    => false,
+            'user_id' => $owner->id,
+            'is_pinned' => false,
         ]);
 
         $response = $this->actingAs($owner)
@@ -171,13 +171,13 @@ class PostControllerTest extends TestCase
 
     public function test_owner_can_unpin_post(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $post = Post::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
-            'is_pinned'    => true,
+            'user_id' => $owner->id,
+            'is_pinned' => true,
         ]);
 
         $response = $this->actingAs($owner)
@@ -189,15 +189,15 @@ class PostControllerTest extends TestCase
 
     public function test_admin_member_can_pin_post(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $admin     = User::factory()->create();
+        $admin = User::factory()->create();
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $admin->id]);
 
         $post = Post::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
-            'is_pinned'    => false,
+            'user_id' => $owner->id,
+            'is_pinned' => false,
         ]);
 
         $response = $this->actingAs($admin)
@@ -209,15 +209,15 @@ class PostControllerTest extends TestCase
 
     public function test_regular_member_cannot_pin_post(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $member    = User::factory()->create();
+        $member = User::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $post = Post::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
-            'is_pinned'    => false,
+            'user_id' => $owner->id,
+            'is_pinned' => false,
         ]);
 
         $response = $this->actingAs($member)
@@ -230,9 +230,9 @@ class PostControllerTest extends TestCase
 
     public function test_author_can_update_post(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $post      = Post::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+        $post = Post::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         $this->actingAs($user)->patch("/posts/{$post->id}", [
             'content' => 'Updated content here.',
@@ -243,10 +243,10 @@ class PostControllerTest extends TestCase
 
     public function test_non_author_cannot_update_post(): void
     {
-        $author    = User::factory()->create();
-        $other     = User::factory()->create();
+        $author = User::factory()->create();
+        $other = User::factory()->create();
         $community = Community::factory()->create();
-        $post      = Post::factory()->create(['community_id' => $community->id, 'user_id' => $author->id]);
+        $post = Post::factory()->create(['community_id' => $community->id, 'user_id' => $author->id]);
 
         $this->actingAs($other)->patch("/posts/{$post->id}", [
             'content' => 'Hacked content.',
@@ -255,9 +255,9 @@ class PostControllerTest extends TestCase
 
     public function test_update_requires_content(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $post      = Post::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+        $post = Post::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         $this->actingAs($user)->patch("/posts/{$post->id}", [
             'content' => '',
@@ -268,9 +268,9 @@ class PostControllerTest extends TestCase
 
     public function test_store_fails_with_content_too_long(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $member    = User::factory()->create();
+        $member = User::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $response = $this->actingAs($member)
@@ -285,16 +285,16 @@ class PostControllerTest extends TestCase
 
     public function test_author_can_update_post_title(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $post      = Post::factory()->create([
+        $post = Post::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'title'        => 'Old Title',
+            'user_id' => $user->id,
+            'title' => 'Old Title',
         ]);
 
         $this->actingAs($user)->patch("/posts/{$post->id}", [
-            'title'   => 'New Title',
+            'title' => 'New Title',
             'content' => 'Updated content.',
         ])->assertRedirect();
 
@@ -304,7 +304,7 @@ class PostControllerTest extends TestCase
     public function test_guest_cannot_update_post(): void
     {
         $community = Community::factory()->create();
-        $post      = Post::factory()->create(['community_id' => $community->id]);
+        $post = Post::factory()->create(['community_id' => $community->id]);
 
         $this->patch("/posts/{$post->id}", [
             'content' => 'Hacked',
@@ -316,21 +316,21 @@ class PostControllerTest extends TestCase
     public function test_guest_cannot_delete_post(): void
     {
         $community = Community::factory()->create();
-        $post      = Post::factory()->create(['community_id' => $community->id]);
+        $post = Post::factory()->create(['community_id' => $community->id]);
 
         $this->delete("/posts/{$post->id}")->assertRedirect('/login');
     }
 
     public function test_owner_can_delete_any_post_in_community(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $member    = User::factory()->create();
+        $member = User::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $post = Post::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
+            'user_id' => $member->id,
         ]);
 
         // Owner is not in community_members but owns the community.
@@ -338,7 +338,7 @@ class PostControllerTest extends TestCase
         // Owner needs a membership record to pass the action check.
         CommunityMember::factory()->admin()->create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
+            'user_id' => $owner->id,
         ]);
 
         $this->actingAs($owner)
@@ -353,25 +353,25 @@ class PostControllerTest extends TestCase
     public function test_guest_cannot_pin_post(): void
     {
         $community = Community::factory()->create();
-        $post      = Post::factory()->create(['community_id' => $community->id]);
+        $post = Post::factory()->create(['community_id' => $community->id]);
 
         $this->post("/posts/{$post->id}/pin")->assertRedirect('/login');
     }
 
     public function test_moderator_cannot_pin_post(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         $moderator = User::factory()->create();
         CommunityMember::factory()->moderator()->create([
             'community_id' => $community->id,
-            'user_id'      => $moderator->id,
+            'user_id' => $moderator->id,
         ]);
 
         $post = Post::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
-            'is_pinned'    => false,
+            'user_id' => $owner->id,
+            'is_pinned' => false,
         ]);
 
         $this->actingAs($moderator)
@@ -383,9 +383,9 @@ class PostControllerTest extends TestCase
 
     public function test_store_returns_error_session_when_action_throws(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $member    = User::factory()->create();
+        $member = User::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $mock = Mockery::mock(CreatePost::class);
@@ -403,9 +403,9 @@ class PostControllerTest extends TestCase
 
     public function test_update_returns_error_session_when_action_throws(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $post      = Post::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+        $post = Post::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         $mock = Mockery::mock(UpdatePost::class);
         $mock->shouldReceive('execute')->once()->andThrow(new \RuntimeException('db error'));
@@ -422,9 +422,9 @@ class PostControllerTest extends TestCase
 
     public function test_destroy_returns_error_session_when_action_throws(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $post      = Post::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+        $post = Post::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         $mock = Mockery::mock(DeletePost::class);
         $mock->shouldReceive('execute')->once()->andThrow(new \RuntimeException('db error'));
@@ -441,14 +441,14 @@ class PostControllerTest extends TestCase
 
     public function test_toggle_pin_returns_error_session_when_action_throws(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $post = Post::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
-            'is_pinned'    => false,
+            'user_id' => $owner->id,
+            'is_pinned' => false,
         ]);
 
         $mock = Mockery::mock(TogglePin::class);

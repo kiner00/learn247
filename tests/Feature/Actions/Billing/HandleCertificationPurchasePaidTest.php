@@ -8,7 +8,6 @@ use App\Models\Affiliate;
 use App\Models\CertificationPurchase;
 use App\Models\Community;
 use App\Models\CourseCertification;
-use App\Models\Payment;
 use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -22,28 +21,28 @@ class HandleCertificationPurchasePaidTest extends TestCase
 
     private function createCertPurchaseSetup(array $overrides = []): array
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'                  => $owner->id,
+            'owner_id' => $owner->id,
             'affiliate_commission_rate' => 10,
         ]);
 
         $certification = CourseCertification::create([
-            'community_id'              => $community->id,
-            'title'                     => 'Test Certification',
-            'cert_title'                => 'Certified Tester',
-            'price'                     => 500,
+            'community_id' => $community->id,
+            'title' => 'Test Certification',
+            'cert_title' => 'Certified Tester',
+            'price' => 500,
             'affiliate_commission_rate' => 10,
-            'pass_score'                => 70,
+            'pass_score' => 70,
         ]);
 
         $buyer = User::factory()->create();
 
         $purchase = CertificationPurchase::create(array_merge([
-            'user_id'          => $buyer->id,
+            'user_id' => $buyer->id,
             'certification_id' => $certification->id,
-            'xendit_id'        => 'inv_cert_' . uniqid(),
-            'status'           => CertificationPurchase::STATUS_PENDING,
+            'xendit_id' => 'inv_cert_'.uniqid(),
+            'status' => CertificationPurchase::STATUS_PENDING,
         ], $overrides));
 
         return compact('owner', 'community', 'certification', 'buyer', 'purchase');
@@ -53,7 +52,7 @@ class HandleCertificationPurchasePaidTest extends TestCase
 
     public function test_matches_returns_true_when_certification_purchase_exists(): void
     {
-        $setup   = $this->createCertPurchaseSetup(['xendit_id' => 'inv_cert_match']);
+        $setup = $this->createCertPurchaseSetup(['xendit_id' => 'inv_cert_match']);
         $handler = app(HandleCertificationPurchasePaid::class);
 
         $this->assertTrue($handler->matches('inv_cert_match'));
@@ -78,7 +77,7 @@ class HandleCertificationPurchasePaidTest extends TestCase
         $handler->matches('inv_cert_paid');
 
         $handler->handle([
-            'amount'   => 500,
+            'amount' => 500,
             'currency' => 'PHP',
         ], 'evt_cert_paid', 'PAID');
 
@@ -97,7 +96,7 @@ class HandleCertificationPurchasePaidTest extends TestCase
         $handler->matches('inv_cert_settled');
 
         $handler->handle([
-            'amount'   => 500,
+            'amount' => 500,
             'currency' => 'PHP',
         ], 'evt_cert_settled', 'SETTLED');
 
@@ -154,51 +153,51 @@ class HandleCertificationPurchasePaidTest extends TestCase
     {
         Mail::fake();
 
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'                  => $owner->id,
+            'owner_id' => $owner->id,
             'affiliate_commission_rate' => 10,
         ]);
 
         $certification = CourseCertification::create([
-            'community_id'              => $community->id,
-            'title'                     => 'Affiliate Cert',
-            'cert_title'                => 'Certified',
-            'price'                     => 1000,
+            'community_id' => $community->id,
+            'title' => 'Affiliate Cert',
+            'cert_title' => 'Certified',
+            'price' => 1000,
             'affiliate_commission_rate' => 15,
-            'pass_score'                => 70,
+            'pass_score' => 70,
         ]);
 
         $affiliateUser = User::factory()->create();
-        $affiliate     = Affiliate::create([
+        $affiliate = Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => $affiliateUser->id,
-            'code'         => 'AFF-CERT-1',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => $affiliateUser->id,
+            'code' => 'AFF-CERT-1',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         // Affiliate must be subscribed
         Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $affiliateUser->id,
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->addMonth(),
+            'user_id' => $affiliateUser->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addMonth(),
         ]);
 
-        $buyer    = User::factory()->create();
+        $buyer = User::factory()->create();
         $purchase = CertificationPurchase::create([
-            'user_id'          => $buyer->id,
+            'user_id' => $buyer->id,
             'certification_id' => $certification->id,
-            'affiliate_id'     => $affiliate->id,
-            'xendit_id'        => 'inv_cert_aff',
-            'status'           => CertificationPurchase::STATUS_PENDING,
+            'affiliate_id' => $affiliate->id,
+            'xendit_id' => 'inv_cert_aff',
+            'status' => CertificationPurchase::STATUS_PENDING,
         ]);
 
         $handler = app(HandleCertificationPurchasePaid::class);
         $handler->matches('inv_cert_aff');
 
         $handler->handle([
-            'amount'   => 1000,
+            'amount' => 1000,
             'currency' => 'PHP',
         ], 'evt_cert_aff', 'PAID');
 
@@ -207,9 +206,9 @@ class HandleCertificationPurchasePaidTest extends TestCase
 
         // Affiliate conversion should be recorded
         $this->assertDatabaseHas('affiliate_conversions', [
-            'affiliate_id'              => $affiliate->id,
+            'affiliate_id' => $affiliate->id,
             'certification_purchase_id' => $purchase->id,
-            'referred_user_id'          => $buyer->id,
+            'referred_user_id' => $buyer->id,
         ]);
     }
 
@@ -223,7 +222,7 @@ class HandleCertificationPurchasePaidTest extends TestCase
         $handler->matches('inv_cert_no_aff');
 
         $handler->handle([
-            'amount'   => 500,
+            'amount' => 500,
             'currency' => 'PHP',
         ], 'evt_cert_no_aff', 'PAID');
 
@@ -234,47 +233,47 @@ class HandleCertificationPurchasePaidTest extends TestCase
     {
         Mail::fake();
 
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $certification = CourseCertification::create([
-            'community_id'              => $community->id,
-            'title'                     => 'No Commission Cert',
-            'cert_title'                => 'Certified',
-            'price'                     => 500,
+            'community_id' => $community->id,
+            'title' => 'No Commission Cert',
+            'cert_title' => 'Certified',
+            'price' => 500,
             'affiliate_commission_rate' => 0,
-            'pass_score'                => 70,
+            'pass_score' => 70,
         ]);
 
         $affiliateUser = User::factory()->create();
-        $affiliate     = Affiliate::create([
+        $affiliate = Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => $affiliateUser->id,
-            'code'         => 'AFF-CERT-ZERO',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => $affiliateUser->id,
+            'code' => 'AFF-CERT-ZERO',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $affiliateUser->id,
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->addMonth(),
+            'user_id' => $affiliateUser->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addMonth(),
         ]);
 
-        $buyer    = User::factory()->create();
+        $buyer = User::factory()->create();
         $purchase = CertificationPurchase::create([
-            'user_id'          => $buyer->id,
+            'user_id' => $buyer->id,
             'certification_id' => $certification->id,
-            'affiliate_id'     => $affiliate->id,
-            'xendit_id'        => 'inv_cert_zero_rate',
-            'status'           => CertificationPurchase::STATUS_PENDING,
+            'affiliate_id' => $affiliate->id,
+            'xendit_id' => 'inv_cert_zero_rate',
+            'status' => CertificationPurchase::STATUS_PENDING,
         ]);
 
         $handler = app(HandleCertificationPurchasePaid::class);
         $handler->matches('inv_cert_zero_rate');
 
         $handler->handle([
-            'amount'   => 500,
+            'amount' => 500,
             'currency' => 'PHP',
         ], 'evt_cert_zero', 'PAID');
 
@@ -308,7 +307,7 @@ class HandleCertificationPurchasePaidTest extends TestCase
         $handler->matches('inv_cert_err');
 
         $handler->handle([
-            'amount'   => 500,
+            'amount' => 500,
             'currency' => 'PHP',
         ], 'evt_cert_err', 'PAID');
     }

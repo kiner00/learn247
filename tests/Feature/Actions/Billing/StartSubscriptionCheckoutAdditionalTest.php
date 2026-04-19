@@ -16,6 +16,7 @@ class StartSubscriptionCheckoutAdditionalTest extends TestCase
     use RefreshDatabase;
 
     private XenditService $xendit;
+
     private StartSubscriptionCheckout $action;
 
     protected function setUp(): void
@@ -29,7 +30,7 @@ class StartSubscriptionCheckoutAdditionalTest extends TestCase
 
     public function test_xendit_api_failure_is_rethrown(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid(499)->create();
 
         $this->xendit->shouldReceive('createInvoice')
@@ -44,7 +45,7 @@ class StartSubscriptionCheckoutAdditionalTest extends TestCase
 
     public function test_uses_default_success_url_when_none_provided(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid(499)->create();
 
         $this->xendit->shouldReceive('createInvoice')
@@ -61,14 +62,14 @@ class StartSubscriptionCheckoutAdditionalTest extends TestCase
 
     public function test_allows_checkout_when_existing_subscription_is_not_active(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid(499)->create();
 
         // Existing but expired subscription
         Subscription::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'status'       => Subscription::STATUS_EXPIRED,
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_EXPIRED,
         ]);
 
         $this->xendit->shouldReceive('createInvoice')

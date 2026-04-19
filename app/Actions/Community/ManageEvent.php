@@ -20,15 +20,15 @@ class ManageEvent
         $tz = $data['timezone'] ?? 'UTC';
 
         return $community->events()->create([
-            'created_by'  => $creator->id,
-            'title'       => $data['title'],
+            'created_by' => $creator->id,
+            'title' => $data['title'],
             'description' => $data['description'] ?? null,
-            'start_at'    => Carbon::parse($data['start_at'], $tz)->utc(),
-            'end_at'      => isset($data['end_at']) ? Carbon::parse($data['end_at'], $tz)->utc() : null,
-            'timezone'    => $tz,
-            'url'         => $data['url'] ?? null,
+            'start_at' => Carbon::parse($data['start_at'], $tz)->utc(),
+            'end_at' => isset($data['end_at']) ? Carbon::parse($data['end_at'], $tz)->utc() : null,
+            'timezone' => $tz,
+            'url' => $data['url'] ?? null,
             'cover_image' => $url,
-            'visibility'  => $data['visibility'] ?? 'public',
+            'visibility' => $data['visibility'] ?? 'public',
         ]);
     }
 

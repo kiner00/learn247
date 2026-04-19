@@ -16,7 +16,7 @@ class DirectMessageControllerTest extends TestCase
     private function createUserWithUsername(array $attributes = []): User
     {
         return User::factory()->create(array_merge([
-            'username' => 'user_' . uniqid(),
+            'username' => 'user_'.uniqid(),
         ], $attributes));
     }
 
@@ -24,13 +24,13 @@ class DirectMessageControllerTest extends TestCase
 
     public function test_authenticated_user_can_view_conversations_list(): void
     {
-        $user    = $this->createUserWithUsername();
+        $user = $this->createUserWithUsername();
         $partner = $this->createUserWithUsername();
 
         DirectMessage::create([
-            'sender_id'   => $user->id,
+            'sender_id' => $user->id,
             'receiver_id' => $partner->id,
-            'content'     => 'Hello!',
+            'content' => 'Hello!',
         ]);
 
         $response = $this->actingAs($user)->get('/messages');
@@ -62,10 +62,10 @@ class DirectMessageControllerTest extends TestCase
 
     public function test_user_can_search_messageable_users(): void
     {
-        $owner     = $this->createUserWithUsername();
+        $owner = $this->createUserWithUsername();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
-        $user   = $this->createUserWithUsername(['name' => 'John Doe']);
+        $user = $this->createUserWithUsername(['name' => 'John Doe']);
         $target = $this->createUserWithUsername(['name' => 'Jane Smith']);
 
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
@@ -80,7 +80,7 @@ class DirectMessageControllerTest extends TestCase
 
     public function test_search_does_not_return_self(): void
     {
-        $owner     = $this->createUserWithUsername();
+        $owner = $this->createUserWithUsername();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $user = $this->createUserWithUsername(['name' => 'John Doe']);
@@ -103,13 +103,13 @@ class DirectMessageControllerTest extends TestCase
 
     public function test_user_can_view_conversation_thread(): void
     {
-        $user    = $this->createUserWithUsername();
+        $user = $this->createUserWithUsername();
         $partner = $this->createUserWithUsername();
 
         DirectMessage::create([
-            'sender_id'   => $user->id,
+            'sender_id' => $user->id,
             'receiver_id' => $partner->id,
-            'content'     => 'Hey there',
+            'content' => 'Hey there',
         ]);
 
         $response = $this->actingAs($user)->get("/messages/{$partner->username}");
@@ -123,21 +123,21 @@ class DirectMessageControllerTest extends TestCase
 
     public function test_show_marks_unread_messages_as_read(): void
     {
-        $user    = $this->createUserWithUsername();
+        $user = $this->createUserWithUsername();
         $partner = $this->createUserWithUsername();
 
         DirectMessage::create([
-            'sender_id'   => $partner->id,
+            'sender_id' => $partner->id,
             'receiver_id' => $user->id,
-            'content'     => 'Unread message',
+            'content' => 'Unread message',
         ]);
 
         $this->actingAs($user)->get("/messages/{$partner->username}");
 
         $this->assertDatabaseMissing('direct_messages', [
-            'sender_id'   => $partner->id,
+            'sender_id' => $partner->id,
             'receiver_id' => $user->id,
-            'read_at'     => null,
+            'read_at' => null,
         ]);
     }
 
@@ -154,7 +154,7 @@ class DirectMessageControllerTest extends TestCase
 
     public function test_user_can_send_direct_message(): void
     {
-        $sender   = $this->createUserWithUsername();
+        $sender = $this->createUserWithUsername();
         $receiver = $this->createUserWithUsername();
 
         $response = $this->actingAs($sender)
@@ -167,15 +167,15 @@ class DirectMessageControllerTest extends TestCase
         $response->assertJsonPath('message.is_mine', true);
 
         $this->assertDatabaseHas('direct_messages', [
-            'sender_id'   => $sender->id,
+            'sender_id' => $sender->id,
             'receiver_id' => $receiver->id,
-            'content'     => 'Hello friend!',
+            'content' => 'Hello friend!',
         ]);
     }
 
     public function test_store_validates_content_required(): void
     {
-        $sender   = $this->createUserWithUsername();
+        $sender = $this->createUserWithUsername();
         $receiver = $this->createUserWithUsername();
 
         $response = $this->actingAs($sender)
@@ -189,7 +189,7 @@ class DirectMessageControllerTest extends TestCase
 
     public function test_store_validates_content_max_length(): void
     {
-        $sender   = $this->createUserWithUsername();
+        $sender = $this->createUserWithUsername();
         $receiver = $this->createUserWithUsername();
 
         $response = $this->actingAs($sender)
@@ -216,13 +216,13 @@ class DirectMessageControllerTest extends TestCase
 
     public function test_user_can_poll_for_new_messages(): void
     {
-        $user    = $this->createUserWithUsername();
+        $user = $this->createUserWithUsername();
         $partner = $this->createUserWithUsername();
 
         $msg = DirectMessage::create([
-            'sender_id'   => $partner->id,
+            'sender_id' => $partner->id,
             'receiver_id' => $user->id,
-            'content'     => 'New message',
+            'content' => 'New message',
         ]);
 
         $response = $this->actingAs($user)
@@ -236,19 +236,19 @@ class DirectMessageControllerTest extends TestCase
 
     public function test_poll_returns_only_messages_after_given_id(): void
     {
-        $user    = $this->createUserWithUsername();
+        $user = $this->createUserWithUsername();
         $partner = $this->createUserWithUsername();
 
         $old = DirectMessage::create([
-            'sender_id'   => $partner->id,
+            'sender_id' => $partner->id,
             'receiver_id' => $user->id,
-            'content'     => 'Old message',
+            'content' => 'Old message',
         ]);
 
         $new = DirectMessage::create([
-            'sender_id'   => $partner->id,
+            'sender_id' => $partner->id,
             'receiver_id' => $user->id,
-            'content'     => 'New message',
+            'content' => 'New message',
         ]);
 
         $response = $this->actingAs($user)
@@ -261,28 +261,28 @@ class DirectMessageControllerTest extends TestCase
 
     public function test_poll_marks_received_messages_as_read(): void
     {
-        $user    = $this->createUserWithUsername();
+        $user = $this->createUserWithUsername();
         $partner = $this->createUserWithUsername();
 
         DirectMessage::create([
-            'sender_id'   => $partner->id,
+            'sender_id' => $partner->id,
             'receiver_id' => $user->id,
-            'content'     => 'Unread',
+            'content' => 'Unread',
         ]);
 
         $this->actingAs($user)
             ->getJson("/messages/{$partner->username}/poll?after=0");
 
         $this->assertDatabaseMissing('direct_messages', [
-            'sender_id'   => $partner->id,
+            'sender_id' => $partner->id,
             'receiver_id' => $user->id,
-            'read_at'     => null,
+            'read_at' => null,
         ]);
     }
 
     public function test_poll_returns_empty_when_no_new_messages(): void
     {
-        $user    = $this->createUserWithUsername();
+        $user = $this->createUserWithUsername();
         $partner = $this->createUserWithUsername();
 
         $response = $this->actingAs($user)
@@ -296,13 +296,13 @@ class DirectMessageControllerTest extends TestCase
 
     public function test_sender_can_delete_own_message(): void
     {
-        $sender   = $this->createUserWithUsername();
+        $sender = $this->createUserWithUsername();
         $receiver = $this->createUserWithUsername();
 
         $msg = DirectMessage::create([
-            'sender_id'   => $sender->id,
+            'sender_id' => $sender->id,
             'receiver_id' => $receiver->id,
-            'content'     => 'Delete me',
+            'content' => 'Delete me',
         ]);
 
         $response = $this->actingAs($sender)
@@ -315,13 +315,13 @@ class DirectMessageControllerTest extends TestCase
 
     public function test_user_cannot_delete_others_message(): void
     {
-        $sender   = $this->createUserWithUsername();
+        $sender = $this->createUserWithUsername();
         $receiver = $this->createUserWithUsername();
 
         $msg = DirectMessage::create([
-            'sender_id'   => $sender->id,
+            'sender_id' => $sender->id,
             'receiver_id' => $receiver->id,
-            'content'     => 'Not yours',
+            'content' => 'Not yours',
         ]);
 
         $response = $this->actingAs($receiver)
@@ -333,13 +333,13 @@ class DirectMessageControllerTest extends TestCase
 
     public function test_guest_cannot_delete_message(): void
     {
-        $sender   = $this->createUserWithUsername();
+        $sender = $this->createUserWithUsername();
         $receiver = $this->createUserWithUsername();
 
         $msg = DirectMessage::create([
-            'sender_id'   => $sender->id,
+            'sender_id' => $sender->id,
             'receiver_id' => $receiver->id,
-            'content'     => 'Hello',
+            'content' => 'Hello',
         ]);
 
         $response = $this->deleteJson("/direct-messages/{$msg->id}");

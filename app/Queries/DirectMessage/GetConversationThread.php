@@ -4,7 +4,6 @@ namespace App\Queries\DirectMessage;
 
 use App\Models\DirectMessage;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 
 class GetConversationThread
 {
@@ -18,9 +17,9 @@ class GetConversationThread
         })->orWhere(function ($q) use ($myId, $partnerId) {
             $q->where('sender_id', $partnerId)->where('receiver_id', $myId);
         })->oldest()->take($limit)->get()->map(fn ($m) => [
-            'id'         => $m->id,
-            'content'    => $m->content,
-            'is_mine'    => $m->sender_id === $myId,
+            'id' => $m->id,
+            'content' => $m->content,
+            'is_mine' => $m->sender_id === $myId,
             'created_at' => $m->created_at,
         ]);
 
@@ -44,9 +43,9 @@ class GetConversationThread
             ->take($limit)
             ->get()
             ->map(fn ($m) => [
-                'id'         => $m->id,
-                'content'    => $m->content,
-                'is_mine'    => false,
+                'id' => $m->id,
+                'content' => $m->content,
+                'is_mine' => false,
                 'created_at' => $m->created_at,
             ]);
 

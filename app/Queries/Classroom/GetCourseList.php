@@ -66,31 +66,31 @@ class GetCourseList
             $hasAccess = $this->resolveAccess($course, $isOwner, $isMember, $isPaidMember, $paidEnrollmentIds, $wasEverMember);
 
             $lessonIds = $course->modules->flatMap(fn ($m) => $m->lessons->pluck('id'));
-            $total     = $lessonIds->count();
+            $total = $lessonIds->count();
             $completed = ($hasAccess && $userId && $total > 0)
                 ? $lessonIds->filter(fn ($id) => $completedLessonIds->has($id))->count()
                 : 0;
 
             $result = [
-                'id'          => $course->id,
-                'title'       => $course->title,
+                'id' => $course->id,
+                'title' => $course->title,
                 'description' => $course->description,
-                'cover_image'    => $course->cover_image,
-                'preview_video'       => $course->preview_video,
+                'cover_image' => $course->cover_image,
+                'preview_video' => $course->preview_video,
                 'preview_video_sound' => (bool) $course->preview_video_sound,
-                'position'    => $course->position,
-                'access_type'              => $course->access_type,
-                'price'                    => $course->price,
-                'affiliate_commission_rate'=> $course->affiliate_commission_rate,
+                'position' => $course->position,
+                'access_type' => $course->access_type,
+                'price' => $course->price,
+                'affiliate_commission_rate' => $course->affiliate_commission_rate,
                 'is_published' => $course->is_published,
-                'total'       => $total,
-                'completed'   => $completed,
-                'progress'    => $total > 0 && $hasAccess ? round($completed / $total * 100) : 0,
-                'has_access'  => $hasAccess,
+                'total' => $total,
+                'completed' => $completed,
+                'progress' => $total > 0 && $hasAccess ? round($completed / $total * 100) : 0,
+                'has_access' => $hasAccess,
             ];
 
             if ($isOwner) {
-                $result['preview_play_count']    = $course->preview_play_count ?? 0;
+                $result['preview_play_count'] = $course->preview_play_count ?? 0;
                 $result['preview_watch_seconds'] = $course->preview_watch_seconds ?? 0;
             }
 

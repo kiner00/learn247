@@ -9,7 +9,6 @@ use App\Models\Affiliate;
 use App\Models\Community;
 use App\Models\Curzzo;
 use App\Models\CurzzoPurchase;
-use App\Models\Payment;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
@@ -21,27 +20,27 @@ class HandleCurzzoPurchasePaidTest extends TestCase
 
     private function createPendingPurchase(array $overrides = []): array
     {
-        $owner     = User::factory()->kycVerified()->create();
+        $owner = User::factory()->kycVerified()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $curzzo    = Curzzo::create([
-            'community_id'  => $community->id,
-            'name'          => 'Test Bot',
-            'description'   => 'A test curzzo',
-            'instructions'  => 'Be helpful',
-            'price'         => 99.00,
-            'currency'      => 'PHP',
-            'billing_type'  => $overrides['billing_type'] ?? 'one_time',
-            'is_active'     => true,
-            'position'      => 1,
+        $curzzo = Curzzo::create([
+            'community_id' => $community->id,
+            'name' => 'Test Bot',
+            'description' => 'A test curzzo',
+            'instructions' => 'Be helpful',
+            'price' => 99.00,
+            'currency' => 'PHP',
+            'billing_type' => $overrides['billing_type'] ?? 'one_time',
+            'is_active' => true,
+            'position' => 1,
         ]);
 
-        $buyer    = User::factory()->create();
+        $buyer = User::factory()->create();
         $purchase = CurzzoPurchase::create([
-            'user_id'    => $buyer->id,
-            'curzzo_id'  => $curzzo->id,
-            'xendit_id'  => $overrides['xendit_id'] ?? 'inv_purchase_123',
-            'status'     => CurzzoPurchase::STATUS_PENDING,
-            'paid_at'    => null,
+            'user_id' => $buyer->id,
+            'curzzo_id' => $curzzo->id,
+            'xendit_id' => $overrides['xendit_id'] ?? 'inv_purchase_123',
+            'status' => CurzzoPurchase::STATUS_PENDING,
+            'paid_at' => null,
             'expires_at' => $overrides['expires_at'] ?? null,
         ]);
 
@@ -52,7 +51,7 @@ class HandleCurzzoPurchasePaidTest extends TestCase
 
     public function test_matches_returns_true_for_existing_purchase(): void
     {
-        $data    = $this->createPendingPurchase();
+        $data = $this->createPendingPurchase();
         $handler = app(HandleCurzzoPurchasePaid::class);
 
         $this->assertTrue($handler->matches('inv_purchase_123'));
@@ -69,7 +68,7 @@ class HandleCurzzoPurchasePaidTest extends TestCase
 
     public function test_marks_purchase_as_paid(): void
     {
-        $data    = $this->createPendingPurchase();
+        $data = $this->createPendingPurchase();
         $handler = app(HandleCurzzoPurchasePaid::class);
         $handler->matches('inv_purchase_123');
 
@@ -82,7 +81,7 @@ class HandleCurzzoPurchasePaidTest extends TestCase
 
     public function test_one_time_purchase_has_null_expires_at(): void
     {
-        $data    = $this->createPendingPurchase(['billing_type' => 'one_time']);
+        $data = $this->createPendingPurchase(['billing_type' => 'one_time']);
         $handler = app(HandleCurzzoPurchasePaid::class);
         $handler->matches('inv_purchase_123');
 
@@ -94,7 +93,7 @@ class HandleCurzzoPurchasePaidTest extends TestCase
 
     public function test_monthly_purchase_sets_expires_at(): void
     {
-        $data    = $this->createPendingPurchase(['billing_type' => 'monthly']);
+        $data = $this->createPendingPurchase(['billing_type' => 'monthly']);
         $handler = app(HandleCurzzoPurchasePaid::class);
         $handler->matches('inv_purchase_123');
 
@@ -109,9 +108,9 @@ class HandleCurzzoPurchasePaidTest extends TestCase
     public function test_monthly_renewal_extends_from_existing_future_expiry(): void
     {
         $futureDate = now()->addDays(10);
-        $data       = $this->createPendingPurchase([
+        $data = $this->createPendingPurchase([
             'billing_type' => 'monthly',
-            'expires_at'   => $futureDate,
+            'expires_at' => $futureDate,
         ]);
 
         $handler = app(HandleCurzzoPurchasePaid::class);
@@ -128,7 +127,7 @@ class HandleCurzzoPurchasePaidTest extends TestCase
 
     public function test_ignores_expired_status(): void
     {
-        $data    = $this->createPendingPurchase();
+        $data = $this->createPendingPurchase();
         $handler = app(HandleCurzzoPurchasePaid::class);
         $handler->matches('inv_purchase_123');
 
@@ -140,7 +139,7 @@ class HandleCurzzoPurchasePaidTest extends TestCase
 
     public function test_ignores_failed_status(): void
     {
-        $data    = $this->createPendingPurchase();
+        $data = $this->createPendingPurchase();
         $handler = app(HandleCurzzoPurchasePaid::class);
         $handler->matches('inv_purchase_123');
 
@@ -152,7 +151,7 @@ class HandleCurzzoPurchasePaidTest extends TestCase
 
     public function test_ignores_unknown_status(): void
     {
-        $data    = $this->createPendingPurchase();
+        $data = $this->createPendingPurchase();
         $handler = app(HandleCurzzoPurchasePaid::class);
         $handler->matches('inv_purchase_123');
 
@@ -166,15 +165,15 @@ class HandleCurzzoPurchasePaidTest extends TestCase
 
     public function test_records_affiliate_conversion_and_sends_cha_ching(): void
     {
-        $data          = $this->createPendingPurchase();
+        $data = $this->createPendingPurchase();
         $affiliateUser = User::factory()->create();
-        $affiliate     = Affiliate::create([
+        $affiliate = Affiliate::create([
             'community_id' => $data['community']->id,
-            'user_id'      => $affiliateUser->id,
-            'code'         => 'AFF123',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => $affiliateUser->id,
+            'code' => 'AFF123',
+            'status' => Affiliate::STATUS_ACTIVE,
             'total_earned' => 0,
-            'total_paid'   => 0,
+            'total_paid' => 0,
         ]);
         $data['purchase']->update(['affiliate_id' => $affiliate->id]);
 
@@ -183,7 +182,7 @@ class HandleCurzzoPurchasePaidTest extends TestCase
             ->once()
             ->andReturn([
                 'sale_amount' => 99.00,
-                'commission'  => 9.90,
+                'commission' => 9.90,
             ]);
 
         $mockChaChing = $this->mock(SendChaChing::class);

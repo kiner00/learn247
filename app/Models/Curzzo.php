@@ -31,10 +31,10 @@ class Curzzo extends Model
     protected function casts(): array
     {
         return [
-            'personality'         => 'array',
-            'is_active'           => 'boolean',
+            'personality' => 'array',
+            'is_active' => 'boolean',
             'preview_video_sound' => 'boolean',
-            'price'               => 'decimal:2',
+            'price' => 'decimal:2',
         ];
     }
 

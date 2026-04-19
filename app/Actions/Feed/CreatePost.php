@@ -38,24 +38,24 @@ class CreatePost
 
         $post = Post::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'title'        => $data['title'] ?? null,
-            'content'      => $data['content'],
-            'image'        => $data['image'] ?? null,
-            'video_url'    => $data['video_url'] ?? null,
-            'video'        => $data['video'] ?? null,
-            'is_pinned'    => false,
+            'user_id' => $user->id,
+            'title' => $data['title'] ?? null,
+            'content' => $data['content'],
+            'image' => $data['image'] ?? null,
+            'video_url' => $data['video_url'] ?? null,
+            'video' => $data['video'] ?? null,
+            'is_pinned' => false,
         ]);
 
         if ($community->owner_id !== $user->id) {
             Notification::create([
-                'user_id'      => $community->owner_id,
-                'actor_id'     => $user->id,
+                'user_id' => $community->owner_id,
+                'actor_id' => $user->id,
                 'community_id' => $community->id,
-                'type'         => 'new_post',
-                'data'         => [
+                'type' => 'new_post',
+                'data' => [
                     'post_title' => $post->title ?? 'New post',
-                    'message'    => "{$user->name} posted in {$community->name}",
+                    'message' => "{$user->name} posted in {$community->name}",
                 ],
             ]);
         }

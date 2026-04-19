@@ -23,7 +23,7 @@ class EnsureActiveMembership
         $community = $request->route('community');
 
         if (! $community instanceof Community) {
-            $slug      = $community ?? $request->route('slug');
+            $slug = $community ?? $request->route('slug');
             $community = Community::where('slug', $slug)->first();
         }
 

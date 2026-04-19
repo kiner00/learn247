@@ -11,9 +11,12 @@ use App\Models\User;
 
 class CurzzoLimitService
 {
-    private const LIMIT_FREE    = 10;
-    private const LIMIT_PAID    = 50;
-    private const LIMIT_BUYER   = 100;
+    private const LIMIT_FREE = 10;
+
+    private const LIMIT_PAID = 50;
+
+    private const LIMIT_BUYER = 100;
+
     private const COMMUNITY_MONTHLY_LIMIT = 10000;
 
     public const DEFAULT_PACKS = [
@@ -106,13 +109,13 @@ class CurzzoLimitService
     public function canSendMessage(User $user, Community $community): array
     {
         $dailyLimit = $this->dailyLimit($user, $community);
-        $dailyUsed  = $this->todayUsage($user, $community);
+        $dailyUsed = $this->todayUsage($user, $community);
         $topupRemaining = $this->topupRemaining($user, $community);
 
         $base = [
-            'daily_limit'      => $dailyLimit >= PHP_INT_MAX ? -1 : $dailyLimit,
-            'daily_used'       => $dailyUsed,
-            'topup_remaining'  => $topupRemaining >= PHP_INT_MAX ? -1 : $topupRemaining,
+            'daily_limit' => $dailyLimit >= PHP_INT_MAX ? -1 : $dailyLimit,
+            'daily_used' => $dailyUsed,
+            'topup_remaining' => $topupRemaining >= PHP_INT_MAX ? -1 : $topupRemaining,
         ];
 
         // Owner bypass
@@ -124,7 +127,7 @@ class CurzzoLimitService
         if ($this->communityMonthlyUsage($community) >= self::COMMUNITY_MONTHLY_LIMIT) {
             return array_merge($base, [
                 'allowed' => false,
-                'reason'  => 'This community has reached its monthly AI message limit. Please try again next month.',
+                'reason' => 'This community has reached its monthly AI message limit. Please try again next month.',
             ]);
         }
 
@@ -141,7 +144,7 @@ class CurzzoLimitService
         // Over daily limit, no topup
         return array_merge($base, [
             'allowed' => false,
-            'reason'  => "You've reached your daily limit of {$dailyLimit} messages. Top up to keep chatting!",
+            'reason' => "You've reached your daily limit of {$dailyLimit} messages. Top up to keep chatting!",
         ]);
     }
 
@@ -157,13 +160,13 @@ class CurzzoLimitService
                 // Message packs with remaining credits
                 $q->where(function ($q2) {
                     $q2->where('messages', '>', 0)
-                       ->whereColumn('messages_used', '<', 'messages');
+                        ->whereColumn('messages_used', '<', 'messages');
                 })
                 // Or active day passes
-                ->orWhere(function ($q2) {
-                    $q2->where('messages', 0)
-                       ->where('expires_at', '>', now());
-                });
+                    ->orWhere(function ($q2) {
+                        $q2->where('messages', 0)
+                            ->where('expires_at', '>', now());
+                    });
             })
             ->orderBy('created_at')
             ->first();

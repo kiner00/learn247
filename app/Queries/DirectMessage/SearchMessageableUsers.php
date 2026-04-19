@@ -17,7 +17,7 @@ class SearchMessageableUsers
             ->where('id', '!=', $userId)
             ->when($search, fn ($q) => $q->where(function ($w) use ($search) {
                 $w->where('name', 'like', "%{$search}%")
-                  ->orWhere('username', 'like', "%{$search}%");
+                    ->orWhere('username', 'like', "%{$search}%");
             }))
             ->limit($limit)
             ->get();

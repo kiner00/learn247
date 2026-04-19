@@ -11,7 +11,8 @@ class Tag extends Model
 {
     use HasFactory;
 
-    public const TYPE_MANUAL    = 'manual';
+    public const TYPE_MANUAL = 'manual';
+
     public const TYPE_AUTOMATIC = 'automatic';
 
     protected $fillable = [
@@ -33,6 +34,6 @@ class Tag extends Model
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(CommunityMember::class, 'community_member_tag')
-                    ->withPivot('tagged_at');
+            ->withPivot('tagged_at');
     }
 }

@@ -50,7 +50,7 @@ class CourseLesson extends Model implements Transcodeable
     public function setTranscodeStatus(string $status, int $percent): void
     {
         $this->update([
-            'video_transcode_status'  => $status,
+            'video_transcode_status' => $status,
             'video_transcode_percent' => $percent,
         ]);
     }

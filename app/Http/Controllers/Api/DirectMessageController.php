@@ -25,7 +25,7 @@ class DirectMessageController extends Controller
         $data = $query->execute($request->user()->id, $user->id);
 
         return response()->json([
-            'partner'  => ['id' => $user->id, 'name' => $user->name, 'username' => $user->username, 'avatar' => $user->avatar],
+            'partner' => ['id' => $user->id, 'name' => $user->name, 'username' => $user->username, 'avatar' => $user->avatar],
             'messages' => $data['messages'],
         ]);
     }
@@ -33,13 +33,13 @@ class DirectMessageController extends Controller
     public function store(Request $request, User $user, SendDirectMessage $action): JsonResponse
     {
         $data = $request->validate(['content' => ['required', 'string', 'max:2000']]);
-        $msg  = $action->execute($request->user(), $user, $data['content']);
+        $msg = $action->execute($request->user(), $user, $data['content']);
 
         return response()->json([
             'message' => [
-                'id'         => $msg->id,
-                'content'    => $msg->content,
-                'is_mine'    => true,
+                'id' => $msg->id,
+                'content' => $msg->content,
+                'is_mine' => true,
                 'created_at' => $msg->created_at,
             ],
         ], 201);
@@ -54,7 +54,7 @@ class DirectMessageController extends Controller
 
     public function poll(Request $request, User $user, GetConversationThread $query): JsonResponse
     {
-        $after    = (int) $request->query('after', 0);
+        $after = (int) $request->query('after', 0);
         $messages = $query->poll($request->user()->id, $user->id, $after);
 
         return response()->json(['messages' => $messages]);

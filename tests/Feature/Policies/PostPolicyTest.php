@@ -19,7 +19,7 @@ class PostPolicyTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->policy = new PostPolicy();
+        $this->policy = new PostPolicy;
     }
 
     public function test_author_can_delete_own_post(): void
@@ -38,7 +38,7 @@ class PostPolicyTest extends TestCase
         $admin = User::factory()->create();
         CommunityMember::factory()->admin()->create([
             'community_id' => $community->id,
-            'user_id'      => $admin->id,
+            'user_id' => $admin->id,
         ]);
 
         $this->assertTrue($this->policy->delete($admin, $post));
@@ -52,7 +52,7 @@ class PostPolicyTest extends TestCase
         $moderator = User::factory()->create();
         CommunityMember::factory()->moderator()->create([
             'community_id' => $community->id,
-            'user_id'      => $moderator->id,
+            'user_id' => $moderator->id,
         ]);
 
         $this->assertTrue($this->policy->delete($moderator, $post));
@@ -74,7 +74,7 @@ class PostPolicyTest extends TestCase
         $member = User::factory()->create();
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
+            'user_id' => $member->id,
         ]);
 
         $this->assertFalse($this->policy->delete($member, $post));

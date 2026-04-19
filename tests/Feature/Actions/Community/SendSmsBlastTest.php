@@ -47,7 +47,7 @@ class SendSmsBlastTest extends TestCase
         $action = new SendSmsBlast($smsMock);
         $result = $action->execute($community, [
             'filter_type' => 'all',
-            'message'     => 'Hello members!',
+            'message' => 'Hello members!',
         ]);
 
         $this->assertSame(1, $result['sent']);
@@ -64,7 +64,7 @@ class SendSmsBlastTest extends TestCase
         $action = new SendSmsBlast($this->mockSmsProvider());
         $result = $action->execute($community, [
             'filter_type' => 'all',
-            'message'     => 'Hello!',
+            'message' => 'Hello!',
         ]);
 
         $this->assertSame(0, $result['sent']);
@@ -79,15 +79,15 @@ class SendSmsBlastTest extends TestCase
         $newUser = User::factory()->create(['phone' => '+639111111111']);
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $newUser->id,
-            'joined_at'    => now()->subDays(3),
+            'user_id' => $newUser->id,
+            'joined_at' => now()->subDays(3),
         ]);
 
         $oldUser = User::factory()->create(['phone' => '+639222222222']);
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $oldUser->id,
-            'joined_at'    => now()->subDays(30),
+            'user_id' => $oldUser->id,
+            'joined_at' => now()->subDays(30),
         ]);
 
         $smsMock = $this->createMock(SmsProvider::class);
@@ -104,7 +104,7 @@ class SendSmsBlastTest extends TestCase
         $result = $action->execute($community, [
             'filter_type' => 'new_members',
             'filter_days' => 7,
-            'message'     => 'Welcome!',
+            'message' => 'Welcome!',
         ]);
 
         $this->assertSame(1, $result['sent']);
@@ -114,14 +114,14 @@ class SendSmsBlastTest extends TestCase
     public function test_filters_by_course_enrollment(): void
     {
         $community = Community::factory()->create();
-        $course    = Course::factory()->create(['community_id' => $community->id]);
+        $course = Course::factory()->create(['community_id' => $community->id]);
 
         $enrolledUser = User::factory()->create(['phone' => '+639333333333']);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $enrolledUser->id]);
         CourseEnrollment::create([
-            'user_id'   => $enrolledUser->id,
+            'user_id' => $enrolledUser->id,
             'course_id' => $course->id,
-            'status'    => CourseEnrollment::STATUS_PAID,
+            'status' => CourseEnrollment::STATUS_PAID,
         ]);
 
         $notEnrolledUser = User::factory()->create(['phone' => '+639444444444']);
@@ -139,9 +139,9 @@ class SendSmsBlastTest extends TestCase
 
         $action = new SendSmsBlast($smsMock);
         $result = $action->execute($community, [
-            'filter_type'      => 'course',
+            'filter_type' => 'course',
             'filter_course_id' => $course->id,
-            'message'          => 'Course update!',
+            'message' => 'Course update!',
         ]);
 
         $this->assertSame(1, $result['sent']);
@@ -157,7 +157,7 @@ class SendSmsBlastTest extends TestCase
         $action = new SendSmsBlast($this->mockSmsProvider());
         $result = $action->execute($community, [
             'filter_type' => 'all',
-            'message'     => 'Test',
+            'message' => 'Test',
         ]);
 
         $this->assertTrue($result['no_recipients']);
@@ -183,7 +183,7 @@ class SendSmsBlastTest extends TestCase
         $action = new SendSmsBlast($smsMock);
         $action->execute($community, [
             'filter_type' => 'all',
-            'message'     => 'Test',
+            'message' => 'Test',
         ]);
     }
 
@@ -194,8 +194,8 @@ class SendSmsBlastTest extends TestCase
         $user = User::factory()->create(['phone' => '+639555555555']);
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'joined_at'    => now()->subDays(6),
+            'user_id' => $user->id,
+            'joined_at' => now()->subDays(6),
         ]);
 
         $smsMock = $this->createMock(SmsProvider::class);
@@ -207,7 +207,7 @@ class SendSmsBlastTest extends TestCase
         $result = $action->execute($community, [
             'filter_type' => 'new_members',
             // no filter_days key -- should default to 7
-            'message'     => 'Default days!',
+            'message' => 'Default days!',
         ]);
 
         $this->assertSame(1, $result['sent']);

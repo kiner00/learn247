@@ -80,7 +80,7 @@ class PasswordReminderMailTest extends TestCase
         $mailable = new PasswordReminderMail($user);
         $content = $mailable->content();
 
-        $expectedUrl = config('app.url') . '/login';
+        $expectedUrl = config('app.url').'/login';
         $this->assertStringContainsString($expectedUrl, $content->htmlString);
     }
 

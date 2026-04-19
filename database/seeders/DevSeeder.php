@@ -182,7 +182,7 @@ class DevSeeder extends Seeder
         $owner = User::firstOrCreate(
             ['email' => 'owner@test.com'],
             [
-                'name'     => 'Test Owner',
+                'name' => 'Test Owner',
                 'username' => 'test-owner',
                 'password' => Hash::make('password'),
             ]
@@ -191,7 +191,7 @@ class DevSeeder extends Seeder
         User::firstOrCreate(
             ['email' => 'member@test.com'],
             [
-                'name'     => 'Test Member',
+                'name' => 'Test Member',
                 'username' => 'test-member',
                 'password' => Hash::make('password'),
             ]
@@ -204,7 +204,7 @@ class DevSeeder extends Seeder
             $users->push(User::firstOrCreate(
                 ['email' => "devuser{$i}@test.com"],
                 [
-                    'name'     => fake()->name(),
+                    'name' => fake()->name(),
                     'username' => "devuser-{$i}",
                     'password' => Hash::make('password'),
                 ]
@@ -217,21 +217,21 @@ class DevSeeder extends Seeder
         $bar->start();
 
         foreach ($this->communities as $data) {
-            $seed       = $this->imgSeeds[$data['img']] ?? '42';
+            $seed = $this->imgSeeds[$data['img']] ?? '42';
             $coverImage = "https://picsum.photos/seed/{$seed}/1200/400";
-            $slug       = Str::slug($data['name']);
+            $slug = Str::slug($data['name']);
 
             $community = Community::updateOrCreate(
                 ['slug' => $slug],
                 [
-                    'name'        => $data['name'],
-                    'owner_id'    => $owner->id,
+                    'name' => $data['name'],
+                    'owner_id' => $owner->id,
                     'description' => $this->description($data['category']),
-                    'category'    => $data['category'],
+                    'category' => $data['category'],
                     'cover_image' => $coverImage,
-                    'is_private'  => false, // all public for demo
-                    'price'       => $data['price'],
-                    'currency'    => 'PHP',
+                    'is_private' => false, // all public for demo
+                    'price' => $data['price'],
+                    'currency' => 'PHP',
                 ]
             );
 
@@ -242,17 +242,17 @@ class DevSeeder extends Seeder
             );
 
             // 20–120 random members with subscriptions (skip existing)
-            $count   = rand(20, min(120, $users->count()));
+            $count = rand(20, min(120, $users->count()));
             $members = $users->random($count);
 
             foreach ($members as $user) {
                 Subscription::firstOrCreate(
                     ['community_id' => $community->id, 'user_id' => $user->id],
                     [
-                        'status'             => Subscription::STATUS_ACTIVE,
-                        'xendit_id'          => 'dev_' . Str::uuid(),
+                        'status' => Subscription::STATUS_ACTIVE,
+                        'xendit_id' => 'dev_'.Str::uuid(),
                         'xendit_invoice_url' => 'https://checkout.xendit.co/dev',
-                        'expires_at'         => now()->addDays(rand(5, 60)),
+                        'expires_at' => now()->addDays(rand(5, 60)),
                     ]
                 );
 
@@ -276,7 +276,7 @@ class DevSeeder extends Seeder
                 ['Member', 'member@test.com', 'password'],
             ]
         );
-        $this->command->info('Communities: ' . count($this->communities));
+        $this->command->info('Communities: '.count($this->communities));
         $this->command->info('Users: 200 random + 2 fixed');
     }
 
@@ -284,39 +284,39 @@ class DevSeeder extends Seeder
     {
         $descriptions = [
             'Entrepreneurship' => 'A thriving community for ambitious entrepreneurs ready to build, scale, and grow their businesses. Join thousands of founders sharing strategies, wins, and lessons learned.',
-            'Business'         => 'Connect with business owners and professionals who are serious about growing their ventures. Get access to exclusive resources, mentorship, and peer support.',
-            'Finance'          => 'Master your finances and build lasting wealth with guidance from experts and fellow community members who have done it before.',
-            'Crypto'           => 'Navigate the world of cryptocurrency with confidence. Get real-time insights, trading strategies, and market analysis from experienced traders.',
-            'Real Estate'      => 'Everything you need to start and grow your real estate investment portfolio in the Philippines. From due diligence to deal flow.',
-            'Investing'        => 'Learn how to make your money work harder. From stocks to funds, we cover all investment vehicles available to Filipino investors.',
-            'Marketing'        => 'Level up your marketing skills with proven strategies from top marketers. From paid ads to organic growth — everything works here.',
-            'Content'          => 'A creative space for content creators to sharpen their craft, grow their audience, and monetize their passion.',
-            'Technology'       => 'Stay ahead in the ever-evolving tech landscape. Share knowledge, collaborate on projects, and level up your technical skills.',
-            'Web Dev'          => 'A community for web developers to share knowledge, get code reviews, and stay updated with the latest tools and frameworks.',
-            'Fitness'          => 'Transform your body and mind with support from a community that keeps you accountable and motivated every single day.',
-            'Nutrition'        => 'Science-based nutrition guidance and community support to help you reach your health and body composition goals.',
-            'Wellness'         => 'A safe space to prioritize your mental, emotional, and physical well-being — because you deserve to feel your best.',
-            'Education'        => 'Accelerate your learning with structured courses, expert guidance, and a supportive community that celebrates every win.',
-            'Freelancing'      => 'Build a thriving freelance career with support from top earners. Find clients, raise your rates, and work on your terms.',
-            'Design'           => 'A community for designers to showcase work, get feedback, learn new tools, and connect with potential clients.',
+            'Business' => 'Connect with business owners and professionals who are serious about growing their ventures. Get access to exclusive resources, mentorship, and peer support.',
+            'Finance' => 'Master your finances and build lasting wealth with guidance from experts and fellow community members who have done it before.',
+            'Crypto' => 'Navigate the world of cryptocurrency with confidence. Get real-time insights, trading strategies, and market analysis from experienced traders.',
+            'Real Estate' => 'Everything you need to start and grow your real estate investment portfolio in the Philippines. From due diligence to deal flow.',
+            'Investing' => 'Learn how to make your money work harder. From stocks to funds, we cover all investment vehicles available to Filipino investors.',
+            'Marketing' => 'Level up your marketing skills with proven strategies from top marketers. From paid ads to organic growth — everything works here.',
+            'Content' => 'A creative space for content creators to sharpen their craft, grow their audience, and monetize their passion.',
+            'Technology' => 'Stay ahead in the ever-evolving tech landscape. Share knowledge, collaborate on projects, and level up your technical skills.',
+            'Web Dev' => 'A community for web developers to share knowledge, get code reviews, and stay updated with the latest tools and frameworks.',
+            'Fitness' => 'Transform your body and mind with support from a community that keeps you accountable and motivated every single day.',
+            'Nutrition' => 'Science-based nutrition guidance and community support to help you reach your health and body composition goals.',
+            'Wellness' => 'A safe space to prioritize your mental, emotional, and physical well-being — because you deserve to feel your best.',
+            'Education' => 'Accelerate your learning with structured courses, expert guidance, and a supportive community that celebrates every win.',
+            'Freelancing' => 'Build a thriving freelance career with support from top earners. Find clients, raise your rates, and work on your terms.',
+            'Design' => 'A community for designers to showcase work, get feedback, learn new tools, and connect with potential clients.',
             'Self Improvement' => 'Commit to becoming the best version of yourself. Daily habits, mindset shifts, and accountability that actually work.',
-            'Leadership'       => 'Develop the leadership skills that drive teams, companies, and communities forward in the modern world.',
-            'Coaching'         => 'Work with certified coaches and connect with others on their transformation journey. Real change starts here.',
-            'Photography'      => 'Sharpen your eye, master your gear, and build a photography business you love — with a community that inspires daily.',
-            'Travel'           => 'Explore the world smarter. Travel hacks, destination guides, and a community of adventurous souls like you.',
-            'Music'            => 'Whether you create, perform, or produce — this is your space to grow as a musician and connect with fellow artists.',
-            'Parenting'        => 'Navigate parenthood with confidence and joy. Share experiences, get advice, and build connections with parents who get it.',
-            'Lifestyle'        => 'Design a life you love — intentional, balanced, and aligned with your values. Community over competition.',
-            'Gaming'           => 'Level up your game, connect with elite players, and be part of a competitive community that pushes each other higher.',
-            'Sports'           => 'Connect with athletes and sports enthusiasts who share your passion for competition, fitness, and camaraderie.',
-            'Food'             => 'For those who live to eat — discover new recipes, cooking techniques, and connect with fellow food lovers.',
-            'Food Business'    => 'Turn your passion for food into a profitable business. Marketing, operations, and growth strategies for food entrepreneurs.',
-            'Career'           => 'Accelerate your career with insider knowledge, professional mentorship, and a network of driven professionals.',
-            'Agriculture'      => 'Sustainable farming practices, modern agricultural techniques, and a community of passionate growers.',
-            'Beauty'           => 'Skincare routines, beauty tips, and product recommendations from a community that believes in science-backed beauty.',
-            'Healthcare'       => 'A professional network for healthcare workers to share knowledge, support each other, and grow together.',
-            'Engineering'      => 'Connect with fellow engineers, stay updated on industry trends, and advance your professional career.',
-            'E-Commerce'       => 'Everything you need to build and scale a profitable e-commerce business in today\'s competitive marketplace.',
+            'Leadership' => 'Develop the leadership skills that drive teams, companies, and communities forward in the modern world.',
+            'Coaching' => 'Work with certified coaches and connect with others on their transformation journey. Real change starts here.',
+            'Photography' => 'Sharpen your eye, master your gear, and build a photography business you love — with a community that inspires daily.',
+            'Travel' => 'Explore the world smarter. Travel hacks, destination guides, and a community of adventurous souls like you.',
+            'Music' => 'Whether you create, perform, or produce — this is your space to grow as a musician and connect with fellow artists.',
+            'Parenting' => 'Navigate parenthood with confidence and joy. Share experiences, get advice, and build connections with parents who get it.',
+            'Lifestyle' => 'Design a life you love — intentional, balanced, and aligned with your values. Community over competition.',
+            'Gaming' => 'Level up your game, connect with elite players, and be part of a competitive community that pushes each other higher.',
+            'Sports' => 'Connect with athletes and sports enthusiasts who share your passion for competition, fitness, and camaraderie.',
+            'Food' => 'For those who live to eat — discover new recipes, cooking techniques, and connect with fellow food lovers.',
+            'Food Business' => 'Turn your passion for food into a profitable business. Marketing, operations, and growth strategies for food entrepreneurs.',
+            'Career' => 'Accelerate your career with insider knowledge, professional mentorship, and a network of driven professionals.',
+            'Agriculture' => 'Sustainable farming practices, modern agricultural techniques, and a community of passionate growers.',
+            'Beauty' => 'Skincare routines, beauty tips, and product recommendations from a community that believes in science-backed beauty.',
+            'Healthcare' => 'A professional network for healthcare workers to share knowledge, support each other, and grow together.',
+            'Engineering' => 'Connect with fellow engineers, stay updated on industry trends, and advance your professional career.',
+            'E-Commerce' => 'Everything you need to build and scale a profitable e-commerce business in today\'s competitive marketplace.',
         ];
 
         return $descriptions[$category]

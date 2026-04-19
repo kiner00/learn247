@@ -31,6 +31,7 @@ class EncryptCommunitySecrets extends Command
                         $val = $row->{$col};
                         if ($val === null || $val === '') {
                             $totals['empty']++;
+
                             continue;
                         }
                         try {

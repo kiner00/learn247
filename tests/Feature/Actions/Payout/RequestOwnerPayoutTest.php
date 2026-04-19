@@ -32,10 +32,10 @@ class RequestOwnerPayoutTest extends TestCase
     public function test_unverified_kyc_returns_failure(): void
     {
         $owner = User::factory()->create([
-            'payout_method'   => 'gcash',
-            'payout_details'  => '09171234567',
+            'payout_method' => 'gcash',
+            'payout_details' => '09171234567',
             'kyc_verified_at' => null,
-            'kyc_status'      => User::KYC_NONE,
+            'kyc_status' => User::KYC_NONE,
         ]);
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
@@ -68,12 +68,12 @@ class RequestOwnerPayoutTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         PayoutRequest::create([
-            'user_id'         => $owner->id,
-            'type'            => PayoutRequest::TYPE_OWNER,
-            'community_id'    => $community->id,
-            'amount'          => 100,
+            'user_id' => $owner->id,
+            'type' => PayoutRequest::TYPE_OWNER,
+            'community_id' => $community->id,
+            'amount' => 100,
             'eligible_amount' => 100,
-            'status'          => PayoutRequest::STATUS_PENDING,
+            'status' => PayoutRequest::STATUS_PENDING,
         ]);
 
         $eligibility = Mockery::mock(CalculateEligibility::class);
@@ -129,11 +129,11 @@ class RequestOwnerPayoutTest extends TestCase
         $this->assertTrue($result['success']);
         $this->assertStringContainsString('submitted', $result['message']);
         $this->assertDatabaseHas('payout_requests', [
-            'user_id'      => $owner->id,
-            'type'         => PayoutRequest::TYPE_OWNER,
+            'user_id' => $owner->id,
+            'type' => PayoutRequest::TYPE_OWNER,
             'community_id' => $community->id,
-            'amount'       => 150,
-            'status'       => PayoutRequest::STATUS_PENDING,
+            'amount' => 150,
+            'status' => PayoutRequest::STATUS_PENDING,
         ]);
     }
 }

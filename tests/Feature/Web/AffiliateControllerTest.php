@@ -25,6 +25,7 @@ class AffiliateControllerTest extends TestCase
             $pdo = \Illuminate\Support\Facades\DB::connection()->getPdo();
             $pdo->sqliteCreateFunction('DATE_FORMAT', function ($date, $format) {
                 $map = ['%Y' => 'Y', '%m' => 'm', '%d' => 'd', '%Y-%m' => 'Y-m'];
+
                 return date($map[$format] ?? 'Y-m-d', strtotime($date));
             }, 2);
         }
@@ -917,42 +918,42 @@ class AffiliateControllerTest extends TestCase
 
     public function test_owner_can_update_pixel_ids(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
         $affiliate = Affiliate::create([
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
             'community_id' => $community->id,
-            'code'         => 'AFFPX01',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'code' => 'AFFPX01',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         $this->actingAs($user)
             ->patch("/affiliates/{$affiliate->id}/pixels", [
-                'facebook_pixel_id'   => '123456789012345',
-                'tiktok_pixel_id'     => 'TK123',
+                'facebook_pixel_id' => '123456789012345',
+                'tiktok_pixel_id' => 'TK123',
                 'google_analytics_id' => 'G-ABC123',
             ])
             ->assertRedirect()
             ->assertSessionHas('success', 'Pixel IDs saved.');
 
         $this->assertDatabaseHas('affiliates', [
-            'id'                  => $affiliate->id,
-            'facebook_pixel_id'   => '123456789012345',
-            'tiktok_pixel_id'     => 'TK123',
+            'id' => $affiliate->id,
+            'facebook_pixel_id' => '123456789012345',
+            'tiktok_pixel_id' => 'TK123',
             'google_analytics_id' => 'G-ABC123',
         ]);
     }
 
     public function test_non_owner_cannot_update_pixel_ids(): void
     {
-        $owner  = User::factory()->create();
-        $other  = User::factory()->create();
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         $affiliate = Affiliate::create([
-            'user_id'      => $owner->id,
+            'user_id' => $owner->id,
             'community_id' => $community->id,
-            'code'         => 'AFFPX02',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'code' => 'AFFPX02',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         $this->actingAs($other)

@@ -51,11 +51,11 @@ class RecurringCurzzoPurchaseHandler extends AbstractRecurringCycleHandler
 
         return [
             'affiliate_user' => $entity->affiliate->user,
-            'creator'        => $entity->curzzo->community->owner,
-            'community'      => $entity->curzzo->community,
-            'sale_amount'    => $conversion['sale_amount'],
-            'commission'     => $conversion['commission'],
-            'referred_by'    => $entity->affiliate->user->name,
+            'creator' => $entity->curzzo->community->owner,
+            'community' => $entity->curzzo->community,
+            'sale_amount' => $conversion['sale_amount'],
+            'commission' => $conversion['commission'],
+            'referred_by' => $entity->affiliate->user->name,
         ];
     }
 

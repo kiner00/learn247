@@ -18,9 +18,9 @@ class GuestCheckoutControllerTest extends TestCase
     {
         return [
             'first_name' => 'Juan',
-            'last_name'  => 'Dela Cruz',
-            'email'      => 'juan@example.com',
-            'phone'      => '09171234567',
+            'last_name' => 'Dela Cruz',
+            'email' => 'juan@example.com',
+            'phone' => '09171234567',
         ];
     }
 
@@ -30,9 +30,9 @@ class GuestCheckoutControllerTest extends TestCase
 
         return Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => $community->owner_id,
-            'code'         => 'REF-TEST',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => $community->owner_id,
+            'code' => 'REF-TEST',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
     }
 
@@ -42,7 +42,7 @@ class GuestCheckoutControllerTest extends TestCase
     {
         Http::fake([
             '*' => Http::response([
-                'id'          => 'inv_test_123',
+                'id' => 'inv_test_123',
                 'invoice_url' => 'https://checkout.xendit.co/inv_test_123',
             ]),
         ]);
@@ -55,7 +55,7 @@ class GuestCheckoutControllerTest extends TestCase
 
         $this->assertDatabaseHas('users', [
             'email' => 'juan@example.com',
-            'name'  => 'Juan Dela Cruz',
+            'name' => 'Juan Dela Cruz',
         ]);
     }
 
@@ -71,9 +71,9 @@ class GuestCheckoutControllerTest extends TestCase
         $community = Community::factory()->paid()->create(['deletion_requested_at' => now()]);
         $affiliate = Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => $community->owner_id,
-            'code'         => 'REF-DELETED',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => $community->owner_id,
+            'code' => 'REF-DELETED',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         $response = $this->post("/ref-checkout/{$affiliate->code}", $this->validPayload());
@@ -87,9 +87,9 @@ class GuestCheckoutControllerTest extends TestCase
 
         Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => $community->owner_id,
-            'code'         => 'INACTIVE-CODE',
-            'status'       => Affiliate::STATUS_INACTIVE,
+            'user_id' => $community->owner_id,
+            'code' => 'INACTIVE-CODE',
+            'status' => Affiliate::STATUS_INACTIVE,
         ]);
 
         $response = $this->post('/ref-checkout/INACTIVE-CODE', $this->validPayload());
@@ -112,9 +112,9 @@ class GuestCheckoutControllerTest extends TestCase
 
         $response = $this->post("/ref-checkout/{$affiliate->code}", [
             'first_name' => 'Juan',
-            'last_name'  => 'Dela Cruz',
-            'email'      => 'not-an-email',
-            'phone'      => '09171234567',
+            'last_name' => 'Dela Cruz',
+            'email' => 'not-an-email',
+            'phone' => '09171234567',
         ]);
 
         $response->assertSessionHasErrors('email');
@@ -129,14 +129,14 @@ class GuestCheckoutControllerTest extends TestCase
 
         Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $existingUser->id,
+            'user_id' => $existingUser->id,
         ]);
 
         $response = $this->post("/ref-checkout/{$affiliate->code}", [
             'first_name' => 'Existing',
-            'last_name'  => 'User',
-            'email'      => 'existing@example.com',
-            'phone'      => '09171234567',
+            'last_name' => 'User',
+            'email' => 'existing@example.com',
+            'phone' => '09171234567',
         ]);
 
         $response->assertRedirect();
@@ -147,7 +147,7 @@ class GuestCheckoutControllerTest extends TestCase
     {
         Http::fake([
             '*' => Http::response([
-                'id'          => 'inv_exist_123',
+                'id' => 'inv_exist_123',
                 'invoice_url' => 'https://checkout.xendit.co/inv_exist_123',
             ]),
         ]);
@@ -159,16 +159,16 @@ class GuestCheckoutControllerTest extends TestCase
 
         $response = $this->post("/ref-checkout/{$affiliate->code}", [
             'first_name' => 'Returning',
-            'last_name'  => 'User',
-            'email'      => 'returning@example.com',
-            'phone'      => '09171234567',
+            'last_name' => 'User',
+            'email' => 'returning@example.com',
+            'phone' => '09171234567',
         ]);
 
         $response->assertRedirect('https://checkout.xendit.co/inv_exist_123');
 
         $this->assertDatabaseHas('subscriptions', [
             'community_id' => $community->id,
-            'status'       => Subscription::STATUS_PENDING,
+            'status' => Subscription::STATUS_PENDING,
         ]);
     }
 
@@ -176,7 +176,7 @@ class GuestCheckoutControllerTest extends TestCase
     {
         Http::fake([
             '*' => Http::response([
-                'id'          => 'inv_new_123',
+                'id' => 'inv_new_123',
                 'invoice_url' => 'https://checkout.xendit.co/inv_new_123',
             ]),
         ]);
@@ -185,9 +185,9 @@ class GuestCheckoutControllerTest extends TestCase
 
         $this->post("/ref-checkout/{$affiliate->code}", [
             'first_name' => 'Maria',
-            'last_name'  => 'Santos',
-            'email'      => 'maria@example.com',
-            'phone'      => '09181234567',
+            'last_name' => 'Santos',
+            'email' => 'maria@example.com',
+            'phone' => '09181234567',
         ]);
 
         $user = User::where('email', 'maria@example.com')->first();
@@ -203,9 +203,9 @@ class GuestCheckoutControllerTest extends TestCase
 
         $response = $this->post("/ref-checkout/{$affiliate->code}", [
             'first_name' => str_repeat('A', 101),
-            'last_name'  => 'Cruz',
-            'email'      => 'too@example.com',
-            'phone'      => '09171234567',
+            'last_name' => 'Cruz',
+            'email' => 'too@example.com',
+            'phone' => '09171234567',
         ]);
 
         $response->assertSessionHasErrors('first_name');
@@ -217,9 +217,9 @@ class GuestCheckoutControllerTest extends TestCase
 
         $response = $this->post("/ref-checkout/{$affiliate->code}", [
             'first_name' => 'Juan',
-            'last_name'  => str_repeat('Z', 101),
-            'email'      => 'too@example.com',
-            'phone'      => '09171234567',
+            'last_name' => str_repeat('Z', 101),
+            'email' => 'too@example.com',
+            'phone' => '09171234567',
         ]);
 
         $response->assertSessionHasErrors('last_name');
@@ -231,9 +231,9 @@ class GuestCheckoutControllerTest extends TestCase
 
         $response = $this->post("/ref-checkout/{$affiliate->code}", [
             'first_name' => 'Juan',
-            'last_name'  => 'Cruz',
-            'email'      => 'juan@example.com',
-            'phone'      => str_repeat('1', 31),
+            'last_name' => 'Cruz',
+            'email' => 'juan@example.com',
+            'phone' => str_repeat('1', 31),
         ]);
 
         $response->assertSessionHasErrors('phone');
@@ -266,7 +266,7 @@ class GuestCheckoutControllerTest extends TestCase
     {
         Http::fake([
             '*' => Http::response([
-                'id'          => 'inv_no_aff_123',
+                'id' => 'inv_no_aff_123',
                 'invoice_url' => 'https://checkout.xendit.co/inv_no_aff_123',
             ]),
         ]);
@@ -299,14 +299,14 @@ class GuestCheckoutControllerTest extends TestCase
 
         Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $existingUser->id,
+            'user_id' => $existingUser->id,
         ]);
 
         $response = $this->post(route('communities.guest.checkout', $community), [
             'first_name' => 'Existing',
-            'last_name'  => 'User',
-            'email'      => 'exists@example.com',
-            'phone'      => '09171234567',
+            'last_name' => 'User',
+            'email' => 'exists@example.com',
+            'phone' => '09171234567',
         ]);
 
         $response->assertRedirect();
@@ -326,7 +326,7 @@ class GuestCheckoutControllerTest extends TestCase
     {
         Http::fake([
             '*' => Http::response([
-                'id'          => 'inv_cookie_123',
+                'id' => 'inv_cookie_123',
                 'invoice_url' => 'https://checkout.xendit.co/inv_cookie_123',
             ]),
         ]);
@@ -343,7 +343,7 @@ class GuestCheckoutControllerTest extends TestCase
     {
         Http::fake([
             '*' => Http::response([
-                'id'          => 'inv_exist_no_aff',
+                'id' => 'inv_exist_no_aff',
                 'invoice_url' => 'https://checkout.xendit.co/inv_exist_no_aff',
             ]),
         ]);
@@ -353,9 +353,9 @@ class GuestCheckoutControllerTest extends TestCase
 
         $response = $this->post(route('communities.guest.checkout', $community), [
             'first_name' => 'Returning',
-            'last_name'  => 'User',
-            'email'      => 'returning@example.com',
-            'phone'      => '09171234567',
+            'last_name' => 'User',
+            'email' => 'returning@example.com',
+            'phone' => '09171234567',
         ]);
 
         $response->assertRedirect('https://checkout.xendit.co/inv_exist_no_aff');

@@ -36,22 +36,22 @@ return [
     ],
 
     'xendit' => [
-        'secret_key'     => env('XENDIT_SECRET_KEY'),
-        'public_key'     => env('XENDIT_PUBLIC_KEY'),
+        'secret_key' => env('XENDIT_SECRET_KEY'),
+        'public_key' => env('XENDIT_PUBLIC_KEY'),
         'callback_token' => env('XENDIT_CALLBACK_TOKEN'),
     ],
 
     'ploi' => [
-        'token'     => env('PLOI_API_TOKEN'),
+        'token' => env('PLOI_API_TOKEN'),
         'server_id' => env('PLOI_SERVER_ID'),
-        'site_id'   => env('PLOI_SITE_ID'),
+        'site_id' => env('PLOI_SITE_ID'),
     ],
 
     'mediaconvert' => [
         'endpoint' => env('AWS_MEDIACONVERT_ENDPOINT'),
         'role_arn' => env('AWS_MEDIACONVERT_ROLE_ARN'),
-        'region'   => env('AWS_DEFAULT_REGION', 'us-east-1'),
-        'queue'    => env('AWS_MEDIACONVERT_QUEUE', 'Default'),
+        'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
+        'queue' => env('AWS_MEDIACONVERT_QUEUE', 'Default'),
     ],
 
 ];

@@ -35,22 +35,22 @@ class GetAffiliateStats
             ->keyBy('affiliate_id');
 
         return $affiliates->map(fn ($a) => [
-            'id'                    => $a->id,
-            'code'                  => $a->code,
-            'status'                => $a->status,
-            'is_active'             => $a->isActive(),
-            'total_earned'          => (float) $a->total_earned,
-            'total_paid'            => (float) $a->total_paid,
-            'pending_amount'        => (float) $a->pendingAmount(),
-            'eligible_amount'       => $eligibility->forAffiliate($a),
+            'id' => $a->id,
+            'code' => $a->code,
+            'status' => $a->status,
+            'is_active' => $a->isActive(),
+            'total_earned' => (float) $a->total_earned,
+            'total_paid' => (float) $a->total_paid,
+            'pending_amount' => (float) $a->pendingAmount(),
+            'eligible_amount' => $eligibility->forAffiliate($a),
             'payout_request_status' => $activeRequestsByAffiliate->has($a->id)
                 ? $activeRequestsByAffiliate->get($a->id)->status
                 : null,
-            'referral_url'          => url("/ref/{$a->code}"),
-            'community'             => ['name' => $a->community->name, 'slug' => $a->community->slug],
-            'facebook_pixel_id'     => $a->facebook_pixel_id,
-            'tiktok_pixel_id'       => $a->tiktok_pixel_id,
-            'google_analytics_id'   => $a->google_analytics_id,
+            'referral_url' => url("/ref/{$a->code}"),
+            'community' => ['name' => $a->community->name, 'slug' => $a->community->slug],
+            'facebook_pixel_id' => $a->facebook_pixel_id,
+            'tiktok_pixel_id' => $a->tiktok_pixel_id,
+            'google_analytics_id' => $a->google_analytics_id,
         ]);
     }
 
@@ -65,9 +65,9 @@ class GetAffiliateStats
             ->when($from, fn ($q) => $q->where('created_at', '>=', $from));
 
         return [
-            'total_earned'      => (float) (clone $base)->sum('commission_amount'),
-            'total_paid'        => (float) (clone $base)->where('status', AffiliateConversion::STATUS_PAID)->sum('commission_amount'),
-            'total_pending'     => (float) (clone $base)->where('status', AffiliateConversion::STATUS_PENDING)->sum('commission_amount'),
+            'total_earned' => (float) (clone $base)->sum('commission_amount'),
+            'total_paid' => (float) (clone $base)->where('status', AffiliateConversion::STATUS_PAID)->sum('commission_amount'),
+            'total_pending' => (float) (clone $base)->where('status', AffiliateConversion::STATUS_PENDING)->sum('commission_amount'),
             'total_conversions' => (clone $base)->count(),
         ];
     }
@@ -83,24 +83,24 @@ class GetAffiliateStats
             ->limit($limit)
             ->get()
             ->map(fn ($c) => [
-                'id'                => $c->id,
-                'date'              => $c->created_at->toDateString(),
-                'community'         => $c->affiliate->community->name,
-                'referred_name'     => $c->referredUser?->name,
-                'referred_email'    => $c->referredUser?->email,
-                'sale_amount'       => (float) $c->sale_amount,
+                'id' => $c->id,
+                'date' => $c->created_at->toDateString(),
+                'community' => $c->affiliate->community->name,
+                'referred_name' => $c->referredUser?->name,
+                'referred_email' => $c->referredUser?->email,
+                'sale_amount' => (float) $c->sale_amount,
                 'commission_amount' => (float) $c->commission_amount,
-                'status'            => $c->status,
-                'paid_at'           => $c->paid_at?->toDateString(),
+                'status' => $c->status,
+                'paid_at' => $c->paid_at?->toDateString(),
             ]);
     }
 
     private function periodStart(?string $period): ?Carbon
     {
         return match ($period) {
-            'week'  => Carbon::now()->startOfWeek(),
+            'week' => Carbon::now()->startOfWeek(),
             'month' => Carbon::now()->startOfMonth(),
-            'year'  => Carbon::now()->startOfYear(),
+            'year' => Carbon::now()->startOfYear(),
             default => null,
         };
     }

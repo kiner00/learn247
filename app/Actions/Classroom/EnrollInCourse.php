@@ -38,9 +38,9 @@ class EnrollInCourse
         }
 
         try {
-            $isMonthly  = $course->access_type === Course::ACCESS_PAID_MONTHLY;
-            $externalId = "course_{$course->id}_{$user->id}_" . time();
-            $label      = $isMonthly ? "{$course->title} (Monthly)" : $course->title;
+            $isMonthly = $course->access_type === Course::ACCESS_PAID_MONTHLY;
+            $externalId = "course_{$course->id}_{$user->id}_".time();
+            $label = $isMonthly ? "{$course->title} (Monthly)" : $course->title;
 
             $invoice = $this->xendit->createInvoice(
                 InvoiceBuilder::make()
@@ -70,9 +70,9 @@ class EnrollInCourse
             return ['enrollment' => $enrollment, 'checkout_url' => $invoice['invoice_url']];
         } catch (\Throwable $e) {
             Log::error('EnrollInCourse failed', [
-                'user_id'   => $user->id,
+                'user_id' => $user->id,
                 'course_id' => $course->id,
-                'error'     => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
 
             throw $e;

@@ -31,7 +31,7 @@ class LikeController extends Controller
         $updated = $action->execute($request->user(), $post);
 
         return response()->json([
-            'message'   => $updated->is_pinned ? 'Post pinned.' : 'Post unpinned.',
+            'message' => $updated->is_pinned ? 'Post pinned.' : 'Post unpinned.',
             'is_pinned' => $updated->is_pinned,
         ]);
     }

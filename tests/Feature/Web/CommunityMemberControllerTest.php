@@ -28,13 +28,13 @@ class CommunityMemberControllerTest extends TestCase
 
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $admin->id,
-            'role'         => CommunityMember::ROLE_ADMIN,
+            'user_id' => $admin->id,
+            'role' => CommunityMember::ROLE_ADMIN,
         ]);
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
-            'role'         => CommunityMember::ROLE_MEMBER,
+            'user_id' => $member->id,
+            'role' => CommunityMember::ROLE_MEMBER,
         ]);
 
         $this->actingAs($admin)
@@ -44,7 +44,7 @@ class CommunityMemberControllerTest extends TestCase
 
         $this->assertDatabaseMissing('community_members', [
             'community_id' => $community->id,
-            'user_id'      => $member->id,
+            'user_id' => $member->id,
         ]);
     }
 
@@ -57,13 +57,13 @@ class CommunityMemberControllerTest extends TestCase
 
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $actor->id,
-            'role'         => CommunityMember::ROLE_MEMBER,
+            'user_id' => $actor->id,
+            'role' => CommunityMember::ROLE_MEMBER,
         ]);
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $target->id,
-            'role'         => CommunityMember::ROLE_MEMBER,
+            'user_id' => $target->id,
+            'role' => CommunityMember::ROLE_MEMBER,
         ]);
 
         $this->actingAs($actor)
@@ -79,8 +79,8 @@ class CommunityMemberControllerTest extends TestCase
 
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $admin->id,
-            'role'         => CommunityMember::ROLE_ADMIN,
+            'user_id' => $admin->id,
+            'role' => CommunityMember::ROLE_ADMIN,
         ]);
 
         $this->actingAs($admin)
@@ -107,8 +107,8 @@ class CommunityMemberControllerTest extends TestCase
 
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
-            'role'         => CommunityMember::ROLE_MEMBER,
+            'user_id' => $member->id,
+            'role' => CommunityMember::ROLE_MEMBER,
         ]);
 
         $this->actingAs($owner)
@@ -117,8 +117,8 @@ class CommunityMemberControllerTest extends TestCase
 
         $this->assertDatabaseHas('community_members', [
             'community_id' => $community->id,
-            'user_id'      => $member->id,
-            'role'         => CommunityMember::ROLE_ADMIN,
+            'user_id' => $member->id,
+            'role' => CommunityMember::ROLE_ADMIN,
         ]);
     }
 
@@ -131,13 +131,13 @@ class CommunityMemberControllerTest extends TestCase
 
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $admin->id,
-            'role'         => CommunityMember::ROLE_ADMIN,
+            'user_id' => $admin->id,
+            'role' => CommunityMember::ROLE_ADMIN,
         ]);
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
-            'role'         => CommunityMember::ROLE_MEMBER,
+            'user_id' => $member->id,
+            'role' => CommunityMember::ROLE_MEMBER,
         ]);
 
         $this->actingAs($admin)
@@ -153,8 +153,8 @@ class CommunityMemberControllerTest extends TestCase
 
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
-            'role'         => CommunityMember::ROLE_MEMBER,
+            'user_id' => $member->id,
+            'role' => CommunityMember::ROLE_MEMBER,
         ]);
 
         $this->actingAs($owner)
@@ -170,8 +170,8 @@ class CommunityMemberControllerTest extends TestCase
 
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
-            'role'         => CommunityMember::ROLE_MEMBER,
+            'user_id' => $member->id,
+            'role' => CommunityMember::ROLE_MEMBER,
         ]);
 
         $this->actingAs($owner)
@@ -189,9 +189,9 @@ class CommunityMemberControllerTest extends TestCase
 
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
-            'role'         => CommunityMember::ROLE_MEMBER,
-            'is_blocked'   => false,
+            'user_id' => $member->id,
+            'role' => CommunityMember::ROLE_MEMBER,
+            'is_blocked' => false,
         ]);
 
         $this->actingAs($owner)
@@ -201,8 +201,8 @@ class CommunityMemberControllerTest extends TestCase
 
         $this->assertDatabaseHas('community_members', [
             'community_id' => $community->id,
-            'user_id'      => $member->id,
-            'is_blocked'   => true,
+            'user_id' => $member->id,
+            'is_blocked' => true,
         ]);
     }
 
@@ -214,9 +214,9 @@ class CommunityMemberControllerTest extends TestCase
 
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
-            'role'         => CommunityMember::ROLE_MEMBER,
-            'is_blocked'   => true,
+            'user_id' => $member->id,
+            'role' => CommunityMember::ROLE_MEMBER,
+            'is_blocked' => true,
         ]);
 
         $this->actingAs($owner)
@@ -226,8 +226,8 @@ class CommunityMemberControllerTest extends TestCase
 
         $this->assertDatabaseHas('community_members', [
             'community_id' => $community->id,
-            'user_id'      => $member->id,
-            'is_blocked'   => false,
+            'user_id' => $member->id,
+            'is_blocked' => false,
         ]);
     }
 
@@ -240,12 +240,12 @@ class CommunityMemberControllerTest extends TestCase
 
         CommunityMember::factory()->admin()->create([
             'community_id' => $community->id,
-            'user_id'      => $admin->id,
+            'user_id' => $admin->id,
         ]);
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
-            'is_blocked'   => false,
+            'user_id' => $member->id,
+            'is_blocked' => false,
         ]);
 
         $this->actingAs($admin)
@@ -263,12 +263,12 @@ class CommunityMemberControllerTest extends TestCase
 
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $actor->id,
-            'role'         => CommunityMember::ROLE_MEMBER,
+            'user_id' => $actor->id,
+            'role' => CommunityMember::ROLE_MEMBER,
         ]);
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $target->id,
+            'user_id' => $target->id,
         ]);
 
         $this->actingAs($actor)
@@ -284,7 +284,7 @@ class CommunityMemberControllerTest extends TestCase
 
         CommunityMember::factory()->admin()->create([
             'community_id' => $community->id,
-            'user_id'      => $admin->id,
+            'user_id' => $admin->id,
         ]);
 
         $this->actingAs($admin)
@@ -301,16 +301,16 @@ class CommunityMemberControllerTest extends TestCase
         $member = User::factory()->create();
 
         CommunityMember::factory()->create([
-            'community_id'  => $community->id,
-            'user_id'       => $member->id,
+            'community_id' => $community->id,
+            'user_id' => $member->id,
             'membership_type' => CommunityMember::MEMBERSHIP_FREE,
-            'expires_at'    => now()->subDay(),
+            'expires_at' => now()->subDay(),
         ]);
 
         $this->actingAs($owner)
             ->patch(route('communities.members.extend-access', $community), [
                 'user_ids' => [$member->id],
-                'months'   => 3,
+                'months' => 3,
             ])
             ->assertRedirect()
             ->assertSessionHas('success');
@@ -325,18 +325,18 @@ class CommunityMemberControllerTest extends TestCase
 
         CommunityMember::factory()->admin()->create([
             'community_id' => $community->id,
-            'user_id'      => $admin->id,
+            'user_id' => $admin->id,
         ]);
         CommunityMember::factory()->create([
-            'community_id'  => $community->id,
-            'user_id'       => $member->id,
+            'community_id' => $community->id,
+            'user_id' => $member->id,
             'membership_type' => CommunityMember::MEMBERSHIP_FREE,
         ]);
 
         $this->actingAs($admin)
             ->patch(route('communities.members.extend-access', $community), [
                 'user_ids' => [$member->id],
-                'months'   => 3,
+                'months' => 3,
             ])
             ->assertForbidden();
     }
@@ -359,7 +359,7 @@ class CommunityMemberControllerTest extends TestCase
         $this->actingAs($owner)
             ->patch(route('communities.members.extend-access', $community), [
                 'user_ids' => [1],
-                'months'   => 0,
+                'months' => 0,
             ])
             ->assertSessionHasErrors('months');
     }
@@ -372,7 +372,7 @@ class CommunityMemberControllerTest extends TestCase
         $this->actingAs($owner)
             ->patch(route('communities.members.extend-access', $community), [
                 'user_ids' => [1],
-                'months'   => 121,
+                'months' => 121,
             ])
             ->assertSessionHasErrors('months');
     }
@@ -384,16 +384,16 @@ class CommunityMemberControllerTest extends TestCase
         $member = User::factory()->create();
 
         CommunityMember::factory()->create([
-            'community_id'    => $community->id,
-            'user_id'         => $member->id,
+            'community_id' => $community->id,
+            'user_id' => $member->id,
             'membership_type' => CommunityMember::MEMBERSHIP_FREE,
-            'expires_at'      => now()->subDay(),
+            'expires_at' => now()->subDay(),
         ]);
 
         $response = $this->actingAs($owner)
             ->patch(route('communities.members.extend-access', $community), [
                 'user_ids' => [$member->id],
-                'months'   => 1,
+                'months' => 1,
             ]);
 
         $response->assertRedirect();
@@ -409,11 +409,11 @@ class CommunityMemberControllerTest extends TestCase
 
         CommunityMember::factory()->moderator()->create([
             'community_id' => $community->id,
-            'user_id'      => $moderator->id,
+            'user_id' => $moderator->id,
         ]);
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
+            'user_id' => $member->id,
         ]);
 
         $this->actingAs($moderator)
@@ -432,11 +432,11 @@ class CommunityMemberControllerTest extends TestCase
 
         CommunityMember::factory()->admin()->create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
+            'user_id' => $owner->id,
         ]);
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
+            'user_id' => $member->id,
         ]);
 
         // Mock the action to throw a generic exception (not AuthorizationException)
@@ -462,8 +462,8 @@ class CommunityMemberControllerTest extends TestCase
 
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
-            'is_blocked'   => false,
+            'user_id' => $member->id,
+            'is_blocked' => false,
         ]);
 
         $this->mock(ToggleMemberBlock::class, function ($mock) {
@@ -487,16 +487,16 @@ class CommunityMemberControllerTest extends TestCase
         $member = User::factory()->create();
 
         CommunityMember::factory()->create([
-            'community_id'    => $community->id,
-            'user_id'         => $member->id,
+            'community_id' => $community->id,
+            'user_id' => $member->id,
             'membership_type' => CommunityMember::MEMBERSHIP_FREE,
-            'expires_at'      => null,
+            'expires_at' => null,
         ]);
 
         $this->actingAs($owner)
             ->patch(route('communities.members.set-expiry', $community), [
                 'user_ids' => [$member->id],
-                'months'   => 1,
+                'months' => 1,
             ])
             ->assertRedirect()
             ->assertSessionHas('success');
@@ -511,16 +511,16 @@ class CommunityMemberControllerTest extends TestCase
         $member = User::factory()->create();
 
         CommunityMember::factory()->create([
-            'community_id'    => $community->id,
-            'user_id'         => $member->id,
+            'community_id' => $community->id,
+            'user_id' => $member->id,
             'membership_type' => CommunityMember::MEMBERSHIP_FREE,
-            'expires_at'      => now()->addYears(5),
+            'expires_at' => now()->addYears(5),
         ]);
 
         $this->actingAs($owner)
             ->patch(route('communities.members.set-expiry', $community), [
                 'user_ids' => [$member->id],
-                'months'   => 1,
+                'months' => 1,
             ])
             ->assertSessionHas('success');
 
@@ -535,16 +535,16 @@ class CommunityMemberControllerTest extends TestCase
         $member = User::factory()->create();
 
         CommunityMember::factory()->create([
-            'community_id'    => $community->id,
-            'user_id'         => $member->id,
+            'community_id' => $community->id,
+            'user_id' => $member->id,
             'membership_type' => CommunityMember::MEMBERSHIP_FREE,
-            'expires_at'      => now()->addMonth(),
+            'expires_at' => now()->addMonth(),
         ]);
 
         $this->actingAs($owner)
             ->patch(route('communities.members.set-expiry', $community), [
                 'user_ids' => [$member->id],
-                'months'   => null,
+                'months' => null,
             ])
             ->assertSessionHas('success');
 
@@ -559,13 +559,13 @@ class CommunityMemberControllerTest extends TestCase
 
         CommunityMember::factory()->admin()->create([
             'community_id' => $community->id,
-            'user_id'      => $admin->id,
+            'user_id' => $admin->id,
         ]);
 
         $this->actingAs($admin)
             ->patch(route('communities.members.set-expiry', $community), [
                 'user_ids' => [$admin->id],
-                'months'   => 1,
+                'months' => 1,
             ])
             ->assertForbidden();
     }
@@ -579,8 +579,8 @@ class CommunityMemberControllerTest extends TestCase
         $member = User::factory()->create();
 
         CommunityMember::factory()->create([
-            'community_id'    => $community->id,
-            'user_id'         => $member->id,
+            'community_id' => $community->id,
+            'user_id' => $member->id,
             'membership_type' => CommunityMember::MEMBERSHIP_FREE,
         ]);
 
@@ -593,7 +593,7 @@ class CommunityMemberControllerTest extends TestCase
         $this->actingAs($owner)
             ->patch(route('communities.members.extend-access', $community), [
                 'user_ids' => [$member->id],
-                'months'   => 3,
+                'months' => 3,
             ])
             ->assertRedirect()
             ->assertSessionHas('error', 'Failed to extend access.');
@@ -609,8 +609,8 @@ class CommunityMemberControllerTest extends TestCase
 
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
-            'role'         => CommunityMember::ROLE_MEMBER,
+            'user_id' => $member->id,
+            'role' => CommunityMember::ROLE_MEMBER,
         ]);
 
         $this->mock(ChangeMemberRole::class, function ($mock) {
@@ -635,22 +635,22 @@ class CommunityMemberControllerTest extends TestCase
         $member2 = User::factory()->create();
 
         CommunityMember::factory()->create([
-            'community_id'    => $community->id,
-            'user_id'         => $member1->id,
+            'community_id' => $community->id,
+            'user_id' => $member1->id,
             'membership_type' => CommunityMember::MEMBERSHIP_FREE,
-            'expires_at'      => now()->subDay(),
+            'expires_at' => now()->subDay(),
         ]);
         CommunityMember::factory()->create([
-            'community_id'    => $community->id,
-            'user_id'         => $member2->id,
+            'community_id' => $community->id,
+            'user_id' => $member2->id,
             'membership_type' => CommunityMember::MEMBERSHIP_FREE,
-            'expires_at'      => now()->subDay(),
+            'expires_at' => now()->subDay(),
         ]);
 
         $response = $this->actingAs($owner)
             ->patch(route('communities.members.extend-access', $community), [
                 'user_ids' => [$member1->id, $member2->id],
-                'months'   => 3,
+                'months' => 3,
             ]);
 
         $response->assertRedirect();

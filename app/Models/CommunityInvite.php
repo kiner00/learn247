@@ -13,7 +13,7 @@ class CommunityInvite extends Model
     {
         return [
             'accepted_at' => 'datetime',
-            'expires_at'  => 'datetime',
+            'expires_at' => 'datetime',
         ];
     }
 

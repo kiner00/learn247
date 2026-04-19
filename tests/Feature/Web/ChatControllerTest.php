@@ -17,9 +17,9 @@ class ChatControllerTest extends TestCase
 
     private function createCommunityWithMember(): array
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
-        $member    = User::factory()->create();
+        $member = User::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         return [$owner, $community, $member];
@@ -65,7 +65,7 @@ class ChatControllerTest extends TestCase
 
     public function test_guest_is_redirected_to_login(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
 
         $response = $this->get("/communities/{$community->slug}/chat");
@@ -79,8 +79,8 @@ class ChatControllerTest extends TestCase
 
         Message::create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
-            'content'      => 'Hello chat',
+            'user_id' => $owner->id,
+            'content' => 'Hello chat',
         ]);
 
         $this->actingAs($member)
@@ -112,8 +112,8 @@ class ChatControllerTest extends TestCase
 
         $this->assertDatabaseHas('messages', [
             'community_id' => $community->id,
-            'user_id'      => $member->id,
-            'content'      => 'Hey everyone!',
+            'user_id' => $member->id,
+            'content' => 'Hey everyone!',
         ]);
     }
 
@@ -177,8 +177,8 @@ class ChatControllerTest extends TestCase
 
         $msg = Message::create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
-            'content'      => 'New chat message',
+            'user_id' => $owner->id,
+            'content' => 'New chat message',
         ]);
 
         $response = $this->actingAs($member)
@@ -195,14 +195,14 @@ class ChatControllerTest extends TestCase
 
         $old = Message::create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
-            'content'      => 'Old',
+            'user_id' => $owner->id,
+            'content' => 'Old',
         ]);
 
         $new = Message::create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
-            'content'      => 'New',
+            'user_id' => $owner->id,
+            'content' => 'New',
         ]);
 
         $response = $this->actingAs($member)
@@ -243,8 +243,8 @@ class ChatControllerTest extends TestCase
 
         $msg = Message::create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
-            'content'      => 'Delete me',
+            'user_id' => $member->id,
+            'content' => 'Delete me',
         ]);
 
         $response = $this->actingAs($member)
@@ -263,8 +263,8 @@ class ChatControllerTest extends TestCase
 
         $msg = Message::create([
             'community_id' => $community->id,
-            'user_id'      => $anotherMember->id,
-            'content'      => 'Not yours',
+            'user_id' => $anotherMember->id,
+            'content' => 'Not yours',
         ]);
 
         $response = $this->actingAs($member)
@@ -282,8 +282,8 @@ class ChatControllerTest extends TestCase
 
         $msg = Message::create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
-            'content'      => 'Any message',
+            'user_id' => $member->id,
+            'content' => 'Any message',
         ]);
 
         $response = $this->actingAs($admin)
@@ -300,8 +300,8 @@ class ChatControllerTest extends TestCase
 
         $msg = Message::create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
-            'content'      => 'Some message',
+            'user_id' => $member->id,
+            'content' => 'Some message',
         ]);
 
         $response = $this->actingAs($stranger)
@@ -340,7 +340,7 @@ class ChatControllerTest extends TestCase
         $response = $this->actingAs($member)
             ->postJson("/communities/{$community->slug}/chat", [
                 'content' => 'Check this image',
-                'media'   => UploadedFile::fake()->image('photo.jpg'),
+                'media' => UploadedFile::fake()->image('photo.jpg'),
             ]);
 
         $response->assertOk();
@@ -357,7 +357,7 @@ class ChatControllerTest extends TestCase
         $response = $this->actingAs($member)
             ->postJson("/communities/{$community->slug}/chat", [
                 'content' => 'Check this video',
-                'media'   => UploadedFile::fake()->create('video.mp4', 1024, 'video/mp4'),
+                'media' => UploadedFile::fake()->create('video.mp4', 1024, 'video/mp4'),
             ]);
 
         $response->assertOk();
@@ -373,8 +373,8 @@ class ChatControllerTest extends TestCase
 
         Message::create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
-            'content'      => 'New message',
+            'user_id' => $owner->id,
+            'content' => 'New message',
         ]);
 
         $this->actingAs($member)
@@ -396,9 +396,9 @@ class ChatControllerTest extends TestCase
         // Create chatbot messages from the member
         \App\Models\ChatbotMessage::create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
-            'role'         => 'user',
-            'content'      => 'Hello bot',
+            'user_id' => $member->id,
+            'role' => 'user',
+            'content' => 'Hello bot',
         ]);
 
         $response = $this->actingAs($owner)
@@ -465,8 +465,8 @@ class ChatControllerTest extends TestCase
 
         $msg = Message::create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
-            'content'      => 'Member message',
+            'user_id' => $member->id,
+            'content' => 'Member message',
         ]);
 
         $response = $this->actingAs($owner)
@@ -487,7 +487,7 @@ class ChatControllerTest extends TestCase
         $response = $this->actingAs($member)
             ->postJson("/communities/{$community->slug}/chat", [
                 'content' => null,
-                'media'   => UploadedFile::fake()->image('photo.jpg'),
+                'media' => UploadedFile::fake()->image('photo.jpg'),
             ]);
 
         // This will either pass or fail depending on SendMessageRequest validation
@@ -499,7 +499,7 @@ class ChatControllerTest extends TestCase
 
     public function test_guest_cannot_poll_chat(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
 
         $this->getJson("/communities/{$community->slug}/chat/poll?after=0")
@@ -514,7 +514,7 @@ class ChatControllerTest extends TestCase
 
         $community->update([
             'telegram_bot_token' => 'tg-bot-token',
-            'telegram_chat_id'   => '-100123456',
+            'telegram_chat_id' => '-100123456',
         ]);
 
         $gateway = \Mockery::mock(\App\Contracts\TelegramGateway::class);
@@ -539,13 +539,13 @@ class ChatControllerTest extends TestCase
 
     public function test_guest_cannot_delete_chat_message(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
 
         $msg = Message::create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
-            'content'      => 'Test',
+            'user_id' => $owner->id,
+            'content' => 'Test',
         ]);
 
         $this->deleteJson("/communities/{$community->slug}/chat/{$msg->id}")

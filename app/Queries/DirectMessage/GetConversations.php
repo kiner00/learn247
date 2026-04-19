@@ -31,11 +31,11 @@ class GetConversations
             $partner = User::select('id', 'name', 'username', 'avatar')->find($partnerId);
 
             return [
-                'user'           => $partner,
+                'user' => $partner,
                 'latest_message' => $latest ? [
-                    'content'    => $latest->content,
+                    'content' => $latest->content,
                     'created_at' => $latest->created_at,
-                    'is_mine'    => $latest->sender_id === $userId,
+                    'is_mine' => $latest->sender_id === $userId,
                 ] : null,
                 'unread_count' => $unread,
             ];

@@ -17,11 +17,11 @@ class CommunityChatbotController extends Controller
     public function chat(Request $request, Community $community): JsonResponse
     {
         $request->validate([
-            'message'         => ['required', 'string', 'max:1000'],
+            'message' => ['required', 'string', 'max:1000'],
             'conversation_id' => ['nullable', 'string', 'uuid'],
         ]);
 
-        $user  = $request->user();
+        $user = $request->user();
         $community->load('owner:id,name');
 
         $agent = new CommunityChatbot($community);
@@ -32,8 +32,8 @@ class CommunityChatbotController extends Controller
 
         // Store both messages
         $attrs = [
-            'community_id'    => $community->id,
-            'user_id'         => $user->id,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
             'conversation_id' => $response->conversationId,
         ];
 
@@ -43,7 +43,7 @@ class CommunityChatbotController extends Controller
         ]);
 
         return response()->json([
-            'message'         => $response->text,
+            'message' => $response->text,
             'conversation_id' => $response->conversationId,
         ]);
     }
@@ -61,18 +61,18 @@ class CommunityChatbotController extends Controller
         ]);
 
         $message = ChatbotMessage::create([
-            'community_id'    => $community->id,
-            'user_id'         => $request->user_id,
-            'role'            => 'creator',
-            'content'         => $request->message,
+            'community_id' => $community->id,
+            'user_id' => $request->user_id,
+            'role' => 'creator',
+            'content' => $request->message,
             'conversation_id' => null,
         ]);
 
         return response()->json([
             'message' => [
-                'id'         => $message->id,
-                'role'       => 'creator',
-                'content'    => $message->content,
+                'id' => $message->id,
+                'role' => 'creator',
+                'content' => $message->content,
                 'created_at' => $message->created_at,
             ],
         ]);
@@ -83,7 +83,7 @@ class CommunityChatbotController extends Controller
      */
     public function poll(Request $request, Community $community): JsonResponse
     {
-        $after  = (int) $request->query('after', 0);
+        $after = (int) $request->query('after', 0);
         $userId = $request->user()->id;
 
         // Creator can poll a specific user's conversation
@@ -98,10 +98,10 @@ class CommunityChatbotController extends Controller
             ->select('id', 'role', 'content', 'created_at')
             ->get()
             ->map(fn ($m) => [
-                'id'         => $m->id,
-                'role'       => $m->role,
-                'text'       => $m->content,
-                'content'    => $m->content,
+                'id' => $m->id,
+                'role' => $m->role,
+                'text' => $m->content,
+                'content' => $m->content,
                 'created_at' => $m->created_at,
             ]);
 
@@ -120,7 +120,7 @@ class CommunityChatbotController extends Controller
             ->limit(100)
             ->get()
             ->map(fn ($m) => [
-                'id'   => $m->id,
+                'id' => $m->id,
                 'role' => $m->role,
                 'text' => $m->content,
             ]);

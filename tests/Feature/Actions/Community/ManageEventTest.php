@@ -18,20 +18,20 @@ class ManageEventTest extends TestCase
     public function test_store_creates_event(): void
     {
         $community = Community::factory()->create();
-        $user      = User::factory()->create();
-        $action    = app(ManageEvent::class);
+        $user = User::factory()->create();
+        $action = app(ManageEvent::class);
 
         $event = $action->store($community, $user, [
-            'title'       => 'Launch Party',
+            'title' => 'Launch Party',
             'description' => 'Come celebrate!',
-            'start_at'    => now()->addWeek()->toDateTimeString(),
-            'timezone'    => 'Asia/Manila',
+            'start_at' => now()->addWeek()->toDateTimeString(),
+            'timezone' => 'Asia/Manila',
         ]);
 
         $this->assertDatabaseHas('events', [
-            'id'           => $event->id,
+            'id' => $event->id,
             'community_id' => $community->id,
-            'title'        => 'Launch Party',
+            'title' => 'Launch Party',
         ]);
     }
 
@@ -39,12 +39,12 @@ class ManageEventTest extends TestCase
     {
         Storage::fake(config('filesystems.default'));
         $community = Community::factory()->create();
-        $user      = User::factory()->create();
-        $action    = app(ManageEvent::class);
-        $image     = UploadedFile::fake()->image('event-cover.jpg');
+        $user = User::factory()->create();
+        $action = app(ManageEvent::class);
+        $image = UploadedFile::fake()->image('event-cover.jpg');
 
         $event = $action->store($community, $user, [
-            'title'    => 'Image Event',
+            'title' => 'Image Event',
             'start_at' => now()->addWeek()->toDateTimeString(),
             'timezone' => 'UTC',
         ], $image);
@@ -55,19 +55,19 @@ class ManageEventTest extends TestCase
     public function test_update_event_basic_fields(): void
     {
         $community = Community::factory()->create();
-        $user      = User::factory()->create();
-        $event     = Event::create([
+        $user = User::factory()->create();
+        $event = Event::create([
             'community_id' => $community->id,
-            'created_by'   => $user->id,
-            'title'        => 'Original',
-            'description'  => 'Original desc',
-            'start_at'     => now()->addWeek(),
-            'timezone'     => 'UTC',
+            'created_by' => $user->id,
+            'title' => 'Original',
+            'description' => 'Original desc',
+            'start_at' => now()->addWeek(),
+            'timezone' => 'UTC',
         ]);
 
-        $action   = app(ManageEvent::class);
+        $action = app(ManageEvent::class);
         $updated = $action->update($event, [
-            'title'       => 'Updated Title',
+            'title' => 'Updated Title',
             'description' => 'Updated desc',
         ]);
 
@@ -78,19 +78,19 @@ class ManageEventTest extends TestCase
     {
         Storage::fake(config('filesystems.default'));
         $community = Community::factory()->create();
-        $user      = User::factory()->create();
-        $event     = Event::create([
+        $user = User::factory()->create();
+        $event = Event::create([
             'community_id' => $community->id,
-            'created_by'   => $user->id,
-            'title'        => 'Covered Event',
-            'start_at'     => now()->addWeek(),
-            'timezone'     => 'UTC',
-            'cover_image'  => 'events/old.jpg',
+            'created_by' => $user->id,
+            'title' => 'Covered Event',
+            'start_at' => now()->addWeek(),
+            'timezone' => 'UTC',
+            'cover_image' => 'events/old.jpg',
         ]);
 
-        $action    = app(ManageEvent::class);
-        $newImage  = UploadedFile::fake()->image('new-cover.jpg');
-        $updated   = $action->update($event, ['title' => 'Still Covered'], $newImage);
+        $action = app(ManageEvent::class);
+        $newImage = UploadedFile::fake()->image('new-cover.jpg');
+        $updated = $action->update($event, ['title' => 'Still Covered'], $newImage);
 
         $this->assertNotEquals('events/old.jpg', $updated->cover_image);
     }
@@ -98,13 +98,13 @@ class ManageEventTest extends TestCase
     public function test_destroy_deletes_event(): void
     {
         $community = Community::factory()->create();
-        $user      = User::factory()->create();
-        $event     = Event::create([
+        $user = User::factory()->create();
+        $event = Event::create([
             'community_id' => $community->id,
-            'created_by'   => $user->id,
-            'title'        => 'Delete Me',
-            'start_at'     => now()->addWeek(),
-            'timezone'     => 'UTC',
+            'created_by' => $user->id,
+            'title' => 'Delete Me',
+            'start_at' => now()->addWeek(),
+            'timezone' => 'UTC',
         ]);
 
         $action = app(ManageEvent::class);
@@ -120,14 +120,14 @@ class ManageEventTest extends TestCase
         Storage::disk($disk)->put('events/cover.jpg', 'dummy');
 
         $community = Community::factory()->create();
-        $user      = User::factory()->create();
-        $event     = Event::create([
+        $user = User::factory()->create();
+        $event = Event::create([
             'community_id' => $community->id,
-            'created_by'   => $user->id,
-            'title'        => 'Event With Image',
-            'start_at'     => now()->addWeek(),
-            'timezone'     => 'UTC',
-            'cover_image'  => 'events/cover.jpg',
+            'created_by' => $user->id,
+            'title' => 'Event With Image',
+            'start_at' => now()->addWeek(),
+            'timezone' => 'UTC',
+            'cover_image' => 'events/cover.jpg',
         ]);
 
         $action = app(ManageEvent::class);

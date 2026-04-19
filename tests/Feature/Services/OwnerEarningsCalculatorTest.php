@@ -22,7 +22,7 @@ class OwnerEarningsCalculatorTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->calc = new OwnerEarningsCalculator();
+        $this->calc = new OwnerEarningsCalculator;
     }
 
     // ── Zero state ────────────────────────────────────────────────────────────
@@ -45,10 +45,10 @@ class OwnerEarningsCalculatorTest extends TestCase
 
     public function test_sums_only_paid_payments(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $member    = User::factory()->create();
-        $sub       = Subscription::factory()->active()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+        $member = User::factory()->create();
+        $sub = Subscription::factory()->active()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         Payment::create(['subscription_id' => $sub->id, 'community_id' => $community->id, 'user_id' => $member->id,
             'amount' => 500, 'currency' => 'PHP', 'status' => Payment::STATUS_PAID, 'metadata' => [], 'paid_at' => now()]);
@@ -63,17 +63,17 @@ class OwnerEarningsCalculatorTest extends TestCase
 
     public function test_platform_fee_is_gross_times_rate(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $member    = User::factory()->create();
-        $sub       = Subscription::factory()->active()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+        $member = User::factory()->create();
+        $sub = Subscription::factory()->active()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         Payment::create(['subscription_id' => $sub->id, 'community_id' => $community->id, 'user_id' => $member->id,
             'amount' => 1000, 'currency' => 'PHP', 'status' => Payment::STATUS_PAID, 'metadata' => [], 'paid_at' => now()]);
 
         $result = $this->calc->forCommunity($community);
 
-        $expectedFee  = round(1000 * $community->platformFeeRate(), 2);
+        $expectedFee = round(1000 * $community->platformFeeRate(), 2);
         $this->assertEquals($expectedFee, $result['platform_fee']);
         $this->assertEquals($community->platformFeeRate(), $result['platform_fee_rate']);
     }
@@ -82,30 +82,30 @@ class OwnerEarningsCalculatorTest extends TestCase
 
     public function test_subtracts_affiliate_commission_from_earned(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $member    = User::factory()->create();
-        $sub       = Subscription::factory()->active()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+        $member = User::factory()->create();
+        $sub = Subscription::factory()->active()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         Payment::create(['subscription_id' => $sub->id, 'community_id' => $community->id, 'user_id' => $member->id,
             'amount' => 1000, 'currency' => 'PHP', 'status' => Payment::STATUS_PAID, 'metadata' => [], 'paid_at' => now()]);
 
         $affiliateUser = User::factory()->create();
-        $affiliate     = Affiliate::create([
+        $affiliate = Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => $affiliateUser->id,
-            'code'         => 'AFF01',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => $affiliateUser->id,
+            'code' => 'AFF01',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         AffiliateConversion::create([
-            'affiliate_id'     => $affiliate->id,
-            'subscription_id'  => $sub->id,
+            'affiliate_id' => $affiliate->id,
+            'subscription_id' => $sub->id,
             'referred_user_id' => $member->id,
-            'sale_amount'      => 1000,
-            'platform_fee'     => 98,
-            'commission_amount'=> 100,
-            'creator_amount'   => 802,
+            'sale_amount' => 1000,
+            'platform_fee' => 98,
+            'commission_amount' => 100,
+            'creator_amount' => 802,
         ]);
 
         $result = $this->calc->forCommunity($community);
@@ -118,24 +118,24 @@ class OwnerEarningsCalculatorTest extends TestCase
 
     public function test_only_counts_commissions_from_this_community(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $other     = Community::factory()->create();
+        $other = Community::factory()->create();
 
         // Conversion for the OTHER community's affiliate
-        $affUser   = User::factory()->create();
+        $affUser = User::factory()->create();
         $affiliate = Affiliate::create(['community_id' => $other->id, 'user_id' => $affUser->id, 'code' => 'OTH', 'status' => Affiliate::STATUS_ACTIVE]);
-        $member    = User::factory()->create();
-        $sub       = Subscription::factory()->active()->create(['community_id' => $other->id, 'user_id' => $member->id]);
+        $member = User::factory()->create();
+        $sub = Subscription::factory()->active()->create(['community_id' => $other->id, 'user_id' => $member->id]);
 
         AffiliateConversion::create([
-            'affiliate_id'     => $affiliate->id,
-            'subscription_id'  => $sub->id,
+            'affiliate_id' => $affiliate->id,
+            'subscription_id' => $sub->id,
             'referred_user_id' => $member->id,
-            'sale_amount'      => 500,
-            'platform_fee'     => 49,
-            'commission_amount'=> 50,
-            'creator_amount'   => 401,
+            'sale_amount' => 500,
+            'platform_fee' => 49,
+            'commission_amount' => 50,
+            'creator_amount' => 401,
         ]);
 
         $result = $this->calc->forCommunity($community);
@@ -147,10 +147,10 @@ class OwnerEarningsCalculatorTest extends TestCase
 
     public function test_paid_is_sum_of_non_failed_payouts(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $member    = User::factory()->create();
-        $sub       = Subscription::factory()->active()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+        $member = User::factory()->create();
+        $sub = Subscription::factory()->active()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         Payment::create(['subscription_id' => $sub->id, 'community_id' => $community->id, 'user_id' => $member->id,
             'amount' => 2000, 'currency' => 'PHP', 'status' => Payment::STATUS_PAID, 'metadata' => [], 'paid_at' => now()]);
@@ -168,7 +168,7 @@ class OwnerEarningsCalculatorTest extends TestCase
 
     public function test_pending_is_floored_at_zero_when_paid_exceeds_earned(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         // No income, but a payout recorded
@@ -199,10 +199,10 @@ class OwnerEarningsCalculatorTest extends TestCase
 
     public function test_parts_sum_correctly(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $member    = User::factory()->create();
-        $sub       = Subscription::factory()->active()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+        $member = User::factory()->create();
+        $sub = Subscription::factory()->active()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         Payment::create(['subscription_id' => $sub->id, 'community_id' => $community->id, 'user_id' => $member->id,
             'amount' => 1000, 'currency' => 'PHP', 'status' => Payment::STATUS_PAID, 'metadata' => [], 'paid_at' => now()]);

@@ -21,47 +21,47 @@ class MarkAffiliateConversionPaidTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->action = new MarkAffiliateConversionPaid();
+        $this->action = new MarkAffiliateConversionPaid;
     }
 
     private function createConversion(Affiliate $affiliate, float $commission = 50): AffiliateConversion
     {
         $sub = Subscription::factory()->active()->create([
             'community_id' => $affiliate->community_id,
-            'user_id'      => User::factory()->create()->id,
+            'user_id' => User::factory()->create()->id,
         ]);
         $payment = Payment::create([
             'subscription_id' => $sub->id,
-            'community_id'    => $affiliate->community_id,
-            'user_id'         => $sub->user_id,
-            'amount'          => 500,
-            'currency'        => 'PHP',
-            'status'          => Payment::STATUS_PAID,
-            'metadata'        => [],
-            'paid_at'         => now(),
+            'community_id' => $affiliate->community_id,
+            'user_id' => $sub->user_id,
+            'amount' => 500,
+            'currency' => 'PHP',
+            'status' => Payment::STATUS_PAID,
+            'metadata' => [],
+            'paid_at' => now(),
         ]);
 
         return AffiliateConversion::create([
-            'affiliate_id'      => $affiliate->id,
-            'subscription_id'   => $sub->id,
-            'payment_id'        => $payment->id,
-            'referred_user_id'  => $sub->user_id,
-            'sale_amount'       => 500,
-            'platform_fee'      => 75,
+            'affiliate_id' => $affiliate->id,
+            'subscription_id' => $sub->id,
+            'payment_id' => $payment->id,
+            'referred_user_id' => $sub->user_id,
+            'sale_amount' => 500,
+            'platform_fee' => 75,
             'commission_amount' => $commission,
-            'creator_amount'    => 500 - 75 - $commission,
-            'status'            => AffiliateConversion::STATUS_PENDING,
+            'creator_amount' => 500 - 75 - $commission,
+            'status' => AffiliateConversion::STATUS_PENDING,
         ]);
     }
 
     public function test_marks_conversion_as_paid_with_timestamp(): void
     {
-        $community  = Community::factory()->create(['affiliate_commission_rate' => 10]);
-        $affiliate  = Affiliate::create([
-            'user_id'      => User::factory()->create()->id,
+        $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
+        $affiliate = Affiliate::create([
+            'user_id' => User::factory()->create()->id,
             'community_id' => $community->id,
-            'code'         => 'PAID001',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'code' => 'PAID001',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
         $conversion = $this->createConversion($affiliate);
 
@@ -76,11 +76,11 @@ class MarkAffiliateConversionPaidTest extends TestCase
     {
         $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
         $affiliate = Affiliate::create([
-            'user_id'      => User::factory()->create()->id,
+            'user_id' => User::factory()->create()->id,
             'community_id' => $community->id,
-            'code'         => 'PAID002',
-            'status'       => Affiliate::STATUS_ACTIVE,
-            'total_paid'   => 0,
+            'code' => 'PAID002',
+            'status' => Affiliate::STATUS_ACTIVE,
+            'total_paid' => 0,
         ]);
         $conversion = $this->createConversion($affiliate, 80);
 

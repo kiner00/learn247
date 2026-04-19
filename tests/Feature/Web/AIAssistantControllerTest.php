@@ -6,7 +6,6 @@ use App\Ai\Agents\CommunityAssistant;
 use App\Models\User;
 use App\Queries\AI\BuildAIContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Laravel\Ai\Image;
 use Mockery;
 use Mockery\MockInterface;
 use Tests\TestCase;
@@ -20,9 +19,9 @@ class AIAssistantControllerTest extends TestCase
         $this->mock(BuildAIContext::class, function (MockInterface $mock) use ($user) {
             $mock->shouldReceive('execute')
                 ->andReturn([
-                    'id'          => $user->id,
-                    'name'        => $user->name,
-                    'email'       => $user->email,
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
                     'communities' => [
                         ['name' => 'Test Community', 'role' => 'member', 'points' => 10, 'level' => 1, 'lessons_done' => 2, 'lessons_total' => 5, 'lessons_pending_names' => [], 'quizzes' => [], 'badges' => []],
                     ],
@@ -81,7 +80,7 @@ class AIAssistantControllerTest extends TestCase
 
         $this->actingAs($user)
             ->postJson(route('ai.chat'), [
-                'message'         => 'What should I do next?',
+                'message' => 'What should I do next?',
                 'conversation_id' => null,
             ])
             ->assertOk()
@@ -97,7 +96,7 @@ class AIAssistantControllerTest extends TestCase
 
         $this->actingAs($user)
             ->postJson(route('ai.chat'), [
-                'message'         => 'Tell me more',
+                'message' => 'Tell me more',
                 'conversation_id' => 'b7a1c3d2-e456-4f78-9a0b-1c2d3e4f5a6b',
             ])
             ->assertOk()
@@ -141,7 +140,7 @@ class AIAssistantControllerTest extends TestCase
 
         $this->actingAs($user)
             ->postJson(route('ai.chat'), [
-                'message'         => 'Hello',
+                'message' => 'Hello',
                 'conversation_id' => 'not-a-uuid',
             ])
             ->assertUnprocessable()
@@ -156,6 +155,7 @@ class AIAssistantControllerTest extends TestCase
 
     /**
      * @runInSeparateProcess
+     *
      * @preserveGlobalState disabled
      */
     public function test_chat_returns_image_when_message_requests_image_generation(): void
@@ -163,8 +163,8 @@ class AIAssistantControllerTest extends TestCase
         $user = User::factory()->create();
         $this->mockContextWithCommunities($user);
 
-        $fakeImg       = new \stdClass();
-        $fakeImg->mime  = 'image/png';
+        $fakeImg = new \stdClass;
+        $fakeImg->mime = 'image/png';
         $fakeImg->image = base64_encode('fake-image-data');
 
         $fakeResponse = Mockery::mock();
@@ -201,6 +201,7 @@ class AIAssistantControllerTest extends TestCase
 
     /**
      * @runInSeparateProcess
+     *
      * @preserveGlobalState disabled
      */
     public function test_chat_returns_friendly_error_when_image_generation_fails(): void

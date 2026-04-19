@@ -13,7 +13,7 @@ class KycVerificationService
 {
     public function verify(User $user): array
     {
-        $idUrl     = $user->kyc_id_document;
+        $idUrl = $user->kyc_id_document;
         $selfieUrl = $user->kyc_selfie;
 
         if (! $idUrl || ! $selfieUrl) {
@@ -21,11 +21,11 @@ class KycVerificationService
         }
 
         // Convert relative storage URLs to full URLs
-        $idUrl     = $this->toFullUrl($idUrl);
+        $idUrl = $this->toFullUrl($idUrl);
         $selfieUrl = $this->toFullUrl($selfieUrl);
 
         try {
-            $agent = new KycVerifier();
+            $agent = new KycVerifier;
 
             $response = $agent->prompt(
                 'Please verify these KYC documents. Image 1 is the government ID. Image 2 is the selfie with ID.',
@@ -45,7 +45,7 @@ class KycVerificationService
 
             if (! $result || ! isset($result['approved'])) {
                 Log::warning('KYC AI verification returned invalid response', [
-                    'user_id'  => $user->id,
+                    'user_id' => $user->id,
                     'response' => $text,
                 ]);
 
@@ -54,14 +54,14 @@ class KycVerificationService
 
             Log::info('KYC AI verification result', [
                 'user_id' => $user->id,
-                'result'  => $result,
+                'result' => $result,
             ]);
 
             return $result;
         } catch (\Throwable $e) {
             Log::error('KYC AI verification failed', [
                 'user_id' => $user->id,
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
 
             return ['approved' => false, 'reason' => 'AI verification failed. Manual review required.'];
@@ -76,12 +76,12 @@ class KycVerificationService
         $user->kyc_ai_result = $result;
 
         if ($result['approved'] ?? false) {
-            $user->kyc_status          = User::KYC_APPROVED;
-            $user->kyc_verified_at     = now();
+            $user->kyc_status = User::KYC_APPROVED;
+            $user->kyc_verified_at = now();
             $user->kyc_rejected_reason = null;
         } else {
             $user->kyc_ai_rejections = ($user->kyc_ai_rejections ?? 0) + 1;
-            $user->kyc_status        = User::KYC_REJECTED;
+            $user->kyc_status = User::KYC_REJECTED;
             $user->kyc_rejected_reason = $result['reason'] ?? 'AI verification failed';
         }
 
@@ -102,6 +102,6 @@ class KycVerificationService
             return $url;
         }
 
-        return rtrim(config('app.url'), '/') . $url;
+        return rtrim(config('app.url'), '/').$url;
     }
 }

@@ -27,12 +27,12 @@ class EmailAnalyticsController extends Controller
             ->orderBy('date')
             ->get()
             ->map(fn ($stat) => [
-                'date'         => $stat->date->format('M j'),
-                'sent'         => $stat->sent,
-                'delivered'    => $stat->delivered,
-                'opened'       => $stat->opened,
-                'clicked'      => $stat->clicked,
-                'bounced'      => $stat->bounced,
+                'date' => $stat->date->format('M j'),
+                'sent' => $stat->sent,
+                'delivered' => $stat->delivered,
+                'opened' => $stat->opened,
+                'clicked' => $stat->clicked,
+                'bounced' => $stat->bounced,
                 'unsubscribed' => $stat->unsubscribed,
             ]);
 
@@ -41,8 +41,8 @@ class EmailAnalyticsController extends Controller
             ->select(
                 DB::raw('COUNT(*) as total_sent'),
                 DB::raw("SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END) as total_delivered"),
-                DB::raw("SUM(CASE WHEN opened_at IS NOT NULL THEN 1 ELSE 0 END) as total_opened"),
-                DB::raw("SUM(CASE WHEN clicked_at IS NOT NULL THEN 1 ELSE 0 END) as total_clicked"),
+                DB::raw('SUM(CASE WHEN opened_at IS NOT NULL THEN 1 ELSE 0 END) as total_opened'),
+                DB::raw('SUM(CASE WHEN clicked_at IS NOT NULL THEN 1 ELSE 0 END) as total_clicked'),
                 DB::raw("SUM(CASE WHEN status = 'bounced' THEN 1 ELSE 0 END) as total_bounced"),
                 DB::raw("SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as total_failed"),
             )
@@ -51,15 +51,15 @@ class EmailAnalyticsController extends Controller
         $totalUnsubscribed = EmailUnsubscribe::where('community_id', $community->id)->count();
 
         return Inertia::render('Communities/Email/Analytics', [
-            'community'  => $community,
+            'community' => $community,
             'dailyStats' => $dailyStats,
-            'totals'     => [
-                'sent'         => $totals->total_sent ?? 0,
-                'delivered'    => $totals->total_delivered ?? 0,
-                'opened'       => $totals->total_opened ?? 0,
-                'clicked'      => $totals->total_clicked ?? 0,
-                'bounced'      => $totals->total_bounced ?? 0,
-                'failed'       => $totals->total_failed ?? 0,
+            'totals' => [
+                'sent' => $totals->total_sent ?? 0,
+                'delivered' => $totals->total_delivered ?? 0,
+                'opened' => $totals->total_opened ?? 0,
+                'clicked' => $totals->total_clicked ?? 0,
+                'bounced' => $totals->total_bounced ?? 0,
+                'failed' => $totals->total_failed ?? 0,
                 'unsubscribed' => $totalUnsubscribed,
             ],
             'days' => $days,

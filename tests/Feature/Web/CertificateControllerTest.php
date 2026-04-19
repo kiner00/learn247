@@ -21,14 +21,14 @@ class CertificateControllerTest extends TestCase
         $community = Community::factory()->create();
         $certification = CourseCertification::create([
             'community_id' => $community->id,
-            'title'        => 'PHP Fundamentals',
-            'cert_title'   => 'PHP Certified Developer',
-            'pass_score'   => 70,
+            'title' => 'PHP Fundamentals',
+            'cert_title' => 'PHP Certified Developer',
+            'pass_score' => 70,
         ]);
         $cert = Certificate::create([
-            'user_id'          => $user->id,
+            'user_id' => $user->id,
             'certification_id' => $certification->id,
-            'issued_at'        => now(),
+            'issued_at' => now(),
         ]);
 
         $this->get(route('certificates.show', $cert->uuid))
@@ -55,14 +55,14 @@ class CertificateControllerTest extends TestCase
         $community = Community::factory()->create();
         $certification = CourseCertification::create([
             'community_id' => $community->id,
-            'title'        => 'Test Exam',
-            'cert_title'   => 'Test Certificate',
-            'pass_score'   => 70,
+            'title' => 'Test Exam',
+            'cert_title' => 'Test Certificate',
+            'pass_score' => 70,
         ]);
         $cert = Certificate::create([
-            'user_id'          => $user->id,
+            'user_id' => $user->id,
             'certification_id' => $certification->id,
-            'issued_at'        => now(),
+            'issued_at' => now(),
         ]);
 
         $this->assertGuest();

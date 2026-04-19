@@ -2,10 +2,10 @@
 
 namespace Tests\Feature\Web;
 
+use App\Http\Controllers\Web\GuestCheckoutController;
 use App\Models\Community;
 use App\Models\Subscription;
 use App\Models\User;
-use App\Http\Controllers\Web\GuestCheckoutController;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -35,18 +35,18 @@ class CheckoutCallbackControllerTest extends TestCase
 
     public function test_expired_link_returns_403(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
 
         // Build a valid token but with an expired timestamp
-        $expires  = now()->subHour()->getTimestamp();
+        $expires = now()->subHour()->getTimestamp();
         $expected = hash_hmac('sha256', "{$user->id}|{$community->slug}|{$expires}", config('app.key'));
 
         $url = route('checkout.callback', [
-            'user'      => $user->id,
+            'user' => $user->id,
             'community' => $community->slug,
-            'expires'   => $expires,
-            'token'     => $expected,
+            'expires' => $expires,
+            'token' => $expected,
         ]);
 
         $this->get($url)->assertForbidden();
@@ -60,10 +60,10 @@ class CheckoutCallbackControllerTest extends TestCase
         // Build a URL with a bad token
         $expires = now()->addHours(2)->getTimestamp();
         $url = route('checkout.callback', [
-            'user'      => $user->id,
+            'user' => $user->id,
             'community' => $community->slug,
-            'expires'   => $expires,
-            'token'     => 'invalid-token',
+            'expires' => $expires,
+            'token' => 'invalid-token',
         ]);
 
         $this->get($url)->assertForbidden();
@@ -96,7 +96,7 @@ class CheckoutCallbackControllerTest extends TestCase
 
         Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         $this->actingAs($user)
@@ -112,8 +112,8 @@ class CheckoutCallbackControllerTest extends TestCase
 
         Subscription::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'status'       => Subscription::STATUS_PENDING,
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_PENDING,
         ]);
 
         $this->actingAs($user)
@@ -145,16 +145,16 @@ class CheckoutCallbackControllerTest extends TestCase
 
     public function test_callback_with_ref_code_cookie_passes_affiliate_pixels(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['facebook_pixel_id' => null]);
 
         $affiliate = \App\Models\Affiliate::create([
-            'community_id'      => $community->id,
-            'user_id'           => $community->owner_id,
-            'code'              => 'REF-PIXEL',
-            'status'            => \App\Models\Affiliate::STATUS_ACTIVE,
+            'community_id' => $community->id,
+            'user_id' => $community->owner_id,
+            'code' => 'REF-PIXEL',
+            'status' => \App\Models\Affiliate::STATUS_ACTIVE,
             'facebook_pixel_id' => 'FB_123',
-            'tiktok_pixel_id'   => 'TT_456',
+            'tiktok_pixel_id' => 'TT_456',
         ]);
 
         $url = GuestCheckoutController::buildCallbackUrl($user->id, $community->slug);
@@ -171,7 +171,7 @@ class CheckoutCallbackControllerTest extends TestCase
 
     public function test_callback_with_unknown_ref_code_cookie_passes_null_pixels(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
 
         $url = GuestCheckoutController::buildCallbackUrl($user->id, $community->slug);

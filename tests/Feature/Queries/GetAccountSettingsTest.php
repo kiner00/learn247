@@ -19,17 +19,17 @@ class GetAccountSettingsTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->query = new GetAccountSettings();
+        $this->query = new GetAccountSettings;
     }
 
     public function test_returns_profile_user_data(): void
     {
         $user = User::factory()->create([
-            'name'     => 'John Doe',
+            'name' => 'John Doe',
             'username' => 'johndoe',
-            'email'    => 'john@example.com',
-            'bio'      => 'A bio',
-            'avatar'   => '/avatar.jpg',
+            'email' => 'john@example.com',
+            'bio' => 'A bio',
+            'avatar' => '/avatar.jpg',
         ]);
 
         $result = $this->query->execute($user);
@@ -64,7 +64,7 @@ class GetAccountSettingsTest extends TestCase
         $community = Community::factory()->create(['name' => 'Test Community']);
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         $result = $this->query->execute($user);
@@ -80,12 +80,12 @@ class GetAccountSettingsTest extends TestCase
         $community = Community::factory()->create();
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         $sub = Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         $result = $this->query->execute($user);
@@ -103,13 +103,13 @@ class GetAccountSettingsTest extends TestCase
         $community = Community::factory()->create();
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         Subscription::factory()->active()->create([
-            'community_id'    => $community->id,
-            'user_id'         => $user->id,
-            'xendit_plan_id'  => 'plan_123',
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'xendit_plan_id' => 'plan_123',
             'recurring_status' => 'ACTIVE',
         ]);
 
@@ -127,7 +127,7 @@ class GetAccountSettingsTest extends TestCase
         $community = Community::factory()->create();
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         $result = $this->query->execute($user);
@@ -200,9 +200,9 @@ class GetAccountSettingsTest extends TestCase
     public function test_returns_payout_data(): void
     {
         $user = User::factory()->create([
-            'payout_method'  => 'bank',
+            'payout_method' => 'bank',
             'payout_details' => '1234567890',
-            'bank_name'      => 'BDO',
+            'bank_name' => 'BDO',
         ]);
         $result = $this->query->execute($user);
 
@@ -219,11 +219,11 @@ class GetAccountSettingsTest extends TestCase
 
         CommunityMember::factory()->create([
             'community_id' => $ownedCommunity->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
         CommunityMember::factory()->create([
             'community_id' => $otherCommunity->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         $result = $this->query->execute($user);
@@ -242,7 +242,7 @@ class GetAccountSettingsTest extends TestCase
         $community = Community::factory()->create();
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         $result = $this->query->execute($user);

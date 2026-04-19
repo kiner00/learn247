@@ -5,11 +5,11 @@ namespace Tests\Feature\Actions\Affiliate;
 use App\Actions\Affiliate\RecordAffiliateConversion;
 use App\Models\Affiliate;
 use App\Models\AffiliateConversion;
+use App\Models\CertificationPurchase;
 use App\Models\Community;
 use App\Models\Course;
-use App\Models\CourseEnrollment;
 use App\Models\CourseCertification;
-use App\Models\CertificationPurchase;
+use App\Models\CourseEnrollment;
 use App\Models\Curzzo;
 use App\Models\CurzzoPurchase;
 use App\Models\Payment;
@@ -40,83 +40,83 @@ class RecordAffiliateConversionTest extends TestCase
     public function test_records_conversion_with_correct_amounts(): void
     {
         $affiliateUser = User::factory()->create();
-        $community     = Community::factory()->create(['affiliate_commission_rate' => 10]);
-        $affiliate     = Affiliate::create([
-            'user_id'      => $affiliateUser->id,
+        $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
+        $affiliate = Affiliate::create([
+            'user_id' => $affiliateUser->id,
             'community_id' => $community->id,
-            'code'         => 'REC001',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'code' => 'REC001',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $affiliateUser->id,
+            'user_id' => $affiliateUser->id,
         ]);
 
-        $referredUser  = User::factory()->create();
-        $subscription  = Subscription::factory()->active()->create([
+        $referredUser = User::factory()->create();
+        $subscription = Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $referredUser->id,
+            'user_id' => $referredUser->id,
             'affiliate_id' => $affiliate->id,
         ]);
         $payment = Payment::create([
             'subscription_id' => $subscription->id,
-            'community_id'    => $community->id,
-            'user_id'         => $referredUser->id,
-            'amount'          => 1000,
-            'currency'        => 'PHP',
-            'status'          => Payment::STATUS_PAID,
-            'metadata'        => [],
-            'paid_at'         => now(),
+            'community_id' => $community->id,
+            'user_id' => $referredUser->id,
+            'amount' => 1000,
+            'currency' => 'PHP',
+            'status' => Payment::STATUS_PAID,
+            'metadata' => [],
+            'paid_at' => now(),
         ]);
 
         $this->action->execute($subscription, $payment);
 
         $this->assertDatabaseHas('affiliate_conversions', [
-            'affiliate_id'     => $affiliate->id,
-            'subscription_id'  => $subscription->id,
-            'payment_id'       => $payment->id,
+            'affiliate_id' => $affiliate->id,
+            'subscription_id' => $subscription->id,
+            'payment_id' => $payment->id,
             'referred_user_id' => $referredUser->id,
-            'sale_amount'      => 1000,
-            'platform_fee'     => 98,   // 9.8% of 1000 (free plan)
+            'sale_amount' => 1000,
+            'platform_fee' => 98,   // 9.8% of 1000 (free plan)
             'commission_amount' => 100,
-            'creator_amount'   => 802,
-            'status'           => AffiliateConversion::STATUS_PENDING,
+            'creator_amount' => 802,
+            'status' => AffiliateConversion::STATUS_PENDING,
         ]);
     }
 
     public function test_increments_affiliate_total_earned(): void
     {
         $affiliateUser = User::factory()->create();
-        $community     = Community::factory()->create(['affiliate_commission_rate' => 10]);
-        $affiliate     = Affiliate::create([
-            'user_id'      => $affiliateUser->id,
+        $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
+        $affiliate = Affiliate::create([
+            'user_id' => $affiliateUser->id,
             'community_id' => $community->id,
-            'code'         => 'REC002',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'code' => 'REC002',
+            'status' => Affiliate::STATUS_ACTIVE,
             'total_earned' => 0,
         ]);
 
         Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $affiliateUser->id,
+            'user_id' => $affiliateUser->id,
         ]);
 
         $referredUser = User::factory()->create();
         $subscription = Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $referredUser->id,
+            'user_id' => $referredUser->id,
             'affiliate_id' => $affiliate->id,
         ]);
         $payment = Payment::create([
             'subscription_id' => $subscription->id,
-            'community_id'    => $community->id,
-            'user_id'         => $referredUser->id,
-            'amount'          => 1000,
-            'currency'        => 'PHP',
-            'status'          => Payment::STATUS_PAID,
-            'metadata'        => [],
-            'paid_at'         => now(),
+            'community_id' => $community->id,
+            'user_id' => $referredUser->id,
+            'amount' => 1000,
+            'currency' => 'PHP',
+            'status' => Payment::STATUS_PAID,
+            'metadata' => [],
+            'paid_at' => now(),
         ]);
 
         $this->action->execute($subscription, $payment);
@@ -128,21 +128,21 @@ class RecordAffiliateConversionTest extends TestCase
     public function test_skips_if_subscription_has_no_affiliate(): void
     {
         $referredUser = User::factory()->create();
-        $community    = Community::factory()->create(['affiliate_commission_rate' => 10]);
+        $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
         $subscription = Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $referredUser->id,
+            'user_id' => $referredUser->id,
             'affiliate_id' => null,
         ]);
         $payment = Payment::create([
             'subscription_id' => $subscription->id,
-            'community_id'    => $community->id,
-            'user_id'         => $referredUser->id,
-            'amount'          => 1000,
-            'currency'        => 'PHP',
-            'status'          => Payment::STATUS_PAID,
-            'metadata'        => [],
-            'paid_at'         => now(),
+            'community_id' => $community->id,
+            'user_id' => $referredUser->id,
+            'amount' => 1000,
+            'currency' => 'PHP',
+            'status' => Payment::STATUS_PAID,
+            'metadata' => [],
+            'paid_at' => now(),
         ]);
 
         $this->action->execute($subscription, $payment);
@@ -153,29 +153,29 @@ class RecordAffiliateConversionTest extends TestCase
     public function test_skips_if_affiliate_is_not_subscribed(): void
     {
         $affiliateUser = User::factory()->create();
-        $community     = Community::factory()->create(['affiliate_commission_rate' => 10]);
-        $affiliate     = Affiliate::create([
-            'user_id'      => $affiliateUser->id,
+        $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
+        $affiliate = Affiliate::create([
+            'user_id' => $affiliateUser->id,
             'community_id' => $community->id,
-            'code'         => 'REC003',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'code' => 'REC003',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         $referredUser = User::factory()->create();
         $subscription = Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $referredUser->id,
+            'user_id' => $referredUser->id,
             'affiliate_id' => $affiliate->id,
         ]);
         $payment = Payment::create([
             'subscription_id' => $subscription->id,
-            'community_id'    => $community->id,
-            'user_id'         => $referredUser->id,
-            'amount'          => 1000,
-            'currency'        => 'PHP',
-            'status'          => Payment::STATUS_PAID,
-            'metadata'        => [],
-            'paid_at'         => now(),
+            'community_id' => $community->id,
+            'user_id' => $referredUser->id,
+            'amount' => 1000,
+            'currency' => 'PHP',
+            'status' => Payment::STATUS_PAID,
+            'metadata' => [],
+            'paid_at' => now(),
         ]);
 
         $this->action->execute($subscription, $payment);
@@ -186,43 +186,43 @@ class RecordAffiliateConversionTest extends TestCase
     public function test_math_500_sale_20_percent_rate(): void
     {
         $affiliateUser = User::factory()->create();
-        $community     = Community::factory()->create(['affiliate_commission_rate' => 20]);
-        $affiliate     = Affiliate::create([
-            'user_id'      => $affiliateUser->id,
+        $community = Community::factory()->create(['affiliate_commission_rate' => 20]);
+        $affiliate = Affiliate::create([
+            'user_id' => $affiliateUser->id,
             'community_id' => $community->id,
-            'code'         => 'REC004',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'code' => 'REC004',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $affiliateUser->id,
+            'user_id' => $affiliateUser->id,
         ]);
 
         $referredUser = User::factory()->create();
         $subscription = Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $referredUser->id,
+            'user_id' => $referredUser->id,
             'affiliate_id' => $affiliate->id,
         ]);
         $payment = Payment::create([
             'subscription_id' => $subscription->id,
-            'community_id'    => $community->id,
-            'user_id'         => $referredUser->id,
-            'amount'          => 500,
-            'currency'        => 'PHP',
-            'status'          => Payment::STATUS_PAID,
-            'metadata'        => [],
-            'paid_at'         => now(),
+            'community_id' => $community->id,
+            'user_id' => $referredUser->id,
+            'amount' => 500,
+            'currency' => 'PHP',
+            'status' => Payment::STATUS_PAID,
+            'metadata' => [],
+            'paid_at' => now(),
         ]);
 
         $this->action->execute($subscription, $payment);
 
         $this->assertDatabaseHas('affiliate_conversions', [
-            'sale_amount'       => 500,
-            'platform_fee'      => 49,   // 9.8% of 500 (free plan)
+            'sale_amount' => 500,
+            'platform_fee' => 49,   // 9.8% of 500 (free plan)
             'commission_amount' => 100,
-            'creator_amount'    => 351,
+            'creator_amount' => 351,
         ]);
     }
 
@@ -231,23 +231,23 @@ class RecordAffiliateConversionTest extends TestCase
     private function createCourseAffiliateSetup(float $price, int $commissionRate): array
     {
         $affiliateUser = User::factory()->create();
-        $community     = Community::factory()->create();
-        $course        = Course::factory()->create([
-            'community_id'            => $community->id,
-            'price'                   => $price,
+        $community = Community::factory()->create();
+        $course = Course::factory()->create([
+            'community_id' => $community->id,
+            'price' => $price,
             'affiliate_commission_rate' => $commissionRate,
         ]);
         $affiliate = Affiliate::create([
-            'user_id'      => $affiliateUser->id,
+            'user_id' => $affiliateUser->id,
             'community_id' => $community->id,
-            'code'         => 'COURSE' . rand(1000, 9999),
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'code' => 'COURSE'.rand(1000, 9999),
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         // Affiliate must be subscribed
         Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $affiliateUser->id,
+            'user_id' => $affiliateUser->id,
         ]);
 
         return [$affiliateUser, $community, $course, $affiliate];
@@ -258,11 +258,11 @@ class RecordAffiliateConversionTest extends TestCase
         [$affiliateUser, $community, $course, $affiliate] = $this->createCourseAffiliateSetup(500, 15);
 
         $enrollment = CourseEnrollment::create([
-            'user_id'      => User::factory()->create()->id,
-            'course_id'    => $course->id,
+            'user_id' => User::factory()->create()->id,
+            'course_id' => $course->id,
             'affiliate_id' => $affiliate->id,
-            'status'       => CourseEnrollment::STATUS_PAID,
-            'paid_at'      => now(),
+            'status' => CourseEnrollment::STATUS_PAID,
+            'paid_at' => now(),
         ]);
 
         $result = $this->action->executeForCourse($enrollment);
@@ -272,28 +272,28 @@ class RecordAffiliateConversionTest extends TestCase
         $this->assertEquals(500.0, $result['sale_amount']);
 
         $this->assertDatabaseHas('affiliate_conversions', [
-            'affiliate_id'         => $affiliate->id,
+            'affiliate_id' => $affiliate->id,
             'course_enrollment_id' => $enrollment->id,
-            'sale_amount'          => 500,
-            'commission_amount'    => 75,
+            'sale_amount' => 500,
+            'commission_amount' => 75,
         ]);
     }
 
     public function test_course_skips_if_no_affiliate(): void
     {
         $community = Community::factory()->create();
-        $course    = Course::factory()->create([
-            'community_id'            => $community->id,
-            'price'                   => 500,
+        $course = Course::factory()->create([
+            'community_id' => $community->id,
+            'price' => 500,
             'affiliate_commission_rate' => 15,
         ]);
 
         $enrollment = CourseEnrollment::create([
-            'user_id'      => User::factory()->create()->id,
-            'course_id'    => $course->id,
+            'user_id' => User::factory()->create()->id,
+            'course_id' => $course->id,
             'affiliate_id' => null,
-            'status'       => CourseEnrollment::STATUS_PAID,
-            'paid_at'      => now(),
+            'status' => CourseEnrollment::STATUS_PAID,
+            'paid_at' => now(),
         ]);
 
         $result = $this->action->executeForCourse($enrollment);
@@ -307,11 +307,11 @@ class RecordAffiliateConversionTest extends TestCase
         [$affiliateUser, $community, $course, $affiliate] = $this->createCourseAffiliateSetup(500, 0);
 
         $enrollment = CourseEnrollment::create([
-            'user_id'      => User::factory()->create()->id,
-            'course_id'    => $course->id,
+            'user_id' => User::factory()->create()->id,
+            'course_id' => $course->id,
             'affiliate_id' => $affiliate->id,
-            'status'       => CourseEnrollment::STATUS_PAID,
-            'paid_at'      => now(),
+            'status' => CourseEnrollment::STATUS_PAID,
+            'paid_at' => now(),
         ]);
 
         $result = $this->action->executeForCourse($enrollment);
@@ -323,26 +323,26 @@ class RecordAffiliateConversionTest extends TestCase
     public function test_course_skips_if_affiliate_not_subscribed(): void
     {
         $affiliateUser = User::factory()->create();
-        $community     = Community::factory()->create();
-        $course        = Course::factory()->create([
-            'community_id'            => $community->id,
-            'price'                   => 500,
+        $community = Community::factory()->create();
+        $course = Course::factory()->create([
+            'community_id' => $community->id,
+            'price' => 500,
             'affiliate_commission_rate' => 15,
         ]);
         $affiliate = Affiliate::create([
-            'user_id'      => $affiliateUser->id,
+            'user_id' => $affiliateUser->id,
             'community_id' => $community->id,
-            'code'         => 'NOSUB' . rand(1000, 9999),
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'code' => 'NOSUB'.rand(1000, 9999),
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
         // No subscription for affiliateUser
 
         $enrollment = CourseEnrollment::create([
-            'user_id'      => User::factory()->create()->id,
-            'course_id'    => $course->id,
+            'user_id' => User::factory()->create()->id,
+            'course_id' => $course->id,
             'affiliate_id' => $affiliate->id,
-            'status'       => CourseEnrollment::STATUS_PAID,
-            'paid_at'      => now(),
+            'status' => CourseEnrollment::STATUS_PAID,
+            'paid_at' => now(),
         ]);
 
         $result = $this->action->executeForCourse($enrollment);
@@ -355,32 +355,32 @@ class RecordAffiliateConversionTest extends TestCase
     public function test_certification_records_conversion(): void
     {
         $affiliateUser = User::factory()->create();
-        $community     = Community::factory()->create();
+        $community = Community::factory()->create();
         $certification = CourseCertification::create([
-            'community_id'            => $community->id,
-            'title'                   => 'Test Cert',
-            'cert_title'              => 'Certified Tester',
-            'price'                   => 200,
+            'community_id' => $community->id,
+            'title' => 'Test Cert',
+            'cert_title' => 'Certified Tester',
+            'price' => 200,
             'affiliate_commission_rate' => 20,
         ]);
         $affiliate = Affiliate::create([
-            'user_id'      => $affiliateUser->id,
+            'user_id' => $affiliateUser->id,
             'community_id' => $community->id,
-            'code'         => 'CERT' . rand(1000, 9999),
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'code' => 'CERT'.rand(1000, 9999),
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $affiliateUser->id,
+            'user_id' => $affiliateUser->id,
         ]);
 
         $purchase = CertificationPurchase::create([
-            'user_id'          => User::factory()->create()->id,
+            'user_id' => User::factory()->create()->id,
             'certification_id' => $certification->id,
-            'affiliate_id'     => $affiliate->id,
-            'status'           => CertificationPurchase::STATUS_PAID,
-            'paid_at'          => now(),
+            'affiliate_id' => $affiliate->id,
+            'status' => CertificationPurchase::STATUS_PAID,
+            'paid_at' => now(),
         ]);
 
         $result = $this->action->executeForCertification($purchase);
@@ -390,30 +390,30 @@ class RecordAffiliateConversionTest extends TestCase
         $this->assertEquals(200.0, $result['sale_amount']);
 
         $this->assertDatabaseHas('affiliate_conversions', [
-            'affiliate_id'              => $affiliate->id,
+            'affiliate_id' => $affiliate->id,
             'certification_purchase_id' => $purchase->id,
-            'sale_amount'               => 200,
-            'commission_amount'         => 40,
+            'sale_amount' => 200,
+            'commission_amount' => 40,
         ]);
     }
 
     public function test_certification_skips_if_no_affiliate(): void
     {
-        $community     = Community::factory()->create();
+        $community = Community::factory()->create();
         $certification = CourseCertification::create([
-            'community_id'            => $community->id,
-            'title'                   => 'Test Cert',
-            'cert_title'              => 'Certified',
-            'price'                   => 200,
+            'community_id' => $community->id,
+            'title' => 'Test Cert',
+            'cert_title' => 'Certified',
+            'price' => 200,
             'affiliate_commission_rate' => 20,
         ]);
 
         $purchase = CertificationPurchase::create([
-            'user_id'          => User::factory()->create()->id,
+            'user_id' => User::factory()->create()->id,
             'certification_id' => $certification->id,
-            'affiliate_id'     => null,
-            'status'           => CertificationPurchase::STATUS_PAID,
-            'paid_at'          => now(),
+            'affiliate_id' => null,
+            'status' => CertificationPurchase::STATUS_PAID,
+            'paid_at' => now(),
         ]);
 
         $result = $this->action->executeForCertification($purchase);
@@ -424,32 +424,32 @@ class RecordAffiliateConversionTest extends TestCase
     public function test_certification_skips_if_zero_commission_rate(): void
     {
         $affiliateUser = User::factory()->create();
-        $community     = Community::factory()->create();
+        $community = Community::factory()->create();
         $certification = CourseCertification::create([
-            'community_id'            => $community->id,
-            'title'                   => 'Test Cert',
-            'cert_title'              => 'Certified',
-            'price'                   => 200,
+            'community_id' => $community->id,
+            'title' => 'Test Cert',
+            'cert_title' => 'Certified',
+            'price' => 200,
             'affiliate_commission_rate' => 0,
         ]);
         $affiliate = Affiliate::create([
-            'user_id'      => $affiliateUser->id,
+            'user_id' => $affiliateUser->id,
             'community_id' => $community->id,
-            'code'         => 'CERTZERO' . rand(1000, 9999),
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'code' => 'CERTZERO'.rand(1000, 9999),
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $affiliateUser->id,
+            'user_id' => $affiliateUser->id,
         ]);
 
         $purchase = CertificationPurchase::create([
-            'user_id'          => User::factory()->create()->id,
+            'user_id' => User::factory()->create()->id,
             'certification_id' => $certification->id,
-            'affiliate_id'     => $affiliate->id,
-            'status'           => CertificationPurchase::STATUS_PAID,
-            'paid_at'          => now(),
+            'affiliate_id' => $affiliate->id,
+            'status' => CertificationPurchase::STATUS_PAID,
+            'paid_at' => now(),
         ]);
 
         $result = $this->action->executeForCertification($purchase);
@@ -460,43 +460,43 @@ class RecordAffiliateConversionTest extends TestCase
     public function test_certification_skips_if_already_recorded(): void
     {
         $affiliateUser = User::factory()->create();
-        $community     = Community::factory()->create();
+        $community = Community::factory()->create();
         $certification = CourseCertification::create([
-            'community_id'            => $community->id,
-            'title'                   => 'Test Cert',
-            'cert_title'              => 'Certified',
-            'price'                   => 200,
+            'community_id' => $community->id,
+            'title' => 'Test Cert',
+            'cert_title' => 'Certified',
+            'price' => 200,
             'affiliate_commission_rate' => 20,
         ]);
         $affiliate = Affiliate::create([
-            'user_id'      => $affiliateUser->id,
+            'user_id' => $affiliateUser->id,
             'community_id' => $community->id,
-            'code'         => 'CERTDUP' . rand(1000, 9999),
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'code' => 'CERTDUP'.rand(1000, 9999),
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $affiliateUser->id,
+            'user_id' => $affiliateUser->id,
         ]);
 
         $purchase = CertificationPurchase::create([
-            'user_id'          => User::factory()->create()->id,
+            'user_id' => User::factory()->create()->id,
             'certification_id' => $certification->id,
-            'affiliate_id'     => $affiliate->id,
-            'status'           => CertificationPurchase::STATUS_PAID,
-            'paid_at'          => now(),
+            'affiliate_id' => $affiliate->id,
+            'status' => CertificationPurchase::STATUS_PAID,
+            'paid_at' => now(),
         ]);
 
         // Pre-create the conversion
         AffiliateConversion::create([
-            'affiliate_id'              => $affiliate->id,
+            'affiliate_id' => $affiliate->id,
             'certification_purchase_id' => $purchase->id,
-            'referred_user_id'          => $purchase->user_id,
-            'sale_amount'               => 200,
-            'platform_fee'              => 20,
-            'commission_amount'         => 40,
-            'creator_amount'            => 140,
+            'referred_user_id' => $purchase->user_id,
+            'sale_amount' => 200,
+            'platform_fee' => 20,
+            'commission_amount' => 40,
+            'creator_amount' => 140,
         ]);
 
         $result = $this->action->executeForCertification($purchase);
@@ -511,25 +511,25 @@ class RecordAffiliateConversionTest extends TestCase
     private function createCurzzoAffiliateSetup(float $price, int $commissionRate, bool $subscribe = true): array
     {
         $affiliateUser = User::factory()->create();
-        $community     = Community::factory()->create();
-        $curzzo        = Curzzo::create([
-            'community_id'              => $community->id,
-            'name'                      => 'Test Bot',
-            'instructions'              => 'Be helpful.',
-            'price'                     => $price,
+        $community = Community::factory()->create();
+        $curzzo = Curzzo::create([
+            'community_id' => $community->id,
+            'name' => 'Test Bot',
+            'instructions' => 'Be helpful.',
+            'price' => $price,
             'affiliate_commission_rate' => $commissionRate,
         ]);
         $affiliate = Affiliate::create([
-            'user_id'      => $affiliateUser->id,
+            'user_id' => $affiliateUser->id,
             'community_id' => $community->id,
-            'code'         => 'CURZ' . rand(1000, 9999),
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'code' => 'CURZ'.rand(1000, 9999),
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         if ($subscribe) {
             Subscription::factory()->active()->create([
                 'community_id' => $community->id,
-                'user_id'      => $affiliateUser->id,
+                'user_id' => $affiliateUser->id,
             ]);
         }
 
@@ -541,11 +541,11 @@ class RecordAffiliateConversionTest extends TestCase
         [, $community, $curzzo, $affiliate] = $this->createCurzzoAffiliateSetup(300, 25);
 
         $purchase = CurzzoPurchase::create([
-            'user_id'      => User::factory()->create()->id,
-            'curzzo_id'    => $curzzo->id,
+            'user_id' => User::factory()->create()->id,
+            'curzzo_id' => $curzzo->id,
             'affiliate_id' => $affiliate->id,
-            'status'       => CurzzoPurchase::STATUS_PAID,
-            'paid_at'      => now(),
+            'status' => CurzzoPurchase::STATUS_PAID,
+            'paid_at' => now(),
         ]);
 
         $result = $this->action->executeForCurzzo($purchase);
@@ -555,30 +555,30 @@ class RecordAffiliateConversionTest extends TestCase
         $this->assertEquals(300.0, $result['sale_amount']);
 
         $this->assertDatabaseHas('affiliate_conversions', [
-            'affiliate_id'       => $affiliate->id,
+            'affiliate_id' => $affiliate->id,
             'curzzo_purchase_id' => $purchase->id,
-            'sale_amount'        => 300,
-            'commission_amount'  => 75,
+            'sale_amount' => 300,
+            'commission_amount' => 75,
         ]);
     }
 
     public function test_curzzo_skips_if_no_affiliate(): void
     {
         $community = Community::factory()->create();
-        $curzzo    = Curzzo::create([
-            'community_id'              => $community->id,
-            'name'                      => 'Bot',
-            'instructions'              => 'Help.',
-            'price'                     => 300,
+        $curzzo = Curzzo::create([
+            'community_id' => $community->id,
+            'name' => 'Bot',
+            'instructions' => 'Help.',
+            'price' => 300,
             'affiliate_commission_rate' => 25,
         ]);
 
         $purchase = CurzzoPurchase::create([
-            'user_id'      => User::factory()->create()->id,
-            'curzzo_id'    => $curzzo->id,
+            'user_id' => User::factory()->create()->id,
+            'curzzo_id' => $curzzo->id,
             'affiliate_id' => null,
-            'status'       => CurzzoPurchase::STATUS_PAID,
-            'paid_at'      => now(),
+            'status' => CurzzoPurchase::STATUS_PAID,
+            'paid_at' => now(),
         ]);
 
         $this->assertNull($this->action->executeForCurzzo($purchase));
@@ -589,11 +589,11 @@ class RecordAffiliateConversionTest extends TestCase
         [, , $curzzo, $affiliate] = $this->createCurzzoAffiliateSetup(300, 0);
 
         $purchase = CurzzoPurchase::create([
-            'user_id'      => User::factory()->create()->id,
-            'curzzo_id'    => $curzzo->id,
+            'user_id' => User::factory()->create()->id,
+            'curzzo_id' => $curzzo->id,
             'affiliate_id' => $affiliate->id,
-            'status'       => CurzzoPurchase::STATUS_PAID,
-            'paid_at'      => now(),
+            'status' => CurzzoPurchase::STATUS_PAID,
+            'paid_at' => now(),
         ]);
 
         $this->assertNull($this->action->executeForCurzzo($purchase));
@@ -605,21 +605,21 @@ class RecordAffiliateConversionTest extends TestCase
         [, , $curzzo, $affiliate] = $this->createCurzzoAffiliateSetup(300, 25);
 
         $purchase = CurzzoPurchase::create([
-            'user_id'      => User::factory()->create()->id,
-            'curzzo_id'    => $curzzo->id,
+            'user_id' => User::factory()->create()->id,
+            'curzzo_id' => $curzzo->id,
             'affiliate_id' => $affiliate->id,
-            'status'       => CurzzoPurchase::STATUS_PAID,
-            'paid_at'      => now(),
+            'status' => CurzzoPurchase::STATUS_PAID,
+            'paid_at' => now(),
         ]);
 
         AffiliateConversion::create([
-            'affiliate_id'       => $affiliate->id,
+            'affiliate_id' => $affiliate->id,
             'curzzo_purchase_id' => $purchase->id,
-            'referred_user_id'   => $purchase->user_id,
-            'sale_amount'        => 300,
-            'platform_fee'       => 30,
-            'commission_amount'  => 75,
-            'creator_amount'     => 195,
+            'referred_user_id' => $purchase->user_id,
+            'sale_amount' => 300,
+            'platform_fee' => 30,
+            'commission_amount' => 75,
+            'creator_amount' => 195,
         ]);
 
         $this->assertNull($this->action->executeForCurzzo($purchase));
@@ -631,11 +631,11 @@ class RecordAffiliateConversionTest extends TestCase
         [, , $curzzo, $affiliate] = $this->createCurzzoAffiliateSetup(300, 25, subscribe: false);
 
         $purchase = CurzzoPurchase::create([
-            'user_id'      => User::factory()->create()->id,
-            'curzzo_id'    => $curzzo->id,
+            'user_id' => User::factory()->create()->id,
+            'curzzo_id' => $curzzo->id,
             'affiliate_id' => $affiliate->id,
-            'status'       => CurzzoPurchase::STATUS_PAID,
-            'paid_at'      => now(),
+            'status' => CurzzoPurchase::STATUS_PAID,
+            'paid_at' => now(),
         ]);
 
         $this->assertNull($this->action->executeForCurzzo($purchase));
@@ -644,28 +644,28 @@ class RecordAffiliateConversionTest extends TestCase
     public function test_certification_skips_if_affiliate_not_subscribed(): void
     {
         $affiliateUser = User::factory()->create();
-        $community     = Community::factory()->create();
+        $community = Community::factory()->create();
         $certification = CourseCertification::create([
-            'community_id'            => $community->id,
-            'title'                   => 'Test Cert',
-            'cert_title'              => 'Certified',
-            'price'                   => 200,
+            'community_id' => $community->id,
+            'title' => 'Test Cert',
+            'cert_title' => 'Certified',
+            'price' => 200,
             'affiliate_commission_rate' => 20,
         ]);
         $affiliate = Affiliate::create([
-            'user_id'      => $affiliateUser->id,
+            'user_id' => $affiliateUser->id,
             'community_id' => $community->id,
-            'code'         => 'CERTNOSUB' . rand(1000, 9999),
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'code' => 'CERTNOSUB'.rand(1000, 9999),
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
         // No subscription
 
         $purchase = CertificationPurchase::create([
-            'user_id'          => User::factory()->create()->id,
+            'user_id' => User::factory()->create()->id,
             'certification_id' => $certification->id,
-            'affiliate_id'     => $affiliate->id,
-            'status'           => CertificationPurchase::STATUS_PAID,
-            'paid_at'          => now(),
+            'affiliate_id' => $affiliate->id,
+            'status' => CertificationPurchase::STATUS_PAID,
+            'paid_at' => now(),
         ]);
 
         $result = $this->action->executeForCertification($purchase);

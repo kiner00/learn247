@@ -24,6 +24,6 @@ class SuperAdminSeeder extends Seeder
             $this->command->warn("Super admin not set — user not found: {$email}");
         }
 
-        $this->command->info('Super admins updated: ' . $found->implode(', '));
+        $this->command->info('Super admins updated: '.$found->implode(', '));
     }
 }

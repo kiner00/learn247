@@ -18,17 +18,17 @@ class GetFeaturedCommunities
             ->latest()
             ->get()
             ->map(fn ($c) => [
-                'id'            => $c->id,
-                'name'          => $c->name,
-                'slug'          => $c->slug,
-                'description'   => $c->description,
-                'cover_image'   => $c->cover_image,
-                'avatar'        => $c->avatar,
-                'price'         => (float) $c->price,
-                'billing_type'  => $c->billing_type,
-                'category'      => $c->category,
+                'id' => $c->id,
+                'name' => $c->name,
+                'slug' => $c->slug,
+                'description' => $c->description,
+                'cover_image' => $c->cover_image,
+                'avatar' => $c->avatar,
+                'price' => (float) $c->price,
+                'billing_type' => $c->billing_type,
+                'category' => $c->category,
                 'members_count' => $c->members_count,
-                'owner'         => ['name' => $c->owner?->name],
+                'owner' => ['name' => $c->owner?->name],
             ]);
     }
 }

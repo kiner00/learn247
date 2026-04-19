@@ -11,11 +11,11 @@ class EmailProviderFactory
     public static ?EmailProvider $fakeProvider = null;
 
     public const PROVIDERS = [
-        'resend'   => ResendProvider::class,
+        'resend' => ResendProvider::class,
         'sendgrid' => SendGridProvider::class,
         'postmark' => PostmarkProvider::class,
-        'ses'      => SesProvider::class,
-        'mailgun'  => MailgunProvider::class,
+        'ses' => SesProvider::class,
+        'mailgun' => MailgunProvider::class,
     ];
 
     /**
@@ -37,7 +37,7 @@ class EmailProviderFactory
             throw new \RuntimeException("Unknown email provider: {$providerId}");
         }
 
-        return new $class();
+        return new $class;
     }
 
     /**

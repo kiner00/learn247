@@ -48,13 +48,13 @@ class RequestAffiliatePayout
         }
 
         PayoutRequest::create([
-            'user_id'         => $affiliate->user_id,
-            'type'            => PayoutRequest::TYPE_AFFILIATE,
-            'community_id'    => $affiliate->community_id,
-            'affiliate_id'    => $affiliate->id,
-            'amount'          => $amount,
+            'user_id' => $affiliate->user_id,
+            'type' => PayoutRequest::TYPE_AFFILIATE,
+            'community_id' => $affiliate->community_id,
+            'affiliate_id' => $affiliate->id,
+            'amount' => $amount,
             'eligible_amount' => $eligibleNow,
-            'status'          => PayoutRequest::STATUS_PENDING,
+            'status' => PayoutRequest::STATUS_PENDING,
         ]);
 
         CacheKeys::flushCommunity($affiliate->community_id);

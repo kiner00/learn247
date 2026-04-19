@@ -16,16 +16,16 @@ class RegenerateLandingSectionTest extends TestCase
     public function test_execute_regenerates_hero_section(): void
     {
         $heroData = json_encode([
-            'headline'    => 'New Bold Headline',
+            'headline' => 'New Bold Headline',
             'subheadline' => 'New subheadline',
-            'cta_label'   => 'Join Now',
+            'cta_label' => 'Join Now',
         ]);
 
         LandingPageSectionBuilder::fake([$heroData]);
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'     => $user->id,
+            'owner_id' => $user->id,
             'landing_page' => ['hero' => ['headline' => 'Old']],
         ]);
 
@@ -42,7 +42,7 @@ class RegenerateLandingSectionTest extends TestCase
 
     public function test_execute_throws_on_invalid_section(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $user->id]);
 
         $this->expectException(\InvalidArgumentException::class);
@@ -56,7 +56,7 @@ class RegenerateLandingSectionTest extends TestCase
     {
         LandingPageSectionBuilder::fake(['not valid json']);
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $user->id]);
 
         $this->expectException(\RuntimeException::class);
@@ -75,7 +75,7 @@ class RegenerateLandingSectionTest extends TestCase
 
         LandingPageSectionBuilder::fake(["```json\n{$faqData}\n```"]);
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $user->id]);
 
         $action = app(RegenerateLandingSection::class);
@@ -89,14 +89,14 @@ class RegenerateLandingSectionTest extends TestCase
     {
         $benefitsData = json_encode([
             'headline' => 'Why Join',
-            'items'    => [],
+            'items' => [],
         ]);
 
         LandingPageSectionBuilder::fake([$benefitsData]);
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'     => $user->id,
+            'owner_id' => $user->id,
             'landing_page' => [
                 'hero' => ['headline' => 'Keep this'],
                 'benefits' => ['headline' => 'Old benefits'],
@@ -119,9 +119,9 @@ class RegenerateLandingSectionTest extends TestCase
 
         LandingPageSectionBuilder::fake([$heroData]);
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'     => $user->id,
+            'owner_id' => $user->id,
             'landing_page' => null,
         ]);
 
@@ -140,7 +140,7 @@ class RegenerateLandingSectionTest extends TestCase
     {
         LandingPageSectionBuilder::fake([json_encode(['test' => true])]);
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $user->id]);
 
         $action = app(RegenerateLandingSection::class);
@@ -152,16 +152,16 @@ class RegenerateLandingSectionTest extends TestCase
     public static function validSectionsProvider(): array
     {
         return [
-            'hero'                => ['hero'],
-            'social_proof'        => ['social_proof'],
-            'benefits'            => ['benefits'],
-            'for_you'             => ['for_you'],
-            'creator'             => ['creator'],
-            'testimonials'        => ['testimonials'],
-            'faq'                 => ['faq'],
-            'cta_section'         => ['cta_section'],
-            'offer_stack'         => ['offer_stack'],
-            'guarantee'           => ['guarantee'],
+            'hero' => ['hero'],
+            'social_proof' => ['social_proof'],
+            'benefits' => ['benefits'],
+            'for_you' => ['for_you'],
+            'creator' => ['creator'],
+            'testimonials' => ['testimonials'],
+            'faq' => ['faq'],
+            'cta_section' => ['cta_section'],
+            'offer_stack' => ['offer_stack'],
+            'guarantee' => ['guarantee'],
             'price_justification' => ['price_justification'],
         ];
     }

@@ -17,7 +17,7 @@ class ListCommunitiesTest extends TestCase
     {
         Community::factory()->count(3)->create();
 
-        $query  = new ListCommunities();
+        $query = new ListCommunities;
         $result = $query->execute('', '', 'latest');
 
         $this->assertCount(3, $result->items());
@@ -29,7 +29,7 @@ class ListCommunitiesTest extends TestCase
         Community::factory()->create(['name' => 'Laravel Community']);
         Community::factory()->create(['name' => 'Vue Community']);
 
-        $query  = new ListCommunities();
+        $query = new ListCommunities;
         $result = $query->execute('Laravel', '', 'latest');
 
         $this->assertCount(1, $result->items());
@@ -41,7 +41,7 @@ class ListCommunitiesTest extends TestCase
         Community::factory()->create(['description' => 'Learn PHP and Laravel']);
         Community::factory()->create(['description' => 'Learn Vue.js']);
 
-        $query  = new ListCommunities();
+        $query = new ListCommunities;
         $result = $query->execute('PHP', '', 'latest');
 
         $this->assertCount(1, $result->items());
@@ -52,7 +52,7 @@ class ListCommunitiesTest extends TestCase
         Community::factory()->create(['category' => 'Tech']);
         Community::factory()->create(['category' => 'Business']);
 
-        $query  = new ListCommunities();
+        $query = new ListCommunities;
         $result = $query->execute('', 'Tech', 'latest');
 
         $this->assertCount(1, $result->items());
@@ -64,7 +64,7 @@ class ListCommunitiesTest extends TestCase
         Community::factory()->create(['category' => 'Tech']);
         Community::factory()->create(['category' => 'Business']);
 
-        $query  = new ListCommunities();
+        $query = new ListCommunities;
         $result = $query->execute('', 'All', 'latest');
 
         $this->assertCount(2, $result->items());
@@ -74,10 +74,10 @@ class ListCommunitiesTest extends TestCase
     {
         $community1 = Community::factory()->create();
         $community2 = Community::factory()->create();
-        $user       = User::factory()->create();
+        $user = User::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community1->id, 'user_id' => $user->id]);
 
-        $query  = new ListCommunities();
+        $query = new ListCommunities;
         $result = $query->execute('', '', 'popular');
 
         $this->assertCount(2, $result->items());
@@ -92,7 +92,7 @@ class ListCommunitiesTest extends TestCase
         Community::factory()->create();
         Community::factory()->create();
 
-        $query  = new ListCommunities();
+        $query = new ListCommunities;
         $result = $query->execute('', '', 'latest');
 
         $this->assertCount(2, $result->items());
@@ -102,7 +102,7 @@ class ListCommunitiesTest extends TestCase
     {
         Community::factory()->count(2)->create();
 
-        $query  = new ListCommunities();
+        $query = new ListCommunities;
         $result = $query->execute('', '', 'invalid');
 
         $this->assertCount(2, $result->items());
@@ -112,7 +112,7 @@ class ListCommunitiesTest extends TestCase
     {
         Community::factory()->count(20)->create();
 
-        $query  = new ListCommunities();
+        $query = new ListCommunities;
         $result = $query->execute('', '', 'latest', 5);
 
         $this->assertCount(5, $result->items());
@@ -121,13 +121,13 @@ class ListCommunitiesTest extends TestCase
 
     public function test_only_shows_communities_with_kyc_verified_owners(): void
     {
-        $verifiedOwner   = User::factory()->kycVerified()->create();
+        $verifiedOwner = User::factory()->kycVerified()->create();
         $unverifiedOwner = User::factory()->create();
 
         Community::factory()->create(['owner_id' => $verifiedOwner->id]);
         Community::factory()->create(['owner_id' => $unverifiedOwner->id]);
 
-        $query  = new ListCommunities();
+        $query = new ListCommunities;
         $result = $query->execute('', '', 'latest');
 
         $this->assertCount(1, $result->items());

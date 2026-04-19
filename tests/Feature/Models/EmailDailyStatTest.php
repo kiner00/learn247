@@ -13,7 +13,7 @@ class EmailDailyStatTest extends TestCase
 
     public function test_does_not_use_timestamps(): void
     {
-        $stat = new EmailDailyStat();
+        $stat = new EmailDailyStat;
         $this->assertFalse($stat->timestamps);
     }
 
@@ -23,13 +23,13 @@ class EmailDailyStatTest extends TestCase
 
         $stat = EmailDailyStat::create([
             'community_id' => $community->id,
-            'date'         => '2026-04-10',
-            'sent'         => 10,
-            'delivered'    => 9,
-            'opened'       => 5,
-            'clicked'      => 2,
-            'bounced'      => 1,
-            'complained'   => 0,
+            'date' => '2026-04-10',
+            'sent' => 10,
+            'delivered' => 9,
+            'opened' => 5,
+            'clicked' => 2,
+            'bounced' => 1,
+            'complained' => 0,
             'unsubscribed' => 0,
         ]);
 
@@ -43,13 +43,13 @@ class EmailDailyStatTest extends TestCase
 
         $stat = EmailDailyStat::create([
             'community_id' => $community->id,
-            'date'         => '2026-04-10',
-            'sent'         => 1,
-            'delivered'    => 1,
-            'opened'       => 0,
-            'clicked'      => 0,
-            'bounced'      => 0,
-            'complained'   => 0,
+            'date' => '2026-04-10',
+            'sent' => 1,
+            'delivered' => 1,
+            'opened' => 0,
+            'clicked' => 0,
+            'bounced' => 0,
+            'complained' => 0,
             'unsubscribed' => 0,
         ]);
 
@@ -62,13 +62,13 @@ class EmailDailyStatTest extends TestCase
 
         $stat = EmailDailyStat::create([
             'community_id' => $community->id,
-            'date'         => '2026-04-10',
-            'sent'         => 100,
-            'delivered'    => 95,
-            'opened'       => 50,
-            'clicked'      => 20,
-            'bounced'      => 3,
-            'complained'   => 1,
+            'date' => '2026-04-10',
+            'sent' => 100,
+            'delivered' => 95,
+            'opened' => 50,
+            'clicked' => 20,
+            'bounced' => 3,
+            'complained' => 1,
             'unsubscribed' => 2,
         ]);
 

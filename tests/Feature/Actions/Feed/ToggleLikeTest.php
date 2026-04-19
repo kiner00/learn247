@@ -14,9 +14,9 @@ class ToggleLikeTest extends TestCase
 
     public function test_add_like(): void
     {
-        $user   = User::factory()->create();
-        $post   = Post::factory()->create();
-        $action = new ToggleLike();
+        $user = User::factory()->create();
+        $post = Post::factory()->create();
+        $action = new ToggleLike;
 
         $result = $action->execute($user, $post);
 
@@ -27,9 +27,9 @@ class ToggleLikeTest extends TestCase
 
     public function test_remove_like(): void
     {
-        $user   = User::factory()->create();
-        $post   = Post::factory()->create();
-        $action = new ToggleLike();
+        $user = User::factory()->create();
+        $post = Post::factory()->create();
+        $action = new ToggleLike;
 
         $action->execute($user, $post);
         $result = $action->execute($user, $post);
@@ -40,9 +40,9 @@ class ToggleLikeTest extends TestCase
 
     public function test_update_reaction_type(): void
     {
-        $user   = User::factory()->create();
-        $post   = Post::factory()->create();
-        $action = new ToggleLike();
+        $user = User::factory()->create();
+        $post = Post::factory()->create();
+        $action = new ToggleLike;
 
         $action->execute($user, $post, 'like');
         $result = $action->execute($user, $post, 'trophy');
@@ -54,9 +54,9 @@ class ToggleLikeTest extends TestCase
 
     public function test_invalid_type_defaults_to_like(): void
     {
-        $user   = User::factory()->create();
-        $post   = Post::factory()->create();
-        $action = new ToggleLike();
+        $user = User::factory()->create();
+        $post = Post::factory()->create();
+        $action = new ToggleLike;
 
         $result = $action->execute($user, $post, 'invalid_type');
 
@@ -65,9 +65,9 @@ class ToggleLikeTest extends TestCase
 
     public function test_handshake_reaction(): void
     {
-        $user   = User::factory()->create();
-        $post   = Post::factory()->create();
-        $action = new ToggleLike();
+        $user = User::factory()->create();
+        $post = Post::factory()->create();
+        $action = new ToggleLike;
 
         $result = $action->execute($user, $post, 'handshake');
 

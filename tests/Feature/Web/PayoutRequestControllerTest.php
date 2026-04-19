@@ -6,7 +6,6 @@ use App\Http\Controllers\Web\PayoutRequestController;
 use App\Models\Affiliate;
 use App\Models\AffiliateConversion;
 use App\Models\Community;
-use App\Models\CommunityMember;
 use App\Models\Payment;
 use App\Models\PayoutRequest;
 use App\Models\Subscription;
@@ -23,24 +22,24 @@ class PayoutRequestControllerTest extends TestCase
     public function test_owner_can_submit_payout_request(): void
     {
         $owner = User::factory()->create([
-            'payout_method'   => 'gcash',
-            'payout_details'  => '09171234567',
+            'payout_method' => 'gcash',
+            'payout_details' => '09171234567',
             'kyc_verified_at' => now(),
         ]);
         $community = Community::factory()->paid()->create(['owner_id' => $owner->id]);
 
         $subscription = Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
+            'user_id' => $owner->id,
         ]);
 
         Payment::factory()->create([
             'subscription_id' => $subscription->id,
-            'community_id'    => $community->id,
-            'user_id'         => $owner->id,
-            'amount'          => 1000,
-            'status'          => 'paid',
-            'paid_at'         => now()->subDays(20),
+            'community_id' => $community->id,
+            'user_id' => $owner->id,
+            'amount' => 1000,
+            'status' => 'paid',
+            'paid_at' => now()->subDays(20),
         ]);
 
         $response = $this->actingAs($owner)->post("/creator/payout-request/{$community->id}", [
@@ -50,17 +49,17 @@ class PayoutRequestControllerTest extends TestCase
         $response->assertRedirect();
         $response->assertSessionHas('success');
         $this->assertDatabaseHas('payout_requests', [
-            'user_id'      => $owner->id,
+            'user_id' => $owner->id,
             'community_id' => $community->id,
-            'type'         => PayoutRequest::TYPE_OWNER,
-            'status'       => PayoutRequest::STATUS_PENDING,
+            'type' => PayoutRequest::TYPE_OWNER,
+            'status' => PayoutRequest::STATUS_PENDING,
         ]);
     }
 
     public function test_non_owner_cannot_submit_owner_payout_request(): void
     {
-        $owner     = User::factory()->create();
-        $other     = User::factory()->create();
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $response = $this->actingAs($other)->post("/creator/payout-request/{$community->id}", [
@@ -84,23 +83,23 @@ class PayoutRequestControllerTest extends TestCase
     public function test_owner_payout_fails_without_payout_method(): void
     {
         $owner = User::factory()->create([
-            'payout_method'  => null,
+            'payout_method' => null,
             'payout_details' => null,
         ]);
         $community = Community::factory()->paid()->create(['owner_id' => $owner->id]);
 
         $subscription = Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
+            'user_id' => $owner->id,
         ]);
 
         Payment::factory()->create([
             'subscription_id' => $subscription->id,
-            'community_id'    => $community->id,
-            'user_id'         => $owner->id,
-            'amount'          => 1000,
-            'status'          => 'paid',
-            'paid_at'         => now()->subDays(20),
+            'community_id' => $community->id,
+            'user_id' => $owner->id,
+            'amount' => 1000,
+            'status' => 'paid',
+            'paid_at' => now()->subDays(20),
         ]);
 
         $response = $this->actingAs($owner)->post("/creator/payout-request/{$community->id}", [
@@ -114,18 +113,18 @@ class PayoutRequestControllerTest extends TestCase
     public function test_owner_payout_fails_when_pending_request_exists(): void
     {
         $owner = User::factory()->create([
-            'payout_method'  => 'gcash',
+            'payout_method' => 'gcash',
             'payout_details' => '09171234567',
         ]);
         $community = Community::factory()->paid()->create(['owner_id' => $owner->id]);
 
         PayoutRequest::create([
-            'user_id'         => $owner->id,
-            'type'            => PayoutRequest::TYPE_OWNER,
-            'community_id'    => $community->id,
-            'amount'          => 500,
+            'user_id' => $owner->id,
+            'type' => PayoutRequest::TYPE_OWNER,
+            'community_id' => $community->id,
+            'amount' => 500,
             'eligible_amount' => 500,
-            'status'          => PayoutRequest::STATUS_PENDING,
+            'status' => PayoutRequest::STATUS_PENDING,
         ]);
 
         $response = $this->actingAs($owner)->post("/creator/payout-request/{$community->id}", [
@@ -138,7 +137,7 @@ class PayoutRequestControllerTest extends TestCase
 
     public function test_owner_payout_validates_amount_required(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $response = $this->actingAs($owner)->post("/creator/payout-request/{$community->id}", []);
@@ -150,34 +149,34 @@ class PayoutRequestControllerTest extends TestCase
 
     public function test_affiliate_can_submit_payout_request(): void
     {
-        $user      = User::factory()->create(['kyc_verified_at' => now()]);
-        $referred  = User::factory()->create();
+        $user = User::factory()->create(['kyc_verified_at' => now()]);
+        $referred = User::factory()->create();
         $community = Community::factory()->paid()->create();
 
         $subscription = Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $referred->id,
+            'user_id' => $referred->id,
         ]);
 
         $affiliate = Affiliate::create([
-            'community_id'  => $community->id,
-            'user_id'       => $user->id,
-            'code'          => 'AFF-TEST',
-            'status'        => Affiliate::STATUS_ACTIVE,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'code' => 'AFF-TEST',
+            'status' => Affiliate::STATUS_ACTIVE,
             'payout_method' => 'gcash',
             'payout_details' => '09171234567',
         ]);
 
         $this->travel(-20)->days();
         AffiliateConversion::create([
-            'affiliate_id'      => $affiliate->id,
-            'subscription_id'   => $subscription->id,
-            'referred_user_id'  => $referred->id,
-            'sale_amount'       => 499,
-            'platform_fee'      => 74.85,
+            'affiliate_id' => $affiliate->id,
+            'subscription_id' => $subscription->id,
+            'referred_user_id' => $referred->id,
+            'sale_amount' => 499,
+            'platform_fee' => 74.85,
             'commission_amount' => 200,
-            'creator_amount'    => 224.15,
-            'status'            => AffiliateConversion::STATUS_PENDING,
+            'creator_amount' => 224.15,
+            'status' => AffiliateConversion::STATUS_PENDING,
         ]);
         $this->travelBack();
 
@@ -189,23 +188,23 @@ class PayoutRequestControllerTest extends TestCase
         $response->assertSessionHas('success');
         $this->assertDatabaseHas('payout_requests', [
             'affiliate_id' => $affiliate->id,
-            'type'         => PayoutRequest::TYPE_AFFILIATE,
-            'status'       => PayoutRequest::STATUS_PENDING,
+            'type' => PayoutRequest::TYPE_AFFILIATE,
+            'status' => PayoutRequest::STATUS_PENDING,
         ]);
     }
 
     public function test_non_owner_of_affiliate_cannot_submit_affiliate_payout(): void
     {
-        $user      = User::factory()->create();
-        $other     = User::factory()->create();
+        $user = User::factory()->create();
+        $other = User::factory()->create();
         $community = Community::factory()->create();
 
         $affiliate = Affiliate::create([
-            'community_id'   => $community->id,
-            'user_id'        => $user->id,
-            'code'           => 'AFF-DENY',
-            'status'         => Affiliate::STATUS_ACTIVE,
-            'payout_method'  => 'gcash',
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'code' => 'AFF-DENY',
+            'status' => Affiliate::STATUS_ACTIVE,
+            'payout_method' => 'gcash',
             'payout_details' => '09171234567',
         ]);
 
@@ -218,15 +217,15 @@ class PayoutRequestControllerTest extends TestCase
 
     public function test_affiliate_payout_fails_without_payout_method(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
 
         $affiliate = Affiliate::create([
-            'community_id'   => $community->id,
-            'user_id'        => $user->id,
-            'code'           => 'AFF-NOPM',
-            'status'         => Affiliate::STATUS_ACTIVE,
-            'payout_method'  => null,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'code' => 'AFF-NOPM',
+            'status' => Affiliate::STATUS_ACTIVE,
+            'payout_method' => null,
             'payout_details' => null,
         ]);
 
@@ -242,34 +241,34 @@ class PayoutRequestControllerTest extends TestCase
 
     public function test_affiliate_all_submits_for_eligible_affiliates(): void
     {
-        $user       = User::factory()->create();
-        $referred   = User::factory()->create();
-        $community  = Community::factory()->paid()->create();
+        $user = User::factory()->create();
+        $referred = User::factory()->create();
+        $community = Community::factory()->paid()->create();
 
         $subscription = Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $referred->id,
+            'user_id' => $referred->id,
         ]);
 
         $affiliate = Affiliate::create([
-            'community_id'   => $community->id,
-            'user_id'        => $user->id,
-            'code'           => 'AFF-ALL1',
-            'status'         => Affiliate::STATUS_ACTIVE,
-            'payout_method'  => 'gcash',
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'code' => 'AFF-ALL1',
+            'status' => Affiliate::STATUS_ACTIVE,
+            'payout_method' => 'gcash',
             'payout_details' => '09171234567',
         ]);
 
         $this->travel(-20)->days();
         AffiliateConversion::create([
-            'affiliate_id'      => $affiliate->id,
-            'subscription_id'   => $subscription->id,
-            'referred_user_id'  => $referred->id,
-            'sale_amount'       => 499,
-            'platform_fee'      => 74.85,
+            'affiliate_id' => $affiliate->id,
+            'subscription_id' => $subscription->id,
+            'referred_user_id' => $referred->id,
+            'sale_amount' => 499,
+            'platform_fee' => 74.85,
             'commission_amount' => 200,
-            'creator_amount'    => 224.15,
-            'status'            => AffiliateConversion::STATUS_PENDING,
+            'creator_amount' => 224.15,
+            'status' => AffiliateConversion::STATUS_PENDING,
         ]);
         $this->travelBack();
 
@@ -279,7 +278,7 @@ class PayoutRequestControllerTest extends TestCase
         $response->assertSessionHas('success');
         $this->assertDatabaseHas('payout_requests', [
             'affiliate_id' => $affiliate->id,
-            'type'         => PayoutRequest::TYPE_AFFILIATE,
+            'type' => PayoutRequest::TYPE_AFFILIATE,
         ]);
     }
 
@@ -295,45 +294,45 @@ class PayoutRequestControllerTest extends TestCase
 
     public function test_affiliate_all_skips_affiliates_with_pending_requests(): void
     {
-        $user      = User::factory()->create();
-        $referred  = User::factory()->create();
+        $user = User::factory()->create();
+        $referred = User::factory()->create();
         $community = Community::factory()->paid()->create();
 
         $subscription = Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $referred->id,
+            'user_id' => $referred->id,
         ]);
 
         $affiliate = Affiliate::create([
-            'community_id'   => $community->id,
-            'user_id'        => $user->id,
-            'code'           => 'AFF-PND',
-            'status'         => Affiliate::STATUS_ACTIVE,
-            'payout_method'  => 'gcash',
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'code' => 'AFF-PND',
+            'status' => Affiliate::STATUS_ACTIVE,
+            'payout_method' => 'gcash',
             'payout_details' => '09171234567',
         ]);
 
         $this->travel(-20)->days();
         AffiliateConversion::create([
-            'affiliate_id'      => $affiliate->id,
-            'subscription_id'   => $subscription->id,
-            'referred_user_id'  => $referred->id,
-            'sale_amount'       => 499,
-            'platform_fee'      => 74.85,
+            'affiliate_id' => $affiliate->id,
+            'subscription_id' => $subscription->id,
+            'referred_user_id' => $referred->id,
+            'sale_amount' => 499,
+            'platform_fee' => 74.85,
             'commission_amount' => 200,
-            'creator_amount'    => 224.15,
-            'status'            => AffiliateConversion::STATUS_PENDING,
+            'creator_amount' => 224.15,
+            'status' => AffiliateConversion::STATUS_PENDING,
         ]);
         $this->travelBack();
 
         PayoutRequest::create([
-            'user_id'         => $user->id,
-            'type'            => PayoutRequest::TYPE_AFFILIATE,
-            'community_id'    => $community->id,
-            'affiliate_id'    => $affiliate->id,
-            'amount'          => 100,
+            'user_id' => $user->id,
+            'type' => PayoutRequest::TYPE_AFFILIATE,
+            'community_id' => $community->id,
+            'affiliate_id' => $affiliate->id,
+            'amount' => 100,
             'eligible_amount' => 200,
-            'status'          => PayoutRequest::STATUS_PENDING,
+            'status' => PayoutRequest::STATUS_PENDING,
         ]);
 
         $response = $this->actingAs($user)->post('/affiliates/payout-request/all');
@@ -352,18 +351,18 @@ class PayoutRequestControllerTest extends TestCase
 
         $subscription = Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
+            'user_id' => $owner->id,
         ]);
 
         Payment::create([
             'subscription_id' => $subscription->id,
-            'community_id'    => $community->id,
-            'user_id'         => $owner->id,
-            'amount'          => 1000,
-            'currency'        => 'PHP',
-            'status'          => Payment::STATUS_PAID,
-            'metadata'        => [],
-            'paid_at'         => now()->subDays(30),
+            'community_id' => $community->id,
+            'user_id' => $owner->id,
+            'amount' => 1000,
+            'currency' => 'PHP',
+            'status' => Payment::STATUS_PAID,
+            'metadata' => [],
+            'paid_at' => now()->subDays(30),
         ]);
 
         $result = PayoutRequestController::ownerEligibility($community);
@@ -379,34 +378,34 @@ class PayoutRequestControllerTest extends TestCase
 
     public function test_affiliate_eligibility_returns_float(): void
     {
-        $user      = User::factory()->create();
-        $referred  = User::factory()->create();
+        $user = User::factory()->create();
+        $referred = User::factory()->create();
         $community = Community::factory()->paid()->create();
 
         $subscription = Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $referred->id,
+            'user_id' => $referred->id,
         ]);
 
         $affiliate = Affiliate::create([
-            'community_id'   => $community->id,
-            'user_id'        => $user->id,
-            'code'           => 'AFF-ELIG',
-            'status'         => Affiliate::STATUS_ACTIVE,
-            'payout_method'  => 'gcash',
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'code' => 'AFF-ELIG',
+            'status' => Affiliate::STATUS_ACTIVE,
+            'payout_method' => 'gcash',
             'payout_details' => '09171234567',
         ]);
 
         $this->travel(-25)->days();
         AffiliateConversion::create([
-            'affiliate_id'      => $affiliate->id,
-            'subscription_id'   => $subscription->id,
-            'referred_user_id'  => $referred->id,
-            'sale_amount'       => 500,
-            'platform_fee'      => 75,
+            'affiliate_id' => $affiliate->id,
+            'subscription_id' => $subscription->id,
+            'referred_user_id' => $referred->id,
+            'sale_amount' => 500,
+            'platform_fee' => 75,
             'commission_amount' => 100,
-            'creator_amount'    => 325,
-            'status'            => AffiliateConversion::STATUS_PENDING,
+            'creator_amount' => 325,
+            'status' => AffiliateConversion::STATUS_PENDING,
         ]);
         $this->travelBack();
 

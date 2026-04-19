@@ -20,12 +20,12 @@ class CertificateController extends Controller
 
         return response()->json([
             'certificate' => [
-                'uuid'           => $cert->uuid,
-                'issued_at'      => $cert->issued_at->toDateString(),
-                'student_name'   => $cert->user->name,
+                'uuid' => $cert->uuid,
+                'issued_at' => $cert->issued_at->toDateString(),
+                'student_name' => $cert->user->name,
                 'student_avatar' => $cert->user->avatar,
-                'cert_title'     => $cert->cert_title ?: $cert->certification->cert_title,
-                'exam_title'     => $cert->certification->title,
+                'cert_title' => $cert->cert_title ?: $cert->certification->cert_title,
+                'exam_title' => $cert->certification->title,
                 'community_name' => $community->name,
                 'community_slug' => $community->slug,
             ],

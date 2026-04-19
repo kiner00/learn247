@@ -47,9 +47,9 @@ class StartCurzzoCheckout
                 amount: (float) $curzzo->price,
                 currency: $curzzo->currency ?? $community->currency ?? 'PHP',
                 description: "Curzzo: {$curzzo->name} — {$community->name}",
-                referenceId: "curzzo_{$curzzo->id}_user_{$user->id}_" . time(),
-                successUrl: $successRedirectUrl ?? config('app.url') . "/communities/{$community->slug}/curzzos",
-                failureUrl: config('app.url') . "/communities/{$community->slug}/curzzos",
+                referenceId: "curzzo_{$curzzo->id}_user_{$user->id}_".time(),
+                successUrl: $successRedirectUrl ?? config('app.url')."/communities/{$community->slug}/curzzos",
+                failureUrl: config('app.url')."/communities/{$community->slug}/curzzos",
                 itemName: "Curzzo: {$curzzo->name}",
                 itemCategory: 'AI Bot',
             ));
@@ -64,22 +64,22 @@ class StartCurzzoCheckout
             }
 
             $purchase = CurzzoPurchase::create([
-                'user_id'            => $user->id,
-                'curzzo_id'          => $curzzo->id,
-                'affiliate_id'       => $affiliateId,
-                'status'             => CurzzoPurchase::STATUS_PENDING,
-                'xendit_id'          => $result->invoiceId,
-                'xendit_plan_id'     => $result->planId,
+                'user_id' => $user->id,
+                'curzzo_id' => $curzzo->id,
+                'affiliate_id' => $affiliateId,
+                'status' => CurzzoPurchase::STATUS_PENDING,
+                'xendit_id' => $result->invoiceId,
+                'xendit_plan_id' => $result->planId,
                 'xendit_customer_id' => $result->customerId,
-                'recurring_status'   => $result->recurringStatus,
+                'recurring_status' => $result->recurringStatus,
             ]);
 
             return ['purchase' => $purchase, 'checkout_url' => $result->checkoutUrl];
         } catch (\Throwable $e) {
             Log::error('StartCurzzoCheckout failed', [
-                'user_id'   => $user->id,
+                'user_id' => $user->id,
                 'curzzo_id' => $curzzo->id,
-                'error'     => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
 
             throw $e;

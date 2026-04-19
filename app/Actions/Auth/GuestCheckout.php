@@ -18,10 +18,10 @@ class GuestCheckout
         }
 
         $user = User::create([
-            'name'                 => trim($data['first_name'] . ' ' . $data['last_name']),
-            'email'                => $data['email'],
-            'phone'                => $data['phone'] ?? null,
-            'password'             => Hash::make(Str::random(32)),
+            'name' => trim($data['first_name'].' '.$data['last_name']),
+            'email' => $data['email'],
+            'phone' => $data['phone'] ?? null,
+            'password' => Hash::make(Str::random(32)),
             'needs_password_setup' => true,
         ]);
 
@@ -46,8 +46,8 @@ class GuestCheckout
         );
 
         $first = $slug($firstName) ?: 'user';
-        $last  = $slug($lastName);
-        $base  = $last ? "{$first}-{$last}" : $first;
+        $last = $slug($lastName);
+        $base = $last ? "{$first}-{$last}" : $first;
 
         return "{$base}-{$userId}";
     }

@@ -28,7 +28,7 @@ class CreatePostTest extends TestCase
     public function test_member_can_create_post(): void
     {
         $community = Community::factory()->create();
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         $post = $this->action->execute($user, $community, ['content' => 'Hello world!', 'title' => 'My Post']);
@@ -40,7 +40,7 @@ class CreatePostTest extends TestCase
     public function test_post_without_title_is_allowed(): void
     {
         $community = Community::factory()->create();
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         $post = $this->action->execute($user, $community, ['content' => 'No title']);
@@ -51,7 +51,7 @@ class CreatePostTest extends TestCase
     public function test_non_member_cannot_create_post(): void
     {
         $community = Community::factory()->create();
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
 
         $this->expectException(AuthorizationException::class);
         $this->action->execute($user, $community, ['content' => 'Should fail']);
@@ -61,12 +61,12 @@ class CreatePostTest extends TestCase
     {
         Storage::fake(config('filesystems.default'));
         $community = Community::factory()->create();
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         $post = $this->action->execute($user, $community, [
             'content' => 'Post with image',
-            'image'   => UploadedFile::fake()->image('photo.jpg'),
+            'image' => UploadedFile::fake()->image('photo.jpg'),
         ]);
 
         $this->assertNotNull($post->image);
@@ -74,23 +74,23 @@ class CreatePostTest extends TestCase
 
     public function test_post_notifies_community_owner(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $this->action->execute($member, $community, ['content' => 'New post']);
 
         $this->assertDatabaseHas('notifications', [
-            'user_id'  => $owner->id,
+            'user_id' => $owner->id,
             'actor_id' => $member->id,
-            'type'     => 'new_post',
+            'type' => 'new_post',
         ]);
     }
 
     public function test_owner_posting_does_not_self_notify(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
@@ -98,18 +98,18 @@ class CreatePostTest extends TestCase
 
         $this->assertDatabaseMissing('notifications', [
             'user_id' => $owner->id,
-            'type'    => 'new_post',
+            'type' => 'new_post',
         ]);
     }
 
     public function test_blocked_member_cannot_create_post(): void
     {
         $community = Community::factory()->create();
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'is_blocked'   => true,
+            'user_id' => $user->id,
+            'is_blocked' => true,
         ]);
 
         $this->expectException(AuthorizationException::class);
@@ -121,12 +121,12 @@ class CreatePostTest extends TestCase
     {
         Storage::fake(config('filesystems.default'));
         $community = Community::factory()->create();
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         $post = $this->action->execute($user, $community, [
             'content' => 'Post with video',
-            'video'   => UploadedFile::fake()->create('clip.mp4', 1024, 'video/mp4'),
+            'video' => UploadedFile::fake()->create('clip.mp4', 1024, 'video/mp4'),
         ]);
 
         $this->assertNotNull($post->video);
@@ -135,11 +135,11 @@ class CreatePostTest extends TestCase
     public function test_post_with_video_url(): void
     {
         $community = Community::factory()->create();
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         $post = $this->action->execute($user, $community, [
-            'content'   => 'Post with YouTube',
+            'content' => 'Post with YouTube',
             'video_url' => 'https://youtube.com/watch?v=abc123',
         ]);
 
@@ -149,7 +149,7 @@ class CreatePostTest extends TestCase
     public function test_post_is_not_pinned_by_default(): void
     {
         $community = Community::factory()->create();
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         $post = $this->action->execute($user, $community, ['content' => 'Regular post']);
@@ -159,18 +159,18 @@ class CreatePostTest extends TestCase
 
     public function test_notification_contains_correct_data(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create(['name' => 'Jane Doe']);
+        $owner = User::factory()->create();
+        $member = User::factory()->create(['name' => 'Jane Doe']);
         $community = Community::factory()->create(['owner_id' => $owner->id, 'name' => 'Test Community']);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $post = $this->action->execute($member, $community, ['content' => 'Check this', 'title' => 'My Title']);
 
         $this->assertDatabaseHas('notifications', [
-            'user_id'      => $owner->id,
-            'actor_id'     => $member->id,
+            'user_id' => $owner->id,
+            'actor_id' => $member->id,
             'community_id' => $community->id,
-            'type'         => 'new_post',
+            'type' => 'new_post',
         ]);
     }
 }

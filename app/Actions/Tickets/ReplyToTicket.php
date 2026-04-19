@@ -12,9 +12,9 @@ class ReplyToTicket
     {
         return TicketReply::create([
             'ticket_id' => $ticket->id,
-            'user_id'   => $user->id,
-            'content'   => $data['content'],
-            'is_admin'  => $user->isSuperAdmin(),
+            'user_id' => $user->id,
+            'content' => $data['content'],
+            'is_admin' => $user->isSuperAdmin(),
         ]);
     }
 }

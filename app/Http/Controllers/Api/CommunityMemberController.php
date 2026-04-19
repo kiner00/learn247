@@ -20,7 +20,7 @@ class CommunityMemberController extends Controller
     public function index(Request $request): AnonymousResourceCollection
     {
         $community = Community::where('slug', $request->query('community_slug'))->firstOrFail();
-        $members   = $community->members()->with('user')->paginate(20);
+        $members = $community->members()->with('user')->paginate(20);
 
         return CommunityMemberResource::collection($members);
     }
@@ -35,6 +35,7 @@ class CommunityMemberController extends Controller
             throw $e;
         } catch (\Throwable $e) {
             Log::error('Api\CommunityMemberController@destroy failed', ['error' => $e->getMessage(), 'community_id' => $community->id, 'user_id' => $user->id]);
+
             return response()->json(['message' => 'Failed to remove member.'], 500);
         }
     }
@@ -51,6 +52,7 @@ class CommunityMemberController extends Controller
             return new CommunityMemberResource($member);
         } catch (\Throwable $e) {
             Log::error('Api\CommunityMemberController@changeRole failed', ['error' => $e->getMessage(), 'community_id' => $community->id, 'user_id' => $user->id]);
+
             return response()->json(['message' => 'Failed to change role.'], 500);
         }
     }

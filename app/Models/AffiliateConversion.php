@@ -11,7 +11,8 @@ class AffiliateConversion extends Model
     use HasFactory;
 
     public const STATUS_PENDING = 'pending';
-    public const STATUS_PAID    = 'paid';
+
+    public const STATUS_PAID = 'paid';
 
     protected $fillable = [
         'affiliate_id', 'subscription_id', 'course_enrollment_id', 'certification_purchase_id', 'curzzo_purchase_id', 'payment_id', 'referred_user_id',
@@ -22,11 +23,11 @@ class AffiliateConversion extends Model
     protected function casts(): array
     {
         return [
-            'sale_amount'       => 'decimal:2',
-            'platform_fee'      => 'decimal:2',
+            'sale_amount' => 'decimal:2',
+            'platform_fee' => 'decimal:2',
             'commission_amount' => 'decimal:2',
-            'creator_amount'    => 'decimal:2',
-            'paid_at'           => 'datetime',
+            'creator_amount' => 'decimal:2',
+            'paid_at' => 'datetime',
         ];
     }
 

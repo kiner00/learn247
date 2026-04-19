@@ -11,29 +11,31 @@ class XenditService implements PaymentGateway
     private const BASE_URL = 'https://api.xendit.co';
 
     private string $secretKey;
+
     private string $callbackToken;
 
     public function __construct()
     {
-        $this->secretKey     = config('services.xendit.secret_key') ?? '';
+        $this->secretKey = config('services.xendit.secret_key') ?? '';
         $this->callbackToken = config('services.xendit.callback_token') ?? '';
     }
 
     /**
      * Create a Xendit Invoice (one-time payment link).
+     *
      * @throws \RuntimeException
      */
     public function createInvoice(array $data): array
     {
         $response = Http::withBasicAuth($this->secretKey, '')
-            ->post(self::BASE_URL . '/v2/invoices', $data);
+            ->post(self::BASE_URL.'/v2/invoices', $data);
 
         if ($response->failed()) {
             Log::error('XenditService::createInvoice failed', [
                 'status' => $response->status(),
-                'body'   => $response->json(),
+                'body' => $response->json(),
             ]);
-            throw new \RuntimeException('Failed to create Xendit invoice: ' . $response->body());
+            throw new \RuntimeException('Failed to create Xendit invoice: '.$response->body());
         }
 
         return $response->json();
@@ -41,15 +43,16 @@ class XenditService implements PaymentGateway
 
     /**
      * Fetch a Xendit Invoice by ID.
+     *
      * @throws \RuntimeException
      */
     public function getInvoice(string $invoiceId): array
     {
         $response = Http::withBasicAuth($this->secretKey, '')
-            ->get(self::BASE_URL . "/v2/invoices/{$invoiceId}");
+            ->get(self::BASE_URL."/v2/invoices/{$invoiceId}");
 
         if ($response->failed()) {
-            throw new \RuntimeException('Failed to fetch Xendit invoice: ' . $response->body());
+            throw new \RuntimeException('Failed to fetch Xendit invoice: '.$response->body());
         }
 
         return $response->json();
@@ -57,6 +60,7 @@ class XenditService implements PaymentGateway
 
     /**
      * Create a Xendit Payout (send money to e-wallet or bank via /payouts API).
+     *
      * @throws \RuntimeException
      */
     public function createPayout(array $data): array
@@ -65,14 +69,14 @@ class XenditService implements PaymentGateway
 
         $response = Http::withBasicAuth($this->secretKey, '')
             ->withHeaders(['Idempotency-key' => $idempotencyKey])
-            ->post(self::BASE_URL . '/v2/payouts', $data);
+            ->post(self::BASE_URL.'/v2/payouts', $data);
 
         if ($response->failed()) {
             Log::error('XenditService::createPayout failed', [
                 'status' => $response->status(),
-                'body'   => $response->json(),
+                'body' => $response->json(),
             ]);
-            throw new \RuntimeException('Xendit payout failed: ' . ($response->json()['message'] ?? $response->body()));
+            throw new \RuntimeException('Xendit payout failed: '.($response->json()['message'] ?? $response->body()));
         }
 
         return $response->json();
@@ -80,18 +84,20 @@ class XenditService implements PaymentGateway
 
     /**
      * Get Xendit account balance.
-     * @param string $accountType CASH | HOLDING | TAX
+     *
+     * @param  string  $accountType  CASH | HOLDING | TAX
      */
     public function getBalance(string $accountType = 'CASH'): float
     {
         $response = Http::withBasicAuth($this->secretKey, '')
-            ->get(self::BASE_URL . '/balance', ['account_type' => $accountType]);
+            ->get(self::BASE_URL.'/balance', ['account_type' => $accountType]);
 
         if ($response->failed()) {
             Log::error('XenditService::getBalance failed', [
                 'status' => $response->status(),
-                'body'   => $response->json(),
+                'body' => $response->json(),
             ]);
+
             return 0.0;
         }
 
@@ -104,10 +110,10 @@ class XenditService implements PaymentGateway
     public function getPayout(string $payoutId): array
     {
         $response = Http::withBasicAuth($this->secretKey, '')
-            ->get(self::BASE_URL . "/v2/payouts/{$payoutId}");
+            ->get(self::BASE_URL."/v2/payouts/{$payoutId}");
 
         if ($response->failed()) {
-            throw new \RuntimeException('Failed to fetch Xendit payout: ' . $response->body());
+            throw new \RuntimeException('Failed to fetch Xendit payout: '.$response->body());
         }
 
         return $response->json();
@@ -126,13 +132,13 @@ class XenditService implements PaymentGateway
         $channel = strtoupper($channel);
 
         return match (true) {
-            $channel === 'GCASH'                          => round($gross * 0.023, 2),
-            in_array($channel, ['PAYMAYA', 'MAYA'])       => round($gross * 0.018, 2),
-            in_array($channel, ['GRABPAY', 'SHOPEEPAY'])  => round($gross * 0.020, 2),
+            $channel === 'GCASH' => round($gross * 0.023, 2),
+            in_array($channel, ['PAYMAYA', 'MAYA']) => round($gross * 0.018, 2),
+            in_array($channel, ['GRABPAY', 'SHOPEEPAY']) => round($gross * 0.020, 2),
             in_array($channel, ['CREDIT_CARD', 'DEBIT_CARD', 'VISA', 'MASTERCARD']) => round($gross * 0.032 + 10, 2),
-            $channel === 'QRPH'                           => max(round($gross * 0.014, 2), 15.0),
+            $channel === 'QRPH' => max(round($gross * 0.014, 2), 15.0),
             in_array($channel, ['DD_BPI', 'BPI', 'DD_UBP', 'UBP']) => max(round($gross * 0.010, 2), 25.0),
-            default                                       => 0.0,
+            default => 0.0,
         };
     }
 
@@ -150,19 +156,20 @@ class XenditService implements PaymentGateway
 
     /**
      * Create a Xendit Customer (idempotent by reference_id).
+     *
      * @throws \RuntimeException
      */
     public function createCustomer(array $data): array
     {
         $response = Http::withBasicAuth($this->secretKey, '')
-            ->post(self::BASE_URL . '/customers', $data);
+            ->post(self::BASE_URL.'/customers', $data);
 
         if ($response->failed()) {
             Log::error('XenditService::createCustomer failed', [
                 'status' => $response->status(),
-                'body'   => $response->json(),
+                'body' => $response->json(),
             ]);
-            throw new \RuntimeException('Failed to create Xendit customer: ' . $response->body());
+            throw new \RuntimeException('Failed to create Xendit customer: '.$response->body());
         }
 
         return $response->json();
@@ -170,19 +177,20 @@ class XenditService implements PaymentGateway
 
     /**
      * Create a Xendit Recurring Plan (subscription).
+     *
      * @throws \RuntimeException
      */
     public function createRecurringPlan(array $data): array
     {
         $response = Http::withBasicAuth($this->secretKey, '')
-            ->post(self::BASE_URL . '/recurring/plans', $data);
+            ->post(self::BASE_URL.'/recurring/plans', $data);
 
         if ($response->failed()) {
             Log::error('XenditService::createRecurringPlan failed', [
                 'status' => $response->status(),
-                'body'   => $response->json(),
+                'body' => $response->json(),
             ]);
-            throw new \RuntimeException('Failed to create Xendit recurring plan: ' . $response->body());
+            throw new \RuntimeException('Failed to create Xendit recurring plan: '.$response->body());
         }
 
         return $response->json();
@@ -190,15 +198,16 @@ class XenditService implements PaymentGateway
 
     /**
      * Fetch a Xendit Recurring Plan by ID.
+     *
      * @throws \RuntimeException
      */
     public function getRecurringPlan(string $planId): array
     {
         $response = Http::withBasicAuth($this->secretKey, '')
-            ->get(self::BASE_URL . "/recurring/plans/{$planId}");
+            ->get(self::BASE_URL."/recurring/plans/{$planId}");
 
         if ($response->failed()) {
-            throw new \RuntimeException('Failed to fetch Xendit recurring plan: ' . $response->body());
+            throw new \RuntimeException('Failed to fetch Xendit recurring plan: '.$response->body());
         }
 
         return $response->json();
@@ -206,19 +215,20 @@ class XenditService implements PaymentGateway
 
     /**
      * Deactivate a Xendit Recurring Plan (cancel auto-charge).
+     *
      * @throws \RuntimeException
      */
     public function deactivateRecurringPlan(string $planId): array
     {
         $response = Http::withBasicAuth($this->secretKey, '')
-            ->post(self::BASE_URL . "/recurring/plans/{$planId}/deactivate");
+            ->post(self::BASE_URL."/recurring/plans/{$planId}/deactivate");
 
         if ($response->failed()) {
             Log::error('XenditService::deactivateRecurringPlan failed', [
                 'status' => $response->status(),
-                'body'   => $response->json(),
+                'body' => $response->json(),
             ]);
-            throw new \RuntimeException('Failed to deactivate Xendit recurring plan: ' . $response->body());
+            throw new \RuntimeException('Failed to deactivate Xendit recurring plan: '.$response->body());
         }
 
         return $response->json();

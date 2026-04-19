@@ -32,10 +32,10 @@ class BadgeService implements BadgeEvaluator
 
             if ($this->conditionChecker->conditionMet($user, $badge, $communityId)) {
                 UserBadge::create([
-                    'user_id'      => $user->id,
-                    'badge_id'     => $badge->id,
+                    'user_id' => $user->id,
+                    'badge_id' => $badge->id,
                     'community_id' => $communityId,
-                    'earned_at'    => now(),
+                    'earned_at' => now(),
                 ]);
 
                 $this->tokenAwarder->award($user, $badge);

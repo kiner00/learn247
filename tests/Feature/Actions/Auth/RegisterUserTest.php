@@ -23,13 +23,13 @@ class RegisterUserTest extends TestCase
 
         $user = $action->execute([
             'first_name' => 'John',
-            'last_name'  => 'Doe',
-            'email'      => 'john@example.com',
-            'password'   => 'secret123',
+            'last_name' => 'Doe',
+            'email' => 'john@example.com',
+            'password' => 'secret123',
         ]);
 
         $this->assertDatabaseHas('users', [
-            'name'  => 'John Doe',
+            'name' => 'John Doe',
             'email' => 'john@example.com',
         ]);
         $this->assertTrue(Hash::check('secret123', $user->password));
@@ -44,9 +44,9 @@ class RegisterUserTest extends TestCase
 
         $user = $action->execute([
             'first_name' => 'Jane',
-            'last_name'  => 'Smith',
-            'email'      => 'jane@example.com',
-            'password'   => 'secret123',
+            'last_name' => 'Smith',
+            'email' => 'jane@example.com',
+            'password' => 'secret123',
         ]);
 
         $this->assertSame("jane-smith-{$user->id}", $user->username);
@@ -61,9 +61,9 @@ class RegisterUserTest extends TestCase
 
         $user = $action->execute([
             'first_name' => 'No',
-            'last_name'  => 'Phone',
-            'email'      => 'nophone@example.com',
-            'password'   => 'secret123',
+            'last_name' => 'Phone',
+            'email' => 'nophone@example.com',
+            'password' => 'secret123',
         ]);
 
         $this->assertNull($user->phone);
@@ -80,9 +80,9 @@ class RegisterUserTest extends TestCase
 
         $action->execute([
             'first_name' => 'Badge',
-            'last_name'  => 'Test',
-            'email'      => 'badge@example.com',
-            'password'   => 'secret123',
+            'last_name' => 'Test',
+            'email' => 'badge@example.com',
+            'password' => 'secret123',
         ]);
     }
 }

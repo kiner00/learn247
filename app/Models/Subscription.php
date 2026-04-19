@@ -11,9 +11,12 @@ class Subscription extends Model
 {
     use Concerns\HasRecurringPlan, HasFactory;
 
-    public const STATUS_PENDING   = 'pending';
-    public const STATUS_ACTIVE    = 'active';
-    public const STATUS_EXPIRED   = 'expired';
+    public const STATUS_PENDING = 'pending';
+
+    public const STATUS_ACTIVE = 'active';
+
+    public const STATUS_EXPIRED = 'expired';
+
     public const STATUS_CANCELLED = 'cancelled';
 
     protected $fillable = [
@@ -26,7 +29,7 @@ class Subscription extends Model
     protected function casts(): array
     {
         return [
-            'expires_at'          => 'datetime',
+            'expires_at' => 'datetime',
             'reminder_5d_sent_at' => 'datetime',
             'reminder_1d_sent_at' => 'datetime',
         ];

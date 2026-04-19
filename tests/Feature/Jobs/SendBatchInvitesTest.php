@@ -28,11 +28,11 @@ class SendBatchInvitesTest extends TestCase
 
         $this->assertDatabaseHas('community_invites', [
             'community_id' => $community->id,
-            'email'        => 'alice@example.com',
+            'email' => 'alice@example.com',
         ]);
         $this->assertDatabaseHas('community_invites', [
             'community_id' => $community->id,
-            'email'        => 'bob@example.com',
+            'email' => 'bob@example.com',
         ]);
 
         Mail::assertQueued(CommunityInviteMail::class, 2);
@@ -61,7 +61,7 @@ class SendBatchInvitesTest extends TestCase
         $existingUser = User::factory()->create(['email' => 'member@example.com']);
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $existingUser->id,
+            'user_id' => $existingUser->id,
         ]);
 
         $emails = ['member@example.com', 'newperson@example.com'];
@@ -71,11 +71,11 @@ class SendBatchInvitesTest extends TestCase
 
         $this->assertDatabaseMissing('community_invites', [
             'community_id' => $community->id,
-            'email'        => 'member@example.com',
+            'email' => 'member@example.com',
         ]);
         $this->assertDatabaseHas('community_invites', [
             'community_id' => $community->id,
-            'email'        => 'newperson@example.com',
+            'email' => 'newperson@example.com',
         ]);
 
         Mail::assertQueued(CommunityInviteMail::class, 1);
@@ -92,9 +92,9 @@ class SendBatchInvitesTest extends TestCase
 
         $oldInvite = CommunityInvite::create([
             'community_id' => $community->id,
-            'email'        => 'repeat@example.com',
-            'token'        => 'old-token-value',
-            'expires_at'   => now()->subDay(),
+            'email' => 'repeat@example.com',
+            'token' => 'old-token-value',
+            'expires_at' => now()->subDay(),
         ]);
 
         $job = new SendBatchInvites($community, ['repeat@example.com']);

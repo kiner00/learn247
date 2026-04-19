@@ -17,7 +17,7 @@ class SubscriptionController extends Controller
         $result = $action->execute($request->user(), $community, $affiliateCode);
 
         return response()->json([
-            'checkout_url'    => $result['checkout_url'],
+            'checkout_url' => $result['checkout_url'],
             'subscription_id' => $result['subscription']->id,
         ]);
     }

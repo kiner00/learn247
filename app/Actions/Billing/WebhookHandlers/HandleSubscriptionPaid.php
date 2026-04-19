@@ -8,9 +8,9 @@ use App\Actions\Billing\SendChaChing;
 use App\Actions\Billing\SyncMembershipFromSubscription;
 use App\Contracts\WebhookHandler;
 use App\Events\SubscriptionPaid as SubscriptionPaidEvent;
+use App\Models\Affiliate;
 use App\Models\CartEvent;
 use App\Models\CommunityMember;
-use App\Models\Affiliate;
 use App\Models\Payment;
 use App\Models\Subscription;
 use App\Services\XenditService;
@@ -45,18 +45,19 @@ class HandleSubscriptionPaid implements WebhookHandler
 
         if (! $subscription) {
             Log::warning('Xendit webhook: no matching subscription', ['xenditId' => $payload['id'] ?? null]);
+
             return;
         }
 
         try {
-            $chaChing      = null;
+            $chaChing = null;
             $guestMailData = null;
 
             DB::transaction(function () use ($subscription, $payload, $eventId, $status, &$chaChing, &$guestMailData) {
-                $newSubStatus     = $this->mapSubscriptionStatus($status);
-                $community        = $subscription->community;
-                $pendingDeletion  = $community?->isPendingDeletion();
-                $isOneTime        = $community?->billing_type === \App\Models\Community::BILLING_ONE_TIME;
+                $newSubStatus = $this->mapSubscriptionStatus($status);
+                $community = $subscription->community;
+                $pendingDeletion = $community?->isPendingDeletion();
+                $isOneTime = $community?->billing_type === \App\Models\Community::BILLING_ONE_TIME;
 
                 // One-time billing -> no expiry.
                 // Monthly pending-deletion -> do NOT extend; let current expiry stand so subscriber finishes their paid period.
@@ -72,7 +73,7 @@ class HandleSubscriptionPaid implements WebhookHandler
                 }
 
                 $subscription->update([
-                    'status'     => $newSubStatus,
+                    'status' => $newSubStatus,
                     'expires_at' => $newSubStatus === Subscription::STATUS_ACTIVE
                         ? $newExpiresAt
                         : $subscription->expires_at,
@@ -82,24 +83,24 @@ class HandleSubscriptionPaid implements WebhookHandler
                 $paymentStatus = $this->mapPaymentStatus($status);
                 $payment = null;
                 if ($paymentStatus !== Payment::STATUS_PENDING) {
-                    $gross          = (float) ($payload['amount'] ?? 0);
-                    $channel        = $payload['payment_channel'] ?? '';
-                    $processingFee  = XenditService::collectionFee($channel, $gross);
-                    $platformFee    = round($gross * $community->platformFeeRate(), 2);
+                    $gross = (float) ($payload['amount'] ?? 0);
+                    $channel = $payload['payment_channel'] ?? '';
+                    $processingFee = XenditService::collectionFee($channel, $gross);
+                    $platformFee = round($gross * $community->platformFeeRate(), 2);
 
                     $payment = Payment::create([
-                        'subscription_id'    => $subscription->id,
-                        'community_id'       => $subscription->community_id,
-                        'user_id'            => $subscription->user_id,
-                        'amount'             => $gross,
-                        'processing_fee'     => $processingFee,
-                        'platform_fee'       => $platformFee,
-                        'currency'           => $payload['currency']    ?? 'PHP',
-                        'status'             => $paymentStatus,
-                        'provider_reference' => $payload['payment_id']  ?? ($payload['external_id'] ?? null),
-                        'xendit_event_id'    => $eventId,
-                        'metadata'           => $payload,
-                        'paid_at'            => $paymentStatus === Payment::STATUS_PAID ? now() : null,
+                        'subscription_id' => $subscription->id,
+                        'community_id' => $subscription->community_id,
+                        'user_id' => $subscription->user_id,
+                        'amount' => $gross,
+                        'processing_fee' => $processingFee,
+                        'platform_fee' => $platformFee,
+                        'currency' => $payload['currency'] ?? 'PHP',
+                        'status' => $paymentStatus,
+                        'provider_reference' => $payload['payment_id'] ?? ($payload['external_id'] ?? null),
+                        'xendit_event_id' => $eventId,
+                        'metadata' => $payload,
+                        'paid_at' => $paymentStatus === Payment::STATUS_PAID ? now() : null,
                     ]);
                 }
 
@@ -109,32 +110,32 @@ class HandleSubscriptionPaid implements WebhookHandler
                     $this->recordConversion->execute($subscription->load('affiliate.community'), $payment);
 
                     if (! $pendingDeletion) {
-                        $affiliate     = $subscription->affiliate;
+                        $affiliate = $subscription->affiliate;
                         $affiliateUser = $affiliate->user;
-                        $creator       = $community->owner;
-                        $saleAmount    = (float) ($payload['amount'] ?? 0);
-                        $rate          = $community->affiliate_commission_rate / 100;
-                        $commission    = round($saleAmount * $rate, 2);
+                        $creator = $community->owner;
+                        $saleAmount = (float) ($payload['amount'] ?? 0);
+                        $rate = $community->affiliate_commission_rate / 100;
+                        $commission = round($saleAmount * $rate, 2);
 
                         $chaChing = [
                             'affiliate_user' => $affiliateUser,
-                            'creator'        => $creator,
-                            'community'      => $community,
-                            'sale_amount'    => $saleAmount,
-                            'commission'     => $commission,
-                            'referred_by'    => $affiliateUser->name,
+                            'creator' => $creator,
+                            'community' => $community,
+                            'sale_amount' => $saleAmount,
+                            'commission' => $commission,
+                            'referred_by' => $affiliateUser->name,
                         ];
                     }
                 } elseif ($payment && $paymentStatus === Payment::STATUS_PAID && ! $pendingDeletion) {
                     // No affiliate -- still notify creator (skip if pending deletion)
-                    $creator  = $community->owner;
+                    $creator = $community->owner;
                     $chaChing = [
                         'affiliate_user' => null,
-                        'creator'        => $creator,
-                        'community'      => $community,
-                        'sale_amount'    => (float) ($payload['amount'] ?? 0),
-                        'commission'     => null,
-                        'referred_by'    => null,
+                        'creator' => $creator,
+                        'community' => $community,
+                        'sale_amount' => (float) ($payload['amount'] ?? 0),
+                        'commission' => null,
+                        'referred_by' => null,
                     ];
                 }
 
@@ -149,9 +150,9 @@ class HandleSubscriptionPaid implements WebhookHandler
                         if (! $alreadyAffiliate) {
                             Affiliate::create([
                                 'community_id' => $community->id,
-                                'user_id'      => $subscription->user_id,
-                                'code'         => AffiliateCodeGenerator::generate(),
-                                'status'       => Affiliate::STATUS_ACTIVE,
+                                'user_id' => $subscription->user_id,
+                                'code' => AffiliateCodeGenerator::generate(),
+                                'status' => Affiliate::STATUS_ACTIVE,
                             ]);
                         }
                     }
@@ -163,9 +164,9 @@ class HandleSubscriptionPaid implements WebhookHandler
                     $tempPassword = $this->issueGuestPassword->generate($user);
                     if ($tempPassword) {
                         $guestMailData = [
-                            'user'         => $user,
-                            'password'     => $tempPassword,
-                            'community'    => $subscription->community,
+                            'user' => $user,
+                            'password' => $tempPassword,
+                            'community' => $subscription->community,
                         ];
                     }
                 }
@@ -229,7 +230,7 @@ class HandleSubscriptionPaid implements WebhookHandler
         } catch (\Throwable $e) {
             Log::error('HandleSubscriptionPaid failed', [
                 'subscription_id' => $subscription->id,
-                'error'           => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
             throw $e;
         }
@@ -239,9 +240,9 @@ class HandleSubscriptionPaid implements WebhookHandler
     {
         return match (strtoupper($status)) {
             'PAID', 'SETTLED' => Subscription::STATUS_ACTIVE,
-            'EXPIRED'         => Subscription::STATUS_EXPIRED,
-            'FAILED'          => Subscription::STATUS_CANCELLED,
-            default           => Subscription::STATUS_PENDING,
+            'EXPIRED' => Subscription::STATUS_EXPIRED,
+            'FAILED' => Subscription::STATUS_CANCELLED,
+            default => Subscription::STATUS_PENDING,
         };
     }
 
@@ -249,9 +250,9 @@ class HandleSubscriptionPaid implements WebhookHandler
     {
         return match (strtoupper($status)) {
             'PAID', 'SETTLED' => Payment::STATUS_PAID,
-            'EXPIRED'         => Payment::STATUS_EXPIRED,
-            'FAILED'          => Payment::STATUS_FAILED,
-            default           => Payment::STATUS_PENDING,
+            'EXPIRED' => Payment::STATUS_EXPIRED,
+            'FAILED' => Payment::STATUS_FAILED,
+            default => Payment::STATUS_PENDING,
         };
     }
 }

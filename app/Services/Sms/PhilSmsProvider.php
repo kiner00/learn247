@@ -10,15 +10,15 @@ class PhilSmsProvider implements SmsProviderInterface
 {
     public function send(Community $community, array $numbers, string $message): array
     {
-        $sent   = 0;
+        $sent = 0;
         $failed = 0;
         $errors = [];
 
         foreach ($numbers as $number) {
             $payload = [
                 'recipient' => $number,
-                'message'   => $message,
-                'type'      => 'plain',
+                'message' => $message,
+                'type' => 'plain',
             ];
 
             if ($community->sms_sender_name) {
@@ -30,14 +30,14 @@ class PhilSmsProvider implements SmsProviderInterface
                     ->withToken($community->sms_api_key)
                     ->post('https://app.philsms.com/api/v3/sms/send', $payload);
 
-                $body   = $response->json();
+                $body = $response->json();
                 $status = $body['status'] ?? null;
 
                 if ($response->successful() && $status === 'success') {
                     $sent++;
                 } else {
                     $failed++;
-                    $errors[] = "PhilSMS error for {$number}: " . ($body['message'] ?? $response->body());
+                    $errors[] = "PhilSMS error for {$number}: ".($body['message'] ?? $response->body());
                     Log::error('PhilSmsProvider error', ['body' => $response->body()]);
                 }
             } catch (\Throwable $e) {

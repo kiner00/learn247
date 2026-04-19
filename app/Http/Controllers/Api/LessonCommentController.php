@@ -29,18 +29,19 @@ class LessonCommentController extends Controller
             return response()->json([
                 'message' => 'Comment posted.',
                 'comment' => [
-                    'id'         => $comment->id,
-                    'content'    => $comment->content,
+                    'id' => $comment->id,
+                    'content' => $comment->content,
                     'created_at' => $comment->created_at,
-                    'user'       => [
-                        'id'       => $request->user()->id,
-                        'name'     => $request->user()->name,
+                    'user' => [
+                        'id' => $request->user()->id,
+                        'name' => $request->user()->name,
                         'username' => $request->user()->username,
                     ],
                 ],
             ], 201);
         } catch (\Throwable $e) {
             Log::error('Api\LessonCommentController@store failed', ['error' => $e->getMessage(), 'lesson_id' => $lesson->id]);
+
             return response()->json(['message' => 'Failed to post comment.'], 500);
         }
     }
@@ -56,6 +57,7 @@ class LessonCommentController extends Controller
             return response()->json(['deleted' => $comment->id]);
         } catch (\Throwable $e) {
             Log::error('Api\LessonCommentController@destroy failed', ['error' => $e->getMessage(), 'comment_id' => $comment->id]);
+
             return response()->json(['message' => 'Failed to delete comment.'], 500);
         }
     }

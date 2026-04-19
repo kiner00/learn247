@@ -21,9 +21,9 @@ class CourseTest extends TestCase
 
         return Course::create([
             'community_id' => $community->id,
-            'title'        => 'Test Course',
-            'access_type'  => Course::ACCESS_FREE,
-            'position'     => 1,
+            'title' => 'Test Course',
+            'access_type' => Course::ACCESS_FREE,
+            'position' => 1,
         ]);
     }
 
@@ -42,14 +42,14 @@ class CourseTest extends TestCase
     public function test_community_relationship_returns_correct_community(): void
     {
         $community = Community::factory()->create();
-        $course    = $this->makeCourse($community);
+        $course = $this->makeCourse($community);
 
         $this->assertEquals($community->id, $course->community->id);
     }
 
     public function test_modules_relationship_returns_ordered_modules(): void
     {
-        $course  = $this->makeCourse();
+        $course = $this->makeCourse();
         $module1 = CourseModule::create(['course_id' => $course->id, 'title' => 'M1', 'position' => 1]);
         $module2 = CourseModule::create(['course_id' => $course->id, 'title' => 'M2', 'position' => 0]);
 
@@ -61,7 +61,7 @@ class CourseTest extends TestCase
 
     public function test_lessons_relationship_returns_all_lessons_through_modules(): void
     {
-        $course  = $this->makeCourse();
+        $course = $this->makeCourse();
         $module1 = CourseModule::create(['course_id' => $course->id, 'title' => 'M1', 'position' => 0]);
         $module2 = CourseModule::create(['course_id' => $course->id, 'title' => 'M2', 'position' => 1]);
 
@@ -74,8 +74,8 @@ class CourseTest extends TestCase
     public function test_enrollments_relationship_returns_course_enrollments(): void
     {
         $course = $this->makeCourse();
-        $user1  = User::factory()->create();
-        $user2  = User::factory()->create();
+        $user1 = User::factory()->create();
+        $user2 = User::factory()->create();
 
         CourseEnrollment::create(['user_id' => $user1->id, 'course_id' => $course->id, 'status' => CourseEnrollment::STATUS_PAID]);
         CourseEnrollment::create(['user_id' => $user2->id, 'course_id' => $course->id, 'status' => CourseEnrollment::STATUS_PENDING]);

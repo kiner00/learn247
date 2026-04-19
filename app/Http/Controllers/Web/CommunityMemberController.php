@@ -29,6 +29,7 @@ class CommunityMemberController extends Controller
             throw $e;
         } catch (\Throwable $e) {
             Log::error('CommunityMemberController@destroy failed', ['error' => $e->getMessage(), 'community_id' => $community->id, 'user_id' => $user->id]);
+
             return back()->with('error', 'Failed to remove member.');
         }
     }
@@ -43,6 +44,7 @@ class CommunityMemberController extends Controller
             throw $e;
         } catch (\Throwable $e) {
             Log::error('CommunityMemberController@toggleBlock failed', ['error' => $e->getMessage(), 'community_id' => $community->id, 'user_id' => $user->id]);
+
             return back()->with('error', 'Failed to toggle block status.');
         }
     }
@@ -52,17 +54,18 @@ class CommunityMemberController extends Controller
         abort_unless($request->user()->id === $community->owner_id, 403);
 
         $data = $request->validate([
-            'user_ids'   => ['required', 'array', 'min:1'],
+            'user_ids' => ['required', 'array', 'min:1'],
             'user_ids.*' => ['required', 'integer'],
-            'months'     => ['required', 'integer', 'min:1', 'max:120'],
+            'months' => ['required', 'integer', 'min:1', 'max:120'],
         ]);
 
         try {
             $count = $action->execute($community, $data['user_ids'], $data['months']);
 
-            return back()->with('success', "Extended access for {$count} member" . ($count !== 1 ? 's' : '') . " by {$data['months']} month" . ($data['months'] !== 1 ? 's' : '') . '.');
+            return back()->with('success', "Extended access for {$count} member".($count !== 1 ? 's' : '')." by {$data['months']} month".($data['months'] !== 1 ? 's' : '').'.');
         } catch (\Throwable $e) {
             Log::error('CommunityMemberController@extendAccess failed', ['error' => $e->getMessage(), 'community_id' => $community->id]);
+
             return back()->with('error', 'Failed to extend access.');
         }
     }
@@ -72,9 +75,9 @@ class CommunityMemberController extends Controller
         abort_unless($request->user()->id === $community->owner_id, 403);
 
         $data = $request->validate([
-            'user_ids'   => ['required', 'array', 'min:1'],
+            'user_ids' => ['required', 'array', 'min:1'],
             'user_ids.*' => ['required', 'integer'],
-            'months'     => ['nullable', 'integer', 'min:1', 'max:120'],
+            'months' => ['nullable', 'integer', 'min:1', 'max:120'],
         ]);
 
         try {
@@ -82,11 +85,12 @@ class CommunityMemberController extends Controller
 
             $suffix = $data['months'] === null
                 ? 'to no expiry'
-                : 'to expire in ' . $data['months'] . ' month' . ($data['months'] !== 1 ? 's' : '');
+                : 'to expire in '.$data['months'].' month'.($data['months'] !== 1 ? 's' : '');
 
-            return back()->with('success', "Set {$count} member" . ($count !== 1 ? 's' : '') . " {$suffix}.");
+            return back()->with('success', "Set {$count} member".($count !== 1 ? 's' : '')." {$suffix}.");
         } catch (\Throwable $e) {
             Log::error('CommunityMemberController@setExpiry failed', ['error' => $e->getMessage(), 'community_id' => $community->id]);
+
             return back()->with('error', 'Failed to set expiry.');
         }
     }
@@ -105,6 +109,7 @@ class CommunityMemberController extends Controller
             throw $e;
         } catch (\Throwable $e) {
             Log::error('CommunityMemberController@changeRole failed', ['error' => $e->getMessage(), 'community_id' => $community->id, 'user_id' => $user->id]);
+
             return back()->with('error', 'Failed to change role.');
         }
     }

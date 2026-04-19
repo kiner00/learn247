@@ -27,11 +27,11 @@ class GetInvitedByAffiliate
         }
 
         return [
-            'name'                => $affiliate->user->name,
-            'avatar'              => $affiliate->user->avatar,
-            'code'                => $refCode,
-            'facebook_pixel_id'   => $affiliate->facebook_pixel_id,
-            'tiktok_pixel_id'     => $affiliate->tiktok_pixel_id,
+            'name' => $affiliate->user->name,
+            'avatar' => $affiliate->user->avatar,
+            'code' => $refCode,
+            'facebook_pixel_id' => $affiliate->facebook_pixel_id,
+            'tiktok_pixel_id' => $affiliate->tiktok_pixel_id,
             'google_analytics_id' => $affiliate->google_analytics_id,
         ];
     }

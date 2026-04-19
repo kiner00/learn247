@@ -46,13 +46,13 @@ class RequestAllAffiliatePayouts
             }
 
             PayoutRequest::create([
-                'user_id'         => $affiliate->user_id,
-                'type'            => PayoutRequest::TYPE_AFFILIATE,
-                'community_id'    => $affiliate->community_id,
-                'affiliate_id'    => $affiliate->id,
-                'amount'          => $eligibleNow,
+                'user_id' => $affiliate->user_id,
+                'type' => PayoutRequest::TYPE_AFFILIATE,
+                'community_id' => $affiliate->community_id,
+                'affiliate_id' => $affiliate->id,
+                'amount' => $eligibleNow,
                 'eligible_amount' => $eligibleNow,
-                'status'          => PayoutRequest::STATUS_PENDING,
+                'status' => PayoutRequest::STATUS_PENDING,
             ]);
 
             $submitted++;

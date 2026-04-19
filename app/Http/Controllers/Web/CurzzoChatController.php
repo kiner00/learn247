@@ -37,16 +37,16 @@ class CurzzoChatController extends Controller
         $limitCheck = $limits->canSendMessage($request->user(), $community);
         if (! $limitCheck['allowed']) {
             return response()->json([
-                'error'           => $limitCheck['reason'],
-                'limit_reached'   => true,
-                'daily_limit'     => $limitCheck['daily_limit'],
-                'daily_used'      => $limitCheck['daily_used'],
+                'error' => $limitCheck['reason'],
+                'limit_reached' => true,
+                'daily_limit' => $limitCheck['daily_limit'],
+                'daily_used' => $limitCheck['daily_used'],
                 'topup_remaining' => $limitCheck['topup_remaining'],
             ], 429);
         }
 
         $request->validate([
-            'message'         => ['required', 'string', 'max:20000'],
+            'message' => ['required', 'string', 'max:20000'],
             'conversation_id' => ['nullable', 'string', 'uuid'],
         ]);
 
@@ -61,25 +61,25 @@ class CurzzoChatController extends Controller
                 : $agent->forUser($user)->prompt($request->message);
         } catch (Throwable $e) {
             Log::error('CurzzoChat agent call failed', [
-                'curzzo_id'       => $curzzo->id,
-                'community_id'    => $community->id,
-                'user_id'         => $user->id,
+                'curzzo_id' => $curzzo->id,
+                'community_id' => $community->id,
+                'user_id' => $user->id,
                 'conversation_id' => $request->conversation_id,
-                'model_tier'      => $curzzo->model_tier,
-                'error'           => $e->getMessage(),
-                'exception'       => get_class($e),
+                'model_tier' => $curzzo->model_tier,
+                'error' => $e->getMessage(),
+                'exception' => get_class($e),
             ]);
 
             return response()->json([
-                'error'           => 'The bot had trouble responding. Please try again.',
+                'error' => 'The bot had trouble responding. Please try again.',
                 'conversation_id' => $request->conversation_id,
             ], 503);
         }
 
         $attrs = [
-            'curzzo_id'       => $curzzo->id,
-            'community_id'    => $community->id,
-            'user_id'         => $user->id,
+            'curzzo_id' => $curzzo->id,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
             'conversation_id' => $response->conversationId,
         ];
 
@@ -97,10 +97,10 @@ class CurzzoChatController extends Controller
         $newCheck = $limits->canSendMessage($user, $community);
 
         return response()->json([
-            'message'         => $response->text,
+            'message' => $response->text,
             'conversation_id' => $response->conversationId,
-            'daily_limit'     => $newCheck['daily_limit'],
-            'daily_used'      => $newCheck['daily_used'],
+            'daily_limit' => $newCheck['daily_limit'],
+            'daily_used' => $newCheck['daily_used'],
             'topup_remaining' => $newCheck['topup_remaining'],
         ]);
     }
@@ -116,7 +116,7 @@ class CurzzoChatController extends Controller
             ->limit(100)
             ->get()
             ->map(fn ($m) => [
-                'id'   => $m->id,
+                'id' => $m->id,
                 'role' => $m->role,
                 'text' => $m->content,
             ]);

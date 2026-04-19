@@ -38,7 +38,7 @@ class SetPasswordControllerTest extends TestCase
 
         $response = $this->actingAs($user)
             ->post('/set-password', [
-                'password'              => 'NewSecureP@ss1',
+                'password' => 'NewSecureP@ss1',
                 'password_confirmation' => 'NewSecureP@ss1',
             ]);
 
@@ -56,7 +56,7 @@ class SetPasswordControllerTest extends TestCase
 
         $response = $this->actingAs($user)
             ->post('/set-password', [
-                'password'              => 'NewSecureP@ss1',
+                'password' => 'NewSecureP@ss1',
                 'password_confirmation' => 'WrongConfirm',
             ]);
 
@@ -69,7 +69,7 @@ class SetPasswordControllerTest extends TestCase
 
         $response = $this->actingAs($user)
             ->post('/set-password', [
-                'password'              => '',
+                'password' => '',
                 'password_confirmation' => '',
             ]);
 
@@ -79,7 +79,7 @@ class SetPasswordControllerTest extends TestCase
     public function test_guest_cannot_store_password(): void
     {
         $response = $this->post('/set-password', [
-            'password'              => 'NewSecureP@ss1',
+            'password' => 'NewSecureP@ss1',
             'password_confirmation' => 'NewSecureP@ss1',
         ]);
 
@@ -92,7 +92,7 @@ class SetPasswordControllerTest extends TestCase
 
         $response = $this->actingAs($user)
             ->post('/set-password', [
-                'password'              => 'short',
+                'password' => 'short',
                 'password_confirmation' => 'short',
             ]);
 
@@ -108,7 +108,7 @@ class SetPasswordControllerTest extends TestCase
 
         $this->actingAs($user)
             ->post('/set-password', [
-                'password'              => '',
+                'password' => '',
                 'password_confirmation' => '',
             ]);
 

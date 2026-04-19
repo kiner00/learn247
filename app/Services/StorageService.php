@@ -33,6 +33,7 @@ class StorageService implements FileStorage
         // S3 key stored directly (e.g. lesson-videos/abc.mp4)
         if (! str_starts_with($url, '/') && ! str_starts_with($url, 'http') && $disk->exists($url)) {
             $disk->delete($url);
+
             return;
         }
 
@@ -45,6 +46,7 @@ class StorageService implements FileStorage
             } else {
                 Storage::disk('public')->delete($path);
             }
+
             return;
         }
 
@@ -56,6 +58,7 @@ class StorageService implements FileStorage
             } else {
                 Storage::disk('public')->delete($path);
             }
+
             return;
         }
 

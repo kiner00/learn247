@@ -14,24 +14,24 @@ class ManageQuiz
         $lesson->quiz()->delete();
 
         $quiz = Quiz::create([
-            'lesson_id'  => $lesson->id,
-            'title'      => $data['title'],
+            'lesson_id' => $lesson->id,
+            'title' => $data['title'],
             'pass_score' => $data['pass_score'],
         ]);
 
         foreach ($data['questions'] as $i => $q) {
             $question = QuizQuestion::create([
-                'quiz_id'  => $quiz->id,
+                'quiz_id' => $quiz->id,
                 'question' => $q['question'],
-                'type'     => $q['type'],
+                'type' => $q['type'],
                 'position' => $i,
             ]);
 
             foreach ($q['options'] as $opt) {
                 QuizQuestionOption::create([
                     'question_id' => $question->id,
-                    'label'       => $opt['label'],
-                    'is_correct'  => $opt['is_correct'],
+                    'label' => $opt['label'],
+                    'is_correct' => $opt['is_correct'],
                 ]);
             }
         }

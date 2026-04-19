@@ -7,11 +7,12 @@ use Carbon\Carbon;
 class RecurringPlanBuilder
 {
     private array $data = [];
+
     private array $schedule = [];
 
     public static function make(): self
     {
-        return new self();
+        return new self;
     }
 
     public function referenceId(string $id): self
@@ -116,7 +117,7 @@ class RecurringPlanBuilder
         $payload['failed_cycle_action'] = 'STOP';
 
         if (! empty($this->schedule)) {
-            $this->schedule['reference_id'] = ($payload['reference_id'] ?? '') . '_schedule';
+            $this->schedule['reference_id'] = ($payload['reference_id'] ?? '').'_schedule';
             $payload['schedule'] = $this->schedule;
         }
 

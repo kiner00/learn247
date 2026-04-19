@@ -28,16 +28,16 @@ class GetAllCommunitiesTool implements Tool
             ->get();
 
         if ($communities->isEmpty()) {
-            return 'No communities found' . ($query ? " matching \"{$query}\"" : '') . '.';
+            return 'No communities found'.($query ? " matching \"{$query}\"" : '').'.';
         }
 
         $result = $communities->map(fn ($c) => [
-            'name'         => $c->name,
-            'slug'         => $c->slug,
-            'category'     => $c->category,
-            'description'  => $c->description ? str($c->description)->limit(120)->value() : null,
-            'price'        => $c->price > 0 ? "₱{$c->price} ({$c->billing_type})" : 'Free',
-            'is_private'   => $c->is_private,
+            'name' => $c->name,
+            'slug' => $c->slug,
+            'category' => $c->category,
+            'description' => $c->description ? str($c->description)->limit(120)->value() : null,
+            'price' => $c->price > 0 ? "₱{$c->price} ({$c->billing_type})" : 'Free',
+            'is_private' => $c->is_private,
         ])->values()->toArray();
 
         return json_encode($result, JSON_PRETTY_PRINT);

@@ -5,7 +5,6 @@ namespace App\Actions\Admin;
 use App\Mail\GlobalAnnouncementMail;
 use App\Models\Affiliate;
 use App\Models\CreatorSubscription;
-use App\Models\CommunityMember;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Mail;
@@ -33,12 +32,12 @@ class SendGlobalAnnouncement
     {
         return match ($audience) {
             'affiliates' => User::whereIn('id',
-                    Affiliate::where('status', Affiliate::STATUS_ACTIVE)->pluck('user_id')
-                )->select('id', 'name', 'email')->get(),
+                Affiliate::where('status', Affiliate::STATUS_ACTIVE)->pluck('user_id')
+            )->select('id', 'name', 'email')->get(),
 
             'creators' => User::whereIn('id',
-                    CreatorSubscription::where('status', CreatorSubscription::STATUS_ACTIVE)->pluck('user_id')
-                )->select('id', 'name', 'email')->get(),
+                CreatorSubscription::where('status', CreatorSubscription::STATUS_ACTIVE)->pluck('user_id')
+            )->select('id', 'name', 'email')->get(),
 
             'members' => User::whereHas('communityMemberships')
                 ->select('id', 'name', 'email')

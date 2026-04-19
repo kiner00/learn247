@@ -29,15 +29,15 @@ class GetMyCommunitiesTool implements Tool
         $result = [];
         foreach ($memberships as $m) {
             $result[] = [
-                'community'       => $m->community->name,
-                'slug'            => $m->community->slug,
-                'category'        => $m->community->category,
-                'role'            => $m->role,
+                'community' => $m->community->name,
+                'slug' => $m->community->slug,
+                'category' => $m->community->category,
+                'role' => $m->role,
                 'membership_type' => $m->membership_type,
-                'points'          => $m->points,
-                'level'           => CommunityMember::computeLevel($m->points),
-                'expires_at'      => $m->expires_at?->toDateString(),
-                'joined_at'       => $m->joined_at?->toDateString(),
+                'points' => $m->points,
+                'level' => CommunityMember::computeLevel($m->points),
+                'expires_at' => $m->expires_at?->toDateString(),
+                'joined_at' => $m->joined_at?->toDateString(),
             ];
         }
 

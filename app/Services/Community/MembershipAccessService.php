@@ -44,6 +44,7 @@ class MembershipAccessService
                 403,
                 'You must be a member of this community.'
             );
+
             return;
         }
 

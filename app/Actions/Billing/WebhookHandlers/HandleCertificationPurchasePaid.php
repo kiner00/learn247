@@ -38,7 +38,7 @@ class HandleCertificationPurchasePaid implements WebhookHandler
 
         try {
             $certPurchase->update([
-                'status'  => CertificationPurchase::STATUS_PAID,
+                'status' => CertificationPurchase::STATUS_PAID,
                 'paid_at' => now(),
             ]);
 
@@ -62,7 +62,7 @@ class HandleCertificationPurchasePaid implements WebhookHandler
         } catch (\Throwable $e) {
             Log::error('HandleCertificationPurchasePaid failed', [
                 'purchase_id' => $certPurchase->id,
-                'error'       => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
             throw $e;
         }
@@ -72,9 +72,9 @@ class HandleCertificationPurchasePaid implements WebhookHandler
     {
         return match (strtoupper($status)) {
             'PAID', 'SETTLED' => Payment::STATUS_PAID,
-            'EXPIRED'         => Payment::STATUS_EXPIRED,
-            'FAILED'          => Payment::STATUS_FAILED,
-            default           => Payment::STATUS_PENDING,
+            'EXPIRED' => Payment::STATUS_EXPIRED,
+            'FAILED' => Payment::STATUS_FAILED,
+            default => Payment::STATUS_PENDING,
         };
     }
 }

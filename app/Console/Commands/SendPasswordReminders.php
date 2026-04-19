@@ -14,7 +14,8 @@ use Illuminate\Support\Str;
 
 class SendPasswordReminders extends Command
 {
-    protected $signature   = 'passwords:send-reminders';
+    protected $signature = 'passwords:send-reminders';
+
     protected $description = 'Send password change reminders and re-issue temp passwords for guest users';
 
     public function handle(): void
@@ -35,7 +36,7 @@ class SendPasswordReminders extends Command
             ->get();
 
         foreach ($day5Users as $user) {
-            $tempPassword = 'Tmp@' . Str::upper(Str::random(3)) . Str::random(3);
+            $tempPassword = 'Tmp@'.Str::upper(Str::random(3)).Str::random(3);
             $user->forceFill(['password' => Hash::make($tempPassword)])->save();
 
             // Find most recent community for the email context

@@ -10,14 +10,14 @@ class LandingPageSectionBuilderTest extends TestCase
     private function makeAgent(array $overrides = []): LandingPageSectionBuilder
     {
         return new LandingPageSectionBuilder(array_merge([
-            'name'         => 'Test Community',
-            'category'     => 'Education',
-            'description'  => 'A great community',
-            'price'        => 499,
-            'currency'     => 'PHP',
+            'name' => 'Test Community',
+            'category' => 'Education',
+            'description' => 'A great community',
+            'price' => 499,
+            'currency' => 'PHP',
             'creator_name' => 'John Doe',
             'member_count' => 100,
-            'section'      => 'hero',
+            'section' => 'hero',
         ], $overrides));
     }
 
@@ -45,7 +45,7 @@ class LandingPageSectionBuilderTest extends TestCase
     public function test_instructions_defaults_when_optional_fields_missing(): void
     {
         $agent = new LandingPageSectionBuilder([
-            'name'    => 'Minimal',
+            'name' => 'Minimal',
             'section' => 'hero',
         ]);
 
@@ -129,8 +129,8 @@ class LandingPageSectionBuilderTest extends TestCase
     public function test_offer_stack_section_schema_with_paid_price(): void
     {
         $instructions = $this->makeAgent([
-            'section'  => 'offer_stack',
-            'price'    => 999,
+            'section' => 'offer_stack',
+            'price' => 999,
             'currency' => 'USD',
         ])->instructions();
 
@@ -142,8 +142,8 @@ class LandingPageSectionBuilderTest extends TestCase
     public function test_offer_stack_section_schema_with_free_price(): void
     {
         $instructions = $this->makeAgent([
-            'section'  => 'offer_stack',
-            'price'    => 0,
+            'section' => 'offer_stack',
+            'price' => 0,
             'currency' => 'PHP',
         ])->instructions();
 

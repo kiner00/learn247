@@ -10,9 +10,11 @@ class Workflow extends Model
 {
     use HasFactory;
 
-    public const TRIGGER_MEMBER_JOINED     = 'member_joined';
+    public const TRIGGER_MEMBER_JOINED = 'member_joined';
+
     public const TRIGGER_SUBSCRIPTION_PAID = 'subscription_paid';
-    public const TRIGGER_COURSE_ENROLLED   = 'course_enrolled';
+
+    public const TRIGGER_COURSE_ENROLLED = 'course_enrolled';
 
     public const TRIGGERS = [
         self::TRIGGER_MEMBER_JOINED,
@@ -42,9 +44,9 @@ class Workflow extends Model
     {
         return [
             'trigger_filter' => 'array',
-            'action_config'  => 'array',
-            'is_active'      => 'boolean',
-            'last_run_at'    => 'datetime',
+            'action_config' => 'array',
+            'is_active' => 'boolean',
+            'last_run_at' => 'datetime',
         ];
     }
 

@@ -19,9 +19,9 @@ class MessageResourceTest extends TestCase
         $receiver = User::factory()->create();
 
         $message = DirectMessage::create([
-            'sender_id'   => $sender->id,
+            'sender_id' => $sender->id,
             'receiver_id' => $receiver->id,
-            'content'     => 'Hello there',
+            'content' => 'Hello there',
         ]);
 
         $request = Request::create('/');
@@ -42,9 +42,9 @@ class MessageResourceTest extends TestCase
         $receiver = User::factory()->create();
 
         $message = DirectMessage::create([
-            'sender_id'   => $sender->id,
+            'sender_id' => $sender->id,
             'receiver_id' => $receiver->id,
-            'content'     => 'My message',
+            'content' => 'My message',
         ]);
 
         $request = Request::create('/');
@@ -62,9 +62,9 @@ class MessageResourceTest extends TestCase
         $receiver = User::factory()->create();
 
         $message = DirectMessage::create([
-            'sender_id'   => $sender->id,
+            'sender_id' => $sender->id,
             'receiver_id' => $receiver->id,
-            'content'     => 'Not mine',
+            'content' => 'Not mine',
         ]);
 
         $request = Request::create('/');
@@ -81,9 +81,9 @@ class MessageResourceTest extends TestCase
         $receiver = User::factory()->create();
 
         $message = DirectMessage::create([
-            'sender_id'   => $sender->id,
+            'sender_id' => $sender->id,
             'receiver_id' => $receiver->id,
-            'content'     => 'Guest view',
+            'content' => 'Guest view',
         ]);
 
         $request = Request::create('/');

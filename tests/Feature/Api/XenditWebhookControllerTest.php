@@ -16,13 +16,13 @@ class XenditWebhookControllerTest extends TestCase
 
     public function test_valid_webhook_returns_200(): void
     {
-        $user         = User::factory()->create();
-        $community    = Community::factory()->paid()->create();
+        $user = User::factory()->create();
+        $community = Community::factory()->paid()->create();
         Subscription::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_test',
-            'status'       => Subscription::STATUS_PENDING,
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_test',
+            'status' => Subscription::STATUS_PENDING,
         ]);
 
         $this->instance(XenditService::class, tap(Mockery::mock(XenditService::class), function ($mock) {
@@ -30,9 +30,9 @@ class XenditWebhookControllerTest extends TestCase
         }));
 
         $response = $this->postJson('/api/xendit/webhook', [
-            'id'       => 'inv_test',
-            'status'   => 'PAID',
-            'amount'   => 499,
+            'id' => 'inv_test',
+            'status' => 'PAID',
+            'amount' => 499,
             'currency' => 'PHP',
         ], ['x-callback-token' => 'valid']);
 

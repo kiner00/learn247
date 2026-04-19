@@ -23,14 +23,14 @@ class CommunityInviteController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        $emails    = $invites->where('accepted_at', '!=', null)->pluck('email')->unique();
+        $emails = $invites->where('accepted_at', '!=', null)->pluck('email')->unique();
         $userNames = User::whereIn('email', $emails)->pluck('name', 'email');
 
         $invites = $invites->map(fn ($invite) => [
-            'email'      => $invite->email,
-            'name'       => $invite->isAccepted() ? ($userNames[$invite->email] ?? null) : null,
-            'status'     => $invite->isAccepted() ? 'accepted' : ($invite->isExpired() ? 'expired' : 'pending'),
-            'sent_at'    => $invite->created_at->format('M j, Y'),
+            'email' => $invite->email,
+            'name' => $invite->isAccepted() ? ($userNames[$invite->email] ?? null) : null,
+            'status' => $invite->isAccepted() ? 'accepted' : ($invite->isExpired() ? 'expired' : 'pending'),
+            'sent_at' => $invite->created_at->format('M j, Y'),
             'expires_at' => $invite->expires_at?->format('M j, Y'),
         ]);
 
@@ -47,14 +47,14 @@ class CommunityInviteController extends Controller
 
         if ($request->hasFile('csv')) {
             $request->validate([
-                'csv'                => 'file|mimes:csv,txt|max:2048',
+                'csv' => 'file|mimes:csv,txt|max:2048',
                 'free_access_months' => 'nullable|integer|min:1|max:120',
             ]);
             $emails = $action->parseCSV($request->file('csv')->getPathname());
             $result = $action->batch($community, $emails, $freeAccessMonths);
         } else {
             $request->validate([
-                'email'              => 'required|email',
+                'email' => 'required|email',
                 'free_access_months' => 'nullable|integer|min:1|max:120',
             ]);
             $result = $action->single($community, $request->email, $freeAccessMonths);
@@ -78,7 +78,7 @@ class CommunityInviteController extends Controller
             $provision->execute($invite);
         }
 
-        $result    = $action->execute(auth()->user(), $invite);
+        $result = $action->execute(auth()->user(), $invite);
         $community = $invite->community;
 
         $route = $result['redirect'] === 'show'

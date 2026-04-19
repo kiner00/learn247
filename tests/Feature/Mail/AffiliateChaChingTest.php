@@ -20,7 +20,7 @@ class AffiliateChaChingTest extends TestCase
         $affiliate = User::factory()->create();
         $community = Community::factory()->create(['name' => 'Awesome Community']);
 
-        $mail     = new AffiliateChaChing($affiliate, $community, 500.00, 50.00);
+        $mail = new AffiliateChaChing($affiliate, $community, 500.00, 50.00);
         $envelope = $mail->envelope();
 
         $this->assertStringContainsString('Awesome Community', $envelope->subject);
@@ -33,7 +33,7 @@ class AffiliateChaChingTest extends TestCase
         $affiliate = User::factory()->create();
         $community = Community::factory()->create();
 
-        $mail    = new AffiliateChaChing($affiliate, $community, 500.00, 50.00);
+        $mail = new AffiliateChaChing($affiliate, $community, 500.00, 50.00);
         $content = $mail->content();
 
         $this->assertEquals('emails.affiliate-cha-ching', $content->view);
@@ -44,8 +44,8 @@ class AffiliateChaChingTest extends TestCase
         EmailTemplate::updateOrCreate(
             ['key' => 'affiliate-cha-ching'],
             [
-                'name'      => 'Affiliate Sale',
-                'subject'   => 'You earned {{commission_amount}} from {{community_name}}',
+                'name' => 'Affiliate Sale',
+                'subject' => 'You earned {{commission_amount}} from {{community_name}}',
                 'html_body' => '<p>Congrats</p>',
             ]
         );
@@ -53,7 +53,7 @@ class AffiliateChaChingTest extends TestCase
         $affiliate = User::factory()->create(['name' => 'John']);
         $community = Community::factory()->create(['name' => 'TestComm']);
 
-        $mail     = new AffiliateChaChing($affiliate, $community, 500.00, 50.00);
+        $mail = new AffiliateChaChing($affiliate, $community, 500.00, 50.00);
         $envelope = $mail->envelope();
 
         $this->assertStringContainsString('TestComm', $envelope->subject);
@@ -65,8 +65,8 @@ class AffiliateChaChingTest extends TestCase
         EmailTemplate::updateOrCreate(
             ['key' => 'affiliate-cha-ching'],
             [
-                'name'      => 'Affiliate Sale',
-                'subject'   => 'Cha-ching!',
+                'name' => 'Affiliate Sale',
+                'subject' => 'Cha-ching!',
                 'html_body' => '<p>Hi {{affiliate_name}}, you earned {{commission_amount}} from {{community_name}}</p>',
             ]
         );
@@ -74,7 +74,7 @@ class AffiliateChaChingTest extends TestCase
         $affiliate = User::factory()->create(['name' => 'Jane']);
         $community = Community::factory()->create(['name' => 'My Community']);
 
-        $mail    = new AffiliateChaChing($affiliate, $community, 1000.00, 100.00);
+        $mail = new AffiliateChaChing($affiliate, $community, 1000.00, 100.00);
         $content = $mail->content();
 
         $this->assertNotNull($content->htmlString);

@@ -17,7 +17,7 @@ class ResendOnboardingEmail
         $community = $user->communityMemberships()->with('community')->first()?->community;
         abort_unless($community, 422, 'No community found for this user.');
 
-        $tempPassword = 'Tmp@' . Str::upper(Str::random(3)) . Str::random(3);
+        $tempPassword = 'Tmp@'.Str::upper(Str::random(3)).Str::random(3);
         $user->forceFill(['password' => Hash::make($tempPassword)])->save();
 
         Mail::to($user->email)->queue(new TempPasswordMail($user, $tempPassword, $community));

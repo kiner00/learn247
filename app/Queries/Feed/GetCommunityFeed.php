@@ -67,7 +67,7 @@ class GetCommunityFeed
                 ->values();
 
             $post->commenter_avatars = $commenters;
-            $post->last_comment_at   = $post->comments->max('created_at');
+            $post->last_comment_at = $post->comments->max('created_at');
         });
     }
 
@@ -90,16 +90,16 @@ class GetCommunityFeed
         }
 
         // Collect all likeable IDs by type
-        $postIds    = $posts->pluck('id')->all();
+        $postIds = $posts->pluck('id')->all();
         $commentIds = $posts->flatMap(fn ($p) => $p->comments->pluck('id'))->all();
-        $replyIds   = $posts->flatMap(fn ($p) => $p->comments->flatMap(fn ($c) => $c->replies->pluck('id')))->all();
+        $replyIds = $posts->flatMap(fn ($p) => $p->comments->flatMap(fn ($c) => $c->replies->pluck('id')))->all();
 
         // Single query: reaction counts grouped by likeable
-        $postReactions    = $this->reactionCountsBatch('App\\Models\\Post', $postIds);
+        $postReactions = $this->reactionCountsBatch('App\\Models\\Post', $postIds);
         $commentReactions = $this->reactionCountsBatch('App\\Models\\Comment', array_merge($commentIds, $replyIds));
 
         // Single query: current user's reactions
-        $userPostLikes    = collect();
+        $userPostLikes = collect();
         $userCommentLikes = collect();
         if ($userId) {
             $userPostLikes = Like::where('user_id', $userId)
@@ -114,21 +114,21 @@ class GetCommunityFeed
         }
 
         foreach ($posts as $post) {
-            $post->reactions      = $postReactions->get($post->id, $this->emptyReactions());
-            $post->user_reaction  = $userPostLikes->get($post->id);
+            $post->reactions = $postReactions->get($post->id, $this->emptyReactions());
+            $post->user_reaction = $userPostLikes->get($post->id);
             $post->user_has_liked = (bool) $post->user_reaction;
 
             foreach ($post->comments as $comment) {
-                $comment->reactions      = $commentReactions->get($comment->id, $this->emptyReactions());
-                $comment->user_reaction  = $userCommentLikes->get($comment->id);
+                $comment->reactions = $commentReactions->get($comment->id, $this->emptyReactions());
+                $comment->user_reaction = $userCommentLikes->get($comment->id);
                 $comment->user_has_liked = (bool) $comment->user_reaction;
-                $comment->likes_count    = collect($comment->reactions)->sum();
+                $comment->likes_count = collect($comment->reactions)->sum();
 
                 foreach ($comment->replies as $reply) {
-                    $reply->reactions      = $commentReactions->get($reply->id, $this->emptyReactions());
-                    $reply->user_reaction  = $userCommentLikes->get($reply->id);
+                    $reply->reactions = $commentReactions->get($reply->id, $this->emptyReactions());
+                    $reply->user_reaction = $userCommentLikes->get($reply->id);
                     $reply->user_has_liked = (bool) $reply->user_reaction;
-                    $reply->likes_count    = collect($reply->reactions)->sum();
+                    $reply->likes_count = collect($reply->reactions)->sum();
                 }
             }
         }
@@ -156,6 +156,7 @@ class GetCommunityFeed
                         $counts[$row->type] = $row->cnt;
                     }
                 }
+
                 return $counts;
             });
     }

@@ -37,20 +37,20 @@ class HandleCurzzoPurchasePaid implements WebhookHandler
         }
 
         try {
-            $isMonthly  = $purchase->curzzo?->billing_type === 'monthly';
-            $expiresAt  = $isMonthly
+            $isMonthly = $purchase->curzzo?->billing_type === 'monthly';
+            $expiresAt = $isMonthly
                 ? ($purchase->expires_at?->isFuture() ? $purchase->expires_at->addMonth() : now()->addMonth())
                 : null;
 
             $purchase->update([
-                'status'     => CurzzoPurchase::STATUS_PAID,
-                'paid_at'    => now(),
+                'status' => CurzzoPurchase::STATUS_PAID,
+                'paid_at' => now(),
                 'expires_at' => $expiresAt,
             ]);
 
             Log::info('Xendit webhook: curzzo purchase paid', [
                 'purchase_id' => $purchase->id,
-                'monthly'     => $isMonthly,
+                'monthly' => $isMonthly,
             ]);
 
             $conversion = $this->recordConversion->executeForCurzzo($purchase);
@@ -69,7 +69,7 @@ class HandleCurzzoPurchasePaid implements WebhookHandler
         } catch (\Throwable $e) {
             Log::error('HandleCurzzoPurchasePaid failed', [
                 'purchase_id' => $purchase->id,
-                'error'       => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
             throw $e;
         }
@@ -79,9 +79,9 @@ class HandleCurzzoPurchasePaid implements WebhookHandler
     {
         return match (strtoupper($status)) {
             'PAID', 'SETTLED' => Payment::STATUS_PAID,
-            'EXPIRED'         => Payment::STATUS_EXPIRED,
-            'FAILED'          => Payment::STATUS_FAILED,
-            default           => Payment::STATUS_PENDING,
+            'EXPIRED' => Payment::STATUS_EXPIRED,
+            'FAILED' => Payment::STATUS_FAILED,
+            default => Payment::STATUS_PENDING,
         };
     }
 }

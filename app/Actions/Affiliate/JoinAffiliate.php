@@ -36,9 +36,9 @@ class JoinAffiliate
 
         return Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'code'         => AffiliateCodeGenerator::generate(),
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => $user->id,
+            'code' => AffiliateCodeGenerator::generate(),
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
     }
 }

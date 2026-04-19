@@ -14,7 +14,7 @@ class BadgeController extends Controller
         $badges = $query->execute(auth()->id());
 
         return Inertia::render('Badges/Index', [
-            'memberBadges'  => $badges['member'],
+            'memberBadges' => $badges['member'],
             'creatorBadges' => $badges['creator'],
         ]);
     }

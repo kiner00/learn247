@@ -6,7 +6,6 @@ use App\Actions\Billing\SyncMembershipFromSubscription;
 use App\Actions\Billing\WebhookHandlers\HandleSubscriptionPaid;
 use App\Models\Affiliate;
 use App\Models\Community;
-use App\Models\CommunityMember;
 use App\Models\Payment;
 use App\Models\Subscription;
 use App\Models\User;
@@ -26,9 +25,9 @@ class HandleSubscriptionPaidTest extends TestCase
         $community = Community::factory()->create();
         Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => User::factory()->create()->id,
-            'xendit_id'    => 'inv_match_yes',
-            'status'       => Subscription::STATUS_PENDING,
+            'user_id' => User::factory()->create()->id,
+            'xendit_id' => 'inv_match_yes',
+            'status' => Subscription::STATUS_PENDING,
         ]);
 
         $handler = app(HandleSubscriptionPaid::class);
@@ -63,14 +62,14 @@ class HandleSubscriptionPaidTest extends TestCase
     {
         Mail::fake();
 
-        $user      = User::factory()->create(['needs_password_setup' => false]);
+        $user = User::factory()->create(['needs_password_setup' => false]);
         $community = Community::factory()->create(['billing_type' => Community::BILLING_ONE_TIME]);
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_onetime_direct',
-            'status'       => Subscription::STATUS_PENDING,
-            'expires_at'   => null,
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_onetime_direct',
+            'status' => Subscription::STATUS_PENDING,
+            'expires_at' => null,
         ]);
 
         $handler = app(HandleSubscriptionPaid::class);
@@ -92,15 +91,15 @@ class HandleSubscriptionPaidTest extends TestCase
     {
         Mail::fake();
 
-        $user      = User::factory()->create(['needs_password_setup' => false]);
+        $user = User::factory()->create(['needs_password_setup' => false]);
         $community = Community::factory()->paid()->create(['deletion_requested_at' => now()]);
         $existingExpiry = now()->addDays(10);
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_pd_keep',
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => $existingExpiry,
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_pd_keep',
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => $existingExpiry,
         ]);
 
         $handler = app(HandleSubscriptionPaid::class);
@@ -124,37 +123,37 @@ class HandleSubscriptionPaidTest extends TestCase
     {
         Mail::fake();
 
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->paid()->create([
-            'owner_id'                  => $owner->id,
+            'owner_id' => $owner->id,
             'affiliate_commission_rate' => 10,
-            'deletion_requested_at'     => now(),
+            'deletion_requested_at' => now(),
         ]);
 
         $affiliateUser = User::factory()->create(['needs_password_setup' => false]);
-        $affiliate     = Affiliate::create([
+        $affiliate = Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => $affiliateUser->id,
-            'code'         => 'AFF_PD_SKIP',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => $affiliateUser->id,
+            'code' => 'AFF_PD_SKIP',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $affiliateUser->id,
-            'xendit_id'    => 'inv_aff_active_pd',
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->addMonth(),
+            'user_id' => $affiliateUser->id,
+            'xendit_id' => 'inv_aff_active_pd',
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addMonth(),
         ]);
 
-        $referredUser  = User::factory()->create(['needs_password_setup' => false]);
-        $subscription  = Subscription::create([
+        $referredUser = User::factory()->create(['needs_password_setup' => false]);
+        $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $referredUser->id,
+            'user_id' => $referredUser->id,
             'affiliate_id' => $affiliate->id,
-            'xendit_id'    => 'inv_pd_cha',
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->addDays(10),
+            'xendit_id' => 'inv_pd_cha',
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addDays(10),
         ]);
 
         $handler = app(HandleSubscriptionPaid::class);
@@ -168,7 +167,7 @@ class HandleSubscriptionPaidTest extends TestCase
         // Payment should still be created
         $this->assertDatabaseHas('payments', [
             'subscription_id' => $subscription->id,
-            'status'          => Payment::STATUS_PAID,
+            'status' => Payment::STATUS_PAID,
         ]);
 
         // No cha-ching emails sent for pending-deletion (Mail::fake ensures none queued for creator/affiliate cha-ching)
@@ -181,36 +180,36 @@ class HandleSubscriptionPaidTest extends TestCase
     {
         Mail::fake();
 
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->paid()->create([
-            'owner_id'                  => $owner->id,
+            'owner_id' => $owner->id,
             'affiliate_commission_rate' => 10,
         ]);
 
         $affiliateUser = User::factory()->create(['needs_password_setup' => false]);
-        $affiliate     = Affiliate::create([
+        $affiliate = Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => $affiliateUser->id,
-            'code'         => 'AFF_ACTIVE_CHA',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => $affiliateUser->id,
+            'code' => 'AFF_ACTIVE_CHA',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $affiliateUser->id,
-            'xendit_id'    => 'inv_aff_active_sub',
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->addMonth(),
+            'user_id' => $affiliateUser->id,
+            'xendit_id' => 'inv_aff_active_sub',
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addMonth(),
         ]);
 
-        $referredUser  = User::factory()->create(['needs_password_setup' => false]);
-        $subscription  = Subscription::create([
+        $referredUser = User::factory()->create(['needs_password_setup' => false]);
+        $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $referredUser->id,
+            'user_id' => $referredUser->id,
             'affiliate_id' => $affiliate->id,
-            'xendit_id'    => 'inv_aff_cha_active',
-            'status'       => Subscription::STATUS_PENDING,
-            'expires_at'   => null,
+            'xendit_id' => 'inv_aff_cha_active',
+            'status' => Subscription::STATUS_PENDING,
+            'expires_at' => null,
         ]);
 
         $handler = app(HandleSubscriptionPaid::class);
@@ -224,7 +223,7 @@ class HandleSubscriptionPaidTest extends TestCase
         // Payment should be created
         $this->assertDatabaseHas('payments', [
             'subscription_id' => $subscription->id,
-            'status'          => Payment::STATUS_PAID,
+            'status' => Payment::STATUS_PAID,
         ]);
 
         // Affiliate and creator cha-ching emails should be sent
@@ -238,19 +237,19 @@ class HandleSubscriptionPaidTest extends TestCase
     {
         Mail::fake();
 
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->paid()->create([
-            'owner_id'              => $owner->id,
+            'owner_id' => $owner->id,
             'deletion_requested_at' => now(),
         ]);
 
-        $user         = User::factory()->create(['needs_password_setup' => false]);
+        $user = User::factory()->create(['needs_password_setup' => false]);
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_pd_no_aff_cha',
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->addDays(10),
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_pd_no_aff_cha',
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addDays(10),
         ]);
 
         $handler = app(HandleSubscriptionPaid::class);
@@ -264,7 +263,7 @@ class HandleSubscriptionPaidTest extends TestCase
         // Payment created, but no cha-ching
         $this->assertDatabaseHas('payments', [
             'subscription_id' => $subscription->id,
-            'status'          => Payment::STATUS_PAID,
+            'status' => Payment::STATUS_PAID,
         ]);
 
         Mail::assertNothingQueued();
@@ -274,14 +273,14 @@ class HandleSubscriptionPaidTest extends TestCase
 
     public function test_expired_status_creates_expired_payment_record(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_exp_pay',
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->addDay(),
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_exp_pay',
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addDay(),
         ]);
 
         $handler = app(HandleSubscriptionPaid::class);
@@ -294,7 +293,7 @@ class HandleSubscriptionPaidTest extends TestCase
 
         $this->assertDatabaseHas('payments', [
             'subscription_id' => $subscription->id,
-            'status'          => Payment::STATUS_EXPIRED,
+            'status' => Payment::STATUS_EXPIRED,
         ]);
     }
 
@@ -304,15 +303,15 @@ class HandleSubscriptionPaidTest extends TestCase
     {
         Mail::fake();
 
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->paid()->create(['owner_id' => $owner->id]);
-        $user      = User::factory()->create(['needs_password_setup' => false]);
+        $user = User::factory()->create(['needs_password_setup' => false]);
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_no_aff_cha',
-            'status'       => Subscription::STATUS_PENDING,
-            'expires_at'   => null,
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_no_aff_cha',
+            'status' => Subscription::STATUS_PENDING,
+            'expires_at' => null,
         ]);
 
         $handler = app(HandleSubscriptionPaid::class);
@@ -325,7 +324,7 @@ class HandleSubscriptionPaidTest extends TestCase
 
         $this->assertDatabaseHas('payments', [
             'subscription_id' => $subscription->id,
-            'status'          => Payment::STATUS_PAID,
+            'status' => Payment::STATUS_PAID,
         ]);
 
         // Creator cha-ching email should be queued
@@ -338,14 +337,14 @@ class HandleSubscriptionPaidTest extends TestCase
     {
         Mail::fake();
 
-        $user      = User::factory()->create(['needs_password_setup' => true]);
+        $user = User::factory()->create(['needs_password_setup' => true]);
         $community = Community::factory()->create();
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_guest_direct',
-            'status'       => Subscription::STATUS_PENDING,
-            'expires_at'   => null,
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_guest_direct',
+            'status' => Subscription::STATUS_PENDING,
+            'expires_at' => null,
         ]);
 
         $handler = app(HandleSubscriptionPaid::class);
@@ -365,14 +364,14 @@ class HandleSubscriptionPaidTest extends TestCase
     {
         Mail::fake();
 
-        $user      = User::factory()->create(['needs_password_setup' => false]);
+        $user = User::factory()->create(['needs_password_setup' => false]);
         $community = Community::factory()->create();
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_nong',
-            'status'       => Subscription::STATUS_PENDING,
-            'expires_at'   => null,
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_nong',
+            'status' => Subscription::STATUS_PENDING,
+            'expires_at' => null,
         ]);
 
         $handler = app(HandleSubscriptionPaid::class);
@@ -392,14 +391,14 @@ class HandleSubscriptionPaidTest extends TestCase
     {
         Mail::fake();
 
-        $user      = User::factory()->create(['needs_password_setup' => false]);
+        $user = User::factory()->create(['needs_password_setup' => false]);
         $community = Community::factory()->create();
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_aff_auto_direct',
-            'status'       => Subscription::STATUS_PENDING,
-            'expires_at'   => null,
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_aff_auto_direct',
+            'status' => Subscription::STATUS_PENDING,
+            'expires_at' => null,
         ]);
 
         $handler = app(HandleSubscriptionPaid::class);
@@ -412,8 +411,8 @@ class HandleSubscriptionPaidTest extends TestCase
 
         $this->assertDatabaseHas('affiliates', [
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => $user->id,
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
     }
 
@@ -421,22 +420,22 @@ class HandleSubscriptionPaidTest extends TestCase
     {
         Mail::fake();
 
-        $user      = User::factory()->create(['needs_password_setup' => false]);
+        $user = User::factory()->create(['needs_password_setup' => false]);
         $community = Community::factory()->create();
 
         Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'code'         => 'EXISTING_AFF',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => $user->id,
+            'code' => 'EXISTING_AFF',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_aff_exists',
-            'status'       => Subscription::STATUS_PENDING,
-            'expires_at'   => null,
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_aff_exists',
+            'status' => Subscription::STATUS_PENDING,
+            'expires_at' => null,
         ]);
 
         $handler = app(HandleSubscriptionPaid::class);
@@ -457,14 +456,14 @@ class HandleSubscriptionPaidTest extends TestCase
 
     public function test_expired_status_on_pending_deletion_community_deletes_community_when_last(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid()->create(['deletion_requested_at' => now()]);
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_grace_del',
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->addDay(),
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_grace_del',
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addDay(),
         ]);
 
         $handler = app(HandleSubscriptionPaid::class);
@@ -480,25 +479,25 @@ class HandleSubscriptionPaidTest extends TestCase
 
     public function test_expired_status_on_pending_deletion_does_not_delete_when_others_active(): void
     {
-        $user1     = User::factory()->create();
-        $user2     = User::factory()->create();
+        $user1 = User::factory()->create();
+        $user2 = User::factory()->create();
         $community = Community::factory()->paid()->create(['deletion_requested_at' => now()]);
 
         // user2 still has an active sub with future expiry
         Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user2->id,
-            'xendit_id'    => 'inv_other_active',
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->addMonth(),
+            'user_id' => $user2->id,
+            'xendit_id' => 'inv_other_active',
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addMonth(),
         ]);
 
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user1->id,
-            'xendit_id'    => 'inv_grace_no_del',
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->addDay(),
+            'user_id' => $user1->id,
+            'xendit_id' => 'inv_grace_no_del',
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addDay(),
         ]);
 
         $handler = app(HandleSubscriptionPaid::class);
@@ -517,14 +516,14 @@ class HandleSubscriptionPaidTest extends TestCase
 
     public function test_failed_status_maps_to_cancelled(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_fail_direct',
-            'status'       => Subscription::STATUS_PENDING,
-            'expires_at'   => null,
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_fail_direct',
+            'status' => Subscription::STATUS_PENDING,
+            'expires_at' => null,
         ]);
 
         $handler = app(HandleSubscriptionPaid::class);
@@ -536,13 +535,13 @@ class HandleSubscriptionPaidTest extends TestCase
         );
 
         $this->assertDatabaseHas('subscriptions', [
-            'id'     => $subscription->id,
+            'id' => $subscription->id,
             'status' => Subscription::STATUS_CANCELLED,
         ]);
 
         $this->assertDatabaseHas('payments', [
             'subscription_id' => $subscription->id,
-            'status'          => Payment::STATUS_FAILED,
+            'status' => Payment::STATUS_FAILED,
         ]);
     }
 
@@ -550,14 +549,14 @@ class HandleSubscriptionPaidTest extends TestCase
 
     public function test_unknown_status_keeps_pending_and_skips_payment(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_unk_direct',
-            'status'       => Subscription::STATUS_PENDING,
-            'expires_at'   => null,
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_unk_direct',
+            'status' => Subscription::STATUS_PENDING,
+            'expires_at' => null,
         ]);
 
         $handler = app(HandleSubscriptionPaid::class);
@@ -569,7 +568,7 @@ class HandleSubscriptionPaidTest extends TestCase
         );
 
         $this->assertDatabaseHas('subscriptions', [
-            'id'     => $subscription->id,
+            'id' => $subscription->id,
             'status' => Subscription::STATUS_PENDING,
         ]);
 
@@ -582,15 +581,15 @@ class HandleSubscriptionPaidTest extends TestCase
     {
         Mail::fake();
 
-        $user      = User::factory()->create(['needs_password_setup' => false]);
+        $user = User::factory()->create(['needs_password_setup' => false]);
         $community = Community::factory()->create();
         $futureExpiry = now()->addDays(15);
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_renew_direct',
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => $futureExpiry,
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_renew_direct',
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => $futureExpiry,
         ]);
 
         $handler = app(HandleSubscriptionPaid::class);
@@ -614,14 +613,14 @@ class HandleSubscriptionPaidTest extends TestCase
     {
         Mail::fake();
 
-        $user      = User::factory()->create(['needs_password_setup' => false]);
+        $user = User::factory()->create(['needs_password_setup' => false]);
         $community = Community::factory()->create();
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_late_renew',
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->subDays(5),
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_late_renew',
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->subDays(5),
         ]);
 
         $handler = app(HandleSubscriptionPaid::class);
@@ -645,14 +644,14 @@ class HandleSubscriptionPaidTest extends TestCase
     {
         Mail::fake();
 
-        $user      = User::factory()->create(['needs_password_setup' => false]);
+        $user = User::factory()->create(['needs_password_setup' => false]);
         $community = Community::factory()->create();
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_settled_direct',
-            'status'       => Subscription::STATUS_PENDING,
-            'expires_at'   => null,
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_settled_direct',
+            'status' => Subscription::STATUS_PENDING,
+            'expires_at' => null,
         ]);
 
         $handler = app(HandleSubscriptionPaid::class);
@@ -664,13 +663,13 @@ class HandleSubscriptionPaidTest extends TestCase
         );
 
         $this->assertDatabaseHas('subscriptions', [
-            'id'     => $subscription->id,
+            'id' => $subscription->id,
             'status' => Subscription::STATUS_ACTIVE,
         ]);
 
         $this->assertDatabaseHas('payments', [
             'subscription_id' => $subscription->id,
-            'status'          => Payment::STATUS_PAID,
+            'status' => Payment::STATUS_PAID,
         ]);
     }
 
@@ -678,14 +677,14 @@ class HandleSubscriptionPaidTest extends TestCase
 
     public function test_cancelled_status_on_pending_deletion_triggers_graceful_delete(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid()->create(['deletion_requested_at' => now()]);
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_cancel_del',
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->addDay(),
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_cancel_del',
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addDay(),
         ]);
 
         $handler = app(HandleSubscriptionPaid::class);
@@ -703,14 +702,14 @@ class HandleSubscriptionPaidTest extends TestCase
 
     public function test_handle_logs_error_and_rethrows_on_exception(): void
     {
-        $user      = User::factory()->create(['needs_password_setup' => false]);
+        $user = User::factory()->create(['needs_password_setup' => false]);
         $community = Community::factory()->create();
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_err_rethrow',
-            'status'       => Subscription::STATUS_PENDING,
-            'expires_at'   => null,
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_err_rethrow',
+            'status' => Subscription::STATUS_PENDING,
+            'expires_at' => null,
         ]);
 
         // Make SyncMembershipFromSubscription throw to trigger the catch block

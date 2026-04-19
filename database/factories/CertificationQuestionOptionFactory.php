@@ -11,8 +11,8 @@ class CertificationQuestionOptionFactory extends Factory
     {
         return [
             'question_id' => CertificationQuestion::factory(),
-            'label'       => fake()->word(),
-            'is_correct'  => false,
+            'label' => fake()->word(),
+            'is_correct' => false,
         ];
     }
 

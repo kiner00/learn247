@@ -14,7 +14,7 @@ class CommunityChecklistService
 {
     public function compute(Community $community): array
     {
-        $hasPost     = Post::where('community_id', $community->id)->exists();
+        $hasPost = Post::where('community_id', $community->id)->exists();
         $courseCount = $community->courses()->count();
 
         return [

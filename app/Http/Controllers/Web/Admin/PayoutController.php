@@ -32,7 +32,8 @@ class PayoutController extends Controller
 
         try {
             $result = $dispatcher->dispatch($community);
-            return back()->with('success', "Paid ₱" . number_format($result['amount'], 2) . " to {$community->owner->name} via Xendit.");
+
+            return back()->with('success', 'Paid ₱'.number_format($result['amount'], 2)." to {$community->owner->name} via Xendit.");
         } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -61,7 +62,7 @@ class PayoutController extends Controller
 
     public function paySelectedAffiliates(Request $request, BatchPayAffiliates $action): RedirectResponse
     {
-        $ids    = $request->validate(['affiliate_ids' => 'required|array', 'affiliate_ids.*' => 'integer'])['affiliate_ids'];
+        $ids = $request->validate(['affiliate_ids' => 'required|array', 'affiliate_ids.*' => 'integer'])['affiliate_ids'];
         $result = $action->execute(affiliateIds: $ids);
 
         return back()->with($result['errors'] ? 'error' : 'success', $result['message']);
@@ -78,7 +79,8 @@ class PayoutController extends Controller
     {
         try {
             $action->execute($payoutRequest);
-            return back()->with('success', "Approved & sent ₱" . number_format($payoutRequest->amount, 2) . " to {$payoutRequest->user->name}.");
+
+            return back()->with('success', 'Approved & sent ₱'.number_format($payoutRequest->amount, 2)." to {$payoutRequest->user->name}.");
         } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
             throw $e;
         } catch (\RuntimeException $e) {
@@ -103,7 +105,7 @@ class PayoutController extends Controller
         );
 
         if ($payoutRequest->type === PayoutRequest::TYPE_AFFILIATE) {
-            $mark      = app(\App\Actions\Affiliate\MarkAffiliateConversionPaid::class);
+            $mark = app(\App\Actions\Affiliate\MarkAffiliateConversionPaid::class);
             $remaining = (float) $payoutRequest->amount;
 
             \App\Models\AffiliateConversion::where('affiliate_id', $payoutRequest->affiliate_id)
@@ -111,14 +113,16 @@ class PayoutController extends Controller
                 ->orderBy('created_at')
                 ->get()
                 ->each(function ($conversion) use (&$remaining, $mark) {
-                    if ($remaining <= 0) return false;
+                    if ($remaining <= 0) {
+                        return false;
+                    }
                     $mark->execute($conversion);
                     $remaining -= (float) $conversion->commission_amount;
                 });
         }
 
         $payoutRequest->update([
-            'status'       => PayoutRequest::STATUS_PAID,
+            'status' => PayoutRequest::STATUS_PAID,
             'processed_by' => auth()->id(),
         ]);
 

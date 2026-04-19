@@ -19,7 +19,7 @@ class IssueGuestPasswordTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->action = new IssueGuestPassword();
+        $this->action = new IssueGuestPassword;
     }
 
     // ─── generate() ──────────────────────────────────────────────────────────
@@ -53,7 +53,7 @@ class IssueGuestPasswordTest extends TestCase
     {
         Mail::fake();
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
 
         $this->action->sendEmail($user, 'Tmp@ABCdef', $community);
@@ -67,7 +67,7 @@ class IssueGuestPasswordTest extends TestCase
     {
         Mail::shouldReceive('to')->andThrow(new \Exception('Mail server down'));
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
 
         // Should not throw
@@ -82,7 +82,7 @@ class IssueGuestPasswordTest extends TestCase
     {
         Mail::fake();
 
-        $user      = User::factory()->create(['needs_password_setup' => true]);
+        $user = User::factory()->create(['needs_password_setup' => true]);
         $community = Community::factory()->create();
 
         $tempPassword = $this->action->execute($user, $community);
@@ -97,7 +97,7 @@ class IssueGuestPasswordTest extends TestCase
     {
         Mail::fake();
 
-        $user      = User::factory()->create(['needs_password_setup' => false]);
+        $user = User::factory()->create(['needs_password_setup' => false]);
         $community = Community::factory()->create();
 
         $result = $this->action->execute($user, $community);

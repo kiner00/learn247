@@ -25,14 +25,14 @@ class CreateCommunityTest extends TestCase
 
     public function test_creates_community_with_provided_slug(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = $this->action->execute($user, [
-            'name'        => 'Test Community',
-            'slug'        => 'test-community',
+            'name' => 'Test Community',
+            'slug' => 'test-community',
             'description' => 'A test',
-            'is_private'  => false,
-            'price'       => 0,
-            'currency'    => 'PHP',
+            'is_private' => false,
+            'price' => 0,
+            'currency' => 'PHP',
         ]);
 
         $this->assertInstanceOf(Community::class, $community);
@@ -43,7 +43,7 @@ class CreateCommunityTest extends TestCase
 
     public function test_auto_generates_slug_from_name_when_not_provided(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = $this->action->execute($user, ['name' => 'Hello World Community']);
 
         $this->assertEquals('hello-world-community', $community->slug);
@@ -51,19 +51,19 @@ class CreateCommunityTest extends TestCase
 
     public function test_owner_is_added_as_admin_member(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = $this->action->execute($user, ['name' => 'My Community']);
 
         $this->assertDatabaseHas('community_members', [
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'role'         => CommunityMember::ROLE_ADMIN,
+            'user_id' => $user->id,
+            'role' => CommunityMember::ROLE_ADMIN,
         ]);
     }
 
     public function test_creates_community_with_default_values(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = $this->action->execute($user, ['name' => 'Minimal']);
 
         $this->assertFalse($community->is_private);
@@ -74,10 +74,10 @@ class CreateCommunityTest extends TestCase
 
     public function test_creates_paid_community(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = $this->action->execute($user, [
-            'name'       => 'Paid Community',
-            'price'      => 499.00,
+            'name' => 'Paid Community',
+            'price' => 499.00,
             'is_private' => true,
         ]);
 
@@ -89,8 +89,8 @@ class CreateCommunityTest extends TestCase
     {
         Storage::fake('public');
 
-        $user      = User::factory()->create();
-        $cover     = UploadedFile::fake()->image('cover.jpg', 1200, 400);
+        $user = User::factory()->create();
+        $cover = UploadedFile::fake()->image('cover.jpg', 1200, 400);
         $community = $this->action->execute($user, ['name' => 'With Cover'], null, $cover);
 
         $this->assertNotNull($community->cover_image);
@@ -101,8 +101,8 @@ class CreateCommunityTest extends TestCase
     {
         Storage::fake('public');
 
-        $user      = User::factory()->create();
-        $avatar    = UploadedFile::fake()->image('avatar.jpg', 200, 200);
+        $user = User::factory()->create();
+        $avatar = UploadedFile::fake()->image('avatar.jpg', 200, 200);
         $community = $this->action->execute($user, ['name' => 'With Avatar'], $avatar);
 
         $this->assertNotNull($community->avatar);

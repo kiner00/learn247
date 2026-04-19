@@ -12,23 +12,23 @@ class ListTrashedPosts
             ->with(['author:id,name', 'community:id,name,slug'])
             ->when($search, fn ($q) => $q->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('content', 'like', "%{$search}%");
+                    ->orWhere('content', 'like', "%{$search}%");
             }))
             ->latest('deleted_at')
             ->paginate(25)
             ->withQueryString()
             ->through(fn ($p) => [
-                'id'             => $p->id,
-                'title'          => $p->title,
-                'content'        => substr($p->content, 0, 120),
-                'author'         => $p->author?->name,
-                'community'      => $p->community?->name,
+                'id' => $p->id,
+                'title' => $p->title,
+                'content' => substr($p->content, 0, 120),
+                'author' => $p->author?->name,
+                'community' => $p->community?->name,
                 'community_slug' => $p->community?->slug,
-                'deleted_at'     => $p->deleted_at?->toDateString(),
+                'deleted_at' => $p->deleted_at?->toDateString(),
             ]);
 
         return [
-            'posts'   => $posts,
+            'posts' => $posts,
             'filters' => ['search' => $search],
         ];
     }

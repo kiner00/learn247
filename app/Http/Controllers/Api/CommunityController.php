@@ -16,7 +16,6 @@ use App\Models\CommunityLevelPerk;
 use App\Models\CommunityMember;
 use App\Queries\Community\GetLeaderboard;
 use App\Queries\Community\ListCommunities;
-use App\Queries\Feed\GetCommunityFeed;
 use App\Services\Analytics\CommunityAnalyticsService;
 use App\Services\Community\MembershipAccessService;
 use App\Services\Community\PlanLimitService;
@@ -46,7 +45,7 @@ class CommunityController extends Controller
 
             $communities->each(function (Community $c) use ($memberIds) {
                 $c->is_member = $memberIds->has($c->id);
-                $c->is_admin  = false;
+                $c->is_admin = false;
             });
         }
 
@@ -57,17 +56,17 @@ class CommunityController extends Controller
     {
         $community->load('owner')->loadCount('members');
 
-        $user       = $request->user();
+        $user = $request->user();
         $memberRecord = $user ? $community->members()->where('user_id', $user->id)->first() : null;
-        $isOwner    = $user && $community->owner_id === $user->id;
-        $hasAccess  = $user ? $membership->hasActiveMembership($user, $community) : false;
+        $isOwner = $user && $community->owner_id === $user->id;
+        $hasAccess = $user ? $membership->hasActiveMembership($user, $community) : false;
 
         return response()->json([
-            'community'  => new CommunityResource($community),
+            'community' => new CommunityResource($community),
             'membership' => $memberRecord ? [
-                'role'      => $memberRecord->role,
-                'points'    => $memberRecord->points,
-                'level'     => CommunityMember::computeLevel($memberRecord->points),
+                'role' => $memberRecord->role,
+                'points' => $memberRecord->points,
+                'level' => CommunityMember::computeLevel($memberRecord->points),
                 'joined_at' => $memberRecord->joined_at,
             ] : null,
             'has_access' => $hasAccess,
@@ -84,7 +83,7 @@ class CommunityController extends Controller
         );
 
         return response()->json([
-            'message'   => 'Community created.',
+            'message' => 'Community created.',
             'community' => new CommunityResource($community),
         ], 201);
     }
@@ -94,16 +93,16 @@ class CommunityController extends Controller
         abort_unless($request->user()->id === $community->owner_id, 403);
 
         $data = $request->validate([
-            'name'                     => ['required', 'string', 'max:255'],
-            'description'              => ['nullable', 'string', 'max:2000'],
-            'category'                 => ['nullable', 'string', 'in:Tech,Business,Design,Health,Education,Finance,Other'],
-            'avatar'                   => ['nullable', 'image', 'max:15360'],
-            'cover_image'              => ['nullable', 'image', 'max:15360'],
-            'price'                    => ['nullable', 'numeric', 'min:0'],
-            'currency'                 => ['nullable', 'string', 'in:PHP,USD'],
-            'is_private'               => ['boolean'],
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:2000'],
+            'category' => ['nullable', 'string', 'in:Tech,Business,Design,Health,Education,Finance,Other'],
+            'avatar' => ['nullable', 'image', 'max:15360'],
+            'cover_image' => ['nullable', 'image', 'max:15360'],
+            'price' => ['nullable', 'numeric', 'min:0'],
+            'currency' => ['nullable', 'string', 'in:PHP,USD'],
+            'is_private' => ['boolean'],
             'affiliate_commission_rate' => ['nullable', 'integer', 'min:0', 'max:85'],
-            'ai_chatbot_instructions'  => ['nullable', 'string', 'max:10000'],
+            'ai_chatbot_instructions' => ['nullable', 'string', 'max:10000'],
         ]);
 
         $action->execute($community, $data, $request->file('avatar'), $request->file('cover_image'));
@@ -137,9 +136,9 @@ class CommunityController extends Controller
         $gallery = collect($community->gallery_images ?? [])->values();
 
         return response()->json([
-            'community'      => new CommunityResource($community),
+            'community' => new CommunityResource($community),
             'recent_members' => $recentMembers,
-            'gallery'        => $gallery,
+            'gallery' => $gallery,
         ]);
     }
 
@@ -155,7 +154,7 @@ class CommunityController extends Controller
             ->paginate(20)->withQueryString();
 
         return response()->json([
-            'members'     => $members,
+            'members' => $members,
             'total_count' => $community->members()->count(),
             'admin_count' => $community->members()->where('role', 'admin')->count(),
         ]);
@@ -166,12 +165,12 @@ class CommunityController extends Controller
         abort_unless($request->user()->id === $community->owner_id, 403);
 
         $pricingGate = $planLimit->pricingGate($community);
-        $levelPerks  = CommunityLevelPerk::where('community_id', $community->id)->pluck('description', 'level')->toArray();
+        $levelPerks = CommunityLevelPerk::where('community_id', $community->id)->pluck('description', 'level')->toArray();
 
         return response()->json([
-            'community'    => new CommunityResource($community),
+            'community' => new CommunityResource($community),
             'pricing_gate' => $pricingGate,
-            'level_perks'  => $levelPerks,
+            'level_perks' => $levelPerks,
         ]);
     }
 
@@ -220,7 +219,7 @@ class CommunityController extends Controller
         abort_unless($request->user()->id === $community->owner_id, 403);
 
         $data = $request->validate([
-            'perks'   => ['nullable', 'array'],
+            'perks' => ['nullable', 'array'],
             'perks.*' => ['nullable', 'string', 'max:255'],
         ]);
 

@@ -19,6 +19,7 @@ class SendEmailBroadcastBatch implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
+
     public array $backoff = [30, 120, 300];
 
     public function __construct(
@@ -46,10 +47,10 @@ class SendEmailBroadcastBatch implements ShouldQueue
             ->get();
 
         $fromEmail = $broadcast->from_email ?? $community->resend_from_email ?? 'onboarding@resend.dev';
-        $fromName  = $broadcast->from_name ?? $community->resend_from_name ?? $community->name;
+        $fromName = $broadcast->from_name ?? $community->resend_from_name ?? $community->name;
 
         $emailPayloads = [];
-        $sendRecords   = [];
+        $sendRecords = [];
 
         foreach ($members as $member) {
             if (! $member->user?->email) {
@@ -58,33 +59,33 @@ class SendEmailBroadcastBatch implements ShouldQueue
 
             $unsubscribeUrl = URL::signedRoute('email.unsubscribe', [
                 'community' => $community->slug,
-                'member'    => $member->id,
+                'member' => $member->id,
             ]);
 
             $html = $this->interpolate($broadcast->html_body, [
-                'user_name'      => $member->user->name ?? 'Member',
-                'user_email'     => $member->user->email,
+                'user_name' => $member->user->name ?? 'Member',
+                'user_email' => $member->user->email,
                 'community_name' => $community->name,
                 'unsubscribe_url' => $unsubscribeUrl,
             ]);
 
             // Append unsubscribe footer
             $html .= '<p style="font-size:12px;color:#999;margin-top:32px;text-align:center;">'
-                    . '<a href="' . e($unsubscribeUrl) . '" style="color:#999;">Unsubscribe</a></p>';
+                    .'<a href="'.e($unsubscribeUrl).'" style="color:#999;">Unsubscribe</a></p>';
 
             $emailPayloads[] = [
-                'from'    => "{$fromName} <{$fromEmail}>",
-                'to'      => [$member->user->email],
+                'from' => "{$fromName} <{$fromEmail}>",
+                'to' => [$member->user->email],
                 'subject' => $broadcast->subject,
-                'html'    => $html,
+                'html' => $html,
                 'reply_to' => $broadcast->reply_to ? [$broadcast->reply_to] : ($community->resend_reply_to ? [$community->resend_reply_to] : []),
             ];
 
             $sendRecords[] = EmailSend::create([
-                'broadcast_id'       => $broadcast->id,
-                'community_id'       => $community->id,
+                'broadcast_id' => $broadcast->id,
+                'community_id' => $community->id,
                 'community_member_id' => $member->id,
-                'status'             => 'queued',
+                'status' => 'queued',
             ]);
         }
 
@@ -104,14 +105,14 @@ class SendEmailBroadcastBatch implements ShouldQueue
                     if (isset($sendRecords[$idx])) {
                         $sendRecords[$idx]->update([
                             'resend_email_id' => $email['id'] ?? null,
-                            'status'          => 'sent',
+                            'status' => 'sent',
                         ]);
                     }
                 }
             } catch (\Exception $e) {
-                Log::error("SendEmailBroadcastBatch: batch send failed", [
+                Log::error('SendEmailBroadcastBatch: batch send failed', [
                     'broadcast_id' => $broadcast->id,
-                    'error'        => $e->getMessage(),
+                    'error' => $e->getMessage(),
                 ]);
 
                 // Mark remaining as failed
@@ -120,7 +121,7 @@ class SendEmailBroadcastBatch implements ShouldQueue
                     $idx = $offset + $j;
                     if (isset($sendRecords[$idx])) {
                         $sendRecords[$idx]->update([
-                            'status'        => 'failed',
+                            'status' => 'failed',
                             'failed_reason' => $e->getMessage(),
                         ]);
                     }
@@ -138,7 +139,7 @@ class SendEmailBroadcastBatch implements ShouldQueue
         $broadcast->refresh();
         if ($broadcast->total_sent + $broadcast->total_failed >= $broadcast->total_recipients) {
             $broadcast->update([
-                'status'  => EmailBroadcast::STATUS_SENT,
+                'status' => EmailBroadcast::STATUS_SENT,
                 'sent_at' => now(),
             ]);
             $broadcast->campaign->update(['status' => 'sent']);
@@ -148,7 +149,7 @@ class SendEmailBroadcastBatch implements ShouldQueue
     private function interpolate(string $html, array $vars): string
     {
         foreach ($vars as $key => $value) {
-            $html = str_replace('{{' . $key . '}}', e($value), $html);
+            $html = str_replace('{{'.$key.'}}', e($value), $html);
         }
 
         return $html;

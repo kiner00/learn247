@@ -24,7 +24,9 @@ class CommentObserver
             ->where('user_id', $comment->user_id)
             ->first();
 
-        if (! $member) return;
+        if (! $member) {
+            return;
+        }
 
         if ($pts > 0) {
             $member->awardPoints($pts);

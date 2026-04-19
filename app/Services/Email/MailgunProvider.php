@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\Http;
 class MailgunProvider implements EmailProvider
 {
     private const BASE_URL = 'https://api.mailgun.net/v3';
-    private const EU_URL   = 'https://api.eu.mailgun.net/v3';
+
+    private const EU_URL = 'https://api.eu.mailgun.net/v3';
 
     public static function id(): string
     {
@@ -24,7 +25,7 @@ class MailgunProvider implements EmailProvider
     public function validateApiKey(Community $community): bool
     {
         try {
-            $response = $this->http($community)->get(self::BASE_URL . '/domains');
+            $response = $this->http($community)->get(self::BASE_URL.'/domains');
 
             return $response->successful();
         } catch (\Exception) {
@@ -38,10 +39,10 @@ class MailgunProvider implements EmailProvider
         $from = $params['from'];
 
         $formData = [
-            'from'    => $from,
-            'to'      => implode(',', $params['to']),
+            'from' => $from,
+            'to' => implode(',', $params['to']),
             'subject' => $params['subject'],
-            'html'    => $params['html'],
+            'html' => $params['html'],
         ];
 
         if (! empty($params['reply_to'])) {
@@ -49,7 +50,7 @@ class MailgunProvider implements EmailProvider
         }
 
         $response = $this->http($community)->asForm()->post(
-            self::BASE_URL . "/{$domain}/messages",
+            self::BASE_URL."/{$domain}/messages",
             $formData
         );
 
@@ -75,7 +76,7 @@ class MailgunProvider implements EmailProvider
 
     public function addDomain(Community $community, string $domain): array
     {
-        $response = $this->http($community)->asForm()->post(self::BASE_URL . '/domains', [
+        $response = $this->http($community)->asForm()->post(self::BASE_URL.'/domains', [
             'name' => $domain,
         ]);
 
@@ -83,32 +84,32 @@ class MailgunProvider implements EmailProvider
         $records = $this->mapMailgunRecords($data);
 
         return [
-            'id'      => $domain,
-            'status'  => ($data['domain']['state'] ?? '') === 'active' ? 'verified' : 'pending',
+            'id' => $domain,
+            'status' => ($data['domain']['state'] ?? '') === 'active' ? 'verified' : 'pending',
             'records' => $records,
         ];
     }
 
     public function getDomain(Community $community, string $domainId): array
     {
-        $response = $this->http($community)->get(self::BASE_URL . "/domains/{$domainId}");
+        $response = $this->http($community)->get(self::BASE_URL."/domains/{$domainId}");
         $data = $response->json();
 
         return [
-            'id'      => $domainId,
-            'name'    => $data['domain']['name'] ?? $domainId,
-            'status'  => ($data['domain']['state'] ?? '') === 'active' ? 'verified' : 'pending',
+            'id' => $domainId,
+            'name' => $data['domain']['name'] ?? $domainId,
+            'status' => ($data['domain']['state'] ?? '') === 'active' ? 'verified' : 'pending',
             'records' => $this->mapMailgunRecords($data),
         ];
     }
 
     public function verifyDomain(Community $community, string $domainId): array
     {
-        $response = $this->http($community)->put(self::BASE_URL . "/domains/{$domainId}/verify");
+        $response = $this->http($community)->put(self::BASE_URL."/domains/{$domainId}/verify");
         $data = $response->json();
 
         return [
-            'id'     => $domainId,
+            'id' => $domainId,
             'status' => ($data['domain']['state'] ?? '') === 'active' ? 'verified' : 'pending',
         ];
     }
@@ -143,9 +144,9 @@ class MailgunProvider implements EmailProvider
         foreach (['sending_dns_records', 'receiving_dns_records'] as $key) {
             foreach ($data[$key] ?? [] as $record) {
                 $records[] = [
-                    'type'   => $record['record_type'] ?? $record['type'] ?? '',
-                    'name'   => $record['name'] ?? '',
-                    'value'  => $record['value'] ?? '',
+                    'type' => $record['record_type'] ?? $record['type'] ?? '',
+                    'name' => $record['name'] ?? '',
+                    'value' => $record['value'] ?? '',
                     'status' => ($record['valid'] ?? '') === 'valid' ? 'verified' : 'pending',
                 ];
             }

@@ -27,7 +27,7 @@ class CourseCertification extends Model
     {
         return [
             'randomize_questions' => 'boolean',
-            'price'               => 'decimal:2',
+            'price' => 'decimal:2',
         ];
     }
 

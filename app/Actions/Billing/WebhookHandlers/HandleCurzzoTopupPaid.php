@@ -29,7 +29,7 @@ class HandleCurzzoTopupPaid implements WebhookHandler
 
         try {
             $updateData = [
-                'status'  => CurzzoTopup::STATUS_PAID,
+                'status' => CurzzoTopup::STATUS_PAID,
                 'paid_at' => now(),
             ];
 
@@ -48,7 +48,7 @@ class HandleCurzzoTopupPaid implements WebhookHandler
         } catch (\Throwable $e) {
             Log::error('HandleCurzzoTopupPaid failed', [
                 'topup_id' => $topup->id,
-                'error'    => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
             throw $e;
         }
@@ -58,9 +58,9 @@ class HandleCurzzoTopupPaid implements WebhookHandler
     {
         return match (strtoupper($status)) {
             'PAID', 'SETTLED' => Payment::STATUS_PAID,
-            'EXPIRED'         => Payment::STATUS_EXPIRED,
-            'FAILED'          => Payment::STATUS_FAILED,
-            default           => Payment::STATUS_PENDING,
+            'EXPIRED' => Payment::STATUS_EXPIRED,
+            'FAILED' => Payment::STATUS_FAILED,
+            default => Payment::STATUS_PENDING,
         };
     }
 }

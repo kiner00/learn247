@@ -22,7 +22,7 @@ class TicketStatusChangedMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "Ticket #{$this->ticket->id} — Status updated to " . str_replace('_', ' ', ucfirst($this->newStatus)),
+            subject: "Ticket #{$this->ticket->id} — Status updated to ".str_replace('_', ' ', ucfirst($this->newStatus)),
         );
     }
 

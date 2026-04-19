@@ -14,7 +14,9 @@ class MigrateStorageToS3 extends Command
     protected $description = 'Migrate all files from local public storage to S3 and update database URLs';
 
     private int $uploaded = 0;
+
     private int $skipped = 0;
+
     private int $failed = 0;
 
     public function handle(): int
@@ -29,6 +31,7 @@ class MigrateStorageToS3 extends Command
 
         if (empty($files)) {
             $this->info('No files found in local public storage.');
+
             return 0;
         }
 
@@ -46,14 +49,16 @@ class MigrateStorageToS3 extends Command
             if (str_starts_with(basename($path), '.')) {
                 $this->skipped++;
                 $bar->advance();
+
                 continue;
             }
 
-            if (!$isDryRun) {
+            if (! $isDryRun) {
                 try {
                     if ($s3->exists($path)) {
                         $this->skipped++;
                         $bar->advance();
+
                         continue;
                     }
 
@@ -85,7 +90,7 @@ class MigrateStorageToS3 extends Command
         $this->newLine(2);
 
         // Update database URLs
-        if (!$isDryRun) {
+        if (! $isDryRun) {
             $this->info('Updating database URLs...');
             $this->updateDatabaseUrls();
         }
@@ -119,24 +124,24 @@ class MigrateStorageToS3 extends Command
             $table = $config['table'];
 
             // Check table exists
-            if (!\Schema::hasTable($table)) {
+            if (! \Schema::hasTable($table)) {
                 continue;
             }
 
             $appUrl = rtrim(config('app.url'), '/');
 
             foreach ($config['columns'] as $column) {
-                if (!\Schema::hasColumn($table, $column)) {
+                if (! \Schema::hasColumn($table, $column)) {
                     continue;
                 }
 
-                $oldPrefix = $appUrl . '/storage/';
+                $oldPrefix = $appUrl.'/storage/';
 
                 // Update /storage/xxx and asset-style URLs to S3 URLs
                 $rows = \DB::table($table)
                     ->where(function ($q) use ($column, $oldPrefix) {
                         $q->where($column, 'LIKE', '/storage/%')
-                          ->orWhere($column, 'LIKE', $oldPrefix . '%');
+                            ->orWhere($column, 'LIKE', $oldPrefix.'%');
                     })
                     ->get(['id', $column]);
 
@@ -144,9 +149,9 @@ class MigrateStorageToS3 extends Command
                 foreach ($rows as $row) {
                     $value = $row->{$column};
                     if (str_starts_with($value, '/storage/')) {
-                        $newValue = $s3BaseUrl . '/' . substr($value, 9);
+                        $newValue = $s3BaseUrl.'/'.substr($value, 9);
                     } elseif (str_starts_with($value, $oldPrefix)) {
-                        $newValue = $s3BaseUrl . '/' . substr($value, strlen($oldPrefix));
+                        $newValue = $s3BaseUrl.'/'.substr($value, strlen($oldPrefix));
                     } else {
                         continue;
                     }
@@ -170,15 +175,17 @@ class MigrateStorageToS3 extends Command
 
                 foreach ($communities as $community) {
                     $gallery = json_decode($community->gallery_images, true);
-                    if (!is_array($gallery)) continue;
+                    if (! is_array($gallery)) {
+                        continue;
+                    }
 
                     $changed = false;
                     foreach ($gallery as &$url) {
                         if (str_starts_with($url, '/storage/')) {
-                            $url = $s3BaseUrl . '/' . ltrim(str_replace('/storage/', '', $url), '/');
+                            $url = $s3BaseUrl.'/'.ltrim(str_replace('/storage/', '', $url), '/');
                             $changed = true;
-                        } elseif (str_starts_with($url, $appUrl . '/storage/')) {
-                            $url = $s3BaseUrl . '/' . substr($url, strlen($appUrl . '/storage/'));
+                        } elseif (str_starts_with($url, $appUrl.'/storage/')) {
+                            $url = $s3BaseUrl.'/'.substr($url, strlen($appUrl.'/storage/'));
                             $changed = true;
                         }
                     }

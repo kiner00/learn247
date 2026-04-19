@@ -14,14 +14,14 @@ class StoreEventRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title'       => 'required|string|max:255',
+            'title' => 'required|string|max:255',
             'description' => 'nullable|string|max:5000',
-            'start_at'    => 'required|date',
-            'end_at'      => 'nullable|date|after:start_at',
-            'timezone'    => 'required|string|timezone',
-            'url'         => 'nullable|url|max:500',
+            'start_at' => 'required|date',
+            'end_at' => 'nullable|date|after:start_at',
+            'timezone' => 'required|string|timezone',
+            'url' => 'nullable|url|max:500',
             'cover_image' => 'nullable|image|max:10240',
-            'visibility'  => 'nullable|in:public,free,paid',
+            'visibility' => 'nullable|in:public,free,paid',
         ];
     }
 
@@ -29,7 +29,7 @@ class StoreEventRequest extends FormRequest
     {
         return [
             'cover_image.uploaded' => 'The cover image failed to upload. The file may be too large — please use an image under 10 MB.',
-            'cover_image.max'      => 'The cover image must be under 10 MB.',
+            'cover_image.max' => 'The cover image must be under 10 MB.',
         ];
     }
 }

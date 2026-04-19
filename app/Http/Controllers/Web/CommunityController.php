@@ -8,27 +8,26 @@ use App\Actions\Community\JoinCommunity;
 use App\Actions\Community\SendAnnouncement;
 use App\Actions\Community\SyncCommunityDomains;
 use App\Actions\Community\SyncTelegramWebhook;
-use App\Http\Requests\UpdateCommunityRequest;
-use App\Services\Analytics\CommunityAnalyticsService;
-use App\Services\Community\CommunityChecklistService;
-use App\Services\Community\CurzzoAccessService;
-use App\Services\Community\CurzzoLimitService;
-use App\Services\TelegramService;
-use App\Services\Community\MembershipAccessService;
-use App\Services\Community\PlanLimitService;
 use App\Actions\Community\UpdateCommunity;
 use App\Actions\Community\UpdateLevelPerks;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CreateCommunityRequest;
+use App\Http\Requests\UpdateCommunityRequest;
+use App\Jobs\GenerateSingleGalleryImage;
+use App\Models\Comment;
 use App\Models\Community;
 use App\Models\CommunityMember;
-use App\Models\Comment;
 use App\Queries\Community\GetFeaturedCommunities;
 use App\Queries\Community\GetInvitedByAffiliate;
 use App\Queries\Community\GetLeaderboard;
 use App\Queries\Community\ListCommunities;
 use App\Queries\Feed\GetCommunityFeed;
-use App\Jobs\GenerateSingleGalleryImage;
+use App\Services\Analytics\CommunityAnalyticsService;
+use App\Services\Community\CommunityChecklistService;
+use App\Services\Community\CurzzoAccessService;
+use App\Services\Community\CurzzoLimitService;
+use App\Services\Community\MembershipAccessService;
+use App\Services\Community\PlanLimitService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -40,24 +39,24 @@ class CommunityController extends Controller
 {
     public function index(Request $request, ListCommunities $query, GetFeaturedCommunities $featured): Response
     {
-        $search   = $request->string('search')->trim()->toString();
+        $search = $request->string('search')->trim()->toString();
         $category = $request->string('category')->trim()->toString();
-        $sort     = $request->input('sort', 'latest');
+        $sort = $request->input('sort', 'latest');
 
         return Inertia::render('Communities/Index', [
             'communities' => $query->execute($search, $category, $sort),
-            'featured'    => $featured->execute(),
-            'filters'     => ['search' => $search, 'category' => $category ?: 'All', 'sort' => $sort],
+            'featured' => $featured->execute(),
+            'filters' => ['search' => $search, 'category' => $category ?: 'All', 'sort' => $sort],
         ]);
     }
 
     public function store(CreateCommunityRequest $request, CreateCommunity $action, PlanLimitService $planLimit): RedirectResponse
     {
         \Log::info('Community create attempt', [
-            'user'   => $request->user()->id,
-            'data'   => $request->except(['avatar', 'cover_image']),
+            'user' => $request->user()->id,
+            'data' => $request->except(['avatar', 'cover_image']),
             'avatar' => $request->hasFile('avatar') ? 'yes' : 'no',
-            'cover'  => $request->hasFile('cover_image') ? 'yes' : 'no',
+            'cover' => $request->hasFile('cover_image') ? 'yes' : 'no',
         ]);
 
         $user = $request->user();
@@ -89,11 +88,11 @@ class CommunityController extends Controller
 
         // For paid communities, free-only members without an active subscription
         // cannot post/comment/chat. Null out membership so the UI hides those interactions.
-        if ($membership && !$community->isFree() && !$membershipService->hasActiveMembership(auth()->user(), $community)) {
+        if ($membership && ! $community->isFree() && ! $membershipService->hasActiveMembership(auth()->user(), $community)) {
             $membership = null;
         }
 
-        $affiliate  = $userId ? $ensureAffiliate->execute($community, $userId) : null;
+        $affiliate = $userId ? $ensureAffiliate->execute($community, $userId) : null;
 
         $adminCount = $community->members()->where('role', CommunityMember::ROLE_ADMIN)->count();
         $topMembers = $leaderboard->topMembers($community);
@@ -111,7 +110,7 @@ class CommunityController extends Controller
 
         $hasFreeCourses = $community->courses()->where('access_type', 'free')->exists();
 
-        $hasLandingPage = !empty($community->landing_page);
+        $hasLandingPage = ! empty($community->landing_page);
 
         return Inertia::render('Communities/Show', compact(
             'community', 'membership', 'affiliate', 'adminCount', 'topMembers', 'checklist', 'recentComments', 'hasFreeCourses', 'hasLandingPage'
@@ -139,7 +138,7 @@ class CommunityController extends Controller
             $query->whereHas('user', function ($q) use ($search, $canSearchEmail) {
                 $q->where(function ($q) use ($search, $canSearchEmail) {
                     $q->where('name', 'like', "%{$search}%")
-                      ->orWhere('username', 'like', "%{$search}%");
+                        ->orWhere('username', 'like', "%{$search}%");
                     if ($canSearchEmail) {
                         $q->orWhere('email', 'like', "%{$search}%");
                     }
@@ -147,12 +146,12 @@ class CommunityController extends Controller
             });
         }
 
-        $members    = $query->orderByRaw("CASE role WHEN 'admin' THEN 0 WHEN 'moderator' THEN 1 ELSE 2 END")->paginate(20)->withQueryString();
+        $members = $query->orderByRaw("CASE role WHEN 'admin' THEN 0 WHEN 'moderator' THEN 1 ELSE 2 END")->paginate(20)->withQueryString();
         $totalCount = $community->members()->count();
         $adminCount = $community->members()->where('role', 'admin')->count();
-        $freeCount  = $community->members()->where('membership_type', CommunityMember::MEMBERSHIP_FREE)->count();
-        $paidCount  = $community->members()->where('membership_type', CommunityMember::MEMBERSHIP_PAID)->count();
-        $affiliate  = auth()->id() ? $community->affiliates()->where('user_id', auth()->id())->first() : null;
+        $freeCount = $community->members()->where('membership_type', CommunityMember::MEMBERSHIP_FREE)->count();
+        $paidCount = $community->members()->where('membership_type', CommunityMember::MEMBERSHIP_PAID)->count();
+        $affiliate = auth()->id() ? $community->affiliates()->where('user_id', auth()->id())->first() : null;
 
         $courses = $community->courses()
             ->select('id', 'title', 'access_type')
@@ -175,13 +174,13 @@ class CommunityController extends Controller
     ): RedirectResponse {
         $data = $request->validated();
 
-        $oldSubdomain    = $community->subdomain;
+        $oldSubdomain = $community->subdomain;
         $oldCustomDomain = $community->custom_domain;
-        $oldTelegram     = $community->telegram_bot_token;
+        $oldTelegram = $community->telegram_bot_token;
 
         if (! empty($data['telegram_clear'])) {
             $data['telegram_bot_token'] = null;
-            $data['telegram_chat_id']   = null;
+            $data['telegram_chat_id'] = null;
         } elseif (empty($data['telegram_bot_token'])) {
             unset($data['telegram_bot_token']);
         }
@@ -223,7 +222,7 @@ class CommunityController extends Controller
         }
 
         $cacheKey = "gallery-generating:{$community->id}";
-        $status   = Cache::get($cacheKey);
+        $status = Cache::get($cacheKey);
 
         if ($status && $status['status'] === 'generating') {
             return response()->json(['error' => 'Image generation is already in progress.'], 409);
@@ -242,7 +241,7 @@ class CommunityController extends Controller
         $this->authorize('update', $community);
 
         $cacheKey = "gallery-generating:{$community->id}";
-        $status   = Cache::get($cacheKey, ['status' => 'idle']);
+        $status = Cache::get($cacheKey, ['status' => 'idle']);
 
         return response()->json($status);
     }
@@ -252,7 +251,7 @@ class CommunityController extends Controller
         $this->authorize('update', $community);
 
         $data = $request->validate([
-            'perks'   => ['nullable', 'array'],
+            'perks' => ['nullable', 'array'],
             'perks.*' => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -301,7 +300,7 @@ class CommunityController extends Controller
         $user = auth()->user();
 
         $selectFields = ['id', 'name', 'description', 'avatar', 'cover_image', 'preview_video', 'preview_video_sound', 'access_type', 'price', 'currency', 'billing_type'];
-        $isOwner      = $user !== null && $user->id === $community->owner_id;
+        $isOwner = $user !== null && $user->id === $community->owner_id;
         if ($isOwner) {
             $selectFields = array_merge($selectFields, ['instructions', 'personality', 'model_tier', 'affiliate_commission_rate', 'is_active']);
         }
@@ -315,6 +314,7 @@ class CommunityController extends Controller
         $context = $access->buildContext($user, $community, $curzzos->pluck('id'));
         $curzzos = $curzzos->map(function ($bot) use ($access, $context) {
             $bot->has_access = $access->hasAccess($bot, $context);
+
             return $bot;
         });
 
@@ -324,18 +324,18 @@ class CommunityController extends Controller
 
         $modelTiers = $isOwner
             ? collect(config('curzzos.tiers'))->map(fn ($tier, $key) => [
-                'value'       => $key,
-                'label'       => $tier['label'],
+                'value' => $key,
+                'label' => $tier['label'],
                 'description' => $tier['description'],
             ])->values()
             : [];
 
         return Inertia::render('Communities/Curzzos', [
-            'community'  => $community,
-            'curzzos'    => $curzzos,
-            'limitInfo'  => $limitInfo,
+            'community' => $community,
+            'curzzos' => $curzzos,
+            'limitInfo' => $limitInfo,
             'topupPacks' => $limits->getPacks($community),
-            'isOwner'    => $isOwner,
+            'isOwner' => $isOwner,
             'modelTiers' => $modelTiers,
         ]);
     }
@@ -377,9 +377,9 @@ class CommunityController extends Controller
             ->filter(fn ($m) => $m['name'])->values();
 
         $membership = auth()->id() ? $community->members()->where('user_id', auth()->id())->first() : null;
-        $isOwner    = auth()->id() === $community->owner_id;
+        $isOwner = auth()->id() === $community->owner_id;
 
-        $invitedBy  = (!$membership && !$isOwner)
+        $invitedBy = (! $membership && ! $isOwner)
             ? $invitedByQuery->execute($community, $request->cookie('ref_code'))
             : null;
 
@@ -387,5 +387,4 @@ class CommunityController extends Controller
 
         return Inertia::render('Communities/About', compact('community', 'affiliate', 'invitedBy', 'membership', 'recentMembers', 'ownerIsPro', 'isOwner'));
     }
-
 }

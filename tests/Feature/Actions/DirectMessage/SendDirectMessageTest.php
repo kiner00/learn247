@@ -19,23 +19,23 @@ class SendDirectMessageTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->action = new SendDirectMessage();
+        $this->action = new SendDirectMessage;
     }
 
     public function test_message_is_persisted(): void
     {
         Event::fake([DirectMessageSent::class]);
 
-        $sender   = User::factory()->create();
+        $sender = User::factory()->create();
         $receiver = User::factory()->create();
 
         $message = $this->action->execute($sender, $receiver, 'Hello there!');
 
         $this->assertInstanceOf(DirectMessage::class, $message);
         $this->assertDatabaseHas('direct_messages', [
-            'sender_id'   => $sender->id,
+            'sender_id' => $sender->id,
             'receiver_id' => $receiver->id,
-            'content'     => 'Hello there!',
+            'content' => 'Hello there!',
         ]);
     }
 
@@ -43,7 +43,7 @@ class SendDirectMessageTest extends TestCase
     {
         Event::fake([DirectMessageSent::class]);
 
-        $sender   = User::factory()->create();
+        $sender = User::factory()->create();
         $receiver = User::factory()->create();
 
         $this->action->execute($sender, $receiver, 'Hi!');
@@ -57,9 +57,9 @@ class SendDirectMessageTest extends TestCase
     {
         Event::fake([DirectMessageSent::class]);
 
-        $sender   = User::factory()->create();
+        $sender = User::factory()->create();
         $receiver = User::factory()->create();
-        $content  = 'Test message content';
+        $content = 'Test message content';
 
         $message = $this->action->execute($sender, $receiver, $content);
 

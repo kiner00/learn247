@@ -8,8 +8,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class CurzzoPurchase extends Model
 {
     use Concerns\HasRecurringPlan;
+
     public const STATUS_PENDING = 'pending';
-    public const STATUS_PAID    = 'paid';
+
+    public const STATUS_PAID = 'paid';
 
     protected $fillable = [
         'user_id',
@@ -25,7 +27,7 @@ class CurzzoPurchase extends Model
     protected function casts(): array
     {
         return [
-            'paid_at'    => 'datetime',
+            'paid_at' => 'datetime',
             'expires_at' => 'datetime',
         ];
     }

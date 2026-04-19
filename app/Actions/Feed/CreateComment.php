@@ -24,11 +24,11 @@ class CreateComment
         }
 
         return Comment::create([
-            'post_id'      => $post->id,
+            'post_id' => $post->id,
             'community_id' => $post->community_id,
-            'user_id'      => $user->id,
-            'parent_id'    => $data['parent_id'] ?? null,
-            'content'      => $data['content'],
+            'user_id' => $user->id,
+            'parent_id' => $data['parent_id'] ?? null,
+            'content' => $data['content'],
         ]);
     }
 }

@@ -29,10 +29,10 @@ class ManageCourseTest extends TestCase
         $course = $this->action->store($community, ['title' => 'My Course', 'description' => 'Desc']);
 
         $this->assertDatabaseHas('courses', [
-            'id'           => $course->id,
+            'id' => $course->id,
             'community_id' => $community->id,
-            'title'        => 'My Course',
-            'position'     => 1,
+            'title' => 'My Course',
+            'position' => 1,
         ]);
         $this->assertNull($course->cover_image);
     }
@@ -87,9 +87,9 @@ class ManageCourseTest extends TestCase
         $community = Community::factory()->create();
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Course',
-            'cover_image'  => 'old-image.jpg',
-            'position'     => 1,
+            'title' => 'Course',
+            'cover_image' => 'old-image.jpg',
+            'position' => 1,
         ]);
 
         $updated = $this->action->update($course, ['title' => 'Updated', 'cover_image' => 'should-be-removed']);
@@ -101,9 +101,9 @@ class ManageCourseTest extends TestCase
     public function test_reorder_updates_course_positions(): void
     {
         $community = Community::factory()->create();
-        $courseA   = Course::create(['community_id' => $community->id, 'title' => 'A', 'position' => 1]);
-        $courseB   = Course::create(['community_id' => $community->id, 'title' => 'B', 'position' => 2]);
-        $courseC   = Course::create(['community_id' => $community->id, 'title' => 'C', 'position' => 3]);
+        $courseA = Course::create(['community_id' => $community->id, 'title' => 'A', 'position' => 1]);
+        $courseB = Course::create(['community_id' => $community->id, 'title' => 'B', 'position' => 2]);
+        $courseC = Course::create(['community_id' => $community->id, 'title' => 'C', 'position' => 3]);
 
         $this->action->reorder($community, [$courseC->id, $courseA->id, $courseB->id]);
 
@@ -115,7 +115,7 @@ class ManageCourseTest extends TestCase
     public function test_destroy_deletes_course_without_cover_image(): void
     {
         $community = Community::factory()->create();
-        $course    = Course::create(['community_id' => $community->id, 'title' => 'To Delete', 'position' => 1]);
+        $course = Course::create(['community_id' => $community->id, 'title' => 'To Delete', 'position' => 1]);
 
         $this->action->destroy($course);
 
@@ -132,9 +132,9 @@ class ManageCourseTest extends TestCase
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'With Cover',
-            'position'     => 1,
-            'cover_image'  => asset('storage/' . $path),
+            'title' => 'With Cover',
+            'position' => 1,
+            'cover_image' => asset('storage/'.$path),
         ]);
 
         $this->action->destroy($course);
@@ -149,7 +149,7 @@ class ManageCourseTest extends TestCase
         $community = Community::factory()->create();
 
         $course = $this->action->store($community, [
-            'title'         => 'Video Course',
+            'title' => 'Video Course',
             'preview_video' => 'course-previews/abc123.mp4',
         ]);
 
@@ -173,13 +173,13 @@ class ManageCourseTest extends TestCase
         $community = Community::factory()->create();
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Course',
+            'title' => 'Course',
             'preview_video' => '/storage/course-previews/old.mp4',
-            'position'     => 1,
+            'position' => 1,
         ]);
 
         $updated = $this->action->update($course, [
-            'title'         => 'Course',
+            'title' => 'Course',
             'preview_video' => 'course-previews/new.mp4',
         ]);
 
@@ -191,14 +191,14 @@ class ManageCourseTest extends TestCase
         Storage::fake(config('filesystems.default'));
         $community = Community::factory()->create();
         $course = Course::create([
-            'community_id'  => $community->id,
-            'title'         => 'Course',
+            'community_id' => $community->id,
+            'title' => 'Course',
             'preview_video' => '/storage/course-previews/old.mp4',
-            'position'      => 1,
+            'position' => 1,
         ]);
 
         $updated = $this->action->update($course, [
-            'title'                => 'Course',
+            'title' => 'Course',
             'remove_preview_video' => true,
         ]);
 
@@ -209,10 +209,10 @@ class ManageCourseTest extends TestCase
     {
         $community = Community::factory()->create();
         $course = Course::create([
-            'community_id'  => $community->id,
-            'title'         => 'Course',
+            'community_id' => $community->id,
+            'title' => 'Course',
             'preview_video' => '/storage/course-previews/existing.mp4',
-            'position'      => 1,
+            'position' => 1,
         ]);
 
         $updated = $this->action->update($course, ['title' => 'Updated Title']);
@@ -228,9 +228,9 @@ class ManageCourseTest extends TestCase
 
         $community = Community::factory()->create();
         $course = Course::create([
-            'community_id'  => $community->id,
-            'title'         => 'With Video',
-            'position'      => 1,
+            'community_id' => $community->id,
+            'title' => 'With Video',
+            'position' => 1,
             // URL that does NOT contain 'course-previews/' — hits else branch
             'preview_video' => 'other/vid.mp4',
         ]);
@@ -250,9 +250,9 @@ class ManageCourseTest extends TestCase
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Course',
-            'cover_image'  => asset('storage/' . $oldPath),
-            'position'     => 1,
+            'title' => 'Course',
+            'cover_image' => asset('storage/'.$oldPath),
+            'position' => 1,
         ]);
 
         $newImage = UploadedFile::fake()->image('new.jpg');
@@ -270,9 +270,9 @@ class ManageCourseTest extends TestCase
 
         $community = Community::factory()->create();
         $course = Course::create([
-            'community_id'  => $community->id,
-            'title'         => 'With Video',
-            'position'      => 1,
+            'community_id' => $community->id,
+            'title' => 'With Video',
+            'position' => 1,
             'preview_video' => 'https://cdn.example.com/course-previews/vid.mp4',
         ]);
 

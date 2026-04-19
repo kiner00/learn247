@@ -28,14 +28,14 @@ class RenewExpiringSubscriptionsTest extends TestCase
     {
         Mail::fake();
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid()->create();
 
         Subscription::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->addDays(5),
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addDays(5),
         ]);
 
         $invoiceAction = Mockery::mock(CreateRenewalInvoice::class);
@@ -54,14 +54,14 @@ class RenewExpiringSubscriptionsTest extends TestCase
     {
         Mail::fake();
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid()->create();
 
         Subscription::factory()->create([
-            'community_id'       => $community->id,
-            'user_id'            => $user->id,
-            'status'             => Subscription::STATUS_ACTIVE,
-            'expires_at'         => now()->addDay(),
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addDay(),
             'xendit_invoice_url' => 'https://checkout.xendit.co/existing-url',
         ]);
 
@@ -81,14 +81,14 @@ class RenewExpiringSubscriptionsTest extends TestCase
     {
         Mail::fake();
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid()->create();
 
         Subscription::factory()->create([
-            'community_id'       => $community->id,
-            'user_id'            => $user->id,
-            'status'             => Subscription::STATUS_ACTIVE,
-            'expires_at'         => now()->addDays(5),
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addDays(5),
             'reminder_5d_sent_at' => now()->subDay(),
         ]);
 
@@ -106,12 +106,12 @@ class RenewExpiringSubscriptionsTest extends TestCase
     {
         Mail::fake();
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid()->create();
 
         Subscription::factory()->expired()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         $invoiceAction = Mockery::mock(CreateRenewalInvoice::class);
@@ -128,14 +128,14 @@ class RenewExpiringSubscriptionsTest extends TestCase
     {
         Mail::fake();
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid()->create();
 
         $subscription = Subscription::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->addDays(5),
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addDays(5),
         ]);
 
         $invoiceAction = Mockery::mock(CreateRenewalInvoice::class);
@@ -153,14 +153,14 @@ class RenewExpiringSubscriptionsTest extends TestCase
     {
         Mail::fake();
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->paid()->create();
 
         $subscription = Subscription::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->addDays(5),
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addDays(5),
         ]);
 
         $invoiceAction = Mockery::mock(CreateRenewalInvoice::class);

@@ -6,6 +6,7 @@ use App\Models\Community;
 use App\Models\CommunityMember;
 use App\Models\Event;
 use App\Models\Subscription;
+
 class GetCalendarEvents
 {
     public function execute(Community $community, ?int $userId, int $year, int $month): array
@@ -29,7 +30,7 @@ class GetCalendarEvents
         $isFreeMember = $memberRecord !== null; // free or paid
 
         $from = now()->setDate($year, $month, 1)->startOfDay();
-        $to   = $from->copy()->endOfMonth()->endOfDay();
+        $to = $from->copy()->endOfMonth()->endOfDay();
 
         $query = $community->events()->whereBetween('start_at', [$from, $to]);
 
@@ -46,21 +47,21 @@ class GetCalendarEvents
         }
 
         $events = $query->get()->map(fn (Event $e) => [
-            'id'          => $e->id,
-            'title'       => $e->title,
+            'id' => $e->id,
+            'title' => $e->title,
             'description' => $e->description,
-            'start_at'    => $e->start_at->toISOString(),
-            'end_at'      => $e->end_at?->toISOString(),
-            'timezone'    => $e->timezone,
-            'url'         => $e->url,
+            'start_at' => $e->start_at->toISOString(),
+            'end_at' => $e->end_at?->toISOString(),
+            'timezone' => $e->timezone,
+            'url' => $e->url,
             'cover_image' => $e->cover_image,
-            'visibility'  => $e->visibility,
+            'visibility' => $e->visibility,
         ]);
 
         return [
-            'events'     => $events,
+            'events' => $events,
             'membership' => ($isFreeMember || $isOwner) ? ['role' => $isOwner ? 'owner' : 'member'] : null,
-            'isOwner'    => (bool) $isOwner,
+            'isOwner' => (bool) $isOwner,
         ];
     }
 }

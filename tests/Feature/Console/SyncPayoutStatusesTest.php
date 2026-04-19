@@ -2,11 +2,9 @@
 
 namespace Tests\Feature\Console;
 
-use App\Actions\Affiliate\MarkAffiliateConversionPaid;
 use App\Models\Affiliate;
 use App\Models\AffiliateConversion;
 use App\Models\Community;
-use App\Models\Payment;
 use App\Models\PayoutRequest;
 use App\Models\Subscription;
 use App\Models\User;
@@ -49,14 +47,14 @@ class SyncPayoutStatusesTest extends TestCase
         $user = User::factory()->create();
 
         return PayoutRequest::create([
-            'user_id'           => $user->id,
-            'type'              => $type,
-            'community_id'      => Community::factory()->create(['owner_id' => $user->id])->id,
-            'affiliate_id'      => $affiliateId,
-            'amount'            => $amount,
-            'eligible_amount'   => $amount,
-            'status'            => PayoutRequest::STATUS_APPROVED,
-            'xendit_reference'  => $xenditRef,
+            'user_id' => $user->id,
+            'type' => $type,
+            'community_id' => Community::factory()->create(['owner_id' => $user->id])->id,
+            'affiliate_id' => $affiliateId,
+            'amount' => $amount,
+            'eligible_amount' => $amount,
+            'status' => PayoutRequest::STATUS_APPROVED,
+            'xendit_reference' => $xenditRef,
         ]);
     }
 
@@ -69,27 +67,27 @@ class SyncPayoutStatusesTest extends TestCase
 
         $affiliate = Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'code'          => strtoupper(fake()->unique()->lexify('????????')),
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => $user->id,
+            'code' => strtoupper(fake()->unique()->lexify('????????')),
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         $conversions = [];
         for ($i = 0; $i < $count; $i++) {
             $sub = Subscription::factory()->create([
                 'community_id' => $community->id,
-                'status'       => Subscription::STATUS_ACTIVE,
+                'status' => Subscription::STATUS_ACTIVE,
             ]);
 
             $conversions[] = AffiliateConversion::create([
-                'affiliate_id'      => $affiliate->id,
-                'subscription_id'   => $sub->id,
-                'referred_user_id'  => $sub->user_id,
-                'sale_amount'       => 500,
-                'platform_fee'      => 75,
+                'affiliate_id' => $affiliate->id,
+                'subscription_id' => $sub->id,
+                'referred_user_id' => $sub->user_id,
+                'sale_amount' => 500,
+                'platform_fee' => 75,
                 'commission_amount' => $commission,
-                'creator_amount'    => 500 - 75 - $commission,
-                'status'            => AffiliateConversion::STATUS_PENDING,
+                'creator_amount' => 500 - 75 - $commission,
+                'status' => AffiliateConversion::STATUS_PENDING,
             ]);
         }
 
@@ -240,7 +238,7 @@ class SyncPayoutStatusesTest extends TestCase
 
         $this->mockXendit([
             'po_err_1' => new \RuntimeException('Network error'),
-            'po_ok_1'  => ['status' => 'SUCCEEDED'],
+            'po_ok_1' => ['status' => 'SUCCEEDED'],
         ]);
 
         $this->artisan('payouts:sync')->assertExitCode(0);
@@ -260,13 +258,13 @@ class SyncPayoutStatusesTest extends TestCase
     {
         $user = User::factory()->create();
         PayoutRequest::create([
-            'user_id'           => $user->id,
-            'type'              => PayoutRequest::TYPE_OWNER,
-            'community_id'      => Community::factory()->create(['owner_id' => $user->id])->id,
-            'amount'            => 100,
-            'eligible_amount'   => 100,
-            'status'            => PayoutRequest::STATUS_APPROVED,
-            'xendit_reference'  => null,
+            'user_id' => $user->id,
+            'type' => PayoutRequest::TYPE_OWNER,
+            'community_id' => Community::factory()->create(['owner_id' => $user->id])->id,
+            'amount' => 100,
+            'eligible_amount' => 100,
+            'status' => PayoutRequest::STATUS_APPROVED,
+            'xendit_reference' => null,
         ]);
 
         $this->mockXendit();
@@ -285,12 +283,12 @@ class SyncPayoutStatusesTest extends TestCase
 
         // Pending - should be ignored
         PayoutRequest::create([
-            'user_id'          => $user->id,
-            'type'             => PayoutRequest::TYPE_OWNER,
-            'community_id'     => $community->id,
-            'amount'           => 100,
-            'eligible_amount'  => 100,
-            'status'           => PayoutRequest::STATUS_PENDING,
+            'user_id' => $user->id,
+            'type' => PayoutRequest::TYPE_OWNER,
+            'community_id' => $community->id,
+            'amount' => 100,
+            'eligible_amount' => 100,
+            'status' => PayoutRequest::STATUS_PENDING,
             'xendit_reference' => 'po_pending_1',
         ]);
 

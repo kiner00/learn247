@@ -25,32 +25,32 @@ class SendChatMessageTest extends TestCase
 
     public function test_creates_message_in_database(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $user->id]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
-        $action  = new SendChatMessage();
+        $action = new SendChatMessage;
         $message = $action->execute($user, $community, 'Hello world');
 
         $this->assertInstanceOf(Message::class, $message);
         $this->assertDatabaseHas('messages', [
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'content'      => 'Hello world',
+            'user_id' => $user->id,
+            'content' => 'Hello world',
         ]);
     }
 
     public function test_updates_messages_last_read_at(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $user->id]);
         CommunityMember::factory()->create([
-            'community_id'          => $community->id,
-            'user_id'               => $user->id,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
             'messages_last_read_at' => null,
         ]);
 
-        $action = new SendChatMessage();
+        $action = new SendChatMessage;
         $action->execute($user, $community, 'Test message');
 
         $this->assertNotNull(
@@ -62,11 +62,11 @@ class SendChatMessageTest extends TestCase
 
     public function test_returns_message_with_user_relation_loaded(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $user->id]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
-        $action  = new SendChatMessage();
+        $action = new SendChatMessage;
         $message = $action->execute($user, $community, 'Test');
 
         $this->assertTrue($message->relationLoaded('user'));
@@ -75,16 +75,16 @@ class SendChatMessageTest extends TestCase
 
     public function test_stores_media_url_and_type(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $user->id]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
-        $action  = new SendChatMessage();
+        $action = new SendChatMessage;
         $message = $action->execute($user, $community, 'See image', 'https://example.com/photo.jpg', 'image');
 
         $this->assertDatabaseHas('messages', [
-            'id'         => $message->id,
-            'media_url'  => 'https://example.com/photo.jpg',
+            'id' => $message->id,
+            'media_url' => 'https://example.com/photo.jpg',
             'media_type' => 'image',
         ]);
     }
@@ -93,15 +93,15 @@ class SendChatMessageTest extends TestCase
     {
         Bus::fake([ForwardMessageToTelegram::class]);
 
-        $user      = User::factory()->create(['name' => 'Alice']);
+        $user = User::factory()->create(['name' => 'Alice']);
         $community = Community::factory()->create([
-            'owner_id'           => $user->id,
+            'owner_id' => $user->id,
             'telegram_bot_token' => 'bot-token-123',
-            'telegram_chat_id'   => 'chat-456',
+            'telegram_chat_id' => 'chat-456',
         ]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
-        $action = new SendChatMessage();
+        $action = new SendChatMessage;
         $action->execute($user, $community, 'Hello telegram');
 
         Bus::assertDispatched(ForwardMessageToTelegram::class, function (ForwardMessageToTelegram $job) {
@@ -118,15 +118,15 @@ class SendChatMessageTest extends TestCase
     {
         Bus::fake([ForwardMessageToTelegram::class]);
 
-        $user      = User::factory()->create(['name' => 'Bob']);
+        $user = User::factory()->create(['name' => 'Bob']);
         $community = Community::factory()->create([
-            'owner_id'           => User::factory()->create()->id,
+            'owner_id' => User::factory()->create()->id,
             'telegram_bot_token' => 'bot-token',
-            'telegram_chat_id'   => 'chat-id',
+            'telegram_chat_id' => 'chat-id',
         ]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
-        $action = new SendChatMessage();
+        $action = new SendChatMessage;
         $action->execute($user, $community, 'Check this', 'https://example.com/photo.jpg', 'image');
 
         Bus::assertDispatched(ForwardMessageToTelegram::class, function (ForwardMessageToTelegram $job) {
@@ -142,15 +142,15 @@ class SendChatMessageTest extends TestCase
     {
         Bus::fake([ForwardMessageToTelegram::class]);
 
-        $user      = User::factory()->create(['name' => 'Carol']);
+        $user = User::factory()->create(['name' => 'Carol']);
         $community = Community::factory()->create([
-            'owner_id'           => $user->id,
+            'owner_id' => $user->id,
             'telegram_bot_token' => 'bot-token',
-            'telegram_chat_id'   => 'chat-id',
+            'telegram_chat_id' => 'chat-id',
         ]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
-        $action = new SendChatMessage();
+        $action = new SendChatMessage;
         $action->execute($user, $community, 'Watch this', 'https://example.com/video.mp4', 'video');
 
         Bus::assertDispatched(ForwardMessageToTelegram::class, function (ForwardMessageToTelegram $job) {
@@ -164,15 +164,15 @@ class SendChatMessageTest extends TestCase
     {
         Bus::fake([ForwardMessageToTelegram::class]);
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'           => $user->id,
+            'owner_id' => $user->id,
             'telegram_bot_token' => null,
-            'telegram_chat_id'   => null,
+            'telegram_chat_id' => null,
         ]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
-        $action = new SendChatMessage();
+        $action = new SendChatMessage;
         $action->execute($user, $community, 'No telegram');
 
         Bus::assertNotDispatched(ForwardMessageToTelegram::class);
@@ -182,16 +182,16 @@ class SendChatMessageTest extends TestCase
     {
         Bus::fake([ForwardMessageToTelegram::class]);
 
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create(['name' => 'Dave']);
+        $owner = User::factory()->create();
+        $member = User::factory()->create(['name' => 'Dave']);
         $community = Community::factory()->create([
-            'owner_id'           => $owner->id,
+            'owner_id' => $owner->id,
             'telegram_bot_token' => 'token',
-            'telegram_chat_id'   => 'chat',
+            'telegram_chat_id' => 'chat',
         ]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
-        $action = new SendChatMessage();
+        $action = new SendChatMessage;
         $action->execute($member, $community, 'Member message');
 
         Bus::assertDispatched(ForwardMessageToTelegram::class, function (ForwardMessageToTelegram $job) {
@@ -205,10 +205,10 @@ class SendChatMessageTest extends TestCase
     {
         // Force broadcasting to use a driver that will throw (pusher with missing creds)
         config([
-            'broadcasting.default'            => 'pusher',
+            'broadcasting.default' => 'pusher',
             'broadcasting.connections.pusher' => [
                 'driver' => 'pusher',
-                'key'    => '',
+                'key' => '',
                 'secret' => '',
                 'app_id' => '',
                 'options' => [],
@@ -217,17 +217,17 @@ class SendChatMessageTest extends TestCase
 
         \Illuminate\Support\Facades\Log::spy();
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $user->id]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
-        $action  = new SendChatMessage();
+        $action = new SendChatMessage;
         $message = $action->execute($user, $community, 'Hello broadcast');
 
         // Message still created & returned even though broadcast blew up
         $this->assertInstanceOf(Message::class, $message);
         $this->assertDatabaseHas('messages', [
-            'id'      => $message->id,
+            'id' => $message->id,
             'content' => 'Hello broadcast',
         ]);
 
@@ -240,15 +240,15 @@ class SendChatMessageTest extends TestCase
     {
         Bus::fake([ForwardMessageToTelegram::class]);
 
-        $user      = User::factory()->create(['name' => 'Eve']);
+        $user = User::factory()->create(['name' => 'Eve']);
         $community = Community::factory()->create([
-            'owner_id'           => $user->id,
+            'owner_id' => $user->id,
             'telegram_bot_token' => 'token',
-            'telegram_chat_id'   => 'chat',
+            'telegram_chat_id' => 'chat',
         ]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
-        $action = new SendChatMessage();
+        $action = new SendChatMessage;
         $action->execute($user, $community, '', 'https://example.com/photo.jpg', 'image');
 
         Bus::assertDispatched(ForwardMessageToTelegram::class, function (ForwardMessageToTelegram $job) {

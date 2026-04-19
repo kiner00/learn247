@@ -22,8 +22,8 @@ class CertificationAttempt extends Model
     protected function casts(): array
     {
         return [
-            'answers'      => 'array',
-            'passed'       => 'boolean',
+            'answers' => 'array',
+            'passed' => 'boolean',
             'completed_at' => 'datetime',
         ];
     }

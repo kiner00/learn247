@@ -19,17 +19,17 @@ class DeleteChatMessageTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->action = new DeleteChatMessage();
+        $this->action = new DeleteChatMessage;
     }
 
     public function test_owner_can_delete_own_message(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $message   = Message::create([
+        $message = Message::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'content'      => 'Hello',
+            'user_id' => $user->id,
+            'content' => 'Hello',
         ]);
 
         $this->action->execute($user, $community, $message);
@@ -39,13 +39,13 @@ class DeleteChatMessageTest extends TestCase
 
     public function test_cannot_delete_another_users_message(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $otherUser = User::factory()->create();
         $community = Community::factory()->create();
-        $message   = Message::create([
+        $message = Message::create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
-            'content'      => 'Hello',
+            'user_id' => $owner->id,
+            'content' => 'Hello',
         ]);
 
         $this->expectException(AuthorizationException::class);
@@ -55,13 +55,13 @@ class DeleteChatMessageTest extends TestCase
 
     public function test_message_from_wrong_community_throws_exception(): void
     {
-        $user       = User::factory()->create();
-        $community1  = Community::factory()->create();
-        $community2  = Community::factory()->create();
-        $message    = Message::create([
+        $user = User::factory()->create();
+        $community1 = Community::factory()->create();
+        $community2 = Community::factory()->create();
+        $message = Message::create([
             'community_id' => $community1->id,
-            'user_id'      => $user->id,
-            'content'      => 'Hello',
+            'user_id' => $user->id,
+            'content' => 'Hello',
         ]);
 
         $this->expectException(AuthorizationException::class);

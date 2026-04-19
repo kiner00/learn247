@@ -19,9 +19,9 @@ class UpdateLandingPage
         }
 
         // Flat arrays must be fully replaced, not deep-merged.
-        $sections        = $data['_sections'] ?? null;
+        $sections = $data['_sections'] ?? null;
         $selectedCourses = array_key_exists('included_courses_selected', $data) ? $data['included_courses_selected'] : null;
-        $customSections  = array_key_exists('custom_sections', $data) ? $data['custom_sections'] : null;
+        $customSections = array_key_exists('custom_sections', $data) ? $data['custom_sections'] : null;
         unset($data['_sections'], $data['included_courses_selected'], $data['custom_sections']);
 
         $merged = array_replace_recursive($community->landing_page ?? [], $data);

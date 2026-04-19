@@ -19,18 +19,18 @@ class EventController extends Controller
 {
     public function index(Request $request, Community $community, GetCalendarEvents $query): Response
     {
-        $year  = (int) $request->query('year', now()->year);
+        $year = (int) $request->query('year', now()->year);
         $month = (int) $request->query('month', now()->month);
 
         $data = $query->execute($community, auth()->id(), $year, $month);
 
         return Inertia::render('Communities/Calendar', [
-            'community'    => $community->only('id', 'name', 'slug', 'avatar', 'cover_image'),
-            'membership'   => $data['membership'],
-            'events'       => $data['events'],
-            'year'         => $year,
-            'month'        => $month,
-            'isOwner'      => $data['isOwner'],
+            'community' => $community->only('id', 'name', 'slug', 'avatar', 'cover_image'),
+            'membership' => $data['membership'],
+            'events' => $data['events'],
+            'year' => $year,
+            'month' => $month,
+            'isOwner' => $data['isOwner'],
             'userTimezone' => $request->user()?->timezone ?? 'UTC',
         ]);
     }
@@ -45,6 +45,7 @@ class EventController extends Controller
             return back()->with('success', 'Event created.');
         } catch (\Throwable $e) {
             Log::error('EventController@store failed', ['error' => $e->getMessage(), 'community_id' => $community->id]);
+
             return back()->with('error', 'Failed to create event.');
         }
     }
@@ -60,6 +61,7 @@ class EventController extends Controller
             return back()->with('success', 'Event updated.');
         } catch (\Throwable $e) {
             Log::error('EventController@update failed', ['error' => $e->getMessage(), 'event_id' => $event->id]);
+
             return back()->with('error', 'Failed to update event.');
         }
     }
@@ -75,6 +77,7 @@ class EventController extends Controller
             return back()->with('success', 'Event deleted.');
         } catch (\Throwable $e) {
             Log::error('EventController@destroy failed', ['error' => $e->getMessage(), 'event_id' => $event->id]);
+
             return back()->with('error', 'Failed to delete event.');
         }
     }

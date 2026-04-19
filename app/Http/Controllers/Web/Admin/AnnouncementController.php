@@ -19,8 +19,8 @@ class AnnouncementController extends Controller
     public function send(Request $request, SendGlobalAnnouncement $action): RedirectResponse
     {
         $data = $request->validate([
-            'subject'  => 'required|string|max:255',
-            'message'  => 'required|string',
+            'subject' => 'required|string|max:255',
+            'message' => 'required|string',
             'audience' => 'required|in:affiliates,creators,members,all',
         ]);
 

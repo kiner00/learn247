@@ -16,12 +16,12 @@ class TicketStatusChangedMailTest extends TestCase
     {
         $user = User::factory()->create();
         $ticket = Ticket::create([
-            'user_id'     => $user->id,
-            'subject'     => 'Help me',
+            'user_id' => $user->id,
+            'subject' => 'Help me',
             'description' => 'Details',
-            'type'        => 'bug',
-            'status'      => 'in_progress',
-            'priority'    => 'medium',
+            'type' => 'bug',
+            'status' => 'in_progress',
+            'priority' => 'medium',
         ]);
 
         $mail = new TicketStatusChangedMail($ticket, 'open', 'in_progress');
@@ -35,12 +35,12 @@ class TicketStatusChangedMailTest extends TestCase
     {
         $user = User::factory()->create();
         $ticket = Ticket::create([
-            'user_id'     => $user->id,
-            'subject'     => 'Test',
+            'user_id' => $user->id,
+            'subject' => 'Test',
             'description' => 'Desc',
-            'type'        => 'bug',
-            'status'      => 'open',
-            'priority'    => 'low',
+            'type' => 'bug',
+            'status' => 'open',
+            'priority' => 'low',
         ]);
 
         $mail = new TicketStatusChangedMail($ticket, 'open', 'resolved');

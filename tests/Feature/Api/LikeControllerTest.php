@@ -29,9 +29,9 @@ class LikeControllerTest extends TestCase
             ->assertJsonPath('likes_count', 1);
 
         $this->assertDatabaseHas('likes', [
-            'user_id'       => $user->id,
+            'user_id' => $user->id,
             'likeable_type' => Post::class,
-            'likeable_id'   => $post->id,
+            'likeable_id' => $post->id,
         ]);
     }
 
@@ -51,9 +51,9 @@ class LikeControllerTest extends TestCase
             ->assertJsonPath('likes_count', 0);
 
         $this->assertDatabaseMissing('likes', [
-            'user_id'       => $user->id,
+            'user_id' => $user->id,
             'likeable_type' => Post::class,
-            'likeable_id'   => $post->id,
+            'likeable_id' => $post->id,
         ]);
     }
 
@@ -61,7 +61,7 @@ class LikeControllerTest extends TestCase
 
     public function test_authenticated_user_can_like_a_comment(): void
     {
-        $user    = User::factory()->create();
+        $user = User::factory()->create();
         $comment = Comment::factory()->create();
 
         $response = $this->actingAs($user)
@@ -72,9 +72,9 @@ class LikeControllerTest extends TestCase
             ->assertJsonPath('likes_count', 1);
 
         $this->assertDatabaseHas('likes', [
-            'user_id'       => $user->id,
+            'user_id' => $user->id,
             'likeable_type' => Comment::class,
-            'likeable_id'   => $comment->id,
+            'likeable_id' => $comment->id,
         ]);
     }
 
@@ -82,9 +82,9 @@ class LikeControllerTest extends TestCase
 
     public function test_community_owner_can_pin_post(): void
     {
-        $owner    = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $post      = Post::factory()->create(['community_id' => $community->id]);
+        $post = Post::factory()->create(['community_id' => $community->id]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $response = $this->actingAs($owner)
@@ -99,10 +99,10 @@ class LikeControllerTest extends TestCase
 
     public function test_non_owner_cannot_pin_post(): void
     {
-        $owner     = User::factory()->create();
-        $nonOwner  = User::factory()->create();
+        $owner = User::factory()->create();
+        $nonOwner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $post      = Post::factory()->create(['community_id' => $community->id]);
+        $post = Post::factory()->create(['community_id' => $community->id]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $nonOwner->id]);
 
         $this->actingAs($nonOwner)
@@ -112,12 +112,12 @@ class LikeControllerTest extends TestCase
 
     public function test_owner_can_toggle_pin_on_post(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $post      = Post::factory()->create([
+        $post = Post::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
-            'is_pinned'    => false,
+            'user_id' => $owner->id,
+            'is_pinned' => false,
         ]);
 
         $this->actingAs($owner)

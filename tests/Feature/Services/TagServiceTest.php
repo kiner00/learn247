@@ -5,7 +5,6 @@ namespace Tests\Feature\Services;
 use App\Models\Community;
 use App\Models\CommunityMember;
 use App\Models\Tag;
-use App\Models\User;
 use App\Services\Community\TagService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -19,7 +18,7 @@ class TagServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new TagService();
+        $this->service = new TagService;
     }
 
     public function test_auto_tag_applied_when_event_matches(): void
@@ -29,11 +28,11 @@ class TagServiceTest extends TestCase
 
         $tag = Tag::create([
             'community_id' => $community->id,
-            'name'         => 'New Member',
-            'slug'         => 'new-member',
-            'color'        => '#000',
-            'type'         => Tag::TYPE_AUTOMATIC,
-            'auto_rule'    => ['event' => 'member.joined'],
+            'name' => 'New Member',
+            'slug' => 'new-member',
+            'color' => '#000',
+            'type' => Tag::TYPE_AUTOMATIC,
+            'auto_rule' => ['event' => 'member.joined'],
         ]);
 
         $this->service->applyAutoTags($member, 'member.joined');
@@ -48,11 +47,11 @@ class TagServiceTest extends TestCase
 
         Tag::create([
             'community_id' => $community->id,
-            'name'         => 'Paid',
-            'slug'         => 'paid',
-            'color'        => '#000',
-            'type'         => Tag::TYPE_AUTOMATIC,
-            'auto_rule'    => ['event' => 'payment.completed'],
+            'name' => 'Paid',
+            'slug' => 'paid',
+            'color' => '#000',
+            'type' => Tag::TYPE_AUTOMATIC,
+            'auto_rule' => ['event' => 'payment.completed'],
         ]);
 
         $this->service->applyAutoTags($member, 'member.joined');
@@ -64,22 +63,22 @@ class TagServiceTest extends TestCase
     {
         $community = Community::factory()->create();
         $freeMember = CommunityMember::factory()->create([
-            'community_id'    => $community->id,
+            'community_id' => $community->id,
             'membership_type' => CommunityMember::MEMBERSHIP_FREE,
         ]);
         $paidMember = CommunityMember::factory()->create([
-            'community_id'    => $community->id,
+            'community_id' => $community->id,
             'membership_type' => CommunityMember::MEMBERSHIP_PAID,
         ]);
 
         $tag = Tag::create([
             'community_id' => $community->id,
-            'name'         => 'Paid Member',
-            'slug'         => 'paid-member',
-            'color'        => '#000',
-            'type'         => Tag::TYPE_AUTOMATIC,
-            'auto_rule'    => [
-                'event'  => 'member.joined',
+            'name' => 'Paid Member',
+            'slug' => 'paid-member',
+            'color' => '#000',
+            'type' => Tag::TYPE_AUTOMATIC,
+            'auto_rule' => [
+                'event' => 'member.joined',
                 'filter' => ['membership_type' => CommunityMember::MEMBERSHIP_PAID],
             ],
         ]);
@@ -98,12 +97,12 @@ class TagServiceTest extends TestCase
 
         $tag = Tag::create([
             'community_id' => $community->id,
-            'name'         => 'Course 5 Student',
-            'slug'         => 'course-5-student',
-            'color'        => '#000',
-            'type'         => Tag::TYPE_AUTOMATIC,
-            'auto_rule'    => [
-                'event'  => 'course.enrolled',
+            'name' => 'Course 5 Student',
+            'slug' => 'course-5-student',
+            'color' => '#000',
+            'type' => Tag::TYPE_AUTOMATIC,
+            'auto_rule' => [
+                'event' => 'course.enrolled',
                 'filter' => ['course_id' => 5],
             ],
         ]);
@@ -124,11 +123,11 @@ class TagServiceTest extends TestCase
 
         Tag::create([
             'community_id' => $community->id,
-            'name'         => 'Broken',
-            'slug'         => 'broken',
-            'color'        => '#000',
-            'type'         => Tag::TYPE_AUTOMATIC,
-            'auto_rule'    => null,
+            'name' => 'Broken',
+            'slug' => 'broken',
+            'color' => '#000',
+            'type' => Tag::TYPE_AUTOMATIC,
+            'auto_rule' => null,
         ]);
 
         $this->service->applyAutoTags($member, 'member.joined');

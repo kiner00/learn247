@@ -15,7 +15,8 @@ class Community extends Model
 {
     use HasFactory, SoftDeletes;
 
-    public const BILLING_MONTHLY  = 'monthly';
+    public const BILLING_MONTHLY = 'monthly';
+
     public const BILLING_ONE_TIME = 'one_time';
 
     protected $fillable = [
@@ -37,14 +38,14 @@ class Community extends Model
     protected function casts(): array
     {
         return [
-            'is_private'                => 'boolean',
-            'is_featured'               => 'boolean',
-            'price'                     => 'decimal:2',
+            'is_private' => 'boolean',
+            'is_featured' => 'boolean',
+            'price' => 'decimal:2',
             'affiliate_commission_rate' => 'integer',
-            'landing_page'              => 'array',
-            'brand_context'             => 'array',
-            'curzzo_topup_packs'        => 'array',
-            'deletion_requested_at'     => 'datetime',
+            'landing_page' => 'array',
+            'brand_context' => 'array',
+            'curzzo_topup_packs' => 'array',
+            'deletion_requested_at' => 'datetime',
         ];
     }
 
@@ -105,21 +106,21 @@ class Community extends Model
         }
 
         return $this->galleryItems->map(fn (CommunityGalleryItem $item) => [
-            'id'                => $item->id,
-            'type'              => $item->type,
-            'url'               => $item->url,
-            'poster_url'        => $item->poster_url,
-            'hls_url'           => $item->video_ready
+            'id' => $item->id,
+            'type' => $item->type,
+            'url' => $item->url,
+            'poster_url' => $item->poster_url,
+            'hls_url' => $item->video_ready
                 ? route('communities.gallery.hls', [
                     'community' => $this->slug,
-                    'item'      => $item->id,
-                    'file'      => 'video.m3u8',
+                    'item' => $item->id,
+                    'file' => 'video.m3u8',
                 ])
                 : null,
-            'transcode_status'  => $item->transcode_status,
+            'transcode_status' => $item->transcode_status,
             'transcode_percent' => $item->transcode_percent,
-            'video_ready'       => $item->video_ready,
-            'position'          => $item->position,
+            'video_ready' => $item->video_ready,
+            'position' => $item->position,
         ])->values()->all();
     }
 
@@ -224,20 +225,21 @@ class Community extends Model
     public function url(): string
     {
         if ($this->custom_domain) {
-            return 'https://' . $this->custom_domain;
+            return 'https://'.$this->custom_domain;
         }
 
-        $appUrl  = rtrim(config('app.url'), '/');
+        $appUrl = rtrim(config('app.url'), '/');
         $appHost = parse_url($appUrl, PHP_URL_HOST) ?? '';
         // Strip port for the subdomain host
         $bareHost = explode(':', $appHost)[0];
 
         if ($this->subdomain && $bareHost) {
             $scheme = parse_url($appUrl, PHP_URL_SCHEME) ?? 'https';
-            return $scheme . '://' . $this->subdomain . '.' . $bareHost;
+
+            return $scheme.'://'.$this->subdomain.'.'.$bareHost;
         }
 
-        return $appUrl . '/communities/' . $this->slug;
+        return $appUrl.'/communities/'.$this->slug;
     }
 
     public function isPendingDeletion(): bool
@@ -260,7 +262,7 @@ class Community extends Model
     public function platformFeeRate(): float
     {
         return match ($this->owner?->creatorPlan()) {
-            'pro'   => 0.029,
+            'pro' => 0.029,
             'basic' => 0.049,
             default => 0.098,
         };

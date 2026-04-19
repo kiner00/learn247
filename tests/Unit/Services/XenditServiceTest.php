@@ -13,7 +13,7 @@ class XenditServiceTest extends TestCase
     public function test_verify_callback_token_returns_true_for_matching_token(): void
     {
         config(['services.xendit.callback_token' => 'my_secret_token']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $this->assertTrue($service->verifyCallbackToken('my_secret_token'));
     }
@@ -21,7 +21,7 @@ class XenditServiceTest extends TestCase
     public function test_verify_callback_token_returns_false_for_wrong_token(): void
     {
         config(['services.xendit.callback_token' => 'my_secret_token']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $this->assertFalse($service->verifyCallbackToken('wrong_token'));
     }
@@ -29,7 +29,7 @@ class XenditServiceTest extends TestCase
     public function test_verify_callback_token_returns_false_for_null_token(): void
     {
         config(['services.xendit.callback_token' => 'my_secret_token']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $this->assertFalse($service->verifyCallbackToken(null));
     }
@@ -37,7 +37,7 @@ class XenditServiceTest extends TestCase
     public function test_verify_callback_token_returns_false_when_config_token_is_empty(): void
     {
         config(['services.xendit.callback_token' => '']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $this->assertFalse($service->verifyCallbackToken('some_token'));
     }
@@ -48,19 +48,19 @@ class XenditServiceTest extends TestCase
     {
         Http::fake([
             'https://api.xendit.co/v2/invoices' => Http::response([
-                'id'          => 'inv_test_123',
+                'id' => 'inv_test_123',
                 'invoice_url' => 'https://checkout.xendit.co/v2/inv_test_123',
-                'status'      => 'PENDING',
+                'status' => 'PENDING',
             ], 200),
         ]);
 
         config(['services.xendit.secret_key' => 'xnd_test_key']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $result = $service->createInvoice([
             'external_id' => 'sub_1',
-            'amount'      => 499,
-            'currency'    => 'PHP',
+            'amount' => 499,
+            'currency' => 'PHP',
         ]);
 
         $this->assertSame('inv_test_123', $result['id']);
@@ -74,7 +74,7 @@ class XenditServiceTest extends TestCase
         ]);
 
         config(['services.xendit.secret_key' => 'bad_key']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessageMatches('/Failed to create Xendit invoice/');
@@ -88,13 +88,13 @@ class XenditServiceTest extends TestCase
     {
         Http::fake([
             'https://api.xendit.co/v2/invoices/inv_abc' => Http::response([
-                'id'     => 'inv_abc',
+                'id' => 'inv_abc',
                 'status' => 'PAID',
             ], 200),
         ]);
 
         config(['services.xendit.secret_key' => 'xnd_test_key']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $result = $service->getInvoice('inv_abc');
 
@@ -109,7 +109,7 @@ class XenditServiceTest extends TestCase
         ]);
 
         config(['services.xendit.secret_key' => 'xnd_test_key']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessageMatches('/Failed to fetch Xendit invoice/');
@@ -123,21 +123,21 @@ class XenditServiceTest extends TestCase
     {
         Http::fake([
             'https://api.xendit.co/v2/payouts' => Http::response([
-                'id'           => 'disb_test_456',
+                'id' => 'disb_test_456',
                 'reference_id' => 'payout-ref-001',
-                'status'       => 'ACCEPTED',
+                'status' => 'ACCEPTED',
             ], 200),
         ]);
 
         config(['services.xendit.secret_key' => 'xnd_test_key']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $result = $service->createPayout([
-            'reference_id'        => 'payout-ref-001',
-            'channel_code'        => 'PH_GCASH',
-            'channel_properties'  => ['account_number' => '09171234567'],
-            'amount'              => 500,
-            'currency'            => 'PHP',
+            'reference_id' => 'payout-ref-001',
+            'channel_code' => 'PH_GCASH',
+            'channel_properties' => ['account_number' => '09171234567'],
+            'amount' => 500,
+            'currency' => 'PHP',
         ]);
 
         $this->assertSame('disb_test_456', $result['id']);
@@ -149,12 +149,12 @@ class XenditServiceTest extends TestCase
         Http::fake([
             'https://api.xendit.co/v2/payouts' => Http::response([
                 'error_code' => 'INSUFFICIENT_BALANCE',
-                'message'    => 'Insufficient balance',
+                'message' => 'Insufficient balance',
             ], 400),
         ]);
 
         config(['services.xendit.secret_key' => 'xnd_test_key']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessageMatches('/Xendit payout failed/');
@@ -168,13 +168,13 @@ class XenditServiceTest extends TestCase
     {
         Http::fake([
             'https://api.xendit.co/v2/payouts/disb_abc' => Http::response([
-                'id'     => 'disb_abc',
+                'id' => 'disb_abc',
                 'status' => 'SUCCEEDED',
             ], 200),
         ]);
 
         config(['services.xendit.secret_key' => 'xnd_test_key']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $result = $service->getPayout('disb_abc');
 
@@ -189,7 +189,7 @@ class XenditServiceTest extends TestCase
         ]);
 
         config(['services.xendit.secret_key' => 'xnd_test_key']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessageMatches('/Failed to fetch Xendit payout/');
@@ -206,7 +206,7 @@ class XenditServiceTest extends TestCase
         ]);
 
         config(['services.xendit.secret_key' => 'xnd_test_key']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $this->assertSame(125000.0, $service->getBalance());
     }
@@ -218,7 +218,7 @@ class XenditServiceTest extends TestCase
         ]);
 
         config(['services.xendit.secret_key' => 'xnd_test_key']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $this->assertSame(0.0, $service->getBalance());
     }
@@ -229,13 +229,13 @@ class XenditServiceTest extends TestCase
     {
         Http::fake([
             'https://api.xendit.co/customers' => Http::response([
-                'id'           => 'cust_001',
+                'id' => 'cust_001',
                 'reference_id' => 'user-42',
             ], 200),
         ]);
 
         config(['services.xendit.secret_key' => 'xnd_test_key']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $result = $service->createCustomer(['reference_id' => 'user-42', 'email' => 'test@example.com']);
 
@@ -249,7 +249,7 @@ class XenditServiceTest extends TestCase
         ]);
 
         config(['services.xendit.secret_key' => 'xnd_test_key']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessageMatches('/Failed to create Xendit customer/');
@@ -263,13 +263,13 @@ class XenditServiceTest extends TestCase
     {
         Http::fake([
             'https://api.xendit.co/recurring/plans' => Http::response([
-                'id'     => 'repl_test_001',
+                'id' => 'repl_test_001',
                 'status' => 'REQUIRES_ACTION',
             ], 200),
         ]);
 
         config(['services.xendit.secret_key' => 'xnd_test_key']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $result = $service->createRecurringPlan(['reference_id' => 'sub-1', 'amount' => 499]);
 
@@ -283,7 +283,7 @@ class XenditServiceTest extends TestCase
         ]);
 
         config(['services.xendit.secret_key' => 'xnd_test_key']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessageMatches('/Failed to create Xendit recurring plan/');
@@ -297,13 +297,13 @@ class XenditServiceTest extends TestCase
     {
         Http::fake([
             'https://api.xendit.co/recurring/plans/repl_abc' => Http::response([
-                'id'     => 'repl_abc',
+                'id' => 'repl_abc',
                 'status' => 'ACTIVE',
             ], 200),
         ]);
 
         config(['services.xendit.secret_key' => 'xnd_test_key']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $result = $service->getRecurringPlan('repl_abc');
 
@@ -318,7 +318,7 @@ class XenditServiceTest extends TestCase
         ]);
 
         config(['services.xendit.secret_key' => 'xnd_test_key']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessageMatches('/Failed to fetch Xendit recurring plan/');
@@ -332,13 +332,13 @@ class XenditServiceTest extends TestCase
     {
         Http::fake([
             'https://api.xendit.co/recurring/plans/repl_abc/deactivate' => Http::response([
-                'id'     => 'repl_abc',
+                'id' => 'repl_abc',
                 'status' => 'INACTIVE',
             ], 200),
         ]);
 
         config(['services.xendit.secret_key' => 'xnd_test_key']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $result = $service->deactivateRecurringPlan('repl_abc');
 
@@ -353,7 +353,7 @@ class XenditServiceTest extends TestCase
         ]);
 
         config(['services.xendit.secret_key' => 'xnd_test_key']);
-        $service = new XenditService();
+        $service = new XenditService;
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessageMatches('/Failed to deactivate Xendit recurring plan/');

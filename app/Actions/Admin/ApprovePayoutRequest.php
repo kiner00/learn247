@@ -25,14 +25,14 @@ class ApprovePayoutRequest
         $user = $payoutRequest->user;
 
         if ($payoutRequest->type === PayoutRequest::TYPE_OWNER) {
-            $payoutMethod  = $user->payout_method;
+            $payoutMethod = $user->payout_method;
             $payoutDetails = $user->payout_details;
-            $holderName    = $user->name;
+            $holderName = $user->name;
         } else {
-            $affiliate     = Affiliate::findOrFail($payoutRequest->affiliate_id);
-            $payoutMethod  = $affiliate->payout_method;
+            $affiliate = Affiliate::findOrFail($payoutRequest->affiliate_id);
+            $payoutMethod = $affiliate->payout_method;
             $payoutDetails = $affiliate->payout_details;
-            $holderName    = $user->name;
+            $holderName = $user->name;
         }
 
         if (! PayoutChannelMap::supports($payoutMethod) || ! $payoutDetails) {
@@ -40,43 +40,43 @@ class ApprovePayoutRequest
         }
 
         $channelCode = PayoutChannelMap::resolve($payoutMethod);
-        $referenceId = 'req-' . $payoutRequest->id . '-' . time();
+        $referenceId = 'req-'.$payoutRequest->id.'-'.time();
 
-        $requestedAmount    = (float) $payoutRequest->amount;
+        $requestedAmount = (float) $payoutRequest->amount;
         $disbursementAmount = $payoutRequest->type === PayoutRequest::TYPE_OWNER
             ? round($requestedAmount - Community::PAYOUT_FEE, 2)
             : $requestedAmount;
 
-        abort_if($disbursementAmount <= 0, 422, 'Payout amount must exceed the ₱' . Community::PAYOUT_FEE . ' processing fee.');
+        abort_if($disbursementAmount <= 0, 422, 'Payout amount must exceed the ₱'.Community::PAYOUT_FEE.' processing fee.');
 
         $result = $this->xendit->createPayout([
-            'reference_id'       => $referenceId,
-            'currency'           => 'PHP',
-            'channel_code'       => $channelCode,
+            'reference_id' => $referenceId,
+            'currency' => 'PHP',
+            'channel_code' => $channelCode,
             'channel_properties' => [
                 'account_holder_name' => $holderName,
-                'account_number'      => $payoutDetails,
+                'account_number' => $payoutDetails,
             ],
-            'amount'      => $disbursementAmount,
+            'amount' => $disbursementAmount,
             'description' => "Payout request #{$payoutRequest->id}",
         ]);
 
         if ($payoutRequest->type === PayoutRequest::TYPE_OWNER) {
             OwnerPayout::create([
-                'community_id'     => $payoutRequest->community_id,
-                'user_id'          => $user->id,
-                'amount'           => $requestedAmount,
-                'status'           => 'accepted',
+                'community_id' => $payoutRequest->community_id,
+                'user_id' => $user->id,
+                'amount' => $requestedAmount,
+                'status' => 'accepted',
                 'xendit_reference' => $result['id'] ?? $referenceId,
-                'paid_at'          => now(),
+                'paid_at' => now(),
             ]);
         }
 
         $payoutRequest->update([
-            'status'           => PayoutRequest::STATUS_APPROVED,
+            'status' => PayoutRequest::STATUS_APPROVED,
             'xendit_reference' => $result['id'] ?? $referenceId,
-            'processed_at'     => now(),
-            'processed_by'     => auth()->id(),
+            'processed_at' => now(),
+            'processed_by' => auth()->id(),
         ]);
 
         CacheKeys::flushPayment($payoutRequest->community_id, $user->id);

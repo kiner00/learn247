@@ -25,11 +25,11 @@ class GetAffiliateAnalytics
         $base = AffiliateConversion::whereIn('affiliate_id', $filteredIds)
             ->when($from, fn ($q) => $q->where('created_at', '>=', $from));
 
-        $totalEarned      = (float) (clone $base)->sum('commission_amount');
-        $totalPaid        = (float) (clone $base)->where('status', AffiliateConversion::STATUS_PAID)->sum('commission_amount');
-        $totalPending     = (float) (clone $base)->where('status', AffiliateConversion::STATUS_PENDING)->sum('commission_amount');
+        $totalEarned = (float) (clone $base)->sum('commission_amount');
+        $totalPaid = (float) (clone $base)->where('status', AffiliateConversion::STATUS_PAID)->sum('commission_amount');
+        $totalPending = (float) (clone $base)->where('status', AffiliateConversion::STATUS_PENDING)->sum('commission_amount');
         $totalConversions = (clone $base)->count();
-        $avgPerReferral   = $totalConversions > 0 ? round($totalEarned / $totalConversions, 2) : 0;
+        $avgPerReferral = $totalConversions > 0 ? round($totalEarned / $totalConversions, 2) : 0;
 
         $bestMonth = AffiliateConversion::whereIn('affiliate_id', $allAffiliateIds)
             ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as month, SUM(commission_amount) as total")
@@ -38,9 +38,9 @@ class GetAffiliateAnalytics
             ->first();
 
         $chartData = match ($period) {
-            'week'  => $this->chartByDay($filteredIds, $from, 7),
+            'week' => $this->chartByDay($filteredIds, $from, 7),
             'month' => $this->chartByDay($filteredIds, $from, Carbon::now()->daysInMonth),
-            'year'  => $this->chartByMonth($filteredIds, $from),
+            'year' => $this->chartByMonth($filteredIds, $from),
             default => $this->chartByMonth($filteredIds, Carbon::now()->subYears(2)),
         };
 
@@ -50,13 +50,13 @@ class GetAffiliateAnalytics
             ->limit(100)
             ->get()
             ->map(fn ($c) => [
-                'id'                => $c->id,
-                'date'              => $c->created_at->format('M j, Y'),
-                'community'         => $c->affiliate->community->name,
-                'sale_amount'       => (float) $c->sale_amount,
+                'id' => $c->id,
+                'date' => $c->created_at->format('M j, Y'),
+                'community' => $c->affiliate->community->name,
+                'sale_amount' => (float) $c->sale_amount,
                 'commission_amount' => (float) $c->commission_amount,
-                'status'            => $c->status,
-                'paid_at'           => $c->paid_at?->format('M j, Y'),
+                'status' => $c->status,
+                'paid_at' => $c->paid_at?->format('M j, Y'),
             ]);
 
         $communities = Affiliate::where('user_id', $user->id)
@@ -75,18 +75,18 @@ class GetAffiliateAnalytics
 
         return [
             'summary' => [
-                'total_earned'      => $totalEarned,
-                'total_paid'        => $totalPaid,
-                'total_pending'     => $totalPending,
+                'total_earned' => $totalEarned,
+                'total_paid' => $totalPaid,
+                'total_pending' => $totalPending,
                 'total_conversions' => $totalConversions,
-                'avg_per_referral'  => $avgPerReferral,
-                'best_month'        => $bestMonth?->month,
-                'best_month_total'  => (float) ($bestMonth?->total ?? 0),
+                'avg_per_referral' => $avgPerReferral,
+                'best_month' => $bestMonth?->month,
+                'best_month_total' => (float) ($bestMonth?->total ?? 0),
             ],
-            'chartData'   => $chartData,
+            'chartData' => $chartData,
             'conversions' => $conversions,
             'communities' => $communities,
-            'byComm'      => $byComm,
+            'byComm' => $byComm,
         ];
     }
 
@@ -94,7 +94,7 @@ class GetAffiliateAnalytics
     {
         $rows = AffiliateConversion::whereIn('affiliate_id', $affiliateIds)
             ->where('created_at', '>=', $from)
-            ->selectRaw("DATE(created_at) as label, SUM(commission_amount) as total")
+            ->selectRaw('DATE(created_at) as label, SUM(commission_amount) as total')
             ->groupBy('label')
             ->pluck('total', 'label');
 
@@ -103,6 +103,7 @@ class GetAffiliateAnalytics
             $d = $from->copy()->addDays($i)->toDateString();
             $result[] = ['label' => Carbon::parse($d)->format('M j'), 'total' => (float) ($rows[$d] ?? 0)];
         }
+
         return $result;
     }
 
@@ -121,15 +122,16 @@ class GetAffiliateAnalytics
             $result[] = ['label' => $cursor->format('M Y'), 'total' => (float) ($rows[$key] ?? 0)];
             $cursor->addMonth();
         }
+
         return $result;
     }
 
     private function periodStart(?string $period): ?Carbon
     {
         return match ($period) {
-            'week'  => Carbon::now()->startOfWeek(),
+            'week' => Carbon::now()->startOfWeek(),
             'month' => Carbon::now()->startOfMonth(),
-            'year'  => Carbon::now()->startOfYear(),
+            'year' => Carbon::now()->startOfYear(),
             default => null,
         };
     }

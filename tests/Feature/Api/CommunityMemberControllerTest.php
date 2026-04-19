@@ -16,7 +16,7 @@ class CommunityMemberControllerTest extends TestCase
 
     public function test_user_can_list_community_members(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
         CommunityMember::factory()->count(2)->create(['community_id' => $community->id]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
@@ -30,7 +30,7 @@ class CommunityMemberControllerTest extends TestCase
 
     public function test_admin_can_remove_member(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
         $memberToRemove = User::factory()->create();
@@ -43,15 +43,15 @@ class CommunityMemberControllerTest extends TestCase
 
         $this->assertDatabaseMissing('community_members', [
             'community_id' => $community->id,
-            'user_id'      => $memberToRemove->id,
+            'user_id' => $memberToRemove->id,
         ]);
     }
 
     public function test_regular_member_cannot_remove_member(): void
     {
-        $owner         = User::factory()->create();
+        $owner = User::factory()->create();
         $regularMember = User::factory()->create();
-        $community     = Community::factory()->create(['owner_id' => $owner->id]);
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $regularMember->id]);
         $targetMember = User::factory()->create();
@@ -63,15 +63,15 @@ class CommunityMemberControllerTest extends TestCase
 
         $this->assertDatabaseHas('community_members', [
             'community_id' => $community->id,
-            'user_id'      => $targetMember->id,
+            'user_id' => $targetMember->id,
         ]);
     }
 
     public function test_owner_can_change_member_role(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $member    = User::factory()->create();
+        $member = User::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $this->actingAs($owner, 'sanctum')
@@ -83,14 +83,14 @@ class CommunityMemberControllerTest extends TestCase
 
         $this->assertDatabaseHas('community_members', [
             'community_id' => $community->id,
-            'user_id'      => $member->id,
-            'role'         => 'moderator',
+            'user_id' => $member->id,
+            'role' => 'moderator',
         ]);
     }
 
     public function test_destroy_returns_500_when_action_throws(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
         $memberToRemove = User::factory()->create();
@@ -107,9 +107,9 @@ class CommunityMemberControllerTest extends TestCase
 
     public function test_change_role_returns_500_when_action_throws(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $member    = User::factory()->create();
+        $member = User::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $mock = $this->mock(ChangeMemberRole::class);

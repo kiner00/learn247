@@ -16,10 +16,10 @@ class CreatorChaChing extends Mailable
     use Queueable, SerializesModels;
 
     public function __construct(
-        public readonly User      $creator,
+        public readonly User $creator,
         public readonly Community $community,
-        public readonly float     $saleAmount,
-        public readonly ?string   $referredByName,
+        public readonly float $saleAmount,
+        public readonly ?string $referredByName,
     ) {}
 
     public function envelope(): Envelope
@@ -51,11 +51,11 @@ class CreatorChaChing extends Mailable
             : '';
 
         return [
-            'creator_name'   => $this->creator->name,
+            'creator_name' => $this->creator->name,
             'community_name' => $this->community->name,
-            'sale_amount'    => number_format($this->saleAmount, 2),
-            'referred_by'    => $referredBy,
-            'dashboard_url'  => config('app.url') . '/creator/dashboard',
+            'sale_amount' => number_format($this->saleAmount, 2),
+            'referred_by' => $referredBy,
+            'dashboard_url' => config('app.url').'/creator/dashboard',
         ];
     }
 }

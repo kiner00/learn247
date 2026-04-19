@@ -22,12 +22,12 @@ class CurzzoLimitServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new CurzzoLimitService();
+        $this->service = new CurzzoLimitService;
     }
 
     public function test_owner_has_unlimited_daily_limit(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->assertSame(PHP_INT_MAX, $this->service->dailyLimit($owner, $community));
@@ -35,11 +35,11 @@ class CurzzoLimitServiceTest extends TestCase
 
     public function test_free_member_gets_base_daily_limit(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
         CommunityMember::factory()->create([
-            'community_id'    => $community->id,
-            'user_id'         => $user->id,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
             'membership_type' => CommunityMember::MEMBERSHIP_FREE,
         ]);
 
@@ -48,11 +48,11 @@ class CurzzoLimitServiceTest extends TestCase
 
     public function test_paid_member_gets_higher_daily_limit(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
         CommunityMember::factory()->create([
-            'community_id'    => $community->id,
-            'user_id'         => $user->id,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
             'membership_type' => CommunityMember::MEMBERSHIP_PAID,
         ]);
 
@@ -61,30 +61,30 @@ class CurzzoLimitServiceTest extends TestCase
 
     public function test_today_usage_counts_only_today_user_messages(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $curzzo    = Curzzo::create([
+        $curzzo = Curzzo::create([
             'community_id' => $community->id,
-            'name'         => 'Test Bot',
+            'name' => 'Test Bot',
             'instructions' => 'Be helpful.',
         ]);
 
         // Today's user message
         CurzzoMessage::create([
-            'curzzo_id'     => $curzzo->id,
-            'community_id'  => $community->id,
-            'user_id'       => $user->id,
-            'role'          => 'user',
-            'content'       => 'hello',
+            'curzzo_id' => $curzzo->id,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'role' => 'user',
+            'content' => 'hello',
         ]);
 
         // Today's assistant message (should not count)
         CurzzoMessage::create([
-            'curzzo_id'     => $curzzo->id,
-            'community_id'  => $community->id,
-            'user_id'       => $user->id,
-            'role'          => 'assistant',
-            'content'       => 'hi',
+            'curzzo_id' => $curzzo->id,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'role' => 'assistant',
+            'content' => 'hi',
         ]);
 
         $this->assertSame(1, $this->service->todayUsage($user, $community));
@@ -92,7 +92,7 @@ class CurzzoLimitServiceTest extends TestCase
 
     public function test_owner_is_always_allowed_to_send(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $result = $this->service->canSendMessage($owner, $community);
@@ -114,17 +114,17 @@ class CurzzoLimitServiceTest extends TestCase
 
     public function test_buyer_with_active_curzzo_purchase_gets_buyer_limit(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $curzzo    = Curzzo::create([
+        $curzzo = Curzzo::create([
             'community_id' => $community->id,
-            'name'         => 'Test Bot',
+            'name' => 'Test Bot',
             'instructions' => 'Be helpful.',
         ]);
         CurzzoPurchase::create([
-            'user_id'   => $user->id,
+            'user_id' => $user->id,
             'curzzo_id' => $curzzo->id,
-            'status'    => CurzzoPurchase::STATUS_PAID,
+            'status' => CurzzoPurchase::STATUS_PAID,
             'expires_at' => null, // lifetime
         ]);
 
@@ -135,7 +135,7 @@ class CurzzoLimitServiceTest extends TestCase
 
     public function test_topup_remaining_returns_zero_when_no_topups(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
 
         $this->assertSame(0, $this->service->topupRemaining($user, $community));
@@ -143,24 +143,24 @@ class CurzzoLimitServiceTest extends TestCase
 
     public function test_topup_remaining_sums_active_message_packs(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
 
         CurzzoTopup::create([
-            'user_id'       => $user->id,
-            'community_id'  => $community->id,
-            'status'        => CurzzoTopup::STATUS_PAID,
-            'messages'      => 50,
+            'user_id' => $user->id,
+            'community_id' => $community->id,
+            'status' => CurzzoTopup::STATUS_PAID,
+            'messages' => 50,
             'messages_used' => 10,
-            'expires_at'    => null,
+            'expires_at' => null,
         ]);
         CurzzoTopup::create([
-            'user_id'       => $user->id,
-            'community_id'  => $community->id,
-            'status'        => CurzzoTopup::STATUS_PAID,
-            'messages'      => 200,
+            'user_id' => $user->id,
+            'community_id' => $community->id,
+            'status' => CurzzoTopup::STATUS_PAID,
+            'messages' => 200,
             'messages_used' => 0,
-            'expires_at'    => null,
+            'expires_at' => null,
         ]);
 
         $this->assertSame(240, $this->service->topupRemaining($user, $community));
@@ -168,16 +168,16 @@ class CurzzoLimitServiceTest extends TestCase
 
     public function test_topup_remaining_returns_max_int_for_active_day_pass(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
 
         CurzzoTopup::create([
-            'user_id'       => $user->id,
-            'community_id'  => $community->id,
-            'status'        => CurzzoTopup::STATUS_PAID,
-            'messages'      => 0,
+            'user_id' => $user->id,
+            'community_id' => $community->id,
+            'status' => CurzzoTopup::STATUS_PAID,
+            'messages' => 0,
             'messages_used' => 0,
-            'expires_at'    => now()->addHours(12),
+            'expires_at' => now()->addHours(12),
         ]);
 
         $this->assertSame(PHP_INT_MAX, $this->service->topupRemaining($user, $community));
@@ -185,16 +185,16 @@ class CurzzoLimitServiceTest extends TestCase
 
     public function test_topup_remaining_ignores_expired_day_pass(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
 
         CurzzoTopup::create([
-            'user_id'       => $user->id,
-            'community_id'  => $community->id,
-            'status'        => CurzzoTopup::STATUS_PAID,
-            'messages'      => 0,
+            'user_id' => $user->id,
+            'community_id' => $community->id,
+            'status' => CurzzoTopup::STATUS_PAID,
+            'messages' => 0,
             'messages_used' => 0,
-            'expires_at'    => now()->subHour(),
+            'expires_at' => now()->subHour(),
         ]);
 
         $this->assertSame(0, $this->service->topupRemaining($user, $community));
@@ -202,16 +202,16 @@ class CurzzoLimitServiceTest extends TestCase
 
     public function test_topup_remaining_ignores_pending_topups(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
 
         CurzzoTopup::create([
-            'user_id'       => $user->id,
-            'community_id'  => $community->id,
-            'status'        => CurzzoTopup::STATUS_PENDING,
-            'messages'      => 50,
+            'user_id' => $user->id,
+            'community_id' => $community->id,
+            'status' => CurzzoTopup::STATUS_PENDING,
+            'messages' => 50,
             'messages_used' => 0,
-            'expires_at'    => null,
+            'expires_at' => null,
         ]);
 
         $this->assertSame(0, $this->service->topupRemaining($user, $community));
@@ -221,11 +221,11 @@ class CurzzoLimitServiceTest extends TestCase
 
     public function test_can_send_message_allowed_when_under_daily_limit(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
         CommunityMember::factory()->create([
-            'community_id'    => $community->id,
-            'user_id'         => $user->id,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
             'membership_type' => CommunityMember::MEMBERSHIP_FREE,
         ]);
 
@@ -237,28 +237,28 @@ class CurzzoLimitServiceTest extends TestCase
 
     public function test_can_send_message_denied_when_over_daily_limit_no_topup(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
         CommunityMember::factory()->create([
-            'community_id'    => $community->id,
-            'user_id'         => $user->id,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
             'membership_type' => CommunityMember::MEMBERSHIP_FREE,
         ]);
 
         $curzzo = Curzzo::create([
             'community_id' => $community->id,
-            'name'         => 'Bot',
+            'name' => 'Bot',
             'instructions' => 'Help',
         ]);
 
         // Create 10 messages to hit free limit
         for ($i = 0; $i < 10; $i++) {
             CurzzoMessage::create([
-                'curzzo_id'     => $curzzo->id,
-                'community_id'  => $community->id,
-                'user_id'       => $user->id,
-                'role'          => 'user',
-                'content'       => "msg {$i}",
+                'curzzo_id' => $curzzo->id,
+                'community_id' => $community->id,
+                'user_id' => $user->id,
+                'role' => 'user',
+                'content' => "msg {$i}",
             ]);
         }
 
@@ -270,38 +270,38 @@ class CurzzoLimitServiceTest extends TestCase
 
     public function test_can_send_message_allowed_with_topup_when_over_daily_limit(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
         CommunityMember::factory()->create([
-            'community_id'    => $community->id,
-            'user_id'         => $user->id,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
             'membership_type' => CommunityMember::MEMBERSHIP_FREE,
         ]);
 
         $curzzo = Curzzo::create([
             'community_id' => $community->id,
-            'name'         => 'Bot',
+            'name' => 'Bot',
             'instructions' => 'Help',
         ]);
 
         for ($i = 0; $i < 10; $i++) {
             CurzzoMessage::create([
-                'curzzo_id'     => $curzzo->id,
-                'community_id'  => $community->id,
-                'user_id'       => $user->id,
-                'role'          => 'user',
-                'content'       => "msg {$i}",
+                'curzzo_id' => $curzzo->id,
+                'community_id' => $community->id,
+                'user_id' => $user->id,
+                'role' => 'user',
+                'content' => "msg {$i}",
             ]);
         }
 
         // Active topup
         CurzzoTopup::create([
-            'user_id'       => $user->id,
-            'community_id'  => $community->id,
-            'status'        => CurzzoTopup::STATUS_PAID,
-            'messages'      => 50,
+            'user_id' => $user->id,
+            'community_id' => $community->id,
+            'status' => CurzzoTopup::STATUS_PAID,
+            'messages' => 50,
             'messages_used' => 0,
-            'expires_at'    => null,
+            'expires_at' => null,
         ]);
 
         $result = $this->service->canSendMessage($user, $community);
@@ -314,16 +314,16 @@ class CurzzoLimitServiceTest extends TestCase
 
     public function test_consume_topup_increments_messages_used(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
 
         $topup = CurzzoTopup::create([
-            'user_id'       => $user->id,
-            'community_id'  => $community->id,
-            'status'        => CurzzoTopup::STATUS_PAID,
-            'messages'      => 50,
+            'user_id' => $user->id,
+            'community_id' => $community->id,
+            'status' => CurzzoTopup::STATUS_PAID,
+            'messages' => 50,
             'messages_used' => 5,
-            'expires_at'    => null,
+            'expires_at' => null,
         ]);
 
         $this->service->consumeTopup($user, $community);
@@ -334,16 +334,16 @@ class CurzzoLimitServiceTest extends TestCase
 
     public function test_consume_topup_does_not_increment_day_pass(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
 
         $topup = CurzzoTopup::create([
-            'user_id'       => $user->id,
-            'community_id'  => $community->id,
-            'status'        => CurzzoTopup::STATUS_PAID,
-            'messages'      => 0,
+            'user_id' => $user->id,
+            'community_id' => $community->id,
+            'status' => CurzzoTopup::STATUS_PAID,
+            'messages' => 0,
             'messages_used' => 0,
-            'expires_at'    => now()->addHours(12),
+            'expires_at' => now()->addHours(12),
         ]);
 
         $this->service->consumeTopup($user, $community);
@@ -354,26 +354,26 @@ class CurzzoLimitServiceTest extends TestCase
 
     public function test_consume_topup_uses_oldest_active_topup_first(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
 
         $older = CurzzoTopup::create([
-            'user_id'       => $user->id,
-            'community_id'  => $community->id,
-            'status'        => CurzzoTopup::STATUS_PAID,
-            'messages'      => 50,
+            'user_id' => $user->id,
+            'community_id' => $community->id,
+            'status' => CurzzoTopup::STATUS_PAID,
+            'messages' => 50,
             'messages_used' => 0,
-            'expires_at'    => null,
-            'created_at'    => now()->subDay(),
+            'expires_at' => null,
+            'created_at' => now()->subDay(),
         ]);
         $newer = CurzzoTopup::create([
-            'user_id'       => $user->id,
-            'community_id'  => $community->id,
-            'status'        => CurzzoTopup::STATUS_PAID,
-            'messages'      => 50,
+            'user_id' => $user->id,
+            'community_id' => $community->id,
+            'status' => CurzzoTopup::STATUS_PAID,
+            'messages' => 50,
             'messages_used' => 0,
-            'expires_at'    => null,
-            'created_at'    => now(),
+            'expires_at' => null,
+            'created_at' => now(),
         ]);
 
         $this->service->consumeTopup($user, $community);
@@ -388,30 +388,30 @@ class CurzzoLimitServiceTest extends TestCase
 
     public function test_community_monthly_usage_counts_only_this_month(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $curzzo    = Curzzo::create([
+        $curzzo = Curzzo::create([
             'community_id' => $community->id,
-            'name'         => 'Bot',
+            'name' => 'Bot',
             'instructions' => 'Help',
         ]);
 
         // This month
         CurzzoMessage::create([
-            'curzzo_id'     => $curzzo->id,
-            'community_id'  => $community->id,
-            'user_id'       => $user->id,
-            'role'          => 'user',
-            'content'       => 'hello',
+            'curzzo_id' => $curzzo->id,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'role' => 'user',
+            'content' => 'hello',
         ]);
 
         // Last month — backdate via query to avoid Eloquent timestamp override
         $oldMsg = CurzzoMessage::create([
-            'curzzo_id'     => $curzzo->id,
-            'community_id'  => $community->id,
-            'user_id'       => $user->id,
-            'role'          => 'user',
-            'content'       => 'old msg',
+            'curzzo_id' => $curzzo->id,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'role' => 'user',
+            'content' => 'old msg',
         ]);
         CurzzoMessage::where('id', $oldMsg->id)->update([
             'created_at' => now()->subMonth()->subDay(),
@@ -424,16 +424,17 @@ class CurzzoLimitServiceTest extends TestCase
 
     public function test_can_send_message_denied_when_community_monthly_cap_hit(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
         CommunityMember::factory()->create([
-            'community_id'    => $community->id,
-            'user_id'         => $user->id,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
             'membership_type' => CommunityMember::MEMBERSHIP_FREE,
         ]);
 
         // Stub service with the monthly cap already hit
-        $service = new class extends CurzzoLimitService {
+        $service = new class extends CurzzoLimitService
+        {
             public function communityMonthlyUsage(\App\Models\Community $community): int
             {
                 return 10000;
@@ -448,17 +449,17 @@ class CurzzoLimitServiceTest extends TestCase
 
     public function test_consume_topup_does_nothing_when_no_active_topup(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
 
         // Expired message pack (no remaining capacity)
         CurzzoTopup::create([
-            'user_id'       => $user->id,
-            'community_id'  => $community->id,
-            'status'        => CurzzoTopup::STATUS_PAID,
-            'messages'      => 5,
+            'user_id' => $user->id,
+            'community_id' => $community->id,
+            'status' => CurzzoTopup::STATUS_PAID,
+            'messages' => 5,
             'messages_used' => 5,
-            'expires_at'    => null,
+            'expires_at' => null,
         ]);
 
         // Should not throw

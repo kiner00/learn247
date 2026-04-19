@@ -22,7 +22,7 @@ class DeleteChatMessage
         }
 
         $communityId = $message->community_id;
-        $messageId   = $message->id;
+        $messageId = $message->id;
 
         $message->delete();
 

@@ -16,14 +16,14 @@ class ChatControllerTest extends TestCase
 
     public function test_member_can_get_chat_messages(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         Message::create([
             'community_id' => $community->id,
-            'user_id'     => $user->id,
-            'content'     => 'Hello',
+            'user_id' => $user->id,
+            'content' => 'Hello',
         ]);
 
         $response = $this->actingAs($user)
@@ -36,7 +36,7 @@ class ChatControllerTest extends TestCase
 
     public function test_member_can_send_message(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
@@ -50,14 +50,14 @@ class ChatControllerTest extends TestCase
 
         $this->assertDatabaseHas('messages', [
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'content'      => 'Hello world',
+            'user_id' => $user->id,
+            'content' => 'Hello world',
         ]);
     }
 
     public function test_send_message_validation_error_without_content(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
@@ -69,7 +69,7 @@ class ChatControllerTest extends TestCase
 
     public function test_non_member_gets_403_for_chat(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['price' => 0]);
 
         $this->actingAs($user)
@@ -79,14 +79,14 @@ class ChatControllerTest extends TestCase
 
     public function test_author_can_delete_own_message(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         $message = Message::create([
             'community_id' => $community->id,
-            'user_id'     => $user->id,
-            'content'     => 'Hello',
+            'user_id' => $user->id,
+            'content' => 'Hello',
         ]);
 
         $this->actingAs($user)
@@ -99,14 +99,14 @@ class ChatControllerTest extends TestCase
 
     public function test_member_can_poll_for_new_messages(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         $msg = Message::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'content'      => 'Poll message',
+            'user_id' => $user->id,
+            'content' => 'Poll message',
         ]);
 
         $this->actingAs($user)
@@ -118,20 +118,20 @@ class ChatControllerTest extends TestCase
 
     public function test_poll_with_after_returns_only_newer_messages(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         $old = Message::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'content'      => 'Old message',
+            'user_id' => $user->id,
+            'content' => 'Old message',
         ]);
 
         $new = Message::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'content'      => 'New message',
+            'user_id' => $user->id,
+            'content' => 'New message',
         ]);
 
         $this->actingAs($user)
@@ -142,14 +142,14 @@ class ChatControllerTest extends TestCase
 
     public function test_index_with_after_parameter(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         $msg = Message::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'content'      => 'Hello',
+            'user_id' => $user->id,
+            'content' => 'Hello',
         ]);
 
         $this->actingAs($user)
@@ -160,13 +160,13 @@ class ChatControllerTest extends TestCase
 
     public function test_owner_can_access_chat_without_membership(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
 
         Message::create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
-            'content'      => 'Owner message',
+            'user_id' => $owner->id,
+            'content' => 'Owner message',
         ]);
 
         $this->actingAs($owner)
@@ -176,16 +176,16 @@ class ChatControllerTest extends TestCase
 
     public function test_non_author_cannot_delete_message(): void
     {
-        $author    = User::factory()->create();
-        $other     = User::factory()->create();
+        $author = User::factory()->create();
+        $other = User::factory()->create();
         $community = Community::factory()->create(['price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $author->id]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $other->id]);
 
         $message = Message::create([
             'community_id' => $community->id,
-            'user_id'      => $author->id,
-            'content'      => 'Author message',
+            'user_id' => $author->id,
+            'content' => 'Author message',
         ]);
 
         $this->actingAs($other)
@@ -197,22 +197,22 @@ class ChatControllerTest extends TestCase
 
     public function test_paid_subscriber_can_access_chat(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 500]);
 
         Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
-            'xendit_id'    => 'inv_chat_paid',
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->addMonth(),
+            'user_id' => $member->id,
+            'xendit_id' => 'inv_chat_paid',
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addMonth(),
         ]);
 
         Message::create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
-            'content'      => 'Welcome to paid chat',
+            'user_id' => $owner->id,
+            'content' => 'Welcome to paid chat',
         ]);
 
         $this->actingAs($member, 'sanctum')
@@ -222,8 +222,8 @@ class ChatControllerTest extends TestCase
 
     public function test_non_subscriber_denied_paid_community_chat(): void
     {
-        $owner     = User::factory()->create();
-        $other     = User::factory()->create();
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 500]);
 
         $this->actingAs($other, 'sanctum')
@@ -233,16 +233,16 @@ class ChatControllerTest extends TestCase
 
     public function test_paid_subscriber_can_poll_chat(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 500]);
 
         Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
-            'xendit_id'    => 'inv_chat_poll',
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->addMonth(),
+            'user_id' => $member->id,
+            'xendit_id' => 'inv_chat_poll',
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addMonth(),
         ]);
 
         $this->actingAs($member, 'sanctum')
@@ -252,16 +252,16 @@ class ChatControllerTest extends TestCase
 
     public function test_paid_subscriber_can_send_message(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 500]);
 
         Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
-            'xendit_id'    => 'inv_chat_send',
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->addMonth(),
+            'user_id' => $member->id,
+            'xendit_id' => 'inv_chat_send',
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addMonth(),
         ]);
 
         $this->actingAs($member, 'sanctum')
@@ -271,22 +271,22 @@ class ChatControllerTest extends TestCase
 
     public function test_paid_subscriber_can_delete_message(): void
     {
-        $owner     = User::factory()->create();
-        $member    = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 500]);
 
         Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
-            'xendit_id'    => 'inv_chat_del',
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->addMonth(),
+            'user_id' => $member->id,
+            'xendit_id' => 'inv_chat_del',
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addMonth(),
         ]);
 
         $message = Message::create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
-            'content'      => 'Delete me',
+            'user_id' => $member->id,
+            'content' => 'Delete me',
         ]);
 
         $this->actingAs($member, 'sanctum')
@@ -296,7 +296,7 @@ class ChatControllerTest extends TestCase
 
     public function test_owner_can_access_paid_community_chat(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 500]);
 
         $this->actingAs($owner, 'sanctum')
@@ -306,16 +306,16 @@ class ChatControllerTest extends TestCase
 
     public function test_expired_subscriber_denied_paid_community_chat(): void
     {
-        $owner  = User::factory()->create();
+        $owner = User::factory()->create();
         $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 500]);
 
         Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
-            'xendit_id'    => 'inv_chat_expired',
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->subDay(),
+            'user_id' => $member->id,
+            'xendit_id' => 'inv_chat_expired',
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->subDay(),
         ]);
 
         $this->actingAs($member, 'sanctum')
@@ -325,20 +325,20 @@ class ChatControllerTest extends TestCase
 
     public function test_index_with_positive_after_returns_newer_messages(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         $old = Message::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'content'      => 'Old message',
+            'user_id' => $user->id,
+            'content' => 'Old message',
         ]);
 
         $new = Message::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'content'      => 'New message',
+            'user_id' => $user->id,
+            'content' => 'New message',
         ]);
 
         $this->actingAs($user)

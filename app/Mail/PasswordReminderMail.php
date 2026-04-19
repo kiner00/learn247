@@ -30,6 +30,7 @@ class PasswordReminderMail extends Mailable
         if ($rendered) {
             return new Content(htmlString: $rendered['html']);
         }
+
         return new Content(view: 'emails.password-reminder');
     }
 
@@ -37,7 +38,7 @@ class PasswordReminderMail extends Mailable
     {
         return [
             'user_name' => $this->user->name,
-            'login_url' => config('app.url') . '/login',
+            'login_url' => config('app.url').'/login',
         ];
     }
 }

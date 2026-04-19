@@ -19,7 +19,7 @@ class EmailTemplateService
             ->toArray();
 
         foreach ($samples as $var => $value) {
-            $htmlBody = str_replace('{{' . $var . '}}', $value, $htmlBody);
+            $htmlBody = str_replace('{{'.$var.'}}', $value, $htmlBody);
         }
 
         return $htmlBody;

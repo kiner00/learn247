@@ -33,7 +33,7 @@ class LandingPageBuilderTest extends TestCase
     public function test_instructions_include_existing_description(): void
     {
         $agent = new LandingPageBuilder([
-            'name'        => 'My Community',
+            'name' => 'My Community',
             'description' => 'We help developers grow.',
         ]);
 
@@ -53,7 +53,7 @@ class LandingPageBuilderTest extends TestCase
 
     public function test_instructions_specify_json_output_with_required_keys(): void
     {
-        $agent        = new LandingPageBuilder(['name' => 'Test']);
+        $agent = new LandingPageBuilder(['name' => 'Test']);
         $instructions = $agent->instructions();
 
         $this->assertStringContainsString('"headline"', $instructions);
@@ -63,7 +63,7 @@ class LandingPageBuilderTest extends TestCase
 
     public function test_instructions_mention_max_character_limits(): void
     {
-        $agent        = new LandingPageBuilder(['name' => 'Test']);
+        $agent = new LandingPageBuilder(['name' => 'Test']);
         $instructions = $agent->instructions();
 
         $this->assertStringContainsString('80', $instructions);  // tagline limit
@@ -73,7 +73,7 @@ class LandingPageBuilderTest extends TestCase
 
     public function test_instructions_require_no_markdown_in_output(): void
     {
-        $agent        = new LandingPageBuilder(['name' => 'Test']);
+        $agent = new LandingPageBuilder(['name' => 'Test']);
         $instructions = $agent->instructions();
 
         $this->assertStringContainsString('no markdown', $instructions);
@@ -84,7 +84,7 @@ class LandingPageBuilderTest extends TestCase
 
     public function test_instructions_prohibit_inventing_facts(): void
     {
-        $agent        = new LandingPageBuilder(['name' => 'Test']);
+        $agent = new LandingPageBuilder(['name' => 'Test']);
         $instructions = $agent->instructions();
 
         $this->assertStringContainsString('specific', $instructions);
@@ -92,7 +92,7 @@ class LandingPageBuilderTest extends TestCase
 
     public function test_instructions_require_active_voice(): void
     {
-        $agent        = new LandingPageBuilder(['name' => 'Test']);
+        $agent = new LandingPageBuilder(['name' => 'Test']);
         $instructions = $agent->instructions();
 
         $this->assertStringContainsString('active voice', $instructions);
@@ -112,8 +112,8 @@ class LandingPageBuilderTest extends TestCase
     public function test_instructions_with_all_fields_populated(): void
     {
         $agent = new LandingPageBuilder([
-            'name'        => 'Full Stack Ninjas',
-            'category'    => 'Tech',
+            'name' => 'Full Stack Ninjas',
+            'category' => 'Tech',
             'description' => 'Master full-stack development.',
         ]);
 
@@ -127,8 +127,8 @@ class LandingPageBuilderTest extends TestCase
     public function test_instructions_show_price_label_when_price_is_positive(): void
     {
         $agent = new LandingPageBuilder([
-            'name'     => 'Premium Club',
-            'price'    => 299,
+            'name' => 'Premium Club',
+            'price' => 299,
             'currency' => 'USD',
         ]);
 
@@ -141,7 +141,7 @@ class LandingPageBuilderTest extends TestCase
     public function test_instructions_show_free_when_price_is_zero(): void
     {
         $agent = new LandingPageBuilder([
-            'name'  => 'Free Club',
+            'name' => 'Free Club',
             'price' => 0,
         ]);
 

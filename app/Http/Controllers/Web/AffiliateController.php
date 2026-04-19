@@ -22,35 +22,35 @@ class AffiliateController extends Controller
 {
     public function index(Request $request, GetAffiliateStats $stats, CalculateEligibility $eligibility, AffiliateChartService $chart): Response
     {
-        $user        = $request->user();
-        $period      = $request->query('period', 'month');
+        $user = $request->user();
+        $period = $request->query('period', 'month');
         $communityId = $request->query('community');
-        $tab         = $request->query('tab', 'links');
+        $tab = $request->query('tab', 'links');
 
-        $affiliates      = $stats->mapForDashboard($user, $eligibility);
+        $affiliates = $stats->mapForDashboard($user, $eligibility);
         $allAffiliateIds = $affiliates->pluck('id');
         $filteredIds = $communityId
             ? Affiliate::where('user_id', $user->id)->where('community_id', $communityId)->pluck('id')
             : $allAffiliateIds;
 
-        $summary     = $stats->summary($filteredIds, $period);
+        $summary = $stats->summary($filteredIds, $period);
         $conversions = $stats->conversions($filteredIds, $period, 100);
 
-        $from           = $chart->periodStart($period);
+        $from = $chart->periodStart($period);
         $avgPerReferral = $summary['total_conversions'] > 0 ? round($summary['total_earned'] / $summary['total_conversions'], 2) : 0;
-        $bestMonth      = $chart->bestMonth($allAffiliateIds);
-        $chartData      = $chart->buildChart($filteredIds, $period, $from);
-        $communities    = $affiliates->map(fn ($a) => ['id' => $a['community']['slug'], 'name' => $a['community']['name']]);
-        $byComm         = $chart->byComm($allAffiliateIds);
+        $bestMonth = $chart->bestMonth($allAffiliateIds);
+        $chartData = $chart->buildChart($filteredIds, $period, $from);
+        $communities = $affiliates->map(fn ($a) => ['id' => $a['community']['slug'], 'name' => $a['community']['name']]);
+        $byComm = $chart->byComm($allAffiliateIds);
 
         return Inertia::render('Affiliates/Index', [
-            'affiliates'    => $affiliates,
-            'payoutMethod'  => $user->payout_method,
+            'affiliates' => $affiliates,
+            'payoutMethod' => $user->payout_method,
             'payoutDetails' => $user->payout_details,
-            'period'        => $period,
-            'communityId'   => $communityId,
-            'tab'           => $tab,
-            'analytics'     => [
+            'period' => $period,
+            'communityId' => $communityId,
+            'tab' => $tab,
+            'analytics' => [
                 'summary' => array_merge($summary, ['avg_per_referral' => $avgPerReferral, 'best_month' => $bestMonth?->month, 'best_month_total' => (float) ($bestMonth?->total ?? 0)]),
                 'chartData' => $chartData, 'conversions' => $conversions, 'communities' => $communities, 'byComm' => $byComm,
             ],
@@ -59,8 +59,8 @@ class AffiliateController extends Controller
 
     public function analytics(Request $request, GetAffiliateStats $stats, AffiliateChartService $chart): Response
     {
-        $user        = $request->user();
-        $period      = $request->query('period', 'month');
+        $user = $request->user();
+        $period = $request->query('period', 'month');
         $communityId = $request->query('community');
 
         $affiliateQuery = Affiliate::where('user_id', $user->id);
@@ -69,13 +69,13 @@ class AffiliateController extends Controller
         }
         $affiliateIds = $affiliateQuery->pluck('id');
 
-        $summary     = $stats->summary($affiliateIds, $period);
+        $summary = $stats->summary($affiliateIds, $period);
         $conversions = $stats->conversions($affiliateIds, $period, 100);
 
         $avgPerReferral = $summary['total_conversions'] > 0 ? round($summary['total_earned'] / $summary['total_conversions'], 2) : 0;
-        $from           = $chart->periodStart($period);
-        $bestMonth      = $chart->bestMonth($affiliateIds);
-        $chartData      = $chart->buildChart($affiliateIds, $period, $from);
+        $from = $chart->periodStart($period);
+        $bestMonth = $chart->bestMonth($affiliateIds);
+        $chartData = $chart->buildChart($affiliateIds, $period, $from);
 
         $communities = Affiliate::where('user_id', $user->id)->with('community:id,name,slug')->get()
             ->map(fn ($a) => ['id' => $a->community_id, 'name' => $a->community->name]);
@@ -118,8 +118,8 @@ class AffiliateController extends Controller
     {
         abort_unless($affiliate->user_id === $request->user()->id, 403);
         $data = $request->validate([
-            'facebook_pixel_id'   => ['nullable', 'string', 'regex:/^\d+$/', 'max:30'],
-            'tiktok_pixel_id'     => ['nullable', 'string', 'max:30'],
+            'facebook_pixel_id' => ['nullable', 'string', 'regex:/^\d+$/', 'max:30'],
+            'tiktok_pixel_id' => ['nullable', 'string', 'max:30'],
             'google_analytics_id' => ['nullable', 'string', 'regex:/^G-[A-Z0-9]+$/i', 'max:20'],
         ]);
         $affiliate->update($data);
@@ -136,9 +136,10 @@ class AffiliateController extends Controller
         try {
             $disburse->execute($conversion);
             $mark->execute($conversion);
+
             return back()->with('success', 'Payout sent via Xendit and marked as paid.');
         } catch (\RuntimeException $e) {
-            return back()->with('error', 'Xendit disbursement failed: ' . $e->getMessage());
+            return back()->with('error', 'Xendit disbursement failed: '.$e->getMessage());
         }
     }
 
@@ -152,5 +153,4 @@ class AffiliateController extends Controller
 
         return back()->with('success', 'Conversion marked as paid.');
     }
-
 }

@@ -14,7 +14,7 @@ class StorageServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new StorageService();
+        $this->service = new StorageService;
     }
 
     public function test_upload_stores_file_and_returns_url(): void

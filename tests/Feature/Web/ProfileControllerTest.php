@@ -38,7 +38,7 @@ class ProfileControllerTest extends TestCase
     public function test_own_profile_shows_crz_token_balance(): void
     {
         $user = User::factory()->create([
-            'username'          => 'richuser',
+            'username' => 'richuser',
             'crz_token_balance' => 150.50,
         ]);
 
@@ -89,7 +89,7 @@ class ProfileControllerTest extends TestCase
     {
         $viewer = User::factory()->create();
         $target = User::factory()->create([
-            'username'          => 'targetuser',
+            'username' => 'targetuser',
             'crz_token_balance' => 999.99,
         ]);
 
@@ -103,11 +103,11 @@ class ProfileControllerTest extends TestCase
 
     public function test_profile_shows_memberships(): void
     {
-        $user      = User::factory()->create(['username' => 'memberuser']);
+        $user = User::factory()->create(['username' => 'memberuser']);
         $community = Community::factory()->create(['price' => 0]);
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         $response = $this->actingAs($user)->get('/profile/memberuser');
@@ -122,7 +122,7 @@ class ProfileControllerTest extends TestCase
     {
         $user = User::factory()->create([
             'username' => 'fullprofile',
-            'bio'      => 'Test bio',
+            'bio' => 'Test bio',
             'location' => 'Manila',
         ]);
 

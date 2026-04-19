@@ -14,10 +14,10 @@ class SendChatMessage
     {
         $message = Message::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'content'      => $content,
-            'media_url'    => $mediaUrl,
-            'media_type'   => $mediaType,
+            'user_id' => $user->id,
+            'content' => $content,
+            'media_url' => $mediaUrl,
+            'media_type' => $mediaType,
         ]);
 
         $community->members()->where('user_id', $user->id)->update([
@@ -26,8 +26,8 @@ class SendChatMessage
 
         if ($community->telegram_bot_token && $community->telegram_chat_id) {
             $isAdmin = $community->owner_id === $user->id;
-            $prefix  = $isAdmin ? "From Curzzo Admin - <b>{$user->name}</b>" : "From Curzzo Member - <b>{$user->name}</b>";
-            $caption = $content ? "{$prefix}\n" . htmlspecialchars($content, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') : $prefix;
+            $prefix = $isAdmin ? "From Curzzo Admin - <b>{$user->name}</b>" : "From Curzzo Member - <b>{$user->name}</b>";
+            $caption = $content ? "{$prefix}\n".htmlspecialchars($content, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') : $prefix;
 
             ForwardMessageToTelegram::dispatch(
                 $community->telegram_bot_token,
@@ -42,15 +42,15 @@ class SendChatMessage
 
         try {
             ChatMessageSent::dispatch($community->id, [
-                'id'              => $message->id,
-                'content'         => $message->content,
-                'created_at'      => $message->created_at,
+                'id' => $message->id,
+                'content' => $message->content,
+                'created_at' => $message->created_at,
                 'telegram_author' => null,
-                'media_url'       => $message->media_url,
-                'media_type'      => $message->media_type,
-                'user'            => [
-                    'id'       => $message->user->id,
-                    'name'     => $message->user->name,
+                'media_url' => $message->media_url,
+                'media_type' => $message->media_type,
+                'user' => [
+                    'id' => $message->user->id,
+                    'name' => $message->user->name,
                     'username' => $message->user->username,
                 ],
             ]);

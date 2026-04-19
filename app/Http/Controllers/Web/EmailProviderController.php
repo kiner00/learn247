@@ -17,11 +17,11 @@ class EmailProviderController extends Controller
         $providerIds = array_keys(EmailProviderFactory::PROVIDERS);
 
         $data = $request->validate([
-            'email_provider'    => ['nullable', 'string', 'in:' . implode(',', $providerIds)],
-            'resend_api_key'    => ['nullable', 'string', 'max:500'],
+            'email_provider' => ['nullable', 'string', 'in:'.implode(',', $providerIds)],
+            'resend_api_key' => ['nullable', 'string', 'max:500'],
             'resend_from_email' => ['nullable', 'email', 'max:255'],
-            'resend_from_name'  => ['nullable', 'string', 'max:255'],
-            'resend_reply_to'   => ['nullable', 'email', 'max:255'],
+            'resend_from_name' => ['nullable', 'string', 'max:255'],
+            'resend_reply_to' => ['nullable', 'email', 'max:255'],
         ]);
 
         if (! empty($data['resend_api_key']) && ! empty($data['email_provider'])) {
@@ -31,10 +31,10 @@ class EmailProviderController extends Controller
             try {
                 $provider = EmailProviderFactory::make($community);
                 if (! $provider->validateApiKey($community)) {
-                    return back()->withErrors(['resend_api_key' => 'Invalid API key for ' . ($data['email_provider'] ?? 'provider') . '.']);
+                    return back()->withErrors(['resend_api_key' => 'Invalid API key for '.($data['email_provider'] ?? 'provider').'.']);
                 }
             } catch (\Exception $e) {
-                return back()->withErrors(['resend_api_key' => 'Could not validate the API key: ' . $e->getMessage()]);
+                return back()->withErrors(['resend_api_key' => 'Could not validate the API key: '.$e->getMessage()]);
             }
         }
 
@@ -60,13 +60,13 @@ class EmailProviderController extends Controller
             $domain = $provider->addDomain($community, $data['domain']);
 
             $community->update([
-                'resend_domain_id'     => $domain['id'],
+                'resend_domain_id' => $domain['id'],
                 'resend_domain_status' => $domain['status'] ?? 'pending',
             ]);
 
             return back()->with('success', 'Domain added. Please configure the DNS records shown below, then click Verify.');
         } catch (\Exception $e) {
-            return back()->withErrors(['resend_domain' => 'Failed to add domain: ' . $e->getMessage()]);
+            return back()->withErrors(['resend_domain' => 'Failed to add domain: '.$e->getMessage()]);
         }
     }
 
@@ -92,7 +92,7 @@ class EmailProviderController extends Controller
                 ? back()->with('success', 'Domain verified successfully!')
                 : back()->with('success', "Domain status: {$status}. DNS propagation may take a few minutes.");
         } catch (\Exception $e) {
-            return back()->withErrors(['resend_domain' => 'Verification failed: ' . $e->getMessage()]);
+            return back()->withErrors(['resend_domain' => 'Verification failed: '.$e->getMessage()]);
         }
     }
 
@@ -113,9 +113,9 @@ class EmailProviderController extends Controller
             ]);
 
             return response()->json([
-                'id'      => $domain['id'],
-                'name'    => $domain['name'],
-                'status'  => $domain['status'],
+                'id' => $domain['id'],
+                'name' => $domain['name'],
+                'status' => $domain['status'],
                 'records' => $domain['records'] ?? [],
             ]);
         } catch (\Exception $e) {
@@ -137,7 +137,7 @@ class EmailProviderController extends Controller
 
         $fromName = $community->resend_from_name ?? $community->name;
         $fromEmail = $community->resend_from_email ?? 'onboarding@resend.dev';
-        $isResend  = ($community->email_provider ?? 'resend') === 'resend';
+        $isResend = ($community->email_provider ?? 'resend') === 'resend';
 
         try {
             $provider = EmailProviderFactory::make($community);
@@ -146,10 +146,10 @@ class EmailProviderController extends Controller
 
             try {
                 $provider->sendEmail($community, [
-                    'from'     => "{$fromName} <{$fromEmail}>",
-                    'to'       => [$data['test_email']],
-                    'subject'  => "Test email from {$community->name}",
-                    'html'     => "<p>This is a test email from <strong>{$community->name}</strong> via Curzzo. Your email integration is working!</p>",
+                    'from' => "{$fromName} <{$fromEmail}>",
+                    'to' => [$data['test_email']],
+                    'subject' => "Test email from {$community->name}",
+                    'html' => "<p>This is a test email from <strong>{$community->name}</strong> via Curzzo. Your email integration is working!</p>",
                     'reply_to' => $replyTo,
                 ]);
 
@@ -157,10 +157,10 @@ class EmailProviderController extends Controller
             } catch (\Exception $e) {
                 if ($isResend && str_contains($e->getMessage(), 'not verified')) {
                     $provider->sendEmail($community, [
-                        'from'    => "Curzzo <onboarding@resend.dev>",
-                        'to'      => [$data['test_email']],
+                        'from' => 'Curzzo <onboarding@resend.dev>',
+                        'to' => [$data['test_email']],
                         'subject' => "[Test] Email from {$community->name}",
-                        'html'    => "<p>This is a test email from <strong>{$community->name}</strong> via Curzzo.</p><p style='color:#666;font-size:13px;'>Sent from Resend sandbox (onboarding@resend.dev) because your domain is not yet verified. Verify your domain at <a href='https://resend.com/domains'>resend.com/domains</a> to send from your own address.</p>",
+                        'html' => "<p>This is a test email from <strong>{$community->name}</strong> via Curzzo.</p><p style='color:#666;font-size:13px;'>Sent from Resend sandbox (onboarding@resend.dev) because your domain is not yet verified. Verify your domain at <a href='https://resend.com/domains'>resend.com/domains</a> to send from your own address.</p>",
                     ]);
 
                     return back()->with('success', "Test sent via Resend sandbox to {$data['test_email']}. Verify your domain at resend.com/domains to use your own from address.");
@@ -169,7 +169,7 @@ class EmailProviderController extends Controller
                 throw $e;
             }
         } catch (\Exception $e) {
-            return back()->withErrors(['resend_test' => 'Test failed: ' . $e->getMessage()]);
+            return back()->withErrors(['resend_test' => 'Test failed: '.$e->getMessage()]);
         }
     }
 }

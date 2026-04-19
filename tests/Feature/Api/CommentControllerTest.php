@@ -17,7 +17,7 @@ class CommentControllerTest extends TestCase
     public function test_member_can_create_comment(): void
     {
         $community = Community::factory()->create(['price' => 0]);
-        $member   = User::factory()->create();
+        $member = User::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
         $post = Post::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
@@ -36,7 +36,7 @@ class CommentControllerTest extends TestCase
     public function test_comment_requires_content(): void
     {
         $community = Community::factory()->create(['price' => 0]);
-        $member   = User::factory()->create();
+        $member = User::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
         $post = Post::factory()->create(['community_id' => $community->id]);
 
@@ -48,14 +48,14 @@ class CommentControllerTest extends TestCase
 
     public function test_author_can_delete_comment(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $post      = Post::factory()->create(['community_id' => $community->id]);
-        $comment   = Comment::factory()->create([
-            'post_id'      => $post->id,
+        $post = Post::factory()->create(['community_id' => $community->id]);
+        $comment = Comment::factory()->create([
+            'post_id' => $post->id,
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'content'      => 'My comment',
+            'user_id' => $user->id,
+            'content' => 'My comment',
         ]);
 
         $this->actingAs($user, 'sanctum')
@@ -68,15 +68,15 @@ class CommentControllerTest extends TestCase
 
     public function test_non_author_cannot_delete_comment(): void
     {
-        $author    = User::factory()->create();
+        $author = User::factory()->create();
         $otherUser = User::factory()->create();
         $community = Community::factory()->create();
-        $post      = Post::factory()->create(['community_id' => $community->id]);
-        $comment   = Comment::factory()->create([
-            'post_id'      => $post->id,
+        $post = Post::factory()->create(['community_id' => $community->id]);
+        $comment = Comment::factory()->create([
+            'post_id' => $post->id,
             'community_id' => $community->id,
-            'user_id'      => $author->id,
-            'content'      => 'Author comment',
+            'user_id' => $author->id,
+            'content' => 'Author comment',
         ]);
 
         $this->actingAs($otherUser, 'sanctum')
@@ -89,7 +89,7 @@ class CommentControllerTest extends TestCase
     public function test_unauthenticated_cannot_comment(): void
     {
         $community = Community::factory()->create(['price' => 0]);
-        $post      = Post::factory()->create(['community_id' => $community->id]);
+        $post = Post::factory()->create(['community_id' => $community->id]);
 
         $this->postJson("/api/posts/{$post->id}/comments", ['content' => 'My comment'])
             ->assertUnauthorized();

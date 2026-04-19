@@ -10,14 +10,14 @@ class SemaphoreProvider implements SmsProviderInterface
 {
     public function send(Community $community, array $numbers, string $message): array
     {
-        $sent   = 0;
+        $sent = 0;
         $failed = 0;
         $errors = [];
 
         foreach (array_chunk($numbers, 100) as $chunk) {
             $payload = [
-                'apikey'  => $community->sms_api_key,
-                'number'  => implode(',', $chunk),
+                'apikey' => $community->sms_api_key,
+                'number' => implode(',', $chunk),
                 'message' => $message,
             ];
 
@@ -33,7 +33,7 @@ class SemaphoreProvider implements SmsProviderInterface
                     $sent += count($chunk);
                 } else {
                     $failed += count($chunk);
-                    $errors[] = 'Semaphore error: ' . $response->body();
+                    $errors[] = 'Semaphore error: '.$response->body();
                     Log::error('SemaphoreProvider error', ['body' => $response->body()]);
                 }
             } catch (\Throwable $e) {

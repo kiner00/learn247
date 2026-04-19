@@ -7,13 +7,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PayoutRequest extends Model
 {
-    public const TYPE_OWNER     = 'owner';
+    public const TYPE_OWNER = 'owner';
+
     public const TYPE_AFFILIATE = 'affiliate';
 
-    public const STATUS_PENDING  = 'pending';
+    public const STATUS_PENDING = 'pending';
+
     public const STATUS_APPROVED = 'approved';
+
     public const STATUS_REJECTED = 'rejected';
-    public const STATUS_PAID     = 'paid';
+
+    public const STATUS_PAID = 'paid';
 
     protected $fillable = [
         'user_id', 'type', 'community_id', 'affiliate_id',
@@ -24,9 +28,9 @@ class PayoutRequest extends Model
     protected function casts(): array
     {
         return [
-            'amount'          => 'decimal:2',
+            'amount' => 'decimal:2',
             'eligible_amount' => 'decimal:2',
-            'processed_at'    => 'datetime',
+            'processed_at' => 'datetime',
         ];
     }
 

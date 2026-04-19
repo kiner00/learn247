@@ -15,19 +15,19 @@ class AffiliateController extends Controller
 {
     public function index(Request $request, GetAffiliateStats $query, CalculateEligibility $eligibility): JsonResponse
     {
-        $user   = $request->user();
+        $user = $request->user();
         $period = $request->get('period', 'month');
 
-        $affiliates   = $query->mapForDashboard($user, $eligibility);
+        $affiliates = $query->mapForDashboard($user, $eligibility);
         $affiliateIds = $affiliates->pluck('id');
-        $summary      = $query->summary($affiliateIds, $period);
-        $conversions  = $query->conversions($affiliateIds, $period);
+        $summary = $query->summary($affiliateIds, $period);
+        $conversions = $query->conversions($affiliateIds, $period);
 
         return response()->json([
-            'affiliates'  => $affiliates,
-            'summary'     => $summary,
+            'affiliates' => $affiliates,
+            'summary' => $summary,
             'conversions' => $conversions,
-            'period'      => $period,
+            'period' => $period,
         ]);
     }
 
@@ -43,7 +43,7 @@ class AffiliateController extends Controller
         abort_unless($affiliate->user_id === $request->user()->id, 403);
 
         $data = $request->validate([
-            'payout_method'  => ['required', 'string', 'in:gcash,bank,paypal,maya'],
+            'payout_method' => ['required', 'string', 'in:gcash,bank,paypal,maya'],
             'payout_details' => ['required', 'string', 'max:255'],
         ]);
 

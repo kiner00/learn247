@@ -9,7 +9,6 @@ use App\Models\User;
 use App\Services\XenditService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
-use Mockery\MockInterface;
 use Tests\TestCase;
 
 class CreateRenewalInvoiceTest extends TestCase
@@ -21,14 +20,14 @@ class CreateRenewalInvoiceTest extends TestCase
         $owner = User::factory()->create();
         $community = Community::factory()->create([
             'owner_id' => $owner->id,
-            'price'    => 500,
+            'price' => 500,
             'currency' => 'PHP',
         ]);
         $subscriber = User::factory()->create();
         $subscription = Subscription::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $subscriber->id,
-            'status'       => Subscription::STATUS_ACTIVE,
+            'user_id' => $subscriber->id,
+            'status' => Subscription::STATUS_ACTIVE,
         ]);
 
         $xenditMock = Mockery::mock(XenditService::class);
@@ -42,7 +41,7 @@ class CreateRenewalInvoiceTest extends TestCase
                     && $data['customer']['email'] === $subscriber->email;
             })
             ->andReturn([
-                'id'          => 'inv_renewal_123',
+                'id' => 'inv_renewal_123',
                 'invoice_url' => 'https://checkout.xendit.co/renew/123',
             ]);
 
@@ -61,14 +60,14 @@ class CreateRenewalInvoiceTest extends TestCase
         $owner = User::factory()->create();
         $community = Community::factory()->create([
             'owner_id' => $owner->id,
-            'price'    => 500,
+            'price' => 500,
             'currency' => 'PHP',
         ]);
         $subscriber = User::factory()->create();
         $subscription = Subscription::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $subscriber->id,
-            'status'       => Subscription::STATUS_ACTIVE,
+            'user_id' => $subscriber->id,
+            'status' => Subscription::STATUS_ACTIVE,
         ]);
 
         $xenditMock = Mockery::mock(XenditService::class);

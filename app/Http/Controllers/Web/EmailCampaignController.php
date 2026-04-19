@@ -8,7 +8,6 @@ use App\Models\Community;
 use App\Models\EmailBroadcast;
 use App\Models\EmailCampaign;
 use App\Models\Tag;
-use App\Services\Community\PlanLimitService;
 use App\Services\StorageService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -32,20 +31,20 @@ class EmailCampaignController extends Controller
                 $latestBroadcast = $campaign->broadcasts->first();
 
                 return [
-                    'id'              => $campaign->id,
-                    'name'            => $campaign->name,
-                    'type'            => $campaign->type,
-                    'status'          => $campaign->status,
+                    'id' => $campaign->id,
+                    'name' => $campaign->name,
+                    'type' => $campaign->type,
+                    'status' => $campaign->status,
                     'broadcasts_count' => $campaign->broadcasts_count,
-                    'total_sent'      => (int) ($campaign->broadcasts_sum_total_sent ?? 0),
-                    'latest_sent_at'  => $latestBroadcast?->sent_at,
-                    'created_at'      => $campaign->created_at,
+                    'total_sent' => (int) ($campaign->broadcasts_sum_total_sent ?? 0),
+                    'latest_sent_at' => $latestBroadcast?->sent_at,
+                    'created_at' => $campaign->created_at,
                 ];
             });
 
         return Inertia::render('Communities/Email/Index', [
-            'community'    => $community,
-            'campaigns'    => $campaigns,
+            'community' => $community,
+            'campaigns' => $campaigns,
             'hasResendKey' => (bool) $community->resend_api_key,
         ]);
     }
@@ -60,7 +59,7 @@ class EmailCampaignController extends Controller
 
         return Inertia::render('Communities/Email/Create', [
             'community' => $community,
-            'tags'      => $tags,
+            'tags' => $tags,
         ]);
     }
 
@@ -73,40 +72,40 @@ class EmailCampaignController extends Controller
         }
 
         $data = $request->validate([
-            'name'                    => ['required', 'string', 'max:255'],
-            'subject'                 => ['required', 'string', 'max:255'],
-            'html_body'               => ['required', 'string', 'max:100000'],
-            'reply_to'                => ['nullable', 'email', 'max:255'],
-            'filter_tags'             => ['nullable', 'array'],
-            'filter_tags.*'           => ['integer'],
-            'filter_exclude_tags'     => ['nullable', 'array'],
-            'filter_exclude_tags.*'   => ['integer'],
-            'filter_registered_days'  => ['nullable', 'integer', 'min:0'],
-            'filter_membership_type'  => ['nullable', 'string', 'in:free,paid'],
-            'scheduled_at'            => ['nullable', 'date', 'after:now'],
+            'name' => ['required', 'string', 'max:255'],
+            'subject' => ['required', 'string', 'max:255'],
+            'html_body' => ['required', 'string', 'max:100000'],
+            'reply_to' => ['nullable', 'email', 'max:255'],
+            'filter_tags' => ['nullable', 'array'],
+            'filter_tags.*' => ['integer'],
+            'filter_exclude_tags' => ['nullable', 'array'],
+            'filter_exclude_tags.*' => ['integer'],
+            'filter_registered_days' => ['nullable', 'integer', 'min:0'],
+            'filter_membership_type' => ['nullable', 'string', 'in:free,paid'],
+            'scheduled_at' => ['nullable', 'date', 'after:now'],
         ]);
 
         $campaign = EmailCampaign::create([
             'community_id' => $community->id,
-            'name'         => $data['name'],
-            'type'         => EmailCampaign::TYPE_BROADCAST,
-            'status'       => EmailCampaign::STATUS_DRAFT,
+            'name' => $data['name'],
+            'type' => EmailCampaign::TYPE_BROADCAST,
+            'status' => EmailCampaign::STATUS_DRAFT,
         ]);
 
         EmailBroadcast::create([
-            'campaign_id'              => $campaign->id,
-            'community_id'             => $community->id,
-            'subject'                  => $data['subject'],
-            'html_body'                => $data['html_body'],
-            'from_email'               => $community->resend_from_email,
-            'from_name'                => $community->resend_from_name ?? $community->name,
-            'reply_to'                 => $data['reply_to'],
-            'filter_tags'              => $data['filter_tags'] ?? null,
-            'filter_exclude_tags'      => $data['filter_exclude_tags'] ?? null,
-            'filter_registered_days'   => $data['filter_registered_days'] ?? null,
-            'filter_membership_type'   => $data['filter_membership_type'] ?? null,
-            'scheduled_at'             => $data['scheduled_at'] ?? null,
-            'status'                   => ! empty($data['scheduled_at']) ? EmailBroadcast::STATUS_SCHEDULED : EmailBroadcast::STATUS_DRAFT,
+            'campaign_id' => $campaign->id,
+            'community_id' => $community->id,
+            'subject' => $data['subject'],
+            'html_body' => $data['html_body'],
+            'from_email' => $community->resend_from_email,
+            'from_name' => $community->resend_from_name ?? $community->name,
+            'reply_to' => $data['reply_to'],
+            'filter_tags' => $data['filter_tags'] ?? null,
+            'filter_exclude_tags' => $data['filter_exclude_tags'] ?? null,
+            'filter_registered_days' => $data['filter_registered_days'] ?? null,
+            'filter_membership_type' => $data['filter_membership_type'] ?? null,
+            'scheduled_at' => $data['scheduled_at'] ?? null,
+            'status' => ! empty($data['scheduled_at']) ? EmailBroadcast::STATUS_SCHEDULED : EmailBroadcast::STATUS_DRAFT,
         ]);
 
         return redirect()->route('communities.email-campaigns.show', [$community, $campaign])
@@ -122,33 +121,33 @@ class EmailCampaignController extends Controller
 
         $stats = $broadcast ? [
             'total_recipients' => $broadcast->total_recipients,
-            'total_sent'       => $broadcast->total_sent,
-            'total_failed'     => $broadcast->total_failed,
-            'delivered'        => $broadcast->sends()->where('status', 'delivered')->count(),
-            'opened'           => $broadcast->sends()->whereNotNull('opened_at')->count(),
-            'clicked'          => $broadcast->sends()->whereNotNull('clicked_at')->count(),
-            'bounced'          => $broadcast->sends()->where('status', 'bounced')->count(),
+            'total_sent' => $broadcast->total_sent,
+            'total_failed' => $broadcast->total_failed,
+            'delivered' => $broadcast->sends()->where('status', 'delivered')->count(),
+            'opened' => $broadcast->sends()->whereNotNull('opened_at')->count(),
+            'clicked' => $broadcast->sends()->whereNotNull('clicked_at')->count(),
+            'bounced' => $broadcast->sends()->where('status', 'bounced')->count(),
         ] : null;
 
         return Inertia::render('Communities/Email/Show', [
             'community' => $community,
-            'campaign'  => [
-                'id'         => $campaign->id,
-                'name'       => $campaign->name,
-                'status'     => $campaign->status,
+            'campaign' => [
+                'id' => $campaign->id,
+                'name' => $campaign->name,
+                'status' => $campaign->status,
                 'created_at' => $campaign->created_at,
             ],
             'broadcast' => $broadcast ? [
-                'id'                     => $broadcast->id,
-                'subject'                => $broadcast->subject,
-                'html_body'              => $broadcast->html_body,
-                'status'                 => $broadcast->status,
-                'sent_at'                => $broadcast->sent_at,
-                'scheduled_at'           => $broadcast->scheduled_at,
-                'filter_tags'              => $broadcast->filter_tags,
-                'filter_exclude_tags'      => $broadcast->filter_exclude_tags,
-                'filter_registered_days'   => $broadcast->filter_registered_days,
-                'filter_membership_type'   => $broadcast->filter_membership_type,
+                'id' => $broadcast->id,
+                'subject' => $broadcast->subject,
+                'html_body' => $broadcast->html_body,
+                'status' => $broadcast->status,
+                'sent_at' => $broadcast->sent_at,
+                'scheduled_at' => $broadcast->scheduled_at,
+                'filter_tags' => $broadcast->filter_tags,
+                'filter_exclude_tags' => $broadcast->filter_exclude_tags,
+                'filter_registered_days' => $broadcast->filter_registered_days,
+                'filter_membership_type' => $broadcast->filter_membership_type,
             ] : null,
             'stats' => $stats,
         ]);
@@ -164,17 +163,17 @@ class EmailCampaignController extends Controller
         }
 
         $data = $request->validate([
-            'name'                    => ['required', 'string', 'max:255'],
-            'subject'                 => ['required', 'string', 'max:255'],
-            'html_body'               => ['required', 'string', 'max:100000'],
-            'reply_to'                => ['nullable', 'email', 'max:255'],
-            'filter_tags'             => ['nullable', 'array'],
-            'filter_tags.*'           => ['integer'],
-            'filter_exclude_tags'     => ['nullable', 'array'],
-            'filter_exclude_tags.*'   => ['integer'],
-            'filter_registered_days'  => ['nullable', 'integer', 'min:0'],
-            'filter_membership_type'  => ['nullable', 'string', 'in:free,paid'],
-            'scheduled_at'            => ['nullable', 'date', 'after:now'],
+            'name' => ['required', 'string', 'max:255'],
+            'subject' => ['required', 'string', 'max:255'],
+            'html_body' => ['required', 'string', 'max:100000'],
+            'reply_to' => ['nullable', 'email', 'max:255'],
+            'filter_tags' => ['nullable', 'array'],
+            'filter_tags.*' => ['integer'],
+            'filter_exclude_tags' => ['nullable', 'array'],
+            'filter_exclude_tags.*' => ['integer'],
+            'filter_registered_days' => ['nullable', 'integer', 'min:0'],
+            'filter_membership_type' => ['nullable', 'string', 'in:free,paid'],
+            'scheduled_at' => ['nullable', 'date', 'after:now'],
         ]);
 
         $campaign->update(['name' => $data['name']]);
@@ -182,15 +181,15 @@ class EmailCampaignController extends Controller
         $broadcast = $campaign->broadcasts()->latest()->first();
         if ($broadcast) {
             $broadcast->update([
-                'subject'                  => $data['subject'],
-                'html_body'                => $data['html_body'],
-                'reply_to'                 => $data['reply_to'],
-                'filter_tags'              => $data['filter_tags'] ?? null,
-                'filter_exclude_tags'      => $data['filter_exclude_tags'] ?? null,
-                'filter_registered_days'   => $data['filter_registered_days'] ?? null,
-                'filter_membership_type'   => $data['filter_membership_type'] ?? null,
-                'scheduled_at'             => $data['scheduled_at'] ?? null,
-                'status'                   => ! empty($data['scheduled_at']) ? EmailBroadcast::STATUS_SCHEDULED : EmailBroadcast::STATUS_DRAFT,
+                'subject' => $data['subject'],
+                'html_body' => $data['html_body'],
+                'reply_to' => $data['reply_to'],
+                'filter_tags' => $data['filter_tags'] ?? null,
+                'filter_exclude_tags' => $data['filter_exclude_tags'] ?? null,
+                'filter_registered_days' => $data['filter_registered_days'] ?? null,
+                'filter_membership_type' => $data['filter_membership_type'] ?? null,
+                'scheduled_at' => $data['scheduled_at'] ?? null,
+                'status' => ! empty($data['scheduled_at']) ? EmailBroadcast::STATUS_SCHEDULED : EmailBroadcast::STATUS_DRAFT,
             ]);
         }
 

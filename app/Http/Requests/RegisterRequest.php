@@ -16,10 +16,10 @@ class RegisterRequest extends FormRequest
     {
         return [
             'first_name' => ['required', 'string', 'max:100'],
-            'last_name'  => ['required', 'string', 'max:100'],
-            'email'      => ['required', 'email', 'unique:users,email'],
-            'phone'      => ['nullable', 'string', 'max:20'],
-            'password'   => ['required', 'confirmed', Password::defaults()],
+            'last_name' => ['required', 'string', 'max:100'],
+            'email' => ['required', 'email', 'unique:users,email'],
+            'phone' => ['nullable', 'string', 'max:20'],
+            'password' => ['required', 'confirmed', Password::defaults()],
         ];
     }
 }

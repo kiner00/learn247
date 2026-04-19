@@ -18,7 +18,7 @@ class GetBadgesTest extends TestCase
     {
         BadgeService::seedDefaults();
 
-        $query = new GetBadges();
+        $query = new GetBadges;
         $result = $query->execute();
 
         $this->assertArrayHasKey('member', $result);
@@ -40,7 +40,7 @@ class GetBadgesTest extends TestCase
             'earned_at' => now(),
         ]);
 
-        $query = new GetBadges();
+        $query = new GetBadges;
         $result = $query->execute($user->id);
 
         $pioneer = $result['member']->firstWhere('key', 'pioneer_member');
@@ -52,7 +52,7 @@ class GetBadgesTest extends TestCase
         BadgeService::seedDefaults();
         $user = User::factory()->create();
 
-        $query = new GetBadges();
+        $query = new GetBadges;
         $result = $query->execute($user->id);
 
         $pioneer = $result['member']->firstWhere('key', 'pioneer_member');
@@ -63,7 +63,7 @@ class GetBadgesTest extends TestCase
     {
         BadgeService::seedDefaults();
 
-        $query = new GetBadges();
+        $query = new GetBadges;
         $result = $query->execute(null);
 
         $allBadges = $result['member']->merge($result['creator']);

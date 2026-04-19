@@ -23,14 +23,14 @@ class EnrollInCourseAdditionalTest extends TestCase
                 ->andThrow(new \RuntimeException('Xendit timeout'));
         });
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $course    = Course::create([
+        $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Paid Course',
-            'access_type'  => Course::ACCESS_PAID_ONCE,
-            'price'        => 500,
-            'position'     => 1,
+            'title' => 'Paid Course',
+            'access_type' => Course::ACCESS_PAID_ONCE,
+            'price' => 500,
+            'position' => 1,
         ]);
 
         $this->expectException(\RuntimeException::class);
@@ -49,19 +49,19 @@ class EnrollInCourseAdditionalTest extends TestCase
                 })
                 ->once()
                 ->andReturn([
-                    'id'          => 'inv_monthly_label',
+                    'id' => 'inv_monthly_label',
                     'invoice_url' => 'https://checkout.xendit.co/monthly_label',
                 ]);
         });
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
-        $course    = Course::create([
+        $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Monthly Course',
-            'access_type'  => Course::ACCESS_PAID_MONTHLY,
-            'price'        => 200,
-            'position'     => 1,
+            'title' => 'Monthly Course',
+            'access_type' => Course::ACCESS_PAID_MONTHLY,
+            'price' => 200,
+            'position' => 1,
         ]);
 
         $action = app(EnrollInCourse::class);
@@ -77,20 +77,20 @@ class EnrollInCourseAdditionalTest extends TestCase
                 })
                 ->once()
                 ->andReturn([
-                    'id'          => 'inv_default_curr',
+                    'id' => 'inv_default_curr',
                     'invoice_url' => 'https://checkout.xendit.co/default_curr',
                 ]);
         });
 
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         // Community uses the default currency (PHP) from the DB column default
         $community = Community::factory()->create();
-        $course    = Course::create([
+        $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Default Curr Course',
-            'access_type'  => Course::ACCESS_PAID_ONCE,
-            'price'        => 300,
-            'position'     => 1,
+            'title' => 'Default Curr Course',
+            'access_type' => Course::ACCESS_PAID_ONCE,
+            'price' => 300,
+            'position' => 1,
         ]);
 
         $action = app(EnrollInCourse::class);

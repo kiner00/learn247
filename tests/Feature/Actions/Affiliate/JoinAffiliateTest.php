@@ -20,16 +20,16 @@ class JoinAffiliateTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->action = new JoinAffiliate();
+        $this->action = new JoinAffiliate;
     }
 
     public function test_success_with_active_subscription_and_affiliate_program(): void
     {
-        $user       = User::factory()->create();
-        $community  = Community::factory()->create(['affiliate_commission_rate' => 10]);
+        $user = User::factory()->create();
+        $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
         Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         $affiliate = $this->action->execute($user, $community);
@@ -41,13 +41,13 @@ class JoinAffiliateTest extends TestCase
         $this->assertNotEmpty($affiliate->code);
         $this->assertDatabaseHas('affiliates', [
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
     }
 
     public function test_throws_if_no_affiliate_program(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['affiliate_commission_rate' => null]);
 
         $this->expectException(ValidationException::class);
@@ -57,7 +57,7 @@ class JoinAffiliateTest extends TestCase
 
     public function test_throws_if_not_subscribed(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
 
         $this->expectException(ValidationException::class);
@@ -67,17 +67,17 @@ class JoinAffiliateTest extends TestCase
 
     public function test_throws_if_already_affiliate(): void
     {
-        $user       = User::factory()->create();
-        $community  = Community::factory()->create(['affiliate_commission_rate' => 10]);
+        $user = User::factory()->create();
+        $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
         Subscription::factory()->active()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
         Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'code'         => 'existing-code',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => $user->id,
+            'code' => 'existing-code',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         $this->expectException(ValidationException::class);

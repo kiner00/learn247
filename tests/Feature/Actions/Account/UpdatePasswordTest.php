@@ -18,7 +18,7 @@ class UpdatePasswordTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->action = new UpdatePassword();
+        $this->action = new UpdatePassword;
     }
 
     public function test_success_updates_password(): void

@@ -6,7 +6,6 @@ use App\Models\ChatbotMessage;
 use App\Models\Community;
 use App\Models\CommunityLevelPerk;
 use App\Models\CommunityMember;
-use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -17,11 +16,11 @@ class CommunitySettingsControllerTest extends TestCase
 
     private function ownerWithCommunity(): array
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
+            'user_id' => $owner->id,
         ]);
 
         return [$owner, $community];
@@ -122,8 +121,8 @@ class CommunitySettingsControllerTest extends TestCase
         // Create some level perks
         CommunityLevelPerk::create([
             'community_id' => $community->id,
-            'level'        => 1,
-            'description'  => 'Bronze badge',
+            'level' => 1,
+            'description' => 'Bronze badge',
         ]);
 
         $response = $this->actingAs($owner)
@@ -235,10 +234,10 @@ class CommunitySettingsControllerTest extends TestCase
 
         // Create a chatbot message so there's data to display
         ChatbotMessage::create([
-            'community_id'    => $community->id,
-            'user_id'         => $owner->id,
-            'role'            => 'user',
-            'content'         => 'Hello bot',
+            'community_id' => $community->id,
+            'user_id' => $owner->id,
+            'role' => 'user',
+            'content' => 'Hello bot',
             'conversation_id' => 'conv-1',
         ]);
 
@@ -260,14 +259,14 @@ class CommunitySettingsControllerTest extends TestCase
         $member = User::factory()->create();
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
+            'user_id' => $member->id,
         ]);
 
         ChatbotMessage::create([
-            'community_id'    => $community->id,
-            'user_id'         => $member->id,
-            'role'            => 'user',
-            'content'         => 'Hello from member',
+            'community_id' => $community->id,
+            'user_id' => $member->id,
+            'role' => 'user',
+            'content' => 'Hello from member',
             'conversation_id' => 'conv-2',
         ]);
 
@@ -301,17 +300,17 @@ class CommunitySettingsControllerTest extends TestCase
 
     public function test_regular_member_cannot_view_settings(): void
     {
-        $owner   = User::factory()->create();
-        $member  = User::factory()->create();
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
 
         CommunityMember::factory()->admin()->create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
+            'user_id' => $owner->id,
         ]);
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
+            'user_id' => $member->id,
         ]);
 
         $response = $this->actingAs($member)
@@ -322,7 +321,7 @@ class CommunitySettingsControllerTest extends TestCase
 
     public function test_non_member_is_redirected_from_settings(): void
     {
-        $owner    = User::factory()->create();
+        $owner = User::factory()->create();
         $outsider = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
 

@@ -16,7 +16,7 @@ class PlanLimitService
     public function communityLimit(string $plan): int
     {
         return match ($plan) {
-            'pro'   => PHP_INT_MAX,
+            'pro' => PHP_INT_MAX,
             'basic' => 3,
             default => 1,
         };
@@ -24,7 +24,7 @@ class PlanLimitService
 
     public function canCreateCommunity(User $user): bool
     {
-        $plan  = $user->creatorPlan();
+        $plan = $user->creatorPlan();
         $limit = $this->communityLimit($plan);
 
         return Community::where('owner_id', $user->id)->count() < $limit;
@@ -32,12 +32,12 @@ class PlanLimitService
 
     public function communityLimitError(User $user): string
     {
-        $plan    = $user->creatorPlan();
-        $limit   = $this->communityLimit($plan);
+        $plan = $user->creatorPlan();
+        $limit = $this->communityLimit($plan);
         $upgrade = $plan === 'free'
             ? 'Upgrade to Basic (3 communities) or Pro (unlimited).'
             : 'Upgrade to Pro for unlimited communities.';
-        $noun    = $limit === 1 ? 'community' : 'communities';
+        $noun = $limit === 1 ? 'community' : 'communities';
 
         return "Your {$plan} plan allows up to {$limit} {$noun}. {$upgrade}";
     }
@@ -47,7 +47,7 @@ class PlanLimitService
     public function courseLimit(string $plan): int
     {
         return match ($plan) {
-            'pro'   => PHP_INT_MAX,
+            'pro' => PHP_INT_MAX,
             'basic' => 5,
             default => 3,
         };
@@ -85,7 +85,7 @@ class PlanLimitService
     public function maxVideoSizeMb(string $plan): int
     {
         return match ($plan) {
-            'pro'   => 5120,
+            'pro' => 5120,
             default => 0,
         };
     }
@@ -95,7 +95,7 @@ class PlanLimitService
     public function curzzoLimit(string $plan): int
     {
         return match ($plan) {
-            'pro'   => 5,
+            'pro' => 5,
             default => 0,
         };
     }
@@ -125,10 +125,10 @@ class PlanLimitService
         $owner = $community->owner;
 
         $gate = [
-            'module_count'       => $moduleCount,
-            'has_banner'         => (bool) $community->cover_image,
-            'has_description'    => (bool) ($community->description && strlen(trim($community->description)) > 0),
-            'profile_complete'   => (bool) ($owner && $owner->name && $owner->bio && $owner->avatar),
+            'module_count' => $moduleCount,
+            'has_banner' => (bool) $community->cover_image,
+            'has_description' => (bool) ($community->description && strlen(trim($community->description)) > 0),
+            'profile_complete' => (bool) ($owner && $owner->name && $owner->bio && $owner->avatar),
             'can_enable_pricing' => false,
         ];
 

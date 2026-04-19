@@ -54,7 +54,7 @@ class GenerateSingleGalleryImageTest extends TestCase
         $items = $community->galleryItems()->get();
         $this->assertCount(1, $items);
         $this->assertEquals('image', $items[0]->type);
-        $this->assertStringContainsString('community-gallery/' . $community->id . '_8_', $items[0]->image_path);
+        $this->assertStringContainsString('community-gallery/'.$community->id.'_8_', $items[0]->image_path);
 
         // Cache should show completed
         $cache = Cache::get("gallery-generating:{$community->id}");
@@ -95,6 +95,7 @@ class GenerateSingleGalleryImageTest extends TestCase
         $capturedPrompt = null;
         Image::fake(function (ImagePrompt $prompt) use (&$capturedPrompt) {
             $capturedPrompt = $prompt->prompt;
+
             return new ImageResponse(
                 collect([new GeneratedImage(base64_encode('x'))]),
                 new Usage,
@@ -103,17 +104,17 @@ class GenerateSingleGalleryImageTest extends TestCase
         });
 
         $community = Community::factory()->create([
-            'brand_context'  => [
-                'visual_style'      => 'flat-illustration',
+            'brand_context' => [
+                'visual_style' => 'flat-illustration',
                 'brand_personality' => 'Professional yet gritty',
-                'color_primary'     => '#FF0000',
-                'color_secondary'   => '#00FF00',
-                'color_accent'      => '#0000FF',
-                'target_audience'   => 'aspiring filmmakers',
+                'color_primary' => '#FF0000',
+                'color_secondary' => '#00FF00',
+                'color_accent' => '#0000FF',
+                'target_audience' => 'aspiring filmmakers',
                 'value_proposition' => 'Ship your first film',
-                'cta_goal'          => 'Start Filming',
-                'big_problem'       => 'procrastination',
-                'offer_details'     => '30% off for 24 hours',
+                'cta_goal' => 'Start Filming',
+                'big_problem' => 'procrastination',
+                'offer_details' => '30% off for 24 hours',
             ],
         ]);
 
@@ -138,6 +139,7 @@ class GenerateSingleGalleryImageTest extends TestCase
         $capturedPrompt = null;
         Image::fake(function (ImagePrompt $prompt) use (&$capturedPrompt) {
             $capturedPrompt = $prompt->prompt;
+
             return new ImageResponse(
                 collect([new GeneratedImage(base64_encode('x'))]),
                 new Usage,
@@ -146,10 +148,10 @@ class GenerateSingleGalleryImageTest extends TestCase
         });
 
         $community = Community::factory()->create([
-            'brand_context'  => [
-                'cta_goal'      => 'Enroll Today',
+            'brand_context' => [
+                'cta_goal' => 'Enroll Today',
                 'offer_details' => 'Limited 50% discount',
-                'big_problem'   => 'stuck at day job',
+                'big_problem' => 'stuck at day job',
             ],
         ]);
 
@@ -168,6 +170,7 @@ class GenerateSingleGalleryImageTest extends TestCase
         $capturedPrompt = null;
         Image::fake(function (ImagePrompt $prompt) use (&$capturedPrompt) {
             $capturedPrompt = $prompt->prompt;
+
             return new ImageResponse(
                 collect([new GeneratedImage(base64_encode('x'))]),
                 new Usage,
@@ -176,8 +179,8 @@ class GenerateSingleGalleryImageTest extends TestCase
         });
 
         $community = Community::factory()->create([
-            'brand_context'  => null,
-            'category'       => null,
+            'brand_context' => null,
+            'category' => null,
         ]);
 
         // index 7 = CTA, should use 'Join Now' default
@@ -247,6 +250,7 @@ class GenerateSingleGalleryImageTest extends TestCase
         $capturedPrompt = null;
         Image::fake(function (ImagePrompt $prompt) use (&$capturedPrompt) {
             $capturedPrompt = $prompt->prompt;
+
             return new ImageResponse(
                 collect([new GeneratedImage(base64_encode('x'))]),
                 new Usage,
@@ -255,7 +259,7 @@ class GenerateSingleGalleryImageTest extends TestCase
         });
 
         $community = Community::factory()->create([
-            'name'           => 'Test Community',
+            'name' => 'Test Community',
         ]);
 
         // index 99 is out of range → falls back to $prompts[0] (welcome banner)
@@ -273,15 +277,15 @@ class GenerateSingleGalleryImageTest extends TestCase
         $community = Community::factory()->create();
         CommunityGalleryItem::create([
             'community_id' => $community->id,
-            'type'         => 'image',
-            'image_path'   => 'community-gallery/existing-1.png',
-            'position'     => 0,
+            'type' => 'image',
+            'image_path' => 'community-gallery/existing-1.png',
+            'position' => 0,
         ]);
         CommunityGalleryItem::create([
             'community_id' => $community->id,
-            'type'         => 'image',
-            'image_path'   => 'community-gallery/existing-2.png',
-            'position'     => 1,
+            'type' => 'image',
+            'image_path' => 'community-gallery/existing-2.png',
+            'position' => 1,
         ]);
 
         $job = new GenerateSingleGalleryImage($community, promptIndex: 7, total: 1);

@@ -11,9 +11,9 @@ class CertificationQuestionFactory extends Factory
     {
         return [
             'certification_id' => CourseCertification::factory(),
-            'question'         => fake()->sentence() . '?',
-            'type'             => 'multiple_choice',
-            'position'         => 0,
+            'question' => fake()->sentence().'?',
+            'type' => 'multiple_choice',
+            'position' => 0,
         ];
     }
 

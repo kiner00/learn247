@@ -32,10 +32,10 @@ class ManageLessonTest extends TestCase
         $lesson = $this->action->store($module, ['title' => 'Lesson 1', 'content' => 'Content']);
 
         $this->assertDatabaseHas('course_lessons', [
-            'id'        => $lesson->id,
+            'id' => $lesson->id,
             'module_id' => $module->id,
-            'title'     => 'Lesson 1',
-            'position'  => 1,
+            'title' => 'Lesson 1',
+            'position' => 1,
         ]);
     }
 
@@ -73,14 +73,14 @@ class ManageLessonTest extends TestCase
         $course = Course::create(['community_id' => $community->id, 'title' => 'C1', 'position' => 1]);
         $module = CourseModule::create(['course_id' => $course->id, 'title' => 'M1', 'position' => 1]);
         $lesson = CourseLesson::create([
-            'module_id'  => $module->id,
-            'title'      => 'Video Lesson',
+            'module_id' => $module->id,
+            'title' => 'Video Lesson',
             'video_path' => 'videos/old-video.mp4',
-            'position'   => 1,
+            'position' => 1,
         ]);
 
         $updated = $this->action->update($lesson, [
-            'title'     => 'Video Lesson',
+            'title' => 'Video Lesson',
             'video_url' => 'https://youtube.com/watch?v=abc',
         ]);
 
@@ -100,10 +100,10 @@ class ManageLessonTest extends TestCase
         $course = Course::create(['community_id' => $community->id, 'title' => 'C1', 'position' => 1]);
         $module = CourseModule::create(['course_id' => $course->id, 'title' => 'M1', 'position' => 1]);
         $lesson = CourseLesson::create([
-            'module_id'  => $module->id,
-            'title'      => 'Video Lesson',
+            'module_id' => $module->id,
+            'title' => 'Video Lesson',
             'video_path' => 'lesson-videos/old.mp4',
-            'position'   => 1,
+            'position' => 1,
         ]);
 
         $updated = $this->action->update($lesson, [
@@ -169,13 +169,13 @@ class ManageLessonTest extends TestCase
         $course = Course::create(['community_id' => $community->id, 'title' => 'C1', 'position' => 1]);
         $module = CourseModule::create(['course_id' => $course->id, 'title' => 'M1', 'position' => 1]);
         $lesson = CourseLesson::create([
-            'module_id'                 => $module->id,
-            'title'                     => 'Video Lesson',
-            'video_path'                => 'lesson-videos/to-remove.mp4',
-            'video_hls_path'            => 'hls/to-remove/index.m3u8',
-            'video_transcode_status'    => 'completed',
-            'video_transcode_percent'   => 100,
-            'position'                  => 1,
+            'module_id' => $module->id,
+            'title' => 'Video Lesson',
+            'video_path' => 'lesson-videos/to-remove.mp4',
+            'video_hls_path' => 'hls/to-remove/index.m3u8',
+            'video_transcode_status' => 'completed',
+            'video_transcode_percent' => 100,
+            'position' => 1,
         ]);
 
         $updated = $this->action->update($lesson, ['video_path' => '']);
@@ -198,8 +198,8 @@ class ManageLessonTest extends TestCase
         $module = CourseModule::create(['course_id' => $course->id, 'title' => 'M1', 'position' => 1]);
         $lesson = CourseLesson::create([
             'module_id' => $module->id,
-            'title'     => 'No Video Yet',
-            'position'  => 1,
+            'title' => 'No Video Yet',
+            'position' => 1,
         ]);
 
         $updated = $this->action->update($lesson, ['video_path' => 'lesson-videos/new.mp4']);
@@ -220,13 +220,13 @@ class ManageLessonTest extends TestCase
         $course = Course::create(['community_id' => $community->id, 'title' => 'C1', 'position' => 1]);
         $module = CourseModule::create(['course_id' => $course->id, 'title' => 'M1', 'position' => 1]);
         $lesson = CourseLesson::create([
-            'module_id'                 => $module->id,
-            'title'                     => 'Video Lesson',
-            'video_path'                => 'lesson-videos/uploaded.mp4',
-            'video_hls_path'            => 'hls/uploaded/index.m3u8',
-            'video_transcode_status'    => 'completed',
-            'video_transcode_percent'   => 100,
-            'position'                  => 1,
+            'module_id' => $module->id,
+            'title' => 'Video Lesson',
+            'video_path' => 'lesson-videos/uploaded.mp4',
+            'video_hls_path' => 'hls/uploaded/index.m3u8',
+            'video_transcode_status' => 'completed',
+            'video_transcode_percent' => 100,
+            'position' => 1,
         ]);
 
         $updated = $this->action->update($lesson, [
@@ -253,11 +253,11 @@ class ManageLessonTest extends TestCase
         $course = Course::create(['community_id' => $community->id, 'title' => 'C1', 'position' => 1]);
         $module = CourseModule::create(['course_id' => $course->id, 'title' => 'M1', 'position' => 1]);
         $lesson = CourseLesson::create([
-            'module_id'      => $module->id,
-            'title'          => 'Video Lesson',
-            'video_path'     => 'lesson-videos/old.mp4',
+            'module_id' => $module->id,
+            'title' => 'Video Lesson',
+            'video_path' => 'lesson-videos/old.mp4',
             'video_hls_path' => 'hls/old-lesson/index.m3u8',
-            'position'       => 1,
+            'position' => 1,
         ]);
 
         $this->action->update($lesson, ['video_path' => 'lesson-videos/new.mp4']);
@@ -276,10 +276,10 @@ class ManageLessonTest extends TestCase
         $course = Course::create(['community_id' => $community->id, 'title' => 'C1', 'position' => 1]);
         $module = CourseModule::create(['course_id' => $course->id, 'title' => 'M1', 'position' => 1]);
         $lesson = CourseLesson::create([
-            'module_id'  => $module->id,
-            'title'      => 'Video Lesson',
+            'module_id' => $module->id,
+            'title' => 'Video Lesson',
             'video_path' => 'lesson-videos/same.mp4',
-            'position'   => 1,
+            'position' => 1,
         ]);
 
         $updated = $this->action->update($lesson, ['video_path' => 'lesson-videos/same.mp4']);

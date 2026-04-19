@@ -26,6 +26,7 @@ class QuizController extends Controller
             return back()->with('success', 'Quiz saved!');
         } catch (\Throwable $e) {
             Log::error('QuizController@store failed', ['error' => $e->getMessage(), 'lesson_id' => $lesson->id]);
+
             return back()->with('error', 'Failed to save quiz.');
         }
     }
@@ -33,7 +34,7 @@ class QuizController extends Controller
     public function submit(Request $request, Community $community, Course $course, CourseLesson $lesson, Quiz $quiz, SubmitQuiz $action): RedirectResponse
     {
         $request->validate([
-            'answers'   => ['required', 'array'],
+            'answers' => ['required', 'array'],
             'answers.*' => ['required', 'integer'],
         ]);
 
@@ -41,13 +42,14 @@ class QuizController extends Controller
             $result = $action->execute($request->user(), $quiz, $request->answers, $community->id);
 
             return back()->with('quiz_result', [
-                'score'   => $result['score'],
-                'passed'  => $result['passed'],
-                'total'   => $result['total'],
+                'score' => $result['score'],
+                'passed' => $result['passed'],
+                'total' => $result['total'],
                 'correct' => $result['correct'],
             ]);
         } catch (\Throwable $e) {
             Log::error('QuizController@submit failed', ['error' => $e->getMessage(), 'quiz_id' => $quiz->id]);
+
             return back()->with('error', 'Failed to submit quiz.');
         }
     }
@@ -62,6 +64,7 @@ class QuizController extends Controller
             return back()->with('success', 'Quiz deleted!');
         } catch (\Throwable $e) {
             Log::error('QuizController@destroy failed', ['error' => $e->getMessage(), 'quiz_id' => $quiz->id]);
+
             return back()->with('error', 'Failed to delete quiz.');
         }
     }

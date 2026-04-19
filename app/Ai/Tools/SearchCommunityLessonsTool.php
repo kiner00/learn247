@@ -36,10 +36,10 @@ class SearchCommunityLessonsTool implements Tool
         }
 
         $result = $lessons->map(fn ($l) => [
-            'lesson'  => $l->title,
+            'lesson' => $l->title,
             'content' => \Illuminate\Support\Str::limit($l->content, 300),
-            'module'  => $l->module->title,
-            'course'  => $l->module->course->title,
+            'module' => $l->module->title,
+            'course' => $l->module->course->title,
         ])->values()->toArray();
 
         return json_encode($result, JSON_PRETTY_PRINT);

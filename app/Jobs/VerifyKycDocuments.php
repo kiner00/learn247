@@ -12,6 +12,7 @@ class VerifyKycDocuments implements ShouldQueue
     use Queueable;
 
     public int $tries = 2;
+
     public int $timeout = 120;
 
     public function __construct(public User $user) {}
@@ -30,7 +31,7 @@ class VerifyKycDocuments implements ShouldQueue
         if (! ($result['approved'] ?? false)) {
             \Illuminate\Support\Facades\Log::info('KYC not auto-approved, pending manual review', [
                 'user_id' => $this->user->id,
-                'reason'  => $result['reason'] ?? 'unknown',
+                'reason' => $result['reason'] ?? 'unknown',
             ]);
         }
     }

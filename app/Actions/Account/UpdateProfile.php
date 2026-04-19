@@ -12,7 +12,7 @@ class UpdateProfile
 
     public function execute(User $user, array $data, ?UploadedFile $avatar = null): User
     {
-        $data['name'] = trim($data['first_name'] . ' ' . $data['last_name']);
+        $data['name'] = trim($data['first_name'].' '.$data['last_name']);
         unset($data['first_name'], $data['last_name']);
 
         if ($avatar) {

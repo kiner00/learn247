@@ -24,16 +24,17 @@ class CommunityGalleryControllerTest extends TestCase
         $owner = User::factory()->create();
         CreatorSubscription::create([
             'user_id' => $owner->id,
-            'plan'    => CreatorSubscription::PLAN_PRO,
-            'status'  => CreatorSubscription::STATUS_ACTIVE,
+            'plan' => CreatorSubscription::PLAN_PRO,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
         ]);
+
         return $owner;
     }
 
     public function test_owner_can_upload_image_creates_row(): void
     {
         Storage::fake();
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner)
@@ -51,15 +52,15 @@ class CommunityGalleryControllerTest extends TestCase
     public function test_image_upload_rejected_when_gallery_full(): void
     {
         Storage::fake();
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         for ($i = 0; $i < 8; $i++) {
             CommunityGalleryItem::create([
                 'community_id' => $community->id,
-                'type'         => 'image',
-                'image_path'   => "community-gallery/img-{$i}.jpg",
-                'position'     => $i,
+                'type' => 'image',
+                'image_path' => "community-gallery/img-{$i}.jpg",
+                'position' => $i,
             ]);
         }
 
@@ -72,14 +73,14 @@ class CommunityGalleryControllerTest extends TestCase
 
     public function test_video_upload_requires_pro_plan(): void
     {
-        $owner     = User::factory()->create(); // free
+        $owner = User::factory()->create(); // free
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner)
             ->postJson("/communities/{$community->slug}/gallery/videos/initiate", [
-                'filename'     => 'clip.mp4',
+                'filename' => 'clip.mp4',
                 'content_type' => 'video/mp4',
-                'size'         => 10_000_000,
+                'size' => 10_000_000,
             ])
             ->assertForbidden();
     }
@@ -94,14 +95,14 @@ class CommunityGalleryControllerTest extends TestCase
         $mock->shouldReceive('complete')->once();
         $this->app->instance(S3MultipartUploadService::class, $mock);
 
-        $owner     = $this->proOwner();
+        $owner = $this->proOwner();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner)
             ->postJson("/communities/{$community->slug}/gallery/videos/complete", [
-                'key'       => 'gallery-videos/abc.mp4',
+                'key' => 'gallery-videos/abc.mp4',
                 'upload_id' => 'fake-upload-id',
-                'parts'     => [
+                'parts' => [
                     ['PartNumber' => 1, 'ETag' => '"etag-1"'],
                 ],
             ])
@@ -118,15 +119,15 @@ class CommunityGalleryControllerTest extends TestCase
 
     public function test_transcode_status_endpoint_returns_item_state(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $item      = CommunityGalleryItem::create([
-            'community_id'      => $community->id,
-            'type'              => 'video',
-            'video_path'        => 'gallery-videos/xyz.mp4',
-            'transcode_status'  => 'processing',
+        $item = CommunityGalleryItem::create([
+            'community_id' => $community->id,
+            'type' => 'video',
+            'video_path' => 'gallery-videos/xyz.mp4',
+            'transcode_status' => 'processing',
             'transcode_percent' => 42,
-            'position'          => 0,
+            'position' => 0,
         ]);
 
         $this->actingAs($owner)
@@ -138,13 +139,13 @@ class CommunityGalleryControllerTest extends TestCase
     public function test_hls_proxy_404s_before_transcoding_completes(): void
     {
         $community = Community::factory()->create();
-        $item      = CommunityGalleryItem::create([
-            'community_id'      => $community->id,
-            'type'              => 'video',
-            'video_path'        => 'gallery-videos/xyz.mp4',
-            'transcode_status'  => 'processing',
+        $item = CommunityGalleryItem::create([
+            'community_id' => $community->id,
+            'type' => 'video',
+            'video_path' => 'gallery-videos/xyz.mp4',
+            'transcode_status' => 'processing',
             'transcode_percent' => 50,
-            'position'          => 0,
+            'position' => 0,
         ]);
 
         $this->getJson("/communities/{$community->slug}/gallery/{$item->id}/hls/video.m3u8")
@@ -157,13 +158,13 @@ class CommunityGalleryControllerTest extends TestCase
         Storage::put('gallery-videos/hls/abc/video.m3u8', "#EXTM3U\nvideo_360p.m3u8\nvideo_720p.m3u8\n");
 
         $community = Community::factory()->create();
-        $item      = CommunityGalleryItem::create([
-            'community_id'     => $community->id,
-            'type'             => 'video',
-            'video_path'       => 'gallery-videos/abc.mp4',
-            'video_hls_path'   => 'gallery-videos/hls/abc/video.m3u8',
+        $item = CommunityGalleryItem::create([
+            'community_id' => $community->id,
+            'type' => 'video',
+            'video_path' => 'gallery-videos/abc.mp4',
+            'video_hls_path' => 'gallery-videos/hls/abc/video.m3u8',
             'transcode_status' => 'completed',
-            'position'         => 0,
+            'position' => 0,
         ]);
 
         // Anonymous request — no actingAs.
@@ -178,16 +179,16 @@ class CommunityGalleryControllerTest extends TestCase
     {
         Storage::fake();
         $community = Community::factory()->create();
-        $item      = CommunityGalleryItem::create([
-            'community_id'     => $community->id,
-            'type'             => 'video',
-            'video_path'       => 'gallery-videos/abc.mp4',
-            'video_hls_path'   => 'gallery-videos/hls/abc/video.m3u8',
+        $item = CommunityGalleryItem::create([
+            'community_id' => $community->id,
+            'type' => 'video',
+            'video_path' => 'gallery-videos/abc.mp4',
+            'video_hls_path' => 'gallery-videos/hls/abc/video.m3u8',
             'transcode_status' => 'completed',
-            'position'         => 0,
+            'position' => 0,
         ]);
 
-        $response = $this->get("/communities/{$community->slug}/gallery/{$item->id}/hls/" . urlencode('../../lesson-videos/hls/x/video.m3u8'));
+        $response = $this->get("/communities/{$community->slug}/gallery/{$item->id}/hls/".urlencode('../../lesson-videos/hls/x/video.m3u8'));
         // Either 400 (bad ext) or 403 (traversal) is acceptable — both are rejections.
         $this->assertContains($response->status(), [400, 403, 404]);
     }
@@ -199,16 +200,16 @@ class CommunityGalleryControllerTest extends TestCase
         Storage::put('gallery-videos/hls/abc/video.m3u8', 'manifest');
         Storage::put('gallery-videos/hls/abc/poster.0000000.jpg', 'poster');
 
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $item      = CommunityGalleryItem::create([
-            'community_id'     => $community->id,
-            'type'             => 'video',
-            'video_path'       => 'gallery-videos/abc.mp4',
-            'video_hls_path'   => 'gallery-videos/hls/abc/video.m3u8',
-            'poster_path'      => 'gallery-videos/hls/abc/poster.0000000.jpg',
+        $item = CommunityGalleryItem::create([
+            'community_id' => $community->id,
+            'type' => 'video',
+            'video_path' => 'gallery-videos/abc.mp4',
+            'video_hls_path' => 'gallery-videos/hls/abc/video.m3u8',
+            'poster_path' => 'gallery-videos/hls/abc/poster.0000000.jpg',
             'transcode_status' => 'completed',
-            'position'         => 0,
+            'position' => 0,
         ]);
 
         $this->actingAs($owner)
@@ -223,7 +224,7 @@ class CommunityGalleryControllerTest extends TestCase
 
     public function test_owner_can_reorder_by_id(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         $a = CommunityGalleryItem::create(['community_id' => $community->id, 'type' => 'image', 'image_path' => 'community-gallery/a.jpg', 'position' => 0]);
         $b = CommunityGalleryItem::create(['community_id' => $community->id, 'type' => 'image', 'image_path' => 'community-gallery/b.jpg', 'position' => 1]);
@@ -239,14 +240,14 @@ class CommunityGalleryControllerTest extends TestCase
 
     public function test_destroy_404s_when_item_belongs_to_other_community(): void
     {
-        $owner       = User::factory()->create();
-        $community1  = Community::factory()->create(['owner_id' => $owner->id]);
-        $community2  = Community::factory()->create();
+        $owner = User::factory()->create();
+        $community1 = Community::factory()->create(['owner_id' => $owner->id]);
+        $community2 = Community::factory()->create();
         $foreignItem = CommunityGalleryItem::create([
             'community_id' => $community2->id,
-            'type'         => 'image',
-            'image_path'   => 'community-gallery/x.jpg',
-            'position'     => 0,
+            'type' => 'image',
+            'image_path' => 'community-gallery/x.jpg',
+            'position' => 0,
         ]);
 
         $this->actingAs($owner)

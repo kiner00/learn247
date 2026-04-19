@@ -15,11 +15,11 @@ class CreateTicket
     public function execute(User $user, array $data): Ticket
     {
         $ticket = Ticket::create([
-            'user_id'     => $user->id,
-            'subject'     => $data['subject'],
+            'user_id' => $user->id,
+            'subject' => $data['subject'],
             'description' => $data['description'],
-            'type'        => $data['type'],
-            'priority'    => $data['priority'] ?? 'medium',
+            'type' => $data['type'],
+            'priority' => $data['priority'] ?? 'medium',
         ]);
 
         if (! empty($data['attachments'])) {
@@ -28,7 +28,7 @@ class CreateTicket
                     $url = $this->storage->upload($file, 'ticket-attachments');
                     TicketAttachment::create([
                         'ticket_id' => $ticket->id,
-                        'file_url'  => $url,
+                        'file_url' => $url,
                         'file_name' => $file->getClientOriginalName(),
                     ]);
                 }

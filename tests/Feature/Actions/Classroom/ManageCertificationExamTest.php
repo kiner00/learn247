@@ -4,8 +4,6 @@ namespace Tests\Feature\Actions\Classroom;
 
 use App\Actions\Classroom\ManageCertificationExam;
 use App\Contracts\FileStorage;
-use App\Models\CertificationQuestion;
-use App\Models\CertificationQuestionOption;
 use App\Models\Community;
 use App\Models\CourseCertification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -20,17 +18,17 @@ class ManageCertificationExamTest extends TestCase
     private function certData(array $overrides = []): array
     {
         return array_merge([
-            'title'               => 'Test Exam',
-            'cert_title'          => 'Test Certificate',
-            'description'         => 'A description',
-            'pass_score'          => 70,
+            'title' => 'Test Exam',
+            'cert_title' => 'Test Certificate',
+            'description' => 'A description',
+            'pass_score' => 70,
             'randomize_questions' => false,
-            'price'               => 0,
-            'questions'           => [
+            'price' => 0,
+            'questions' => [
                 [
                     'question' => 'Question 1?',
-                    'type'     => 'multiple_choice',
-                    'options'  => [
+                    'type' => 'multiple_choice',
+                    'options' => [
                         ['label' => 'A', 'is_correct' => true],
                         ['label' => 'B', 'is_correct' => false],
                     ],
@@ -44,13 +42,13 @@ class ManageCertificationExamTest extends TestCase
         $community = Community::factory()->create();
 
         $action = app(ManageCertificationExam::class);
-        $cert   = $action->store($community, $this->certData());
+        $cert = $action->store($community, $this->certData());
 
         $this->assertDatabaseHas('course_certifications', [
             'community_id' => $community->id,
-            'title'        => 'Test Exam',
-            'cert_title'   => 'Test Certificate',
-            'pass_score'   => 70,
+            'title' => 'Test Exam',
+            'cert_title' => 'Test Certificate',
+            'pass_score' => 70,
         ]);
 
         $this->assertCount(1, $cert->questions);
@@ -60,20 +58,20 @@ class ManageCertificationExamTest extends TestCase
     public function test_store_creates_multiple_questions(): void
     {
         $community = Community::factory()->create();
-        $data      = $this->certData([
+        $data = $this->certData([
             'questions' => [
                 [
                     'question' => 'Q1?',
-                    'type'     => 'multiple_choice',
-                    'options'  => [
+                    'type' => 'multiple_choice',
+                    'options' => [
                         ['label' => 'A', 'is_correct' => true],
                         ['label' => 'B', 'is_correct' => false],
                     ],
                 ],
                 [
                     'question' => 'Q2?',
-                    'type'     => 'true_false',
-                    'options'  => [
+                    'type' => 'true_false',
+                    'options' => [
                         ['label' => 'True', 'is_correct' => true],
                         ['label' => 'False', 'is_correct' => false],
                     ],
@@ -82,7 +80,7 @@ class ManageCertificationExamTest extends TestCase
         ]);
 
         $action = app(ManageCertificationExam::class);
-        $cert   = $action->store($community, $data);
+        $cert = $action->store($community, $data);
 
         $this->assertCount(2, $cert->questions);
         $this->assertEquals(0, $cert->questions[0]->position);
@@ -92,17 +90,17 @@ class ManageCertificationExamTest extends TestCase
     public function test_store_updates_existing_certification(): void
     {
         $community = Community::factory()->create();
-        $action    = app(ManageCertificationExam::class);
+        $action = app(ManageCertificationExam::class);
 
         $existing = $action->store($community, $this->certData());
 
-        $updatedData              = $this->certData();
-        $updatedData['title']     = 'Updated Title';
+        $updatedData = $this->certData();
+        $updatedData['title'] = 'Updated Title';
         $updatedData['questions'] = [
             [
                 'question' => 'New Question?',
-                'type'     => 'multiple_choice',
-                'options'  => [
+                'type' => 'multiple_choice',
+                'options' => [
                     ['label' => 'X', 'is_correct' => true],
                     ['label' => 'Y', 'is_correct' => false],
                     ['label' => 'Z', 'is_correct' => false],
@@ -120,7 +118,7 @@ class ManageCertificationExamTest extends TestCase
         // Old questions should be deleted
         $this->assertDatabaseMissing('certification_questions', [
             'certification_id' => $existing->id,
-            'question'         => 'Question 1?',
+            'question' => 'Question 1?',
         ]);
     }
 
@@ -132,7 +130,7 @@ class ManageCertificationExamTest extends TestCase
         $file = UploadedFile::fake()->image('cover.jpg');
 
         $action = app(ManageCertificationExam::class);
-        $cert   = $action->store($community, $this->certData(), $file);
+        $cert = $action->store($community, $this->certData(), $file);
 
         $this->assertNotNull($cert->cover_image);
     }
@@ -147,14 +145,14 @@ class ManageCertificationExamTest extends TestCase
 
         $existing = CourseCertification::factory()->create([
             'community_id' => $community->id,
-            'cover_image'  => 'old-cover.jpg',
+            'cover_image' => 'old-cover.jpg',
         ]);
 
-        $data                       = $this->certData();
+        $data = $this->certData();
         $data['remove_cover_image'] = true;
 
         $action = new ManageCertificationExam($mock);
-        $cert   = $action->store($community, $data, null, $existing);
+        $cert = $action->store($community, $data, null, $existing);
 
         $this->assertNull($cert->cover_image);
     }
@@ -162,8 +160,8 @@ class ManageCertificationExamTest extends TestCase
     public function test_destroy_deletes_certification(): void
     {
         $community = Community::factory()->create();
-        $action    = app(ManageCertificationExam::class);
-        $cert      = $action->store($community, $this->certData());
+        $action = app(ManageCertificationExam::class);
+        $cert = $action->store($community, $this->certData());
 
         $certId = $cert->id;
         $action->destroy($cert);
@@ -177,9 +175,9 @@ class ManageCertificationExamTest extends TestCase
         $mock->shouldReceive('delete')->once()->with('some-cover.jpg');
 
         $community = Community::factory()->create();
-        $cert      = CourseCertification::factory()->create([
+        $cert = CourseCertification::factory()->create([
             'community_id' => $community->id,
-            'cover_image'  => 'some-cover.jpg',
+            'cover_image' => 'some-cover.jpg',
         ]);
 
         $action = new ManageCertificationExam($mock);
@@ -193,12 +191,12 @@ class ManageCertificationExamTest extends TestCase
         $community = Community::factory()->create();
 
         $data = $this->certData([
-            'price'                     => 199.99,
+            'price' => 199.99,
             'affiliate_commission_rate' => 25,
         ]);
 
         $action = app(ManageCertificationExam::class);
-        $cert   = $action->store($community, $data);
+        $cert = $action->store($community, $data);
 
         $this->assertEquals(199.99, (float) $cert->price);
         $this->assertEquals(25, $cert->affiliate_commission_rate);

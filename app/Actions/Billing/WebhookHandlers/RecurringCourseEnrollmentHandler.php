@@ -51,11 +51,11 @@ class RecurringCourseEnrollmentHandler extends AbstractRecurringCycleHandler
 
         return [
             'affiliate_user' => $entity->affiliate->user,
-            'creator'        => $entity->course->community->owner,
-            'community'      => $entity->course->community,
-            'sale_amount'    => $conversion['sale_amount'],
-            'commission'     => $conversion['commission'],
-            'referred_by'    => $entity->affiliate->user->name,
+            'creator' => $entity->course->community->owner,
+            'community' => $entity->course->community,
+            'sale_amount' => $conversion['sale_amount'],
+            'commission' => $conversion['commission'],
+            'referred_by' => $entity->affiliate->user->name,
         ];
     }
 

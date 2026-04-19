@@ -11,21 +11,26 @@ class CommunityMember extends Model
 {
     use HasFactory;
 
-    public const ROLE_ADMIN     = 'admin';
+    public const ROLE_ADMIN = 'admin';
+
     public const ROLE_MODERATOR = 'moderator';
-    public const ROLE_MEMBER    = 'member';
+
+    public const ROLE_MEMBER = 'member';
 
     public const ROLES = [self::ROLE_ADMIN, self::ROLE_MODERATOR, self::ROLE_MEMBER];
 
     public const MEMBERSHIP_FREE = 'free';
+
     public const MEMBERSHIP_PAID = 'paid';
 
     protected $fillable = ['community_id', 'user_id', 'role', 'membership_type', 'expires_at', 'points', 'joined_at', 'notif_prefs', 'chat_enabled', 'show_on_profile', 'is_blocked'];
 
     // Points per action
-    public const POINTS_POST    = 10;
+    public const POINTS_POST = 10;
+
     public const POINTS_COMMENT = 5;
-    public const POINTS_LESSON  = 20;
+
+    public const POINTS_LESSON = 20;
 
     // Level thresholds — 9 levels (index = level - 1)
     public const LEVEL_THRESHOLDS = [0, 5, 20, 65, 155, 515, 2015, 8015, 33015];
@@ -38,6 +43,7 @@ class CommunityMember extends Model
                 return count(self::LEVEL_THRESHOLDS) - $i;
             }
         }
+
         return 1;
     }
 
@@ -54,12 +60,12 @@ class CommunityMember extends Model
     protected function casts(): array
     {
         return [
-            'joined_at'       => 'datetime',
-            'expires_at'      => 'datetime',
-            'notif_prefs'     => 'array',
-            'chat_enabled'    => 'boolean',
+            'joined_at' => 'datetime',
+            'expires_at' => 'datetime',
+            'notif_prefs' => 'array',
+            'chat_enabled' => 'boolean',
             'show_on_profile' => 'boolean',
-            'is_blocked'      => 'boolean',
+            'is_blocked' => 'boolean',
         ];
     }
 
@@ -78,7 +84,7 @@ class CommunityMember extends Model
     public function tags(): BelongsToMany
     {
         return $this->belongsToMany(Tag::class, 'community_member_tag')
-                    ->withPivot('tagged_at');
+            ->withPivot('tagged_at');
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────

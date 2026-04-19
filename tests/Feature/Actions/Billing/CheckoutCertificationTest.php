@@ -34,7 +34,7 @@ class CheckoutCertificationTest extends TestCase
 
         $this->mock(XenditService::class, function ($mock) {
             $mock->shouldReceive('createInvoice')->once()->andReturn([
-                'id'          => 'inv_123',
+                'id' => 'inv_123',
                 'invoice_url' => 'https://checkout.xendit.co/inv_123',
             ]);
         });
@@ -47,10 +47,10 @@ class CheckoutCertificationTest extends TestCase
         $this->assertEquals('https://checkout.xendit.co/inv_123', $result['checkout_url']);
 
         $this->assertDatabaseHas('certification_purchases', [
-            'user_id'          => $user->id,
+            'user_id' => $user->id,
             'certification_id' => $cert->id,
-            'xendit_id'        => 'inv_123',
-            'status'           => CertificationPurchase::STATUS_PENDING,
+            'xendit_id' => 'inv_123',
+            'status' => CertificationPurchase::STATUS_PENDING,
         ]);
     }
 
@@ -59,7 +59,7 @@ class CheckoutCertificationTest extends TestCase
         $community = Community::factory()->create();
         $cert = CourseCertification::factory()->create([
             'community_id' => $community->id,
-            'price'        => 0,
+            'price' => 0,
         ]);
         $user = User::factory()->create();
 
@@ -74,7 +74,7 @@ class CheckoutCertificationTest extends TestCase
         [$user, $community, $cert] = $this->setupPaidCert();
 
         CertificationPurchase::factory()->paid()->create([
-            'user_id'          => $user->id,
+            'user_id' => $user->id,
             'certification_id' => $cert->id,
         ]);
 
@@ -90,20 +90,20 @@ class CheckoutCertificationTest extends TestCase
 
         // Create a subscription with an affiliate
         $affiliate = \App\Models\Affiliate::create([
-            'user_id'      => User::factory()->create()->id,
+            'user_id' => User::factory()->create()->id,
             'community_id' => $community->id,
-            'code'         => 'AFF123',
+            'code' => 'AFF123',
         ]);
 
         Subscription::factory()->active()->create([
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
             'community_id' => $community->id,
             'affiliate_id' => $affiliate->id,
         ]);
 
         $this->mock(XenditService::class, function ($mock) {
             $mock->shouldReceive('createInvoice')->once()->andReturn([
-                'id'          => 'inv_456',
+                'id' => 'inv_456',
                 'invoice_url' => 'https://checkout.xendit.co/inv_456',
             ]);
         });
@@ -120,15 +120,15 @@ class CheckoutCertificationTest extends TestCase
 
         // Create a pending purchase
         CertificationPurchase::factory()->create([
-            'user_id'          => $user->id,
+            'user_id' => $user->id,
             'certification_id' => $cert->id,
-            'xendit_id'        => 'old_inv',
-            'status'           => CertificationPurchase::STATUS_PENDING,
+            'xendit_id' => 'old_inv',
+            'status' => CertificationPurchase::STATUS_PENDING,
         ]);
 
         $this->mock(XenditService::class, function ($mock) {
             $mock->shouldReceive('createInvoice')->once()->andReturn([
-                'id'          => 'inv_new',
+                'id' => 'inv_new',
                 'invoice_url' => 'https://checkout.xendit.co/inv_new',
             ]);
         });

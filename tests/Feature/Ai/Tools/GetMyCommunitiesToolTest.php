@@ -26,27 +26,27 @@ class GetMyCommunitiesToolTest extends TestCase
 
     public function test_returns_user_communities_with_details(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create([
-            'name'         => 'Laravel Hub',
-            'category'     => 'programming',
-            'price'        => 299,
+            'name' => 'Laravel Hub',
+            'category' => 'programming',
+            'price' => 299,
             'billing_type' => 'monthly',
         ]);
 
         CommunityMember::factory()->create([
-            'community_id'    => $community->id,
-            'user_id'         => $user->id,
-            'role'            => CommunityMember::ROLE_MEMBER,
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'role' => CommunityMember::ROLE_MEMBER,
             'membership_type' => CommunityMember::MEMBERSHIP_PAID,
-            'points'          => 100,
-            'joined_at'       => now()->subDays(30),
-            'expires_at'      => now()->addDays(30),
+            'points' => 100,
+            'joined_at' => now()->subDays(30),
+            'expires_at' => now()->addDays(30),
         ]);
 
-        $tool   = new GetMyCommunitiesTool($user->id);
+        $tool = new GetMyCommunitiesTool($user->id);
         $result = $tool->handle(new Request([]));
-        $json   = json_decode($result, true);
+        $json = json_decode($result, true);
 
         $this->assertCount(1, $json);
         $this->assertSame('Laravel Hub', $json[0]['community']);
@@ -67,66 +67,66 @@ class GetMyCommunitiesToolTest extends TestCase
             $community = Community::factory()->create();
             CommunityMember::factory()->create([
                 'community_id' => $community->id,
-                'user_id'      => $user->id,
+                'user_id' => $user->id,
             ]);
         }
 
-        $tool   = new GetMyCommunitiesTool($user->id);
+        $tool = new GetMyCommunitiesTool($user->id);
         $result = $tool->handle(new Request([]));
-        $json   = json_decode($result, true);
+        $json = json_decode($result, true);
 
         $this->assertCount(3, $json);
     }
 
     public function test_includes_level_based_on_points(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
 
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'points'       => 0,
+            'user_id' => $user->id,
+            'points' => 0,
         ]);
 
-        $tool   = new GetMyCommunitiesTool($user->id);
+        $tool = new GetMyCommunitiesTool($user->id);
         $result = $tool->handle(new Request([]));
-        $json   = json_decode($result, true);
+        $json = json_decode($result, true);
 
         $this->assertSame(1, $json[0]['level']);
     }
 
     public function test_handles_null_expires_at(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
 
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'expires_at'   => null,
+            'user_id' => $user->id,
+            'expires_at' => null,
         ]);
 
-        $tool   = new GetMyCommunitiesTool($user->id);
+        $tool = new GetMyCommunitiesTool($user->id);
         $result = $tool->handle(new Request([]));
-        $json   = json_decode($result, true);
+        $json = json_decode($result, true);
 
         $this->assertNull($json[0]['expires_at']);
     }
 
     public function test_shows_admin_role(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
 
         CommunityMember::factory()->admin()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
-        $tool   = new GetMyCommunitiesTool($user->id);
+        $tool = new GetMyCommunitiesTool($user->id);
         $result = $tool->handle(new Request([]));
-        $json   = json_decode($result, true);
+        $json = json_decode($result, true);
 
         $this->assertSame('admin', $json[0]['role']);
     }
@@ -139,7 +139,7 @@ class GetMyCommunitiesToolTest extends TestCase
 
     public function test_schema_returns_empty_array(): void
     {
-        $tool   = new GetMyCommunitiesTool(1);
+        $tool = new GetMyCommunitiesTool(1);
         $schema = $this->createMock(\Illuminate\Contracts\JsonSchema\JsonSchema::class);
 
         $this->assertSame([], $tool->schema($schema));

@@ -8,8 +8,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Event extends Model
 {
     public const VISIBILITY_PUBLIC = 'public';
-    public const VISIBILITY_FREE   = 'free';
-    public const VISIBILITY_PAID   = 'paid';
+
+    public const VISIBILITY_FREE = 'free';
+
+    public const VISIBILITY_PAID = 'paid';
 
     protected $fillable = [
         'community_id', 'created_by', 'title', 'description',
@@ -20,7 +22,7 @@ class Event extends Model
     {
         return [
             'start_at' => 'datetime',
-            'end_at'   => 'datetime',
+            'end_at' => 'datetime',
         ];
     }
 

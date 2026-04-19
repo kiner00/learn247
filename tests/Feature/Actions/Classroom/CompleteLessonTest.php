@@ -21,14 +21,14 @@ class CompleteLessonTest extends TestCase
         $badges->shouldReceive('evaluate')->once();
 
         $action = new CompleteLesson($badges);
-        $user   = User::factory()->create();
+        $user = User::factory()->create();
         $lesson = CourseLesson::factory()->create();
 
         $completion = $action->execute($user, $lesson);
 
         $this->assertInstanceOf(LessonCompletion::class, $completion);
         $this->assertDatabaseHas('lesson_completions', [
-            'user_id'   => $user->id,
+            'user_id' => $user->id,
             'lesson_id' => $lesson->id,
         ]);
     }
@@ -39,10 +39,10 @@ class CompleteLessonTest extends TestCase
         $badges->shouldReceive('evaluate')->twice();
 
         $action = new CompleteLesson($badges);
-        $user   = User::factory()->create();
+        $user = User::factory()->create();
         $lesson = CourseLesson::factory()->create();
 
-        $first  = $action->execute($user, $lesson);
+        $first = $action->execute($user, $lesson);
         $second = $action->execute($user, $lesson);
 
         $this->assertSame($first->id, $second->id);
@@ -59,7 +59,7 @@ class CompleteLessonTest extends TestCase
             ->with(Mockery::type(User::class), $communityId);
 
         $action = new CompleteLesson($badges);
-        $user   = User::factory()->create();
+        $user = User::factory()->create();
         $lesson = CourseLesson::factory()->create();
 
         $action->execute($user, $lesson, $communityId);

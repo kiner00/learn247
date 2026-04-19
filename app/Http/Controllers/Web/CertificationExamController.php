@@ -10,7 +10,6 @@ use App\Models\Certificate;
 use App\Models\CertificationAttempt;
 use App\Models\CertificationPurchase;
 use App\Models\Community;
-use App\Models\CommunityMember;
 use App\Models\CourseCertification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -26,7 +25,7 @@ class CertificationExamController extends Controller
     public function index(Request $request, Community $community): Response
     {
         try {
-            $userId    = auth()->id();
+            $userId = auth()->id();
             $canManage = $request->user()?->can('manage', $community) ?? false;
             $community->loadCount('members');
 
@@ -36,23 +35,23 @@ class CertificationExamController extends Controller
                 ->get()
                 ->map(function ($cert) use ($canManage) {
                     return [
-                        'id'                        => $cert->id,
-                        'title'                     => $cert->title,
-                        'cert_title'                => $cert->cert_title,
-                        'description'               => $cert->description,
-                        'cover_image'               => $cert->cover_image ?: null,
-                        'pass_score'                => $cert->pass_score,
-                        'randomize_questions'       => $cert->randomize_questions,
-                        'price'                     => (float) ($cert->price ?? 0),
+                        'id' => $cert->id,
+                        'title' => $cert->title,
+                        'cert_title' => $cert->cert_title,
+                        'description' => $cert->description,
+                        'cover_image' => $cert->cover_image ?: null,
+                        'pass_score' => $cert->pass_score,
+                        'randomize_questions' => $cert->randomize_questions,
+                        'price' => (float) ($cert->price ?? 0),
                         'affiliate_commission_rate' => $cert->affiliate_commission_rate,
-                        'questions_count'           => $cert->questions_count,
-                        'questions'           => $cert->questions->map(fn ($q) => [
-                            'id'       => $q->id,
+                        'questions_count' => $cert->questions_count,
+                        'questions' => $cert->questions->map(fn ($q) => [
+                            'id' => $q->id,
                             'question' => $q->question,
-                            'type'     => $q->type,
-                            'options'  => $q->options->map(fn ($o) => [
-                                'id'         => $o->id,
-                                'label'      => $o->label,
+                            'type' => $q->type,
+                            'options' => $q->options->map(fn ($o) => [
+                                'id' => $o->id,
+                                'label' => $o->label,
                                 'is_correct' => $canManage ? $o->is_correct : false,
                             ])->values(),
                         ])->values(),
@@ -68,8 +67,8 @@ class CertificationExamController extends Controller
                     ->groupBy('certification_id')
                     ->map(fn ($group) => $group->sortByDesc('score')->first())
                     ->map(fn ($attempt) => [
-                        'score'        => $attempt->score,
-                        'passed'       => $attempt->passed,
+                        'score' => $attempt->score,
+                        'passed' => $attempt->passed,
                         'completed_at' => $attempt->completed_at?->format('F j, Y'),
                     ])
                     ->toArray();
@@ -106,23 +105,23 @@ class CertificationExamController extends Controller
                     ->latest('issued_at')
                     ->get()
                     ->map(fn ($c) => [
-                        'uuid'           => $c->uuid,
-                        'issued_at'      => $c->issued_at?->format('M j, Y'),
-                        'cert_title'     => $c->cert_title ?: $c->certification?->cert_title,
-                        'exam_title'     => $c->certification?->title,
-                        'student_name'   => $c->user?->name,
+                        'uuid' => $c->uuid,
+                        'issued_at' => $c->issued_at?->format('M j, Y'),
+                        'cert_title' => $c->cert_title ?: $c->certification?->cert_title,
+                        'exam_title' => $c->certification?->title,
+                        'student_name' => $c->user?->name,
                         'student_avatar' => $c->user?->avatar,
                     ]);
             }
 
             return Inertia::render('Communities/Certifications/Index', [
-                'community'          => $community,
-                'certifications'     => $certifications,
-                'attempts'           => $attempts,
-                'userCertificates'   => $userCertificates,
+                'community' => $community,
+                'certifications' => $certifications,
+                'attempts' => $attempts,
+                'userCertificates' => $userCertificates,
                 'issuedCertificates' => $issuedCertificates,
-                'canManage'          => $canManage,
-                'purchases'          => $purchases,
+                'canManage' => $canManage,
+                'purchases' => $purchases,
             ]);
         } catch (\Throwable $e) {
             Log::error('CertificationExamController@index failed', ['error' => $e->getMessage(), 'community' => $community->id]);
@@ -136,20 +135,20 @@ class CertificationExamController extends Controller
             $this->authorize('manage', $community);
 
             $data = $request->validate([
-                'title'                             => ['required', 'string', 'max:255'],
-                'cert_title'                        => ['required', 'string', 'max:255'],
-                'description'                       => ['nullable', 'string', 'max:2000'],
-                'cover_image'                       => ['nullable', 'image', 'max:10240'],
-                'pass_score'                        => ['required', 'integer', 'min:50', 'max:100'],
-                'randomize_questions'               => ['sometimes', 'boolean'],
-                'price'                             => ['nullable', 'numeric', 'min:0'],
-                'affiliate_commission_rate'         => ['nullable', 'integer', 'min:0', 'max:100'],
-                'questions'                         => ['required', 'array', 'min:1'],
-                'questions.*.question'              => ['required', 'string'],
-                'questions.*.type'                  => ['required', 'in:multiple_choice,true_false'],
-                'questions.*.options'               => ['required', 'array', 'min:2'],
-                'questions.*.options.*.label'       => ['required', 'string'],
-                'questions.*.options.*.is_correct'  => ['required', 'boolean'],
+                'title' => ['required', 'string', 'max:255'],
+                'cert_title' => ['required', 'string', 'max:255'],
+                'description' => ['nullable', 'string', 'max:2000'],
+                'cover_image' => ['nullable', 'image', 'max:10240'],
+                'pass_score' => ['required', 'integer', 'min:50', 'max:100'],
+                'randomize_questions' => ['sometimes', 'boolean'],
+                'price' => ['nullable', 'numeric', 'min:0'],
+                'affiliate_commission_rate' => ['nullable', 'integer', 'min:0', 'max:100'],
+                'questions' => ['required', 'array', 'min:1'],
+                'questions.*.question' => ['required', 'string'],
+                'questions.*.type' => ['required', 'in:multiple_choice,true_false'],
+                'questions.*.options' => ['required', 'array', 'min:2'],
+                'questions.*.options.*.label' => ['required', 'string'],
+                'questions.*.options.*.is_correct' => ['required', 'boolean'],
             ]);
 
             $action->store($community, $data, $request->file('cover_image'));
@@ -168,20 +167,20 @@ class CertificationExamController extends Controller
             abort_unless($certification->community_id === $community->id, 404);
 
             $data = $request->validate([
-                'title'                             => ['required', 'string', 'max:255'],
-                'cert_title'                        => ['required', 'string', 'max:255'],
-                'description'                       => ['nullable', 'string', 'max:2000'],
-                'cover_image'                       => ['nullable', 'image', 'max:10240'],
-                'pass_score'                        => ['required', 'integer', 'min:50', 'max:100'],
-                'randomize_questions'               => ['sometimes', 'boolean'],
-                'price'                             => ['nullable', 'numeric', 'min:0'],
-                'affiliate_commission_rate'         => ['nullable', 'integer', 'min:0', 'max:100'],
-                'questions'                         => ['required', 'array', 'min:1'],
-                'questions.*.question'              => ['required', 'string'],
-                'questions.*.type'                  => ['required', 'in:multiple_choice,true_false'],
-                'questions.*.options'               => ['required', 'array', 'min:2'],
-                'questions.*.options.*.label'       => ['required', 'string'],
-                'questions.*.options.*.is_correct'  => ['required', 'boolean'],
+                'title' => ['required', 'string', 'max:255'],
+                'cert_title' => ['required', 'string', 'max:255'],
+                'description' => ['nullable', 'string', 'max:2000'],
+                'cover_image' => ['nullable', 'image', 'max:10240'],
+                'pass_score' => ['required', 'integer', 'min:50', 'max:100'],
+                'randomize_questions' => ['sometimes', 'boolean'],
+                'price' => ['nullable', 'numeric', 'min:0'],
+                'affiliate_commission_rate' => ['nullable', 'integer', 'min:0', 'max:100'],
+                'questions' => ['required', 'array', 'min:1'],
+                'questions.*.question' => ['required', 'string'],
+                'questions.*.type' => ['required', 'in:multiple_choice,true_false'],
+                'questions.*.options' => ['required', 'array', 'min:2'],
+                'questions.*.options.*.label' => ['required', 'string'],
+                'questions.*.options.*.is_correct' => ['required', 'boolean'],
             ]);
 
             $action->store($community, $data, $request->file('cover_image'), $certification);
@@ -223,7 +222,7 @@ class CertificationExamController extends Controller
             }
 
             $request->validate([
-                'answers'   => ['required', 'array'],
+                'answers' => ['required', 'array'],
                 'answers.*' => ['required', 'integer'],
             ]);
 
@@ -231,10 +230,10 @@ class CertificationExamController extends Controller
 
             return back()->with('cert_exam_result', [
                 'certification_id' => $certification->id,
-                'score'            => $result['score'],
-                'passed'           => $result['passed'],
-                'total'            => $result['total'],
-                'correct'          => $result['correct'],
+                'score' => $result['score'],
+                'passed' => $result['passed'],
+                'total' => $result['total'],
+                'correct' => $result['correct'],
                 'certificate_uuid' => $result['certificate_uuid'],
             ]);
         } catch (\Throwable $e) {

@@ -11,10 +11,10 @@ class CreateLessonComment
     public function execute(User $user, CourseLesson $lesson, int $communityId, string $content): Comment
     {
         return Comment::create([
-            'lesson_id'    => $lesson->id,
+            'lesson_id' => $lesson->id,
             'community_id' => $communityId,
-            'user_id'      => $user->id,
-            'content'      => $content,
+            'user_id' => $user->id,
+            'content' => $content,
         ]);
     }
 }

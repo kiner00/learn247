@@ -11,7 +11,7 @@ class TagService
      * Apply automatic tags to a member based on an event.
      *
      * @param  string  $event  e.g. 'member.joined', 'payment.completed', 'course.enrolled'
-     * @param  array   $context  Additional context like ['membership_type' => 'free', 'course_id' => 5]
+     * @param  array  $context  Additional context like ['membership_type' => 'free', 'course_id' => 5]
      */
     public function applyAutoTags(CommunityMember $member, string $event, array $context = []): void
     {

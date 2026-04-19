@@ -21,18 +21,18 @@ class SyncMembershipFromSubscriptionTest extends TestCase
         $community = Community::factory()->create();
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_sync_active',
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->addMonth(),
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_sync_active',
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addMonth(),
         ]);
 
-        $action = new SyncMembershipFromSubscription();
+        $action = new SyncMembershipFromSubscription;
         $action->execute($subscription);
 
         $this->assertDatabaseHas('community_members', [
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
     }
 
@@ -42,24 +42,24 @@ class SyncMembershipFromSubscriptionTest extends TestCase
         $community = Community::factory()->create();
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'role'         => CommunityMember::ROLE_MEMBER,
+            'user_id' => $user->id,
+            'role' => CommunityMember::ROLE_MEMBER,
         ]);
 
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_sync_expired',
-            'status'       => Subscription::STATUS_EXPIRED,
-            'expires_at'   => now()->subDay(),
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_sync_expired',
+            'status' => Subscription::STATUS_EXPIRED,
+            'expires_at' => now()->subDay(),
         ]);
 
-        $action = new SyncMembershipFromSubscription();
+        $action = new SyncMembershipFromSubscription;
         $action->execute($subscription);
 
         $this->assertDatabaseMissing('community_members', [
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
     }
 
@@ -69,25 +69,25 @@ class SyncMembershipFromSubscriptionTest extends TestCase
         $community = Community::factory()->create();
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'role'         => CommunityMember::ROLE_ADMIN,
+            'user_id' => $user->id,
+            'role' => CommunityMember::ROLE_ADMIN,
         ]);
 
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_sync_admin',
-            'status'       => Subscription::STATUS_EXPIRED,
-            'expires_at'   => now()->subDay(),
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_sync_admin',
+            'status' => Subscription::STATUS_EXPIRED,
+            'expires_at' => now()->subDay(),
         ]);
 
-        $action = new SyncMembershipFromSubscription();
+        $action = new SyncMembershipFromSubscription;
         $action->execute($subscription);
 
         $this->assertDatabaseHas('community_members', [
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'role'         => CommunityMember::ROLE_ADMIN,
+            'user_id' => $user->id,
+            'role' => CommunityMember::ROLE_ADMIN,
         ]);
     }
 
@@ -97,26 +97,26 @@ class SyncMembershipFromSubscriptionTest extends TestCase
         $community = Community::factory()->create();
         Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'code'         => 'test-reactivate',
-            'status'       => Affiliate::STATUS_INACTIVE,
+            'user_id' => $user->id,
+            'code' => 'test-reactivate',
+            'status' => Affiliate::STATUS_INACTIVE,
         ]);
 
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_sync_reactivate',
-            'status'       => Subscription::STATUS_ACTIVE,
-            'expires_at'   => now()->addMonth(),
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_sync_reactivate',
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addMonth(),
         ]);
 
-        $action = new SyncMembershipFromSubscription();
+        $action = new SyncMembershipFromSubscription;
         $action->execute($subscription);
 
         $this->assertDatabaseHas('affiliates', [
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => $user->id,
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
     }
 
@@ -126,26 +126,26 @@ class SyncMembershipFromSubscriptionTest extends TestCase
         $community = Community::factory()->create();
         Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'code'         => 'test-suspend',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => $user->id,
+            'code' => 'test-suspend',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         $subscription = Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'xendit_id'    => 'inv_sync_suspend',
-            'status'       => Subscription::STATUS_EXPIRED,
-            'expires_at'   => now()->subDay(),
+            'user_id' => $user->id,
+            'xendit_id' => 'inv_sync_suspend',
+            'status' => Subscription::STATUS_EXPIRED,
+            'expires_at' => now()->subDay(),
         ]);
 
-        $action = new SyncMembershipFromSubscription();
+        $action = new SyncMembershipFromSubscription;
         $action->execute($subscription);
 
         $this->assertDatabaseHas('affiliates', [
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'status'       => Affiliate::STATUS_INACTIVE,
+            'user_id' => $user->id,
+            'status' => Affiliate::STATUS_INACTIVE,
         ]);
     }
 }

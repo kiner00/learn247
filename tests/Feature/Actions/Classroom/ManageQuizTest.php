@@ -22,7 +22,7 @@ class ManageQuizTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->action = new ManageQuiz();
+        $this->action = new ManageQuiz;
     }
 
     private function createLesson(): CourseLesson
@@ -30,41 +30,41 @@ class ManageQuizTest extends TestCase
         $community = Community::factory()->create();
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Test Course',
-            'position'     => 0,
+            'title' => 'Test Course',
+            'position' => 0,
         ]);
         $module = CourseModule::create([
             'course_id' => $course->id,
-            'title'     => 'Test Module',
-            'position'  => 0,
+            'title' => 'Test Module',
+            'position' => 0,
         ]);
 
         return CourseLesson::create([
             'module_id' => $module->id,
-            'title'     => 'Test Lesson',
-            'content'   => 'Some content',
-            'position'  => 0,
+            'title' => 'Test Lesson',
+            'content' => 'Some content',
+            'position' => 0,
         ]);
     }
 
     private function quizData(): array
     {
         return [
-            'title'      => 'Sample Quiz',
+            'title' => 'Sample Quiz',
             'pass_score' => 70,
-            'questions'  => [
+            'questions' => [
                 [
                     'question' => 'What is 2+2?',
-                    'type'     => 'multiple_choice',
-                    'options'  => [
+                    'type' => 'multiple_choice',
+                    'options' => [
                         ['label' => '3', 'is_correct' => false],
                         ['label' => '4', 'is_correct' => true],
                     ],
                 ],
                 [
                     'question' => 'What is the capital of France?',
-                    'type'     => 'multiple_choice',
-                    'options'  => [
+                    'type' => 'multiple_choice',
+                    'options' => [
                         ['label' => 'Paris', 'is_correct' => true],
                         ['label' => 'London', 'is_correct' => false],
                         ['label' => 'Berlin', 'is_correct' => false],
@@ -82,8 +82,8 @@ class ManageQuizTest extends TestCase
 
         $this->assertInstanceOf(Quiz::class, $quiz);
         $this->assertDatabaseHas('quizzes', [
-            'lesson_id'  => $lesson->id,
-            'title'      => 'Sample Quiz',
+            'lesson_id' => $lesson->id,
+            'title' => 'Sample Quiz',
             'pass_score' => 70,
         ]);
     }
@@ -128,13 +128,13 @@ class ManageQuizTest extends TestCase
         $oldQuizId = $oldQuiz->id;
 
         $newData = [
-            'title'      => 'Replacement Quiz',
+            'title' => 'Replacement Quiz',
             'pass_score' => 80,
-            'questions'  => [
+            'questions' => [
                 [
                     'question' => 'New question?',
-                    'type'     => 'multiple_choice',
-                    'options'  => [
+                    'type' => 'multiple_choice',
+                    'options' => [
                         ['label' => 'Yes', 'is_correct' => true],
                         ['label' => 'No', 'is_correct' => false],
                     ],
@@ -146,9 +146,9 @@ class ManageQuizTest extends TestCase
 
         $this->assertDatabaseMissing('quizzes', ['id' => $oldQuizId]);
         $this->assertDatabaseHas('quizzes', [
-            'id'         => $newQuiz->id,
-            'lesson_id'  => $lesson->id,
-            'title'      => 'Replacement Quiz',
+            'id' => $newQuiz->id,
+            'lesson_id' => $lesson->id,
+            'title' => 'Replacement Quiz',
             'pass_score' => 80,
         ]);
         $this->assertCount(1, QuizQuestion::where('quiz_id', $newQuiz->id)->get());

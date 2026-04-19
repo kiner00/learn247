@@ -3,7 +3,6 @@
 namespace Tests\Feature\Services;
 
 use App\Models\Community;
-use App\Models\OwnerPayout;
 use App\Models\Payment;
 use App\Models\Subscription;
 use App\Models\User;
@@ -21,27 +20,27 @@ class OwnerPayoutDispatcherTest extends TestCase
     private function makeDispatcher(?XenditService $xendit = null): OwnerPayoutDispatcher
     {
         return new OwnerPayoutDispatcher(
-            new OwnerEarningsCalculator(),
+            new OwnerEarningsCalculator,
             $xendit ?? Mockery::mock(XenditService::class),
         );
     }
 
     private function communityWithPendingEarnings(string $payoutMethod = 'gcash', string $payoutDetails = '09171234567'): Community
     {
-        $owner     = User::factory()->create(['payout_method' => $payoutMethod, 'payout_details' => $payoutDetails]);
+        $owner = User::factory()->create(['payout_method' => $payoutMethod, 'payout_details' => $payoutDetails]);
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $member    = User::factory()->create();
-        $sub       = Subscription::factory()->active()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+        $member = User::factory()->create();
+        $sub = Subscription::factory()->active()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         Payment::create([
             'subscription_id' => $sub->id,
-            'community_id'    => $community->id,
-            'user_id'         => $member->id,
-            'amount'          => 1000,
-            'currency'        => 'PHP',
-            'status'          => Payment::STATUS_PAID,
-            'metadata'        => [],
-            'paid_at'         => now(),
+            'community_id' => $community->id,
+            'user_id' => $member->id,
+            'amount' => 1000,
+            'currency' => 'PHP',
+            'status' => Payment::STATUS_PAID,
+            'metadata' => [],
+            'paid_at' => now(),
         ]);
 
         return $community;
@@ -51,7 +50,7 @@ class OwnerPayoutDispatcherTest extends TestCase
 
     public function test_can_dispatch_when_owner_has_gcash(): void
     {
-        $community  = $this->communityWithPendingEarnings('gcash', '09171234567');
+        $community = $this->communityWithPendingEarnings('gcash', '09171234567');
         $dispatcher = $this->makeDispatcher();
 
         $this->assertTrue($dispatcher->canDispatch($community));
@@ -59,7 +58,7 @@ class OwnerPayoutDispatcherTest extends TestCase
 
     public function test_can_dispatch_when_owner_has_maya(): void
     {
-        $community  = $this->communityWithPendingEarnings('maya', '09179999999');
+        $community = $this->communityWithPendingEarnings('maya', '09179999999');
         $dispatcher = $this->makeDispatcher();
 
         $this->assertTrue($dispatcher->canDispatch($community));
@@ -67,7 +66,7 @@ class OwnerPayoutDispatcherTest extends TestCase
 
     public function test_cannot_dispatch_when_payout_method_is_null(): void
     {
-        $owner     = User::factory()->create(['payout_method' => null, 'payout_details' => null]);
+        $owner = User::factory()->create(['payout_method' => null, 'payout_details' => null]);
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         $dispatcher = $this->makeDispatcher();
 
@@ -76,7 +75,7 @@ class OwnerPayoutDispatcherTest extends TestCase
 
     public function test_cannot_dispatch_when_payout_details_is_null(): void
     {
-        $owner     = User::factory()->create(['payout_method' => 'gcash', 'payout_details' => null]);
+        $owner = User::factory()->create(['payout_method' => 'gcash', 'payout_details' => null]);
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         $dispatcher = $this->makeDispatcher();
 
@@ -85,7 +84,7 @@ class OwnerPayoutDispatcherTest extends TestCase
 
     public function test_cannot_dispatch_with_unknown_payout_method(): void
     {
-        $owner     = User::factory()->create(['payout_method' => 'bank', 'payout_details' => '123456']);
+        $owner = User::factory()->create(['payout_method' => 'bank', 'payout_details' => '123456']);
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         $dispatcher = $this->makeDispatcher();
 
@@ -101,23 +100,22 @@ class OwnerPayoutDispatcherTest extends TestCase
         $xendit = Mockery::mock(XenditService::class);
         $xendit->shouldReceive('createPayout')
             ->once()
-            ->withArgs(fn ($args) =>
-                $args['currency'] === 'PHP'
+            ->withArgs(fn ($args) => $args['currency'] === 'PHP'
                 && $args['channel_code'] === 'PH_GCASH'
                 && $args['amount'] > 0
             )
             ->andReturn(['id' => 'xnd_payout_123']);
 
         $dispatcher = $this->makeDispatcher($xendit);
-        $result     = $dispatcher->dispatch($community);
+        $result = $dispatcher->dispatch($community);
 
         $this->assertSame('xnd_payout_123', $result['reference']);
         $this->assertGreaterThan(0, $result['amount']);
 
         $this->assertDatabaseHas('owner_payouts', [
-            'community_id'     => $community->id,
+            'community_id' => $community->id,
             'xendit_reference' => 'xnd_payout_123',
-            'status'           => 'accepted',
+            'status' => 'accepted',
         ]);
     }
 
@@ -137,7 +135,7 @@ class OwnerPayoutDispatcherTest extends TestCase
 
     public function test_dispatch_throws_when_no_pending_amount(): void
     {
-        $owner     = User::factory()->create(['payout_method' => 'gcash', 'payout_details' => '09171234567']);
+        $owner = User::factory()->create(['payout_method' => 'gcash', 'payout_details' => '09171234567']);
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $xendit = Mockery::mock(XenditService::class);
@@ -159,9 +157,9 @@ class OwnerPayoutDispatcherTest extends TestCase
         $xendit->shouldReceive('createPayout')->andReturn([]); // no 'id' key
 
         $dispatcher = $this->makeDispatcher($xendit);
-        $result     = $dispatcher->dispatch($community);
+        $result = $dispatcher->dispatch($community);
 
-        $this->assertStringStartsWith('owner-' . $community->id . '-', $result['reference']);
+        $this->assertStringStartsWith('owner-'.$community->id.'-', $result['reference']);
     }
 
     public function test_dispatch_propagates_xendit_exceptions(): void
@@ -190,7 +188,7 @@ class OwnerPayoutDispatcherTest extends TestCase
         $xendit->shouldReceive('createPayout')->twice()->andReturn(['id' => 'xnd_batch']);
 
         $dispatcher = $this->makeDispatcher($xendit);
-        $result     = $dispatcher->batchDispatch(collect([$c1, $c2]));
+        $result = $dispatcher->batchDispatch(collect([$c1, $c2]));
 
         $this->assertSame(2, $result['paid']);
         $this->assertEmpty($result['errors']);
@@ -199,7 +197,7 @@ class OwnerPayoutDispatcherTest extends TestCase
     public function test_batch_skips_communities_without_payout_details(): void
     {
         $good = $this->communityWithPendingEarnings();
-        $bad  = Community::factory()->create([
+        $bad = Community::factory()->create([
             'owner_id' => User::factory()->create(['payout_method' => null])->id,
         ]);
 
@@ -207,7 +205,7 @@ class OwnerPayoutDispatcherTest extends TestCase
         $xendit->shouldReceive('createPayout')->once()->andReturn(['id' => 'xnd_ok']);
 
         $dispatcher = $this->makeDispatcher($xendit);
-        $result     = $dispatcher->batchDispatch(collect([$good, $bad]));
+        $result = $dispatcher->batchDispatch(collect([$good, $bad]));
 
         $this->assertSame(1, $result['paid']);
         $this->assertEmpty($result['errors']);
@@ -224,7 +222,7 @@ class OwnerPayoutDispatcherTest extends TestCase
         $xendit->shouldReceive('createPayout')->once()->andReturn(['id' => 'xnd_ok']);
 
         $dispatcher = $this->makeDispatcher($xendit);
-        $result     = $dispatcher->batchDispatch(collect([$no_earnings, $with_earnings]));
+        $result = $dispatcher->batchDispatch(collect([$no_earnings, $with_earnings]));
 
         $this->assertSame(1, $result['paid']);
         $this->assertEmpty($result['errors']); // "no pending" is not an error
@@ -241,7 +239,7 @@ class OwnerPayoutDispatcherTest extends TestCase
             ->andThrow(new \RuntimeException('Channel unavailable'));
 
         $dispatcher = $this->makeDispatcher($xendit);
-        $result     = $dispatcher->batchDispatch(collect([$c1, $c2]));
+        $result = $dispatcher->batchDispatch(collect([$c1, $c2]));
 
         $this->assertSame(0, $result['paid']);
         $this->assertCount(2, $result['errors']);
@@ -253,7 +251,7 @@ class OwnerPayoutDispatcherTest extends TestCase
         $xendit = Mockery::mock(XenditService::class);
 
         $dispatcher = $this->makeDispatcher($xendit);
-        $result     = $dispatcher->batchDispatch(collect([]), 'selected owners');
+        $result = $dispatcher->batchDispatch(collect([]), 'selected owners');
 
         $this->assertStringContainsString('selected owners', $result['message']);
     }

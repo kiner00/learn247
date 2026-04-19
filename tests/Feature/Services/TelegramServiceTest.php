@@ -12,12 +12,13 @@ class TelegramServiceTest extends TestCase
     use RefreshDatabase;
 
     private TelegramService $service;
+
     private string $token = 'test-bot-token';
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new TelegramService();
+        $this->service = new TelegramService;
     }
 
     // ─── sendMessage ─────────────────────────────────────────────────────────
@@ -220,7 +221,7 @@ class TelegramServiceTest extends TestCase
     {
         Http::fake([
             'https://api.telegram.org/bot*' => Http::response([
-                'ok'     => true,
+                'ok' => true,
                 'result' => ['file_path' => 'photos/file_123.jpg'],
             ], 200),
         ]);
@@ -228,7 +229,7 @@ class TelegramServiceTest extends TestCase
         $url = $this->service->getFileUrl($this->token, 'some-file-id');
 
         $this->assertEquals(
-            'https://api.telegram.org/file/bot' . $this->token . '/photos/file_123.jpg',
+            'https://api.telegram.org/file/bot'.$this->token.'/photos/file_123.jpg',
             $url
         );
     }
@@ -237,7 +238,7 @@ class TelegramServiceTest extends TestCase
     {
         Http::fake([
             'https://api.telegram.org/bot*' => Http::response([
-                'ok'     => true,
+                'ok' => true,
                 'result' => [],
             ], 200),
         ]);
@@ -264,7 +265,7 @@ class TelegramServiceTest extends TestCase
     {
         Http::fake([
             'https://api.telegram.org/bot*' => Http::response([
-                'ok'     => true,
+                'ok' => true,
                 'result' => 42,
             ], 200),
         ]);

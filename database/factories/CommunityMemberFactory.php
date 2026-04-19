@@ -13,9 +13,9 @@ class CommunityMemberFactory extends Factory
     {
         return [
             'community_id' => Community::factory(),
-            'user_id'      => User::factory(),
-            'role'         => CommunityMember::ROLE_MEMBER,
-            'joined_at'    => now(),
+            'user_id' => User::factory(),
+            'role' => CommunityMember::ROLE_MEMBER,
+            'joined_at' => now(),
         ];
     }
 

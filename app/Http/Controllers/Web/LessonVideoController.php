@@ -30,26 +30,26 @@ class LessonVideoController extends Controller
             }
 
             $request->validate([
-                'filename'     => ['required', 'string', 'max:255'],
+                'filename' => ['required', 'string', 'max:255'],
                 'content_type' => ['required', 'string', 'in:video/mp4,video/quicktime,video/webm,video/x-msvideo'],
-                'size'         => ['required', 'integer', 'min:1'],
+                'size' => ['required', 'integer', 'min:1'],
             ]);
 
             $maxBytes = $planLimit->maxVideoSizeMb($owner->creatorPlan()) * 1024 * 1024;
 
             if ($request->size > $maxBytes) {
                 return response()->json([
-                    'error' => 'File too large. Maximum size is ' . $planLimit->maxVideoSizeMb($owner->creatorPlan()) . 'MB.',
+                    'error' => 'File too large. Maximum size is '.$planLimit->maxVideoSizeMb($owner->creatorPlan()).'MB.',
                 ], 422);
             }
 
             $extension = pathinfo($request->filename, PATHINFO_EXTENSION) ?: 'mp4';
-            $key       = 'lesson-videos/' . Str::uuid() . '.' . $extension;
+            $key = 'lesson-videos/'.Str::uuid().'.'.$extension;
 
-            $client  = Storage::disk('s3')->getClient();
+            $client = Storage::disk('s3')->getClient();
             $command = $client->getCommand('PutObject', [
-                'Bucket'      => config('filesystems.disks.s3.bucket'),
-                'Key'         => $key,
+                'Bucket' => config('filesystems.disks.s3.bucket'),
+                'Key' => $key,
                 'ContentType' => $request->content_type,
             ]);
 
@@ -57,7 +57,7 @@ class LessonVideoController extends Controller
 
             return response()->json([
                 'upload_url' => (string) $presigned->getUri(),
-                'key'        => $key,
+                'key' => $key,
             ]);
         } catch (\Throwable $e) {
             Log::error('LessonVideoController@uploadLessonVideo failed', ['error' => $e->getMessage(), 'community' => $community->id]);
@@ -76,26 +76,26 @@ class LessonVideoController extends Controller
             }
 
             $request->validate([
-                'filename'     => ['required', 'string', 'max:255'],
+                'filename' => ['required', 'string', 'max:255'],
                 'content_type' => ['required', 'string', 'in:video/mp4,video/quicktime,video/webm'],
-                'size'         => ['required', 'integer', 'min:1'],
+                'size' => ['required', 'integer', 'min:1'],
             ]);
 
             $maxBytes = $planLimit->maxVideoSizeMb($owner->creatorPlan()) * 1024 * 1024;
 
             if ($request->size > $maxBytes) {
                 return response()->json([
-                    'error' => 'File too large. Maximum size is ' . $planLimit->maxVideoSizeMb($owner->creatorPlan()) . 'MB.',
+                    'error' => 'File too large. Maximum size is '.$planLimit->maxVideoSizeMb($owner->creatorPlan()).'MB.',
                 ], 422);
             }
 
             $extension = pathinfo($request->filename, PATHINFO_EXTENSION) ?: 'mp4';
-            $key       = 'course-previews/' . Str::uuid() . '.' . $extension;
+            $key = 'course-previews/'.Str::uuid().'.'.$extension;
 
-            $client  = Storage::disk('s3')->getClient();
+            $client = Storage::disk('s3')->getClient();
             $command = $client->getCommand('PutObject', [
-                'Bucket'      => config('filesystems.disks.s3.bucket'),
-                'Key'         => $key,
+                'Bucket' => config('filesystems.disks.s3.bucket'),
+                'Key' => $key,
                 'ContentType' => $request->content_type,
             ]);
 
@@ -103,7 +103,7 @@ class LessonVideoController extends Controller
 
             return response()->json([
                 'upload_url' => (string) $presigned->getUri(),
-                'key'        => $key,
+                'key' => $key,
             ]);
         } catch (\Throwable $e) {
             Log::error('LessonVideoController@uploadPreviewVideo failed', ['error' => $e->getMessage(), 'community' => $community->id]);
@@ -121,16 +121,16 @@ class LessonVideoController extends Controller
         }
 
         $request->validate([
-            'filename'     => ['required', 'string', 'max:255'],
+            'filename' => ['required', 'string', 'max:255'],
             'content_type' => ['required', 'string', 'in:video/mp4,video/quicktime,video/webm,video/x-msvideo'],
-            'size'         => ['required', 'integer', 'min:1'],
-            'type'         => ['sometimes', 'string', 'in:lesson,preview'],
+            'size' => ['required', 'integer', 'min:1'],
+            'type' => ['sometimes', 'string', 'in:lesson,preview'],
         ]);
 
         $maxBytes = $planLimit->maxVideoSizeMb($owner->creatorPlan()) * 1024 * 1024;
         if ($request->size > $maxBytes) {
             return response()->json([
-                'error' => 'File too large. Maximum size is ' . $planLimit->maxVideoSizeMb($owner->creatorPlan()) . 'MB.',
+                'error' => 'File too large. Maximum size is '.$planLimit->maxVideoSizeMb($owner->creatorPlan()).'MB.',
             ], 422);
         }
 
@@ -144,8 +144,8 @@ class LessonVideoController extends Controller
         $this->authorize('manage', $community);
 
         $request->validate([
-            'key'         => ['required', 'string'],
-            'upload_id'   => ['required', 'string'],
+            'key' => ['required', 'string'],
+            'upload_id' => ['required', 'string'],
             'part_number' => ['required', 'integer', 'min:1', 'max:10000'],
         ]);
 
@@ -159,11 +159,11 @@ class LessonVideoController extends Controller
         $this->authorize('manage', $community);
 
         $request->validate([
-            'key'                => ['required', 'string'],
-            'upload_id'          => ['required', 'string'],
-            'parts'              => ['required', 'array', 'min:1'],
+            'key' => ['required', 'string'],
+            'upload_id' => ['required', 'string'],
+            'parts' => ['required', 'array', 'min:1'],
             'parts.*.PartNumber' => ['required', 'integer'],
-            'parts.*.ETag'       => ['required', 'string'],
+            'parts.*.ETag' => ['required', 'string'],
         ]);
 
         $multipart->complete($request->key, $request->upload_id, $request->parts);
@@ -179,7 +179,7 @@ class LessonVideoController extends Controller
         $this->authorize('manage', $community);
 
         $request->validate([
-            'key'       => ['required', 'string'],
+            'key' => ['required', 'string'],
             'upload_id' => ['required', 'string'],
         ]);
 
@@ -191,7 +191,7 @@ class LessonVideoController extends Controller
     public function stream(Request $request, Community $community, Course $course, CourseLesson $lesson, CourseAccessService $access): JsonResponse
     {
         try {
-            $user      = $request->user();
+            $user = $request->user();
             $canManage = $user?->can('manage', $community) ?? false;
 
             if (! $course->is_published && ! $canManage) {
@@ -209,14 +209,14 @@ class LessonVideoController extends Controller
             if ($lesson->video_hls_path && $lesson->video_transcode_status === 'completed') {
                 $proxyBase = route('communities.classroom.lessons.hls', [
                     'community' => $community,
-                    'course'    => $course,
-                    'lesson'    => $lesson,
-                    'file'      => basename($lesson->video_hls_path),
+                    'course' => $course,
+                    'lesson' => $lesson,
+                    'file' => basename($lesson->video_hls_path),
                 ]);
 
                 return response()->json([
-                    'url'              => $proxyBase,
-                    'type'             => 'hls',
+                    'url' => $proxyBase,
+                    'type' => 'hls',
                     'transcode_status' => $lesson->video_transcode_status,
                 ]);
             }
@@ -225,13 +225,13 @@ class LessonVideoController extends Controller
 
             if (str_starts_with($path, 'http')) {
                 $parsed = parse_url($path);
-                $path   = ltrim($parsed['path'] ?? '', '/');
+                $path = ltrim($parsed['path'] ?? '', '/');
             }
 
             $url = Storage::temporaryUrl($path, now()->addHours(2));
 
             return response()->json([
-                'url'  => $url,
+                'url' => $url,
                 'type' => 'raw',
                 'transcode_status' => $lesson->video_transcode_status,
             ]);
@@ -243,7 +243,7 @@ class LessonVideoController extends Controller
 
     public function hlsFile(Request $request, Community $community, Course $course, CourseLesson $lesson, string $file, CourseAccessService $access, HlsManifestRewriter $hls)
     {
-        $user      = $request->user();
+        $user = $request->user();
         $canManage = $user?->can('manage', $community) ?? false;
 
         if (! $course->is_published && ! $canManage) {
@@ -263,9 +263,9 @@ class LessonVideoController extends Controller
             $file,
             fn (string $relative) => route('communities.classroom.lessons.hls', [
                 'community' => $community,
-                'course'    => $course,
-                'lesson'    => $lesson,
-                'file'      => $relative,
+                'course' => $course,
+                'lesson' => $lesson,
+                'file' => $relative,
             ]),
         );
     }
@@ -273,7 +273,7 @@ class LessonVideoController extends Controller
     public function transcodeStatus(Request $request, Community $community, Course $course, CourseLesson $lesson): JsonResponse
     {
         return response()->json([
-            'status'  => $lesson->video_transcode_status,
+            'status' => $lesson->video_transcode_status,
             'percent' => $lesson->video_transcode_percent,
         ]);
     }

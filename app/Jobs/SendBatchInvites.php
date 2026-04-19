@@ -41,9 +41,9 @@ class SendBatchInvites implements ShouldQueue
             $invite = CommunityInvite::updateOrCreate(
                 ['community_id' => $this->community->id, 'email' => $email],
                 [
-                    'token'              => Str::random(64),
-                    'accepted_at'        => null,
-                    'expires_at'         => now()->addDays(7),
+                    'token' => Str::random(64),
+                    'accepted_at' => null,
+                    'expires_at' => now()->addDays(7),
                     'free_access_months' => $this->freeAccessMonths,
                 ]
             );

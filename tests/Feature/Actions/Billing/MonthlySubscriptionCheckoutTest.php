@@ -29,7 +29,7 @@ class MonthlySubscriptionCheckoutTest extends TestCase
         $xendit->shouldReceive('createInvoice')
             ->once()
             ->andReturn([
-                'id'          => 'inv_monthly_default',
+                'id' => 'inv_monthly_default',
                 'invoice_url' => 'https://checkout.xendit.co/monthly_default',
             ]);
 
@@ -44,10 +44,10 @@ class MonthlySubscriptionCheckoutTest extends TestCase
         $this->assertEquals('https://checkout.xendit.co/monthly_default', $result['checkout_url']);
 
         $this->assertDatabaseHas('subscriptions', [
-            'community_id'   => $community->id,
-            'user_id'        => $user->id,
-            'status'         => Subscription::STATUS_PENDING,
-            'xendit_id'      => 'inv_monthly_default',
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_PENDING,
+            'xendit_id' => 'inv_monthly_default',
             'xendit_plan_id' => null,
         ]);
     }
@@ -74,7 +74,7 @@ class MonthlySubscriptionCheckoutTest extends TestCase
         $xendit->shouldReceive('createInvoice')
             ->once()
             ->andReturn([
-                'id'          => 'inv_onetime_001',
+                'id' => 'inv_onetime_001',
                 'invoice_url' => 'https://checkout.xendit.co/onetime',
             ]);
 
@@ -89,10 +89,10 @@ class MonthlySubscriptionCheckoutTest extends TestCase
         $this->assertEquals('https://checkout.xendit.co/onetime', $result['checkout_url']);
 
         $this->assertDatabaseHas('subscriptions', [
-            'community_id'   => $community->id,
-            'user_id'        => $user->id,
-            'status'         => Subscription::STATUS_PENDING,
-            'xendit_id'      => 'inv_onetime_001',
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_PENDING,
+            'xendit_id' => 'inv_onetime_001',
             'xendit_plan_id' => null,
         ]);
     }

@@ -16,23 +16,23 @@ class AuthController extends Controller
     public function login(LoginRequest $request, AuthenticateUser $action): JsonResponse
     {
         $validated = $request->validated();
-        $user  = $action->execute($validated['email'], $validated['password']);
+        $user = $action->execute($validated['email'], $validated['password']);
         $token = $user->createToken('mobile')->plainTextToken;
 
         return response()->json([
             'token' => $token,
-            'user'  => new UserResource($user),
+            'user' => new UserResource($user),
         ]);
     }
 
     public function register(RegisterRequest $request, RegisterUser $action): JsonResponse
     {
-        $user  = $action->execute($request->validated());
+        $user = $action->execute($request->validated());
         $token = $user->createToken('mobile')->plainTextToken;
 
         return response()->json([
             'token' => $token,
-            'user'  => new UserResource($user),
+            'user' => new UserResource($user),
         ], 201);
     }
 

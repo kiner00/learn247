@@ -56,25 +56,25 @@ class ForgotPasswordControllerTest extends TestCase
         $user = User::factory()->create(['email' => 'user@example.com']);
 
         $this->post('/reset-password', [
-            'token'                 => 'bad-token',
-            'email'                 => $user->email,
-            'password'              => 'NewPassword1!',
+            'token' => 'bad-token',
+            'email' => $user->email,
+            'password' => 'NewPassword1!',
             'password_confirmation' => 'NewPassword1!',
         ])->assertSessionHasErrors('email');
     }
 
     public function test_reset_with_valid_token_updates_password(): void
     {
-        $user  = User::factory()->create(['email' => 'reset@example.com', 'needs_password_setup' => true]);
+        $user = User::factory()->create(['email' => 'reset@example.com', 'needs_password_setup' => true]);
         $token = Password::broker()->createToken($user);
 
         $this->post('/reset-password', [
-            'token'                 => $token,
-            'email'                 => $user->email,
-            'password'              => 'NewPassword1!',
+            'token' => $token,
+            'email' => $user->email,
+            'password' => 'NewPassword1!',
             'password_confirmation' => 'NewPassword1!',
         ])->assertRedirect(route('login'))
-          ->assertSessionHas('success');
+            ->assertSessionHas('success');
 
         $user->refresh();
         $this->assertFalse((bool) $user->needs_password_setup);

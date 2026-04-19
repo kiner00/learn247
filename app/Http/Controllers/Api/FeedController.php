@@ -56,6 +56,7 @@ class FeedController extends Controller
                 CommunityMember::where('community_id', $community->id)->where('user_id', $user->id)->exists(),
                 403, 'You must be a member of this community.'
             );
+
             return;
         }
 

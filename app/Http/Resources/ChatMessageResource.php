@@ -10,14 +10,14 @@ class ChatMessageResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'         => $this->id,
-            'content'    => $this->content,
+            'id' => $this->id,
+            'content' => $this->content,
             'created_at' => $this->created_at,
-            'user'       => $this->whenLoaded('user', fn () => [
-                'id'       => $this->user->id,
-                'name'     => $this->user->name,
+            'user' => $this->whenLoaded('user', fn () => [
+                'id' => $this->user->id,
+                'name' => $this->user->name,
                 'username' => $this->user->username,
-                'avatar'   => $this->user->avatar,
+                'avatar' => $this->user->avatar,
             ]),
         ];
     }

@@ -18,9 +18,9 @@ class ManageGallery
 
         CommunityGalleryItem::create([
             'community_id' => $community->id,
-            'type'         => 'image',
-            'image_path'   => $this->keyFromUrl($url),
-            'position'     => $this->nextPosition($community),
+            'type' => 'image',
+            'image_path' => $this->keyFromUrl($url),
+            'position' => $this->nextPosition($community),
         ]);
 
         return $url;
@@ -54,6 +54,7 @@ class ManageGallery
         if (str_starts_with($url, '/storage/')) {
             return substr($url, strlen('/storage/'));
         }
+
         return ltrim($url, '/');
     }
 }

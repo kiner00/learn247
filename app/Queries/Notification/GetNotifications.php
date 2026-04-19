@@ -25,13 +25,13 @@ class GetNotifications
             ->take($limit)
             ->get()
             ->map(fn ($n) => [
-                'id'             => $n->id,
-                'type'           => $n->type,
-                'data'           => $n->data,
-                'read_at'        => $n->read_at,
-                'created_at'     => $n->created_at,
-                'actor_name'     => $n->actor?->name,
-                'actor_avatar'   => $n->actor?->avatar,
+                'id' => $n->id,
+                'type' => $n->type,
+                'data' => $n->data,
+                'read_at' => $n->read_at,
+                'created_at' => $n->created_at,
+                'actor_name' => $n->actor?->name,
+                'actor_avatar' => $n->actor?->avatar,
                 'community_name' => $n->community?->name,
                 'community_slug' => $n->community?->slug,
             ]);

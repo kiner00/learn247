@@ -10,12 +10,17 @@ class EmailSend extends Model
 {
     use HasFactory;
 
-    public const STATUS_QUEUED     = 'queued';
-    public const STATUS_SENT       = 'sent';
-    public const STATUS_DELIVERED  = 'delivered';
-    public const STATUS_BOUNCED    = 'bounced';
+    public const STATUS_QUEUED = 'queued';
+
+    public const STATUS_SENT = 'sent';
+
+    public const STATUS_DELIVERED = 'delivered';
+
+    public const STATUS_BOUNCED = 'bounced';
+
     public const STATUS_COMPLAINED = 'complained';
-    public const STATUS_FAILED     = 'failed';
+
+    public const STATUS_FAILED = 'failed';
 
     protected $fillable = [
         'broadcast_id', 'community_id', 'community_member_id',
@@ -26,7 +31,7 @@ class EmailSend extends Model
     protected function casts(): array
     {
         return [
-            'opened_at'  => 'datetime',
+            'opened_at' => 'datetime',
             'clicked_at' => 'datetime',
             'bounced_at' => 'datetime',
         ];

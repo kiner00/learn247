@@ -30,12 +30,12 @@ class CheckMediaConvertStatus implements ShouldQueue
 
     public function handle(): void
     {
-        $region   = config('services.mediaconvert.region');
+        $region = config('services.mediaconvert.region');
         $endpoint = config('services.mediaconvert.endpoint');
 
         $client = new MediaConvertClient([
-            'version'  => '2017-08-29',
-            'region'   => $region,
+            'version' => '2017-08-29',
+            'region' => $region,
             'endpoint' => $endpoint,
         ]);
 
@@ -50,15 +50,15 @@ class CheckMediaConvertStatus implements ShouldQueue
 
         match ($status) {
             'COMPLETE' => $this->handleComplete(),
-            'ERROR'    => $this->handleError($result),
+            'ERROR' => $this->handleError($result),
             'CANCELED' => $this->handleError($result),
-            default    => $this->handleProgressing($result),
+            default => $this->handleProgressing($result),
         };
     }
 
     private function handleComplete(): void
     {
-        $this->target->setHlsPath($this->hlsPrefix . '/video.m3u8');
+        $this->target->setHlsPath($this->hlsPrefix.'/video.m3u8');
 
         if ($this->posterKey) {
             $disk = Storage::disk(config('filesystems.default'));
@@ -68,8 +68,8 @@ class CheckMediaConvertStatus implements ShouldQueue
         $this->target->setTranscodeStatus('completed', 100);
 
         Log::info('HLS transcoding completed via MediaConvert', [
-            'target'   => $this->target->getTranscodeIdentifier(),
-            'hls_path' => $this->hlsPrefix . '/video.m3u8',
+            'target' => $this->target->getTranscodeIdentifier(),
+            'hls_path' => $this->hlsPrefix.'/video.m3u8',
         ]);
     }
 
@@ -82,7 +82,7 @@ class CheckMediaConvertStatus implements ShouldQueue
         Log::error('MediaConvert transcoding failed', [
             'target' => $this->target->getTranscodeIdentifier(),
             'mc_job' => $this->mediaConvertJobId,
-            'error'  => $errorMessage,
+            'error' => $errorMessage,
         ]);
     }
 
@@ -105,7 +105,7 @@ class CheckMediaConvertStatus implements ShouldQueue
         Log::error('CheckMediaConvertStatus job failed', [
             'target' => $this->target->getTranscodeIdentifier(),
             'mc_job' => $this->mediaConvertJobId,
-            'error'  => $exception->getMessage(),
+            'error' => $exception->getMessage(),
         ]);
     }
 }

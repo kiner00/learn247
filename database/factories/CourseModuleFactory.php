@@ -11,8 +11,8 @@ class CourseModuleFactory extends Factory
     {
         return [
             'course_id' => Course::factory(),
-            'title'     => fake()->sentence(2),
-            'position'  => 0,
+            'title' => fake()->sentence(2),
+            'position' => 0,
         ];
     }
 }

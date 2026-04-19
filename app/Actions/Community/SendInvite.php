@@ -30,10 +30,10 @@ class SendInvite
         $invite = CommunityInvite::updateOrCreate(
             ['community_id' => $community->id, 'email' => $email],
             [
-                'token'               => Str::random(64),
-                'accepted_at'         => null,
-                'expires_at'          => now()->addDays(7),
-                'free_access_months'  => $freeAccessMonths,
+                'token' => Str::random(64),
+                'accepted_at' => null,
+                'expires_at' => now()->addDays(7),
+                'free_access_months' => $freeAccessMonths,
             ]
         );
 
@@ -58,8 +58,8 @@ class SendInvite
         $count = count($emails);
 
         return [
-            'type'    => 'success',
-            'message' => "{$count} invite" . ($count !== 1 ? 's' : '') . " queued — emails will arrive shortly.",
+            'type' => 'success',
+            'message' => "{$count} invite".($count !== 1 ? 's' : '').' queued — emails will arrive shortly.',
         ];
     }
 
@@ -69,7 +69,7 @@ class SendInvite
     public function parseCSV(string $filePath): array
     {
         $emails = [];
-        $lines  = file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        $lines = file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
         foreach ($lines as $line) {
             $col = trim(str_getcsv($line)[0] ?? '');
             if (filter_var($col, FILTER_VALIDATE_EMAIL)) {

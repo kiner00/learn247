@@ -17,7 +17,7 @@ class XtremeSmsProviderTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->provider = new XtremeSmsProvider();
+        $this->provider = new XtremeSmsProvider;
     }
 
     public function test_send_success(): void
@@ -27,7 +27,7 @@ class XtremeSmsProviderTest extends TestCase
         ]);
 
         $community = Community::factory()->create([
-            'sms_api_key'    => 'xt-key',
+            'sms_api_key' => 'xt-key',
             'sms_device_url' => 'https://xtreme.example.com',
         ]);
 
@@ -46,7 +46,7 @@ class XtremeSmsProviderTest extends TestCase
     public function test_send_fails_when_device_url_not_set(): void
     {
         $community = Community::factory()->create([
-            'sms_api_key'    => 'xt-key',
+            'sms_api_key' => 'xt-key',
             'sms_device_url' => null,
         ]);
 
@@ -67,7 +67,7 @@ class XtremeSmsProviderTest extends TestCase
         ]);
 
         $community = Community::factory()->create([
-            'sms_api_key'    => 'bad-key',
+            'sms_api_key' => 'bad-key',
             'sms_device_url' => 'https://xtreme.example.com',
         ]);
 
@@ -85,7 +85,7 @@ class XtremeSmsProviderTest extends TestCase
         ]);
 
         $community = Community::factory()->create([
-            'sms_api_key'    => 'xt-key',
+            'sms_api_key' => 'xt-key',
             'sms_device_url' => 'https://xtreme.example.com',
         ]);
 
@@ -103,11 +103,11 @@ class XtremeSmsProviderTest extends TestCase
         ]);
 
         $community = Community::factory()->create([
-            'sms_api_key'    => 'xt-key',
+            'sms_api_key' => 'xt-key',
             'sms_device_url' => 'https://xtreme.example.com',
         ]);
 
-        $numbers = array_map(fn ($i) => '63917' . str_pad($i, 7, '0', STR_PAD_LEFT), range(1, 150));
+        $numbers = array_map(fn ($i) => '63917'.str_pad($i, 7, '0', STR_PAD_LEFT), range(1, 150));
 
         $result = $this->provider->send($community, $numbers, 'Test');
 
@@ -122,7 +122,7 @@ class XtremeSmsProviderTest extends TestCase
         });
 
         $community = Community::factory()->create([
-            'sms_api_key'    => 'xt-key',
+            'sms_api_key' => 'xt-key',
             'sms_device_url' => 'https://xtreme.example.com',
         ]);
 

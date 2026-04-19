@@ -12,9 +12,9 @@ use Illuminate\Validation\ValidationException;
 
 class StartCreatorPlanCheckout
 {
-
     /**
      * @return array{creator_subscription: CreatorSubscription, checkout_url: string}
+     *
      * @throws ValidationException|\RuntimeException
      */
     public function execute(User $user, string $plan): array
@@ -33,9 +33,9 @@ class StartCreatorPlanCheckout
             : 'creator_plan_basic_price';
 
         $defaultPrice = $plan === CreatorSubscription::PLAN_PRO ? 1999 : 499;
-        $price        = (float) Setting::get($priceKey, $defaultPrice);
+        $price = (float) Setting::get($priceKey, $defaultPrice);
 
-        $planLabel  = $plan === CreatorSubscription::PLAN_PRO ? 'Pro' : 'Basic';
+        $planLabel = $plan === CreatorSubscription::PLAN_PRO ? 'Pro' : 'Basic';
 
         try {
             // Creator plans use invoice strategy for now; members opt into recurring via Enable Auto-Renew
@@ -45,33 +45,33 @@ class StartCreatorPlanCheckout
                 amount: $price,
                 currency: 'PHP',
                 description: "Creator {$planLabel} Plan — Monthly",
-                referenceId: "creator_plan_{$plan}_{$user->id}_" . time(),
-                successUrl: config('app.url') . '/creator/plan?success=1',
-                failureUrl: config('app.url') . '/creator/plan?failed=1',
+                referenceId: "creator_plan_{$plan}_{$user->id}_".time(),
+                successUrl: config('app.url').'/creator/plan?success=1',
+                failureUrl: config('app.url').'/creator/plan?failed=1',
                 itemName: "Creator {$planLabel} Plan",
                 itemCategory: 'Creator Subscription',
             ));
 
             $creatorSubscription = CreatorSubscription::create([
-                'user_id'            => $user->id,
-                'plan'               => $plan,
-                'status'             => CreatorSubscription::STATUS_PENDING,
-                'xendit_id'          => $result->invoiceId,
+                'user_id' => $user->id,
+                'plan' => $plan,
+                'status' => CreatorSubscription::STATUS_PENDING,
+                'xendit_id' => $result->invoiceId,
                 'xendit_invoice_url' => $result->invoiceUrl,
-                'xendit_plan_id'     => $result->planId,
+                'xendit_plan_id' => $result->planId,
                 'xendit_customer_id' => $result->customerId,
-                'recurring_status'   => $result->recurringStatus,
+                'recurring_status' => $result->recurringStatus,
             ]);
 
             return [
                 'creator_subscription' => $creatorSubscription,
-                'checkout_url'         => $result->checkoutUrl,
+                'checkout_url' => $result->checkoutUrl,
             ];
         } catch (\Throwable $e) {
             Log::error('StartCreatorPlanCheckout failed', [
                 'user_id' => $user->id,
-                'plan'    => $plan,
-                'error'   => $e->getMessage(),
+                'plan' => $plan,
+                'error' => $e->getMessage(),
             ]);
 
             throw $e;

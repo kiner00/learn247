@@ -33,9 +33,9 @@ class EnsureMemberAffiliate
 
         return Affiliate::create([
             'community_id' => $community->id,
-            'user_id'      => $userId,
-            'code'         => AffiliateCodeGenerator::generate(),
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'user_id' => $userId,
+            'code' => AffiliateCodeGenerator::generate(),
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
     }
 }

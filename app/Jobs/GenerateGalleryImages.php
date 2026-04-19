@@ -16,7 +16,8 @@ class GenerateGalleryImages implements ShouldQueue
 {
     use Queueable;
 
-    public int $tries   = 1;
+    public int $tries = 1;
+
     public int $timeout = 600;
 
     public function __construct(public Community $community) {}
@@ -35,7 +36,7 @@ class GenerateGalleryImages implements ShouldQueue
         }
 
         $communityName = $this->community->name;
-        $category      = $this->community->category ?? 'online learning';
+        $category = $this->community->category ?? 'online learning';
 
         $prompts = [
             "A clean, professional welcome banner graphic that says 'Welcome to {$communityName}'. Modern design with gradient background, bold typography, and subtle decorative elements. Digital marketing style, 1200x800 resolution.",
@@ -53,24 +54,24 @@ class GenerateGalleryImages implements ShouldQueue
         foreach ($prompts as $i => $prompt) {
             try {
                 $imageResponse = Image::of($prompt)->size('3:2')->generate();
-                $img           = $imageResponse->firstImage();
+                $img = $imageResponse->firstImage();
 
-                $filename = 'community-gallery/' . $this->community->id . '_' . ($i + 1) . '_' . time() . '.png';
+                $filename = 'community-gallery/'.$this->community->id.'_'.($i + 1).'_'.time().'.png';
                 Storage::put($filename, base64_decode($img->image));
 
                 CommunityGalleryItem::create([
                     'community_id' => $this->community->id,
-                    'type'         => 'image',
-                    'image_path'   => $filename,
-                    'position'     => $i,
+                    'type' => 'image',
+                    'image_path' => $filename,
+                    'position' => $i,
                 ]);
 
                 $created++;
                 Cache::put($cacheKey, ['status' => 'generating', 'progress' => $i + 1, 'total' => 8], 900);
             } catch (\Throwable $e) {
-                Log::error("Gallery image generation failed for image " . ($i + 1), [
+                Log::error('Gallery image generation failed for image '.($i + 1), [
                     'community' => $this->community->id,
-                    'error'     => $e->getMessage(),
+                    'error' => $e->getMessage(),
                 ]);
             }
         }
@@ -82,12 +83,12 @@ class GenerateGalleryImages implements ShouldQueue
     {
         Cache::put("gallery-generating:{$this->community->id}", [
             'status' => 'failed',
-            'error'  => 'Image generation failed. Please try again.',
+            'error' => 'Image generation failed. Please try again.',
         ], 300);
 
         Log::error('GenerateGalleryImages job failed', [
             'community' => $this->community->id,
-            'error'     => $exception->getMessage(),
+            'error' => $exception->getMessage(),
         ]);
     }
 }

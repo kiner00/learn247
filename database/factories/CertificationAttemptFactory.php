@@ -12,11 +12,11 @@ class CertificationAttemptFactory extends Factory
     {
         return [
             'certification_id' => CourseCertification::factory(),
-            'user_id'          => User::factory(),
-            'answers'          => [],
-            'score'            => fake()->numberBetween(0, 100),
-            'passed'           => false,
-            'completed_at'     => now(),
+            'user_id' => User::factory(),
+            'answers' => [],
+            'score' => fake()->numberBetween(0, 100),
+            'passed' => false,
+            'completed_at' => now(),
         ];
     }
 

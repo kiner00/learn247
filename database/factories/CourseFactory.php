@@ -11,10 +11,10 @@ class CourseFactory extends Factory
     {
         return [
             'community_id' => Community::factory(),
-            'title'        => fake()->sentence(3),
-            'description'  => fake()->paragraph(),
-            'cover_image'  => null,
-            'position'     => 0,
+            'title' => fake()->sentence(3),
+            'description' => fake()->paragraph(),
+            'cover_image' => null,
+            'position' => 0,
         ];
     }
 }

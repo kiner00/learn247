@@ -24,7 +24,7 @@ class GetUserProgressTool implements Tool
         $communityName = trim($request->string('community', ''));
 
         $membership = CommunityMember::where('user_id', $this->userId)
-            ->whereHas('community', fn ($q) => $q->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($communityName) . '%']))
+            ->whereHas('community', fn ($q) => $q->whereRaw('LOWER(name) LIKE ?', ['%'.strtolower($communityName).'%']))
             ->with('community.courses.modules.lessons.quiz')
             ->first();
 
@@ -47,11 +47,11 @@ class GetUserProgressTool implements Tool
             if ($lesson->quiz) {
                 $attempt = $quizAttempts->get($lesson->quiz->id);
                 $quizData[] = [
-                    'quiz'      => $lesson->quiz->title,
-                    'lesson'    => $lesson->title,
+                    'quiz' => $lesson->quiz->title,
+                    'lesson' => $lesson->title,
                     'attempted' => (bool) $attempt,
-                    'passed'    => $attempt?->passed ?? false,
-                    'score'     => $attempt?->score ?? 0,
+                    'passed' => $attempt?->passed ?? false,
+                    'score' => $attempt?->score ?? 0,
                 ];
             }
         }
@@ -68,15 +68,15 @@ class GetUserProgressTool implements Tool
         $pending = $allLessons->whereNotIn('id', $completedIds)->take(5)->pluck('title')->values()->all();
 
         return json_encode([
-            'community'      => $community->name,
-            'role'           => $membership->role,
-            'points'         => $membership->points,
-            'level'          => CommunityMember::computeLevel($membership->points),
-            'lessons_done'   => count($completedIds),
-            'lessons_total'  => $allLessons->count(),
+            'community' => $community->name,
+            'role' => $membership->role,
+            'points' => $membership->points,
+            'level' => CommunityMember::computeLevel($membership->points),
+            'lessons_done' => count($completedIds),
+            'lessons_total' => $allLessons->count(),
             'pending_lessons' => $pending,
-            'quizzes'        => $quizData,
-            'badges'         => $badges,
+            'quizzes' => $quizData,
+            'badges' => $badges,
         ], JSON_PRETTY_PRINT);
     }
 

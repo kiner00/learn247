@@ -20,9 +20,9 @@ class LessonCommentControllerTest extends TestCase
     private function createClassroomStructure(User $owner): array
     {
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $course    = Course::factory()->create(['community_id' => $community->id]);
-        $module    = CourseModule::factory()->create(['course_id' => $course->id]);
-        $lesson    = CourseLesson::factory()->create(['module_id' => $module->id]);
+        $course = Course::factory()->create(['community_id' => $community->id]);
+        $module = CourseModule::factory()->create(['course_id' => $course->id]);
+        $lesson = CourseLesson::factory()->create(['module_id' => $module->id]);
 
         return [$community, $course, $lesson];
     }
@@ -41,7 +41,7 @@ class LessonCommentControllerTest extends TestCase
 
     public function test_store_returns_403_for_non_members(): void
     {
-        $owner   = User::factory()->create();
+        $owner = User::factory()->create();
         $outsider = User::factory()->create();
         [$community, $course, $lesson] = $this->createClassroomStructure($owner);
 
@@ -58,7 +58,7 @@ class LessonCommentControllerTest extends TestCase
         [$community, $course, $lesson] = $this->createClassroomStructure($owner);
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
+            'user_id' => $owner->id,
         ]);
 
         $this->actingAs($owner, 'sanctum')
@@ -73,7 +73,7 @@ class LessonCommentControllerTest extends TestCase
         [$community, $course, $lesson] = $this->createClassroomStructure($owner);
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
+            'user_id' => $owner->id,
         ]);
 
         $this->actingAs($owner, 'sanctum')
@@ -86,12 +86,12 @@ class LessonCommentControllerTest extends TestCase
 
     public function test_store_creates_comment_and_returns_201(): void
     {
-        $owner  = User::factory()->create();
+        $owner = User::factory()->create();
         $member = User::factory()->create();
         [$community, $course, $lesson] = $this->createClassroomStructure($owner);
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
+            'user_id' => $member->id,
         ]);
 
         $response = $this->actingAs($member, 'sanctum')
@@ -106,21 +106,21 @@ class LessonCommentControllerTest extends TestCase
             ]);
 
         $this->assertDatabaseHas('comments', [
-            'lesson_id'    => $lesson->id,
+            'lesson_id' => $lesson->id,
             'community_id' => $community->id,
-            'user_id'      => $member->id,
-            'content'      => 'This was very helpful!',
+            'user_id' => $member->id,
+            'content' => 'This was very helpful!',
         ]);
     }
 
     public function test_store_returns_500_when_action_throws(): void
     {
-        $owner  = User::factory()->create();
+        $owner = User::factory()->create();
         $member = User::factory()->create();
         [$community, $course, $lesson] = $this->createClassroomStructure($owner);
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
+            'user_id' => $member->id,
         ]);
 
         $mock = $this->mock(CreateLessonComment::class);
@@ -139,10 +139,10 @@ class LessonCommentControllerTest extends TestCase
     public function test_destroy_requires_authentication(): void
     {
         $comment = Comment::create([
-            'lesson_id'    => CourseLesson::factory()->create()->id,
+            'lesson_id' => CourseLesson::factory()->create()->id,
             'community_id' => Community::factory()->create()->id,
-            'user_id'      => User::factory()->create()->id,
-            'content'      => 'Test comment',
+            'user_id' => User::factory()->create()->id,
+            'content' => 'Test comment',
         ]);
 
         $this->deleteJson("/api/lesson-comments/{$comment->id}")
@@ -151,12 +151,12 @@ class LessonCommentControllerTest extends TestCase
 
     public function test_destroy_deletes_own_comment(): void
     {
-        $user    = User::factory()->create();
+        $user = User::factory()->create();
         $comment = Comment::create([
-            'lesson_id'    => CourseLesson::factory()->create()->id,
+            'lesson_id' => CourseLesson::factory()->create()->id,
             'community_id' => Community::factory()->create()->id,
-            'user_id'      => $user->id,
-            'content'      => 'My comment',
+            'user_id' => $user->id,
+            'content' => 'My comment',
         ]);
 
         $this->actingAs($user, 'sanctum')
@@ -169,13 +169,13 @@ class LessonCommentControllerTest extends TestCase
 
     public function test_destroy_returns_403_for_other_users_comment(): void
     {
-        $author  = User::factory()->create();
-        $other   = User::factory()->create();
+        $author = User::factory()->create();
+        $other = User::factory()->create();
         $comment = Comment::create([
-            'lesson_id'    => CourseLesson::factory()->create()->id,
+            'lesson_id' => CourseLesson::factory()->create()->id,
             'community_id' => Community::factory()->create()->id,
-            'user_id'      => $author->id,
-            'content'      => 'Author comment',
+            'user_id' => $author->id,
+            'content' => 'Author comment',
         ]);
 
         $this->actingAs($other, 'sanctum')
@@ -185,13 +185,13 @@ class LessonCommentControllerTest extends TestCase
 
     public function test_destroy_allows_super_admin_to_delete_any_comment(): void
     {
-        $admin   = User::factory()->create(['is_super_admin' => true]);
-        $author  = User::factory()->create();
+        $admin = User::factory()->create(['is_super_admin' => true]);
+        $author = User::factory()->create();
         $comment = Comment::create([
-            'lesson_id'    => CourseLesson::factory()->create()->id,
+            'lesson_id' => CourseLesson::factory()->create()->id,
             'community_id' => Community::factory()->create()->id,
-            'user_id'      => $author->id,
-            'content'      => 'Some comment',
+            'user_id' => $author->id,
+            'content' => 'Some comment',
         ]);
 
         $this->actingAs($admin, 'sanctum')
@@ -202,12 +202,12 @@ class LessonCommentControllerTest extends TestCase
 
     public function test_destroy_returns_500_when_delete_throws(): void
     {
-        $user    = User::factory()->create();
+        $user = User::factory()->create();
         $comment = Comment::create([
-            'lesson_id'    => CourseLesson::factory()->create()->id,
+            'lesson_id' => CourseLesson::factory()->create()->id,
             'community_id' => Community::factory()->create()->id,
-            'user_id'      => $user->id,
-            'content'      => 'Will fail to delete',
+            'user_id' => $user->id,
+            'content' => 'Will fail to delete',
         ]);
 
         // Force an exception by hooking into the deleting event

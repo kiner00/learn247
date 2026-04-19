@@ -8,7 +8,9 @@ class CacheKeys
 {
     // TTLs in seconds
     public const TTL_LEADERBOARD = 300;        // 5 min
+
     public const TTL_ANALYTICS = 600;           // 10 min
+
     public const TTL_ADMIN_DASHBOARD = 900;     // 15 min
 
     // Key prefixes
@@ -54,7 +56,7 @@ class CacheKeys
 
     public static function adminCreatorAnalytics(string $search, string $plan): string
     {
-        return 'admin_creator_analytics:' . md5("{$search}:{$plan}");
+        return 'admin_creator_analytics:'.md5("{$search}:{$plan}");
     }
 
     public static function affiliateDashboard(int $communityId): string
@@ -64,7 +66,7 @@ class CacheKeys
 
     public static function affiliateChart(string $ids, string $period): string
     {
-        return "affiliate_chart:" . md5("{$ids}:{$period}");
+        return 'affiliate_chart:'.md5("{$ids}:{$period}");
     }
 
     // ── Invalidation helpers ──────────────────────────────────

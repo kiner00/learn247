@@ -27,12 +27,12 @@ class TicketControllerTest extends TestCase
     private function createTicket(array $attributes = []): Ticket
     {
         return Ticket::create(array_merge([
-            'user_id'     => User::factory()->create()->id,
-            'subject'     => 'Test ticket subject',
+            'user_id' => User::factory()->create()->id,
+            'subject' => 'Test ticket subject',
             'description' => 'Test ticket description',
-            'type'        => 'bug',
-            'status'      => 'open',
-            'priority'    => 'medium',
+            'type' => 'bug',
+            'status' => 'open',
+            'priority' => 'medium',
         ], $attributes));
     }
 
@@ -111,7 +111,7 @@ class TicketControllerTest extends TestCase
 
     public function test_admin_can_update_ticket_status(): void
     {
-        $admin  = $this->superAdmin();
+        $admin = $this->superAdmin();
         $ticket = $this->createTicket(['status' => 'open']);
 
         $response = $this->actingAs($admin)
@@ -121,7 +121,7 @@ class TicketControllerTest extends TestCase
         $response->assertSessionHas('success');
 
         $this->assertDatabaseHas('tickets', [
-            'id'     => $ticket->id,
+            'id' => $ticket->id,
             'status' => 'in_progress',
         ]);
     }
@@ -130,8 +130,8 @@ class TicketControllerTest extends TestCase
     {
         Mail::fake();
 
-        $admin  = $this->superAdmin();
-        $owner  = User::factory()->create(['email' => 'owner@example.com']);
+        $admin = $this->superAdmin();
+        $owner = User::factory()->create(['email' => 'owner@example.com']);
         $ticket = $this->createTicket(['user_id' => $owner->id, 'status' => 'open']);
 
         $this->actingAs($admin)
@@ -146,7 +146,7 @@ class TicketControllerTest extends TestCase
     {
         Mail::fake();
 
-        $admin  = $this->superAdmin();
+        $admin = $this->superAdmin();
         $ticket = $this->createTicket(['status' => 'open']);
 
         $this->actingAs($admin)
@@ -159,7 +159,7 @@ class TicketControllerTest extends TestCase
 
     public function test_user_can_reopen_resolved_ticket(): void
     {
-        $user   = $this->regularUser();
+        $user = $this->regularUser();
         $ticket = $this->createTicket(['user_id' => $user->id, 'status' => 'resolved']);
 
         $response = $this->actingAs($user)
@@ -169,14 +169,14 @@ class TicketControllerTest extends TestCase
         $response->assertSessionHas('success');
 
         $this->assertDatabaseHas('tickets', [
-            'id'     => $ticket->id,
+            'id' => $ticket->id,
             'status' => 'open',
         ]);
     }
 
     public function test_user_cannot_reopen_non_resolved_ticket(): void
     {
-        $user   = $this->regularUser();
+        $user = $this->regularUser();
         $ticket = $this->createTicket(['user_id' => $user->id, 'status' => 'open']);
 
         $response = $this->actingAs($user)
@@ -186,14 +186,14 @@ class TicketControllerTest extends TestCase
         $response->assertSessionHas('error');
 
         $this->assertDatabaseHas('tickets', [
-            'id'     => $ticket->id,
+            'id' => $ticket->id,
             'status' => 'open',
         ]);
     }
 
     public function test_user_can_close_resolved_ticket(): void
     {
-        $user   = $this->regularUser();
+        $user = $this->regularUser();
         $ticket = $this->createTicket(['user_id' => $user->id, 'status' => 'resolved']);
 
         $response = $this->actingAs($user)
@@ -203,14 +203,14 @@ class TicketControllerTest extends TestCase
         $response->assertSessionHas('success');
 
         $this->assertDatabaseHas('tickets', [
-            'id'     => $ticket->id,
+            'id' => $ticket->id,
             'status' => 'closed',
         ]);
     }
 
     public function test_user_cannot_close_non_resolved_ticket(): void
     {
-        $user   = $this->regularUser();
+        $user = $this->regularUser();
         $ticket = $this->createTicket(['user_id' => $user->id, 'status' => 'in_progress']);
 
         $response = $this->actingAs($user)
@@ -220,16 +220,16 @@ class TicketControllerTest extends TestCase
         $response->assertSessionHas('error');
 
         $this->assertDatabaseHas('tickets', [
-            'id'     => $ticket->id,
+            'id' => $ticket->id,
             'status' => 'in_progress',
         ]);
     }
 
     public function test_user_cannot_close_other_users_ticket(): void
     {
-        $user      = $this->regularUser();
+        $user = $this->regularUser();
         $otherUser = $this->regularUser();
-        $ticket    = $this->createTicket(['user_id' => $otherUser->id, 'status' => 'resolved']);
+        $ticket = $this->createTicket(['user_id' => $otherUser->id, 'status' => 'resolved']);
 
         $response = $this->actingAs($user)
             ->patch(route('tickets.close', $ticket));
@@ -237,7 +237,7 @@ class TicketControllerTest extends TestCase
         $response->assertForbidden();
 
         $this->assertDatabaseHas('tickets', [
-            'id'     => $ticket->id,
+            'id' => $ticket->id,
             'status' => 'resolved',
         ]);
     }
@@ -252,10 +252,10 @@ class TicketControllerTest extends TestCase
         });
 
         $response = $this->actingAs($user)->post(route('tickets.store'), [
-            'subject'     => 'Something',
+            'subject' => 'Something',
             'description' => 'Something broke',
-            'type'        => 'bug',
-            'priority'    => 'medium',
+            'type' => 'bug',
+            'priority' => 'medium',
         ]);
 
         $response->assertRedirect();
@@ -264,7 +264,7 @@ class TicketControllerTest extends TestCase
 
     public function test_reply_handles_action_exception(): void
     {
-        $user   = $this->regularUser();
+        $user = $this->regularUser();
         $ticket = $this->createTicket(['user_id' => $user->id]);
 
         $this->mock(\App\Actions\Tickets\ReplyToTicket::class, function ($mock) {
@@ -281,9 +281,9 @@ class TicketControllerTest extends TestCase
 
     public function test_user_cannot_reopen_other_users_ticket(): void
     {
-        $user        = $this->regularUser();
-        $otherUser   = $this->regularUser();
-        $ticket      = $this->createTicket(['user_id' => $otherUser->id, 'status' => 'resolved']);
+        $user = $this->regularUser();
+        $otherUser = $this->regularUser();
+        $ticket = $this->createTicket(['user_id' => $otherUser->id, 'status' => 'resolved']);
 
         $response = $this->actingAs($user)
             ->patch(route('tickets.reopen', $ticket));
@@ -291,7 +291,7 @@ class TicketControllerTest extends TestCase
         $response->assertForbidden();
 
         $this->assertDatabaseHas('tickets', [
-            'id'     => $ticket->id,
+            'id' => $ticket->id,
             'status' => 'resolved',
         ]);
     }
@@ -347,19 +347,19 @@ class TicketControllerTest extends TestCase
         $user = $this->regularUser();
 
         $response = $this->actingAs($user)->post(route('tickets.store'), [
-            'subject'     => 'Something is broken',
+            'subject' => 'Something is broken',
             'description' => 'It crashed when I clicked the button',
-            'type'        => 'bug',
-            'priority'    => 'medium',
+            'type' => 'bug',
+            'priority' => 'medium',
         ]);
 
         $response->assertRedirect();
         $response->assertSessionHas('success');
 
         $this->assertDatabaseHas('tickets', [
-            'user_id'     => $user->id,
-            'subject'     => 'Something is broken',
-            'type'        => 'bug',
+            'user_id' => $user->id,
+            'subject' => 'Something is broken',
+            'type' => 'bug',
         ]);
     }
 
@@ -374,7 +374,7 @@ class TicketControllerTest extends TestCase
 
     public function test_user_can_view_own_ticket(): void
     {
-        $user   = $this->regularUser();
+        $user = $this->regularUser();
         $ticket = $this->createTicket(['user_id' => $user->id]);
 
         $response = $this->actingAs($user)->get(route('tickets.show', $ticket));
@@ -389,8 +389,8 @@ class TicketControllerTest extends TestCase
 
     public function test_user_cannot_view_other_users_ticket(): void
     {
-        $user   = $this->regularUser();
-        $other  = $this->regularUser();
+        $user = $this->regularUser();
+        $other = $this->regularUser();
         $ticket = $this->createTicket(['user_id' => $other->id]);
 
         $response = $this->actingAs($user)->get(route('tickets.show', $ticket));
@@ -400,8 +400,8 @@ class TicketControllerTest extends TestCase
 
     public function test_admin_can_view_any_ticket(): void
     {
-        $admin  = $this->superAdmin();
-        $user   = $this->regularUser();
+        $admin = $this->superAdmin();
+        $user = $this->regularUser();
         $ticket = $this->createTicket(['user_id' => $user->id]);
 
         $response = $this->actingAs($admin)->get(route('admin.tickets.show', $ticket));
@@ -415,7 +415,7 @@ class TicketControllerTest extends TestCase
 
     public function test_user_can_reply_to_own_ticket(): void
     {
-        $user   = $this->regularUser();
+        $user = $this->regularUser();
         $ticket = $this->createTicket(['user_id' => $user->id]);
 
         $response = $this->actingAs($user)->post(route('tickets.reply', $ticket), [
@@ -427,16 +427,16 @@ class TicketControllerTest extends TestCase
 
         $this->assertDatabaseHas('ticket_replies', [
             'ticket_id' => $ticket->id,
-            'user_id'   => $user->id,
-            'content'   => 'Thanks for your help!',
-            'is_admin'  => false,
+            'user_id' => $user->id,
+            'content' => 'Thanks for your help!',
+            'is_admin' => false,
         ]);
     }
 
     public function test_admin_reply_is_marked_as_admin(): void
     {
-        $admin  = $this->superAdmin();
-        $user   = $this->regularUser();
+        $admin = $this->superAdmin();
+        $user = $this->regularUser();
         $ticket = $this->createTicket(['user_id' => $user->id]);
 
         $this->actingAs($admin)->post(route('admin.tickets.reply', $ticket), [
@@ -445,15 +445,15 @@ class TicketControllerTest extends TestCase
 
         $this->assertDatabaseHas('ticket_replies', [
             'ticket_id' => $ticket->id,
-            'user_id'   => $admin->id,
-            'is_admin'  => true,
+            'user_id' => $admin->id,
+            'is_admin' => true,
         ]);
     }
 
     public function test_user_cannot_reply_to_other_users_ticket(): void
     {
-        $user   = $this->regularUser();
-        $other  = $this->regularUser();
+        $user = $this->regularUser();
+        $other = $this->regularUser();
         $ticket = $this->createTicket(['user_id' => $other->id]);
 
         $response = $this->actingAs($user)->post(route('tickets.reply', $ticket), [
@@ -465,7 +465,7 @@ class TicketControllerTest extends TestCase
 
     public function test_reply_validates_content(): void
     {
-        $user   = $this->regularUser();
+        $user = $this->regularUser();
         $ticket = $this->createTicket(['user_id' => $user->id]);
 
         $response = $this->actingAs($user)->post(route('tickets.reply', $ticket), []);

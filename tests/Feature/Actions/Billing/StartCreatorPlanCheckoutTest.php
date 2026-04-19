@@ -5,7 +5,6 @@ namespace Tests\Feature\Actions\Billing;
 use App\Actions\Billing\StartCreatorPlanCheckout;
 use App\Models\CreatorSubscription;
 use App\Models\User;
-use App\Services\XenditService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
@@ -19,8 +18,8 @@ class StartCreatorPlanCheckoutTest extends TestCase
     {
         parent::setUp();
         config([
-            'services.xendit.secret_key'     => 'test_key',
-            'services.xendit.callback_token'  => 'cb_token',
+            'services.xendit.secret_key' => 'test_key',
+            'services.xendit.callback_token' => 'cb_token',
         ]);
     }
 
@@ -39,9 +38,9 @@ class StartCreatorPlanCheckoutTest extends TestCase
         $user = User::factory()->create();
 
         CreatorSubscription::create([
-            'user_id'    => $user->id,
-            'plan'       => CreatorSubscription::PLAN_BASIC,
-            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'user_id' => $user->id,
+            'plan' => CreatorSubscription::PLAN_BASIC,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
             'expires_at' => now()->addMonth(),
         ]);
 
@@ -55,12 +54,12 @@ class StartCreatorPlanCheckoutTest extends TestCase
     {
         Http::fake([
             'https://api.xendit.co/v2/invoices' => Http::response([
-                'id'          => 'inv_basic_123',
+                'id' => 'inv_basic_123',
                 'invoice_url' => 'https://checkout.xendit.co/inv_basic_123',
             ], 200),
         ]);
 
-        $user   = User::factory()->create();
+        $user = User::factory()->create();
         $action = app(StartCreatorPlanCheckout::class);
 
         $result = $action->execute($user, CreatorSubscription::PLAN_BASIC);
@@ -70,9 +69,9 @@ class StartCreatorPlanCheckoutTest extends TestCase
         $this->assertEquals('https://checkout.xendit.co/inv_basic_123', $result['checkout_url']);
 
         $this->assertDatabaseHas('creator_subscriptions', [
-            'user_id'   => $user->id,
-            'plan'      => CreatorSubscription::PLAN_BASIC,
-            'status'    => CreatorSubscription::STATUS_PENDING,
+            'user_id' => $user->id,
+            'plan' => CreatorSubscription::PLAN_BASIC,
+            'status' => CreatorSubscription::STATUS_PENDING,
             'xendit_id' => 'inv_basic_123',
         ]);
     }
@@ -81,20 +80,20 @@ class StartCreatorPlanCheckoutTest extends TestCase
     {
         Http::fake([
             'https://api.xendit.co/v2/invoices' => Http::response([
-                'id'          => 'inv_pro_123',
+                'id' => 'inv_pro_123',
                 'invoice_url' => 'https://checkout.xendit.co/inv_pro_123',
             ], 200),
         ]);
 
-        $user   = User::factory()->create();
+        $user = User::factory()->create();
         $action = app(StartCreatorPlanCheckout::class);
 
         $result = $action->execute($user, CreatorSubscription::PLAN_PRO);
 
         $this->assertDatabaseHas('creator_subscriptions', [
             'user_id' => $user->id,
-            'plan'    => CreatorSubscription::PLAN_PRO,
-            'status'  => CreatorSubscription::STATUS_PENDING,
+            'plan' => CreatorSubscription::PLAN_PRO,
+            'status' => CreatorSubscription::STATUS_PENDING,
         ]);
     }
 
@@ -104,7 +103,7 @@ class StartCreatorPlanCheckoutTest extends TestCase
             'https://api.xendit.co/v2/invoices' => Http::response(['error' => 'bad'], 500),
         ]);
 
-        $user   = User::factory()->create();
+        $user = User::factory()->create();
         $action = app(StartCreatorPlanCheckout::class);
 
         $this->expectException(\RuntimeException::class);

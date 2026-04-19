@@ -17,10 +17,10 @@ class CreatorChaChingTest extends TestCase
     {
         EmailTemplate::where('key', 'creator-cha-ching')->delete();
 
-        $creator   = User::factory()->create();
+        $creator = User::factory()->create();
         $community = Community::factory()->create(['name' => 'Awesome Community']);
 
-        $mail     = new CreatorChaChing($creator, $community, 500.00, null);
+        $mail = new CreatorChaChing($creator, $community, 500.00, null);
         $envelope = $mail->envelope();
 
         $this->assertStringContainsString('Awesome Community', $envelope->subject);
@@ -30,10 +30,10 @@ class CreatorChaChingTest extends TestCase
     {
         EmailTemplate::where('key', 'creator-cha-ching')->delete();
 
-        $creator   = User::factory()->create();
+        $creator = User::factory()->create();
         $community = Community::factory()->create();
 
-        $mail    = new CreatorChaChing($creator, $community, 500.00, null);
+        $mail = new CreatorChaChing($creator, $community, 500.00, null);
         $content = $mail->content();
 
         $this->assertEquals('emails.creator-cha-ching', $content->view);
@@ -44,16 +44,16 @@ class CreatorChaChingTest extends TestCase
         EmailTemplate::updateOrCreate(
             ['key' => 'creator-cha-ching'],
             [
-                'name'      => 'Creator Sale',
-                'subject'   => 'New sale in {{community_name}}: {{sale_amount}}',
+                'name' => 'Creator Sale',
+                'subject' => 'New sale in {{community_name}}: {{sale_amount}}',
                 'html_body' => '<p>Congrats</p>',
             ]
         );
 
-        $creator   = User::factory()->create(['name' => 'Alice']);
+        $creator = User::factory()->create(['name' => 'Alice']);
         $community = Community::factory()->create(['name' => 'TestComm']);
 
-        $mail     = new CreatorChaChing($creator, $community, 1500.00, 'Bob');
+        $mail = new CreatorChaChing($creator, $community, 1500.00, 'Bob');
         $envelope = $mail->envelope();
 
         $this->assertStringContainsString('TestComm', $envelope->subject);
@@ -65,16 +65,16 @@ class CreatorChaChingTest extends TestCase
         EmailTemplate::updateOrCreate(
             ['key' => 'creator-cha-ching'],
             [
-                'name'      => 'Creator Sale',
-                'subject'   => 'Cha-ching!',
+                'name' => 'Creator Sale',
+                'subject' => 'Cha-ching!',
                 'html_body' => '<p>Hi {{creator_name}}, new sale of {{sale_amount}} in {{community_name}}{{referred_by}}</p>',
             ]
         );
 
-        $creator   = User::factory()->create(['name' => 'Alice']);
+        $creator = User::factory()->create(['name' => 'Alice']);
         $community = Community::factory()->create(['name' => 'My Community']);
 
-        $mail    = new CreatorChaChing($creator, $community, 500.00, 'Bob');
+        $mail = new CreatorChaChing($creator, $community, 500.00, 'Bob');
         $content = $mail->content();
 
         $this->assertNotNull($content->htmlString);
@@ -88,10 +88,10 @@ class CreatorChaChingTest extends TestCase
     {
         EmailTemplate::where('key', 'creator-cha-ching')->delete();
 
-        $creator   = User::factory()->create(['name' => 'Alice']);
+        $creator = User::factory()->create(['name' => 'Alice']);
         $community = Community::factory()->create(['name' => 'My Community']);
 
-        $mail    = new CreatorChaChing($creator, $community, 500.00, null);
+        $mail = new CreatorChaChing($creator, $community, 500.00, null);
         $content = $mail->content();
 
         // When no referredByName, the view is used (no template)

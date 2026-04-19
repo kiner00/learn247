@@ -19,14 +19,14 @@ class ChangeMemberRoleTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->action = new ChangeMemberRole();
+        $this->action = new ChangeMemberRole;
     }
 
     public function test_owner_can_promote_member_to_moderator(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $member    = User::factory()->create();
+        $member = User::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id, 'role' => CommunityMember::ROLE_MEMBER]);
 
         $updated = $this->action->execute($owner, $community, $member, CommunityMember::ROLE_MODERATOR);
@@ -36,9 +36,9 @@ class ChangeMemberRoleTest extends TestCase
 
     public function test_throws_for_invalid_role(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
-        $member    = User::factory()->create();
+        $member = User::factory()->create();
 
         $this->expectException(\InvalidArgumentException::class);
         $this->action->execute($owner, $community, $member, 'superadmin');
@@ -47,7 +47,7 @@ class ChangeMemberRoleTest extends TestCase
     public function test_non_owner_cannot_change_roles(): void
     {
         $community = Community::factory()->create();
-        $actor     = User::factory()->create();
+        $actor = User::factory()->create();
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $actor->id]);
         $member = User::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
@@ -58,7 +58,7 @@ class ChangeMemberRoleTest extends TestCase
 
     public function test_cannot_demote_owner(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 

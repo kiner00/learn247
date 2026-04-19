@@ -36,7 +36,7 @@ class CheckoutCertification
         }
 
         try {
-            $externalId = "cert_{$certification->id}_{$user->id}_" . time();
+            $externalId = "cert_{$certification->id}_{$user->id}_".time();
 
             $invoice = $this->xendit->createInvoice(
                 InvoiceBuilder::make()
@@ -65,9 +65,9 @@ class CheckoutCertification
             return ['purchase' => $purchase, 'checkout_url' => $invoice['invoice_url']];
         } catch (\Throwable $e) {
             Log::error('CheckoutCertification failed', [
-                'user_id'          => $user->id,
+                'user_id' => $user->id,
                 'certification_id' => $certification->id,
-                'error'            => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
 
             throw $e;

@@ -23,10 +23,10 @@ class ExecuteWorkflowActionsTest extends TestCase
     private function setup_member(): array
     {
         $community = Community::factory()->create();
-        $user      = User::factory()->create();
-        $member    = CommunityMember::factory()->create([
-            'community_id'    => $community->id,
-            'user_id'         => $user->id,
+        $user = User::factory()->create();
+        $member = CommunityMember::factory()->create([
+            'community_id' => $community->id,
+            'user_id' => $user->id,
             'membership_type' => CommunityMember::MEMBERSHIP_PAID,
         ]);
         $tag = Tag::create(['community_id' => $community->id, 'name' => 'LEAD', 'slug' => 'lead']);
@@ -39,12 +39,12 @@ class ExecuteWorkflowActionsTest extends TestCase
         [$community, $member, $tag] = $this->setup_member();
 
         Workflow::create([
-            'community_id'  => $community->id,
-            'name'          => 'Tag on join',
+            'community_id' => $community->id,
+            'name' => 'Tag on join',
             'trigger_event' => Workflow::TRIGGER_MEMBER_JOINED,
-            'action_type'   => Workflow::ACTION_APPLY_TAG,
+            'action_type' => Workflow::ACTION_APPLY_TAG,
             'action_config' => ['tag_id' => $tag->id],
-            'is_active'     => true,
+            'is_active' => true,
         ]);
 
         MemberJoined::dispatch($member);
@@ -57,12 +57,12 @@ class ExecuteWorkflowActionsTest extends TestCase
         [$community, $member, $tag] = $this->setup_member();
 
         Workflow::create([
-            'community_id'  => $community->id,
-            'name'          => 'Paused',
+            'community_id' => $community->id,
+            'name' => 'Paused',
             'trigger_event' => Workflow::TRIGGER_MEMBER_JOINED,
-            'action_type'   => Workflow::ACTION_APPLY_TAG,
+            'action_type' => Workflow::ACTION_APPLY_TAG,
             'action_config' => ['tag_id' => $tag->id],
-            'is_active'     => false,
+            'is_active' => false,
         ]);
 
         MemberJoined::dispatch($member);
@@ -75,13 +75,13 @@ class ExecuteWorkflowActionsTest extends TestCase
         [$community, $member, $tag] = $this->setup_member();
 
         Workflow::create([
-            'community_id'   => $community->id,
-            'name'           => 'Tag on course 42',
-            'trigger_event'  => Workflow::TRIGGER_COURSE_ENROLLED,
+            'community_id' => $community->id,
+            'name' => 'Tag on course 42',
+            'trigger_event' => Workflow::TRIGGER_COURSE_ENROLLED,
             'trigger_filter' => ['course_id' => 42],
-            'action_type'    => Workflow::ACTION_APPLY_TAG,
-            'action_config'  => ['tag_id' => $tag->id],
-            'is_active'      => true,
+            'action_type' => Workflow::ACTION_APPLY_TAG,
+            'action_config' => ['tag_id' => $tag->id],
+            'is_active' => true,
         ]);
 
         CourseEnrolled::dispatch($member, 99);
@@ -96,13 +96,13 @@ class ExecuteWorkflowActionsTest extends TestCase
         [$community, $member, $tag] = $this->setup_member();
 
         Workflow::create([
-            'community_id'   => $community->id,
-            'name'           => 'Free only',
-            'trigger_event'  => Workflow::TRIGGER_MEMBER_JOINED,
+            'community_id' => $community->id,
+            'name' => 'Free only',
+            'trigger_event' => Workflow::TRIGGER_MEMBER_JOINED,
             'trigger_filter' => ['membership_type' => 'free'],
-            'action_type'    => Workflow::ACTION_APPLY_TAG,
-            'action_config'  => ['tag_id' => $tag->id],
-            'is_active'      => true,
+            'action_type' => Workflow::ACTION_APPLY_TAG,
+            'action_config' => ['tag_id' => $tag->id],
+            'is_active' => true,
         ]);
 
         MemberJoined::dispatch($member); // paid member, should not match
@@ -115,17 +115,17 @@ class ExecuteWorkflowActionsTest extends TestCase
         [$community, $member, $tag] = $this->setup_member();
 
         Workflow::create([
-            'community_id'  => $community->id,
-            'name'          => 'Tag on pay',
+            'community_id' => $community->id,
+            'name' => 'Tag on pay',
             'trigger_event' => Workflow::TRIGGER_SUBSCRIPTION_PAID,
-            'action_type'   => Workflow::ACTION_APPLY_TAG,
+            'action_type' => Workflow::ACTION_APPLY_TAG,
             'action_config' => ['tag_id' => $tag->id],
-            'is_active'     => true,
+            'is_active' => true,
         ]);
 
         $sub = Subscription::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->user_id,
+            'user_id' => $member->user_id,
         ]);
         SubscriptionPaid::dispatch($member, $sub);
 
@@ -137,12 +137,12 @@ class ExecuteWorkflowActionsTest extends TestCase
         [$community, $member, $tag] = $this->setup_member();
 
         $wf = Workflow::create([
-            'community_id'  => $community->id,
-            'name'          => 'Count',
+            'community_id' => $community->id,
+            'name' => 'Count',
             'trigger_event' => Workflow::TRIGGER_MEMBER_JOINED,
-            'action_type'   => Workflow::ACTION_APPLY_TAG,
+            'action_type' => Workflow::ACTION_APPLY_TAG,
             'action_config' => ['tag_id' => $tag->id],
-            'is_active'     => true,
+            'is_active' => true,
         ]);
 
         MemberJoined::dispatch($member);
@@ -158,12 +158,12 @@ class ExecuteWorkflowActionsTest extends TestCase
         $otherCommunity = Community::factory()->create();
 
         Workflow::create([
-            'community_id'  => $otherCommunity->id,
-            'name'          => 'Wrong comm',
+            'community_id' => $otherCommunity->id,
+            'name' => 'Wrong comm',
             'trigger_event' => Workflow::TRIGGER_MEMBER_JOINED,
-            'action_type'   => Workflow::ACTION_APPLY_TAG,
+            'action_type' => Workflow::ACTION_APPLY_TAG,
             'action_config' => ['tag_id' => $tag->id],
-            'is_active'     => true,
+            'is_active' => true,
         ]);
 
         MemberJoined::dispatch($member);
@@ -176,12 +176,12 @@ class ExecuteWorkflowActionsTest extends TestCase
         [$community, $member, $tag] = $this->setup_member();
 
         Workflow::create([
-            'community_id'  => $community->id,
-            'name'          => 'Wf',
+            'community_id' => $community->id,
+            'name' => 'Wf',
             'trigger_event' => Workflow::TRIGGER_MEMBER_JOINED,
-            'action_type'   => Workflow::ACTION_APPLY_TAG,
+            'action_type' => Workflow::ACTION_APPLY_TAG,
             'action_config' => ['tag_id' => $tag->id],
-            'is_active'     => true,
+            'is_active' => true,
         ]);
 
         Event::fake([MemberTagged::class]);

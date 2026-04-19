@@ -11,8 +11,11 @@ class Payment extends Model
     use HasFactory;
 
     public const STATUS_PENDING = 'pending';
-    public const STATUS_PAID    = 'paid';
-    public const STATUS_FAILED  = 'failed';
+
+    public const STATUS_PAID = 'paid';
+
+    public const STATUS_FAILED = 'failed';
+
     public const STATUS_EXPIRED = 'expired';
 
     protected $fillable = [
@@ -24,11 +27,11 @@ class Payment extends Model
     protected function casts(): array
     {
         return [
-            'amount'         => 'decimal:2',
+            'amount' => 'decimal:2',
             'processing_fee' => 'decimal:2',
-            'platform_fee'   => 'decimal:2',
-            'metadata'       => 'array',
-            'paid_at'        => 'datetime',
+            'platform_fee' => 'decimal:2',
+            'metadata' => 'array',
+            'paid_at' => 'datetime',
         ];
     }
 

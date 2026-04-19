@@ -25,12 +25,12 @@ class RenewExpiringSubscriptionsRecurringTest extends TestCase
 
         // Recurring subscription expiring in 5 days — should be SKIPPED
         Subscription::create([
-            'community_id'     => $community->id,
-            'user_id'          => $user->id,
-            'status'           => Subscription::STATUS_ACTIVE,
-            'xendit_plan_id'   => 'repl_skip_renew',
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'xendit_plan_id' => 'repl_skip_renew',
             'recurring_status' => 'ACTIVE',
-            'expires_at'       => now()->addDays(5),
+            'expires_at' => now()->addDays(5),
         ]);
 
         // Mock the action to ensure it's never called
@@ -53,10 +53,10 @@ class RenewExpiringSubscriptionsRecurringTest extends TestCase
         // Invoice-based subscription expiring in 5 days — should get a reminder
         Subscription::create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'status'       => Subscription::STATUS_ACTIVE,
-            'xendit_id'    => 'inv_renew_legacy',
-            'expires_at'   => now()->addDays(5),
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'xendit_id' => 'inv_renew_legacy',
+            'expires_at' => now()->addDays(5),
         ]);
 
         $invoiceAction = Mockery::mock(CreateRenewalInvoice::class);

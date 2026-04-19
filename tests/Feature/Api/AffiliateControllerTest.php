@@ -15,13 +15,13 @@ class AffiliateControllerTest extends TestCase
 
     public function test_returns_affiliate_stats_for_user(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
         Affiliate::create([
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
             'community_id' => $community->id,
-            'code'         => 'TEST123',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'code' => 'TEST123',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         $this->actingAs($user)
@@ -37,13 +37,13 @@ class AffiliateControllerTest extends TestCase
 
     public function test_joins_as_affiliate_when_community_has_affiliate_program(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create(['affiliate_commission_rate' => 15]);
         Subscription::create([
             'community_id' => $community->id,
-            'user_id'     => $user->id,
-            'status'      => Subscription::STATUS_ACTIVE,
-            'expires_at'  => null,
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => null,
         ]);
 
         $this->actingAs($user)
@@ -52,25 +52,25 @@ class AffiliateControllerTest extends TestCase
             ->assertJsonPath('message', 'You are now an affiliate!');
 
         $this->assertDatabaseHas('affiliates', [
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
             'community_id' => $community->id,
         ]);
     }
 
     public function test_updates_payout_method_and_details(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
         $affiliate = Affiliate::create([
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
             'community_id' => $community->id,
-            'code'         => 'TEST123',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'code' => 'TEST123',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         $this->actingAs($user)
             ->patchJson("/api/affiliates/{$affiliate->id}/payout", [
-                'payout_method'  => 'gcash',
+                'payout_method' => 'gcash',
                 'payout_details' => '09171234567',
             ])
             ->assertOk()
@@ -97,17 +97,17 @@ class AffiliateControllerTest extends TestCase
 
     public function test_unauthenticated_returns_401_for_update_payout(): void
     {
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         $community = Community::factory()->create();
         $affiliate = Affiliate::create([
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
             'community_id' => $community->id,
-            'code'         => 'TEST123',
-            'status'       => Affiliate::STATUS_ACTIVE,
+            'code' => 'TEST123',
+            'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
         $this->patchJson("/api/affiliates/{$affiliate->id}/payout", [
-            'payout_method'  => 'gcash',
+            'payout_method' => 'gcash',
             'payout_details' => '09171234567',
         ])
             ->assertUnauthorized();

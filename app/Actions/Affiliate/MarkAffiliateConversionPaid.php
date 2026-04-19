@@ -10,7 +10,7 @@ class MarkAffiliateConversionPaid
     public function execute(AffiliateConversion $conversion): void
     {
         $conversion->update([
-            'status'  => AffiliateConversion::STATUS_PAID,
+            'status' => AffiliateConversion::STATUS_PAID,
             'paid_at' => now(),
         ]);
 

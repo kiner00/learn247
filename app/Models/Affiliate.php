@@ -11,7 +11,8 @@ class Affiliate extends Model
 {
     use HasFactory;
 
-    public const STATUS_ACTIVE   = 'active';
+    public const STATUS_ACTIVE = 'active';
+
     public const STATUS_INACTIVE = 'inactive';
 
     protected $fillable = [
@@ -23,7 +24,7 @@ class Affiliate extends Model
     {
         return [
             'total_earned' => 'decimal:2',
-            'total_paid'   => 'decimal:2',
+            'total_paid' => 'decimal:2',
         ];
     }
 

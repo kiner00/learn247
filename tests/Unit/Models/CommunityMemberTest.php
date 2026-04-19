@@ -9,7 +9,7 @@ class CommunityMemberTest extends TestCase
 {
     public function test_is_admin_returns_true_for_admin_role(): void
     {
-        $member       = new CommunityMember();
+        $member = new CommunityMember;
         $member->role = CommunityMember::ROLE_ADMIN;
 
         $this->assertTrue($member->isAdmin());
@@ -17,7 +17,7 @@ class CommunityMemberTest extends TestCase
 
     public function test_is_admin_returns_false_for_non_admin_role(): void
     {
-        $member       = new CommunityMember();
+        $member = new CommunityMember;
         $member->role = CommunityMember::ROLE_MEMBER;
 
         $this->assertFalse($member->isAdmin());
@@ -25,7 +25,7 @@ class CommunityMemberTest extends TestCase
 
     public function test_is_moderator_returns_true_for_moderator_role(): void
     {
-        $member       = new CommunityMember();
+        $member = new CommunityMember;
         $member->role = CommunityMember::ROLE_MODERATOR;
 
         $this->assertTrue($member->isModerator());
@@ -33,7 +33,7 @@ class CommunityMemberTest extends TestCase
 
     public function test_is_moderator_returns_false_for_non_moderator_role(): void
     {
-        $member       = new CommunityMember();
+        $member = new CommunityMember;
         $member->role = CommunityMember::ROLE_ADMIN;
 
         $this->assertFalse($member->isModerator());
@@ -41,7 +41,7 @@ class CommunityMemberTest extends TestCase
 
     public function test_can_moderate_returns_true_for_admin(): void
     {
-        $member       = new CommunityMember();
+        $member = new CommunityMember;
         $member->role = CommunityMember::ROLE_ADMIN;
 
         $this->assertTrue($member->canModerate());
@@ -49,7 +49,7 @@ class CommunityMemberTest extends TestCase
 
     public function test_can_moderate_returns_true_for_moderator(): void
     {
-        $member       = new CommunityMember();
+        $member = new CommunityMember;
         $member->role = CommunityMember::ROLE_MODERATOR;
 
         $this->assertTrue($member->canModerate());
@@ -57,7 +57,7 @@ class CommunityMemberTest extends TestCase
 
     public function test_can_moderate_returns_false_for_regular_member(): void
     {
-        $member       = new CommunityMember();
+        $member = new CommunityMember;
         $member->role = CommunityMember::ROLE_MEMBER;
 
         $this->assertFalse($member->canModerate());

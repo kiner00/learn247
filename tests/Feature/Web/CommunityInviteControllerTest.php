@@ -2,13 +2,10 @@
 
 namespace Tests\Feature\Web;
 
-use App\Actions\Community\AcceptInvite;
-use App\Actions\Community\SendInvite;
 use App\Jobs\SendBatchInvites;
 use App\Mail\CommunityInviteMail;
 use App\Models\Community;
 use App\Models\CommunityInvite;
-use App\Models\CommunityMember;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -28,11 +25,11 @@ class CommunityInviteControllerTest extends TestCase
         Mail::fake();
 
         $community = Community::factory()->create();
-        $invite    = CommunityInvite::create([
+        $invite = CommunityInvite::create([
             'community_id' => $community->id,
-            'email'        => 'newguest@example.com',
-            'token'        => Str::random(64),
-            'expires_at'   => now()->addDays(7),
+            'email' => 'newguest@example.com',
+            'token' => Str::random(64),
+            'expires_at' => now()->addDays(7),
         ]);
 
         $this->get(route('community.invite.accept', $invite->token))
@@ -47,15 +44,15 @@ class CommunityInviteControllerTest extends TestCase
         Mail::fake();
 
         $existingUser = User::factory()->create([
-            'email'                => 'setup@example.com',
+            'email' => 'setup@example.com',
             'needs_password_setup' => true,
         ]);
         $community = Community::factory()->create();
-        $invite    = CommunityInvite::create([
+        $invite = CommunityInvite::create([
             'community_id' => $community->id,
-            'email'        => 'setup@example.com',
-            'token'        => Str::random(64),
-            'expires_at'   => now()->addDays(7),
+            'email' => 'setup@example.com',
+            'token' => Str::random(64),
+            'expires_at' => now()->addDays(7),
         ]);
 
         $this->get(route('community.invite.accept', $invite->token))
@@ -63,7 +60,7 @@ class CommunityInviteControllerTest extends TestCase
 
         $this->assertDatabaseHas('community_members', [
             'community_id' => $community->id,
-            'user_id'      => $existingUser->id,
+            'user_id' => $existingUser->id,
         ]);
     }
 
@@ -73,9 +70,9 @@ class CommunityInviteControllerTest extends TestCase
         $community = Community::factory()->create();
         $invite = CommunityInvite::create([
             'community_id' => $community->id,
-            'email'        => 'member@example.com',
-            'token'        => Str::random(64),
-            'expires_at'   => now()->addDays(7),
+            'email' => 'member@example.com',
+            'token' => Str::random(64),
+            'expires_at' => now()->addDays(7),
         ]);
 
         $this->actingAs($user)
@@ -84,7 +81,7 @@ class CommunityInviteControllerTest extends TestCase
 
         $this->assertDatabaseHas('community_members', [
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
     }
 
@@ -94,9 +91,9 @@ class CommunityInviteControllerTest extends TestCase
         $community = Community::factory()->create();
         $invite = CommunityInvite::create([
             'community_id' => $community->id,
-            'email'        => 'expired@example.com',
-            'token'        => Str::random(64),
-            'expires_at'   => now()->subDay(),
+            'email' => 'expired@example.com',
+            'token' => Str::random(64),
+            'expires_at' => now()->subDay(),
         ]);
 
         $this->actingAs($user)
@@ -118,9 +115,9 @@ class CommunityInviteControllerTest extends TestCase
         $community = Community::factory()->create();
         $invite = CommunityInvite::create([
             'community_id' => $community->id,
-            'email'        => 'correct@example.com',
-            'token'        => Str::random(64),
-            'expires_at'   => now()->addDays(7),
+            'email' => 'correct@example.com',
+            'token' => Str::random(64),
+            'expires_at' => now()->addDays(7),
         ]);
 
         $this->actingAs($user)
@@ -135,10 +132,10 @@ class CommunityInviteControllerTest extends TestCase
         $community = Community::factory()->create();
         $invite = CommunityInvite::create([
             'community_id' => $community->id,
-            'email'        => 'already@example.com',
-            'token'        => Str::random(64),
-            'accepted_at'  => now(),
-            'expires_at'   => now()->addDays(7),
+            'email' => 'already@example.com',
+            'token' => Str::random(64),
+            'accepted_at' => now(),
+            'expires_at' => now()->addDays(7),
         ]);
 
         $this->actingAs($user)
@@ -150,13 +147,13 @@ class CommunityInviteControllerTest extends TestCase
 
     public function test_owner_can_list_community_invites(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         CommunityInvite::create([
             'community_id' => $community->id,
-            'email'        => 'invited@example.com',
-            'token'        => Str::random(64),
-            'expires_at'   => now()->addDays(7),
+            'email' => 'invited@example.com',
+            'token' => Str::random(64),
+            'expires_at' => now()->addDays(7),
         ]);
 
         $response = $this->actingAs($owner)
@@ -169,8 +166,8 @@ class CommunityInviteControllerTest extends TestCase
 
     public function test_non_owner_cannot_list_invites(): void
     {
-        $owner     = User::factory()->create();
-        $nonOwner  = User::factory()->create();
+        $owner = User::factory()->create();
+        $nonOwner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($nonOwner)
@@ -197,7 +194,7 @@ class CommunityInviteControllerTest extends TestCase
 
         $this->assertDatabaseHas('community_invites', [
             'community_id' => $community->id,
-            'email'        => 'new@example.com',
+            'email' => 'new@example.com',
         ]);
     }
 

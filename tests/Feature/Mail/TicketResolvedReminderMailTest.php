@@ -16,12 +16,12 @@ class TicketResolvedReminderMailTest extends TestCase
     {
         $user = User::factory()->create();
         $ticket = Ticket::create([
-            'user_id'     => $user->id,
-            'subject'     => 'Issue',
+            'user_id' => $user->id,
+            'subject' => 'Issue',
             'description' => 'Details',
-            'type'        => 'bug',
-            'status'      => 'resolved',
-            'priority'    => 'high',
+            'type' => 'bug',
+            'status' => 'resolved',
+            'priority' => 'high',
         ]);
 
         $mail = new TicketResolvedReminderMail($ticket);
@@ -36,12 +36,12 @@ class TicketResolvedReminderMailTest extends TestCase
     {
         $user = User::factory()->create();
         $ticket = Ticket::create([
-            'user_id'     => $user->id,
-            'subject'     => 'Test',
+            'user_id' => $user->id,
+            'subject' => 'Test',
             'description' => 'Desc',
-            'type'        => 'question',
-            'status'      => 'resolved',
-            'priority'    => 'low',
+            'type' => 'question',
+            'status' => 'resolved',
+            'priority' => 'low',
         ]);
 
         $mail = new TicketResolvedReminderMail($ticket);

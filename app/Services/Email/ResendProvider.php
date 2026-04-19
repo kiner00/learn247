@@ -35,10 +35,10 @@ class ResendProvider implements EmailProvider
             $response = Http::withToken($apiKey)
                 ->acceptJson()
                 ->post('https://api.resend.com/emails', [
-                    'from'    => 'test@resend.dev',
-                    'to'      => ['validation-check@example.com'],
+                    'from' => 'test@resend.dev',
+                    'to' => ['validation-check@example.com'],
                     'subject' => 'key validation',
-                    'html'    => '<p>test</p>',
+                    'html' => '<p>test</p>',
                 ]);
 
             // 401 with "API key is invalid" = bad key
@@ -84,8 +84,8 @@ class ResendProvider implements EmailProvider
         $result = $this->client($community)->domains->create(['name' => $domain]);
 
         return [
-            'id'      => $result->id,
-            'status'  => $result->status ?? 'pending',
+            'id' => $result->id,
+            'status' => $result->status ?? 'pending',
             'records' => $result->records ?? [],
         ];
     }
@@ -95,9 +95,9 @@ class ResendProvider implements EmailProvider
         $result = $this->client($community)->domains->get($domainId);
 
         return [
-            'id'      => $result->id,
-            'name'    => $result->name,
-            'status'  => $result->status,
+            'id' => $result->id,
+            'name' => $result->name,
+            'status' => $result->status,
             'records' => $result->records ?? [],
         ];
     }
@@ -107,7 +107,7 @@ class ResendProvider implements EmailProvider
         $result = $this->client($community)->domains->verify($domainId);
 
         return [
-            'id'     => $result->id,
+            'id' => $result->id,
             'status' => $result->status ?? 'pending',
         ];
     }

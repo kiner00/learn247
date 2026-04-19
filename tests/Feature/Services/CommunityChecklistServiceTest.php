@@ -19,7 +19,7 @@ class CommunityChecklistServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new CommunityChecklistService();
+        $this->service = new CommunityChecklistService;
     }
 
     public function test_returns_five_checklist_items(): void
@@ -99,7 +99,7 @@ class CommunityChecklistServiceTest extends TestCase
 
     public function test_post_done_when_post_exists(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
         Post::factory()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
@@ -119,8 +119,8 @@ class CommunityChecklistServiceTest extends TestCase
 
     public function test_post_only_checks_this_community(): void
     {
-        $owner     = User::factory()->create();
-        $other     = Community::factory()->create(['owner_id' => $owner->id]);
+        $owner = User::factory()->create();
+        $other = Community::factory()->create(['owner_id' => $owner->id]);
         $community = Community::factory()->create();
         Post::factory()->create(['community_id' => $other->id, 'user_id' => $owner->id]);
 
@@ -183,12 +183,12 @@ class CommunityChecklistServiceTest extends TestCase
 
     public function test_all_items_done_for_fully_configured_community(): void
     {
-        $owner     = User::factory()->create();
+        $owner = User::factory()->create();
         $community = Community::factory()->create([
-            'owner_id'                 => $owner->id,
-            'cover_image'              => '/storage/cover.jpg',
-            'description'              => 'A great community',
-            'affiliate_commission_rate'=> 10,
+            'owner_id' => $owner->id,
+            'cover_image' => '/storage/cover.jpg',
+            'description' => 'A great community',
+            'affiliate_commission_rate' => 10,
         ]);
         Post::factory()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
         Course::factory()->create(['community_id' => $community->id]);

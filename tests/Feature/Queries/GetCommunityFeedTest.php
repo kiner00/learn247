@@ -18,10 +18,10 @@ class GetCommunityFeedTest extends TestCase
     public function test_paginated_returns_paginated_posts(): void
     {
         $community = Community::factory()->create();
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         Post::factory()->count(3)->create(['community_id' => $community->id]);
 
-        $query  = new GetCommunityFeed();
+        $query = new GetCommunityFeed;
         $result = $query->paginated($community, $user->id);
 
         $this->assertCount(3, $result->items());
@@ -30,10 +30,10 @@ class GetCommunityFeedTest extends TestCase
     public function test_paginated_enriches_post_reaction_data(): void
     {
         $community = Community::factory()->create();
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         Post::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
-        $query  = new GetCommunityFeed();
+        $query = new GetCommunityFeed;
         $result = $query->paginated($community, $user->id);
 
         $post = $result->items()[0];
@@ -46,10 +46,10 @@ class GetCommunityFeedTest extends TestCase
     public function test_for_show_sets_up_feed_data(): void
     {
         $community = Community::factory()->create();
-        $user      = User::factory()->create();
+        $user = User::factory()->create();
         Post::factory()->create(['community_id' => $community->id]);
 
-        $query = new GetCommunityFeed();
+        $query = new GetCommunityFeed;
         $query->forShow($community, $user->id);
 
         $this->assertTrue($community->relationLoaded('posts'));
@@ -59,16 +59,16 @@ class GetCommunityFeedTest extends TestCase
     public function test_for_show_populates_commenter_avatars(): void
     {
         $community = Community::factory()->create();
-        $user      = User::factory()->create();
-        $post      = Post::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+        $user = User::factory()->create();
+        $post = Post::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         Comment::factory()->create([
-            'post_id'      => $post->id,
+            'post_id' => $post->id,
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
-        $query = new GetCommunityFeed();
+        $query = new GetCommunityFeed;
         $query->forShow($community, $user->id);
 
         $enrichedPost = $community->posts->first();
@@ -80,34 +80,34 @@ class GetCommunityFeedTest extends TestCase
     public function test_paginated_enriches_comment_and_reply_reactions(): void
     {
         $community = Community::factory()->create();
-        $user      = User::factory()->create();
-        $post      = Post::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+        $user = User::factory()->create();
+        $post = Post::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         $comment = Comment::factory()->create([
-            'post_id'      => $post->id,
+            'post_id' => $post->id,
             'community_id' => $community->id,
-            'user_id'      => $user->id,
+            'user_id' => $user->id,
         ]);
 
         Comment::create([
-            'post_id'      => $post->id,
+            'post_id' => $post->id,
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'parent_id'    => $comment->id,
-            'content'      => 'A reply',
+            'user_id' => $user->id,
+            'parent_id' => $comment->id,
+            'content' => 'A reply',
         ]);
 
         Like::create([
-            'user_id'       => $user->id,
+            'user_id' => $user->id,
             'likeable_type' => Comment::class,
-            'likeable_id'   => $comment->id,
-            'type'          => 'like',
+            'likeable_id' => $comment->id,
+            'type' => 'like',
         ]);
 
-        $query  = new GetCommunityFeed();
+        $query = new GetCommunityFeed;
         $result = $query->paginated($community, $user->id);
 
-        $enrichedPost    = $result->items()[0];
+        $enrichedPost = $result->items()[0];
         $enrichedComment = $enrichedPost->comments->first();
         $this->assertIsArray($enrichedComment->reactions);
         $this->assertSame(1, $enrichedComment->reactions['like']);

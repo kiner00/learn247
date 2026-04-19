@@ -26,27 +26,27 @@ class QuizControllerTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
         CommunityMember::factory()->admin()->create([
             'community_id' => $community->id,
-            'user_id'      => $owner->id,
+            'user_id' => $owner->id,
         ]);
 
         $course = Course::create([
             'community_id' => $community->id,
-            'title'        => 'Test Course',
-            'description'  => 'A test course',
-            'position'     => 0,
+            'title' => 'Test Course',
+            'description' => 'A test course',
+            'position' => 0,
         ]);
 
         $module = CourseModule::create([
             'course_id' => $course->id,
-            'title'     => 'Module 1',
-            'position'  => 0,
+            'title' => 'Module 1',
+            'position' => 0,
         ]);
 
         $lesson = CourseLesson::create([
             'module_id' => $module->id,
-            'title'     => 'Lesson 1',
-            'content'   => 'Lesson content',
-            'position'  => 0,
+            'title' => 'Lesson 1',
+            'content' => 'Lesson content',
+            'position' => 0,
         ]);
 
         return [$community, $course, $lesson];
@@ -55,13 +55,13 @@ class QuizControllerTest extends TestCase
     private function quizPayload(): array
     {
         return [
-            'title'      => 'Chapter 1 Quiz',
+            'title' => 'Chapter 1 Quiz',
             'pass_score' => 70,
-            'questions'  => [
+            'questions' => [
                 [
                     'question' => 'What is 2+2?',
-                    'type'     => 'multiple_choice',
-                    'options'  => [
+                    'type' => 'multiple_choice',
+                    'options' => [
                         ['label' => '3', 'is_correct' => false],
                         ['label' => '4', 'is_correct' => true],
                         ['label' => '5', 'is_correct' => false],
@@ -69,8 +69,8 @@ class QuizControllerTest extends TestCase
                 ],
                 [
                     'question' => 'PHP is a programming language.',
-                    'type'     => 'true_false',
-                    'options'  => [
+                    'type' => 'true_false',
+                    'options' => [
                         ['label' => 'True', 'is_correct' => true],
                         ['label' => 'False', 'is_correct' => false],
                     ],
@@ -92,8 +92,8 @@ class QuizControllerTest extends TestCase
         $response->assertRedirect();
         $response->assertSessionHas('success', 'Quiz saved!');
         $this->assertDatabaseHas('quizzes', [
-            'lesson_id'  => $lesson->id,
-            'title'      => 'Chapter 1 Quiz',
+            'lesson_id' => $lesson->id,
+            'title' => 'Chapter 1 Quiz',
             'pass_score' => 70,
         ]);
         $this->assertEquals(2, QuizQuestion::where('quiz_id', Quiz::first()->id)->count());
@@ -101,13 +101,13 @@ class QuizControllerTest extends TestCase
 
     public function test_non_owner_cannot_create_quiz(): void
     {
-        $owner  = User::factory()->create();
+        $owner = User::factory()->create();
         $member = User::factory()->create();
         [$community, $course, $lesson] = $this->createCommunityWithLesson($owner);
 
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
+            'user_id' => $member->id,
         ]);
 
         $response = $this->actingAs($member)
@@ -144,38 +144,38 @@ class QuizControllerTest extends TestCase
 
     public function test_member_can_submit_quiz(): void
     {
-        $owner  = User::factory()->create();
+        $owner = User::factory()->create();
         $member = User::factory()->create();
         [$community, $course, $lesson] = $this->createCommunityWithLesson($owner);
 
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
+            'user_id' => $member->id,
         ]);
 
         $quiz = Quiz::create([
-            'lesson_id'  => $lesson->id,
-            'title'      => 'Submit Quiz',
+            'lesson_id' => $lesson->id,
+            'title' => 'Submit Quiz',
             'pass_score' => 50,
         ]);
 
         $question = QuizQuestion::create([
-            'quiz_id'  => $quiz->id,
+            'quiz_id' => $quiz->id,
             'question' => 'What is 1+1?',
-            'type'     => 'multiple_choice',
+            'type' => 'multiple_choice',
             'position' => 0,
         ]);
 
         $correctOption = QuizQuestionOption::create([
             'question_id' => $question->id,
-            'label'       => '2',
-            'is_correct'  => true,
+            'label' => '2',
+            'is_correct' => true,
         ]);
 
         QuizQuestionOption::create([
             'question_id' => $question->id,
-            'label'       => '3',
-            'is_correct'  => false,
+            'label' => '3',
+            'is_correct' => false,
         ]);
 
         $response = $this->actingAs($member)
@@ -195,44 +195,44 @@ class QuizControllerTest extends TestCase
         $this->assertDatabaseHas('quiz_attempts', [
             'quiz_id' => $quiz->id,
             'user_id' => $member->id,
-            'passed'  => true,
+            'passed' => true,
         ]);
     }
 
     public function test_member_can_fail_quiz(): void
     {
-        $owner  = User::factory()->create();
+        $owner = User::factory()->create();
         $member = User::factory()->create();
         [$community, $course, $lesson] = $this->createCommunityWithLesson($owner);
 
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
+            'user_id' => $member->id,
         ]);
 
         $quiz = Quiz::create([
-            'lesson_id'  => $lesson->id,
-            'title'      => 'Hard Quiz',
+            'lesson_id' => $lesson->id,
+            'title' => 'Hard Quiz',
             'pass_score' => 100,
         ]);
 
         $question = QuizQuestion::create([
-            'quiz_id'  => $quiz->id,
+            'quiz_id' => $quiz->id,
             'question' => 'What is 1+1?',
-            'type'     => 'multiple_choice',
+            'type' => 'multiple_choice',
             'position' => 0,
         ]);
 
         QuizQuestionOption::create([
             'question_id' => $question->id,
-            'label'       => '2',
-            'is_correct'  => true,
+            'label' => '2',
+            'is_correct' => true,
         ]);
 
         $wrongOption = QuizQuestionOption::create([
             'question_id' => $question->id,
-            'label'       => '3',
-            'is_correct'  => false,
+            'label' => '3',
+            'is_correct' => false,
         ]);
 
         $response = $this->actingAs($member)
@@ -250,18 +250,18 @@ class QuizControllerTest extends TestCase
 
     public function test_submit_validates_answers_required(): void
     {
-        $owner  = User::factory()->create();
+        $owner = User::factory()->create();
         $member = User::factory()->create();
         [$community, $course, $lesson] = $this->createCommunityWithLesson($owner);
 
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
+            'user_id' => $member->id,
         ]);
 
         $quiz = Quiz::create([
-            'lesson_id'  => $lesson->id,
-            'title'      => 'Validate Quiz',
+            'lesson_id' => $lesson->id,
+            'title' => 'Validate Quiz',
             'pass_score' => 50,
         ]);
 
@@ -279,8 +279,8 @@ class QuizControllerTest extends TestCase
         [$community, $course, $lesson] = $this->createCommunityWithLesson($owner);
 
         $quiz = Quiz::create([
-            'lesson_id'  => $lesson->id,
-            'title'      => 'Deletable Quiz',
+            'lesson_id' => $lesson->id,
+            'title' => 'Deletable Quiz',
             'pass_score' => 50,
         ]);
 
@@ -294,18 +294,18 @@ class QuizControllerTest extends TestCase
 
     public function test_non_owner_cannot_delete_quiz(): void
     {
-        $owner  = User::factory()->create();
+        $owner = User::factory()->create();
         $member = User::factory()->create();
         [$community, $course, $lesson] = $this->createCommunityWithLesson($owner);
 
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
+            'user_id' => $member->id,
         ]);
 
         $quiz = Quiz::create([
-            'lesson_id'  => $lesson->id,
-            'title'      => 'Protected Quiz',
+            'lesson_id' => $lesson->id,
+            'title' => 'Protected Quiz',
             'pass_score' => 50,
         ]);
 
@@ -318,7 +318,7 @@ class QuizControllerTest extends TestCase
 
     public function test_non_member_cannot_access_quiz_routes(): void
     {
-        $owner    = User::factory()->create();
+        $owner = User::factory()->create();
         $outsider = User::factory()->create();
         [$community, $course, $lesson] = $this->createCommunityWithLesson($owner);
 
@@ -350,32 +350,32 @@ class QuizControllerTest extends TestCase
 
     public function test_submit_returns_error_session_when_action_throws(): void
     {
-        $owner  = User::factory()->create();
+        $owner = User::factory()->create();
         $member = User::factory()->create();
         [$community, $course, $lesson] = $this->createCommunityWithLesson($owner);
 
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
+            'user_id' => $member->id,
         ]);
 
         $quiz = Quiz::create([
-            'lesson_id'  => $lesson->id,
-            'title'      => 'Failing Quiz',
+            'lesson_id' => $lesson->id,
+            'title' => 'Failing Quiz',
             'pass_score' => 50,
         ]);
 
         $question = QuizQuestion::create([
-            'quiz_id'  => $quiz->id,
+            'quiz_id' => $quiz->id,
             'question' => 'What is 1+1?',
-            'type'     => 'multiple_choice',
+            'type' => 'multiple_choice',
             'position' => 0,
         ]);
 
         $option = QuizQuestionOption::create([
             'question_id' => $question->id,
-            'label'       => '2',
-            'is_correct'  => true,
+            'label' => '2',
+            'is_correct' => true,
         ]);
 
         $mock = Mockery::mock(SubmitQuiz::class);
@@ -399,8 +399,8 @@ class QuizControllerTest extends TestCase
         [$community, $course, $lesson] = $this->createCommunityWithLesson($owner);
 
         $quiz = Quiz::create([
-            'lesson_id'  => $lesson->id,
-            'title'      => 'Failing Quiz',
+            'lesson_id' => $lesson->id,
+            'title' => 'Failing Quiz',
             'pass_score' => 50,
         ]);
 
@@ -423,8 +423,8 @@ class QuizControllerTest extends TestCase
         [$community, $course, $lesson] = $this->createCommunityWithLesson($owner);
 
         $quiz = Quiz::create([
-            'lesson_id'  => $lesson->id,
-            'title'      => 'Protected Quiz',
+            'lesson_id' => $lesson->id,
+            'title' => 'Protected Quiz',
             'pass_score' => 50,
         ]);
 
@@ -444,8 +444,8 @@ class QuizControllerTest extends TestCase
         [$community, $course, $lesson] = $this->createCommunityWithLesson($owner);
 
         $quiz = Quiz::create([
-            'lesson_id'  => $lesson->id,
-            'title'      => 'Protected Quiz',
+            'lesson_id' => $lesson->id,
+            'title' => 'Protected Quiz',
             'pass_score' => 50,
         ]);
 
@@ -460,18 +460,18 @@ class QuizControllerTest extends TestCase
 
     public function test_submit_validates_answers_must_be_integers(): void
     {
-        $owner  = User::factory()->create();
+        $owner = User::factory()->create();
         $member = User::factory()->create();
         [$community, $course, $lesson] = $this->createCommunityWithLesson($owner);
 
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $member->id,
+            'user_id' => $member->id,
         ]);
 
         $quiz = Quiz::create([
-            'lesson_id'  => $lesson->id,
-            'title'      => 'Validate Quiz',
+            'lesson_id' => $lesson->id,
+            'title' => 'Validate Quiz',
             'pass_score' => 50,
         ]);
 

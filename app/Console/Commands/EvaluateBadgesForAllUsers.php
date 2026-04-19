@@ -8,13 +8,14 @@ use Illuminate\Console\Command;
 
 class EvaluateBadgesForAllUsers extends Command
 {
-    protected $signature   = 'badges:evaluate-all';
+    protected $signature = 'badges:evaluate-all';
+
     protected $description = 'Evaluate and award badges for all users (backfill)';
 
     public function handle(BadgeService $badgeService): void
     {
         $total = User::count();
-        $bar   = $this->output->createProgressBar($total);
+        $bar = $this->output->createProgressBar($total);
         $bar->start();
 
         User::orderBy('id')->chunk(100, function ($users) use ($badgeService, $bar) {

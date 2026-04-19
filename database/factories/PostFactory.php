@@ -12,10 +12,10 @@ class PostFactory extends Factory
     {
         return [
             'community_id' => Community::factory(),
-            'user_id'      => User::factory(),
-            'title'        => fake()->sentence(),
-            'content'      => fake()->paragraphs(2, true),
-            'is_pinned'    => false,
+            'user_id' => User::factory(),
+            'title' => fake()->sentence(),
+            'content' => fake()->paragraphs(2, true),
+            'is_pinned' => false,
         ];
     }
 }

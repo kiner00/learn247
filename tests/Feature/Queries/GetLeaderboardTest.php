@@ -20,11 +20,11 @@ class GetLeaderboardTest extends TestCase
         $community = Community::factory()->create();
         CommunityMember::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'points'       => 150,
+            'user_id' => $user->id,
+            'points' => 150,
         ]);
 
-        $query = new GetLeaderboard();
+        $query = new GetLeaderboard;
         $result = $query->execute($community, $user->id);
 
         $this->assertEquals(150, $result['my_points']);
@@ -40,7 +40,7 @@ class GetLeaderboardTest extends TestCase
         $user = User::factory()->create();
         $community = Community::factory()->create();
 
-        $query = new GetLeaderboard();
+        $query = new GetLeaderboard;
         $result = $query->execute($community, $user->id);
 
         $this->assertEquals(0, $result['my_points']);
@@ -53,7 +53,7 @@ class GetLeaderboardTest extends TestCase
         CommunityMember::factory()->create(['community_id' => $community->id, 'points' => 300]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'points' => 200]);
 
-        $query = new GetLeaderboard();
+        $query = new GetLeaderboard;
         $result = $query->topMembers($community);
 
         $this->assertCount(3, $result);
@@ -70,11 +70,11 @@ class GetLeaderboardTest extends TestCase
 
         Post::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'created_at'   => now()->subDays(3),
+            'user_id' => $user->id,
+            'created_at' => now()->subDays(3),
         ]);
 
-        $query = new GetLeaderboard();
+        $query = new GetLeaderboard;
         $result = $query->execute($community, $user->id);
 
         $this->assertNotEmpty($result['leaderboard_7_days']);
@@ -88,11 +88,11 @@ class GetLeaderboardTest extends TestCase
 
         Post::factory()->create([
             'community_id' => $community->id,
-            'user_id'      => $user->id,
-            'created_at'   => now()->subDays(40),
+            'user_id' => $user->id,
+            'created_at' => now()->subDays(40),
         ]);
 
-        $query = new GetLeaderboard();
+        $query = new GetLeaderboard;
         $result = $query->execute($community, $user->id);
 
         $this->assertEmpty($result['leaderboard_30_days']);
