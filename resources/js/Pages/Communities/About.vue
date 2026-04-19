@@ -15,11 +15,11 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
 
             <!-- Main content -->
-            <div class="lg:col-span-2 min-w-0">
-                <div class="bg-white rounded-2xl overflow-hidden mb-4">
+            <div class="w-full min-w-0 lg:col-span-2">
+                <div class="bg-white rounded-2xl overflow-hidden mb-4 w-full">
 
                     <!-- Community name (above banner) -->
                     <div class="px-4 sm:px-6 pt-5 pb-3">
@@ -98,7 +98,7 @@
             </div>
 
             <!-- Right sidebar (Skool-style) -->
-            <div>
+            <div class="w-full min-w-0">
                 <CommunitySidebarCard :community="community" :admin-count="1">
                     <!-- Recent member avatars -->
                     <div v-if="recentMembers.length" class="flex flex-wrap gap-1 mb-3">

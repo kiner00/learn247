@@ -31,8 +31,8 @@ const displayUrl = computed(() =>
         </div>
 
         <div class="p-4">
-            <h3 class="font-bold text-gray-900 dark:text-gray-100 text-base mb-0.5">{{ community.name }}</h3>
-            <p class="text-xs text-gray-400 mb-2">{{ displayUrl }}</p>
+            <h3 class="font-bold text-gray-900 dark:text-gray-100 text-base mb-0.5 break-words">{{ community.name }}</h3>
+            <p class="text-xs text-gray-400 mb-2 break-all">{{ displayUrl }}</p>
             <p v-if="community.description" class="text-sm text-gray-500 dark:text-gray-400 mb-4 leading-relaxed line-clamp-3">
                 {{ community.description }}
             </p>
