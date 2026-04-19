@@ -26,6 +26,7 @@ Thumbs.db
 /storage/coverage
 /storage/coverage-cc
 /storage/coverage-classroom
+/storage/coverage-admin
 
 **/caddy
 frankenphp

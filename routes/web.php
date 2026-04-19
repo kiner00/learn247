@@ -1,7 +1,14 @@
 <?php
 
 use App\Models\Community;
-use App\Http\Controllers\Web\AdminController;
+use App\Http\Controllers\Web\Admin\AnnouncementController as AdminAnnouncementController;
+use App\Http\Controllers\Web\Admin\CouponController as AdminCouponController;
+use App\Http\Controllers\Web\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Web\Admin\EmailTemplateController as AdminEmailTemplateController;
+use App\Http\Controllers\Web\Admin\KycController as AdminKycController;
+use App\Http\Controllers\Web\Admin\PayoutController as AdminPayoutController;
+use App\Http\Controllers\Web\Admin\PostModerationController as AdminPostModerationController;
+use App\Http\Controllers\Web\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Web\AffiliateController;
 use App\Http\Controllers\Web\BadgeController;
 use App\Http\Controllers\Web\CreatorController;
@@ -117,48 +124,48 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->n
 // ─── Super Admin ──────────────────────────────────────────────────────────────
 
 Route::middleware(['auth', EnsureSuperAdmin::class])->prefix('admin')->group(function () {
-    Route::get('/', [AdminController::class, 'dashboard'])->name('admin.dashboard');
-    Route::patch('/settings', [AdminController::class, 'updateSettings'])->name('admin.settings.update');
-    Route::patch('/creator-plan-pricing', [AdminController::class, 'updateCreatorPlanPricing'])->name('admin.creator-plan-pricing.update');
-    Route::get('/payouts', [AdminController::class, 'payouts'])->name('admin.payouts');
-    Route::post('/payouts/owner/{community:id}', [AdminController::class, 'payOwner'])->name('admin.payouts.owner')->middleware('throttle:10,1');
-    Route::post('/payouts/owners/batch', [AdminController::class, 'batchPayOwners'])->name('admin.payouts.owners.batch')->middleware('throttle:5,1');
-    Route::post('/payouts/owners/selected', [AdminController::class, 'paySelectedOwners'])->name('admin.payouts.owners.selected')->middleware('throttle:5,1');
-    Route::post('/payouts/affiliates/batch', [AdminController::class, 'batchPayAffiliates'])->name('admin.payouts.affiliates.batch')->middleware('throttle:5,1');
-    Route::post('/payouts/affiliates/selected', [AdminController::class, 'paySelectedAffiliates'])->name('admin.payouts.affiliates.selected')->middleware('throttle:5,1');
-    Route::post('/payout-requests/{payoutRequest}/approve', [AdminController::class, 'approvePayoutRequest'])->name('admin.payout-requests.approve')->middleware('throttle:10,1');
-    Route::post('/payout-requests/{payoutRequest}/reject', [AdminController::class, 'rejectPayoutRequest'])->name('admin.payout-requests.reject')->middleware('throttle:10,1');
-    Route::post('/payout-requests/{payoutRequest}/mark-paid', [AdminController::class, 'markPayoutRequestPaid'])->name('admin.payout-requests.mark-paid')->middleware('throttle:10,1');
-    Route::post('/onboarding/{user}/resend', [AdminController::class, 'resendOnboardingEmail'])->name('admin.onboarding.resend');
+    Route::get('/', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
+    Route::patch('/settings', [AdminDashboardController::class, 'updateSettings'])->name('admin.settings.update');
+    Route::patch('/creator-plan-pricing', [AdminDashboardController::class, 'updateCreatorPlanPricing'])->name('admin.creator-plan-pricing.update');
+    Route::get('/payouts', [AdminPayoutController::class, 'index'])->name('admin.payouts');
+    Route::post('/payouts/owner/{community:id}', [AdminPayoutController::class, 'payOwner'])->name('admin.payouts.owner')->middleware('throttle:10,1');
+    Route::post('/payouts/owners/batch', [AdminPayoutController::class, 'batchPayOwners'])->name('admin.payouts.owners.batch')->middleware('throttle:5,1');
+    Route::post('/payouts/owners/selected', [AdminPayoutController::class, 'paySelectedOwners'])->name('admin.payouts.owners.selected')->middleware('throttle:5,1');
+    Route::post('/payouts/affiliates/batch', [AdminPayoutController::class, 'batchPayAffiliates'])->name('admin.payouts.affiliates.batch')->middleware('throttle:5,1');
+    Route::post('/payouts/affiliates/selected', [AdminPayoutController::class, 'paySelectedAffiliates'])->name('admin.payouts.affiliates.selected')->middleware('throttle:5,1');
+    Route::post('/payout-requests/{payoutRequest}/approve', [AdminPayoutController::class, 'approveRequest'])->name('admin.payout-requests.approve')->middleware('throttle:10,1');
+    Route::post('/payout-requests/{payoutRequest}/reject', [AdminPayoutController::class, 'rejectRequest'])->name('admin.payout-requests.reject')->middleware('throttle:10,1');
+    Route::post('/payout-requests/{payoutRequest}/mark-paid', [AdminPayoutController::class, 'markRequestPaid'])->name('admin.payout-requests.mark-paid')->middleware('throttle:10,1');
+    Route::post('/onboarding/{user}/resend', [AdminUserController::class, 'resendOnboardingEmail'])->name('admin.onboarding.resend');
     // Featured communities
-    Route::post('/communities/{community}/toggle-featured', [AdminController::class, 'toggleFeatured'])->name('admin.communities.toggle-featured');
+    Route::post('/communities/{community}/toggle-featured', [AdminDashboardController::class, 'toggleFeatured'])->name('admin.communities.toggle-featured');
     // Analytics
-    Route::get('/creator-analytics', [AdminController::class, 'creatorAnalytics'])->name('admin.creator-analytics');
-    Route::get('/affiliate-analytics', [AdminController::class, 'affiliateAnalytics'])->name('admin.affiliate-analytics');
+    Route::get('/creator-analytics', [AdminDashboardController::class, 'creatorAnalytics'])->name('admin.creator-analytics');
+    Route::get('/affiliate-analytics', [AdminDashboardController::class, 'affiliateAnalytics'])->name('admin.affiliate-analytics');
     // User management
-    Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
-    Route::patch('/users/{user}/toggle-status', [AdminController::class, 'toggleUserStatus'])->name('admin.users.toggle');
-    Route::patch('/users/{user}/toggle-kyc', [AdminController::class, 'toggleKyc'])->name('admin.users.toggle-kyc');
-    Route::get('/kyc-reviews', [AdminController::class, 'kycReviews'])->name('admin.kyc-reviews');
-    Route::patch('/kyc-reviews/{user}/approve', [AdminController::class, 'approveKyc'])->name('admin.kyc.approve');
-    Route::patch('/kyc-reviews/{user}/reject', [AdminController::class, 'rejectKyc'])->name('admin.kyc.reject');
+    Route::get('/users', [AdminUserController::class, 'index'])->name('admin.users');
+    Route::patch('/users/{user}/toggle-status', [AdminUserController::class, 'toggleStatus'])->name('admin.users.toggle');
+    Route::patch('/users/{user}/toggle-kyc', [AdminKycController::class, 'toggle'])->name('admin.users.toggle-kyc');
+    Route::get('/kyc-reviews', [AdminKycController::class, 'reviews'])->name('admin.kyc-reviews');
+    Route::patch('/kyc-reviews/{user}/approve', [AdminKycController::class, 'approve'])->name('admin.kyc.approve');
+    Route::patch('/kyc-reviews/{user}/reject', [AdminKycController::class, 'reject'])->name('admin.kyc.reject');
     // Soft delete recovery
-    Route::get('/posts/trashed', [AdminController::class, 'trashedPosts'])->name('admin.posts.trashed');
-    Route::post('/posts/{postId}/restore', [AdminController::class, 'restorePost'])->name('admin.posts.restore');
-    Route::delete('/posts/{postId}/force-delete', [AdminController::class, 'forceDeletePost'])->name('admin.posts.force-delete');
+    Route::get('/posts/trashed', [AdminPostModerationController::class, 'trashed'])->name('admin.posts.trashed');
+    Route::post('/posts/{postId}/restore', [AdminPostModerationController::class, 'restore'])->name('admin.posts.restore');
+    Route::delete('/posts/{postId}/force-delete', [AdminPostModerationController::class, 'forceDelete'])->name('admin.posts.force-delete');
     // Global announcement
-    Route::get('/announcements', [AdminController::class, 'globalAnnouncement'])->name('admin.announcements');
-    Route::post('/announcements', [AdminController::class, 'sendGlobalAnnouncement'])->name('admin.announcements.send')->middleware('throttle:3,1');
+    Route::get('/announcements', [AdminAnnouncementController::class, 'show'])->name('admin.announcements');
+    Route::post('/announcements', [AdminAnnouncementController::class, 'send'])->name('admin.announcements.send')->middleware('throttle:3,1');
     // Email templates
-    Route::get('/email-templates', [AdminController::class, 'emailTemplates'])->name('admin.email-templates');
-    Route::get('/email-templates/{key}/edit', [AdminController::class, 'editEmailTemplate'])->name('admin.email-templates.edit');
-    Route::put('/email-templates/{key}', [AdminController::class, 'updateEmailTemplate'])->name('admin.email-templates.update');
-    Route::post('/email-templates/{key}/preview', [AdminController::class, 'previewEmailTemplate'])->name('admin.email-templates.preview');
+    Route::get('/email-templates', [AdminEmailTemplateController::class, 'index'])->name('admin.email-templates');
+    Route::get('/email-templates/{key}/edit', [AdminEmailTemplateController::class, 'edit'])->name('admin.email-templates.edit');
+    Route::put('/email-templates/{key}', [AdminEmailTemplateController::class, 'update'])->name('admin.email-templates.update');
+    Route::post('/email-templates/{key}/preview', [AdminEmailTemplateController::class, 'preview'])->name('admin.email-templates.preview');
     // Coupons
-    Route::get('/coupons', [AdminController::class, 'coupons'])->name('admin.coupons');
-    Route::post('/coupons', [AdminController::class, 'storeCoupon'])->name('admin.coupons.store');
-    Route::post('/coupons/{coupon}/toggle', [AdminController::class, 'toggleCoupon'])->name('admin.coupons.toggle');
-    Route::delete('/coupons/{coupon}', [AdminController::class, 'deleteCoupon'])->name('admin.coupons.destroy');
+    Route::get('/coupons', [AdminCouponController::class, 'index'])->name('admin.coupons');
+    Route::post('/coupons', [AdminCouponController::class, 'store'])->name('admin.coupons.store');
+    Route::post('/coupons/{coupon}/toggle', [AdminCouponController::class, 'toggle'])->name('admin.coupons.toggle');
+    Route::delete('/coupons/{coupon}', [AdminCouponController::class, 'destroy'])->name('admin.coupons.destroy');
     // Support Tickets
     Route::get('/tickets', [TicketController::class, 'adminIndex'])->name('admin.tickets');
     Route::get('/tickets/{ticket}', [TicketController::class, 'show'])->name('admin.tickets.show');
