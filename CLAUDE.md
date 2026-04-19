@@ -1,6 +1,6 @@
 # Project: Learn247 (Curzzo)
 
-Community-based learning platform built with Laravel 10 + Vue 3 (Inertia.js).
+Community-based learning platform built with Laravel 12 + Vue 3 (Inertia.js).
 
 ## AI Feature Development Rules
 
@@ -67,7 +67,7 @@ This ordering ensures custom instructions override defaults.
 
 ## Tech Stack
 
-- **Backend**: Laravel 10, PHP 8.2, MySQL, Redis
+- **Backend**: Laravel 12, PHP 8.2, MySQL, Redis
 - **Frontend**: Vue 3 (Composition API + `<script setup>`), Inertia.js, Tailwind CSS
 - **AI**: Laravel AI package (`laravel/ai`), Gemini for chat, image generation via `Laravel\Ai\Image`
 - **Storage**: Laravel Storage (S3-compatible)
