@@ -7,6 +7,8 @@
 
     <livewire:pulse.cache cols="4" />
 
+    <livewire:ai-spend cols="12" rows="3" />
+
     <livewire:pulse.slow-queries cols="8" />
 
     <livewire:pulse.exceptions cols="6" />

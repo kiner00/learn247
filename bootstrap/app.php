@@ -22,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Inertia: encrypt sessions and share flash data
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
+            \App\Http\Middleware\TrackAiContext::class,
         ]);
 
         // Rate limit all API routes: 120 requests/min per user

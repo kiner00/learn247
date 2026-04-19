@@ -8,6 +8,7 @@ use App\Contracts\PaymentGateway;
 use App\Contracts\SmsProvider;
 use App\Contracts\TelegramGateway;
 use App\Listeners\EnrollInEmailSequence;
+use App\Listeners\LogAiUsage;
 use App\Models\Comment;
 use App\Models\LessonCompletion;
 use App\Models\Post;
@@ -20,10 +21,13 @@ use App\Services\StorageService;
 use App\Services\TelegramService;
 use App\Services\XenditService;
 use Illuminate\Queue\Events\JobProcessing;
+use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Ai\Events\AgentPrompted;
+use Laravel\Ai\Events\ImageGenerated;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -44,39 +48,28 @@ class AppServiceProvider extends ServiceProvider
 
         Event::subscribe(EnrollInEmailSequence::class);
 
+        Event::listen(AgentPrompted::class, [LogAiUsage::class, 'handleAgentPrompted']);
+        Event::listen(ImageGenerated::class, [LogAiUsage::class, 'handleImageGenerated']);
+
         Queue::before(function (JobProcessing $event) {
+            $ids = $this->extractJobIds($event);
+
+            if (isset($ids['community_id'])) {
+                Context::add('ai.community_id', $ids['community_id']);
+            }
+            if (isset($ids['user_id'])) {
+                Context::add('ai.user_id', $ids['user_id']);
+            }
+
             if (! app()->bound('sentry')) {
                 return;
             }
 
-            \Sentry\configureScope(function (\Sentry\State\Scope $scope) use ($event) {
+            \Sentry\configureScope(function (\Sentry\State\Scope $scope) use ($event, $ids) {
                 $scope->setTag('queue.name', $event->job->getQueue() ?? 'default');
                 $scope->setTag('queue.job', $event->job->resolveName());
-
-                $command = $event->job->payload()['data']['command'] ?? null;
-                if (! is_string($command)) {
-                    return;
-                }
-
-                try {
-                    $instance = unserialize($command);
-                } catch (\Throwable) {
-                    return;
-                }
-
-                if (! is_object($instance)) {
-                    return;
-                }
-
-                foreach (['community', 'user'] as $rel) {
-                    if (isset($instance->{$rel}) && is_object($instance->{$rel}) && isset($instance->{$rel}->id)) {
-                        $scope->setTag("{$rel}_id", (string) $instance->{$rel}->id);
-                    }
-                }
-                foreach (['communityId', 'userId'] as $key) {
-                    if (isset($instance->{$key})) {
-                        $scope->setTag(strtolower(preg_replace('/([A-Z])/', '_$1', $key)), (string) $instance->{$key});
-                    }
+                foreach ($ids as $key => $value) {
+                    $scope->setTag($key, (string) $value);
                 }
             });
         });
@@ -91,5 +84,40 @@ class AppServiceProvider extends ServiceProvider
                 ]);
             }
         });
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function extractJobIds(JobProcessing $event): array
+    {
+        $command = $event->job->payload()['data']['command'] ?? null;
+        if (! is_string($command)) {
+            return [];
+        }
+
+        try {
+            $instance = unserialize($command);
+        } catch (\Throwable) {
+            return [];
+        }
+
+        if (! is_object($instance)) {
+            return [];
+        }
+
+        $ids = [];
+        foreach (['community' => 'community_id', 'user' => 'user_id'] as $prop => $key) {
+            if (isset($instance->{$prop}) && is_object($instance->{$prop}) && isset($instance->{$prop}->id)) {
+                $ids[$key] = (int) $instance->{$prop}->id;
+            }
+        }
+        foreach (['communityId' => 'community_id', 'userId' => 'user_id'] as $prop => $key) {
+            if (isset($instance->{$prop}) && ! isset($ids[$key])) {
+                $ids[$key] = (int) $instance->{$prop};
+            }
+        }
+
+        return $ids;
     }
 }
