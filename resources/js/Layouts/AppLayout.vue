@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div class="min-h-screen bg-gray-50 dark:bg-gray-900 overflow-x-clip">
         <!-- Sticky Navbar -->
         <nav class="sticky top-0 z-40 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -519,12 +519,12 @@
                             </div>
                         </template>
                         <template v-else>
-                            <Link href="/login" class="text-sm text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+                            <Link href="/login" class="text-sm text-gray-600 hover:text-gray-900 px-2 sm:px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors whitespace-nowrap shrink-0">
                                 Sign in
                             </Link>
                             <Link
                                 href="/register"
-                                class="text-sm bg-indigo-600 text-white px-4 py-1.5 rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+                                class="text-sm bg-indigo-600 text-white px-3 sm:px-4 py-1.5 rounded-lg hover:bg-indigo-700 transition-colors font-medium whitespace-nowrap shrink-0"
                             >
                                 Get started
                             </Link>
