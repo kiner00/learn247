@@ -33,15 +33,33 @@ class CommunityGalleryItem extends Model implements Transcodeable
     public function getUrlAttribute(): ?string
     {
         if ($this->type === 'image') {
-            return $this->image_path ? Storage::url($this->image_path) : null;
+            return $this->resolveStorageUrl($this->image_path);
         }
 
-        return $this->poster_path ? Storage::url($this->poster_path) : null;
+        return $this->resolveStorageUrl($this->poster_path);
     }
 
     public function getPosterUrlAttribute(): ?string
     {
-        return $this->poster_path ? Storage::url($this->poster_path) : null;
+        return $this->resolveStorageUrl($this->poster_path);
+    }
+
+    /**
+     * Build a public URL whether $value is a raw S3 key, a legacy /storage/ path,
+     * or already a fully-qualified URL (back-compat for pre-migration rows).
+     */
+    private function resolveStorageUrl(?string $value): ?string
+    {
+        if (! $value) {
+            return null;
+        }
+        if (str_starts_with($value, 'http://') || str_starts_with($value, 'https://')) {
+            return $value;
+        }
+        if (str_starts_with($value, '/storage/')) {
+            return $value;
+        }
+        return Storage::url($value);
     }
 
     public function getVideoReadyAttribute(): bool
