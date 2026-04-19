@@ -19,7 +19,9 @@ use App\Services\Sms\SmsDispatcher;
 use App\Services\StorageService;
 use App\Services\TelegramService;
 use App\Services\XenditService;
+use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -41,6 +43,43 @@ class AppServiceProvider extends ServiceProvider
         LessonCompletion::observe(LessonCompletionObserver::class);
 
         Event::subscribe(EnrollInEmailSequence::class);
+
+        Queue::before(function (JobProcessing $event) {
+            if (! app()->bound('sentry')) {
+                return;
+            }
+
+            \Sentry\configureScope(function (\Sentry\State\Scope $scope) use ($event) {
+                $scope->setTag('queue.name', $event->job->getQueue() ?? 'default');
+                $scope->setTag('queue.job', $event->job->resolveName());
+
+                $command = $event->job->payload()['data']['command'] ?? null;
+                if (! is_string($command)) {
+                    return;
+                }
+
+                try {
+                    $instance = unserialize($command);
+                } catch (\Throwable) {
+                    return;
+                }
+
+                if (! is_object($instance)) {
+                    return;
+                }
+
+                foreach (['community', 'user'] as $rel) {
+                    if (isset($instance->{$rel}) && is_object($instance->{$rel}) && isset($instance->{$rel}->id)) {
+                        $scope->setTag("{$rel}_id", (string) $instance->{$rel}->id);
+                    }
+                }
+                foreach (['communityId', 'userId'] as $key) {
+                    if (isset($instance->{$key})) {
+                        $scope->setTag(strtolower(preg_replace('/([A-Z])/', '_$1', $key)), (string) $instance->{$key});
+                    }
+                }
+            });
+        });
 
         View::composer('app', function ($view) {
             if (! array_key_exists('ogMeta', $view->getData())) {

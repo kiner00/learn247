@@ -42,6 +42,8 @@ return Application::configure(basePath: dirname(__DIR__))
         }
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        \Sentry\Laravel\Integration::handles($exceptions);
+
         $exceptions->respond(function (\Symfony\Component\HttpFoundation\Response $response, Throwable $e, \Illuminate\Http\Request $request) {
             $status = $response->getStatusCode();
 
