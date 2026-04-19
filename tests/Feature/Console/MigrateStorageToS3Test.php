@@ -196,18 +196,20 @@ class MigrateStorageToS3Test extends TestCase
     {
         Storage::disk('public')->put('gallery/img1.jpg', 'content');
 
-        $community = \App\Models\Community::factory()->create([
-            'gallery_images' => [
+        $community = \App\Models\Community::factory()->create();
+        // Seed the legacy JSON column directly — the migration command operates on it via raw DB.
+        \DB::table('communities')->where('id', $community->id)->update([
+            'gallery_images' => json_encode([
                 '/storage/gallery/img1.jpg',
                 'https://example.com/storage/gallery/img2.jpg',
-            ],
+            ]),
         ]);
 
         $this->artisan('storage:migrate-to-s3')
             ->assertExitCode(0);
 
-        $community->refresh();
-        $gallery = $community->gallery_images; // already cast to array
+        $row     = \DB::table('communities')->where('id', $community->id)->first();
+        $gallery = json_decode($row->gallery_images, true);
 
         $this->assertEquals(
             'https://test-bucket.s3.ap-southeast-1.amazonaws.com/gallery/img1.jpg',

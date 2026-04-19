@@ -12,6 +12,7 @@ use App\Http\Controllers\Web\CertificateController;
 use App\Http\Controllers\Web\ChatController;
 use App\Http\Controllers\Web\CommunityChatbotController;
 use App\Http\Controllers\Web\CommunityDmController;
+use App\Http\Controllers\Web\CommunityGalleryController;
 use App\Http\Controllers\Web\ClassroomController;
 use App\Http\Controllers\Web\DirectMessageController;
 use App\Http\Controllers\Web\CommentController;
@@ -207,6 +208,11 @@ Route::get('/communities/{community}/about', [CommunityController::class, 'about
 Route::get('/communities/{community}/landing', [CommunityController::class, 'landing'])->name('communities.landing');
 Route::get('/communities/{community}/calendar', [EventController::class, 'index'])->name('communities.calendar');
 
+// Public HLS proxy for community gallery videos (anonymous landing-page playback)
+Route::get('/communities/{community}/gallery/{item}/hls/{file}', [CommunityGalleryController::class, 'hlsFile'])
+    ->where('file', '.+\.(m3u8|ts)')
+    ->name('communities.gallery.hls');
+
 // ─── Classroom (public read) ───────────────────────────────────────────────
 Route::get('/communities/{community}/classroom', [ClassroomController::class, 'index'])->name('communities.classroom');
 Route::get('/communities/{community}/classroom/courses/{course}', [ClassroomController::class, 'showCourse'])->name('communities.classroom.courses.show');
@@ -242,11 +248,17 @@ Route::middleware('auth')->group(function () {
     Route::match(['patch', 'post'], '/communities/{community}', [CommunityController::class, 'update'])->name('communities.update');
     Route::patch('/communities/{community}/ai-instructions', [CommunityController::class, 'updateAiInstructions'])->name('communities.ai-instructions');
     Route::patch('/communities/{community}/level-perks', [CommunityController::class, 'updateLevelPerks'])->name('communities.level-perks');
-    Route::post('/communities/{community}/gallery', [CommunityController::class, 'addGalleryImage'])->name('communities.gallery.add');
-    Route::delete('/communities/{community}/gallery/{index}', [CommunityController::class, 'removeGalleryImage'])->name('communities.gallery.remove');
+    // Gallery — images (form-upload), videos (multipart), reorder, transcode status
+    Route::post('/communities/{community}/gallery/images', [CommunityGalleryController::class, 'storeImage'])->name('communities.gallery.images.store');
+    Route::post('/communities/{community}/gallery/videos/initiate', [CommunityGalleryController::class, 'initiateVideoUpload'])->name('communities.gallery.videos.initiate');
+    Route::post('/communities/{community}/gallery/videos/part-url', [CommunityGalleryController::class, 'getVideoPartUrl'])->name('communities.gallery.videos.part-url');
+    Route::post('/communities/{community}/gallery/videos/complete', [CommunityGalleryController::class, 'completeVideoUpload'])->name('communities.gallery.videos.complete');
+    Route::post('/communities/{community}/gallery/videos/abort', [CommunityGalleryController::class, 'abortVideoUpload'])->name('communities.gallery.videos.abort');
+    Route::get('/communities/{community}/gallery/{item}/status', [CommunityGalleryController::class, 'transcodeStatus'])->name('communities.gallery.status');
+    Route::delete('/communities/{community}/gallery/{item}', [CommunityGalleryController::class, 'destroy'])->name('communities.gallery.destroy');
+    Route::put('/communities/{community}/gallery/reorder', [CommunityGalleryController::class, 'reorder'])->name('communities.gallery.reorder');
     Route::post('/communities/{community}/gallery/ai-generate', [CommunityController::class, 'aiGenerateGallery'])->name('communities.gallery.ai-generate');
     Route::get('/communities/{community}/gallery/ai-status', [CommunityController::class, 'aiGalleryStatus'])->name('communities.gallery.ai-status');
-    Route::put('/communities/{community}/gallery/reorder', [CommunityController::class, 'reorderGallery'])->name('communities.gallery.reorder');
     Route::delete('/communities/{community}', [CommunityController::class, 'destroy'])->name('communities.destroy');
     Route::post('/communities/{community}/cancel-deletion', [CommunityController::class, 'cancelDeletion'])->name('communities.cancel-deletion');
     Route::post('/communities/{community}/announce', [CommunityController::class, 'announce'])->name('communities.announce')->middleware('throttle:5,1');

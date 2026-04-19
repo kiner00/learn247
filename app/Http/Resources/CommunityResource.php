@@ -19,7 +19,15 @@ class CommunityResource extends JsonResource
             'category'                   => $this->category,
             'avatar'                     => $this->avatar,
             'cover_image'                => $this->cover_image,
-            'gallery_images'             => $this->gallery_images ?? [],
+            // Backward-compat: array of image URLs (image-type items only) for older mobile clients.
+            'gallery_images'             => collect($this->gallery_images ?? [])
+                ->where('type', 'image')
+                ->pluck('url')
+                ->filter()
+                ->values()
+                ->all(),
+            // New shape: full item objects with type/url/poster/hls_url/transcode status.
+            'gallery_items'              => $this->gallery_images ?? [],
             'is_private'                 => $this->is_private,
             'price'                      => $this->price,
             'currency'                   => $this->currency,

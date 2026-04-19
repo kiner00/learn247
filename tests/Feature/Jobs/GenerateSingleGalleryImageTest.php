@@ -4,6 +4,7 @@ namespace Tests\Feature\Jobs;
 
 use App\Jobs\GenerateSingleGalleryImage;
 use App\Models\Community;
+use App\Models\CommunityGalleryItem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Cache;
@@ -44,17 +45,16 @@ class GenerateSingleGalleryImageTest extends TestCase
         Bus::fake();
         $this->fakeImageWith(base64_encode('hello-image-bytes'));
 
-        $community = Community::factory()->create([
-            'gallery_images' => [],
-        ]);
+        $community = Community::factory()->create();
 
         // Only generate 1 total image, so no next dispatch.
         $job = new GenerateSingleGalleryImage($community, promptIndex: 7, total: 1);
         $job->handle();
 
-        $community->refresh();
-        $this->assertCount(1, $community->gallery_images);
-        $this->assertStringContainsString('community-gallery/' . $community->id . '_8_', $community->gallery_images[0]);
+        $items = $community->galleryItems()->get();
+        $this->assertCount(1, $items);
+        $this->assertEquals('image', $items[0]->type);
+        $this->assertStringContainsString('community-gallery/' . $community->id . '_8_', $items[0]->image_path);
 
         // Cache should show completed
         $cache = Cache::get("gallery-generating:{$community->id}");
@@ -71,7 +71,7 @@ class GenerateSingleGalleryImageTest extends TestCase
         Bus::fake();
         $this->fakeImageWith(base64_encode('bytes'));
 
-        $community = Community::factory()->create(['gallery_images' => []]);
+        $community = Community::factory()->create();
 
         // total=8, index=0 — should dispatch index=1 next.
         $job = new GenerateSingleGalleryImage($community, promptIndex: 0, total: 8);
@@ -103,7 +103,6 @@ class GenerateSingleGalleryImageTest extends TestCase
         });
 
         $community = Community::factory()->create([
-            'gallery_images' => [],
             'brand_context'  => [
                 'visual_style'      => 'flat-illustration',
                 'brand_personality' => 'Professional yet gritty',
@@ -147,7 +146,6 @@ class GenerateSingleGalleryImageTest extends TestCase
         });
 
         $community = Community::factory()->create([
-            'gallery_images' => [],
             'brand_context'  => [
                 'cta_goal'      => 'Enroll Today',
                 'offer_details' => 'Limited 50% discount',
@@ -178,7 +176,6 @@ class GenerateSingleGalleryImageTest extends TestCase
         });
 
         $community = Community::factory()->create([
-            'gallery_images' => [],
             'brand_context'  => null,
             'category'       => null,
         ]);
@@ -202,7 +199,7 @@ class GenerateSingleGalleryImageTest extends TestCase
 
         Log::shouldReceive('error')->once();
 
-        $community = Community::factory()->create(['gallery_images' => []]);
+        $community = Community::factory()->create();
 
         $job = new GenerateSingleGalleryImage($community, promptIndex: 0, total: 3);
         $job->handle();
@@ -213,8 +210,7 @@ class GenerateSingleGalleryImageTest extends TestCase
         $this->assertEquals(3, $cache['total']);
 
         // Gallery untouched
-        $community->refresh();
-        $this->assertEmpty($community->gallery_images ?? []);
+        $this->assertCount(0, $community->galleryItems()->get());
 
         // Should NOT dispatch next
         Bus::assertNotDispatched(GenerateSingleGalleryImage::class);
@@ -260,7 +256,6 @@ class GenerateSingleGalleryImageTest extends TestCase
 
         $community = Community::factory()->create([
             'name'           => 'Test Community',
-            'gallery_images' => [],
         ]);
 
         // index 99 is out of range → falls back to $prompts[0] (welcome banner)
@@ -275,16 +270,28 @@ class GenerateSingleGalleryImageTest extends TestCase
         Bus::fake();
         $this->fakeImageWith(base64_encode('x'));
 
-        $community = Community::factory()->create([
-            'gallery_images' => ['https://cdn/existing-1.png', 'https://cdn/existing-2.png'],
+        $community = Community::factory()->create();
+        CommunityGalleryItem::create([
+            'community_id' => $community->id,
+            'type'         => 'image',
+            'image_path'   => 'community-gallery/existing-1.png',
+            'position'     => 0,
+        ]);
+        CommunityGalleryItem::create([
+            'community_id' => $community->id,
+            'type'         => 'image',
+            'image_path'   => 'community-gallery/existing-2.png',
+            'position'     => 1,
         ]);
 
         $job = new GenerateSingleGalleryImage($community, promptIndex: 7, total: 1);
         $job->handle();
 
-        $community->refresh();
-        $this->assertCount(3, $community->gallery_images);
-        $this->assertEquals('https://cdn/existing-1.png', $community->gallery_images[0]);
-        $this->assertEquals('https://cdn/existing-2.png', $community->gallery_images[1]);
+        $items = $community->galleryItems()->get();
+        $this->assertCount(3, $items);
+        $this->assertEquals('community-gallery/existing-1.png', $items[0]->image_path);
+        $this->assertEquals('community-gallery/existing-2.png', $items[1]->image_path);
+        $this->assertEquals('image', $items[2]->type);
+        $this->assertEquals(2, $items[2]->position);
     }
 }

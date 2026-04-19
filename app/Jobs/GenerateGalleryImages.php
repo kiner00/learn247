@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Community;
+use App\Models\CommunityGalleryItem;
 use App\Services\StorageService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -26,8 +27,11 @@ class GenerateGalleryImages implements ShouldQueue
         Cache::put($cacheKey, ['status' => 'generating', 'progress' => 0, 'total' => 8], 900);
 
         // Clear old gallery
-        foreach ($this->community->gallery_images ?? [] as $oldUrl) {
-            $storage->delete($oldUrl);
+        foreach ($this->community->galleryItems as $oldItem) {
+            if ($oldItem->image_path) {
+                $storage->delete($oldItem->image_path);
+            }
+            $oldItem->delete();
         }
 
         $communityName = $this->community->name;
@@ -44,7 +48,7 @@ class GenerateGalleryImages implements ShouldQueue
             "A compelling 'Join Now' call-to-action graphic for {$communityName}. Bold typography, vibrant gradient background, a prominent sign-up button, and an arrow pointing toward the button. Urgency and excitement in the design. 1200x800 resolution.",
         ];
 
-        $gallery = [];
+        $created = 0;
 
         foreach ($prompts as $i => $prompt) {
             try {
@@ -53,11 +57,15 @@ class GenerateGalleryImages implements ShouldQueue
 
                 $filename = 'community-gallery/' . $this->community->id . '_' . ($i + 1) . '_' . time() . '.png';
                 Storage::put($filename, base64_decode($img->image));
-                $url = Storage::url($filename);
 
-                $gallery[] = $url;
-                $this->community->update(['gallery_images' => $gallery]);
+                CommunityGalleryItem::create([
+                    'community_id' => $this->community->id,
+                    'type'         => 'image',
+                    'image_path'   => $filename,
+                    'position'     => $i,
+                ]);
 
+                $created++;
                 Cache::put($cacheKey, ['status' => 'generating', 'progress' => $i + 1, 'total' => 8], 900);
             } catch (\Throwable $e) {
                 Log::error("Gallery image generation failed for image " . ($i + 1), [
@@ -67,7 +75,7 @@ class GenerateGalleryImages implements ShouldQueue
             }
         }
 
-        Cache::put($cacheKey, ['status' => 'completed', 'progress' => count($gallery), 'total' => 8], 300);
+        Cache::put($cacheKey, ['status' => 'completed', 'progress' => $created, 'total' => 8], 300);
     }
 
     public function failed(\Throwable $exception): void

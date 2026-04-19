@@ -20,7 +20,7 @@ class Community extends Model
 
     protected $fillable = [
         'name', 'slug', 'subdomain', 'custom_domain', 'owner_id', 'description', 'category',
-        'avatar', 'cover_image', 'gallery_images', 'is_private', 'price', 'currency',
+        'avatar', 'cover_image', 'is_private', 'price', 'currency',
         'billing_type', 'affiliate_commission_rate',
         'facebook_pixel_id', 'tiktok_pixel_id', 'google_analytics_id',
         'telegram_bot_token', 'telegram_chat_id',
@@ -32,6 +32,8 @@ class Community extends Model
         'curzzo_topup_packs',
     ];
 
+    protected $appends = ['gallery_images'];
+
     protected function casts(): array
     {
         return [
@@ -39,7 +41,6 @@ class Community extends Model
             'is_featured'               => 'boolean',
             'price'                     => 'decimal:2',
             'affiliate_commission_rate' => 'integer',
-            'gallery_images'            => 'array',
             'landing_page'              => 'array',
             'brand_context'             => 'array',
             'curzzo_topup_packs'        => 'array',
@@ -90,6 +91,36 @@ class Community extends Model
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    public function galleryItems(): HasMany
+    {
+        return $this->hasMany(CommunityGalleryItem::class)->orderBy('position');
+    }
+
+    public function getGalleryImagesAttribute(): array
+    {
+        if (! $this->relationLoaded('galleryItems')) {
+            $this->load('galleryItems');
+        }
+
+        return $this->galleryItems->map(fn (CommunityGalleryItem $item) => [
+            'id'                => $item->id,
+            'type'              => $item->type,
+            'url'               => $item->url,
+            'poster_url'        => $item->poster_url,
+            'hls_url'           => $item->video_ready
+                ? route('communities.gallery.hls', [
+                    'community' => $this->slug,
+                    'item'      => $item->id,
+                    'file'      => 'video.m3u8',
+                ])
+                : null,
+            'transcode_status'  => $item->transcode_status,
+            'transcode_percent' => $item->transcode_percent,
+            'video_ready'       => $item->video_ready,
+            'position'          => $item->position,
+        ])->values()->all();
     }
 
     public function members(): HasMany

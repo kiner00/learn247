@@ -27,28 +27,37 @@
                         <span v-if="community.category" class="inline-block mt-1 text-xs font-medium px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700">{{ community.category }}</span>
                     </div>
 
-                    <!-- Banner image (flush, no side padding) -->
-                    <div class="w-full bg-gray-900 overflow-hidden" style="aspect-ratio: 16/9;">
-                        <img
-                            v-if="activeBannerImg"
-                            :src="activeBannerImg"
-                            :alt="community.name"
-                            class="w-full h-full object-contain transition-all duration-300"
-                        />
-                        <div v-else class="w-full h-full bg-linear-to-br from-indigo-500 to-purple-700" />
+                    <!-- Banner (image or inline-playable video) -->
+                    <GalleryHero v-if="activeItem" :item="activeItem" :alt="community.name" />
+                    <div v-else-if="community.cover_image" class="w-full bg-gray-900 overflow-hidden" style="aspect-ratio: 16/9;">
+                        <img :src="community.cover_image" :alt="community.name" class="w-full h-full object-contain" />
                     </div>
+                    <div v-else class="w-full overflow-hidden bg-linear-to-br from-indigo-500 to-purple-700" style="aspect-ratio: 16/9;" />
 
                     <!-- Gallery strip (directly under banner) — clicking swaps the banner -->
-                    <div v-if="community.gallery_images?.length" class="flex gap-2 px-4 pt-3 overflow-x-auto pb-1">
-                        <div
-                            v-for="(img, i) in community.gallery_images"
-                            :key="i"
-                            class="w-20 h-20 rounded-lg overflow-hidden shrink-0 cursor-pointer border-2 hover:opacity-90 transition-opacity"
-                            :class="activeBannerImg === img ? 'border-indigo-500' : 'border-gray-200'"
-                            @click="activeBannerImg = img"
+                    <div v-if="galleryItems.length" class="flex gap-2 px-4 pt-3 overflow-x-auto pb-1">
+                        <button
+                            v-for="(item, i) in galleryItems"
+                            :key="item.id ?? i"
+                            type="button"
+                            class="relative w-20 h-20 rounded-lg overflow-hidden shrink-0 cursor-pointer border-2 hover:opacity-90 transition-opacity"
+                            :class="activeItem && activeItem.id === item.id ? 'border-indigo-500' : 'border-gray-200'"
+                            @click="activeItem = item"
+                            :aria-label="item.type === 'video' ? 'Play gallery video ' + (i + 1) : 'View gallery image ' + (i + 1)"
                         >
-                            <img :src="img" :alt="'Gallery image ' + (i + 1)" class="w-full h-full object-cover" />
-                        </div>
+                            <img v-if="item.url" :src="item.url" :alt="'Gallery item ' + (i + 1)" class="w-full h-full object-cover" />
+                            <div v-else class="w-full h-full bg-gray-200" />
+                            <span v-if="item.type === 'video'" class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                <span class="w-7 h-7 rounded-full bg-black/55 flex items-center justify-center">
+                                    <svg class="w-3.5 h-3.5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M8 5v14l11-7z" />
+                                    </svg>
+                                </span>
+                            </span>
+                            <span v-if="item.type === 'video' && (item.transcode_status === 'pending' || item.transcode_status === 'processing')" class="absolute bottom-1 left-1 right-1 text-[10px] text-white bg-black/60 rounded px-1 py-0.5 text-center pointer-events-none">
+                                {{ item.transcode_percent || 0 }}%
+                            </span>
+                        </button>
                     </div>
 
                     <div class="px-6 py-4">
@@ -288,6 +297,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import CommunityTabs from '@/Components/CommunityTabs.vue';
 import CommunitySidebarCard from '@/Components/CommunitySidebarCard.vue';
 import InviteModal from '@/Components/InviteModal.vue';
+import GalleryHero from '@/Components/Community/GalleryHero.vue';
 import { usePixel } from '@/composables/usePixel';
 import { useTiktokPixel } from '@/composables/useTiktokPixel';
 import { useGoogleAnalytics } from '@/composables/useGoogleAnalytics';
@@ -340,12 +350,10 @@ onMounted(() => {
         currency:         props.community.currency ?? 'PHP',
     }));
 });
-const lightboxImg     = ref(null);
-const activeBannerImg = ref(
-    props.community.gallery_images?.length
-        ? props.community.gallery_images[0]
-        : (props.community.cover_image || null)
-);
+const lightboxImg = ref(null);
+
+const galleryItems = computed(() => Array.isArray(props.community.gallery_images) ? props.community.gallery_images : []);
+const activeItem   = ref(galleryItems.value.length ? galleryItems.value[0] : null);
 
 const inviteUrl = computed(() =>
     props.affiliate?.code

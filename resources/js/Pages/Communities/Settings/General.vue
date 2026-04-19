@@ -1,10 +1,11 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch, onBeforeUnmount } from 'vue';
 import { Link, useForm, router } from '@inertiajs/vue3';
 import axios from 'axios';
 import CommunitySettingsLayout from '@/Layouts/CommunitySettingsLayout.vue';
 import { IMAGE_DIMENSIONS } from '@/constants';
 import { useDropzone } from '@/composables/useDropzone';
+import { useS3MultipartUpload } from '@/composables/useS3MultipartUpload.js';
 
 const CATEGORIES = ['Tech', 'Business', 'Design', 'Health', 'Education', 'Finance', 'Other'];
 
@@ -114,7 +115,7 @@ function saveImages() {
         });
 }
 
-// ─── Gallery ─────────────────────────────────────────────────────────────────
+// ─── Gallery (mixed image / video) ───────────────────────────────────────────
 const galleryFile      = ref(null);
 const galleryUploading = ref(false);
 const galleryForm      = useForm({ image: null });
@@ -135,7 +136,7 @@ function onGalleryFileChange(e) {
 function uploadGalleryImage() {
     if (!galleryFile.value) return;
     galleryUploading.value = true;
-    galleryForm.post(`/communities/${props.community.slug}/gallery`, {
+    galleryForm.post(`/communities/${props.community.slug}/gallery/images`, {
         preserveScroll: true,
         onSuccess: () => {
             galleryFile.value = null;
@@ -145,9 +146,64 @@ function uploadGalleryImage() {
     });
 }
 
-function removeGalleryImage(index) {
-    router.delete(`/communities/${props.community.slug}/gallery/${index}`, { preserveScroll: true });
+function removeGalleryItem(item) {
+    router.delete(`/communities/${props.community.slug}/gallery/${item.id}`, { preserveScroll: true });
 }
+
+// Video upload via multipart-to-S3 + transcode-status polling.
+const galleryVideoBase = `/communities/${props.community.slug}/gallery/videos`;
+const { uploading: videoUploading, progress: videoProgress, error: videoUploadError, upload: uploadVideo } = useS3MultipartUpload({ baseUrl: galleryVideoBase });
+const videoInputRef = ref(null);
+
+async function onGalleryVideoChange(e) {
+    const file = e.target?.files?.[0];
+    if (!file) return;
+    try {
+        await uploadVideo(file);
+        router.reload({ only: ['community'], preserveScroll: true });
+    } catch {
+        // error.value already populated by composable
+    } finally {
+        if (videoInputRef.value) videoInputRef.value.value = '';
+    }
+}
+
+// Poll transcode status for any video items still processing.
+const transcodePollers = new Map();
+function trackTranscodingItem(itemId) {
+    if (transcodePollers.has(itemId)) return;
+    const timer = setInterval(async () => {
+        try {
+            const { data } = await axios.get(`/communities/${props.community.slug}/gallery/${itemId}/status`);
+            if (data.transcode_status === 'completed' || data.transcode_status === 'failed') {
+                clearInterval(timer);
+                transcodePollers.delete(itemId);
+                router.reload({ only: ['community'], preserveScroll: true });
+            }
+        } catch {
+            clearInterval(timer);
+            transcodePollers.delete(itemId);
+        }
+    }, 3000);
+    transcodePollers.set(itemId, timer);
+}
+
+watch(
+    () => props.community.gallery_images,
+    (items) => {
+        (items ?? []).forEach((item) => {
+            if (item.type === 'video' && (item.transcode_status === 'pending' || item.transcode_status === 'processing')) {
+                trackTranscodingItem(item.id);
+            }
+        });
+    },
+    { immediate: true, deep: true },
+);
+
+onBeforeUnmount(() => {
+    transcodePollers.forEach((t) => clearInterval(t));
+    transcodePollers.clear();
+});
 
 const generalCoverDropRef = ref(null);
 const generalAvatarDropRef = ref(null);
@@ -257,13 +313,11 @@ async function onDrop(index) {
     dropIndex.value = null;
     if (dragIndex.value === null || dragIndex.value === index) return;
 
-    const gallery = [...props.community.gallery_images];
-    const [moved] = gallery.splice(dragIndex.value, 1);
-    gallery.splice(index, 0, moved);
+    const items     = [...(props.community.gallery_images ?? [])];
+    const [moved]   = items.splice(dragIndex.value, 1);
+    items.splice(index, 0, moved);
 
-    // Build order array: map new positions to original indices
-    const original = props.community.gallery_images;
-    const order = gallery.map(url => original.indexOf(url));
+    const order = items.map(item => item.id);
 
     try {
         await axios.put(`/communities/${props.community.slug}/gallery/reorder`, { order });
@@ -732,8 +786,8 @@ function saveBrand() {
             <!-- Existing gallery (drag to reorder) -->
             <div v-if="community.gallery_images?.length" class="flex flex-wrap gap-2 mb-4">
                 <div
-                    v-for="(img, i) in community.gallery_images"
-                    :key="img"
+                    v-for="(item, i) in community.gallery_images"
+                    :key="item.id"
                     draggable="true"
                     @dragstart="onDragStart(i)"
                     @dragover="(e) => onDragOver(e, i)"
@@ -746,41 +800,99 @@ function saveBrand() {
                         dragIndex === i ? 'opacity-40' : 'opacity-100',
                     ]"
                 >
-                    <img :src="img" class="w-full h-full object-cover pointer-events-none" />
+                    <img v-if="item.url" :src="item.url" class="w-full h-full object-cover pointer-events-none" />
+                    <div v-else class="w-full h-full bg-gray-200 pointer-events-none" />
+
+                    <!-- Video transcoding overlay -->
+                    <div
+                        v-if="item.type === 'video' && (item.transcode_status === 'pending' || item.transcode_status === 'processing')"
+                        class="absolute inset-0 flex flex-col items-center justify-center bg-black/65 text-white text-[10px] pointer-events-none"
+                    >
+                        <svg class="w-4 h-4 animate-spin mb-1" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                        {{ item.transcode_percent || 0 }}%
+                    </div>
+
+                    <!-- Video play badge -->
+                    <span
+                        v-else-if="item.type === 'video' && item.transcode_status === 'completed'"
+                        class="absolute inset-0 flex items-center justify-center pointer-events-none"
+                    >
+                        <span class="w-6 h-6 rounded-full bg-black/55 flex items-center justify-center">
+                            <svg class="w-3 h-3 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                        </span>
+                    </span>
+
+                    <!-- Video transcode failed -->
+                    <span
+                        v-else-if="item.type === 'video' && item.transcode_status === 'failed'"
+                        class="absolute inset-0 flex items-center justify-center bg-red-900/70 text-white text-[10px] font-bold pointer-events-none"
+                    >FAILED</span>
+
                     <span class="absolute bottom-0.5 left-0.5 bg-black/50 text-white text-[10px] leading-none px-1 py-0.5 rounded font-medium">{{ i + 1 }}</span>
                     <button
                         type="button"
-                        @click="removeGalleryImage(i)"
+                        @click="removeGalleryItem(item)"
                         class="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs"
                     >✕</button>
                 </div>
             </div>
-            <p v-if="community.gallery_images?.length > 1" class="text-xs text-gray-400 mb-3 -mt-2">Drag images to reorder.</p>
+            <p v-if="community.gallery_images?.length > 1" class="text-xs text-gray-400 mb-3 -mt-2">Drag tiles to reorder.</p>
 
             <!-- Upload new -->
-            <form v-if="!community.gallery_images || community.gallery_images.length < 8" @submit.prevent="uploadGalleryImage">
-                <div
-                    ref="galleryDropRef"
-                    class="flex items-center gap-3 rounded-lg transition-colors"
-                    :class="galleryDragging ? 'ring-2 ring-indigo-300 bg-indigo-50 ring-dashed p-2 -m-2' : ''"
-                >
-                    <label class="flex items-center gap-2 cursor-pointer px-3.5 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
-                        <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                        {{ galleryDragging ? 'Drop image here' : (galleryFile ? galleryFile.name : 'Choose or drag & drop image') }}
-                        <input type="file" accept="image/*" class="hidden" @change="onGalleryFileChange" />
-                    </label>
-                    <button
-                        type="submit"
-                        :disabled="!galleryFile || galleryUploading"
-                        class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+            <div v-if="!community.gallery_images || community.gallery_images.length < 8" class="space-y-3">
+                <form @submit.prevent="uploadGalleryImage">
+                    <div
+                        ref="galleryDropRef"
+                        class="flex items-center gap-3 rounded-lg transition-colors flex-wrap"
+                        :class="galleryDragging ? 'ring-2 ring-indigo-300 bg-indigo-50 ring-dashed p-2 -m-2' : ''"
                     >
-                        {{ galleryUploading ? 'Uploading...' : 'Add image' }}
-                    </button>
-                </div>
-                <p class="mt-1 text-xs text-gray-400">JPG, PNG, WebP — max 15 MB · {{ community.gallery_images?.length ?? 0 }}/8 images &nbsp;·&nbsp; <span class="font-medium text-gray-500">Recommended: 1200 × 800 px</span></p>
-                <p v-if="galleryForm.errors.image" class="mt-1 text-xs text-red-600">{{ galleryForm.errors.image }}</p>
-            </form>
-            <p v-else class="text-xs text-amber-600">Maximum 8 images reached. Remove one to add more.</p>
+                        <label class="flex items-center gap-2 cursor-pointer px-3.5 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                            {{ galleryDragging ? 'Drop image here' : (galleryFile ? galleryFile.name : 'Choose image') }}
+                            <input type="file" accept="image/*" class="hidden" @change="onGalleryFileChange" />
+                        </label>
+                        <button
+                            type="submit"
+                            :disabled="!galleryFile || galleryUploading"
+                            class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                        >
+                            {{ galleryUploading ? 'Uploading…' : 'Add image' }}
+                        </button>
+
+                        <label
+                            v-if="isPro"
+                            class="flex items-center gap-2 cursor-pointer px-3.5 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+                            :class="videoUploading ? 'opacity-60 cursor-not-allowed' : ''"
+                        >
+                            <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                            {{ videoUploading ? `Uploading ${videoProgress}%…` : 'Upload video' }}
+                            <input
+                                ref="videoInputRef"
+                                type="file"
+                                accept="video/mp4,video/quicktime,video/webm"
+                                class="hidden"
+                                :disabled="videoUploading"
+                                @change="onGalleryVideoChange"
+                            />
+                        </label>
+                        <span
+                            v-else
+                            class="inline-flex items-center gap-1 px-2.5 py-2 text-xs font-medium text-gray-400 bg-gray-50 border border-gray-200 rounded-lg cursor-default"
+                            title="Upgrade to PRO to upload videos"
+                        >
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
+                            Upload video
+                            <span class="text-[10px] font-bold text-amber-500 ml-0.5">PRO</span>
+                        </span>
+                    </div>
+                    <p class="mt-1 text-xs text-gray-400">
+                        Images: JPG / PNG / WebP, ≤15 MB · Videos: MP4 / MOV / WebM (transcoded to HLS) · {{ community.gallery_images?.length ?? 0 }}/8 items
+                    </p>
+                    <p v-if="galleryForm.errors.image" class="mt-1 text-xs text-red-600">{{ galleryForm.errors.image }}</p>
+                    <p v-if="videoUploadError" class="mt-1 text-xs text-red-600">{{ videoUploadError }}</p>
+                </form>
+            </div>
+            <p v-else class="text-xs text-amber-600">Maximum 8 items reached. Remove one to add more.</p>
         </div>
     </CommunitySettingsLayout>
 </template>

@@ -2,10 +2,11 @@
 
 namespace App\Jobs;
 
-use App\Models\CourseLesson;
+use App\Contracts\Transcodeable;
 use Aws\MediaConvert\MediaConvertClient;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
@@ -22,24 +23,21 @@ class TranscodeVideoToHls implements ShouldQueue
 
     public int $timeout = 120;
 
-    public function __construct(
-        public CourseLesson $lesson,
-    ) {}
+    public function __construct(public Model&Transcodeable $target) {}
 
     public function handle(): void
     {
-        $lesson = $this->lesson;
+        $target = $this->target;
 
-        $lesson->update([
-            'video_transcode_status'  => 'processing',
-            'video_transcode_percent' => 0,
-        ]);
+        $target->setTranscodeStatus('processing', 0);
 
-        $s3Key = $lesson->video_path;
+        $s3Key = $target->getVideoPath();
 
         if (! $s3Key) {
-            Log::warning('TranscodeVideoToHls: video_path is null, skipping', ['lesson_id' => $lesson->id]);
-            $lesson->update(['video_transcode_status' => 'failed', 'video_transcode_percent' => 0]);
+            Log::warning('TranscodeVideoToHls: video_path is null, skipping', [
+                'target' => $target->getTranscodeIdentifier(),
+            ]);
+            $target->setTranscodeStatus('failed', 0);
             return;
         }
 
@@ -50,13 +48,14 @@ class TranscodeVideoToHls implements ShouldQueue
         }
 
         try {
-            $bucket    = config('filesystems.disks.s3.bucket');
-            $region    = config('services.mediaconvert.region');
-            $endpoint  = config('services.mediaconvert.endpoint');
-            $roleArn   = config('services.mediaconvert.role_arn');
-            $queue     = config('services.mediaconvert.queue');
+            $bucket   = config('filesystems.disks.s3.bucket');
+            $region   = config('services.mediaconvert.region');
+            $endpoint = config('services.mediaconvert.endpoint');
+            $roleArn  = config('services.mediaconvert.role_arn');
+            $queue    = config('services.mediaconvert.queue');
 
-            $hlsPrefix = 'lesson-videos/hls/' . Str::uuid();
+            $hlsPrefix = $target->getHlsPathPrefix() . '/' . Str::uuid();
+            $posterKey = $hlsPrefix . '/poster.0000000.jpg';
 
             $client = new MediaConvertClient([
                 'version'  => '2017-08-29',
@@ -70,128 +69,16 @@ class TranscodeVideoToHls implements ShouldQueue
                 'Settings' => [
                     'Inputs' => [
                         [
-                            'FileInput' => "s3://{$bucket}/{$s3Key}",
+                            'FileInput'      => "s3://{$bucket}/{$s3Key}",
                             'AudioSelectors' => [
-                                'Audio Selector 1' => [
-                                    'DefaultSelection' => 'DEFAULT',
-                                ],
+                                'Audio Selector 1' => ['DefaultSelection' => 'DEFAULT'],
                             ],
                             'VideoSelector' => [],
                         ],
                     ],
                     'OutputGroups' => [
-                        [
-                            'Name'                => 'HLS',
-                            'OutputGroupSettings' => [
-                                'Type'             => 'HLS_GROUP_SETTINGS',
-                                'HlsGroupSettings' => [
-                                    'Destination'      => "s3://{$bucket}/{$hlsPrefix}/video",
-                                    'SegmentLength'    => 6,
-                                    'MinSegmentLength' => 0,
-                                ],
-                            ],
-                            'Outputs' => [
-                                // 360p
-                                [
-                                    'NameModifier' => '_360p',
-                                    'ContainerSettings' => [
-                                        'Container' => 'M3U8',
-                                    ],
-                                    'VideoDescription' => [
-                                        'Width'  => 640,
-                                        'Height' => 360,
-                                        'CodecSettings' => [
-                                            'Codec'        => 'H_264',
-                                            'H264Settings' => [
-                                                'RateControlMode' => 'CBR',
-                                                'Bitrate'         => 800000,
-                                                'CodecProfile'    => 'MAIN',
-                                                'CodecLevel'      => 'LEVEL_4',
-                                            ],
-                                        ],
-                                    ],
-                                    'AudioDescriptions' => [
-                                        [
-                                            'AudioSourceName' => 'Audio Selector 1',
-                                            'CodecSettings'   => [
-                                                'Codec'       => 'AAC',
-                                                'AacSettings' => [
-                                                    'Bitrate'    => 96000,
-                                                    'CodingMode' => 'CODING_MODE_2_0',
-                                                    'SampleRate' => 48000,
-                                                ],
-                                            ],
-                                        ],
-                                    ],
-                                ],
-                                // 720p
-                                [
-                                    'NameModifier' => '_720p',
-                                    'ContainerSettings' => [
-                                        'Container' => 'M3U8',
-                                    ],
-                                    'VideoDescription' => [
-                                        'Width'  => 1280,
-                                        'Height' => 720,
-                                        'CodecSettings' => [
-                                            'Codec'        => 'H_264',
-                                            'H264Settings' => [
-                                                'RateControlMode' => 'CBR',
-                                                'Bitrate'         => 2500000,
-                                                'CodecProfile'    => 'MAIN',
-                                                'CodecLevel'      => 'LEVEL_4',
-                                            ],
-                                        ],
-                                    ],
-                                    'AudioDescriptions' => [
-                                        [
-                                            'AudioSourceName' => 'Audio Selector 1',
-                                            'CodecSettings'   => [
-                                                'Codec'       => 'AAC',
-                                                'AacSettings' => [
-                                                    'Bitrate'    => 128000,
-                                                    'CodingMode' => 'CODING_MODE_2_0',
-                                                    'SampleRate' => 48000,
-                                                ],
-                                            ],
-                                        ],
-                                    ],
-                                ],
-                                // 1080p
-                                [
-                                    'NameModifier' => '_1080p',
-                                    'ContainerSettings' => [
-                                        'Container' => 'M3U8',
-                                    ],
-                                    'VideoDescription' => [
-                                        'Width'  => 1920,
-                                        'Height' => 1080,
-                                        'CodecSettings' => [
-                                            'Codec'        => 'H_264',
-                                            'H264Settings' => [
-                                                'RateControlMode' => 'CBR',
-                                                'Bitrate'         => 5000000,
-                                                'CodecProfile'    => 'HIGH',
-                                                'CodecLevel'      => 'LEVEL_4',
-                                            ],
-                                        ],
-                                    ],
-                                    'AudioDescriptions' => [
-                                        [
-                                            'AudioSourceName' => 'Audio Selector 1',
-                                            'CodecSettings'   => [
-                                                'Codec'       => 'AAC',
-                                                'AacSettings' => [
-                                                    'Bitrate'    => 192000,
-                                                    'CodingMode' => 'CODING_MODE_2_0',
-                                                    'SampleRate' => 48000,
-                                                ],
-                                            ],
-                                        ],
-                                    ],
-                                ],
-                            ],
-                        ],
+                        $this->hlsOutputGroup($bucket, $hlsPrefix),
+                        $this->posterOutputGroup($bucket, $hlsPrefix),
                     ],
                 ],
             ]);
@@ -199,37 +86,113 @@ class TranscodeVideoToHls implements ShouldQueue
             $mcJobId = $result['Job']['Id'];
 
             Log::info('MediaConvert job submitted', [
-                'lesson_id'        => $lesson->id,
+                'target'           => $target->getTranscodeIdentifier(),
                 'mediaconvert_job' => $mcJobId,
                 'hls_prefix'       => $hlsPrefix,
             ]);
 
-            $lesson->update([
-                'video_transcode_percent' => 10,
-            ]);
+            $target->setTranscodeStatus('processing', 10);
 
-            // Dispatch polling job to check when MediaConvert finishes
-            CheckMediaConvertStatus::dispatch($lesson, $mcJobId, $hlsPrefix)
+            CheckMediaConvertStatus::dispatch($target, $mcJobId, $hlsPrefix, $posterKey)
                 ->delay(now()->addSeconds(30));
-
         } catch (\Throwable $e) {
             Log::error('MediaConvert job submission failed', [
-                'lesson_id' => $lesson->id,
-                'error'     => $e->getMessage(),
+                'target' => $target->getTranscodeIdentifier(),
+                'error'  => $e->getMessage(),
             ]);
 
-            $lesson->update([
-                'video_transcode_status'  => 'failed',
-                'video_transcode_percent' => 0,
-            ]);
+            $target->setTranscodeStatus('failed', 0);
 
             throw $e;
         }
     }
 
+    private function hlsOutputGroup(string $bucket, string $hlsPrefix): array
+    {
+        return [
+            'Name'                => 'HLS',
+            'OutputGroupSettings' => [
+                'Type'             => 'HLS_GROUP_SETTINGS',
+                'HlsGroupSettings' => [
+                    'Destination'      => "s3://{$bucket}/{$hlsPrefix}/video",
+                    'SegmentLength'    => 6,
+                    'MinSegmentLength' => 0,
+                ],
+            ],
+            'Outputs' => [
+                $this->hlsRendition('_360p', 640, 360, 800000, 96000, 'MAIN'),
+                $this->hlsRendition('_720p', 1280, 720, 2500000, 128000, 'MAIN'),
+                $this->hlsRendition('_1080p', 1920, 1080, 5000000, 192000, 'HIGH'),
+            ],
+        ];
+    }
+
+    private function hlsRendition(string $name, int $w, int $h, int $videoBitrate, int $audioBitrate, string $profile): array
+    {
+        return [
+            'NameModifier'      => $name,
+            'ContainerSettings' => ['Container' => 'M3U8'],
+            'VideoDescription'  => [
+                'Width'         => $w,
+                'Height'        => $h,
+                'CodecSettings' => [
+                    'Codec'        => 'H_264',
+                    'H264Settings' => [
+                        'RateControlMode' => 'CBR',
+                        'Bitrate'         => $videoBitrate,
+                        'CodecProfile'    => $profile,
+                        'CodecLevel'      => 'LEVEL_4',
+                    ],
+                ],
+            ],
+            'AudioDescriptions' => [
+                [
+                    'AudioSourceName' => 'Audio Selector 1',
+                    'CodecSettings'   => [
+                        'Codec'       => 'AAC',
+                        'AacSettings' => [
+                            'Bitrate'    => $audioBitrate,
+                            'CodingMode' => 'CODING_MODE_2_0',
+                            'SampleRate' => 48000,
+                        ],
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    private function posterOutputGroup(string $bucket, string $hlsPrefix): array
+    {
+        return [
+            'Name'                => 'Poster',
+            'OutputGroupSettings' => [
+                'Type'                    => 'FILE_GROUP_SETTINGS',
+                'FileGroupSettings'       => [
+                    'Destination' => "s3://{$bucket}/{$hlsPrefix}/poster",
+                ],
+            ],
+            'Outputs' => [
+                [
+                    'NameModifier'      => '',
+                    'ContainerSettings' => ['Container' => 'RAW'],
+                    'VideoDescription'  => [
+                        'CodecSettings' => [
+                            'Codec'                => 'FRAME_CAPTURE',
+                            'FrameCaptureSettings' => [
+                                'FramerateNumerator'   => 1,
+                                'FramerateDenominator' => 2,
+                                'MaxCaptures'          => 1,
+                                'Quality'              => 80,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+    }
+
     private function getAccountId(string $roleArn): string
     {
-        // Extract AWS account ID from role ARN: arn:aws:iam::123456789012:role/...
         preg_match('/arn:aws:iam::(\d+):/', $roleArn, $matches);
 
         return $matches[1] ?? '';
@@ -237,14 +200,11 @@ class TranscodeVideoToHls implements ShouldQueue
 
     public function failed(\Throwable $exception): void
     {
-        $this->lesson->update([
-            'video_transcode_status'  => 'failed',
-            'video_transcode_percent' => 0,
-        ]);
+        $this->target->setTranscodeStatus('failed', 0);
 
         Log::error('TranscodeVideoToHls job failed permanently', [
-            'lesson_id' => $this->lesson->id,
-            'error'     => $exception->getMessage(),
+            'target' => $this->target->getTranscodeIdentifier(),
+            'error'  => $exception->getMessage(),
         ]);
     }
 }

@@ -7,7 +7,6 @@ use App\Actions\Community\EnsureMemberAffiliate;
 use App\Actions\Community\GenerateLandingPage;
 use App\Actions\Community\RegenerateLandingSection;
 use App\Actions\Community\JoinCommunity;
-use App\Actions\Community\ManageGallery;
 use App\Actions\Community\SendAnnouncement;
 use App\Actions\Community\SendSmsBlast;
 use App\Actions\Community\SyncCommunityDomains;
@@ -243,25 +242,6 @@ class CommunityController extends Controller
         return back()->with('success', 'AI instructions saved.');
     }
 
-    public function addGalleryImage(Request $request, Community $community, ManageGallery $action): RedirectResponse
-    {
-        $this->authorize('update', $community);
-        $request->validate(['image' => ['required', 'image', 'max:15360']]);
-
-        $action->addImage($community, $request->file('image'));
-
-        return back()->with('success', 'Image added!');
-    }
-
-    public function removeGalleryImage(Request $request, Community $community, int $index, ManageGallery $action): RedirectResponse
-    {
-        $this->authorize('update', $community);
-
-        $action->removeImage($community, $index);
-
-        return back()->with('success', 'Image removed!');
-    }
-
     public function aiGenerateGallery(Request $request, Community $community): JsonResponse
     {
         $this->authorize('update', $community);
@@ -288,29 +268,6 @@ class CommunityController extends Controller
         GenerateSingleGalleryImage::dispatch($community, $galleryCount, $remaining);
 
         return response()->json(['message' => 'Image generation started.'], 202);
-    }
-
-    public function reorderGallery(Request $request, Community $community): JsonResponse
-    {
-        $this->authorize('update', $community);
-
-        $request->validate([
-            'order' => ['required', 'array'],
-            'order.*' => ['integer', 'min:0'],
-        ]);
-
-        $gallery  = $community->gallery_images ?? [];
-        $order    = $request->input('order');
-
-        // Validate that the order array contains valid indices
-        if (count($order) !== count($gallery) || array_diff($order, array_keys($gallery))) {
-            return response()->json(['error' => 'Invalid order.'], 422);
-        }
-
-        $reordered = array_map(fn ($i) => $gallery[$i], $order);
-        $community->update(['gallery_images' => $reordered]);
-
-        return response()->json(['message' => 'Gallery reordered.']);
     }
 
     public function aiGalleryStatus(Request $request, Community $community): JsonResponse

@@ -9,6 +9,8 @@ use App\Actions\Classroom\ManageModule;
 use App\Http\Controllers\Controller;
 use App\Services\Classroom\CourseAccessService;
 use App\Services\Community\PlanLimitService;
+use App\Services\HlsManifestRewriter;
+use App\Services\S3MultipartUploadService;
 use App\Models\Community;
 use App\Models\CommunityMember;
 use App\Models\Course;
@@ -430,7 +432,7 @@ class ClassroomController extends Controller
 
     // ─── Chunked (multipart) video upload ──────────────────────────────────────
 
-    public function initiateMultipartUpload(Request $request, Community $community, PlanLimitService $planLimit): JsonResponse
+    public function initiateMultipartUpload(Request $request, Community $community, PlanLimitService $planLimit, S3MultipartUploadService $multipart): JsonResponse
     {
         $this->authorize('manage', $community);
 
@@ -453,26 +455,12 @@ class ClassroomController extends Controller
             ], 422);
         }
 
-        $extension = pathinfo($request->filename, PATHINFO_EXTENSION) ?: 'mp4';
-        $prefix    = $request->input('type') === 'preview' ? 'course-previews' : 'lesson-videos';
-        $key       = $prefix . '/' . Str::uuid() . '.' . $extension;
+        $prefix = $request->input('type') === 'preview' ? 'course-previews' : 'lesson-videos';
 
-        $client = Storage::disk('s3')->getClient();
-        $bucket = config('filesystems.disks.s3.bucket');
-
-        $result = $client->createMultipartUpload([
-            'Bucket'      => $bucket,
-            'Key'         => $key,
-            'ContentType' => $request->content_type,
-        ]);
-
-        return response()->json([
-            'upload_id' => $result['UploadId'],
-            'key'       => $key,
-        ]);
+        return response()->json($multipart->initiate($request->filename, $request->content_type, $prefix));
     }
 
-    public function getPartUploadUrl(Request $request, Community $community): JsonResponse
+    public function getPartUploadUrl(Request $request, Community $community, S3MultipartUploadService $multipart): JsonResponse
     {
         $this->authorize('manage', $community);
 
@@ -482,44 +470,24 @@ class ClassroomController extends Controller
             'part_number' => ['required', 'integer', 'min:1', 'max:10000'],
         ]);
 
-        $client = Storage::disk('s3')->getClient();
-        $bucket = config('filesystems.disks.s3.bucket');
-
-        $command = $client->getCommand('UploadPart', [
-            'Bucket'     => $bucket,
-            'Key'        => $request->key,
-            'UploadId'   => $request->upload_id,
-            'PartNumber' => $request->part_number,
-        ]);
-
-        $presigned = $client->createPresignedRequest($command, '+30 minutes');
-
         return response()->json([
-            'url' => (string) $presigned->getUri(),
+            'url' => $multipart->partUrl($request->key, $request->upload_id, $request->part_number),
         ]);
     }
 
-    public function completeMultipartUpload(Request $request, Community $community): JsonResponse
+    public function completeMultipartUpload(Request $request, Community $community, S3MultipartUploadService $multipart): JsonResponse
     {
         $this->authorize('manage', $community);
 
         $request->validate([
-            'key'       => ['required', 'string'],
-            'upload_id' => ['required', 'string'],
-            'parts'     => ['required', 'array', 'min:1'],
+            'key'                => ['required', 'string'],
+            'upload_id'          => ['required', 'string'],
+            'parts'              => ['required', 'array', 'min:1'],
             'parts.*.PartNumber' => ['required', 'integer'],
             'parts.*.ETag'       => ['required', 'string'],
         ]);
 
-        $client = Storage::disk('s3')->getClient();
-        $bucket = config('filesystems.disks.s3.bucket');
-
-        $client->completeMultipartUpload([
-            'Bucket'          => $bucket,
-            'Key'             => $request->key,
-            'UploadId'        => $request->upload_id,
-            'MultipartUpload' => ['Parts' => $request->parts],
-        ]);
+        $multipart->complete($request->key, $request->upload_id, $request->parts);
 
         return response()->json([
             'key' => $request->key,
@@ -527,7 +495,7 @@ class ClassroomController extends Controller
         ]);
     }
 
-    public function abortMultipartUpload(Request $request, Community $community): JsonResponse
+    public function abortMultipartUpload(Request $request, Community $community, S3MultipartUploadService $multipart): JsonResponse
     {
         $this->authorize('manage', $community);
 
@@ -536,14 +504,7 @@ class ClassroomController extends Controller
             'upload_id' => ['required', 'string'],
         ]);
 
-        $client = Storage::disk('s3')->getClient();
-        $bucket = config('filesystems.disks.s3.bucket');
-
-        $client->abortMultipartUpload([
-            'Bucket'   => $bucket,
-            'Key'      => $request->key,
-            'UploadId' => $request->upload_id,
-        ]);
+        $multipart->abort($request->key, $request->upload_id);
 
         return response()->json(['ok' => true]);
     }
@@ -608,7 +569,7 @@ class ClassroomController extends Controller
         }
     }
 
-    public function hlsFile(Request $request, Community $community, Course $course, CourseLesson $lesson, string $file, CourseAccessService $access)
+    public function hlsFile(Request $request, Community $community, Course $course, CourseLesson $lesson, string $file, CourseAccessService $access, HlsManifestRewriter $hls)
     {
         $user      = $request->user();
         $canManage = $user?->can('manage', $community) ?? false;
@@ -625,61 +586,16 @@ class ClassroomController extends Controller
             abort(404);
         }
 
-        // Only allow .m3u8 and .ts files
-        $ext = pathinfo($file, PATHINFO_EXTENSION);
-        if (! in_array($ext, ['m3u8', 'ts'])) {
-            abort(400, 'Invalid HLS file type.');
-        }
-
-        $hlsPrefix = dirname($lesson->video_hls_path);
-        $s3Key     = $hlsPrefix . '/' . $file;
-
-        // Prevent path traversal
-        if (! str_starts_with(realpath(dirname($s3Key) . '/') ?: $s3Key, $hlsPrefix)) {
-            abort(403);
-        }
-
-        if (! Storage::exists($s3Key)) {
-            abort(404);
-        }
-
-        $contentType = match ($ext) {
-            'm3u8'  => 'application/vnd.apple.mpegurl',
-            'ts'    => 'video/MP2T',
-            default => 'application/octet-stream',
-        };
-
-        // For .m3u8 playlists, rewrite relative paths to go through our proxy
-        if ($ext === 'm3u8') {
-            $content  = Storage::get($s3Key);
-            $proxyDir = dirname($file);
-            $prefix   = $proxyDir !== '.' ? $proxyDir . '/' : '';
-
-            // Rewrite relative .ts and .m3u8 references to proxy URLs
-            $content = preg_replace_callback(
-                '/^(?!#)(.+\.(ts|m3u8))$/m',
-                function ($matches) use ($community, $course, $lesson, $prefix) {
-                    $refFile = $prefix . $matches[1];
-                    return route('communities.classroom.lessons.hls', [
-                        'community' => $community,
-                        'course'    => $course,
-                        'lesson'    => $lesson,
-                        'file'      => $refFile,
-                    ]);
-                },
-                $content
-            );
-
-            return response($content, 200, [
-                'Content-Type'  => $contentType,
-                'Cache-Control' => 'public, max-age=3600',
-            ]);
-        }
-
-        // For .ts segments, redirect to a signed S3 URL
-        $url = Storage::temporaryUrl($s3Key, now()->addHours(2));
-
-        return redirect($url);
+        return $hls->serve(
+            dirname($lesson->video_hls_path),
+            $file,
+            fn (string $relative) => route('communities.classroom.lessons.hls', [
+                'community' => $community,
+                'course'    => $course,
+                'lesson'    => $lesson,
+                'file'      => $relative,
+            ]),
+        );
     }
 
     public function transcodeStatus(Request $request, Community $community, Course $course, CourseLesson $lesson): JsonResponse

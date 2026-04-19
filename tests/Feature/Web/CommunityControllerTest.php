@@ -313,28 +313,38 @@ class CommunityControllerTest extends TestCase
 
     public function test_owner_can_add_gallery_image(): void
     {
-        Storage::fake('public');
+        Storage::fake();
         $owner     = User::factory()->create();
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner)
-            ->post("/communities/{$community->slug}/gallery", [
+            ->post("/communities/{$community->slug}/gallery/images", [
                 'image' => UploadedFile::fake()->image('gallery.jpg'),
             ])
             ->assertRedirect();
+
+        $this->assertDatabaseHas('community_gallery_items', [
+            'community_id' => $community->id,
+            'type'         => 'image',
+        ]);
     }
 
-    public function test_owner_can_remove_gallery_image(): void
+    public function test_owner_can_remove_gallery_item(): void
     {
         $owner     = User::factory()->create();
-        $community = Community::factory()->create([
-            'owner_id'       => $owner->id,
-            'gallery_images' => ['/storage/img1.jpg', '/storage/img2.jpg'],
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $item      = \App\Models\CommunityGalleryItem::create([
+            'community_id' => $community->id,
+            'type'         => 'image',
+            'image_path'   => 'community-gallery/img1.jpg',
+            'position'     => 0,
         ]);
 
         $this->actingAs($owner)
-            ->delete("/communities/{$community->slug}/gallery/0")
+            ->delete("/communities/{$community->slug}/gallery/{$item->id}")
             ->assertRedirect();
+
+        $this->assertDatabaseMissing('community_gallery_items', ['id' => $item->id]);
     }
 
     public function test_about_page_with_authenticated_user(): void
@@ -1398,23 +1408,26 @@ class CommunityControllerTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($other)
-            ->post("/communities/{$community->slug}/gallery", [
+            ->post("/communities/{$community->slug}/gallery/images", [
                 'image' => UploadedFile::fake()->image('gallery.jpg'),
             ])
             ->assertForbidden();
     }
 
-    public function test_non_owner_cannot_remove_gallery_image(): void
+    public function test_non_owner_cannot_remove_gallery_item(): void
     {
         $owner = User::factory()->create();
         $other = User::factory()->create();
-        $community = Community::factory()->create([
-            'owner_id'       => $owner->id,
-            'gallery_images' => ['/storage/img1.jpg'],
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $item      = \App\Models\CommunityGalleryItem::create([
+            'community_id' => $community->id,
+            'type'         => 'image',
+            'image_path'   => 'community-gallery/img1.jpg',
+            'position'     => 0,
         ]);
 
         $this->actingAs($other)
-            ->delete("/communities/{$community->slug}/gallery/0")
+            ->delete("/communities/{$community->slug}/gallery/{$item->id}")
             ->assertForbidden();
     }
 
@@ -1426,7 +1439,7 @@ class CommunityControllerTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner)
-            ->post("/communities/{$community->slug}/gallery", [])
+            ->post("/communities/{$community->slug}/gallery/images", [])
             ->assertSessionHasErrors('image');
     }
 
@@ -2016,10 +2029,16 @@ class CommunityControllerTest extends TestCase
             'plan'    => CreatorSubscription::PLAN_PRO,
             'status'  => CreatorSubscription::STATUS_ACTIVE,
         ]);
-        $community = Community::factory()->create([
-            'owner_id'       => $owner->id,
-            'gallery_images' => array_fill(0, 8, '/storage/img.jpg'),
-        ]);
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        for ($i = 0; $i < 8; $i++) {
+            \App\Models\CommunityGalleryItem::create([
+                'community_id' => $community->id,
+                'type'         => 'image',
+                'image_path'   => "community-gallery/img-{$i}.jpg",
+                'position'     => $i,
+            ]);
+        }
 
         $this->actingAs($owner)
             ->postJson("/communities/{$community->slug}/gallery/ai-generate")
@@ -2036,10 +2055,7 @@ class CommunityControllerTest extends TestCase
             'plan'    => CreatorSubscription::PLAN_PRO,
             'status'  => CreatorSubscription::STATUS_ACTIVE,
         ]);
-        $community = Community::factory()->create([
-            'owner_id'       => $owner->id,
-            'gallery_images' => [],
-        ]);
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $response = $this->actingAs($owner)
             ->postJson("/communities/{$community->slug}/gallery/ai-generate");
@@ -2068,34 +2084,32 @@ class CommunityControllerTest extends TestCase
     public function test_owner_can_reorder_gallery(): void
     {
         $owner     = User::factory()->create();
-        $community = Community::factory()->create([
-            'owner_id'       => $owner->id,
-            'gallery_images' => ['/img/a.jpg', '/img/b.jpg', '/img/c.jpg'],
-        ]);
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $a = \App\Models\CommunityGalleryItem::create(['community_id' => $community->id, 'type' => 'image', 'image_path' => 'community-gallery/a.jpg', 'position' => 0]);
+        $b = \App\Models\CommunityGalleryItem::create(['community_id' => $community->id, 'type' => 'image', 'image_path' => 'community-gallery/b.jpg', 'position' => 1]);
+        $c = \App\Models\CommunityGalleryItem::create(['community_id' => $community->id, 'type' => 'image', 'image_path' => 'community-gallery/c.jpg', 'position' => 2]);
 
         $response = $this->actingAs($owner)
             ->putJson("/communities/{$community->slug}/gallery/reorder", [
-                'order' => [2, 0, 1],
+                'order' => [$c->id, $a->id, $b->id],
             ]);
 
         $response->assertOk();
-        $this->assertEquals(
-            ['/img/c.jpg', '/img/a.jpg', '/img/b.jpg'],
-            $community->fresh()->gallery_images
-        );
+
+        $items = $community->galleryItems()->get();
+        $this->assertEquals([$c->id, $a->id, $b->id], $items->pluck('id')->all());
     }
 
     public function test_reorder_gallery_rejects_invalid_order(): void
     {
         $owner     = User::factory()->create();
-        $community = Community::factory()->create([
-            'owner_id'       => $owner->id,
-            'gallery_images' => ['/img/a.jpg', '/img/b.jpg'],
-        ]);
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        \App\Models\CommunityGalleryItem::create(['community_id' => $community->id, 'type' => 'image', 'image_path' => 'community-gallery/a.jpg', 'position' => 0]);
+        \App\Models\CommunityGalleryItem::create(['community_id' => $community->id, 'type' => 'image', 'image_path' => 'community-gallery/b.jpg', 'position' => 1]);
 
         $this->actingAs($owner)
             ->putJson("/communities/{$community->slug}/gallery/reorder", [
-                'order' => [0, 5],
+                'order' => [9999, 8888],
             ])
             ->assertStatus(422);
     }
@@ -2104,14 +2118,13 @@ class CommunityControllerTest extends TestCase
     {
         $owner = User::factory()->create();
         $other = User::factory()->create();
-        $community = Community::factory()->create([
-            'owner_id'       => $owner->id,
-            'gallery_images' => ['/img/a.jpg', '/img/b.jpg'],
-        ]);
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $a = \App\Models\CommunityGalleryItem::create(['community_id' => $community->id, 'type' => 'image', 'image_path' => 'community-gallery/a.jpg', 'position' => 0]);
+        $b = \App\Models\CommunityGalleryItem::create(['community_id' => $community->id, 'type' => 'image', 'image_path' => 'community-gallery/b.jpg', 'position' => 1]);
 
         $this->actingAs($other)
             ->putJson("/communities/{$community->slug}/gallery/reorder", [
-                'order' => [1, 0],
+                'order' => [$b->id, $a->id],
             ])
             ->assertForbidden();
     }
@@ -2434,10 +2447,7 @@ class CommunityControllerTest extends TestCase
             'plan'    => CreatorSubscription::PLAN_PRO,
             'status'  => CreatorSubscription::STATUS_ACTIVE,
         ]);
-        $community = Community::factory()->create([
-            'owner_id'       => $owner->id,
-            'gallery_images' => [],
-        ]);
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         \Illuminate\Support\Facades\Cache::put(
             "gallery-generating:{$community->id}",

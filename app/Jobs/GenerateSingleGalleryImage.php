@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Community;
+use App\Models\CommunityGalleryItem;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Cache;
@@ -69,11 +70,15 @@ class GenerateSingleGalleryImage implements ShouldQueue
 
             $filename = 'community-gallery/' . $this->community->id . '_' . ($this->promptIndex + 1) . '_' . time() . '.png';
             Storage::put($filename, base64_decode($img->image));
-            $url = Storage::url($filename);
 
-            $gallery   = $this->community->fresh()->gallery_images ?? [];
-            $gallery[] = $url;
-            $this->community->update(['gallery_images' => $gallery]);
+            $nextPosition = (int) ($this->community->galleryItems()->max('position') ?? -1) + 1;
+
+            CommunityGalleryItem::create([
+                'community_id' => $this->community->id,
+                'type'         => 'image',
+                'image_path'   => $filename,
+                'position'     => $nextPosition,
+            ]);
 
             $newProgress = $generated + 1;
 

@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Contracts\Transcodeable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-class CourseLesson extends Model
+class CourseLesson extends Model implements Transcodeable
 {
     use HasFactory;
 
@@ -39,5 +40,38 @@ class CourseLesson extends Model
     public function comments(): HasMany
     {
         return $this->hasMany(Comment::class, 'lesson_id')->whereNull('parent_id')->with(['author:id,name,username,avatar', 'replies.author:id,name,username,avatar'])->latest();
+    }
+
+    public function getVideoPath(): ?string
+    {
+        return $this->video_path;
+    }
+
+    public function setTranscodeStatus(string $status, int $percent): void
+    {
+        $this->update([
+            'video_transcode_status'  => $status,
+            'video_transcode_percent' => $percent,
+        ]);
+    }
+
+    public function setHlsPath(string $path): void
+    {
+        $this->update(['video_hls_path' => $path]);
+    }
+
+    public function setPosterPath(?string $path): void
+    {
+        // Course lessons don't store posters; ignore.
+    }
+
+    public function getHlsPathPrefix(): string
+    {
+        return 'lesson-videos/hls';
+    }
+
+    public function getTranscodeIdentifier(): string
+    {
+        return "lesson:{$this->id}";
     }
 }

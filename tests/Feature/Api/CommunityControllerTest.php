@@ -524,14 +524,19 @@ class CommunityControllerTest extends TestCase
     public function test_owner_can_remove_gallery_image(): void
     {
         $owner     = User::factory()->create();
-        $community = Community::factory()->create([
-            'owner_id'       => $owner->id,
-            'gallery_images' => ['/storage/img1.jpg'],
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        \App\Models\CommunityGalleryItem::create([
+            'community_id' => $community->id,
+            'type'         => 'image',
+            'image_path'   => 'community-gallery/img1.jpg',
+            'position'     => 0,
         ]);
 
         $this->actingAs($owner, 'sanctum')
             ->deleteJson("/api/communities/{$community->slug}/gallery/0")
             ->assertOk();
+
+        $this->assertCount(0, $community->galleryItems()->get());
     }
 
     public function test_paid_community_join_returns_error(): void
@@ -639,10 +644,20 @@ class CommunityControllerTest extends TestCase
 
     public function test_about_with_gallery_images_returns_urls(): void
     {
-        Storage::fake('public');
+        Storage::fake();
 
-        $community = Community::factory()->create([
-            'gallery_images' => ['gallery/img1.jpg', 'gallery/img2.jpg'],
+        $community = Community::factory()->create();
+        \App\Models\CommunityGalleryItem::create([
+            'community_id' => $community->id,
+            'type'         => 'image',
+            'image_path'   => 'gallery/img1.jpg',
+            'position'     => 0,
+        ]);
+        \App\Models\CommunityGalleryItem::create([
+            'community_id' => $community->id,
+            'type'         => 'image',
+            'image_path'   => 'gallery/img2.jpg',
+            'position'     => 1,
         ]);
 
         $this->getJson("/api/communities/{$community->slug}/about")
