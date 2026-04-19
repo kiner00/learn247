@@ -2787,8 +2787,9 @@ class ClassroomControllerTest extends TestCase
 
         $mockDisk = \Mockery::mock(\Illuminate\Contracts\Filesystem\Filesystem::class);
         $mockDisk->shouldReceive('getClient')->once()->andReturn($mockClient);
+        $mockDisk->shouldReceive('url')->once()->andReturn('https://cdn.example.com/lesson-videos/test-uuid.mp4');
 
-        Storage::shouldReceive('disk')->with('s3')->once()->andReturn($mockDisk);
+        Storage::shouldReceive('disk')->with('s3')->twice()->andReturn($mockDisk);
 
         $response = $this->actingAs($owner)
             ->postJson("/communities/{$community->slug}/classroom/multipart/complete", [
@@ -2887,5 +2888,158 @@ class ClassroomControllerTest extends TestCase
             ]);
 
         $response->assertForbidden();
+    }
+
+    // ─── streamLessonVideo: HLS ready branch ────────────────────────────────
+
+    public function test_stream_lesson_video_returns_hls_url_when_transcode_completed(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Course',
+            'position'     => 1,
+            'is_published' => true,
+        ]);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
+        $lesson = CourseLesson::create([
+            'module_id'              => $module->id,
+            'title'                  => 'Lesson',
+            'position'               => 1,
+            'video_path'             => 'lesson-videos/raw.mp4',
+            'video_hls_path'         => 'lesson-videos/hls/master.m3u8',
+            'video_transcode_status' => 'completed',
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->getJson("/communities/{$community->slug}/classroom/courses/{$course->id}/lessons/{$lesson->id}/stream");
+
+        $response->assertOk();
+        $response->assertJsonFragment(['type' => 'hls']);
+        $response->assertJsonStructure(['url', 'type', 'transcode_status']);
+    }
+
+    // ─── hlsFile: auth/gate branches ────────────────────────────────────────
+
+    public function test_hls_file_returns_404_for_unpublished_course_non_manager(): void
+    {
+        $owner     = User::factory()->create();
+        $member    = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Course',
+            'position'     => 1,
+            'is_published' => false,
+        ]);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
+        $lesson = CourseLesson::create([
+            'module_id'              => $module->id,
+            'title'                  => 'Lesson',
+            'position'               => 1,
+            'video_hls_path'         => 'lesson-videos/hls/master.m3u8',
+            'video_transcode_status' => 'completed',
+        ]);
+
+        $this->actingAs($member)
+            ->get("/communities/{$community->slug}/classroom/courses/{$course->id}/lessons/{$lesson->id}/hls/master.m3u8")
+            ->assertNotFound();
+    }
+
+    public function test_hls_file_returns_403_without_course_access(): void
+    {
+        $owner     = User::factory()->create();
+        $member    = User::factory()->create();
+        $community = Community::factory()->paid()->create(['owner_id' => $owner->id]);
+        Subscription::factory()->active()->create([
+            'community_id' => $community->id,
+            'user_id'      => $member->id,
+        ]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Course',
+            'position'     => 1,
+            'is_published' => true,
+            'access_type'  => 'paid_once',
+            'price'        => 50,
+        ]);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
+        $lesson = CourseLesson::create([
+            'module_id'              => $module->id,
+            'title'                  => 'Lesson',
+            'position'               => 1,
+            'video_hls_path'         => 'lesson-videos/hls/master.m3u8',
+            'video_transcode_status' => 'completed',
+        ]);
+
+        $this->actingAs($member)
+            ->get("/communities/{$community->slug}/classroom/courses/{$course->id}/lessons/{$lesson->id}/hls/master.m3u8")
+            ->assertForbidden();
+    }
+
+    public function test_hls_file_returns_404_when_transcode_not_completed(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Course',
+            'position'     => 1,
+            'is_published' => true,
+        ]);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
+        $lesson = CourseLesson::create([
+            'module_id'              => $module->id,
+            'title'                  => 'Lesson',
+            'position'               => 1,
+            'video_hls_path'         => null,
+            'video_transcode_status' => 'pending',
+        ]);
+
+        $this->actingAs($owner)
+            ->get("/communities/{$community->slug}/classroom/courses/{$course->id}/lessons/{$lesson->id}/hls/master.m3u8")
+            ->assertNotFound();
+    }
+
+    public function test_hls_file_serves_manifest_for_owner(): void
+    {
+        Storage::fake(config('filesystems.default'));
+        Storage::put(
+            'lesson-videos/hls/master.m3u8',
+            "#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=800000\nvideo_720p.m3u8\n"
+        );
+
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $course = Course::create([
+            'community_id' => $community->id,
+            'title'        => 'Course',
+            'position'     => 1,
+            'is_published' => true,
+        ]);
+        $module = CourseModule::create(['course_id' => $course->id, 'title' => 'Module', 'position' => 1]);
+        $lesson = CourseLesson::create([
+            'module_id'              => $module->id,
+            'title'                  => 'Lesson',
+            'position'               => 1,
+            'video_hls_path'         => 'lesson-videos/hls/master.m3u8',
+            'video_transcode_status' => 'completed',
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->get("/communities/{$community->slug}/classroom/courses/{$course->id}/lessons/{$lesson->id}/hls/master.m3u8");
+
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'application/vnd.apple.mpegurl');
     }
 }

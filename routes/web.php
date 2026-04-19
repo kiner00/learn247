@@ -13,12 +13,18 @@ use App\Http\Controllers\Web\ChatController;
 use App\Http\Controllers\Web\CommunityChatbotController;
 use App\Http\Controllers\Web\CommunityDmController;
 use App\Http\Controllers\Web\CommunityGalleryController;
-use App\Http\Controllers\Web\ClassroomController;
+use App\Http\Controllers\Web\CourseController;
+use App\Http\Controllers\Web\CourseLessonController;
+use App\Http\Controllers\Web\CourseModuleController;
+use App\Http\Controllers\Web\LessonVideoController;
 use App\Http\Controllers\Web\DirectMessageController;
 use App\Http\Controllers\Web\CommentController;
 use App\Http\Controllers\Web\CommunityController;
 use App\Http\Controllers\Web\CommunityInviteController;
 use App\Http\Controllers\Web\CommunitySettingsController;
+use App\Http\Controllers\Web\EmailProviderController;
+use App\Http\Controllers\Web\LandingPageController;
+use App\Http\Controllers\Web\SmsSettingsController;
 use App\Http\Controllers\Web\EventController;
 use App\Http\Controllers\Web\CommunityMemberController;
 use App\Http\Controllers\Web\AccountSettingsController;
@@ -205,7 +211,7 @@ Route::middleware('auth')->prefix('account')->group(function () {
 Route::get('/communities', [CommunityController::class, 'index'])->name('communities.index');
 Route::get('/communities/{community}', [CommunityController::class, 'show'])->name('communities.show');
 Route::get('/communities/{community}/about', [CommunityController::class, 'about'])->name('communities.about');
-Route::get('/communities/{community}/landing', [CommunityController::class, 'landing'])->name('communities.landing');
+Route::get('/communities/{community}/landing', [LandingPageController::class, 'show'])->name('communities.landing');
 Route::get('/communities/{community}/calendar', [EventController::class, 'index'])->name('communities.calendar');
 
 // Public HLS proxy for community gallery videos (anonymous landing-page playback)
@@ -214,9 +220,9 @@ Route::get('/communities/{community}/gallery/{item}/hls/{file}', [CommunityGalle
     ->name('communities.gallery.hls');
 
 // ─── Classroom (public read) ───────────────────────────────────────────────
-Route::get('/communities/{community}/classroom', [ClassroomController::class, 'index'])->name('communities.classroom');
-Route::get('/communities/{community}/classroom/courses/{course}', [ClassroomController::class, 'showCourse'])->name('communities.classroom.courses.show');
-Route::post('/communities/{community}/classroom/courses/{course}/preview-play', [ClassroomController::class, 'trackPreviewPlay'])->name('communities.classroom.courses.preview-play');
+Route::get('/communities/{community}/classroom', [CourseController::class, 'index'])->name('communities.classroom');
+Route::get('/communities/{community}/classroom/courses/{course}', [CourseController::class, 'show'])->name('communities.classroom.courses.show');
+Route::post('/communities/{community}/classroom/courses/{course}/preview-play', [CourseController::class, 'trackPreviewPlay'])->name('communities.classroom.courses.preview-play');
 
 Route::middleware('auth')->group(function () {
     Route::post('/communities', [CommunityController::class, 'store'])->name('communities.store');
@@ -262,16 +268,16 @@ Route::middleware('auth')->group(function () {
     Route::delete('/communities/{community}', [CommunityController::class, 'destroy'])->name('communities.destroy');
     Route::post('/communities/{community}/cancel-deletion', [CommunityController::class, 'cancelDeletion'])->name('communities.cancel-deletion');
     Route::post('/communities/{community}/announce', [CommunityController::class, 'announce'])->name('communities.announce')->middleware('throttle:5,1');
-    Route::post('/communities/{community}/sms-config', [CommunityController::class, 'updateSmsConfig'])->name('communities.sms-config');
-    Route::post('/communities/{community}/sms-test', [CommunityController::class, 'testSms'])->name('communities.sms-test');
-    Route::post('/communities/{community}/sms-blast', [CommunityController::class, 'sendSmsBlast'])->name('communities.sms-blast')->middleware('throttle:3,1');
+    Route::post('/communities/{community}/sms-config', [SmsSettingsController::class, 'update'])->name('communities.sms-config');
+    Route::post('/communities/{community}/sms-test', [SmsSettingsController::class, 'test'])->name('communities.sms-test');
+    Route::post('/communities/{community}/sms-blast', [SmsSettingsController::class, 'blast'])->name('communities.sms-blast')->middleware('throttle:3,1');
 
     // ─── Resend Email Config ─────────────────────────────────────────────────
-    Route::post('/communities/{community}/resend-config', [CommunityController::class, 'updateResendConfig'])->name('communities.resend-config');
-    Route::post('/communities/{community}/resend-add-domain', [CommunityController::class, 'resendAddDomain'])->name('communities.resend-add-domain');
-    Route::post('/communities/{community}/resend-verify-domain', [CommunityController::class, 'resendVerifyDomain'])->name('communities.resend-verify-domain');
-    Route::get('/communities/{community}/resend-domain-info', [CommunityController::class, 'resendGetDomain'])->name('communities.resend-domain-info');
-    Route::post('/communities/{community}/resend-test', [CommunityController::class, 'resendTestEmail'])->name('communities.resend-test');
+    Route::post('/communities/{community}/resend-config', [EmailProviderController::class, 'updateConfig'])->name('communities.resend-config');
+    Route::post('/communities/{community}/resend-add-domain', [EmailProviderController::class, 'addDomain'])->name('communities.resend-add-domain');
+    Route::post('/communities/{community}/resend-verify-domain', [EmailProviderController::class, 'verifyDomain'])->name('communities.resend-verify-domain');
+    Route::get('/communities/{community}/resend-domain-info', [EmailProviderController::class, 'getDomain'])->name('communities.resend-domain-info');
+    Route::post('/communities/{community}/resend-test', [EmailProviderController::class, 'testEmail'])->name('communities.resend-test');
 
     // ─── Tags ────────────────────────────────────────────────────────────────
     Route::get('/communities/{community}/tags', [TagController::class, 'index'])->name('communities.tags.index');
@@ -284,11 +290,11 @@ Route::middleware('auth')->group(function () {
     Route::patch('/communities/{community}/workflows/{workflow}', [WorkflowController::class, 'update'])->name('communities.workflows.update');
     Route::post('/communities/{community}/workflows/{workflow}/toggle', [WorkflowController::class, 'toggle'])->name('communities.workflows.toggle');
     Route::delete('/communities/{community}/workflows/{workflow}', [WorkflowController::class, 'destroy'])->name('communities.workflows.destroy');
-    Route::post('/communities/{community}/ai-landing', [CommunityController::class, 'generateLandingPage'])->name('communities.ai-landing');
-    Route::post('/communities/{community}/ai-landing/section', [CommunityController::class, 'regenerateSection'])->name('communities.ai-landing.section');
-    Route::post('/communities/{community}/landing-page/upload-image', [CommunityController::class, 'uploadSectionImage'])->name('communities.landing-page.upload-image');
-    Route::post('/communities/{community}/landing-page/upload-video', [CommunityController::class, 'uploadSectionVideo'])->name('communities.landing-page.upload-video');
-    Route::patch('/communities/{community}/landing-page', [CommunityController::class, 'updateLandingPage'])->name('communities.landing-page.update');
+    Route::post('/communities/{community}/ai-landing', [LandingPageController::class, 'generate'])->name('communities.ai-landing');
+    Route::post('/communities/{community}/ai-landing/section', [LandingPageController::class, 'regenerateSection'])->name('communities.ai-landing.section');
+    Route::post('/communities/{community}/landing-page/upload-image', [LandingPageController::class, 'uploadImage'])->name('communities.landing-page.upload-image');
+    Route::post('/communities/{community}/landing-page/upload-video', [LandingPageController::class, 'uploadVideo'])->name('communities.landing-page.upload-video');
+    Route::patch('/communities/{community}/landing-page', [LandingPageController::class, 'update'])->name('communities.landing-page.update');
 
     // Member management (admin only — enforced by Action)
     Route::delete('/communities/{community}/members/{user}', [CommunityMemberController::class, 'destroy'])->name('communities.members.destroy');
@@ -346,30 +352,30 @@ Route::middleware('auth')->group(function () {
         Route::post('/communities/{community}/posts', [PostController::class, 'store'])->name('posts.store');
 
         // ─── Classroom (mutations — membership required) ───────────────────────
-        Route::post('/communities/{community}/classroom/courses/reorder', [ClassroomController::class, 'reorderCourses'])->name('communities.classroom.courses.reorder');
-        Route::post('/communities/{community}/classroom/courses', [ClassroomController::class, 'storeCourse'])->name('communities.classroom.courses.store');
-        Route::post('/communities/{community}/classroom/courses/{course}/update', [ClassroomController::class, 'updateCourse'])->name('communities.classroom.courses.update');
-        Route::delete('/communities/{community}/classroom/courses/{course}', [ClassroomController::class, 'destroyCourse'])->name('communities.classroom.courses.destroy');
-        Route::post('/communities/{community}/classroom/courses/{course}/toggle-publish', [ClassroomController::class, 'togglePublish'])->name('communities.classroom.courses.toggle-publish');
-        Route::post('/communities/{community}/classroom/courses/{course}/modules', [ClassroomController::class, 'storeModule'])->name('communities.classroom.modules.store');
-        Route::match(['patch', 'post'], '/communities/{community}/classroom/courses/{course}/modules/{module}', [ClassroomController::class, 'updateModule'])->name('communities.classroom.modules.update');
-        Route::delete('/communities/{community}/classroom/courses/{course}/modules/{module}', [ClassroomController::class, 'destroyModule'])->name('communities.classroom.modules.destroy');
-        Route::post('/communities/{community}/classroom/courses/{course}/modules/{module}/lessons', [ClassroomController::class, 'storeLesson'])->name('communities.classroom.lessons.store');
-        Route::post('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/complete', [ClassroomController::class, 'completeLesson'])->name('communities.classroom.lessons.complete');
-        Route::post('/communities/{community}/classroom/courses/{course}/modules/{module}/lessons/reorder', [ClassroomController::class, 'reorderLessons'])->name('communities.classroom.lessons.reorder');
-        Route::match(['patch', 'post'], '/communities/{community}/classroom/courses/{course}/modules/{module}/lessons/{lesson}', [ClassroomController::class, 'updateLesson'])->name('communities.classroom.lessons.update');
-        Route::delete('/communities/{community}/classroom/courses/{course}/modules/{module}/lessons/{lesson}', [ClassroomController::class, 'destroyLesson'])->name('communities.classroom.lessons.destroy');
-        Route::post('/communities/{community}/classroom/lesson-images', [ClassroomController::class, 'uploadLessonImage'])->name('communities.classroom.lesson-images');
-        Route::post('/communities/{community}/classroom/lesson-videos', [ClassroomController::class, 'uploadLessonVideo'])->name('communities.classroom.lesson-videos');
-        Route::post('/communities/{community}/classroom/preview-videos', [ClassroomController::class, 'uploadPreviewVideo'])->name('communities.classroom.preview-videos');
-        Route::post('/communities/{community}/classroom/multipart/initiate', [ClassroomController::class, 'initiateMultipartUpload'])->name('communities.classroom.multipart.initiate');
-        Route::post('/communities/{community}/classroom/multipart/part-url', [ClassroomController::class, 'getPartUploadUrl'])->name('communities.classroom.multipart.part-url');
-        Route::post('/communities/{community}/classroom/multipart/complete', [ClassroomController::class, 'completeMultipartUpload'])->name('communities.classroom.multipart.complete');
-        Route::post('/communities/{community}/classroom/multipart/abort', [ClassroomController::class, 'abortMultipartUpload'])->name('communities.classroom.multipart.abort');
-        Route::get('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/stream', [ClassroomController::class, 'streamLessonVideo'])->name('communities.classroom.lessons.stream');
-        Route::get('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/transcode-status', [ClassroomController::class, 'transcodeStatus'])->name('communities.classroom.lessons.transcode-status');
-        Route::get('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/hls/{file}', [ClassroomController::class, 'hlsFile'])->where('file', '.*')->name('communities.classroom.lessons.hls');
-        Route::post('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/video-play', [ClassroomController::class, 'trackLessonVideoPlay'])->name('communities.classroom.lessons.video-play');
+        Route::post('/communities/{community}/classroom/courses/reorder', [CourseController::class, 'reorder'])->name('communities.classroom.courses.reorder');
+        Route::post('/communities/{community}/classroom/courses', [CourseController::class, 'store'])->name('communities.classroom.courses.store');
+        Route::post('/communities/{community}/classroom/courses/{course}/update', [CourseController::class, 'update'])->name('communities.classroom.courses.update');
+        Route::delete('/communities/{community}/classroom/courses/{course}', [CourseController::class, 'destroy'])->name('communities.classroom.courses.destroy');
+        Route::post('/communities/{community}/classroom/courses/{course}/toggle-publish', [CourseController::class, 'togglePublish'])->name('communities.classroom.courses.toggle-publish');
+        Route::post('/communities/{community}/classroom/courses/{course}/modules', [CourseModuleController::class, 'store'])->name('communities.classroom.modules.store');
+        Route::match(['patch', 'post'], '/communities/{community}/classroom/courses/{course}/modules/{module}', [CourseModuleController::class, 'update'])->name('communities.classroom.modules.update');
+        Route::delete('/communities/{community}/classroom/courses/{course}/modules/{module}', [CourseModuleController::class, 'destroy'])->name('communities.classroom.modules.destroy');
+        Route::post('/communities/{community}/classroom/courses/{course}/modules/{module}/lessons', [CourseLessonController::class, 'store'])->name('communities.classroom.lessons.store');
+        Route::post('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/complete', [CourseLessonController::class, 'complete'])->name('communities.classroom.lessons.complete');
+        Route::post('/communities/{community}/classroom/courses/{course}/modules/{module}/lessons/reorder', [CourseLessonController::class, 'reorder'])->name('communities.classroom.lessons.reorder');
+        Route::match(['patch', 'post'], '/communities/{community}/classroom/courses/{course}/modules/{module}/lessons/{lesson}', [CourseLessonController::class, 'update'])->name('communities.classroom.lessons.update');
+        Route::delete('/communities/{community}/classroom/courses/{course}/modules/{module}/lessons/{lesson}', [CourseLessonController::class, 'destroy'])->name('communities.classroom.lessons.destroy');
+        Route::post('/communities/{community}/classroom/lesson-images', [CourseLessonController::class, 'uploadImage'])->name('communities.classroom.lesson-images');
+        Route::post('/communities/{community}/classroom/lesson-videos', [LessonVideoController::class, 'uploadLessonVideo'])->name('communities.classroom.lesson-videos');
+        Route::post('/communities/{community}/classroom/preview-videos', [LessonVideoController::class, 'uploadPreviewVideo'])->name('communities.classroom.preview-videos');
+        Route::post('/communities/{community}/classroom/multipart/initiate', [LessonVideoController::class, 'initiateMultipartUpload'])->name('communities.classroom.multipart.initiate');
+        Route::post('/communities/{community}/classroom/multipart/part-url', [LessonVideoController::class, 'getPartUploadUrl'])->name('communities.classroom.multipart.part-url');
+        Route::post('/communities/{community}/classroom/multipart/complete', [LessonVideoController::class, 'completeMultipartUpload'])->name('communities.classroom.multipart.complete');
+        Route::post('/communities/{community}/classroom/multipart/abort', [LessonVideoController::class, 'abortMultipartUpload'])->name('communities.classroom.multipart.abort');
+        Route::get('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/stream', [LessonVideoController::class, 'stream'])->name('communities.classroom.lessons.stream');
+        Route::get('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/transcode-status', [LessonVideoController::class, 'transcodeStatus'])->name('communities.classroom.lessons.transcode-status');
+        Route::get('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/hls/{file}', [LessonVideoController::class, 'hlsFile'])->where('file', '.*')->name('communities.classroom.lessons.hls');
+        Route::post('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/video-play', [LessonVideoController::class, 'trackPlay'])->name('communities.classroom.lessons.video-play');
 
         // Lesson comments
         Route::post('/communities/{community}/classroom/courses/{course}/lessons/{lesson}/comments', [LessonCommentController::class, 'store'])->name('lesson.comments.store');

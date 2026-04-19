@@ -23,6 +23,9 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 /coverage-report
+/storage/coverage
+/storage/coverage-cc
+/storage/coverage-classroom
 
 **/caddy
 frankenphp

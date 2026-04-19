@@ -2491,4 +2491,321 @@ class CommunityControllerTest extends TestCase
 
         $this->assertNull(Community::find($community->id));
     }
+
+    // ─── members: search branch ─────────────────────────────────────────────
+
+    public function test_members_page_search_as_owner_matches_email(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        CommunityMember::factory()->admin()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
+
+        $alice = User::factory()->create(['name' => 'Alice', 'username' => 'alice', 'email' => 'alice@example.com']);
+        $bob   = User::factory()->create(['name' => 'Bob', 'username' => 'bob', 'email' => 'bob@example.com']);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $alice->id]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $bob->id]);
+
+        $this->actingAs($owner)
+            ->get("/communities/{$community->slug}/members?search=alice@")
+            ->assertOk();
+    }
+
+    public function test_members_page_search_as_non_owner_skips_email_branch(): void
+    {
+        $owner     = User::factory()->create();
+        $member    = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+
+        $carol = User::factory()->create(['name' => 'Carol', 'username' => 'carol', 'email' => 'carol@example.com']);
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $carol->id]);
+
+        $this->actingAs($member)
+            ->get("/communities/{$community->slug}/members?search=carol")
+            ->assertOk();
+    }
+
+    // ─── curzzos: has_access map ────────────────────────────────────────────
+
+    public function test_curzzos_page_attaches_has_access_flag(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        \App\Models\Curzzo::create([
+            'community_id' => $community->id,
+            'name'         => 'Test Bot',
+            'instructions' => 'Be helpful.',
+            'is_active'    => true,
+        ]);
+
+        $response = $this->actingAs($owner)->get("/communities/{$community->slug}/curzzos");
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Communities/Curzzos')
+            ->has('curzzos', 1)
+            ->has('curzzos.0.has_access')
+        );
+    }
+
+    // ─── updateResendConfig: validation exception ───────────────────────────
+
+    public function test_update_resend_config_handles_validation_exception(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        \App\Services\Email\EmailProviderFactory::$fakeProvider = new class implements \App\Contracts\EmailProvider {
+            public function validateApiKey(\App\Models\Community $community): bool { throw new \RuntimeException('network down'); }
+            public function sendEmail(\App\Models\Community $community, array $params): array { return []; }
+            public function sendBatch(\App\Models\Community $community, array $emails): array { return []; }
+            public function addDomain(\App\Models\Community $community, string $domain): array { return []; }
+            public function getDomain(\App\Models\Community $community, string $domainId): array { return []; }
+            public function verifyDomain(\App\Models\Community $community, string $domainId): array { return []; }
+            public static function id(): string { return 'fake'; }
+            public static function label(): string { return 'Fake'; }
+        };
+
+        $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/resend-config", [
+                'email_provider' => 'resend',
+                'resend_api_key' => 're_test',
+            ])
+            ->assertRedirect()
+            ->assertSessionHasErrors('resend_api_key');
+
+        \App\Services\Email\EmailProviderFactory::$fakeProvider = null;
+    }
+
+    // ─── resendAddDomain: exception branch ──────────────────────────────────
+
+    public function test_resend_add_domain_handles_exception(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create([
+            'owner_id'       => $owner->id,
+            'resend_api_key' => 're_test_key',
+        ]);
+
+        \App\Services\Email\EmailProviderFactory::$fakeProvider = new class implements \App\Contracts\EmailProvider {
+            public function validateApiKey(\App\Models\Community $community): bool { return true; }
+            public function sendEmail(\App\Models\Community $community, array $params): array { return []; }
+            public function sendBatch(\App\Models\Community $community, array $emails): array { return []; }
+            public function addDomain(\App\Models\Community $community, string $domain): array { throw new \RuntimeException('domain already exists'); }
+            public function getDomain(\App\Models\Community $community, string $domainId): array { return []; }
+            public function verifyDomain(\App\Models\Community $community, string $domainId): array { return []; }
+            public static function id(): string { return 'fake'; }
+            public static function label(): string { return 'Fake'; }
+        };
+
+        $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/resend-add-domain", ['domain' => 'mail.example.com'])
+            ->assertRedirect()
+            ->assertSessionHasErrors('resend_domain');
+
+        \App\Services\Email\EmailProviderFactory::$fakeProvider = null;
+    }
+
+    // ─── resendVerifyDomain: exception branch ───────────────────────────────
+
+    public function test_resend_verify_domain_handles_exception(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create([
+            'owner_id'         => $owner->id,
+            'resend_api_key'   => 're_test_key',
+            'resend_domain_id' => 'dom_123',
+        ]);
+
+        \App\Services\Email\EmailProviderFactory::$fakeProvider = new class implements \App\Contracts\EmailProvider {
+            public function validateApiKey(\App\Models\Community $community): bool { return true; }
+            public function sendEmail(\App\Models\Community $community, array $params): array { return []; }
+            public function sendBatch(\App\Models\Community $community, array $emails): array { return []; }
+            public function addDomain(\App\Models\Community $community, string $domain): array { return []; }
+            public function getDomain(\App\Models\Community $community, string $domainId): array { return []; }
+            public function verifyDomain(\App\Models\Community $community, string $domainId): array { throw new \RuntimeException('verify failed'); }
+            public static function id(): string { return 'fake'; }
+            public static function label(): string { return 'Fake'; }
+        };
+
+        $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/resend-verify-domain")
+            ->assertRedirect()
+            ->assertSessionHasErrors('resend_domain');
+
+        \App\Services\Email\EmailProviderFactory::$fakeProvider = null;
+    }
+
+    // ─── resendGetDomain: exception branch ──────────────────────────────────
+
+    public function test_resend_get_domain_handles_exception(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create([
+            'owner_id'         => $owner->id,
+            'resend_api_key'   => 're_test_key',
+            'resend_domain_id' => 'dom_123',
+        ]);
+
+        \App\Services\Email\EmailProviderFactory::$fakeProvider = new class implements \App\Contracts\EmailProvider {
+            public function validateApiKey(\App\Models\Community $community): bool { return true; }
+            public function sendEmail(\App\Models\Community $community, array $params): array { return []; }
+            public function sendBatch(\App\Models\Community $community, array $emails): array { return []; }
+            public function addDomain(\App\Models\Community $community, string $domain): array { return []; }
+            public function getDomain(\App\Models\Community $community, string $domainId): array { throw new \RuntimeException('not found'); }
+            public function verifyDomain(\App\Models\Community $community, string $domainId): array { return []; }
+            public static function id(): string { return 'fake'; }
+            public static function label(): string { return 'Fake'; }
+        };
+
+        $this->actingAs($owner)
+            ->getJson("/communities/{$community->slug}/resend-domain-info")
+            ->assertStatus(500)
+            ->assertJsonFragment(['error' => 'not found']);
+
+        \App\Services\Email\EmailProviderFactory::$fakeProvider = null;
+    }
+
+    // ─── resendTestEmail: sandbox fallback + outer catch ────────────────────
+
+    public function test_resend_test_email_falls_back_to_sandbox_on_unverified_domain(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create([
+            'owner_id'        => $owner->id,
+            'email_provider'  => 'resend',
+            'resend_api_key'  => 're_test_key',
+            'resend_from_email' => 'hello@unverified.example',
+        ]);
+
+        \App\Services\Email\EmailProviderFactory::$fakeProvider = new class implements \App\Contracts\EmailProvider {
+            public int $calls = 0;
+            public function validateApiKey(\App\Models\Community $community): bool { return true; }
+            public function sendEmail(\App\Models\Community $community, array $params): array {
+                $this->calls++;
+                if ($this->calls === 1) {
+                    throw new \RuntimeException('The domain is not verified');
+                }
+                return ['id' => 'msg_sandbox'];
+            }
+            public function sendBatch(\App\Models\Community $community, array $emails): array { return []; }
+            public function addDomain(\App\Models\Community $community, string $domain): array { return []; }
+            public function getDomain(\App\Models\Community $community, string $domainId): array { return []; }
+            public function verifyDomain(\App\Models\Community $community, string $domainId): array { return []; }
+            public static function id(): string { return 'fake'; }
+            public static function label(): string { return 'Fake'; }
+        };
+
+        $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/resend-test", ['test_email' => 'recipient@example.com'])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        \App\Services\Email\EmailProviderFactory::$fakeProvider = null;
+    }
+
+    public function test_resend_test_email_handles_generic_failure(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create([
+            'owner_id'       => $owner->id,
+            'email_provider' => 'sendgrid',
+            'resend_api_key' => 'sg_test_key',
+        ]);
+
+        \App\Services\Email\EmailProviderFactory::$fakeProvider = new class implements \App\Contracts\EmailProvider {
+            public function validateApiKey(\App\Models\Community $community): bool { return true; }
+            public function sendEmail(\App\Models\Community $community, array $params): array { throw new \RuntimeException('API key revoked'); }
+            public function sendBatch(\App\Models\Community $community, array $emails): array { return []; }
+            public function addDomain(\App\Models\Community $community, string $domain): array { return []; }
+            public function getDomain(\App\Models\Community $community, string $domainId): array { return []; }
+            public function verifyDomain(\App\Models\Community $community, string $domainId): array { return []; }
+            public static function id(): string { return 'fake'; }
+            public static function label(): string { return 'Fake'; }
+        };
+
+        $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/resend-test", ['test_email' => 'recipient@example.com'])
+            ->assertRedirect()
+            ->assertSessionHasErrors('resend_test');
+
+        \App\Services\Email\EmailProviderFactory::$fakeProvider = null;
+    }
+
+    // ─── landing: selected-ids filter branches ──────────────────────────────
+
+    public function test_landing_page_filters_courses_and_curzzos_by_selected_ids(): void
+    {
+        $owner     = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $includedCourse = Course::factory()->create(['community_id' => $community->id, 'is_published' => true, 'access_type' => 'paid_once', 'price' => 10]);
+        $excludedCourse = Course::factory()->create(['community_id' => $community->id, 'is_published' => true, 'access_type' => 'paid_once', 'price' => 20]);
+
+        $includedCurzzo = \App\Models\Curzzo::create([
+            'community_id' => $community->id,
+            'name'         => 'Included Bot',
+            'instructions' => 'Help.',
+            'is_active'    => true,
+        ]);
+        \App\Models\Curzzo::create([
+            'community_id' => $community->id,
+            'name'         => 'Excluded Bot',
+            'instructions' => 'Help.',
+            'is_active'    => true,
+        ]);
+
+        $community->update([
+            'landing_page' => [
+                'hero'                        => ['headline' => 'Welcome'],
+                'included_courses_selected'   => [$includedCourse->id],
+                'curzzos_selected'            => [$includedCurzzo->id],
+            ],
+        ]);
+
+        $this->get("/communities/{$community->slug}/landing")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Communities/Landing')
+                ->has('courses', 1)
+                ->where('courses.0.id', $includedCourse->id)
+                ->has('curzzos', 1)
+                ->where('curzzos.0.id', $includedCurzzo->id)
+            );
+    }
+
+    // ─── uploadSectionVideo: success path ───────────────────────────────────
+
+    public function test_upload_section_video_succeeds_for_pro_owner(): void
+    {
+        $owner = User::factory()->create();
+        CreatorSubscription::create([
+            'user_id'    => $owner->id,
+            'plan'       => CreatorSubscription::PLAN_PRO,
+            'status'     => CreatorSubscription::STATUS_ACTIVE,
+            'expires_at' => now()->addYear(),
+        ]);
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $mockRequest = new \GuzzleHttp\Psr7\Request('PUT', 'https://s3.amazonaws.com/test-bucket/landing-videos/uuid.mp4');
+        $mockClient = \Mockery::mock(\Aws\S3\S3Client::class);
+        $mockClient->shouldReceive('getCommand')->once()->andReturn(new \Aws\Command('PutObject'));
+        $mockClient->shouldReceive('createPresignedRequest')->once()->andReturn($mockRequest);
+
+        $mockDisk = \Mockery::mock(\Illuminate\Contracts\Filesystem\Filesystem::class);
+        $mockDisk->shouldReceive('getClient')->once()->andReturn($mockClient);
+        $mockDisk->shouldReceive('url')->once()->andReturn('https://cdn.example.com/landing-videos/uuid.mp4');
+
+        Storage::shouldReceive('disk')->with('s3')->twice()->andReturn($mockDisk);
+
+        $response = $this->actingAs($owner)
+            ->postJson("/communities/{$community->slug}/landing-page/upload-video", [
+                'filename'     => 'promo.mp4',
+                'content_type' => 'video/mp4',
+                'size'         => 5 * 1024 * 1024,
+            ]);
+
+        $response->assertOk();
+        $response->assertJsonStructure(['upload_url', 'key', 'url']);
+    }
 }
