@@ -41,11 +41,15 @@ class StartSubscriptionCheckout
             // Strategy decides how to charge: invoice (one-time) or recurring plan (monthly)
             $strategy = CheckoutStrategyFactory::make($community->billing_type);
 
+            $description = $community->hasPromoFirstMonth()
+                ? "First month: {$community->name}"
+                : "Subscription to {$community->name}";
+
             $result = $strategy->initiatePayment(new CheckoutContext(
                 user: $user,
-                amount: (float) $community->price,
+                amount: $community->firstChargeAmount(),
                 currency: $community->currency,
-                description: "Subscription to {$community->name}",
+                description: $description,
                 referenceId: "{$community->slug}_sub_{$user->id}_".time(),
                 successUrl: $successRedirectUrl ?? config('app.url')."/communities/{$community->slug}",
                 failureUrl: config('app.url')."/communities/{$community->slug}",

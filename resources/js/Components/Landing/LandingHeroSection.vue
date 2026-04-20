@@ -101,21 +101,20 @@
             </button>
 
             <p v-if="!('price_note' in (lp.hero ?? {})) || lp.hero.price_note" class="mt-4 text-slate-400" :style="{ fontSize: (lp.hero?.price_note_font_size || 14) + 'px' }">
-                {{ lp.hero?.price_note
-                    || (community.price > 0
-                        ? `${community.currency ?? 'PHP'} ${Number(community.price).toLocaleString()}${community.billing_type === 'one_time' ? ' one-time' : '/month'}`
-                        : 'Free to join') }}
+                {{ lp.hero?.price_note || autoPriceNote }}
             </p>
         </div>
     </section>
 </template>
 
 <script setup>
+import { toRef } from 'vue';
 import SafeHtmlRenderer from '@/Components/SafeHtmlRenderer.vue';
 import { sanitizeHtml } from '@/utils/sanitize';
 import { resolveMediaUrl } from '@/utils/media';
+import { usePricingLabel } from '@/composables/usePricingLabel.js';
 
-defineProps({
+const props = defineProps({
     lp: { type: Object, required: true },
     community: { type: Object, required: true },
     invitedBy: { type: Object, default: null },
@@ -126,6 +125,8 @@ defineProps({
     editableClass: { type: String, default: '' },
     normalizeVideoUrl: { type: Function, required: true },
 });
+
+const autoPriceNote = usePricingLabel(toRef(props, 'community'));
 
 defineEmits(['openColorPopover', 'elFocus', 'elBlur', 'cta']);
 

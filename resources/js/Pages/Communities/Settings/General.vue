@@ -6,6 +6,7 @@ import CommunitySettingsLayout from '@/Layouts/CommunitySettingsLayout.vue';
 import { IMAGE_DIMENSIONS } from '@/constants';
 import { useDropzone } from '@/composables/useDropzone';
 import { useS3MultipartUpload } from '@/composables/useS3MultipartUpload.js';
+import { usePricingLabel } from '@/composables/usePricingLabel.js';
 
 const CATEGORIES = ['Tech', 'Business', 'Design', 'Health', 'Education', 'Finance', 'Other'];
 
@@ -19,14 +20,24 @@ const props = defineProps({
 const saved = ref(false);
 
 const form = useForm({
-    name:         props.community.name,
-    description:  props.community.description ?? '',
-    category:     props.community.category ?? '',
-    price:        props.community.price ?? 0,
-    currency:     props.community.currency ?? 'PHP',
-    billing_type: props.community.billing_type ?? 'monthly',
-    is_private:   props.community.is_private ?? false,
+    name:              props.community.name,
+    description:       props.community.description ?? '',
+    category:          props.community.category ?? '',
+    price:             props.community.price ?? 0,
+    currency:          props.community.currency ?? 'PHP',
+    billing_type:      props.community.billing_type ?? 'monthly',
+    trial_mode:        props.community.trial_mode ?? 'none',
+    trial_days:        props.community.trial_days ?? 7,
+    free_until:        props.community.free_until ? String(props.community.free_until).slice(0, 10) : '',
+    first_month_price: props.community.first_month_price ?? '',
+    is_private:        props.community.is_private ?? false,
 });
+
+const pricingPreview = usePricingLabel(form);
+const trialTileClass = (active) => [
+    'cursor-pointer rounded-xl border-2 p-3 transition-all block',
+    active ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300',
+];
 
 function save() {
     form.transform(data => ({ ...data, _method: 'PATCH' }))
@@ -487,6 +498,86 @@ function saveBrand() {
                                 <option value="PHP">PHP – Philippine Peso</option>
                                 <option value="USD">USD – US Dollar</option>
                             </select>
+                        </div>
+                    </div>
+
+                    <!-- Trial & promotional pricing -->
+                    <div v-if="Number(form.price) > 0" class="space-y-4 pt-4 border-t border-gray-100">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-800">Trial &amp; promotional pricing</h3>
+                            <p class="text-xs text-gray-400 mt-0.5">Attract new members with a free trial or a discounted first month. Changes apply only to new joiners.</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Free trial</label>
+                            <div class="grid grid-cols-3 gap-3">
+                                <label :class="trialTileClass(form.trial_mode === 'none')">
+                                    <input type="radio" value="none" v-model="form.trial_mode" class="sr-only" />
+                                    <div class="text-sm font-bold text-gray-800">No trial</div>
+                                    <div class="text-xs text-gray-400 mt-0.5">Charge immediately</div>
+                                </label>
+                                <label :class="trialTileClass(form.trial_mode === 'per_user')">
+                                    <input type="radio" value="per_user" v-model="form.trial_mode" class="sr-only" />
+                                    <div class="text-sm font-bold text-gray-800">Per-user</div>
+                                    <div class="text-xs text-gray-400 mt-0.5">N days from join</div>
+                                </label>
+                                <label :class="trialTileClass(form.trial_mode === 'window')">
+                                    <input type="radio" value="window" v-model="form.trial_mode" class="sr-only" />
+                                    <div class="text-sm font-bold text-gray-800">Calendar window</div>
+                                    <div class="text-xs text-gray-400 mt-0.5">Free until a date</div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div v-if="form.trial_mode === 'per_user'">
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Trial length <span class="text-gray-400 font-normal">(days)</span></label>
+                            <input
+                                v-model.number="form.trial_days"
+                                type="number"
+                                min="1"
+                                max="365"
+                                class="w-full px-3.5 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                :class="form.errors.trial_days ? 'border-red-400' : 'border-gray-300'"
+                            />
+                            <p v-if="form.errors.trial_days" class="mt-1 text-xs text-red-600">{{ form.errors.trial_days }}</p>
+                            <p v-else class="mt-1 text-xs text-gray-400">Each member gets this many days of free access from their join date.</p>
+                        </div>
+
+                        <div v-if="form.trial_mode === 'window'">
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Free until</label>
+                            <input
+                                v-model="form.free_until"
+                                type="date"
+                                class="w-full px-3.5 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                :class="form.errors.free_until ? 'border-red-400' : 'border-gray-300'"
+                            />
+                            <p v-if="form.errors.free_until" class="mt-1 text-xs text-red-600">{{ form.errors.free_until }}</p>
+                            <p v-else class="mt-1 text-xs text-gray-400">Everyone joining before this date gets free access until then. After that, normal checkout applies.</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                Promotional first-cycle price
+                                <span class="text-gray-400 font-normal">(optional)</span>
+                            </label>
+                            <input
+                                v-model="form.first_month_price"
+                                type="number"
+                                min="0"
+                                step="1"
+                                placeholder="Leave blank for no promo"
+                                class="w-full px-3.5 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                :class="form.errors.first_month_price ? 'border-red-400' : 'border-gray-300'"
+                            />
+                            <p v-if="form.errors.first_month_price" class="mt-1 text-xs text-red-600">{{ form.errors.first_month_price }}</p>
+                            <p v-else-if="form.first_month_price !== '' && Number(form.first_month_price) > 0" class="mt-1 text-xs text-gray-400">
+                                Charged on the first cycle; renewals use the regular {{ form.currency }} {{ Number(form.price).toLocaleString() }}.
+                            </p>
+                            <p v-else class="mt-1 text-xs text-gray-400">Set a lower price for the first month to boost conversions.</p>
+                        </div>
+
+                        <div class="rounded-lg bg-gray-50 border border-gray-200 px-3 py-2 text-sm text-gray-700">
+                            <span class="font-medium">Preview:</span> {{ pricingPreview }}
                         </div>
                     </div>
 

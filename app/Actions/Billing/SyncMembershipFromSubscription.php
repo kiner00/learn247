@@ -28,6 +28,10 @@ class SyncMembershipFromSubscription
 
             if ($member->wasRecentlyCreated) {
                 MemberJoined::dispatch($member);
+            } elseif ($member->membership_type === CommunityMember::MEMBERSHIP_FREE || $member->expires_at !== null) {
+                // Upgrade a prior free trial / invite-granted row to paid, clearing expiry.
+                // Role is preserved so admins/moderators keep their privileges.
+                $member->update(['membership_type' => CommunityMember::MEMBERSHIP_PAID, 'expires_at' => null]);
             }
 
             // Reactivate affiliate if they were previously suspended

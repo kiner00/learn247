@@ -19,10 +19,17 @@ class Community extends Model
 
     public const BILLING_ONE_TIME = 'one_time';
 
+    public const TRIAL_NONE = 'none';
+
+    public const TRIAL_PER_USER = 'per_user';
+
+    public const TRIAL_WINDOW = 'window';
+
     protected $fillable = [
         'name', 'slug', 'subdomain', 'custom_domain', 'owner_id', 'description', 'category',
         'avatar', 'cover_image', 'is_private', 'price', 'currency',
-        'billing_type', 'affiliate_commission_rate',
+        'billing_type', 'trial_mode', 'trial_days', 'free_until', 'first_month_price',
+        'affiliate_commission_rate',
         'facebook_pixel_id', 'tiktok_pixel_id', 'google_analytics_id',
         'telegram_bot_token', 'telegram_chat_id',
         'sms_provider', 'sms_api_key', 'sms_api_secret', 'sms_sender_name', 'sms_device_url',
@@ -41,6 +48,9 @@ class Community extends Model
             'is_private' => 'boolean',
             'is_featured' => 'boolean',
             'price' => 'decimal:2',
+            'first_month_price' => 'decimal:2',
+            'trial_days' => 'integer',
+            'free_until' => 'datetime',
             'affiliate_commission_rate' => 'integer',
             'landing_page' => 'array',
             'brand_context' => 'array',
@@ -214,6 +224,80 @@ class Community extends Model
     public function isFree(): bool
     {
         return $this->price <= 0;
+    }
+
+    public function hasTrial(): bool
+    {
+        if ($this->isFree()) {
+            return false;
+        }
+
+        return match ($this->trial_mode) {
+            self::TRIAL_PER_USER => (int) $this->trial_days > 0,
+            self::TRIAL_WINDOW => $this->free_until !== null && $this->free_until->isFuture(),
+            default => false,
+        };
+    }
+
+    /** Trial expiry for a user joining at $joinedAt, or null if no trial applies. */
+    public function trialExpiresAtFor(?\Illuminate\Support\Carbon $joinedAt = null): ?\Illuminate\Support\Carbon
+    {
+        if (! $this->hasTrial()) {
+            return null;
+        }
+
+        $joinedAt = $joinedAt ?? now();
+
+        return match ($this->trial_mode) {
+            self::TRIAL_PER_USER => $joinedAt->copy()->addDays((int) $this->trial_days),
+            self::TRIAL_WINDOW => $this->free_until,
+            default => null,
+        };
+    }
+
+    /** Amount charged on the first subscription cycle (promo if set, else regular). */
+    public function firstChargeAmount(): float
+    {
+        return $this->first_month_price !== null
+            ? (float) $this->first_month_price
+            : (float) $this->price;
+    }
+
+    public function hasPromoFirstMonth(): bool
+    {
+        return $this->first_month_price !== null
+            && (float) $this->first_month_price < (float) $this->price;
+    }
+
+    /** Human price note for emails / OG tags. The Vue composable is the UI source of truth. */
+    public function displayPriceNote(): string
+    {
+        if ($this->isFree()) {
+            return 'Free to join';
+        }
+
+        $currency = $this->currency ?: 'PHP';
+        $fmt = fn (float $amount) => $currency.' '.number_format($amount, 0);
+        $parts = [];
+
+        if ($this->trial_mode === self::TRIAL_PER_USER && (int) $this->trial_days > 0) {
+            $parts[] = "Free for {$this->trial_days} days";
+        } elseif ($this->trial_mode === self::TRIAL_WINDOW && $this->free_until?->isFuture()) {
+            $parts[] = 'Free until '.$this->free_until->format('M j');
+        }
+
+        $suffix = $this->billing_type === self::BILLING_ONE_TIME ? ' one-time' : '/month';
+
+        if ($this->hasPromoFirstMonth()) {
+            $prefix = empty($parts) ? '' : 'then ';
+            $parts[] = $prefix.$fmt((float) $this->first_month_price).' first month';
+            $parts[] = $fmt((float) $this->price).$suffix.' after';
+        } else {
+            $prefix = empty($parts) ? '' : 'then ';
+            $parts[] = $prefix.$fmt((float) $this->price).$suffix;
+        }
+
+        return implode(', ', $parts);
     }
 
     public function hasAffiliateProgram(): bool

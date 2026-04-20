@@ -15,6 +15,41 @@ class UpdateCommunityRequest extends FormRequest
             && $this->user()?->can('update', $community);
     }
 
+    protected function prepareForValidation(): void
+    {
+        $mode = $this->input('trial_mode');
+
+        if ($mode === 'none' || $mode === null) {
+            $this->merge(['trial_days' => null, 'free_until' => null]);
+        } elseif ($mode === 'per_user') {
+            $this->merge(['free_until' => null]);
+        } elseif ($mode === 'window') {
+            $this->merge(['trial_days' => null]);
+
+            $rawDate = $this->input('free_until');
+            if (is_string($rawDate) && $rawDate !== '' && ! str_contains($rawDate, ':')) {
+                // Date-only input → treat as end-of-day in the app timezone so "Free until Nov 1" includes all of Nov 1.
+                $this->merge([
+                    'free_until' => \Illuminate\Support\Carbon::parse($rawDate)->endOfDay()->toDateTimeString(),
+                ]);
+            }
+        }
+
+        if ($this->input('first_month_price') === '') {
+            $this->merge(['first_month_price' => null]);
+        }
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($v) {
+            $mode = $this->input('trial_mode');
+            if (($mode === 'per_user' || $mode === 'window') && (float) $this->input('price', 0) <= 0) {
+                $v->errors()->add('trial_mode', 'Trial requires a paid community. Set a price first.');
+            }
+        });
+    }
+
     public function rules(): array
     {
         $community = $this->route('community');
@@ -33,6 +68,16 @@ class UpdateCommunityRequest extends FormRequest
             'price' => ['nullable', 'numeric', 'min:0'],
             'currency' => ['nullable', 'string', 'in:PHP,USD'],
             'billing_type' => ['nullable', 'string', 'in:monthly,one_time'],
+            'trial_mode' => ['nullable', 'string', 'in:none,per_user,window'],
+            'trial_days' => [
+                'nullable', 'integer', 'min:1', 'max:365',
+                Rule::requiredIf(fn () => $this->input('trial_mode') === 'per_user'),
+            ],
+            'free_until' => [
+                'nullable', 'date', 'after:today',
+                Rule::requiredIf(fn () => $this->input('trial_mode') === 'window'),
+            ],
+            'first_month_price' => ['nullable', 'numeric', 'min:0', 'lte:price'],
             'is_private' => ['boolean'],
             'affiliate_commission_rate' => ['nullable', 'integer', 'min:0', 'max:85'],
 

@@ -6,6 +6,7 @@ use App\Actions\Community\CreateCommunity;
 use App\Actions\Community\EnsureMemberAffiliate;
 use App\Actions\Community\JoinCommunity;
 use App\Actions\Community\SendAnnouncement;
+use App\Actions\Community\StartTrialMembership;
 use App\Actions\Community\SyncCommunityDomains;
 use App\Actions\Community\SyncTelegramWebhook;
 use App\Actions\Community\UpdateCommunity;
@@ -88,7 +89,9 @@ class CommunityController extends Controller
 
         // For paid communities, free-only members without an active subscription
         // cannot post/comment/chat. Null out membership so the UI hides those interactions.
+        $trialExpired = false;
         if ($membership && ! $community->isFree() && ! $membershipService->hasActiveMembership(auth()->user(), $community)) {
+            $trialExpired = $membershipService->hasExpiredTrial(auth()->user(), $community);
             $membership = null;
         }
 
@@ -113,7 +116,7 @@ class CommunityController extends Controller
         $hasLandingPage = ! empty($community->landing_page);
 
         return Inertia::render('Communities/Show', compact(
-            'community', 'membership', 'affiliate', 'adminCount', 'topMembers', 'checklist', 'recentComments', 'hasFreeCourses', 'hasLandingPage'
+            'community', 'membership', 'affiliate', 'adminCount', 'topMembers', 'checklist', 'recentComments', 'hasFreeCourses', 'hasLandingPage', 'trialExpired'
         ));
     }
 
@@ -340,11 +343,24 @@ class CommunityController extends Controller
         ]);
     }
 
-    public function join(Request $request, Community $community, JoinCommunity $action): RedirectResponse
+    public function join(Request $request, Community $community, JoinCommunity $join, StartTrialMembership $trial): RedirectResponse
     {
-        $action->execute($request->user(), $community);
+        if ($community->isFree()) {
+            $join->execute($request->user(), $community);
 
-        return back()->with('success', 'You have joined the community!');
+            return back()->with('success', 'You have joined the community!');
+        }
+
+        if ($community->hasTrial()) {
+            $trial->execute($request->user(), $community);
+
+            return back()->with('success', 'Your free trial has started!');
+        }
+
+        // Paid community with no trial — frontend should drive them to checkout.
+        return back()->withErrors([
+            'community' => 'This is a paid community. Please subscribe to join.',
+        ]);
     }
 
     public function announce(Request $request, Community $community, SendAnnouncement $action, PlanLimitService $planLimit): RedirectResponse

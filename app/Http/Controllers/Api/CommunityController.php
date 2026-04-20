@@ -6,6 +6,7 @@ use App\Actions\Community\CreateCommunity;
 use App\Actions\Community\JoinCommunity;
 use App\Actions\Community\ManageGallery;
 use App\Actions\Community\SendAnnouncement;
+use App\Actions\Community\StartTrialMembership;
 use App\Actions\Community\UpdateCommunity;
 use App\Actions\Community\UpdateLevelPerks;
 use App\Http\Controllers\Controller;
@@ -118,11 +119,23 @@ class CommunityController extends Controller
         return response()->json(['message' => 'Community deleted.']);
     }
 
-    public function join(Request $request, Community $community, JoinCommunity $action): JsonResponse
+    public function join(Request $request, Community $community, JoinCommunity $join, StartTrialMembership $trial): JsonResponse
     {
-        $action->execute($request->user(), $community);
+        if ($community->isFree()) {
+            $join->execute($request->user(), $community);
 
-        return response()->json(['message' => 'You have joined the community!'], 201);
+            return response()->json(['message' => 'You have joined the community!'], 201);
+        }
+
+        if ($community->hasTrial()) {
+            $trial->execute($request->user(), $community);
+
+            return response()->json(['message' => 'Your free trial has started!'], 201);
+        }
+
+        return response()->json([
+            'message' => 'This is a paid community. Please subscribe to join.',
+        ], 422);
     }
 
     public function about(Request $request, Community $community): JsonResponse

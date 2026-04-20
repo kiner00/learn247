@@ -5,6 +5,9 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- ── Posts feed ──────────────────────────────────────────────── -->
             <div class="lg:col-span-2 space-y-4 order-2 lg:order-1">
+                <!-- Trial-expired paywall -->
+                <TrialExpiredPaywall v-if="trialExpired" :community="community" />
+
                 <!-- Compose box -->
                 <PostComposer
                     v-if="isMember"
@@ -598,6 +601,7 @@ import UserAvatar from "@/Components/UserAvatar.vue";
 import PostComposer from "@/Components/Community/PostComposer.vue";
 import PostCard from "@/Components/Community/PostCard.vue";
 import PostModal from "@/Components/Community/PostModal.vue";
+import TrialExpiredPaywall from "@/Components/Community/TrialExpiredPaywall.vue";
 import ConfirmModal from '@/Components/ConfirmModal.vue';
 import { useConfirm } from '@/composables/useConfirm';
 
@@ -613,6 +617,7 @@ const props = defineProps({
     recentComments: { type: Array, default: () => [] },
     hasFreeCourses: { type: Boolean, default: false },
     hasLandingPage: { type: Boolean, default: false },
+    trialExpired: { type: Boolean, default: false },
 });
 
 const page = usePage();

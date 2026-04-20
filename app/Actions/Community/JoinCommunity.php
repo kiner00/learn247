@@ -8,6 +8,7 @@ use App\Models\CommunityMember;
 use App\Models\Notification;
 use App\Models\User;
 use App\Support\CacheKeys;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
 
 class JoinCommunity
@@ -26,26 +27,49 @@ class JoinCommunity
     /** @throws ValidationException */
     public function execute(User $user, Community $community): CommunityMember
     {
-        if (CommunityMember::where('community_id', $community->id)->where('user_id', $user->id)->exists()) {
-            throw ValidationException::withMessages([
-                'community' => 'You are already a member of this community.',
-            ]);
-        }
-
         if (! $community->isFree()) {
             throw ValidationException::withMessages([
                 'community' => 'This is a paid community. Please subscribe to join.',
             ]);
         }
 
+        return $this->createMember($user, $community);
+    }
+
+    /**
+     * Trial join — grants temporary free membership on a paid community.
+     *
+     * @throws ValidationException
+     */
+    public function executeAsTrial(User $user, Community $community, Carbon $expiresAt): CommunityMember
+    {
+        return $this->createMember($user, $community, [
+            'membership_type' => CommunityMember::MEMBERSHIP_FREE,
+            'expires_at' => $expiresAt,
+        ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $overrides  Extra attributes (membership_type, expires_at).
+     *
+     * @throws ValidationException
+     */
+    private function createMember(User $user, Community $community, array $overrides = []): CommunityMember
+    {
+        if (CommunityMember::where('community_id', $community->id)->where('user_id', $user->id)->exists()) {
+            throw ValidationException::withMessages([
+                'community' => 'You are already a member of this community.',
+            ]);
+        }
+
         $beforeCount = $community->members()->count();
 
-        $member = CommunityMember::create([
+        $member = CommunityMember::create(array_merge([
             'community_id' => $community->id,
             'user_id' => $user->id,
             'role' => CommunityMember::ROLE_MEMBER,
             'joined_at' => now(),
-        ]);
+        ], $overrides));
 
         CacheKeys::flushUserMembership($user->id);
 
