@@ -2,8 +2,10 @@
 
 namespace App\Jobs;
 
+use App\Exceptions\AiBudgetExceededException;
 use App\Models\Community;
 use App\Models\CommunityGalleryItem;
+use App\Services\Ai\BudgetGuard;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Cache;
@@ -28,6 +30,23 @@ class GenerateSingleGalleryImage implements ShouldQueue
     public function handle(): void
     {
         $cacheKey = "gallery-generating:{$this->community->id}";
+
+        try {
+            BudgetGuard::assertAllowed(userId: null, communityId: $this->community->id);
+        } catch (AiBudgetExceededException $e) {
+            Log::warning('Gallery image generation blocked by budget guard', [
+                'community' => $this->community->id,
+                'reason' => $e->getMessage(),
+            ]);
+            Cache::put($cacheKey, [
+                'status' => 'failed',
+                'error' => 'AI budget reached. Try again later.',
+                'progress' => $this->promptIndex - (8 - $this->total),
+                'total' => $this->total,
+            ], 300);
+
+            return;
+        }
 
         $communityName = $this->community->name;
         $category = $this->community->category ?? 'online learning';

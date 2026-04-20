@@ -7,7 +7,11 @@
 
     <livewire:pulse.cache cols="4" />
 
-    <livewire:ai-spend cols="12" rows="3" />
+    <livewire:ai-spend cols="6" rows="3" />
+
+    <livewire:ai-spend-users cols="6" rows="3" />
+
+    <livewire:ai-spend-models cols="12" rows="2" />
 
     <livewire:pulse.slow-queries cols="8" />
 

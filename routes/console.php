@@ -23,4 +23,7 @@ Schedule::command('email-stats:aggregate')->dailyAt('02:00');
 // Ticket reminders: nudge users to close resolved tickets (every 2 days)
 Schedule::command('tickets:remind-resolved')->dailyAt('10:00');
 
+// AI budget alerts: check spend thresholds hourly
+Schedule::command('ai:check-budgets')->hourly();
+
 // Schedule::command('pulse:check')->everyMinute();

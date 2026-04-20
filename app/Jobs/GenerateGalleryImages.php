@@ -2,8 +2,10 @@
 
 namespace App\Jobs;
 
+use App\Exceptions\AiBudgetExceededException;
 use App\Models\Community;
 use App\Models\CommunityGalleryItem;
+use App\Services\Ai\BudgetGuard;
 use App\Services\StorageService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -25,6 +27,24 @@ class GenerateGalleryImages implements ShouldQueue
     public function handle(StorageService $storage): void
     {
         $cacheKey = "gallery-generating:{$this->community->id}";
+
+        try {
+            BudgetGuard::assertAllowed(userId: null, communityId: $this->community->id);
+        } catch (AiBudgetExceededException $e) {
+            Log::warning('Gallery batch generation blocked by budget guard', [
+                'community' => $this->community->id,
+                'reason' => $e->getMessage(),
+            ]);
+            Cache::put($cacheKey, [
+                'status' => 'failed',
+                'error' => 'AI budget reached. Try again later.',
+                'progress' => 0,
+                'total' => 8,
+            ], 300);
+
+            return;
+        }
+
         Cache::put($cacheKey, ['status' => 'generating', 'progress' => 0, 'total' => 8], 900);
 
         // Clear old gallery

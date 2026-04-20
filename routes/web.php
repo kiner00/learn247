@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Web\AccountSettingsController;
+use App\Http\Controllers\Web\Admin\AiUsageController as AdminAiUsageController;
 use App\Http\Controllers\Web\Admin\AnnouncementController as AdminAnnouncementController;
 use App\Http\Controllers\Web\Admin\CouponController as AdminCouponController;
 use App\Http\Controllers\Web\Admin\DashboardController as AdminDashboardController;
@@ -166,6 +167,8 @@ Route::middleware(['auth', EnsureSuperAdmin::class])->prefix('admin')->group(fun
     Route::post('/coupons', [AdminCouponController::class, 'store'])->name('admin.coupons.store');
     Route::post('/coupons/{coupon}/toggle', [AdminCouponController::class, 'toggle'])->name('admin.coupons.toggle');
     Route::delete('/coupons/{coupon}', [AdminCouponController::class, 'destroy'])->name('admin.coupons.destroy');
+    // AI usage (observability)
+    Route::get('/ai-usage', [AdminAiUsageController::class, 'index'])->name('admin.ai-usage');
     // Support Tickets
     Route::get('/tickets', [TicketController::class, 'adminIndex'])->name('admin.tickets');
     Route::get('/tickets/{ticket}', [TicketController::class, 'show'])->name('admin.tickets.show');
