@@ -41,7 +41,7 @@ class UpdateLandingPageRequest extends FormRequest
             'social_proof.hide_avatars' => 'nullable|boolean',
             'social_proof.hide_member_count' => 'nullable|boolean',
 
-            'benefits.headline' => 'nullable|string|max:100',
+            'benefits.headline' => 'nullable|string|max:200',
             'benefits.items' => 'nullable|array|max:6',
             'benefits.items.*.icon' => 'nullable|string|max:10',
             'benefits.items.*.title' => 'nullable|string|max:80',
