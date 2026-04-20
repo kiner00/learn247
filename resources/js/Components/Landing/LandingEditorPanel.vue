@@ -117,6 +117,10 @@
                                         <input v-model="editDraft.hero.price_note" type="text" placeholder="e.g. PHP 999/month · cancel anytime" class="field-input" />
                                     </div>
                                     <div>
+                                        <label class="field-label">Price Note Font Size <span class="text-gray-400 font-normal">({{ editDraft.hero.price_note_font_size || 14 }}px)</span></label>
+                                        <input type="range" v-model.number="editDraft.hero.price_note_font_size" min="10" max="32" step="1" class="w-full accent-indigo-600" />
+                                    </div>
+                                    <div>
                                         <label class="field-label">Video Type</label>
                                         <div class="flex items-center gap-1 p-0.5 bg-gray-100 rounded-lg w-fit">
                                             <button type="button" @click="editDraft.hero.video_type = 'vsl'" class="px-3 py-1 text-xs font-medium rounded-md transition-colors" :class="(!editDraft.hero.video_type || editDraft.hero.video_type === 'vsl') ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'">

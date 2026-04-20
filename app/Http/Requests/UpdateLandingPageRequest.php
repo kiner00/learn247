@@ -32,6 +32,7 @@ class UpdateLandingPageRequest extends FormRequest
             'hero.btn_bg' => 'nullable|string|max:20',
             'hero.btn_text' => 'nullable|string|max:20',
             'hero.price_note' => 'nullable|string|max:100',
+            'hero.price_note_font_size' => 'nullable|integer|min:10|max:32',
             'hero.bg_image' => 'nullable|url|max:2048',
 
             'social_proof.stat_label' => 'nullable|string|max:100',

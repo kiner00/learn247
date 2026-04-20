@@ -100,7 +100,7 @@
                 </svg>
             </button>
 
-            <p v-if="!('price_note' in (lp.hero ?? {})) || lp.hero.price_note" class="mt-4 text-slate-400 text-sm">
+            <p v-if="!('price_note' in (lp.hero ?? {})) || lp.hero.price_note" class="mt-4 text-slate-400" :style="{ fontSize: (lp.hero?.price_note_font_size || 14) + 'px' }">
                 {{ lp.hero?.price_note
                     || (community.price > 0
                         ? `${community.currency ?? 'PHP'} ${Number(community.price).toLocaleString()}${community.billing_type === 'one_time' ? ' one-time' : '/month'}`
