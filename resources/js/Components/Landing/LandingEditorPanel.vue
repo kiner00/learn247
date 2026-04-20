@@ -250,9 +250,9 @@
                                             <input v-model="editDraft.benefits.headline" type="text" class="field-input" />
                                         </div>
                                         <div v-for="(item, i) in editDraft.benefits.items" :key="i" class="bg-white rounded-xl p-3 border border-gray-200 space-y-2">
-                                            <div class="flex gap-2 items-center">
-                                                <input v-model="item.icon" type="text" placeholder="🎯" class="field-input w-10 text-center text-base shrink-0" />
-                                                <div class="flex-1">
+                                            <div class="flex gap-2 items-end">
+                                                <input v-model="item.icon" type="text" placeholder="🎯" class="field-input !w-12 text-center text-base shrink-0" />
+                                                <div class="flex-1 min-w-0">
                                                     <label class="text-[10px] text-gray-400 font-medium">Title</label>
                                                     <input v-model="item.title" type="text" placeholder="Benefit title" class="field-input w-full" />
                                                 </div>
