@@ -672,11 +672,18 @@ async function uploadImage(section, event) {
             return;
         }
 
-        if (!editDraft.value[section]) editDraft.value[section] = {};
-        if (section === 'creator') {
-            editDraft.value[section].photo = data.url;
+        if (section.startsWith('testimonials:')) {
+            const idx = parseInt(section.split(':')[1], 10);
+            if (!Array.isArray(editDraft.value.testimonials)) editDraft.value.testimonials = [];
+            if (!editDraft.value.testimonials[idx]) editDraft.value.testimonials[idx] = { name: '', role: '', quote: '', photo: '' };
+            editDraft.value.testimonials[idx].photo = data.url;
         } else {
-            editDraft.value[section].bg_image = data.url;
+            if (!editDraft.value[section]) editDraft.value[section] = {};
+            if (section === 'creator') {
+                editDraft.value[section].photo = data.url;
+            } else {
+                editDraft.value[section].bg_image = data.url;
+            }
         }
     } catch (e) {
         alert(e?.message ?? 'Upload failed.');

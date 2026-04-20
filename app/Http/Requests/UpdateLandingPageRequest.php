@@ -64,6 +64,7 @@ class UpdateLandingPageRequest extends FormRequest
             'testimonials.*.name' => 'nullable|string|max:80',
             'testimonials.*.role' => 'nullable|string|max:80',
             'testimonials.*.quote' => 'nullable|string|max:300',
+            'testimonials.*.photo' => 'nullable|url|max:2048',
 
             'faq' => 'nullable|array|max:10',
             'faq.*.question' => 'nullable|string|max:200',

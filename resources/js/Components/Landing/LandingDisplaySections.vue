@@ -195,9 +195,10 @@
                         :class="['text-gray-600 text-sm leading-relaxed italic flex-1', inlineMode ? editableClass : '']"
                     />
                     <div class="flex items-center gap-3 pt-2 border-t border-gray-100">
-                        <div class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm text-white"
-                            :style="`background-color: hsl(${i * 120}, 60%, 55%)`">
-                            {{ t.name.charAt(0) }}
+                        <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center font-bold text-sm text-white shrink-0"
+                            :style="t.photo ? '' : `background-color: hsl(${i * 120}, 60%, 55%)`">
+                            <img v-if="t.photo" :src="t.photo" class="w-full h-full object-cover" :alt="t.name" />
+                            <span v-else>{{ t.name.charAt(0) }}</span>
                         </div>
                         <div>
                             <p class="text-sm font-bold text-gray-900">{{ t.name }}</p>

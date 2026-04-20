@@ -396,10 +396,22 @@
                                     <!-- Manual testimonials -->
                                     <template v-if="!editDraft.testimonials_type || editDraft.testimonials_type === 'manual'">
                                         <div v-if="!editDraft.testimonials?.length" class="text-xs text-gray-500">
-                                            <button @click="editDraft.testimonials = [{ name: '', role: '', quote: '' }]" class="text-indigo-600 font-medium hover:underline">+ Initialize section</button>
+                                            <button @click="editDraft.testimonials = [{ name: '', role: '', quote: '', photo: '' }]" class="text-indigo-600 font-medium hover:underline">+ Initialize section</button>
                                         </div>
                                         <template v-else>
                                             <div v-for="(t, i) in editDraft.testimonials" :key="i" class="bg-white rounded-xl p-3 border border-gray-200 space-y-2">
+                                                <div class="flex items-center gap-3">
+                                                    <div class="w-10 h-10 rounded-full overflow-hidden bg-gray-100 shrink-0 flex items-center justify-center text-sm font-black text-white"
+                                                         :style="t.photo ? '' : `background-color: hsl(${i * 120}, 60%, 55%)`">
+                                                        <img v-if="t.photo" :src="t.photo" class="w-full h-full object-cover" />
+                                                        <span v-else>{{ (t.name || '?').charAt(0) }}</span>
+                                                    </div>
+                                                    <label class="relative cursor-pointer text-xs text-indigo-600 font-medium hover:underline">
+                                                        {{ uploadLoading === `testimonials:${i}` ? 'Uploading…' : (t.photo ? 'Change photo' : 'Upload photo') }}
+                                                        <input type="file" accept="image/*" class="sr-only" @change="$emit('uploadImage', `testimonials:${i}`, $event)" />
+                                                    </label>
+                                                    <button v-if="t.photo" @click="t.photo = ''" class="text-xs text-red-400 hover:text-red-600">Remove</button>
+                                                </div>
                                                 <div class="flex gap-2">
                                                     <input v-model="t.name" type="text" placeholder="Name" class="field-input flex-1" />
                                                     <input v-model="t.role" type="text" placeholder="Role" class="field-input flex-1" />
@@ -407,7 +419,7 @@
                                                 <textarea v-model="t.quote" rows="2" placeholder="Quote…" class="field-input resize-none w-full" />
                                                 <button @click="editDraft.testimonials.splice(i, 1)" class="text-xs text-red-400 hover:text-red-600">Remove</button>
                                             </div>
-                                            <button @click="editDraft.testimonials.push({ name: '', role: '', quote: '' })" class="text-xs text-indigo-600 font-medium hover:underline">+ Add testimonial</button>
+                                            <button @click="editDraft.testimonials.push({ name: '', role: '', quote: '', photo: '' })" class="text-xs text-indigo-600 font-medium hover:underline">+ Add testimonial</button>
                                         </template>
                                     </template>
 
