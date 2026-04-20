@@ -235,6 +235,89 @@ class ChatControllerTest extends TestCase
         $response->assertForbidden();
     }
 
+    // ─── history ───────────────────────────────────────────────────────────────
+
+    public function test_member_can_load_older_messages(): void
+    {
+        [$owner, $community, $member] = $this->createCommunityWithMember();
+
+        $m1 = Message::create(['community_id' => $community->id, 'user_id' => $owner->id, 'content' => 'First']);
+        $m2 = Message::create(['community_id' => $community->id, 'user_id' => $owner->id, 'content' => 'Second']);
+        $m3 = Message::create(['community_id' => $community->id, 'user_id' => $owner->id, 'content' => 'Third']);
+
+        $response = $this->actingAs($member)
+            ->getJson("/communities/{$community->slug}/chat/history?before={$m3->id}");
+
+        $response->assertOk();
+        $response->assertJsonCount(2, 'messages');
+        $response->assertJsonPath('messages.0.content', 'First');
+        $response->assertJsonPath('messages.1.content', 'Second');
+    }
+
+    public function test_history_returns_empty_when_no_older_messages(): void
+    {
+        [$owner, $community, $member] = $this->createCommunityWithMember();
+
+        $msg = Message::create(['community_id' => $community->id, 'user_id' => $owner->id, 'content' => 'Only one']);
+
+        $response = $this->actingAs($member)
+            ->getJson("/communities/{$community->slug}/chat/history?before={$msg->id}");
+
+        $response->assertOk();
+        $response->assertJsonCount(0, 'messages');
+    }
+
+    public function test_history_caps_at_fifty_messages_per_page(): void
+    {
+        [$owner, $community, $member] = $this->createCommunityWithMember();
+
+        for ($i = 0; $i < 60; $i++) {
+            Message::create(['community_id' => $community->id, 'user_id' => $owner->id, 'content' => "msg {$i}"]);
+        }
+        $anchor = Message::create(['community_id' => $community->id, 'user_id' => $owner->id, 'content' => 'anchor']);
+
+        $response = $this->actingAs($member)
+            ->getJson("/communities/{$community->slug}/chat/history?before={$anchor->id}");
+
+        $response->assertOk();
+        $response->assertJsonCount(50, 'messages');
+    }
+
+    public function test_history_only_returns_messages_from_this_community(): void
+    {
+        [$owner, $community, $member] = $this->createCommunityWithMember();
+        $otherCommunity = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+
+        Message::create(['community_id' => $otherCommunity->id, 'user_id' => $owner->id, 'content' => 'Leak']);
+        $anchor = Message::create(['community_id' => $community->id, 'user_id' => $owner->id, 'content' => 'ours']);
+
+        $response = $this->actingAs($member)
+            ->getJson("/communities/{$community->slug}/chat/history?before={$anchor->id}");
+
+        $response->assertOk();
+        $response->assertJsonCount(0, 'messages');
+    }
+
+    public function test_non_member_cannot_load_history(): void
+    {
+        [$owner, $community] = $this->createCommunityWithMember();
+        $stranger = User::factory()->create();
+
+        $response = $this->actingAs($stranger)
+            ->getJson("/communities/{$community->slug}/chat/history?before=999999");
+
+        $response->assertForbidden();
+    }
+
+    public function test_guest_cannot_load_history(): void
+    {
+        $owner = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
+
+        $this->getJson("/communities/{$community->slug}/chat/history?before=999999")
+            ->assertUnauthorized();
+    }
+
     // ─── destroy ───────────────────────────────────────────────────────────────
 
     public function test_author_can_delete_own_chat_message(): void

@@ -140,6 +140,27 @@ class ChatController extends Controller
         return response()->json(['messages' => $messages]);
     }
 
+    public function history(Request $request, Community $community, GetChatMessages $query): JsonResponse
+    {
+        $before = (int) $request->query('before', 0);
+
+        $messages = $query->before($community, $before)->map(fn ($m) => [
+            'id' => $m->id,
+            'content' => $m->content,
+            'created_at' => $m->created_at,
+            'telegram_author' => $m->telegram_author,
+            'media_url' => $m->media_url,
+            'media_type' => $m->media_type,
+            'user' => $m->user ? [
+                'id' => $m->user->id,
+                'name' => $m->user->name,
+                'username' => $m->user->username,
+            ] : null,
+        ]);
+
+        return response()->json(['messages' => $messages]);
+    }
+
     public function destroy(Request $request, Community $community, Message $message, DeleteChatMessage $action): JsonResponse
     {
         $action->execute($request->user(), $community, $message);

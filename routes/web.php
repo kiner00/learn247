@@ -408,6 +408,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/communities/{community}/chat', [ChatController::class, 'index'])->name('communities.chat');
         Route::post('/communities/{community}/chat', [ChatController::class, 'store'])->name('communities.chat.store');
         Route::get('/communities/{community}/chat/poll', [ChatController::class, 'poll'])->name('communities.chat.poll');
+        Route::get('/communities/{community}/chat/history', [ChatController::class, 'history'])->name('communities.chat.history');
         Route::delete('/communities/{community}/chat/{message}', [ChatController::class, 'destroy'])->name('communities.chat.destroy');
         Route::post('/communities/{community}/chatbot', [CommunityChatbotController::class, 'chat'])->name('communities.chatbot.chat');
         Route::post('/communities/{community}/chatbot/reply', [CommunityChatbotController::class, 'reply'])->name('communities.chatbot.reply');

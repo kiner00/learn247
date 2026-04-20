@@ -121,7 +121,8 @@
                             <span class="text-xs font-medium text-sky-600">Telegram{{ telegramMemberCount ? ` · ${telegramMemberCount} members` : '' }}</span>
                         </div>
                     </div>
-                    <div ref="messagesEl" class="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+                    <div ref="messagesEl" @scroll="onMessagesScroll" class="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+                        <div v-if="loadingOlder" class="flex items-center justify-center py-2 text-xs text-gray-400">Loading older messages…</div>
                         <div v-if="groupMessages.length" class="flex items-center gap-3 py-1"><div class="flex-1 h-px bg-gray-100"></div><span class="text-xs text-gray-400">Today</span><div class="flex-1 h-px bg-gray-100"></div></div>
                         <div v-if="!groupMessages.length" class="flex flex-col items-center justify-center h-full text-center py-16">
                             <div class="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-4">
@@ -331,6 +332,8 @@ function switchTab(key) {
 const groupMessages   = ref([...props.messages]);
 const groupContent    = ref('');
 const sending         = ref(false);
+const loadingOlder    = ref(false);
+const hasMoreHistory  = ref(props.messages.length >= 50);
 const messagesEl      = ref(null);
 const inputEl         = ref(null);
 const fileInputEl     = ref(null);
@@ -363,6 +366,37 @@ function formatTime(d) { return d ? new Date(d).toLocaleTimeString('en-PH', { ho
 function formatRelativeTime(d) { if (!d) return ''; const diff = Math.floor((Date.now() - new Date(d)) / 86400000); if (diff === 0) return formatTime(d); if (diff === 1) return 'Yesterday'; if (diff < 7) return new Date(d).toLocaleDateString('en-PH', { weekday: 'short' }); return new Date(d).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' }); }
 function autoResize(e) { e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px'; }
 function scrollToBottom(smooth = false) { nextTick(() => { messagesEl.value?.scrollTo({ top: messagesEl.value.scrollHeight, behavior: smooth ? 'smooth' : 'instant' }); }); }
+
+async function onMessagesScroll() {
+    if (loadingOlder.value || !hasMoreHistory.value) return;
+    const el = messagesEl.value;
+    if (!el || el.scrollTop > 100 || !groupMessages.value.length) return;
+    const oldestId = groupMessages.value[0]?.id;
+    if (!oldestId) return;
+
+    loadingOlder.value = true;
+    const prevScrollHeight = el.scrollHeight;
+    const prevScrollTop = el.scrollTop;
+    try {
+        const { data } = await axios.get(`/communities/${props.community.slug}/chat/history`, { params: { before: oldestId } });
+        const older = data.messages || [];
+        if (!older.length) {
+            hasMoreHistory.value = false;
+        } else {
+            const seen = new Set(groupMessages.value.map(m => m.id));
+            const unique = older.filter(m => !seen.has(m.id));
+            if (!unique.length) {
+                hasMoreHistory.value = false;
+            } else {
+                groupMessages.value = [...unique, ...groupMessages.value];
+                if (older.length < 50) hasMoreHistory.value = false;
+                await nextTick();
+                el.scrollTop = el.scrollHeight - prevScrollHeight + prevScrollTop;
+            }
+        }
+    } catch {}
+    finally { loadingOlder.value = false; }
+}
 function canDelete(msg) { const u = page.props.auth?.user; return u && (msg.user?.id === u.id || u.is_super_admin); }
 async function deleteMessage(msg) {
     if (!await ask({ title: 'Delete Message', message: 'Delete this message?', confirmLabel: 'Delete', destructive: true })) return;

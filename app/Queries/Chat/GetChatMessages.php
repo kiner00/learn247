@@ -29,6 +29,18 @@ class GetChatMessages
             ->get();
     }
 
+    public function before(Community $community, int $beforeId, int $limit = 50): Collection
+    {
+        return Message::where('community_id', $community->id)
+            ->where('id', '<', $beforeId)
+            ->with('user:id,name,username,avatar')
+            ->latest()
+            ->take($limit)
+            ->get()
+            ->reverse()
+            ->values();
+    }
+
     public function markAsRead(Community $community, int $userId): void
     {
         $community->members()->where('user_id', $userId)->update([
