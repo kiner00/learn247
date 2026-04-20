@@ -317,12 +317,17 @@
                                             <p class="text-xs text-gray-400 mt-1">Leave empty to use account name</p>
                                         </div>
                                         <div>
+                                            <label class="field-label">Role / Title <span class="text-gray-400 font-normal">(shown below the name)</span></label>
+                                            <input v-model="editDraft.creator.role" type="text" class="field-input" placeholder="Creator" />
+                                        </div>
+                                        <div>
                                             <label class="field-label">Headline <span class="text-gray-400 font-normal">(e.g. "Meet Your Coach")</span></label>
                                             <input v-model="editDraft.creator.headline" type="text" class="field-input" />
                                         </div>
                                         <div>
                                             <label class="field-label">Bio</label>
-                                            <textarea v-model="editDraft.creator.bio" rows="4" class="field-input resize-none" />
+                                            <textarea v-model="editDraft.creator.bio" rows="8" class="field-input resize-y" maxlength="2000" />
+                                            <p class="text-xs text-gray-400 mt-1">Line breaks are preserved. Up to 2000 characters.</p>
                                         </div>
                                         <div>
                                             <label class="field-label">Card Background Color</label>

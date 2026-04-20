@@ -129,7 +129,7 @@
                         @keydown.enter.prevent="insertBr"
                         :class="['font-bold text-white text-sm', inlineMode ? editableClass : '']"
                     />
-                    <p class="text-white/60 text-xs mt-0.5">Creator</p>
+                    <p class="text-white/60 text-xs mt-0.5">{{ lp.creator.role || 'Creator' }}</p>
                 </div>
                 <div>
                     <h2 v-html="sanitizeHtml(lp.creator.headline)"
@@ -143,7 +143,7 @@
                         :contenteditable="inlineMode ? 'true' : 'false'"
                         @focus="inlineMode && $emit('elFocus', $event, 'creator.bio')"
                         @blur="inlineMode && $emit('elBlur', $event, 'creator.bio')"
-                        :class="['text-slate-300 leading-relaxed', inlineMode ? editableClass : '']"
+                        :class="['text-slate-300 leading-relaxed whitespace-pre-line', inlineMode ? editableClass : '']"
                     />
                 </div>
             </div>

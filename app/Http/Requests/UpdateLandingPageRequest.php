@@ -52,8 +52,9 @@ class UpdateLandingPageRequest extends FormRequest
             'for_you.points.*' => 'nullable|string|max:120',
 
             'creator.headline' => 'nullable|string|max:80',
-            'creator.bio' => 'nullable|string|max:500',
+            'creator.bio' => 'nullable|string|max:2000',
             'creator.name' => 'nullable|string|max:80',
+            'creator.role' => 'nullable|string|max:50',
             'creator.photo' => 'nullable|url|max:2048',
             'creator.bg_color' => 'nullable|string|max:20',
 
