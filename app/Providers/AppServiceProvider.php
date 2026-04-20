@@ -20,9 +20,11 @@ use App\Services\Sms\SmsDispatcher;
 use App\Services\StorageService;
 use App\Services\TelegramService;
 use App\Services\XenditService;
+use App\Models\User;
 use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -50,6 +52,9 @@ class AppServiceProvider extends ServiceProvider
 
         Event::listen(AgentPrompted::class, [LogAiUsage::class, 'handleAgentPrompted']);
         Event::listen(ImageGenerated::class, [LogAiUsage::class, 'handleImageGenerated']);
+
+        // Pulse dashboard access — super admins only.
+        Gate::define('viewPulse', fn (User $user) => $user->isSuperAdmin());
 
         Queue::before(function (JobProcessing $event) {
             $ids = $this->extractJobIds($event);
