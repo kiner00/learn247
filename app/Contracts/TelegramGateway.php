@@ -14,7 +14,7 @@ interface TelegramGateway
 
     public function sendVideo(string $token, string $chatId, string $videoUrl, ?string $caption = null): void;
 
-    public function getFileUrl(string $token, string $fileId): ?string;
+    public function mirrorFile(string $token, string $fileId, string $folder): ?string;
 
     public function getChatMemberCount(string $token, string $chatId): ?int;
 

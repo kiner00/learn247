@@ -57,11 +57,11 @@ class TelegramWebhookController extends Controller
             // Telegram sends multiple sizes; pick the largest
             $photo = end($chatMessage['photo']);
             $fileId = $photo['file_id'];
-            $mediaUrl = $this->telegram->getFileUrl($community->telegram_bot_token, $fileId);
+            $mediaUrl = $this->telegram->mirrorFile($community->telegram_bot_token, $fileId, 'chat-media');
             $mediaType = 'image';
         } elseif (isset($chatMessage['video'])) {
             $fileId = $chatMessage['video']['file_id'];
-            $mediaUrl = $this->telegram->getFileUrl($community->telegram_bot_token, $fileId);
+            $mediaUrl = $this->telegram->mirrorFile($community->telegram_bot_token, $fileId, 'chat-media');
             $mediaType = 'video';
         }
 

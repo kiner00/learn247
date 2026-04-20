@@ -5,6 +5,7 @@ namespace Tests\Feature\Services;
 use App\Services\TelegramService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class TelegramServiceTest extends TestCase
@@ -215,27 +216,32 @@ class TelegramServiceTest extends TestCase
         $this->assertTrue(true);
     }
 
-    // ─── getFileUrl ──────────────────────────────────────────────────────────
+    // ─── mirrorFile ──────────────────────────────────────────────────────────
 
-    public function test_get_file_url_returns_full_url(): void
+    public function test_mirror_file_downloads_and_stores_on_our_disk(): void
     {
+        Storage::fake(config('filesystems.default'));
+
         Http::fake([
-            'https://api.telegram.org/bot*' => Http::response([
+            'https://api.telegram.org/bot*/getFile*' => Http::response([
                 'ok' => true,
                 'result' => ['file_path' => 'photos/file_123.jpg'],
             ], 200),
+            'https://api.telegram.org/file/bot*' => Http::response('fake-image-bytes', 200),
         ]);
 
-        $url = $this->service->getFileUrl($this->token, 'some-file-id');
+        $url = $this->service->mirrorFile($this->token, 'some-file-id', 'chat-media');
 
-        $this->assertEquals(
-            'https://api.telegram.org/file/bot'.$this->token.'/photos/file_123.jpg',
-            $url
-        );
+        $this->assertNotNull($url);
+        $this->assertStringNotContainsString($this->token, $url);
+        $this->assertStringContainsString('chat-media/', $url);
+        $this->assertStringEndsWith('.jpg', $url);
     }
 
-    public function test_get_file_url_returns_null_when_no_file_path(): void
+    public function test_mirror_file_returns_null_when_no_file_path(): void
     {
+        Storage::fake(config('filesystems.default'));
+
         Http::fake([
             'https://api.telegram.org/bot*' => Http::response([
                 'ok' => true,
@@ -243,20 +249,31 @@ class TelegramServiceTest extends TestCase
             ], 200),
         ]);
 
-        $url = $this->service->getFileUrl($this->token, 'some-file-id');
-
-        $this->assertNull($url);
+        $this->assertNull($this->service->mirrorFile($this->token, 'some-file-id', 'chat-media'));
     }
 
-    public function test_get_file_url_returns_null_on_exception(): void
+    public function test_mirror_file_returns_null_when_download_fails(): void
+    {
+        Storage::fake(config('filesystems.default'));
+
+        Http::fake([
+            'https://api.telegram.org/bot*/getFile*' => Http::response([
+                'ok' => true,
+                'result' => ['file_path' => 'photos/file_123.jpg'],
+            ], 200),
+            'https://api.telegram.org/file/bot*' => Http::response('', 404),
+        ]);
+
+        $this->assertNull($this->service->mirrorFile($this->token, 'some-file-id', 'chat-media'));
+    }
+
+    public function test_mirror_file_returns_null_on_exception(): void
     {
         Http::fake(function () {
             throw new \Exception('Timeout');
         });
 
-        $url = $this->service->getFileUrl($this->token, 'some-file-id');
-
-        $this->assertNull($url);
+        $this->assertNull($this->service->mirrorFile($this->token, 'some-file-id', 'chat-media'));
     }
 
     // ─── getChatMemberCount ─────────────────────────────────────────────────

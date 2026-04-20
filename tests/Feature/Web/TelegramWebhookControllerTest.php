@@ -7,6 +7,7 @@ use App\Models\Message;
 use App\Services\TelegramService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class TelegramWebhookControllerTest extends TestCase
@@ -93,11 +94,13 @@ class TelegramWebhookControllerTest extends TestCase
 
     public function test_creates_message_from_photo_with_caption(): void
     {
+        Storage::fake(config('filesystems.default'));
         Http::fake([
-            'https://api.telegram.org/bot*' => Http::response([
+            'https://api.telegram.org/bot*/getFile*' => Http::response([
                 'ok' => true,
                 'result' => ['file_path' => 'photos/file_99.jpg'],
             ], 200),
+            'https://api.telegram.org/file/bot*' => Http::response('fake-image-bytes', 200),
         ]);
 
         $payload = [
@@ -129,15 +132,22 @@ class TelegramWebhookControllerTest extends TestCase
             'telegram_author' => 'Jane',
             'media_type' => 'image',
         ]);
+
+        $storedUrl = \App\Models\Message::where('community_id', $this->community->id)->value('media_url');
+        $this->assertNotNull($storedUrl);
+        $this->assertStringNotContainsString('test-bot-token', $storedUrl);
+        $this->assertStringNotContainsString('api.telegram.org', $storedUrl);
     }
 
     public function test_creates_message_from_video(): void
     {
+        Storage::fake(config('filesystems.default'));
         Http::fake([
-            'https://api.telegram.org/bot*' => Http::response([
+            'https://api.telegram.org/bot*/getFile*' => Http::response([
                 'ok' => true,
                 'result' => ['file_path' => 'videos/file_55.mp4'],
             ], 200),
+            'https://api.telegram.org/file/bot*' => Http::response('fake-video-bytes', 200),
         ]);
 
         $payload = [
@@ -164,6 +174,45 @@ class TelegramWebhookControllerTest extends TestCase
             'community_id' => $this->community->id,
             'telegram_author' => 'videoguy',
             'media_type' => 'video',
+        ]);
+
+        $storedUrl = \App\Models\Message::where('community_id', $this->community->id)->value('media_url');
+        $this->assertNotNull($storedUrl);
+        $this->assertStringNotContainsString('test-bot-token', $storedUrl);
+        $this->assertStringNotContainsString('api.telegram.org', $storedUrl);
+    }
+
+    public function test_photo_message_still_created_when_mirror_fails(): void
+    {
+        Storage::fake(config('filesystems.default'));
+        Http::fake([
+            'https://api.telegram.org/bot*/getFile*' => Http::response([
+                'ok' => true,
+                'result' => ['file_path' => 'photos/file_99.jpg'],
+            ], 200),
+            'https://api.telegram.org/file/bot*' => Http::response('', 500),
+        ]);
+
+        $payload = [
+            'message' => [
+                'chat' => ['id' => -1001234567890],
+                'from' => ['id' => 222, 'is_bot' => false, 'first_name' => 'Jane'],
+                'caption' => 'Caption survives',
+                'photo' => [['file_id' => 'id', 'width' => 800, 'height' => 600]],
+            ],
+        ];
+
+        $response = $this->postJson(
+            '/webhooks/telegram/'.$this->community->slug,
+            $payload,
+            ['X-Telegram-Bot-Api-Secret-Token' => $this->secret]
+        );
+
+        $response->assertStatus(200);
+        $this->assertDatabaseHas('messages', [
+            'community_id' => $this->community->id,
+            'content' => 'Caption survives',
+            'media_url' => null,
         ]);
     }
 

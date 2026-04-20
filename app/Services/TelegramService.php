@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Contracts\TelegramGateway;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class TelegramService implements TelegramGateway
 {
@@ -77,7 +79,7 @@ class TelegramService implements TelegramGateway
         }
     }
 
-    public function getFileUrl(string $token, string $fileId): ?string
+    public function mirrorFile(string $token, string $fileId, string $folder): ?string
     {
         try {
             $response = Http::timeout(10)->get(self::API_BASE.$token.'/getFile', [
@@ -89,9 +91,18 @@ class TelegramService implements TelegramGateway
                 return null;
             }
 
-            return 'https://api.telegram.org/file/bot'.$token.'/'.$filePath;
+            $download = Http::timeout(30)->get('https://api.telegram.org/file/bot'.$token.'/'.$filePath);
+            if (! $download->successful()) {
+                return null;
+            }
+
+            $extension = pathinfo($filePath, PATHINFO_EXTENSION) ?: 'bin';
+            $storedPath = trim($folder, '/').'/'.Str::uuid().'.'.$extension;
+            Storage::disk(config('filesystems.default'))->put($storedPath, $download->body());
+
+            return Storage::url($storedPath);
         } catch (\Throwable $e) {
-            Log::warning('Telegram getFile failed', ['error' => $e->getMessage()]);
+            Log::warning('Telegram mirrorFile failed', ['error' => $e->getMessage()]);
 
             return null;
         }
