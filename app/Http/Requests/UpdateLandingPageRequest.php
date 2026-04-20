@@ -39,6 +39,7 @@ class UpdateLandingPageRequest extends FormRequest
             'social_proof.trust_line' => 'nullable|string|max:100',
             'social_proof.bg_color' => 'nullable|string|max:20',
             'social_proof.hide_avatars' => 'nullable|boolean',
+            'social_proof.hide_member_count' => 'nullable|boolean',
 
             'benefits.headline' => 'nullable|string|max:100',
             'benefits.items' => 'nullable|array|max:6',

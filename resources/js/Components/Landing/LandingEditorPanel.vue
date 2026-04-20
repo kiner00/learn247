@@ -230,6 +230,12 @@
                                                 <span class="field-label !mb-0">Hide avatar circles</span>
                                             </label>
                                         </div>
+                                        <div>
+                                            <label class="flex items-center gap-2 cursor-pointer">
+                                                <input type="checkbox" v-model="editDraft.social_proof.hide_member_count" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                                                <span class="field-label !mb-0">Hide member count</span>
+                                            </label>
+                                        </div>
                                     </template>
                                 </template>
 

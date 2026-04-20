@@ -20,8 +20,8 @@
                     </div>
                 </div>
                 <div>
-                    <span class="font-black text-xl">{{ formatCount(community.members_count) }}</span>
-                    <span class="ml-1.5 text-white/70">{{ lp.social_proof.stat_label }}</span>
+                    <span v-if="!lp.social_proof.hide_member_count" class="font-black text-xl">{{ formatCount(community.members_count) }}</span>
+                    <span :class="['text-white/70', !lp.social_proof.hide_member_count && 'ml-1.5']">{{ lp.social_proof.stat_label }}</span>
                 </div>
             </div>
             <div class="hidden sm:block w-px h-6 bg-white/20"></div>
