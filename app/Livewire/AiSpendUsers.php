@@ -25,8 +25,15 @@ class AiSpendUsers extends Card
             ->with('user:id,name,email,username')
             ->get();
 
+        $totals = AiUsageLog::query()
+            ->where('created_at', '>=', $since)
+            ->whereNotNull('user_id')
+            ->selectRaw('SUM(cost_usd) as cost, SUM(total_tokens) as tokens, COUNT(*) as calls')
+            ->first();
+
         return View::make('livewire.ai-spend-users', [
             'users' => $users,
+            'totals' => $totals,
         ]);
     }
 }
