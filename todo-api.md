@@ -51,12 +51,14 @@ This is a running checklist — check items off as they ship. Pick any single it
 - [x] Web characterization tests for cancel-recurring already existed (19 tests, all green); 18 new API feature tests added
 - Why: mobile starts checkout but cannot confirm completion without webhook visibility.
 
-### [ ] 1.3 Password reset / forgot password API  (~1–1.5 hr)
-- [ ] `POST /api/auth/forgot-password` (request reset email)
-- [ ] `POST /api/auth/verify-reset-token` (validate token before showing form)
-- [ ] `POST /api/auth/reset-password` (submit new password)
-- [ ] Reuse Web `ForgotPasswordController` / `ResetPasswordController` actions
-- [ ] API feature tests
+### [x] 1.3 Password reset / forgot password API  (~1–1.5 hr)
+- [x] `POST /api/auth/forgot-password` (request reset email)
+- [x] `POST /api/auth/verify-reset-token` (validate token before showing form)
+- [x] `POST /api/auth/reset-password` (submit new password)
+- [x] Extracted `SendPasswordResetLink`, `VerifyResetToken`, `ResetPassword` actions in `app/Actions/Auth/`
+- [x] `ForgotPasswordRequest`, `VerifyResetTokenRequest`, `ResetPasswordRequest` form requests
+- [x] Web `ForgotPasswordController` refactored to delegate to same Actions; 8 existing Web characterization tests still green
+- [x] 11 new API feature tests in `tests/Feature/Api/AuthApiTest.php`
 
 ### [ ] 1.4 KYC submit + status API  (~1.5–2 hr)
 - [ ] `POST /api/kyc/submit` (file uploads + form data)

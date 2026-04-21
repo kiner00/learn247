@@ -38,6 +38,9 @@ Route::post('/xendit/webhook', XenditWebhookController::class)->middleware('thro
 // ─── Auth (public) ─────────────────────────────────────────────────────────
 Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 Route::post('/auth/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
+Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:3,1');
+Route::post('/auth/verify-reset-token', [AuthController::class, 'verifyResetToken'])->middleware('throttle:10,1');
+Route::post('/auth/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:3,1');
 
 // ─── Communities (public read) ─────────────────────────────────────────────
 Route::get('/communities', [CommunityController::class, 'index']);
