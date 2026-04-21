@@ -40,13 +40,15 @@ This is a running checklist — check items off as they ship. Pick any single it
 - [x] 33 Web characterization tests + 31 API feature tests + 2 Action unit tests (all green)
 - [x] `Curzzo` model gained `HasFactory` + `CurzzoFactory`
 
-### [ ] 1.2 Payment status polling + cancel  (~1.5–2 hr)
-- [ ] `POST /api/subscriptions/{subscription}/check-status`
-- [ ] `POST /api/subscriptions/{subscription}/cancel-recurring`
-- [ ] `POST /api/curzzo-purchases/{purchase}/check-status`
-- [ ] `POST /api/curzzo-purchases/{purchase}/cancel-recurring`
-- [ ] Reuse existing `RecurringCancellationController` actions
-- [ ] Web characterization tests + API feature tests
+### [x] 1.2 Payment status polling + cancel  (~1.5–2 hr)
+- [x] `POST /api/subscriptions/{subscription}/check-status`
+- [x] `POST /api/subscriptions/{subscription}/cancel-recurring`
+- [x] `POST /api/curzzo-purchases/{curzzoPurchase}/check-status`
+- [x] `POST /api/curzzo-purchases/{curzzoPurchase}/cancel-recurring`
+- [x] Reuse existing `CancelRecurringPlan` action (same one `RecurringCancellationController` uses)
+- [x] New `CheckSubscriptionStatus` + `CheckCurzzoPurchaseStatus` actions (read-only; webhook remains source of truth for writes)
+- [x] `SubscriptionStatusResource` + `CurzzoPurchaseStatusResource` lock the JSON contract
+- [x] Web characterization tests for cancel-recurring already existed (19 tests, all green); 18 new API feature tests added
 - Why: mobile starts checkout but cannot confirm completion without webhook visibility.
 
 ### [ ] 1.3 Password reset / forgot password API  (~1–1.5 hr)

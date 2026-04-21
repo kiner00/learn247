@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\CreatorController;
 use App\Http\Controllers\Api\CurzzoChatController;
 use App\Http\Controllers\Api\CurzzoCheckoutController;
 use App\Http\Controllers\Api\CurzzoController;
+use App\Http\Controllers\Api\CurzzoPurchaseController;
 use App\Http\Controllers\Api\CurzzoTopupController;
 use App\Http\Controllers\Api\DirectMessageController;
 use App\Http\Controllers\Api\EventController;
@@ -122,6 +123,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ─── Subscriptions ─────────────────────────────────────────────────────
     Route::post('/communities/{community}/checkout', [SubscriptionController::class, 'checkout']);
+    Route::post('/subscriptions/{subscription}/check-status', [SubscriptionController::class, 'checkStatus']);
+    Route::post('/subscriptions/{subscription}/cancel-recurring', [SubscriptionController::class, 'cancelRecurring']);
+
+    // ─── Curzzo purchases ──────────────────────────────────────────────────
+    Route::post('/curzzo-purchases/{curzzoPurchase}/check-status', [CurzzoPurchaseController::class, 'checkStatus']);
+    Route::post('/curzzo-purchases/{curzzoPurchase}/cancel-recurring', [CurzzoPurchaseController::class, 'cancelRecurring']);
 
     // ─── Notifications ─────────────────────────────────────────────────────
     Route::get('/notifications', [NotificationController::class, 'index']);
