@@ -622,6 +622,35 @@ class AccountSettingsControllerTest extends TestCase
         $response->assertSessionHasErrors(['id_document', 'selfie']);
     }
 
+    public function test_submit_kyc_rejects_oversized_files(): void
+    {
+        $user = User::factory()->create(['kyc_status' => User::KYC_REJECTED]);
+
+        $response = $this->actingAs($user)->post('/account/settings/kyc', [
+            'id_document' => UploadedFile::fake()->image('big.jpg')->size(10241),
+            'selfie' => UploadedFile::fake()->image('big2.jpg')->size(10241),
+        ]);
+
+        $response->assertSessionHasErrors(['id_document', 'selfie']);
+    }
+
+    public function test_submit_kyc_dispatches_verification_job(): void
+    {
+        Storage::fake(config('filesystems.default'));
+        Queue::fake();
+
+        $user = User::factory()->create(['kyc_status' => User::KYC_NONE]);
+
+        $this->actingAs($user)->post('/account/settings/kyc', [
+            'id_document' => UploadedFile::fake()->image('id.jpg', 400, 300),
+            'selfie' => UploadedFile::fake()->image('selfie.jpg', 400, 300),
+        ]);
+
+        Queue::assertPushed(\App\Jobs\VerifyKycDocuments::class, function ($job) use ($user) {
+            return $job->user->is($user);
+        });
+    }
+
     // ─── requestManualKycReview ───────────────────────────────────────────────
 
     public function test_request_manual_kyc_review_after_three_ai_rejections(): void

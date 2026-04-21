@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Web;
 
 use App\Actions\Account\LogoutEverywhere;
+use App\Actions\Account\RequestManualKycReview;
+use App\Actions\Account\SubmitKyc;
 use App\Actions\Account\UpdateChatPrefs;
 use App\Actions\Account\UpdateCommunityChat;
 use App\Actions\Account\UpdateCommunityNotificationPrefs;
@@ -16,6 +18,7 @@ use App\Actions\Account\UpdateProfile;
 use App\Actions\Account\UpdateTheme;
 use App\Actions\Account\UpdateTimezone;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SubmitKycRequest;
 use App\Http\Requests\UpdateEmailRequest;
 use App\Http\Requests\UpdatePasswordRequest;
 use App\Http\Requests\UpdateProfileRequest;
@@ -161,66 +164,20 @@ class AccountSettingsController extends Controller
         return back()->with('success', 'Crypto wallet saved!');
     }
 
-    public function submitKyc(Request $request, \App\Services\StorageService $storage): RedirectResponse
+    public function submitKyc(SubmitKycRequest $request, SubmitKyc $action): RedirectResponse
     {
-        $user = $request->user();
-
-        if ($user->kyc_status === User::KYC_SUBMITTED) {
-            return back()->withErrors(['kyc' => 'Your KYC is already under review.']);
-        }
-
-        if ($user->kyc_status === User::KYC_APPROVED) {
-            return back()->withErrors(['kyc' => 'Your KYC is already approved.']);
-        }
-
-        $request->validate([
-            'id_document' => ['required', 'image', 'max:10240'],
-            'selfie' => ['required', 'image', 'max:10240'],
-        ], [
-            'id_document.required' => 'Please upload your government-issued ID.',
-            'id_document.image' => 'The ID document must be an image file (JPG, PNG, GIF, BMP, SVG, or WebP).',
-            'id_document.max' => 'The ID document must be smaller than 10 MB.',
-            'selfie.required' => 'Please upload a selfie holding your ID.',
-            'selfie.image' => 'The selfie must be an image file (JPG, PNG, GIF, BMP, SVG, or WebP).',
-            'selfie.max' => 'The selfie must be smaller than 10 MB.',
-            'id_document.uploaded' => 'The ID document failed to upload. The file may be too large — please use an image under 10 MB.',
-            'selfie.uploaded' => 'The selfie failed to upload. The file may be too large — please use an image under 10 MB.',
-        ]);
-
-        $idUrl = $storage->upload($request->file('id_document'), 'kyc-documents');
-        $selfieUrl = $storage->upload($request->file('selfie'), 'kyc-documents');
-
-        $user->update([
-            'kyc_status' => User::KYC_SUBMITTED,
-            'kyc_id_document' => $idUrl,
-            'kyc_selfie' => $selfieUrl,
-            'kyc_submitted_at' => now(),
-            'kyc_rejected_reason' => null,
-        ]);
-
-        // Dispatch AI verification in the background
-        \App\Jobs\VerifyKycDocuments::dispatch($user);
+        $action->execute(
+            $request->user(),
+            $request->file('id_document'),
+            $request->file('selfie'),
+        );
 
         return back()->with('success', 'KYC documents submitted! We\'ll review them shortly.');
     }
 
-    public function requestManualKycReview(Request $request): RedirectResponse
+    public function requestManualKycReview(Request $request, RequestManualKycReview $action): RedirectResponse
     {
-        $user = $request->user();
-
-        if (($user->kyc_ai_rejections ?? 0) < 3) {
-            return back()->withErrors(['kyc' => 'Please re-submit your documents first.']);
-        }
-
-        if ($user->kyc_status === User::KYC_SUBMITTED) {
-            return back()->withErrors(['kyc' => 'Your KYC is already under review.']);
-        }
-
-        $user->update([
-            'kyc_status' => User::KYC_SUBMITTED,
-            'kyc_submitted_at' => now(),
-            'kyc_rejected_reason' => null,
-        ]);
+        $action->execute($request->user());
 
         return back()->with('success', 'Your documents have been sent for manual review by our team.');
     }

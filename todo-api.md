@@ -60,13 +60,17 @@ This is a running checklist — check items off as they ship. Pick any single it
 - [x] Web `ForgotPasswordController` refactored to delegate to same Actions; 8 existing Web characterization tests still green
 - [x] 11 new API feature tests in `tests/Feature/Api/AuthApiTest.php`
 
-### [ ] 1.4 KYC submit + status API  (~1.5–2 hr)
-- [ ] `POST /api/kyc/submit` (file uploads + form data)
-- [ ] `GET /api/kyc/status` (current verification state)
-- [ ] `KycResource`
-- [ ] Add `kyc_status` to `UserResource` (so `/auth/me` exposes it)
-- [ ] Reuse `AccountSettingsController@submitKyc` action (extract first if fat)
-- [ ] Web characterization tests + API feature tests
+### [x] 1.4 KYC submit + status API
+- [x] `POST /api/kyc/submit` (multipart: `id_document`, `selfie`)
+- [x] `GET /api/kyc/status` (current verification state; no document URLs exposed)
+- [x] `POST /api/kyc/manual-review` (parity with web manual-review endpoint)
+- [x] `KycResource` — status, verified, verified_at, submitted_at, rejected_reason, ai_rejections, `can_request_manual_review` computed flag
+- [x] `UserResource` now surfaces `kyc_status` + `kyc_verified` (so `/auth/me` exposes it)
+- [x] Extracted `SubmitKyc` + `RequestManualKycReview` actions in `app/Actions/Account/`; both throw `ValidationException::withMessages(['kyc' => ...])` so web redirects-back and API returns 422 from the same guards
+- [x] `SubmitKycRequest` form request (shape validation; same messages as before)
+- [x] Web `AccountSettingsController@submitKyc` and `@requestManualKycReview` refactored to delegate to Actions
+- [x] 2 new Web characterization tests added (job-dispatch assertion + oversized-files guard); all 10 Web KYC tests green
+- [x] 17 new API feature tests in `tests/Feature/Api/KycApiTest.php`
 
 ### [ ] 1.5 Email verification API  (~1–1.5 hr)
 - [ ] `POST /api/auth/email/send-verification` (resend verification link)

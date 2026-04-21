@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\CurzzoTopupController;
 use App\Http\Controllers\Api\DirectMessageController;
 use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\FeedController;
+use App\Http\Controllers\Api\KycController;
 use App\Http\Controllers\Api\LessonCommentController;
 use App\Http\Controllers\Api\LikeController;
 use App\Http\Controllers\Api\NotificationController;
@@ -163,6 +164,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('/payout', [AccountSettingsController::class, 'updatePayout']);
         Route::patch('/crypto', [AccountSettingsController::class, 'updateCrypto']);
     });
+
+    // ─── KYC ───────────────────────────────────────────────────────────────
+    Route::post('/kyc/submit', [KycController::class, 'submit']);
+    Route::get('/kyc/status', [KycController::class, 'status']);
+    Route::post('/kyc/manual-review', [KycController::class, 'manualReview']);
 
     // ─── Community chat ────────────────────────────────────────────────────
     Route::get('/communities/{community}/chat', [ChatController::class, 'index']);
