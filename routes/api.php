@@ -42,6 +42,7 @@ Route::post('/auth/register', [AuthController::class, 'register'])->middleware('
 Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:3,1');
 Route::post('/auth/verify-reset-token', [AuthController::class, 'verifyResetToken'])->middleware('throttle:10,1');
 Route::post('/auth/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:3,1');
+Route::post('/auth/email/verify', [AuthController::class, 'verifyEmail'])->middleware('throttle:10,1');
 
 // ─── Communities (public read) ─────────────────────────────────────────────
 Route::get('/communities', [CommunityController::class, 'index']);
@@ -58,6 +59,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Auth
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/me', [AuthController::class, 'me']);
+    Route::post('/auth/email/send-verification', [AuthController::class, 'sendEmailVerification'])->middleware('throttle:3,1');
 
     // ─── Communities ───────────────────────────────────────────────────────
     Route::post('/communities', [CommunityController::class, 'store']);

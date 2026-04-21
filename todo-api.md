@@ -72,12 +72,17 @@ This is a running checklist — check items off as they ship. Pick any single it
 - [x] 2 new Web characterization tests added (job-dispatch assertion + oversized-files guard); all 10 Web KYC tests green
 - [x] 17 new API feature tests in `tests/Feature/Api/KycApiTest.php`
 
-### [ ] 1.5 Email verification API  (~1–1.5 hr)
-- [ ] `POST /api/auth/email/send-verification` (resend verification link)
-- [ ] `POST /api/auth/email/verify` (accept signed token from deep link)
-- [ ] Surface `email_verified_at` on `UserResource`
-- [ ] API feature tests
-- Why: Mobile needs an explicit flow; the web version uses signed URL clicks which open in browser, not the app.
+### [x] 1.5 Email verification API
+- [x] `POST /api/auth/email/send-verification` (auth:sanctum, throttle:3,1) — resends verification email, rejects already-verified users
+- [x] `POST /api/auth/email/verify` (public, throttle:10,1) — accepts HMAC-signed token from deep link
+- [x] `UserResource` now surfaces `email_verified` (bool) + `email_verified_at` (ISO)
+- [x] `User` now implements `MustVerifyEmail`; overrides `sendEmailVerificationNotification` to dispatch our `VerifyEmailMail`
+- [x] `app/Mail/VerifyEmailMail.php` + `resources/views/emails/verify-email.blade.php` (matches existing mail style)
+- [x] `app/Support/EmailVerificationToken.php` — HMAC-SHA256 signed token (`base64url(payload).sig`), 60-min TTL, binds to user id + current email so email-change invalidates
+- [x] `SendEmailVerification` + `VerifyEmail` actions in `app/Actions/Auth/` — guards throw `ValidationException` so both surfaces get consistent 422/redirect behavior; verification is idempotent (does not re-fire `Verified` event for already-verified users)
+- [x] `VerifyEmailRequest` form request
+- [x] 14 new API feature tests in `AuthApiTest.php` (send happy path, 401 unauth, already-verified guard, verify happy path, idempotency, tampered signature, malformed token, expired, deleted user, email-changed-after-issue, missing token, `/auth/me` exposes the fields)
+- Deliberately NOT in scope (flag as follow-ups): wiring registration to auto-send; wiring email-change to re-verify; a web verification route.
 
 ### [ ] 1.6 Account deletion API  **(Apple App Store requirement since 2022)**  (~2–3 hr)
 - [ ] `POST /api/account/delete` — initiate deletion (with grace period or immediate, decide policy)

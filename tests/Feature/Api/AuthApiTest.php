@@ -2,8 +2,13 @@
 
 namespace Tests\Feature\Api;
 
+use App\Mail\VerifyEmailMail;
 use App\Models\User;
+use App\Support\EmailVerificationToken;
+use Illuminate\Auth\Events\Verified;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
 use Tests\TestCase;
@@ -224,5 +229,149 @@ class AuthApiTest extends TestCase
             'password_confirmation' => 'Different1!',
         ])->assertUnprocessable()
             ->assertJsonValidationErrors('password');
+    }
+
+    // ─── Email verification ────────────────────────────────────────────────
+
+    public function test_me_exposes_email_verified_fields(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+
+        $response = $this->actingAs($user, 'sanctum')->getJson('/api/auth/me');
+
+        $response->assertOk()
+            ->assertJsonPath('data.email_verified', true)
+            ->assertJsonStructure(['data' => ['email_verified', 'email_verified_at']]);
+    }
+
+    public function test_send_email_verification_requires_authentication(): void
+    {
+        $this->postJson('/api/auth/email/send-verification')->assertUnauthorized();
+    }
+
+    public function test_send_email_verification_queues_mail_for_unverified_user(): void
+    {
+        Mail::fake();
+
+        $user = User::factory()->unverified()->create();
+
+        $response = $this->actingAs($user, 'sanctum')
+            ->postJson('/api/auth/email/send-verification');
+
+        $response->assertOk()->assertJsonPath('message', 'Verification email sent.');
+
+        Mail::assertSent(VerifyEmailMail::class, function (VerifyEmailMail $mail) use ($user) {
+            return $mail->user->is($user) && $mail->hasTo($user->email);
+        });
+    }
+
+    public function test_send_email_verification_rejects_already_verified_user(): void
+    {
+        Mail::fake();
+
+        $user = User::factory()->create(['email_verified_at' => now()]);
+
+        $response = $this->actingAs($user, 'sanctum')
+            ->postJson('/api/auth/email/send-verification');
+
+        $response->assertUnprocessable()->assertJsonValidationErrors('email');
+        Mail::assertNothingSent();
+    }
+
+    public function test_verify_email_marks_user_verified_with_valid_token(): void
+    {
+        Event::fake([Verified::class]);
+
+        $user = User::factory()->unverified()->create();
+        $token = EmailVerificationToken::issue($user);
+
+        $response = $this->postJson('/api/auth/email/verify', ['token' => $token]);
+
+        $response->assertOk()
+            ->assertJsonPath('message', 'Email verified.')
+            ->assertJsonPath('user.email_verified', true);
+
+        $this->assertNotNull($user->refresh()->email_verified_at);
+        Event::assertDispatched(Verified::class, fn ($e) => $e->user->is($user));
+    }
+
+    public function test_verify_email_is_idempotent(): void
+    {
+        Event::fake([Verified::class]);
+
+        $user = User::factory()->create(['email_verified_at' => now()->subDay()]);
+        $verifiedAt = $user->email_verified_at;
+        $token = EmailVerificationToken::issue($user);
+
+        $response = $this->postJson('/api/auth/email/verify', ['token' => $token]);
+
+        $response->assertOk();
+        $this->assertTrue($user->refresh()->email_verified_at->equalTo($verifiedAt));
+        Event::assertNotDispatched(Verified::class);
+    }
+
+    public function test_verify_email_rejects_tampered_signature(): void
+    {
+        $user = User::factory()->unverified()->create();
+        $token = EmailVerificationToken::issue($user);
+        [$payload, $sig] = explode('.', $token);
+        $tampered = $payload.'.'.strrev($sig);
+
+        $response = $this->postJson('/api/auth/email/verify', ['token' => $tampered]);
+
+        $response->assertUnprocessable()->assertJsonValidationErrors('token');
+        $this->assertNull($user->refresh()->email_verified_at);
+    }
+
+    public function test_verify_email_rejects_malformed_token(): void
+    {
+        $this->postJson('/api/auth/email/verify', ['token' => 'not-a-valid-token'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('token');
+    }
+
+    public function test_verify_email_rejects_expired_token(): void
+    {
+        $user = User::factory()->unverified()->create();
+
+        $this->travel(-2)->hours();
+        $token = EmailVerificationToken::issue($user);
+        $this->travelBack();
+
+        $response = $this->postJson('/api/auth/email/verify', ['token' => $token]);
+
+        $response->assertUnprocessable()->assertJsonValidationErrors('token');
+        $this->assertNull($user->refresh()->email_verified_at);
+    }
+
+    public function test_verify_email_rejects_token_for_deleted_user(): void
+    {
+        $user = User::factory()->unverified()->create();
+        $token = EmailVerificationToken::issue($user);
+        $user->delete();
+
+        $response = $this->postJson('/api/auth/email/verify', ['token' => $token]);
+
+        $response->assertUnprocessable()->assertJsonValidationErrors('token');
+    }
+
+    public function test_verify_email_rejects_token_after_email_change(): void
+    {
+        $user = User::factory()->unverified()->create(['email' => 'old@example.com']);
+        $token = EmailVerificationToken::issue($user);
+
+        $user->update(['email' => 'new@example.com']);
+
+        $response = $this->postJson('/api/auth/email/verify', ['token' => $token]);
+
+        $response->assertUnprocessable()->assertJsonValidationErrors('token');
+        $this->assertNull($user->refresh()->email_verified_at);
+    }
+
+    public function test_verify_email_requires_token(): void
+    {
+        $this->postJson('/api/auth/email/verify', [])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('token');
     }
 }

@@ -5,13 +5,16 @@ namespace App\Http\Controllers\Api;
 use App\Actions\Auth\AuthenticateUser;
 use App\Actions\Auth\RegisterUser;
 use App\Actions\Auth\ResetPassword;
+use App\Actions\Auth\SendEmailVerification;
 use App\Actions\Auth\SendPasswordResetLink;
+use App\Actions\Auth\VerifyEmail;
 use App\Actions\Auth\VerifyResetToken;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ForgotPasswordRequest;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Requests\ResetPasswordRequest;
+use App\Http\Requests\VerifyEmailRequest;
 use App\Http\Requests\VerifyResetTokenRequest;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\JsonResponse;
@@ -87,6 +90,23 @@ class AuthController extends Controller
 
         throw ValidationException::withMessages([
             'email' => [__($status)],
+        ]);
+    }
+
+    public function sendEmailVerification(Request $request, SendEmailVerification $action): JsonResponse
+    {
+        $action->execute($request->user());
+
+        return response()->json(['message' => 'Verification email sent.']);
+    }
+
+    public function verifyEmail(VerifyEmailRequest $request, VerifyEmail $action): JsonResponse
+    {
+        $user = $action->execute($request->validated('token'));
+
+        return response()->json([
+            'message' => 'Email verified.',
+            'user' => new UserResource($user),
         ]);
     }
 }

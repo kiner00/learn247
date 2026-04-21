@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Services\XenditService;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -10,7 +11,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasFactory, HasRoles, Notifiable;
 
@@ -63,6 +64,12 @@ class User extends Authenticatable
     public function isKycVerified(): bool
     {
         return $this->kyc_verified_at !== null || $this->kyc_status === self::KYC_APPROVED;
+    }
+
+    public function sendEmailVerificationNotification(): void
+    {
+        \Illuminate\Support\Facades\Mail::to($this->email)
+            ->send(new \App\Mail\VerifyEmailMail($this));
     }
 
     public function ownedCommunities(): HasMany
