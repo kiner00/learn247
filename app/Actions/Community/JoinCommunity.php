@@ -27,6 +27,8 @@ class JoinCommunity
     /** @throws ValidationException */
     public function execute(User $user, Community $community): CommunityMember
     {
+        $this->guardAcceptingMembers($community);
+
         if (! $community->isFree()) {
             throw ValidationException::withMessages([
                 'community' => 'This is a paid community. Please subscribe to join.',
@@ -43,10 +45,22 @@ class JoinCommunity
      */
     public function executeAsTrial(User $user, Community $community, Carbon $expiresAt): CommunityMember
     {
+        $this->guardAcceptingMembers($community);
+
         return $this->createMember($user, $community, [
             'membership_type' => CommunityMember::MEMBERSHIP_FREE,
             'expires_at' => $expiresAt,
         ]);
+    }
+
+    /** @throws ValidationException */
+    private function guardAcceptingMembers(Community $community): void
+    {
+        if (! $community->isAcceptingNewMembers()) {
+            throw ValidationException::withMessages([
+                'community' => 'This community is no longer accepting new members.',
+            ]);
+        }
     }
 
     /**

@@ -84,14 +84,19 @@ This is a running checklist — check items off as they ship. Pick any single it
 - [x] 14 new API feature tests in `AuthApiTest.php` (send happy path, 401 unauth, already-verified guard, verify happy path, idempotency, tampered signature, malformed token, expired, deleted user, email-changed-after-issue, missing token, `/auth/me` exposes the fields)
 - Deliberately NOT in scope (flag as follow-ups): wiring registration to auto-send; wiring email-change to re-verify; a web verification route.
 
-### [ ] 1.6 Account deletion API  **(Apple App Store requirement since 2022)**  (~2–3 hr)
-- [ ] `POST /api/account/delete` — initiate deletion (with grace period or immediate, decide policy)
-- [ ] `POST /api/account/delete/cancel` — undo if within grace period
-- [ ] `GET /api/account/deletion-status`
-- [ ] Action: `DeleteUserAccount` (cascade rules, anonymize vs hard delete decision)
-- [ ] Web equivalent in `AccountSettingsController` if missing
-- [ ] Web + API tests
-- Why: **HARD REQUIREMENT** — Apple rejects apps without in-app account deletion.
+### [x] 1.6 Account deletion API  **(Apple App Store requirement since 2022)**
+- [x] Policy: **soft-delete + 30-day grace period, then hard-delete**. User on soft-delete cannot authenticate; communities they own stop accepting new members; existing members retain access.
+- [x] `POST /api/account/delete` (auth:sanctum) — soft-deletes user, revokes all Sanctum tokens, auto-cancels any `recurring_status=ACTIVE` plans via `CancelRecurringPlan` (Subscription / CreatorSubscription / CurzzoPurchase / CourseEnrollment)
+- [x] `POST /api/account/delete/cancel` (public, throttle:5,1) — accepts `{email, password}`; restores if within grace window. Generic error message for all failure modes to avoid leaking account state.
+- [x] `GET /api/account/deletion-status` (auth:sanctum) — returns `{requested, requested_at, will_be_deleted_at, days_remaining, can_cancel}`
+- [x] Web equivalent: `POST /account/settings/delete-account`
+- [x] Actions: `RequestAccountDeletion`, `CancelAccountDeletion`, `HardDeleteUserAccount` (app/Actions/Account/)
+- [x] Console command: `php artisan users:prune-deleted` — runs `HardDeleteUserAccount` for anyone past grace (wipes S3 avatar + KYC docs, then forceDelete → cascade)
+- [x] `User` uses `SoftDeletes` (migration `2026_04_21_120000_add_soft_deletes_to_users_table`) + `DELETION_GRACE_DAYS = 30` constant
+- [x] `Community::isAcceptingNewMembers()` helper + guards in `JoinCommunity` (both free + trial paths) and `StartSubscriptionCheckout`
+- [x] `CancelAccountDeletionRequest` form request + `AccountDeletionStatusResource`
+- [x] Tests: 17 API (happy paths, auth guards, expired grace, wrong credentials, Xendit failure tolerance, soft-delete-blocks-sanctum-auth, community-join guarding) + 2 Web characterization + 4 command tests. All green; 1547/1547 across the full API/Web/Middleware sweep.
+- Deliberately NOT in scope (flag as follow-ups): scheduling `users:prune-deleted` in `app/Console/Kernel.php` (ops decision on when to run); Inertia UI page for the delete-account button; login endpoint could surface a "pending_deletion" status when credentials match a soft-deleted user (currently just returns generic invalid credentials — users discover the cancel flow via the dedicated endpoint).
 
 ### [ ] 1.7 OpenAPI/Scribe spec  (~1.5–2 hr)
 - [ ] Install `knuckleswtf/scribe` or similar

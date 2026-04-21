@@ -43,6 +43,7 @@ Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword'])-
 Route::post('/auth/verify-reset-token', [AuthController::class, 'verifyResetToken'])->middleware('throttle:10,1');
 Route::post('/auth/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:3,1');
 Route::post('/auth/email/verify', [AuthController::class, 'verifyEmail'])->middleware('throttle:10,1');
+Route::post('/account/delete/cancel', [AccountSettingsController::class, 'cancelDeletion'])->middleware('throttle:5,1');
 
 // ─── Communities (public read) ─────────────────────────────────────────────
 Route::get('/communities', [CommunityController::class, 'index']);
@@ -166,6 +167,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('/payout', [AccountSettingsController::class, 'updatePayout']);
         Route::patch('/crypto', [AccountSettingsController::class, 'updateCrypto']);
     });
+
+    // ─── Account deletion ──────────────────────────────────────────────────
+    Route::post('/account/delete', [AccountSettingsController::class, 'deleteAccount']);
+    Route::get('/account/deletion-status', [AccountSettingsController::class, 'deletionStatus']);
 
     // ─── KYC ───────────────────────────────────────────────────────────────
     Route::post('/kyc/submit', [KycController::class, 'submit']);

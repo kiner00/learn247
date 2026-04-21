@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Account\CancelAccountDeletion;
 use App\Actions\Account\LogoutEverywhere;
+use App\Actions\Account\RequestAccountDeletion;
 use App\Actions\Account\UpdateChatPrefs;
 use App\Actions\Account\UpdateCommunityChat;
 use App\Actions\Account\UpdateCommunityNotificationPrefs;
@@ -16,9 +18,11 @@ use App\Actions\Account\UpdateProfile;
 use App\Actions\Account\UpdateTheme;
 use App\Actions\Account\UpdateTimezone;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CancelAccountDeletionRequest;
 use App\Http\Requests\UpdateEmailRequest;
 use App\Http\Requests\UpdatePasswordRequest;
 use App\Http\Requests\UpdateProfileRequest;
+use App\Http\Resources\AccountDeletionStatusResource;
 use App\Queries\Account\GetAccountSettings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -125,5 +129,33 @@ class AccountSettingsController extends Controller
         $action->execute($request->user(), $request->input('crypto_wallet'));
 
         return response()->json(['message' => 'Crypto wallet updated.']);
+    }
+
+    public function deleteAccount(Request $request, RequestAccountDeletion $action): JsonResponse
+    {
+        $user = $action->execute($request->user());
+
+        return response()->json([
+            'message' => 'Your account is scheduled for deletion. You can cancel within '.\App\Models\User::DELETION_GRACE_DAYS.' days by signing in again.',
+            'deletion' => new AccountDeletionStatusResource($user),
+        ]);
+    }
+
+    public function cancelDeletion(CancelAccountDeletionRequest $request, CancelAccountDeletion $action): JsonResponse
+    {
+        $user = $action->execute(
+            $request->validated('email'),
+            $request->validated('password'),
+        );
+
+        return response()->json([
+            'message' => 'Your account has been restored. Please sign in.',
+            'deletion' => new AccountDeletionStatusResource($user),
+        ]);
+    }
+
+    public function deletionStatus(Request $request): AccountDeletionStatusResource
+    {
+        return new AccountDeletionStatusResource($request->user());
     }
 }

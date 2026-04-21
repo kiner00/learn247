@@ -20,6 +20,12 @@ class StartSubscriptionCheckout
      */
     public function execute(User $user, Community $community, ?string $affiliateCode = null, ?string $successRedirectUrl = null): array
     {
+        if (! $community->isAcceptingNewMembers()) {
+            throw ValidationException::withMessages([
+                'community' => 'This community is no longer accepting new members.',
+            ]);
+        }
+
         if ($community->isFree()) {
             throw ValidationException::withMessages([
                 'community' => 'This community is free. No checkout required.',

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Actions\Account\LogoutEverywhere;
+use App\Actions\Account\RequestAccountDeletion;
 use App\Actions\Account\RequestManualKycReview;
 use App\Actions\Account\SubmitKyc;
 use App\Actions\Account\UpdateChatPrefs;
@@ -180,5 +181,16 @@ class AccountSettingsController extends Controller
         $action->execute($request->user());
 
         return back()->with('success', 'Your documents have been sent for manual review by our team.');
+    }
+
+    public function deleteAccount(Request $request, RequestAccountDeletion $action): RedirectResponse
+    {
+        $action->execute($request->user());
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect('/')->with('success',
+            'Your account is scheduled for deletion. Sign back in within '
+            .User::DELETION_GRACE_DAYS.' days to cancel.');
     }
 }

@@ -213,6 +213,7 @@ Route::middleware('auth')->prefix('account')->group(function () {
     Route::patch('/settings/crypto', [AccountSettingsController::class, 'updateCrypto'])->name('account.settings.crypto');
     Route::post('/settings/kyc', [AccountSettingsController::class, 'submitKyc'])->name('account.settings.kyc');
     Route::post('/settings/kyc/manual-review', [AccountSettingsController::class, 'requestManualKycReview'])->name('account.settings.kyc.manual');
+    Route::post('/settings/delete-account', [AccountSettingsController::class, 'deleteAccount'])->name('account.settings.delete');
 });
 
 // ─── Communities ───────────────────────────────────────────────────────────────

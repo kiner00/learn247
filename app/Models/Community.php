@@ -226,6 +226,15 @@ class Community extends Model
         return $this->price <= 0;
     }
 
+    /**
+     * Communities owned by a user pending account deletion (soft-deleted)
+     * stop accepting new members for the duration of the grace period.
+     */
+    public function isAcceptingNewMembers(): bool
+    {
+        return $this->owner()->whereNull('deleted_at')->exists();
+    }
+
     public function hasTrial(): bool
     {
         if ($this->isFree()) {

@@ -695,4 +695,23 @@ class AccountSettingsControllerTest extends TestCase
         $response->assertRedirect();
         $response->assertSessionHasErrors(['kyc']);
     }
+
+    // ─── deleteAccount ─────────────────────────────────────────────────────
+
+    public function test_delete_account_soft_deletes_user_and_logs_out(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->post('/account/settings/delete-account');
+
+        $response->assertRedirect('/');
+        $response->assertSessionHas('success');
+
+        $this->assertSoftDeleted('users', ['id' => $user->id]);
+    }
+
+    public function test_delete_account_requires_authentication(): void
+    {
+        $this->post('/account/settings/delete-account')->assertRedirect('/login');
+    }
 }
