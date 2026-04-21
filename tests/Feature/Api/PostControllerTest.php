@@ -202,6 +202,67 @@ class PostControllerTest extends TestCase
         $controller->togglePin($post, app(TogglePin::class));
     }
 
+    // ─── update (route-level) ────────────────────────────────────────────────
+
+    public function test_author_can_update_post_via_route(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create();
+        $post = Post::factory()->create([
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'content' => 'Original content',
+        ]);
+
+        $this->actingAs($user, 'sanctum')
+            ->patchJson("/api/posts/{$post->id}", ['content' => 'Updated via route'])
+            ->assertOk()
+            ->assertJsonPath('message', 'Post updated.');
+
+        $this->assertEquals('Updated via route', $post->fresh()->content);
+    }
+
+    public function test_non_author_cannot_update_post_via_route(): void
+    {
+        $author = User::factory()->create();
+        $other = User::factory()->create();
+        $community = Community::factory()->create();
+        $post = Post::factory()->create([
+            'community_id' => $community->id,
+            'user_id' => $author->id,
+            'content' => 'Original',
+        ]);
+
+        $this->actingAs($other, 'sanctum')
+            ->patchJson("/api/posts/{$post->id}", ['content' => 'Hijacked'])
+            ->assertForbidden();
+
+        $this->assertEquals('Original', $post->fresh()->content);
+    }
+
+    public function test_update_validates_content_required_via_route(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create();
+        $post = Post::factory()->create([
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+        ]);
+
+        $this->actingAs($user, 'sanctum')
+            ->patchJson("/api/posts/{$post->id}", [])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['content']);
+    }
+
+    public function test_unauthenticated_cannot_update_post_via_route(): void
+    {
+        $post = Post::factory()->create();
+
+        $this->patchJson("/api/posts/{$post->id}", ['content' => 'Nope'])
+            ->assertUnauthorized();
+    }
+
     // ─── update (controller-level, no route) ─────────────────────────────────
 
     public function test_author_can_update_post_via_controller(): void

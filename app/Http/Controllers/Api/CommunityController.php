@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Actions\Community\CreateCommunity;
 use App\Actions\Community\JoinCommunity;
+use App\Actions\Community\LeaveCommunity;
 use App\Actions\Community\ManageGallery;
 use App\Actions\Community\SendAnnouncement;
 use App\Actions\Community\StartTrialMembership;
@@ -136,6 +137,13 @@ class CommunityController extends Controller
         return response()->json([
             'message' => 'This is a paid community. Please subscribe to join.',
         ], 422);
+    }
+
+    public function leave(Request $request, Community $community, LeaveCommunity $action): JsonResponse
+    {
+        $action->execute($request->user(), $community);
+
+        return response()->json(['message' => 'You have left the community.']);
     }
 
     public function about(Request $request, Community $community): JsonResponse

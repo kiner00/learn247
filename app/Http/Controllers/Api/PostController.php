@@ -34,6 +34,8 @@ class PostController extends Controller
             $action->execute($request->user(), $post, $request->validated());
 
             return response()->json(['message' => 'Post updated.']);
+        } catch (AuthorizationException $e) {
+            throw $e;
         } catch (\Throwable $e) {
             Log::error('Api\PostController@update failed', ['error' => $e->getMessage(), 'post_id' => $post->id]);
 

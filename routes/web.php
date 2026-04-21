@@ -237,6 +237,7 @@ Route::post('/communities/{community}/classroom/courses/{course}/preview-play', 
 Route::middleware('auth')->group(function () {
     Route::post('/communities', [CommunityController::class, 'store'])->name('communities.store');
     Route::post('/communities/{community}/join', [CommunityController::class, 'join'])->name('communities.join');
+    Route::post('/communities/{community}/leave', [CommunityController::class, 'leave'])->name('communities.leave');
 
     // Paid community checkout → redirects to Xendit invoice URL
     Route::post('/communities/{community}/checkout', [SubscriptionController::class, 'checkout'])->name('communities.checkout')->middleware('throttle:10,1');

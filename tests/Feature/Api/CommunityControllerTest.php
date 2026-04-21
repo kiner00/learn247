@@ -183,6 +183,57 @@ class CommunityControllerTest extends TestCase
         ]);
     }
 
+    // ─── leave ────────────────────────────────────────────────────────────────
+
+    public function test_member_can_leave_community(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create();
+        CommunityMember::factory()->create([
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+        ]);
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson("/api/communities/{$community->slug}/leave")
+            ->assertOk()
+            ->assertJsonPath('message', 'You have left the community.');
+
+        $this->assertDatabaseMissing('community_members', [
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+        ]);
+    }
+
+    public function test_owner_cannot_leave_own_community(): void
+    {
+        $owner = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $this->actingAs($owner, 'sanctum')
+            ->postJson("/api/communities/{$community->slug}/leave")
+            ->assertForbidden();
+    }
+
+    public function test_non_member_cannot_leave(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create();
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson("/api/communities/{$community->slug}/leave")
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['community']);
+    }
+
+    public function test_unauthenticated_cannot_leave(): void
+    {
+        $community = Community::factory()->create();
+
+        $this->postJson("/api/communities/{$community->slug}/leave")
+            ->assertUnauthorized();
+    }
+
     // ─── about (public) ──────────────────────────────────────────────────────
 
     public function test_about_returns_community_info(): void

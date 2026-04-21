@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Web;
+namespace App\Http\Controllers\Api;
 
 use App\Actions\Curzzo\CreateCurzzo;
 use App\Actions\Curzzo\DeleteCurzzo;
@@ -13,76 +13,64 @@ use App\Http\Requests\CreateCurzzoRequest;
 use App\Http\Requests\ReorderCurzzosRequest;
 use App\Http\Requests\UpdateCurzzoRequest;
 use App\Http\Requests\UploadCurzzoPreviewVideoRequest;
+use App\Http\Resources\CurzzoResource;
 use App\Models\Community;
 use App\Models\Curzzo;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
-use Inertia\Inertia;
-use Inertia\Response;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class CurzzoController extends Controller
 {
-    public function index(Community $community): Response
+    public function index(Community $community): AnonymousResourceCollection
     {
         $this->authorize('update', $community);
 
-        $curzzos = $community->curzzos()->orderBy('position')->get();
-
-        $modelTiers = collect(config('curzzos.tiers'))->map(fn ($tier, $key) => [
-            'value' => $key,
-            'label' => $tier['label'],
-            'description' => $tier['description'],
-        ])->values();
-
-        return Inertia::render('Communities/Settings/Curzzos', [
-            'community' => $community,
-            'isPro' => auth()->user()->creatorPlan() === 'pro',
-            'curzzos' => $curzzos,
-            'modelTiers' => $modelTiers,
-        ]);
+        return CurzzoResource::collection(
+            $community->curzzos()->orderBy('position')->get()
+        );
     }
 
-    public function store(CreateCurzzoRequest $request, Community $community, CreateCurzzo $action): RedirectResponse
+    public function store(CreateCurzzoRequest $request, Community $community, CreateCurzzo $action): CurzzoResource
     {
-        $action->execute($request->user(), $community, $request->validated());
+        $curzzo = $action->execute($request->user(), $community, $request->validated());
 
-        return back()->with('success', 'Curzzo created!');
+        return new CurzzoResource($curzzo);
     }
 
-    public function update(UpdateCurzzoRequest $request, Community $community, Curzzo $curzzo, UpdateCurzzo $action): RedirectResponse
+    public function update(UpdateCurzzoRequest $request, Community $community, Curzzo $curzzo, UpdateCurzzo $action): CurzzoResource
     {
         abort_unless($curzzo->community_id === $community->id, 404);
 
         $action->execute($curzzo, $request->validated());
 
-        return back()->with('success', 'Curzzo updated!');
+        return new CurzzoResource($curzzo);
     }
 
-    public function destroy(Community $community, Curzzo $curzzo, DeleteCurzzo $action): RedirectResponse
+    public function destroy(Community $community, Curzzo $curzzo, DeleteCurzzo $action): JsonResponse
     {
         $this->authorize('update', $community);
         abort_unless($curzzo->community_id === $community->id, 404);
 
         $action->execute($curzzo);
 
-        return back()->with('success', 'Curzzo deleted!');
+        return response()->json(['ok' => true]);
     }
 
-    public function reorder(ReorderCurzzosRequest $request, Community $community, ReorderCurzzos $action): RedirectResponse
+    public function reorder(ReorderCurzzosRequest $request, Community $community, ReorderCurzzos $action): JsonResponse
     {
         $action->execute($community, $request->validated('ids'));
 
-        return back();
+        return response()->json(['ok' => true]);
     }
 
-    public function toggleActive(Community $community, Curzzo $curzzo, ToggleCurzzoActive $action): RedirectResponse
+    public function toggleActive(Community $community, Curzzo $curzzo, ToggleCurzzoActive $action): CurzzoResource
     {
         $this->authorize('update', $community);
         abort_unless($curzzo->community_id === $community->id, 404);
 
         $action->execute($curzzo);
 
-        return back();
+        return new CurzzoResource($curzzo);
     }
 
     public function uploadPreviewVideo(UploadCurzzoPreviewVideoRequest $request, Community $community, RequestCurzzoPreviewVideoUpload $action): JsonResponse

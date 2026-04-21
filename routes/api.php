@@ -11,7 +11,12 @@ use App\Http\Controllers\Api\ClassroomController;
 use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\CommunityController;
 use App\Http\Controllers\Api\CommunityMemberController;
+use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\CreatorController;
+use App\Http\Controllers\Api\CurzzoChatController;
+use App\Http\Controllers\Api\CurzzoCheckoutController;
+use App\Http\Controllers\Api\CurzzoController;
+use App\Http\Controllers\Api\CurzzoTopupController;
 use App\Http\Controllers\Api\DirectMessageController;
 use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\FeedController;
@@ -54,6 +59,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::match(['patch', 'post'], '/communities/{community}', [CommunityController::class, 'update']);
     Route::delete('/communities/{community}', [CommunityController::class, 'destroy']);
     Route::post('/communities/{community}/join', [CommunityController::class, 'join']);
+    Route::post('/communities/{community}/leave', [CommunityController::class, 'leave']);
     Route::get('/communities/{community}/members', [CommunityController::class, 'members']);
     Route::get('/communities/{community}/settings', [CommunityController::class, 'settings']);
     Route::get('/communities/{community}/analytics', [CommunityController::class, 'analytics']);
@@ -74,6 +80,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ─── Posts ─────────────────────────────────────────────────────────────
     Route::post('/posts', [PostController::class, 'store'])->middleware('throttle:10,1');
+    Route::match(['patch', 'post'], '/posts/{post}', [PostController::class, 'update']);
     Route::delete('/posts/{post}', [PostController::class, 'destroy']);
 
     // ─── Likes & reactions ─────────────────────────────────────────────────
@@ -119,6 +126,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // ─── Notifications ─────────────────────────────────────────────────────
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::post('/notifications/read-all', [NotificationController::class, 'readAll']);
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'read']);
 
     // ─── Profile ───────────────────────────────────────────────────────────
     Route::get('/profile', [ProfileController::class, 'me']);
@@ -169,6 +177,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // ─── Creator Dashboard ─────────────────────────────────────────────────
     Route::get('/creator/dashboard', [CreatorController::class, 'dashboard']);
 
+    // ─── Coupons ───────────────────────────────────────────────────────────
+    Route::post('/coupons/{code}/redeem', [CouponController::class, 'redeem'])->middleware('throttle:10,1');
+
     // ─── Payout Requests ───────────────────────────────────────────────────
     Route::post('/creator/payout-request/{community:id}', [PayoutRequestController::class, 'storeOwner']);
     Route::post('/affiliates/{affiliate}/payout-request', [PayoutRequestController::class, 'storeAffiliate']);
@@ -177,4 +188,26 @@ Route::middleware('auth:sanctum')->group(function () {
     // ─── AI Assistant ──────────────────────────────────────────────────────
     Route::post('/ai/chat', [AIAssistantController::class, 'chat'])->middleware('throttle:15,1');
     Route::post('/ai/greet', [AIAssistantController::class, 'greet'])->middleware('throttle:15,1');
+
+    // ─── Curzzos (Custom AI Bots) ──────────────────────────────────────────
+    // Management (creator-only via policy)
+    Route::get('/communities/{community}/curzzos', [CurzzoController::class, 'index']);
+    Route::post('/communities/{community}/curzzos', [CurzzoController::class, 'store']);
+    Route::patch('/communities/{community}/curzzos/{curzzo}', [CurzzoController::class, 'update']);
+    Route::delete('/communities/{community}/curzzos/{curzzo}', [CurzzoController::class, 'destroy']);
+    Route::post('/communities/{community}/curzzos/reorder', [CurzzoController::class, 'reorder']);
+    Route::post('/communities/{community}/curzzos/{curzzo}/toggle-active', [CurzzoController::class, 'toggleActive']);
+    Route::post('/communities/{community}/curzzos/preview-videos', [CurzzoController::class, 'uploadPreviewVideo']);
+
+    // Chat
+    Route::post('/communities/{community}/curzzos/{curzzo}/chat', [CurzzoChatController::class, 'chat']);
+    Route::get('/communities/{community}/curzzos/{curzzo}/history', [CurzzoChatController::class, 'history']);
+    Route::delete('/communities/{community}/curzzos/{curzzo}/history', [CurzzoChatController::class, 'resetHistory']);
+
+    // Topup
+    Route::get('/communities/{community}/curzzos/topup-packs', [CurzzoTopupController::class, 'packs']);
+    Route::post('/communities/{community}/curzzos/topup/checkout', [CurzzoTopupController::class, 'checkout'])->middleware('throttle:10,1');
+
+    // Curzzo purchase checkout
+    Route::post('/communities/{community}/curzzos/{curzzo}/checkout', [CurzzoCheckoutController::class, 'checkout'])->middleware('throttle:10,1');
 });

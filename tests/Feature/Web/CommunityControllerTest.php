@@ -170,6 +170,57 @@ class CommunityControllerTest extends TestCase
             ->assertRedirect('/login');
     }
 
+    // ─── leave ────────────────────────────────────────────────────────────────
+
+    public function test_member_can_leave_community(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create();
+        CommunityMember::factory()->create([
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+        ]);
+
+        $this->actingAs($user)
+            ->post("/communities/{$community->slug}/leave")
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('community_members', [
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+        ]);
+    }
+
+    public function test_owner_cannot_leave_own_community(): void
+    {
+        $owner = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+
+        $this->actingAs($owner)
+            ->post("/communities/{$community->slug}/leave")
+            ->assertForbidden();
+    }
+
+    public function test_non_member_cannot_leave(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create();
+
+        $this->actingAs($user)
+            ->from("/communities/{$community->slug}")
+            ->post("/communities/{$community->slug}/leave")
+            ->assertRedirect("/communities/{$community->slug}")
+            ->assertSessionHasErrors('community');
+    }
+
+    public function test_unauthenticated_user_cannot_leave(): void
+    {
+        $community = Community::factory()->create();
+
+        $this->post("/communities/{$community->slug}/leave")
+            ->assertRedirect('/login');
+    }
+
     // ─── members ──────────────────────────────────────────────────────────────
 
     public function test_member_can_view_members_page(): void

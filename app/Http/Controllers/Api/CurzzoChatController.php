@@ -1,16 +1,18 @@
 <?php
 
-namespace App\Http\Controllers\Web;
+namespace App\Http\Controllers\Api;
 
 use App\Actions\Curzzo\ChatWithCurzzo;
 use App\Actions\Curzzo\GetCurzzoChatHistory;
 use App\Actions\Curzzo\ResetCurzzoChatHistory;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ChatWithCurzzoRequest;
+use App\Http\Resources\CurzzoChatMessageResource;
 use App\Models\Community;
 use App\Models\Curzzo;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class CurzzoChatController extends Controller
 {
@@ -29,13 +31,13 @@ class CurzzoChatController extends Controller
         return response()->json($result->body, $result->status);
     }
 
-    public function history(Request $request, Community $community, Curzzo $curzzo, GetCurzzoChatHistory $action): JsonResponse
+    public function history(Request $request, Community $community, Curzzo $curzzo, GetCurzzoChatHistory $action): AnonymousResourceCollection
     {
         abort_unless($curzzo->community_id === $community->id, 404);
 
-        return response()->json([
-            'messages' => $action->execute($request->user(), $curzzo),
-        ]);
+        return CurzzoChatMessageResource::collection(
+            $action->execute($request->user(), $curzzo)
+        );
     }
 
     public function resetHistory(Request $request, Community $community, Curzzo $curzzo, ResetCurzzoChatHistory $action): JsonResponse

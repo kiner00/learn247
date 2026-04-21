@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Actions\Community\CreateCommunity;
 use App\Actions\Community\EnsureMemberAffiliate;
 use App\Actions\Community\JoinCommunity;
+use App\Actions\Community\LeaveCommunity;
 use App\Actions\Community\SendAnnouncement;
 use App\Actions\Community\StartTrialMembership;
 use App\Actions\Community\SyncCommunityDomains;
@@ -361,6 +362,13 @@ class CommunityController extends Controller
         return back()->withErrors([
             'community' => 'This is a paid community. Please subscribe to join.',
         ]);
+    }
+
+    public function leave(Request $request, Community $community, LeaveCommunity $action): RedirectResponse
+    {
+        $action->execute($request->user(), $community);
+
+        return back()->with('success', 'You have left the community.');
     }
 
     public function announce(Request $request, Community $community, SendAnnouncement $action, PlanLimitService $planLimit): RedirectResponse

@@ -59,4 +59,74 @@ class NotificationControllerTest extends TestCase
         $this->postJson('/api/notifications/read-all')
             ->assertUnauthorized();
     }
+
+    public function test_user_can_mark_single_notification_as_read(): void
+    {
+        $user = User::factory()->create();
+        $notification = Notification::create([
+            'user_id' => $user->id,
+            'type' => 'test',
+            'data' => ['message' => 'Test'],
+            'read_at' => null,
+        ]);
+
+        $this->actingAs($user)
+            ->postJson("/api/notifications/{$notification->id}/read")
+            ->assertOk()
+            ->assertJsonPath('message', 'Notification marked as read.');
+
+        $this->assertNotNull($notification->fresh()->read_at);
+    }
+
+    public function test_read_is_idempotent_and_preserves_timestamp(): void
+    {
+        $user = User::factory()->create();
+        $readAt = now()->subHour();
+        $notification = Notification::create([
+            'user_id' => $user->id,
+            'type' => 'test',
+            'data' => ['message' => 'Test'],
+            'read_at' => $readAt,
+        ]);
+
+        $this->actingAs($user)
+            ->postJson("/api/notifications/{$notification->id}/read")
+            ->assertOk();
+
+        $this->assertEquals(
+            $readAt->toDateTimeString(),
+            $notification->fresh()->read_at->toDateTimeString()
+        );
+    }
+
+    public function test_user_cannot_mark_other_users_notification_as_read(): void
+    {
+        $user = User::factory()->create();
+        $other = User::factory()->create();
+        $notification = Notification::create([
+            'user_id' => $other->id,
+            'type' => 'test',
+            'data' => ['message' => 'Test'],
+            'read_at' => null,
+        ]);
+
+        $this->actingAs($user)
+            ->postJson("/api/notifications/{$notification->id}/read")
+            ->assertForbidden();
+
+        $this->assertNull($notification->fresh()->read_at);
+    }
+
+    public function test_unauthenticated_cannot_mark_notification_as_read(): void
+    {
+        $notification = Notification::create([
+            'user_id' => User::factory()->create()->id,
+            'type' => 'test',
+            'data' => [],
+            'read_at' => null,
+        ]);
+
+        $this->postJson("/api/notifications/{$notification->id}/read")
+            ->assertUnauthorized();
+    }
 }
