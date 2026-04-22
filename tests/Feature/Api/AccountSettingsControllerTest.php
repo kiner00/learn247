@@ -16,7 +16,7 @@ class AccountSettingsControllerTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->getJson('/api/account/settings');
+        $response = $this->actingAs($user)->getJson('/api/v1/account/settings');
 
         $response->assertOk()
             ->assertJsonStructure([
@@ -29,7 +29,7 @@ class AccountSettingsControllerTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->getJson('/api/account/settings?tab=notifications');
+        $response = $this->actingAs($user)->getJson('/api/v1/account/settings?tab=notifications');
 
         $response->assertOk()->assertJsonPath('tab', 'notifications');
     }
@@ -38,7 +38,7 @@ class AccountSettingsControllerTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->patchJson('/api/account/settings/theme', [
+        $response = $this->actingAs($user)->patchJson('/api/v1/account/settings/theme', [
             'theme' => 'invalid-theme',
         ]);
 
@@ -49,7 +49,7 @@ class AccountSettingsControllerTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->patchJson('/api/account/settings/timezone', [
+        $response = $this->actingAs($user)->patchJson('/api/v1/account/settings/timezone', [
             'timezone' => 'Invalid/Timezone',
         ]);
 
@@ -60,7 +60,7 @@ class AccountSettingsControllerTest extends TestCase
     {
         $user = User::factory()->create(['email' => 'old@example.com']);
 
-        $response = $this->actingAs($user)->patchJson('/api/account/settings/email', [
+        $response = $this->actingAs($user)->patchJson('/api/v1/account/settings/email', [
             'email' => 'new@example.com',
         ]);
 
@@ -72,7 +72,7 @@ class AccountSettingsControllerTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->patchJson('/api/account/settings/password', [
+        $response = $this->actingAs($user)->patchJson('/api/v1/account/settings/password', [
             'current_password' => 'password',
             'password' => 'new-secure-password',
             'password_confirmation' => 'new-secure-password',
@@ -85,7 +85,7 @@ class AccountSettingsControllerTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->patchJson('/api/account/settings/timezone', [
+        $response = $this->actingAs($user)->patchJson('/api/v1/account/settings/timezone', [
             'timezone' => 'Asia/Manila',
         ]);
 
@@ -97,7 +97,7 @@ class AccountSettingsControllerTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->patchJson('/api/account/settings/theme', [
+        $response = $this->actingAs($user)->patchJson('/api/v1/account/settings/theme', [
             'theme' => 'dark',
         ]);
 
@@ -109,22 +109,22 @@ class AccountSettingsControllerTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->postJson('/api/account/settings/logout-everywhere');
+        $response = $this->actingAs($user)->postJson('/api/v1/account/settings/logout-everywhere');
 
         $response->assertOk()->assertJson(['message' => 'All other sessions have been logged out.']);
     }
 
     public function test_unauthenticated_returns_401(): void
     {
-        $this->getJson('/api/account/settings')->assertUnauthorized();
-        $this->patchJson('/api/account/settings/email', ['email' => 'test@example.com'])->assertUnauthorized();
+        $this->getJson('/api/v1/account/settings')->assertUnauthorized();
+        $this->patchJson('/api/v1/account/settings/email', ['email' => 'test@example.com'])->assertUnauthorized();
     }
 
     public function test_patch_notifications_updates_preferences(): void
     {
         $user = User::factory()->create();
 
-        $this->actingAs($user)->patchJson('/api/account/settings/notifications', [
+        $this->actingAs($user)->patchJson('/api/v1/account/settings/notifications', [
             'email_notifications' => false,
         ])
             ->assertOk()
@@ -137,7 +137,7 @@ class AccountSettingsControllerTest extends TestCase
         $community = Community::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
-        $this->actingAs($user)->patchJson("/api/account/settings/notifications/{$community->id}", [
+        $this->actingAs($user)->patchJson("/api/v1/account/settings/notifications/{$community->id}", [
             'muted' => true,
         ])
             ->assertOk()
@@ -148,7 +148,7 @@ class AccountSettingsControllerTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $this->actingAs($user)->patchJson('/api/account/settings/chat', [
+        $this->actingAs($user)->patchJson('/api/v1/account/settings/chat', [
             'chat_enabled' => true,
         ])
             ->assertOk()
@@ -161,7 +161,7 @@ class AccountSettingsControllerTest extends TestCase
         $community = Community::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
-        $this->actingAs($user)->patchJson("/api/account/settings/chat/{$community->id}", [
+        $this->actingAs($user)->patchJson("/api/v1/account/settings/chat/{$community->id}", [
             'chat_enabled' => false,
         ])
             ->assertOk()
@@ -172,7 +172,7 @@ class AccountSettingsControllerTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $this->actingAs($user)->patchJson('/api/account/settings/payout', [
+        $this->actingAs($user)->patchJson('/api/v1/account/settings/payout', [
             'payout_method' => 'gcash',
             'payout_account' => '09123456789',
         ])
@@ -184,7 +184,7 @@ class AccountSettingsControllerTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $this->actingAs($user)->patchJson('/api/account/settings/crypto', [
+        $this->actingAs($user)->patchJson('/api/v1/account/settings/crypto', [
             'crypto_wallet' => '0x1234567890abcdef',
         ])
             ->assertOk()
@@ -197,7 +197,7 @@ class AccountSettingsControllerTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $this->actingAs($user)->postJson('/api/account/settings/profile', [
+        $this->actingAs($user)->postJson('/api/v1/account/settings/profile', [
             'username' => 'updateduser',
             'first_name' => 'Updated',
             'last_name' => 'Name',
@@ -213,7 +213,7 @@ class AccountSettingsControllerTest extends TestCase
         $community = Community::factory()->create();
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
-        $this->actingAs($user)->patchJson("/api/account/settings/profile/visibility/{$community->id}", [
+        $this->actingAs($user)->patchJson("/api/v1/account/settings/profile/visibility/{$community->id}", [
             'is_public' => false,
         ])
             ->assertOk()

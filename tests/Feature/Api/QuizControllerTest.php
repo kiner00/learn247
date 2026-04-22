@@ -61,7 +61,7 @@ class QuizControllerTest extends TestCase
         [$community, $course, $lesson] = $this->createClassroomStructure($owner);
 
         $this->postJson(
-            "/api/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/quiz",
+            "/api/v1/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/quiz",
             $this->quizPayload()
         )->assertUnauthorized();
     }
@@ -74,7 +74,7 @@ class QuizControllerTest extends TestCase
 
         $this->actingAs($other, 'sanctum')
             ->postJson(
-                "/api/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/quiz",
+                "/api/v1/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/quiz",
                 $this->quizPayload()
             )
             ->assertForbidden();
@@ -87,7 +87,7 @@ class QuizControllerTest extends TestCase
 
         $this->actingAs($owner, 'sanctum')
             ->postJson(
-                "/api/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/quiz",
+                "/api/v1/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/quiz",
                 []
             )
             ->assertUnprocessable()
@@ -101,7 +101,7 @@ class QuizControllerTest extends TestCase
 
         $this->actingAs($owner, 'sanctum')
             ->postJson(
-                "/api/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/quiz",
+                "/api/v1/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/quiz",
                 [
                     'title' => 'Quiz',
                     'pass_score' => 70,
@@ -120,7 +120,7 @@ class QuizControllerTest extends TestCase
 
         $response = $this->actingAs($owner, 'sanctum')
             ->postJson(
-                "/api/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/quiz",
+                "/api/v1/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/quiz",
                 $this->quizPayload()
             );
 
@@ -154,7 +154,7 @@ class QuizControllerTest extends TestCase
 
         $this->actingAs($owner, 'sanctum')
             ->postJson(
-                "/api/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/quiz",
+                "/api/v1/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/quiz",
                 $this->quizPayload()
             )
             ->assertStatus(201);
@@ -172,7 +172,7 @@ class QuizControllerTest extends TestCase
         $quiz = Quiz::create(['lesson_id' => $lesson->id, 'title' => 'Test', 'pass_score' => 50]);
 
         $this->deleteJson(
-            "/api/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/quiz/{$quiz->id}"
+            "/api/v1/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/quiz/{$quiz->id}"
         )->assertUnauthorized();
     }
 
@@ -185,7 +185,7 @@ class QuizControllerTest extends TestCase
 
         $this->actingAs($other, 'sanctum')
             ->deleteJson(
-                "/api/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/quiz/{$quiz->id}"
+                "/api/v1/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/quiz/{$quiz->id}"
             )
             ->assertForbidden();
     }
@@ -198,7 +198,7 @@ class QuizControllerTest extends TestCase
 
         $this->actingAs($owner, 'sanctum')
             ->deleteJson(
-                "/api/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/quiz/{$quiz->id}"
+                "/api/v1/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/quiz/{$quiz->id}"
             )
             ->assertOk()
             ->assertJsonPath('message', 'Quiz deleted.');
@@ -219,7 +219,7 @@ class QuizControllerTest extends TestCase
 
         $this->actingAs($owner, 'sanctum')
             ->postJson(
-                "/api/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/quiz",
+                "/api/v1/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/quiz",
                 $this->quizPayload()
             )
             ->assertStatus(500)
@@ -240,7 +240,7 @@ class QuizControllerTest extends TestCase
 
         $this->actingAs($owner, 'sanctum')
             ->deleteJson(
-                "/api/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/quiz/{$quiz->id}"
+                "/api/v1/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/quiz/{$quiz->id}"
             )
             ->assertStatus(500)
             ->assertJsonPath('message', 'Failed to delete quiz.');

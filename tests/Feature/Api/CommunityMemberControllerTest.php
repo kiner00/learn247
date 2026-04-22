@@ -22,7 +22,7 @@ class CommunityMemberControllerTest extends TestCase
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson("/api/community-members?community_slug={$community->slug}");
+            ->getJson("/api/v1/community-members?community_slug={$community->slug}");
 
         $response->assertOk()
             ->assertJsonStructure(['data', 'links', 'meta']);
@@ -37,7 +37,7 @@ class CommunityMemberControllerTest extends TestCase
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $memberToRemove->id]);
 
         $this->actingAs($owner, 'sanctum')
-            ->deleteJson("/api/communities/{$community->slug}/members/{$memberToRemove->id}")
+            ->deleteJson("/api/v1/communities/{$community->slug}/members/{$memberToRemove->id}")
             ->assertOk()
             ->assertJsonPath('message', 'Member removed.');
 
@@ -58,7 +58,7 @@ class CommunityMemberControllerTest extends TestCase
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $targetMember->id]);
 
         $this->actingAs($regularMember, 'sanctum')
-            ->deleteJson("/api/communities/{$community->slug}/members/{$targetMember->id}")
+            ->deleteJson("/api/v1/communities/{$community->slug}/members/{$targetMember->id}")
             ->assertForbidden();
 
         $this->assertDatabaseHas('community_members', [
@@ -75,7 +75,7 @@ class CommunityMemberControllerTest extends TestCase
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $this->actingAs($owner, 'sanctum')
-            ->patchJson("/api/communities/{$community->slug}/members/{$member->id}/role", [
+            ->patchJson("/api/v1/communities/{$community->slug}/members/{$member->id}/role", [
                 'role' => 'moderator',
             ])
             ->assertOk()
@@ -100,7 +100,7 @@ class CommunityMemberControllerTest extends TestCase
         $mock->shouldReceive('execute')->once()->andThrow(new \RuntimeException('DB error'));
 
         $this->actingAs($owner, 'sanctum')
-            ->deleteJson("/api/communities/{$community->slug}/members/{$memberToRemove->id}")
+            ->deleteJson("/api/v1/communities/{$community->slug}/members/{$memberToRemove->id}")
             ->assertStatus(500)
             ->assertJsonPath('message', 'Failed to remove member.');
     }
@@ -116,7 +116,7 @@ class CommunityMemberControllerTest extends TestCase
         $mock->shouldReceive('execute')->once()->andThrow(new \RuntimeException('DB error'));
 
         $this->actingAs($owner, 'sanctum')
-            ->patchJson("/api/communities/{$community->slug}/members/{$member->id}/role", [
+            ->patchJson("/api/v1/communities/{$community->slug}/members/{$member->id}/role", [
                 'role' => 'moderator',
             ])
             ->assertStatus(500)
@@ -127,13 +127,13 @@ class CommunityMemberControllerTest extends TestCase
     {
         $community = Community::factory()->create();
 
-        $this->getJson("/api/community-members?community_slug={$community->slug}")
+        $this->getJson("/api/v1/community-members?community_slug={$community->slug}")
             ->assertUnauthorized();
 
-        $this->deleteJson("/api/communities/{$community->slug}/members/1")
+        $this->deleteJson("/api/v1/communities/{$community->slug}/members/1")
             ->assertUnauthorized();
 
-        $this->patchJson("/api/communities/{$community->slug}/members/1/role", ['role' => 'admin'])
+        $this->patchJson("/api/v1/communities/{$community->slug}/members/1/role", ['role' => 'admin'])
             ->assertUnauthorized();
     }
 }

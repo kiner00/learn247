@@ -21,7 +21,7 @@ class AuthApiTest extends TestCase
     {
         $user = User::factory()->create(['password' => 'password']);
 
-        $response = $this->postJson('/api/auth/login', [
+        $response = $this->postJson('/api/v1/auth/login', [
             'email' => $user->email,
             'password' => 'password',
         ]);
@@ -35,7 +35,7 @@ class AuthApiTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->postJson('/api/auth/login', [
+        $response = $this->postJson('/api/v1/auth/login', [
             'email' => $user->email,
             'password' => 'wrong-password',
         ]);
@@ -46,7 +46,7 @@ class AuthApiTest extends TestCase
 
     public function test_register_creates_user_and_returns_token_and_user(): void
     {
-        $response = $this->postJson('/api/auth/register', [
+        $response = $this->postJson('/api/v1/auth/register', [
             'first_name' => 'John',
             'last_name' => 'Doe',
             'email' => 'john@example.com',
@@ -63,7 +63,7 @@ class AuthApiTest extends TestCase
 
     public function test_register_validation_errors_for_missing_fields(): void
     {
-        $response = $this->postJson('/api/auth/register', []);
+        $response = $this->postJson('/api/v1/auth/register', []);
 
         $response->assertUnprocessable()
             ->assertJsonValidationErrors(['first_name', 'last_name', 'email', 'password']);
@@ -75,7 +75,7 @@ class AuthApiTest extends TestCase
         $token = $user->createToken('mobile')->plainTextToken;
 
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
-            ->postJson('/api/auth/logout');
+            ->postJson('/api/v1/auth/logout');
 
         $response->assertOk()->assertJsonPath('message', 'Logged out.');
     }
@@ -85,7 +85,7 @@ class AuthApiTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson('/api/auth/me');
+            ->getJson('/api/v1/auth/me');
 
         $response->assertOk()
             ->assertJsonPath('data.id', $user->id)
@@ -94,7 +94,7 @@ class AuthApiTest extends TestCase
 
     public function test_me_requires_authentication(): void
     {
-        $this->getJson('/api/auth/me')
+        $this->getJson('/api/v1/auth/me')
             ->assertUnauthorized();
     }
 
@@ -103,14 +103,14 @@ class AuthApiTest extends TestCase
         Notification::fake();
         $user = User::factory()->create(['email' => 'reset@example.com']);
 
-        $response = $this->postJson('/api/auth/forgot-password', ['email' => $user->email]);
+        $response = $this->postJson('/api/v1/auth/forgot-password', ['email' => $user->email]);
 
         $response->assertOk()->assertJsonStructure(['message']);
     }
 
     public function test_forgot_password_returns_generic_success_for_nonexistent_email(): void
     {
-        $response = $this->postJson('/api/auth/forgot-password', [
+        $response = $this->postJson('/api/v1/auth/forgot-password', [
             'email' => 'nobody@example.com',
         ]);
 
@@ -119,14 +119,14 @@ class AuthApiTest extends TestCase
 
     public function test_forgot_password_validates_email_field(): void
     {
-        $this->postJson('/api/auth/forgot-password', ['email' => 'not-an-email'])
+        $this->postJson('/api/v1/auth/forgot-password', ['email' => 'not-an-email'])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('email');
     }
 
     public function test_forgot_password_requires_email_field(): void
     {
-        $this->postJson('/api/auth/forgot-password', [])
+        $this->postJson('/api/v1/auth/forgot-password', [])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('email');
     }
@@ -136,7 +136,7 @@ class AuthApiTest extends TestCase
         $user = User::factory()->create(['email' => 'token@example.com']);
         $token = Password::broker()->createToken($user);
 
-        $response = $this->postJson('/api/auth/verify-reset-token', [
+        $response = $this->postJson('/api/v1/auth/verify-reset-token', [
             'email' => $user->email,
             'token' => $token,
         ]);
@@ -148,7 +148,7 @@ class AuthApiTest extends TestCase
     {
         $user = User::factory()->create(['email' => 'bad@example.com']);
 
-        $response = $this->postJson('/api/auth/verify-reset-token', [
+        $response = $this->postJson('/api/v1/auth/verify-reset-token', [
             'email' => $user->email,
             'token' => 'nonsense-token',
         ]);
@@ -158,7 +158,7 @@ class AuthApiTest extends TestCase
 
     public function test_verify_reset_token_returns_false_for_unknown_email(): void
     {
-        $response = $this->postJson('/api/auth/verify-reset-token', [
+        $response = $this->postJson('/api/v1/auth/verify-reset-token', [
             'email' => 'ghost@example.com',
             'token' => 'some-token',
         ]);
@@ -168,7 +168,7 @@ class AuthApiTest extends TestCase
 
     public function test_verify_reset_token_validates_required_fields(): void
     {
-        $this->postJson('/api/auth/verify-reset-token', [])
+        $this->postJson('/api/v1/auth/verify-reset-token', [])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['email', 'token']);
     }
@@ -181,7 +181,7 @@ class AuthApiTest extends TestCase
         ]);
         $token = Password::broker()->createToken($user);
 
-        $response = $this->postJson('/api/auth/reset-password', [
+        $response = $this->postJson('/api/v1/auth/reset-password', [
             'token' => $token,
             'email' => $user->email,
             'password' => 'NewPassword1!',
@@ -199,7 +199,7 @@ class AuthApiTest extends TestCase
     {
         $user = User::factory()->create(['email' => 'bad-token@example.com']);
 
-        $response = $this->postJson('/api/auth/reset-password', [
+        $response = $this->postJson('/api/v1/auth/reset-password', [
             'token' => 'bad-token',
             'email' => $user->email,
             'password' => 'NewPassword1!',
@@ -212,7 +212,7 @@ class AuthApiTest extends TestCase
 
     public function test_reset_password_validates_required_fields(): void
     {
-        $this->postJson('/api/auth/reset-password', [])
+        $this->postJson('/api/v1/auth/reset-password', [])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['token', 'email', 'password']);
     }
@@ -222,7 +222,7 @@ class AuthApiTest extends TestCase
         $user = User::factory()->create(['email' => 'confirm@example.com']);
         $token = Password::broker()->createToken($user);
 
-        $this->postJson('/api/auth/reset-password', [
+        $this->postJson('/api/v1/auth/reset-password', [
             'token' => $token,
             'email' => $user->email,
             'password' => 'NewPassword1!',
@@ -237,7 +237,7 @@ class AuthApiTest extends TestCase
     {
         $user = User::factory()->create(['email_verified_at' => now()]);
 
-        $response = $this->actingAs($user, 'sanctum')->getJson('/api/auth/me');
+        $response = $this->actingAs($user, 'sanctum')->getJson('/api/v1/auth/me');
 
         $response->assertOk()
             ->assertJsonPath('data.email_verified', true)
@@ -246,7 +246,7 @@ class AuthApiTest extends TestCase
 
     public function test_send_email_verification_requires_authentication(): void
     {
-        $this->postJson('/api/auth/email/send-verification')->assertUnauthorized();
+        $this->postJson('/api/v1/auth/email/send-verification')->assertUnauthorized();
     }
 
     public function test_send_email_verification_queues_mail_for_unverified_user(): void
@@ -256,7 +256,7 @@ class AuthApiTest extends TestCase
         $user = User::factory()->unverified()->create();
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson('/api/auth/email/send-verification');
+            ->postJson('/api/v1/auth/email/send-verification');
 
         $response->assertOk()->assertJsonPath('message', 'Verification email sent.');
 
@@ -272,7 +272,7 @@ class AuthApiTest extends TestCase
         $user = User::factory()->create(['email_verified_at' => now()]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson('/api/auth/email/send-verification');
+            ->postJson('/api/v1/auth/email/send-verification');
 
         $response->assertUnprocessable()->assertJsonValidationErrors('email');
         Mail::assertNothingSent();
@@ -285,7 +285,7 @@ class AuthApiTest extends TestCase
         $user = User::factory()->unverified()->create();
         $token = EmailVerificationToken::issue($user);
 
-        $response = $this->postJson('/api/auth/email/verify', ['token' => $token]);
+        $response = $this->postJson('/api/v1/auth/email/verify', ['token' => $token]);
 
         $response->assertOk()
             ->assertJsonPath('message', 'Email verified.')
@@ -303,7 +303,7 @@ class AuthApiTest extends TestCase
         $verifiedAt = $user->email_verified_at;
         $token = EmailVerificationToken::issue($user);
 
-        $response = $this->postJson('/api/auth/email/verify', ['token' => $token]);
+        $response = $this->postJson('/api/v1/auth/email/verify', ['token' => $token]);
 
         $response->assertOk();
         $this->assertTrue($user->refresh()->email_verified_at->equalTo($verifiedAt));
@@ -317,7 +317,7 @@ class AuthApiTest extends TestCase
         [$payload, $sig] = explode('.', $token);
         $tampered = $payload.'.'.strrev($sig);
 
-        $response = $this->postJson('/api/auth/email/verify', ['token' => $tampered]);
+        $response = $this->postJson('/api/v1/auth/email/verify', ['token' => $tampered]);
 
         $response->assertUnprocessable()->assertJsonValidationErrors('token');
         $this->assertNull($user->refresh()->email_verified_at);
@@ -325,7 +325,7 @@ class AuthApiTest extends TestCase
 
     public function test_verify_email_rejects_malformed_token(): void
     {
-        $this->postJson('/api/auth/email/verify', ['token' => 'not-a-valid-token'])
+        $this->postJson('/api/v1/auth/email/verify', ['token' => 'not-a-valid-token'])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('token');
     }
@@ -338,7 +338,7 @@ class AuthApiTest extends TestCase
         $token = EmailVerificationToken::issue($user);
         $this->travelBack();
 
-        $response = $this->postJson('/api/auth/email/verify', ['token' => $token]);
+        $response = $this->postJson('/api/v1/auth/email/verify', ['token' => $token]);
 
         $response->assertUnprocessable()->assertJsonValidationErrors('token');
         $this->assertNull($user->refresh()->email_verified_at);
@@ -350,7 +350,7 @@ class AuthApiTest extends TestCase
         $token = EmailVerificationToken::issue($user);
         $user->delete();
 
-        $response = $this->postJson('/api/auth/email/verify', ['token' => $token]);
+        $response = $this->postJson('/api/v1/auth/email/verify', ['token' => $token]);
 
         $response->assertUnprocessable()->assertJsonValidationErrors('token');
     }
@@ -362,7 +362,7 @@ class AuthApiTest extends TestCase
 
         $user->update(['email' => 'new@example.com']);
 
-        $response = $this->postJson('/api/auth/email/verify', ['token' => $token]);
+        $response = $this->postJson('/api/v1/auth/email/verify', ['token' => $token]);
 
         $response->assertUnprocessable()->assertJsonValidationErrors('token');
         $this->assertNull($user->refresh()->email_verified_at);
@@ -370,7 +370,7 @@ class AuthApiTest extends TestCase
 
     public function test_verify_email_requires_token(): void
     {
-        $this->postJson('/api/auth/email/verify', [])
+        $this->postJson('/api/v1/auth/email/verify', [])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('token');
     }

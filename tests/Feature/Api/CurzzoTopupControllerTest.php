@@ -21,7 +21,7 @@ class CurzzoTopupControllerTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner, 'sanctum')
-            ->getJson("/api/communities/{$community->slug}/curzzos/topup-packs")
+            ->getJson("/api/v1/communities/{$community->slug}/curzzos/topup-packs")
             ->assertOk()
             ->assertJsonStructure([
                 'packs' => [
@@ -34,7 +34,7 @@ class CurzzoTopupControllerTest extends TestCase
     {
         $community = Community::factory()->create();
 
-        $this->getJson("/api/communities/{$community->slug}/curzzos/topup-packs")
+        $this->getJson("/api/v1/communities/{$community->slug}/curzzos/topup-packs")
             ->assertUnauthorized();
     }
 
@@ -49,7 +49,7 @@ class CurzzoTopupControllerTest extends TestCase
         ]);
 
         $this->actingAs($member, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/curzzos/topup/checkout", [])
+            ->postJson("/api/v1/communities/{$community->slug}/curzzos/topup/checkout", [])
             ->assertStatus(422)
             ->assertJsonValidationErrors('pack_index');
     }
@@ -65,7 +65,7 @@ class CurzzoTopupControllerTest extends TestCase
         ]);
 
         $this->actingAs($member, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/curzzos/topup/checkout", [
+            ->postJson("/api/v1/communities/{$community->slug}/curzzos/topup/checkout", [
                 'pack_index' => 999,
             ])
             ->assertStatus(422)
@@ -93,7 +93,7 @@ class CurzzoTopupControllerTest extends TestCase
         $this->instance(StartCurzzoTopupCheckout::class, $action);
 
         $this->actingAs($member, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/curzzos/topup/checkout", [
+            ->postJson("/api/v1/communities/{$community->slug}/curzzos/topup/checkout", [
                 'pack_index' => 0,
             ])
             ->assertOk()

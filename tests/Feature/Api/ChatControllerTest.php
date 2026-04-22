@@ -27,7 +27,7 @@ class ChatControllerTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)
-            ->getJson("/api/communities/{$community->slug}/chat");
+            ->getJson("/api/v1/communities/{$community->slug}/chat");
 
         $response->assertOk()
             ->assertJsonStructure(['messages'])
@@ -41,7 +41,7 @@ class ChatControllerTest extends TestCase
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         $response = $this->actingAs($user)
-            ->postJson("/api/communities/{$community->slug}/chat", [
+            ->postJson("/api/v1/communities/{$community->slug}/chat", [
                 'content' => 'Hello world',
             ]);
 
@@ -62,7 +62,7 @@ class ChatControllerTest extends TestCase
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         $this->actingAs($user)
-            ->postJson("/api/communities/{$community->slug}/chat", [])
+            ->postJson("/api/v1/communities/{$community->slug}/chat", [])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['content']);
     }
@@ -73,7 +73,7 @@ class ChatControllerTest extends TestCase
         $community = Community::factory()->create(['price' => 0]);
 
         $this->actingAs($user)
-            ->getJson("/api/communities/{$community->slug}/chat")
+            ->getJson("/api/v1/communities/{$community->slug}/chat")
             ->assertForbidden();
     }
 
@@ -90,7 +90,7 @@ class ChatControllerTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->deleteJson("/api/communities/{$community->slug}/chat/{$message->id}")
+            ->deleteJson("/api/v1/communities/{$community->slug}/chat/{$message->id}")
             ->assertOk()
             ->assertJsonPath('deleted', $message->id);
 
@@ -110,7 +110,7 @@ class ChatControllerTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->getJson("/api/communities/{$community->slug}/chat/poll?after=0")
+            ->getJson("/api/v1/communities/{$community->slug}/chat/poll?after=0")
             ->assertOk()
             ->assertJsonStructure(['messages'])
             ->assertJsonCount(1, 'messages');
@@ -135,7 +135,7 @@ class ChatControllerTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->getJson("/api/communities/{$community->slug}/chat/poll?after={$old->id}")
+            ->getJson("/api/v1/communities/{$community->slug}/chat/poll?after={$old->id}")
             ->assertOk()
             ->assertJsonCount(1, 'messages');
     }
@@ -153,7 +153,7 @@ class ChatControllerTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->getJson("/api/communities/{$community->slug}/chat?after=0")
+            ->getJson("/api/v1/communities/{$community->slug}/chat?after=0")
             ->assertOk()
             ->assertJsonStructure(['messages']);
     }
@@ -170,7 +170,7 @@ class ChatControllerTest extends TestCase
         ]);
 
         $this->actingAs($owner)
-            ->getJson("/api/communities/{$community->slug}/chat")
+            ->getJson("/api/v1/communities/{$community->slug}/chat")
             ->assertOk();
     }
 
@@ -189,7 +189,7 @@ class ChatControllerTest extends TestCase
         ]);
 
         $this->actingAs($other)
-            ->deleteJson("/api/communities/{$community->slug}/chat/{$message->id}")
+            ->deleteJson("/api/v1/communities/{$community->slug}/chat/{$message->id}")
             ->assertForbidden();
 
         $this->assertDatabaseHas('messages', ['id' => $message->id]);
@@ -216,7 +216,7 @@ class ChatControllerTest extends TestCase
         ]);
 
         $this->actingAs($member, 'sanctum')
-            ->getJson("/api/communities/{$community->slug}/chat")
+            ->getJson("/api/v1/communities/{$community->slug}/chat")
             ->assertOk();
     }
 
@@ -227,7 +227,7 @@ class ChatControllerTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 500]);
 
         $this->actingAs($other, 'sanctum')
-            ->getJson("/api/communities/{$community->slug}/chat")
+            ->getJson("/api/v1/communities/{$community->slug}/chat")
             ->assertForbidden();
     }
 
@@ -246,7 +246,7 @@ class ChatControllerTest extends TestCase
         ]);
 
         $this->actingAs($member, 'sanctum')
-            ->getJson("/api/communities/{$community->slug}/chat/poll?after=0")
+            ->getJson("/api/v1/communities/{$community->slug}/chat/poll?after=0")
             ->assertOk();
     }
 
@@ -265,7 +265,7 @@ class ChatControllerTest extends TestCase
         ]);
 
         $this->actingAs($member, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/chat", ['content' => 'Paid message'])
+            ->postJson("/api/v1/communities/{$community->slug}/chat", ['content' => 'Paid message'])
             ->assertCreated();
     }
 
@@ -290,7 +290,7 @@ class ChatControllerTest extends TestCase
         ]);
 
         $this->actingAs($member, 'sanctum')
-            ->deleteJson("/api/communities/{$community->slug}/chat/{$message->id}")
+            ->deleteJson("/api/v1/communities/{$community->slug}/chat/{$message->id}")
             ->assertOk();
     }
 
@@ -300,7 +300,7 @@ class ChatControllerTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 500]);
 
         $this->actingAs($owner, 'sanctum')
-            ->getJson("/api/communities/{$community->slug}/chat")
+            ->getJson("/api/v1/communities/{$community->slug}/chat")
             ->assertOk();
     }
 
@@ -319,7 +319,7 @@ class ChatControllerTest extends TestCase
         ]);
 
         $this->actingAs($member, 'sanctum')
-            ->getJson("/api/communities/{$community->slug}/chat")
+            ->getJson("/api/v1/communities/{$community->slug}/chat")
             ->assertForbidden();
     }
 
@@ -342,7 +342,7 @@ class ChatControllerTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->getJson("/api/communities/{$community->slug}/chat?after={$old->id}")
+            ->getJson("/api/v1/communities/{$community->slug}/chat?after={$old->id}")
             ->assertOk()
             ->assertJsonStructure(['messages']);
     }

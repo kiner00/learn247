@@ -23,7 +23,7 @@ class DirectMessageControllerTest extends TestCase
             'content' => 'Hello',
         ]);
 
-        $response = $this->actingAs($user)->getJson('/api/messages');
+        $response = $this->actingAs($user)->getJson('/api/v1/messages');
 
         $response->assertOk()->assertJsonStructure(['conversations']);
     }
@@ -38,7 +38,7 @@ class DirectMessageControllerTest extends TestCase
             'content' => 'Hello',
         ]);
 
-        $response = $this->actingAs($user)->getJson("/api/messages/{$other->id}");
+        $response = $this->actingAs($user)->getJson("/api/v1/messages/{$other->id}");
 
         $response->assertOk()
             ->assertJsonStructure(['partner', 'messages'])
@@ -51,7 +51,7 @@ class DirectMessageControllerTest extends TestCase
         $user = User::factory()->create();
         $other = User::factory()->create();
 
-        $response = $this->actingAs($user)->postJson("/api/messages/{$other->id}", [
+        $response = $this->actingAs($user)->postJson("/api/v1/messages/{$other->id}", [
             'content' => 'Hello there',
         ]);
 
@@ -70,7 +70,7 @@ class DirectMessageControllerTest extends TestCase
         $user = User::factory()->create();
         $other = User::factory()->create();
 
-        $response = $this->actingAs($user)->postJson("/api/messages/{$other->id}", []);
+        $response = $this->actingAs($user)->postJson("/api/v1/messages/{$other->id}", []);
 
         $response->assertUnprocessable()->assertJsonValidationErrors(['content']);
     }
@@ -80,7 +80,7 @@ class DirectMessageControllerTest extends TestCase
         $user = User::factory()->create(['name' => 'John Doe', 'username' => 'johndoe']);
         User::factory()->create(['name' => 'Jane Smith', 'username' => 'janesmith']);
 
-        $response = $this->actingAs($user)->getJson('/api/messages/search?q=john');
+        $response = $this->actingAs($user)->getJson('/api/v1/messages/search?q=john');
 
         $response->assertOk()->assertJsonStructure(['users']);
     }
@@ -95,7 +95,7 @@ class DirectMessageControllerTest extends TestCase
             'content' => 'Hello',
         ]);
 
-        $response = $this->actingAs($user)->deleteJson("/api/direct-messages/{$dm->id}");
+        $response = $this->actingAs($user)->deleteJson("/api/v1/direct-messages/{$dm->id}");
 
         $response->assertOk()->assertJsonPath('deleted', $dm->id);
         $this->assertDatabaseMissing('direct_messages', ['id' => $dm->id]);
@@ -111,7 +111,7 @@ class DirectMessageControllerTest extends TestCase
             'content' => 'Hello',
         ]);
 
-        $response = $this->actingAs($other)->deleteJson("/api/direct-messages/{$dm->id}");
+        $response = $this->actingAs($other)->deleteJson("/api/v1/direct-messages/{$dm->id}");
 
         $response->assertForbidden();
         $this->assertDatabaseHas('direct_messages', ['id' => $dm->id]);
@@ -119,8 +119,8 @@ class DirectMessageControllerTest extends TestCase
 
     public function test_unauthenticated_returns_401(): void
     {
-        $this->getJson('/api/messages')->assertUnauthorized();
-        $this->postJson('/api/messages/1', ['content' => 'Hi'])->assertUnauthorized();
+        $this->getJson('/api/v1/messages')->assertUnauthorized();
+        $this->postJson('/api/v1/messages/1', ['content' => 'Hi'])->assertUnauthorized();
     }
 
     public function test_poll_returns_new_messages_from_partner(): void
@@ -134,7 +134,7 @@ class DirectMessageControllerTest extends TestCase
             'content' => 'New message from partner',
         ]);
 
-        $response = $this->actingAs($user)->getJson("/api/messages/{$partner->id}/poll?after=0");
+        $response = $this->actingAs($user)->getJson("/api/v1/messages/{$partner->id}/poll?after=0");
 
         $response->assertOk()
             ->assertJsonStructure(['messages'])
@@ -157,7 +157,7 @@ class DirectMessageControllerTest extends TestCase
             'user_id' => $other->id,
         ]);
 
-        $response = $this->actingAs($user)->getJson('/api/messages/search');
+        $response = $this->actingAs($user)->getJson('/api/v1/messages/search');
 
         $response->assertOk()
             ->assertJsonStructure(['users'])
@@ -169,7 +169,7 @@ class DirectMessageControllerTest extends TestCase
         $user = User::factory()->create();
         $other = User::factory()->create();
 
-        $response = $this->actingAs($user)->getJson("/api/messages/{$other->id}");
+        $response = $this->actingAs($user)->getJson("/api/v1/messages/{$other->id}");
 
         $response->assertOk()
             ->assertJsonStructure(['partner', 'messages'])
@@ -182,7 +182,7 @@ class DirectMessageControllerTest extends TestCase
         $user = User::factory()->create();
         $partner = User::factory()->create();
 
-        $response = $this->actingAs($user)->getJson("/api/messages/{$partner->id}/poll?after=99999");
+        $response = $this->actingAs($user)->getJson("/api/v1/messages/{$partner->id}/poll?after=99999");
 
         $response->assertOk()
             ->assertJsonStructure(['messages'])
@@ -199,7 +199,7 @@ class DirectMessageControllerTest extends TestCase
             CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $u->id]);
         }
 
-        $response = $this->actingAs($user)->getJson('/api/messages/search?q=alice');
+        $response = $this->actingAs($user)->getJson('/api/v1/messages/search?q=alice');
 
         $response->assertOk()->assertJsonStructure(['users']);
         $usernames = array_column($response->json('users'), 'username');

@@ -25,7 +25,7 @@ class AffiliateControllerTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->getJson('/api/affiliates')
+            ->getJson('/api/v1/affiliates')
             ->assertOk()
             ->assertJsonStructure([
                 'affiliates',
@@ -47,7 +47,7 @@ class AffiliateControllerTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->postJson("/api/communities/{$community->slug}/affiliates")
+            ->postJson("/api/v1/communities/{$community->slug}/affiliates")
             ->assertStatus(201)
             ->assertJsonPath('message', 'You are now an affiliate!');
 
@@ -69,7 +69,7 @@ class AffiliateControllerTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->patchJson("/api/affiliates/{$affiliate->id}/payout", [
+            ->patchJson("/api/v1/affiliates/{$affiliate->id}/payout", [
                 'payout_method' => 'gcash',
                 'payout_details' => '09171234567',
             ])
@@ -83,7 +83,7 @@ class AffiliateControllerTest extends TestCase
 
     public function test_unauthenticated_returns_401_for_affiliates_index(): void
     {
-        $this->getJson('/api/affiliates')
+        $this->getJson('/api/v1/affiliates')
             ->assertUnauthorized();
     }
 
@@ -91,7 +91,7 @@ class AffiliateControllerTest extends TestCase
     {
         $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
 
-        $this->postJson("/api/communities/{$community->slug}/affiliates")
+        $this->postJson("/api/v1/communities/{$community->slug}/affiliates")
             ->assertUnauthorized();
     }
 
@@ -106,7 +106,7 @@ class AffiliateControllerTest extends TestCase
             'status' => Affiliate::STATUS_ACTIVE,
         ]);
 
-        $this->patchJson("/api/affiliates/{$affiliate->id}/payout", [
+        $this->patchJson("/api/v1/affiliates/{$affiliate->id}/payout", [
             'payout_method' => 'gcash',
             'payout_details' => '09171234567',
         ])

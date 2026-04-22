@@ -33,7 +33,7 @@ class CertificateControllerTest extends TestCase
             'issued_at' => now(),
         ]);
 
-        $this->getJson("/api/certificates/{$uuid}")
+        $this->getJson("/api/v1/certificates/{$uuid}")
             ->assertOk()
             ->assertJsonStructure([
                 'certificate' => [
@@ -51,7 +51,7 @@ class CertificateControllerTest extends TestCase
 
     public function test_get_certificate_returns_404_for_invalid_uuid(): void
     {
-        $this->getJson('/api/certificates/nonexistent-uuid')
+        $this->getJson('/api/v1/certificates/nonexistent-uuid')
             ->assertNotFound();
     }
 }

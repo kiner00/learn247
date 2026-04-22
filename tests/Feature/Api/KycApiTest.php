@@ -18,7 +18,7 @@ class KycApiTest extends TestCase
 
     public function test_submit_requires_authentication(): void
     {
-        $response = $this->postJson('/api/kyc/submit', []);
+        $response = $this->postJson('/api/v1/kyc/submit', []);
 
         $response->assertStatus(401);
     }
@@ -30,7 +30,7 @@ class KycApiTest extends TestCase
 
         $user = User::factory()->create(['kyc_status' => User::KYC_NONE]);
 
-        $response = $this->actingAs($user, 'sanctum')->postJson('/api/kyc/submit', [
+        $response = $this->actingAs($user, 'sanctum')->postJson('/api/v1/kyc/submit', [
             'id_document' => UploadedFile::fake()->image('id.jpg', 400, 300),
             'selfie' => UploadedFile::fake()->image('selfie.jpg', 400, 300),
         ]);
@@ -60,7 +60,7 @@ class KycApiTest extends TestCase
     {
         $user = User::factory()->create(['kyc_status' => User::KYC_SUBMITTED]);
 
-        $response = $this->actingAs($user, 'sanctum')->postJson('/api/kyc/submit', [
+        $response = $this->actingAs($user, 'sanctum')->postJson('/api/v1/kyc/submit', [
             'id_document' => UploadedFile::fake()->image('id.jpg', 400, 300),
             'selfie' => UploadedFile::fake()->image('selfie.jpg', 400, 300),
         ]);
@@ -73,7 +73,7 @@ class KycApiTest extends TestCase
     {
         $user = User::factory()->create(['kyc_status' => User::KYC_APPROVED]);
 
-        $response = $this->actingAs($user, 'sanctum')->postJson('/api/kyc/submit', [
+        $response = $this->actingAs($user, 'sanctum')->postJson('/api/v1/kyc/submit', [
             'id_document' => UploadedFile::fake()->image('id.jpg', 400, 300),
             'selfie' => UploadedFile::fake()->image('selfie.jpg', 400, 300),
         ]);
@@ -86,7 +86,7 @@ class KycApiTest extends TestCase
     {
         $user = User::factory()->create(['kyc_status' => User::KYC_REJECTED]);
 
-        $response = $this->actingAs($user, 'sanctum')->postJson('/api/kyc/submit', []);
+        $response = $this->actingAs($user, 'sanctum')->postJson('/api/v1/kyc/submit', []);
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['id_document', 'selfie']);
@@ -96,7 +96,7 @@ class KycApiTest extends TestCase
     {
         $user = User::factory()->create(['kyc_status' => User::KYC_REJECTED]);
 
-        $response = $this->actingAs($user, 'sanctum')->postJson('/api/kyc/submit', [
+        $response = $this->actingAs($user, 'sanctum')->postJson('/api/v1/kyc/submit', [
             'id_document' => UploadedFile::fake()->create('doc.pdf', 100, 'application/pdf'),
             'selfie' => UploadedFile::fake()->create('text.txt', 100, 'text/plain'),
         ]);
@@ -109,7 +109,7 @@ class KycApiTest extends TestCase
     {
         $user = User::factory()->create(['kyc_status' => User::KYC_REJECTED]);
 
-        $response = $this->actingAs($user, 'sanctum')->postJson('/api/kyc/submit', [
+        $response = $this->actingAs($user, 'sanctum')->postJson('/api/v1/kyc/submit', [
             'id_document' => UploadedFile::fake()->image('big.jpg')->size(10241),
             'selfie' => UploadedFile::fake()->image('big2.jpg')->size(10241),
         ]);
@@ -122,14 +122,14 @@ class KycApiTest extends TestCase
 
     public function test_status_requires_authentication(): void
     {
-        $this->getJson('/api/kyc/status')->assertStatus(401);
+        $this->getJson('/api/v1/kyc/status')->assertStatus(401);
     }
 
     public function test_status_returns_defaults_for_user_who_never_submitted(): void
     {
         $user = User::factory()->create(['kyc_status' => User::KYC_NONE]);
 
-        $response = $this->actingAs($user, 'sanctum')->getJson('/api/kyc/status');
+        $response = $this->actingAs($user, 'sanctum')->getJson('/api/v1/kyc/status');
 
         $response->assertOk()
             ->assertJsonPath('data.status', User::KYC_NONE)
@@ -145,7 +145,7 @@ class KycApiTest extends TestCase
             'kyc_verified_at' => now(),
         ]);
 
-        $response = $this->actingAs($user, 'sanctum')->getJson('/api/kyc/status');
+        $response = $this->actingAs($user, 'sanctum')->getJson('/api/v1/kyc/status');
 
         $response->assertOk()
             ->assertJsonPath('data.status', User::KYC_APPROVED)
@@ -159,7 +159,7 @@ class KycApiTest extends TestCase
             'kyc_ai_rejections' => 3,
         ]);
 
-        $response = $this->actingAs($user, 'sanctum')->getJson('/api/kyc/status');
+        $response = $this->actingAs($user, 'sanctum')->getJson('/api/v1/kyc/status');
 
         $response->assertOk()
             ->assertJsonPath('data.can_request_manual_review', true);
@@ -173,7 +173,7 @@ class KycApiTest extends TestCase
             'kyc_selfie' => 'https://example.com/selfie.jpg',
         ]);
 
-        $response = $this->actingAs($user, 'sanctum')->getJson('/api/kyc/status');
+        $response = $this->actingAs($user, 'sanctum')->getJson('/api/v1/kyc/status');
 
         $response->assertOk();
         $response->assertJsonMissing(['kyc_id_document' => 'https://example.com/id.jpg']);
@@ -184,7 +184,7 @@ class KycApiTest extends TestCase
 
     public function test_manual_review_requires_authentication(): void
     {
-        $this->postJson('/api/kyc/manual-review')->assertStatus(401);
+        $this->postJson('/api/v1/kyc/manual-review')->assertStatus(401);
     }
 
     public function test_manual_review_happy_path_after_three_rejections(): void
@@ -195,7 +195,7 @@ class KycApiTest extends TestCase
             'kyc_rejected_reason' => 'Blurry image',
         ]);
 
-        $response = $this->actingAs($user, 'sanctum')->postJson('/api/kyc/manual-review');
+        $response = $this->actingAs($user, 'sanctum')->postJson('/api/v1/kyc/manual-review');
 
         $response->assertOk()
             ->assertJsonPath('data.status', User::KYC_SUBMITTED);
@@ -212,7 +212,7 @@ class KycApiTest extends TestCase
             'kyc_ai_rejections' => 2,
         ]);
 
-        $response = $this->actingAs($user, 'sanctum')->postJson('/api/kyc/manual-review');
+        $response = $this->actingAs($user, 'sanctum')->postJson('/api/v1/kyc/manual-review');
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['kyc']);
@@ -225,7 +225,7 @@ class KycApiTest extends TestCase
             'kyc_ai_rejections' => 5,
         ]);
 
-        $response = $this->actingAs($user, 'sanctum')->postJson('/api/kyc/manual-review');
+        $response = $this->actingAs($user, 'sanctum')->postJson('/api/v1/kyc/manual-review');
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['kyc']);
@@ -240,7 +240,7 @@ class KycApiTest extends TestCase
             'kyc_verified_at' => now(),
         ]);
 
-        $response = $this->actingAs($user, 'sanctum')->getJson('/api/auth/me');
+        $response = $this->actingAs($user, 'sanctum')->getJson('/api/v1/auth/me');
 
         $response->assertOk()
             ->assertJsonPath('data.kyc_status', User::KYC_APPROVED)

@@ -23,7 +23,7 @@ class FeedControllerTest extends TestCase
         Post::factory()->create(['community_id' => $community->id]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson("/api/communities/{$community->slug}/posts");
+            ->getJson("/api/v1/communities/{$community->slug}/posts");
 
         $response->assertOk()
             ->assertJsonStructure(['data']);
@@ -38,7 +38,7 @@ class FeedControllerTest extends TestCase
         Post::factory()->count(3)->create(['community_id' => $community->id]);
 
         $this->actingAs($user, 'sanctum')
-            ->getJson("/api/communities/{$community->slug}/posts")
+            ->getJson("/api/v1/communities/{$community->slug}/posts")
             ->assertOk()
             ->assertJsonStructure(['data']);
     }
@@ -49,7 +49,7 @@ class FeedControllerTest extends TestCase
         $community = Community::factory()->create();
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson("/api/communities/{$community->slug}/posts");
+            ->getJson("/api/v1/communities/{$community->slug}/posts");
 
         $response->assertForbidden();
     }
@@ -61,7 +61,7 @@ class FeedControllerTest extends TestCase
         Post::factory()->create(['community_id' => $community->id]);
 
         $response = $this->actingAs($owner, 'sanctum')
-            ->getJson("/api/communities/{$community->slug}/posts");
+            ->getJson("/api/v1/communities/{$community->slug}/posts");
 
         $response->assertOk()
             ->assertJsonStructure(['data']);
@@ -76,7 +76,7 @@ class FeedControllerTest extends TestCase
         Comment::factory()->create(['post_id' => $post->id, 'community_id' => $community->id]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson("/api/posts/{$post->id}");
+            ->getJson("/api/v1/posts/{$post->id}");
 
         $response->assertOk()
             ->assertJsonStructure(['data']);
@@ -86,7 +86,7 @@ class FeedControllerTest extends TestCase
     {
         $post = Post::factory()->create();
 
-        $this->getJson("/api/posts/{$post->id}")
+        $this->getJson("/api/v1/posts/{$post->id}")
             ->assertUnauthorized();
     }
 
@@ -98,7 +98,7 @@ class FeedControllerTest extends TestCase
         $post = Post::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         $this->actingAs($user, 'sanctum')
-            ->getJson("/api/posts/{$post->id}")
+            ->getJson("/api/v1/posts/{$post->id}")
             ->assertOk()
             ->assertJsonStructure(['data' => ['id', 'content']]);
     }
@@ -112,7 +112,7 @@ class FeedControllerTest extends TestCase
         $post = Post::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         $this->actingAs($other, 'sanctum')
-            ->getJson("/api/posts/{$post->id}")
+            ->getJson("/api/v1/posts/{$post->id}")
             ->assertForbidden();
     }
 
@@ -133,7 +133,7 @@ class FeedControllerTest extends TestCase
         Post::factory()->create(['community_id' => $community->id]);
 
         $this->actingAs($member, 'sanctum')
-            ->getJson("/api/communities/{$community->slug}/posts")
+            ->getJson("/api/v1/communities/{$community->slug}/posts")
             ->assertOk();
     }
 }

@@ -29,7 +29,7 @@ class CommunityControllerTest extends TestCase
     {
         Community::factory()->count(2)->create();
 
-        $response = $this->getJson('/api/communities');
+        $response = $this->getJson('/api/v1/communities');
 
         $response->assertOk()
             ->assertJsonStructure(['data']);
@@ -44,7 +44,7 @@ class CommunityControllerTest extends TestCase
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson("/api/communities/{$community->slug}");
+            ->getJson("/api/v1/communities/{$community->slug}");
 
         $response->assertOk()
             ->assertJsonStructure(['community', 'membership', 'has_access'])
@@ -55,7 +55,7 @@ class CommunityControllerTest extends TestCase
     {
         $community = Community::factory()->create(['is_private' => false]);
 
-        $response = $this->getJson("/api/communities/{$community->slug}");
+        $response = $this->getJson("/api/v1/communities/{$community->slug}");
 
         $response->assertOk()
             ->assertJsonStructure(['community', 'membership', 'has_access']);
@@ -69,7 +69,7 @@ class CommunityControllerTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user, 'sanctum')
-            ->post('/api/communities', [
+            ->post('/api/v1/communities', [
                 'name' => 'My New Community',
                 'description' => 'A test community description.',
                 'cover_image' => UploadedFile::fake()->image('cover.jpg'),
@@ -90,7 +90,7 @@ class CommunityControllerTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson('/api/communities', ['description' => 'No name provided.']);
+            ->postJson('/api/v1/communities', ['description' => 'No name provided.']);
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['name']);
@@ -104,7 +104,7 @@ class CommunityControllerTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $response = $this->actingAs($owner, 'sanctum')
-            ->patchJson("/api/communities/{$community->slug}", [
+            ->patchJson("/api/v1/communities/{$community->slug}", [
                 'name' => 'Updated Community Name',
                 'description' => 'Updated description.',
             ]);
@@ -126,7 +126,7 @@ class CommunityControllerTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $response = $this->actingAs($nonOwner, 'sanctum')
-            ->patchJson("/api/communities/{$community->slug}", [
+            ->patchJson("/api/v1/communities/{$community->slug}", [
                 'name' => 'Hacked Name',
                 'description' => 'Should fail.',
             ]);
@@ -143,7 +143,7 @@ class CommunityControllerTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $response = $this->actingAs($owner, 'sanctum')
-            ->deleteJson("/api/communities/{$community->slug}");
+            ->deleteJson("/api/v1/communities/{$community->slug}");
 
         $response->assertOk()
             ->assertJsonPath('message', 'Community deleted.');
@@ -158,7 +158,7 @@ class CommunityControllerTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $response = $this->actingAs($nonOwner, 'sanctum')
-            ->deleteJson("/api/communities/{$community->slug}");
+            ->deleteJson("/api/v1/communities/{$community->slug}");
 
         $response->assertForbidden();
         $this->assertDatabaseHas('communities', ['id' => $community->id]);
@@ -172,7 +172,7 @@ class CommunityControllerTest extends TestCase
         $community = Community::factory()->create(['price' => 0]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/join");
+            ->postJson("/api/v1/communities/{$community->slug}/join");
 
         $response->assertStatus(201)
             ->assertJsonPath('message', 'You have joined the community!');
@@ -195,7 +195,7 @@ class CommunityControllerTest extends TestCase
         ]);
 
         $this->actingAs($user, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/leave")
+            ->postJson("/api/v1/communities/{$community->slug}/leave")
             ->assertOk()
             ->assertJsonPath('message', 'You have left the community.');
 
@@ -211,7 +211,7 @@ class CommunityControllerTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/leave")
+            ->postJson("/api/v1/communities/{$community->slug}/leave")
             ->assertForbidden();
     }
 
@@ -221,7 +221,7 @@ class CommunityControllerTest extends TestCase
         $community = Community::factory()->create();
 
         $this->actingAs($user, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/leave")
+            ->postJson("/api/v1/communities/{$community->slug}/leave")
             ->assertStatus(422)
             ->assertJsonValidationErrors(['community']);
     }
@@ -230,7 +230,7 @@ class CommunityControllerTest extends TestCase
     {
         $community = Community::factory()->create();
 
-        $this->postJson("/api/communities/{$community->slug}/leave")
+        $this->postJson("/api/v1/communities/{$community->slug}/leave")
             ->assertUnauthorized();
     }
 
@@ -240,7 +240,7 @@ class CommunityControllerTest extends TestCase
     {
         $community = Community::factory()->create();
 
-        $response = $this->getJson("/api/communities/{$community->slug}/about");
+        $response = $this->getJson("/api/v1/communities/{$community->slug}/about");
 
         $response->assertOk()
             ->assertJsonStructure(['community', 'recent_members', 'gallery']);
@@ -255,7 +255,7 @@ class CommunityControllerTest extends TestCase
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson("/api/communities/{$community->slug}/members");
+            ->getJson("/api/v1/communities/{$community->slug}/members");
 
         $response->assertOk()
             ->assertJsonStructure(['members', 'total_count', 'admin_count']);
@@ -269,7 +269,7 @@ class CommunityControllerTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $response = $this->actingAs($owner, 'sanctum')
-            ->getJson("/api/communities/{$community->slug}/settings");
+            ->getJson("/api/v1/communities/{$community->slug}/settings");
 
         $response->assertOk()
             ->assertJsonStructure(['community', 'pricing_gate', 'level_perks']);
@@ -282,7 +282,7 @@ class CommunityControllerTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $response = $this->actingAs($nonOwner, 'sanctum')
-            ->getJson("/api/communities/{$community->slug}/settings");
+            ->getJson("/api/v1/communities/{$community->slug}/settings");
 
         $response->assertForbidden();
     }
@@ -295,7 +295,7 @@ class CommunityControllerTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $response = $this->actingAs($owner, 'sanctum')
-            ->getJson("/api/communities/{$community->slug}/analytics");
+            ->getJson("/api/v1/communities/{$community->slug}/analytics");
 
         $response->assertOk()
             ->assertJsonStructure(['stats', 'revenue', 'payout', 'course_stats']);
@@ -308,7 +308,7 @@ class CommunityControllerTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $response = $this->actingAs($nonOwner, 'sanctum')
-            ->getJson("/api/communities/{$community->slug}/analytics");
+            ->getJson("/api/v1/communities/{$community->slug}/analytics");
 
         $response->assertForbidden();
     }
@@ -342,7 +342,7 @@ class CommunityControllerTest extends TestCase
         CourseLesson::create(['module_id' => $module->id, 'title' => 'L1', 'position' => 1]);
 
         $this->actingAs($owner, 'sanctum')
-            ->getJson("/api/communities/{$community->slug}/analytics")
+            ->getJson("/api/v1/communities/{$community->slug}/analytics")
             ->assertOk()
             ->assertJsonStructure(['stats', 'revenue', 'payout', 'course_stats']);
     }
@@ -392,7 +392,7 @@ class CommunityControllerTest extends TestCase
         ]);
 
         $this->actingAs($owner, 'sanctum')
-            ->getJson("/api/communities/{$community->slug}/analytics")
+            ->getJson("/api/v1/communities/{$community->slug}/analytics")
             ->assertOk()
             ->assertJsonPath('revenue.affiliate_commission_earned', 100);
     }
@@ -404,7 +404,7 @@ class CommunityControllerTest extends TestCase
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         $this->actingAs($user, 'sanctum')
-            ->getJson('/api/communities')
+            ->getJson('/api/v1/communities')
             ->assertOk()
             ->assertJsonStructure(['data']);
     }
@@ -422,7 +422,7 @@ class CommunityControllerTest extends TestCase
         ]);
 
         $this->actingAs($user, 'sanctum')
-            ->getJson("/api/communities/{$community->slug}")
+            ->getJson("/api/v1/communities/{$community->slug}")
             ->assertOk()
             ->assertJsonPath('has_access', true);
     }
@@ -433,7 +433,7 @@ class CommunityControllerTest extends TestCase
         $community = Community::factory()->create(['price' => 500]);
 
         $this->actingAs($user, 'sanctum')
-            ->getJson("/api/communities/{$community->slug}")
+            ->getJson("/api/v1/communities/{$community->slug}")
             ->assertOk()
             ->assertJsonPath('has_access', false);
     }
@@ -453,7 +453,7 @@ class CommunityControllerTest extends TestCase
         ]);
 
         $this->actingAs($owner, 'sanctum')
-            ->getJson("/api/communities/{$community->slug}/analytics")
+            ->getJson("/api/v1/communities/{$community->slug}/analytics")
             ->assertOk()
             ->assertJsonPath('payout.pending_request.amount', '300.00');
     }
@@ -469,7 +469,7 @@ class CommunityControllerTest extends TestCase
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $response = $this->actingAs($owner, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/announce", [
+            ->postJson("/api/v1/communities/{$community->slug}/announce", [
                 'subject' => 'Important Update',
                 'message' => 'Hello members, here is an update.',
             ]);
@@ -484,7 +484,7 @@ class CommunityControllerTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $response = $this->actingAs($owner, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/announce", []);
+            ->postJson("/api/v1/communities/{$community->slug}/announce", []);
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['subject', 'message']);
@@ -498,7 +498,7 @@ class CommunityControllerTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $response = $this->actingAs($owner, 'sanctum')
-            ->patchJson("/api/communities/{$community->slug}/level-perks", [
+            ->patchJson("/api/v1/communities/{$community->slug}/level-perks", [
                 'perks' => [
                     1 => 'First perk',
                     2 => 'Second perk',
@@ -528,7 +528,7 @@ class CommunityControllerTest extends TestCase
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson("/api/communities/{$community->slug}/leaderboard");
+            ->getJson("/api/v1/communities/{$community->slug}/leaderboard");
 
         $response->assertOk()
             ->assertJsonStructure([
@@ -548,13 +548,13 @@ class CommunityControllerTest extends TestCase
     {
         $community = Community::factory()->create();
 
-        $this->postJson('/api/communities', ['name' => 'Test'])
+        $this->postJson('/api/v1/communities', ['name' => 'Test'])
             ->assertUnauthorized();
 
-        $this->deleteJson("/api/communities/{$community->slug}")
+        $this->deleteJson("/api/v1/communities/{$community->slug}")
             ->assertUnauthorized();
 
-        $this->postJson("/api/communities/{$community->slug}/join")
+        $this->postJson("/api/v1/communities/{$community->slug}/join")
             ->assertUnauthorized();
     }
 
@@ -565,7 +565,7 @@ class CommunityControllerTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner, 'sanctum')
-            ->post("/api/communities/{$community->slug}/gallery", [
+            ->post("/api/v1/communities/{$community->slug}/gallery", [
                 'image' => UploadedFile::fake()->image('gallery.jpg'),
             ], ['Accept' => 'application/json'])
             ->assertCreated();
@@ -583,7 +583,7 @@ class CommunityControllerTest extends TestCase
         ]);
 
         $this->actingAs($owner, 'sanctum')
-            ->deleteJson("/api/communities/{$community->slug}/gallery/0")
+            ->deleteJson("/api/v1/communities/{$community->slug}/gallery/0")
             ->assertOk();
 
         $this->assertCount(0, $community->galleryItems()->get());
@@ -595,7 +595,7 @@ class CommunityControllerTest extends TestCase
         $community = Community::factory()->create(['price' => 500]);
 
         $this->actingAs($user, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/join")
+            ->postJson("/api/v1/communities/{$community->slug}/join")
             ->assertUnprocessable();
     }
 
@@ -605,7 +605,7 @@ class CommunityControllerTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 500]);
 
         $this->actingAs($owner, 'sanctum')
-            ->getJson("/api/communities/{$community->slug}")
+            ->getJson("/api/v1/communities/{$community->slug}")
             ->assertOk()
             ->assertJsonPath('has_access', true);
     }
@@ -623,7 +623,7 @@ class CommunityControllerTest extends TestCase
         ]);
 
         $this->actingAs($user, 'sanctum')
-            ->getJson("/api/communities/{$community->slug}")
+            ->getJson("/api/v1/communities/{$community->slug}")
             ->assertOk()
             ->assertJsonPath('has_access', true);
     }
@@ -635,7 +635,7 @@ class CommunityControllerTest extends TestCase
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         $this->actingAs($user, 'sanctum')
-            ->getJson("/api/communities/{$community->slug}")
+            ->getJson("/api/v1/communities/{$community->slug}")
             ->assertOk()
             ->assertJsonPath('has_access', true)
             ->assertJsonPath('membership.role', 'member');
@@ -650,7 +650,7 @@ class CommunityControllerTest extends TestCase
         CourseModule::create(['course_id' => $course->id, 'title' => 'Empty Module', 'position' => 1]);
 
         $this->actingAs($owner, 'sanctum')
-            ->getJson("/api/communities/{$community->slug}/analytics")
+            ->getJson("/api/v1/communities/{$community->slug}/analytics")
             ->assertOk()
             ->assertJsonPath('course_stats.0.completed_members', 0);
     }
@@ -661,7 +661,7 @@ class CommunityControllerTest extends TestCase
         $community = Community::factory()->create(['price' => 0]);
 
         $this->actingAs($user, 'sanctum')
-            ->getJson("/api/communities/{$community->slug}")
+            ->getJson("/api/v1/communities/{$community->slug}")
             ->assertOk()
             ->assertJsonPath('has_access', false)
             ->assertJsonPath('membership', null);
@@ -687,7 +687,7 @@ class CommunityControllerTest extends TestCase
         ]);
 
         $this->actingAs($owner, 'sanctum')
-            ->getJson("/api/communities/{$community->slug}/members?filter=admin")
+            ->getJson("/api/v1/communities/{$community->slug}/members?filter=admin")
             ->assertOk()
             ->assertJsonPath('admin_count', 1);
     }
@@ -710,7 +710,7 @@ class CommunityControllerTest extends TestCase
             'position' => 1,
         ]);
 
-        $this->getJson("/api/communities/{$community->slug}/about")
+        $this->getJson("/api/v1/communities/{$community->slug}/about")
             ->assertOk()
             ->assertJsonCount(2, 'gallery');
     }

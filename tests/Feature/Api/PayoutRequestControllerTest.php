@@ -22,7 +22,7 @@ class PayoutRequestControllerTest extends TestCase
     {
         $community = Community::factory()->create();
 
-        $this->postJson("/api/creator/payout-request/{$community->id}", ['amount' => 100])
+        $this->postJson("/api/v1/creator/payout-request/{$community->id}", ['amount' => 100])
             ->assertUnauthorized();
     }
 
@@ -33,7 +33,7 @@ class PayoutRequestControllerTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 499]);
 
         $this->actingAs($other, 'sanctum')
-            ->postJson("/api/creator/payout-request/{$community->id}", ['amount' => 100])
+            ->postJson("/api/v1/creator/payout-request/{$community->id}", ['amount' => 100])
             ->assertForbidden();
     }
 
@@ -43,7 +43,7 @@ class PayoutRequestControllerTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 499]);
 
         $this->actingAs($owner, 'sanctum')
-            ->postJson("/api/creator/payout-request/{$community->id}", [])
+            ->postJson("/api/v1/creator/payout-request/{$community->id}", [])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('amount');
     }
@@ -54,7 +54,7 @@ class PayoutRequestControllerTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 499]);
 
         $this->actingAs($owner, 'sanctum')
-            ->postJson("/api/creator/payout-request/{$community->id}", ['amount' => 100])
+            ->postJson("/api/v1/creator/payout-request/{$community->id}", ['amount' => 100])
             ->assertStatus(422)
             ->assertJsonPath('message', 'Please set your payout method in Account Settings before requesting a payout.');
     }
@@ -92,7 +92,7 @@ class PayoutRequestControllerTest extends TestCase
         ]);
 
         $this->actingAs($owner, 'sanctum')
-            ->postJson("/api/creator/payout-request/{$community->id}", ['amount' => 50])
+            ->postJson("/api/v1/creator/payout-request/{$community->id}", ['amount' => 50])
             ->assertStatus(422)
             ->assertJsonPath('message', 'You already have a pending or approved payout request for this community.');
     }
@@ -121,7 +121,7 @@ class PayoutRequestControllerTest extends TestCase
         ]);
 
         $this->actingAs($owner, 'sanctum')
-            ->postJson("/api/creator/payout-request/{$community->id}", ['amount' => 100])
+            ->postJson("/api/v1/creator/payout-request/{$community->id}", ['amount' => 100])
             ->assertStatus(201)
             ->assertJsonPath('message', 'Payout request submitted. The admin will review and process it shortly.');
 
@@ -146,7 +146,7 @@ class PayoutRequestControllerTest extends TestCase
             'payout_details' => '09171234567',
         ]);
 
-        $this->postJson("/api/affiliates/{$affiliate->id}/payout-request", ['amount' => 50])
+        $this->postJson("/api/v1/affiliates/{$affiliate->id}/payout-request", ['amount' => 50])
             ->assertUnauthorized();
     }
 
@@ -164,7 +164,7 @@ class PayoutRequestControllerTest extends TestCase
         ]);
 
         $this->actingAs($other, 'sanctum')
-            ->postJson("/api/affiliates/{$affiliate->id}/payout-request", ['amount' => 50])
+            ->postJson("/api/v1/affiliates/{$affiliate->id}/payout-request", ['amount' => 50])
             ->assertForbidden();
     }
 
@@ -195,7 +195,7 @@ class PayoutRequestControllerTest extends TestCase
         $conversion->forceFill(['created_at' => now()->subDays(20)])->save();
 
         $this->actingAs($user, 'sanctum')
-            ->postJson("/api/affiliates/{$affiliate->id}/payout-request", ['amount' => 40])
+            ->postJson("/api/v1/affiliates/{$affiliate->id}/payout-request", ['amount' => 40])
             ->assertStatus(201)
             ->assertJsonPath('message', 'Payout request submitted. The admin will review and process it shortly.');
 
@@ -211,7 +211,7 @@ class PayoutRequestControllerTest extends TestCase
 
     public function test_store_affiliate_all_requires_authentication(): void
     {
-        $this->postJson('/api/affiliates/payout-request/all')
+        $this->postJson('/api/v1/affiliates/payout-request/all')
             ->assertUnauthorized();
     }
 
@@ -220,7 +220,7 @@ class PayoutRequestControllerTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user, 'sanctum')
-            ->postJson('/api/affiliates/payout-request/all')
+            ->postJson('/api/v1/affiliates/payout-request/all')
             ->assertStatus(422)
             ->assertJsonPath('message', 'No affiliates with a valid payout method set.');
     }
@@ -253,7 +253,7 @@ class PayoutRequestControllerTest extends TestCase
         $conversion->forceFill(['created_at' => now()->subDays(20)])->save();
 
         $this->actingAs($user, 'sanctum')
-            ->postJson('/api/affiliates/payout-request/all')
+            ->postJson('/api/v1/affiliates/payout-request/all')
             ->assertStatus(201)
             ->assertJsonPath('message', 'Payout request submitted for 1 affiliate program(s).');
 
@@ -303,7 +303,7 @@ class PayoutRequestControllerTest extends TestCase
         ]);
 
         $this->actingAs($user, 'sanctum')
-            ->postJson('/api/affiliates/payout-request/all')
+            ->postJson('/api/v1/affiliates/payout-request/all')
             ->assertStatus(422)
             ->assertJsonPath('message', 'No eligible affiliate earnings to request payout for.');
     }

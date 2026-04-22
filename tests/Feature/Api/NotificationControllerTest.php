@@ -22,7 +22,7 @@ class NotificationControllerTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)
-            ->getJson('/api/notifications');
+            ->getJson('/api/v1/notifications');
 
         $response->assertOk()
             ->assertJsonStructure(['data', 'links', 'meta'])
@@ -41,7 +41,7 @@ class NotificationControllerTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->postJson('/api/notifications/read-all')
+            ->postJson('/api/v1/notifications/read-all')
             ->assertOk()
             ->assertJsonPath('message', 'All notifications marked as read.');
 
@@ -50,13 +50,13 @@ class NotificationControllerTest extends TestCase
 
     public function test_unauthenticated_returns_401_for_get_notifications(): void
     {
-        $this->getJson('/api/notifications')
+        $this->getJson('/api/v1/notifications')
             ->assertUnauthorized();
     }
 
     public function test_unauthenticated_returns_401_for_read_all(): void
     {
-        $this->postJson('/api/notifications/read-all')
+        $this->postJson('/api/v1/notifications/read-all')
             ->assertUnauthorized();
     }
 
@@ -71,7 +71,7 @@ class NotificationControllerTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->postJson("/api/notifications/{$notification->id}/read")
+            ->postJson("/api/v1/notifications/{$notification->id}/read")
             ->assertOk()
             ->assertJsonPath('message', 'Notification marked as read.');
 
@@ -90,7 +90,7 @@ class NotificationControllerTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->postJson("/api/notifications/{$notification->id}/read")
+            ->postJson("/api/v1/notifications/{$notification->id}/read")
             ->assertOk();
 
         $this->assertEquals(
@@ -111,7 +111,7 @@ class NotificationControllerTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->postJson("/api/notifications/{$notification->id}/read")
+            ->postJson("/api/v1/notifications/{$notification->id}/read")
             ->assertForbidden();
 
         $this->assertNull($notification->fresh()->read_at);
@@ -126,7 +126,7 @@ class NotificationControllerTest extends TestCase
             'read_at' => null,
         ]);
 
-        $this->postJson("/api/notifications/{$notification->id}/read")
+        $this->postJson("/api/v1/notifications/{$notification->id}/read")
             ->assertUnauthorized();
     }
 }

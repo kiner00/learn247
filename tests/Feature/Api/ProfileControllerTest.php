@@ -19,7 +19,7 @@ class ProfileControllerTest extends TestCase
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson('/api/profile');
+            ->getJson('/api/v1/profile');
 
         $response->assertOk()
             ->assertJsonStructure([
@@ -38,7 +38,7 @@ class ProfileControllerTest extends TestCase
         $profile = User::factory()->create(['username' => 'johndoe']);
 
         $response = $this->actingAs($viewer, 'sanctum')
-            ->getJson('/api/users/johndoe');
+            ->getJson('/api/v1/users/johndoe');
 
         $response->assertOk()
             ->assertJsonPath('user.id', $profile->id)
@@ -55,7 +55,7 @@ class ProfileControllerTest extends TestCase
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->patchJson('/api/profile', [
+            ->patchJson('/api/v1/profile', [
                 'name' => 'New Name',
                 'bio' => 'New bio',
                 'location' => 'Manila',
@@ -78,7 +78,7 @@ class ProfileControllerTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user, 'sanctum')
-            ->patchJson('/api/profile', [
+            ->patchJson('/api/v1/profile', [
                 'name' => str_repeat('a', 256),
                 'bio' => str_repeat('b', 501),
             ]);
@@ -89,7 +89,7 @@ class ProfileControllerTest extends TestCase
 
     public function test_get_profile_unauthenticated_returns_401(): void
     {
-        $this->getJson('/api/profile')
+        $this->getJson('/api/v1/profile')
             ->assertUnauthorized();
     }
 }

@@ -26,7 +26,7 @@ class PostControllerTest extends TestCase
         $community = Community::factory()->create(['price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
-        $response = $this->actingAs($user)->postJson('/api/posts', [
+        $response = $this->actingAs($user)->postJson('/api/v1/posts', [
             'community_slug' => $community->slug,
             'content' => 'Post content via slug',
         ]);
@@ -46,7 +46,7 @@ class PostControllerTest extends TestCase
         $community = Community::factory()->create(['price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
-        $response = $this->actingAs($user)->postJson('/api/posts', [
+        $response = $this->actingAs($user)->postJson('/api/v1/posts', [
             'community_id' => $community->id,
             'content' => 'Post content via id',
         ]);
@@ -66,7 +66,7 @@ class PostControllerTest extends TestCase
         $community = Community::factory()->create(['price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
-        $this->actingAs($user)->postJson('/api/posts', [
+        $this->actingAs($user)->postJson('/api/v1/posts', [
             'community_id' => $community->id,
         ])
             ->assertStatus(422)
@@ -79,7 +79,7 @@ class PostControllerTest extends TestCase
         $community = Community::factory()->create(['price' => 0]);
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
 
-        $this->actingAs($user)->postJson('/api/posts', [
+        $this->actingAs($user)->postJson('/api/v1/posts', [
             'content' => 'Content without community',
         ])
             ->assertStatus(422)
@@ -95,7 +95,7 @@ class PostControllerTest extends TestCase
             'user_id' => $user->id,
         ]);
 
-        $this->actingAs($user)->deleteJson("/api/posts/{$post->id}")
+        $this->actingAs($user)->deleteJson("/api/v1/posts/{$post->id}")
             ->assertOk()
             ->assertJsonPath('message', 'Post deleted.');
 
@@ -112,7 +112,7 @@ class PostControllerTest extends TestCase
             'user_id' => $author->id,
         ]);
 
-        $this->actingAs($user)->deleteJson("/api/posts/{$post->id}")
+        $this->actingAs($user)->deleteJson("/api/v1/posts/{$post->id}")
             ->assertForbidden();
 
         $this->assertDatabaseHas('posts', ['id' => $post->id]);
@@ -122,7 +122,7 @@ class PostControllerTest extends TestCase
     {
         $community = Community::factory()->create();
 
-        $this->postJson('/api/posts', [
+        $this->postJson('/api/v1/posts', [
             'community_id' => $community->id,
             'content' => 'Some content',
         ])
@@ -215,7 +215,7 @@ class PostControllerTest extends TestCase
         ]);
 
         $this->actingAs($user, 'sanctum')
-            ->patchJson("/api/posts/{$post->id}", ['content' => 'Updated via route'])
+            ->patchJson("/api/v1/posts/{$post->id}", ['content' => 'Updated via route'])
             ->assertOk()
             ->assertJsonPath('message', 'Post updated.');
 
@@ -234,7 +234,7 @@ class PostControllerTest extends TestCase
         ]);
 
         $this->actingAs($other, 'sanctum')
-            ->patchJson("/api/posts/{$post->id}", ['content' => 'Hijacked'])
+            ->patchJson("/api/v1/posts/{$post->id}", ['content' => 'Hijacked'])
             ->assertForbidden();
 
         $this->assertEquals('Original', $post->fresh()->content);
@@ -250,7 +250,7 @@ class PostControllerTest extends TestCase
         ]);
 
         $this->actingAs($user, 'sanctum')
-            ->patchJson("/api/posts/{$post->id}", [])
+            ->patchJson("/api/v1/posts/{$post->id}", [])
             ->assertStatus(422)
             ->assertJsonValidationErrors(['content']);
     }
@@ -259,7 +259,7 @@ class PostControllerTest extends TestCase
     {
         $post = Post::factory()->create();
 
-        $this->patchJson("/api/posts/{$post->id}", ['content' => 'Nope'])
+        $this->patchJson("/api/v1/posts/{$post->id}", ['content' => 'Nope'])
             ->assertUnauthorized();
     }
 
@@ -277,7 +277,7 @@ class PostControllerTest extends TestCase
 
         $this->actingAs($user, 'sanctum');
 
-        $request = UpdatePostRequest::create("/api/posts/{$post->id}", 'PATCH', [
+        $request = UpdatePostRequest::create("/api/v1/posts/{$post->id}", 'PATCH', [
             'content' => 'Updated API content',
         ]);
         $request->setUserResolver(fn () => $user);
@@ -307,7 +307,7 @@ class PostControllerTest extends TestCase
         $mock = Mockery::mock(UpdatePost::class);
         $mock->shouldReceive('execute')->once()->andThrow(new \RuntimeException('db error'));
 
-        $request = UpdatePostRequest::create("/api/posts/{$post->id}", 'PATCH', [
+        $request = UpdatePostRequest::create("/api/v1/posts/{$post->id}", 'PATCH', [
             'content' => 'Updated content',
         ]);
         $request->setUserResolver(fn () => $user);
@@ -338,7 +338,7 @@ class PostControllerTest extends TestCase
         $this->app->instance(DeletePost::class, $mock);
 
         $this->actingAs($user)
-            ->deleteJson("/api/posts/{$post->id}")
+            ->deleteJson("/api/v1/posts/{$post->id}")
             ->assertStatus(500)
             ->assertJsonPath('message', 'Failed to delete post.');
     }
@@ -385,7 +385,7 @@ class PostControllerTest extends TestCase
 
         $file = \Illuminate\Http\UploadedFile::fake()->image('photo.jpg');
 
-        $response = $this->actingAs($user)->postJson('/api/posts', [
+        $response = $this->actingAs($user)->postJson('/api/v1/posts', [
             'community_id' => $community->id,
             'content' => 'Post with image',
             'image' => $file,
@@ -406,7 +406,7 @@ class PostControllerTest extends TestCase
         $community = Community::factory()->create();
         $post = Post::factory()->create(['community_id' => $community->id]);
 
-        $this->deleteJson("/api/posts/{$post->id}")
+        $this->deleteJson("/api/v1/posts/{$post->id}")
             ->assertUnauthorized();
     }
 }

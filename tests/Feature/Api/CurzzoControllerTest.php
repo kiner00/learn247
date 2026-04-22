@@ -29,7 +29,7 @@ class CurzzoControllerTest extends TestCase
         Curzzo::factory()->count(3)->create(['community_id' => $community->id]);
 
         $this->actingAs($owner, 'sanctum')
-            ->getJson("/api/communities/{$community->slug}/curzzos")
+            ->getJson("/api/v1/communities/{$community->slug}/curzzos")
             ->assertOk()
             ->assertJsonCount(3, 'data')
             ->assertJsonStructure([
@@ -46,7 +46,7 @@ class CurzzoControllerTest extends TestCase
         $other = User::factory()->create();
 
         $this->actingAs($other, 'sanctum')
-            ->getJson("/api/communities/{$community->slug}/curzzos")
+            ->getJson("/api/v1/communities/{$community->slug}/curzzos")
             ->assertForbidden();
     }
 
@@ -54,7 +54,7 @@ class CurzzoControllerTest extends TestCase
     {
         $community = Community::factory()->create();
 
-        $this->getJson("/api/communities/{$community->slug}/curzzos")
+        $this->getJson("/api/v1/communities/{$community->slug}/curzzos")
             ->assertUnauthorized();
     }
 
@@ -66,7 +66,7 @@ class CurzzoControllerTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/curzzos", [
+            ->postJson("/api/v1/communities/{$community->slug}/curzzos", [
                 'name' => 'API Bot',
                 'instructions' => 'Be helpful.',
                 'access_type' => 'free',
@@ -87,7 +87,7 @@ class CurzzoControllerTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/curzzos", [])
+            ->postJson("/api/v1/communities/{$community->slug}/curzzos", [])
             ->assertStatus(422)
             ->assertJsonValidationErrors(['name', 'instructions', 'access_type']);
     }
@@ -98,7 +98,7 @@ class CurzzoControllerTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/curzzos", [
+            ->postJson("/api/v1/communities/{$community->slug}/curzzos", [
                 'name' => 'Bot',
                 'instructions' => 'Help.',
                 'access_type' => 'free',
@@ -114,7 +114,7 @@ class CurzzoControllerTest extends TestCase
         $other = User::factory()->create();
 
         $this->actingAs($other, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/curzzos", [
+            ->postJson("/api/v1/communities/{$community->slug}/curzzos", [
                 'name' => 'Sneaky',
                 'instructions' => 'Help.',
                 'access_type' => 'free',
@@ -134,7 +134,7 @@ class CurzzoControllerTest extends TestCase
         $this->instance(FileStorage::class, $storage);
 
         $this->actingAs($owner, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/curzzos", [
+            ->postJson("/api/v1/communities/{$community->slug}/curzzos", [
                 'name' => 'With Avatar',
                 'instructions' => 'Help.',
                 'access_type' => 'free',
@@ -156,7 +156,7 @@ class CurzzoControllerTest extends TestCase
         ]);
 
         $this->actingAs($owner, 'sanctum')
-            ->patchJson("/api/communities/{$community->slug}/curzzos/{$curzzo->id}", [
+            ->patchJson("/api/v1/communities/{$community->slug}/curzzos/{$curzzo->id}", [
                 'name' => 'New',
             ])
             ->assertOk()
@@ -173,7 +173,7 @@ class CurzzoControllerTest extends TestCase
         $curzzoB = Curzzo::factory()->create(['community_id' => $b->id]);
 
         $this->actingAs($owner, 'sanctum')
-            ->patchJson("/api/communities/{$a->slug}/curzzos/{$curzzoB->id}", ['name' => 'X'])
+            ->patchJson("/api/v1/communities/{$a->slug}/curzzos/{$curzzoB->id}", ['name' => 'X'])
             ->assertNotFound();
     }
 
@@ -194,7 +194,7 @@ class CurzzoControllerTest extends TestCase
         $this->instance(FileStorage::class, $storage);
 
         $this->actingAs($owner, 'sanctum')
-            ->deleteJson("/api/communities/{$community->slug}/curzzos/{$curzzo->id}")
+            ->deleteJson("/api/v1/communities/{$community->slug}/curzzos/{$curzzo->id}")
             ->assertOk()
             ->assertJsonPath('ok', true);
 
@@ -211,7 +211,7 @@ class CurzzoControllerTest extends TestCase
         $b = Curzzo::factory()->create(['community_id' => $community->id, 'position' => 1]);
 
         $this->actingAs($owner, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/curzzos/reorder", [
+            ->postJson("/api/v1/communities/{$community->slug}/curzzos/reorder", [
                 'ids' => [$b->id, $a->id],
             ])
             ->assertOk()
@@ -230,7 +230,7 @@ class CurzzoControllerTest extends TestCase
         $curzzo = Curzzo::factory()->create(['community_id' => $community->id, 'is_active' => true]);
 
         $this->actingAs($owner, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/curzzos/{$curzzo->id}/toggle-active")
+            ->postJson("/api/v1/communities/{$community->slug}/curzzos/{$curzzo->id}/toggle-active")
             ->assertOk()
             ->assertJsonPath('data.is_active', false);
 
@@ -245,7 +245,7 @@ class CurzzoControllerTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/curzzos/preview-videos", [
+            ->postJson("/api/v1/communities/{$community->slug}/curzzos/preview-videos", [
                 'filename' => 'v.mp4',
                 'content_type' => 'video/mp4',
                 'size' => 1024,
@@ -260,7 +260,7 @@ class CurzzoControllerTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/curzzos/preview-videos", [
+            ->postJson("/api/v1/communities/{$community->slug}/curzzos/preview-videos", [
                 'filename' => 'v.mp4',
                 'content_type' => 'video/mp4',
                 'size' => (5120 * 1024 * 1024) + 1,

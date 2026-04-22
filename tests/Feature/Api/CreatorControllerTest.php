@@ -21,7 +21,7 @@ class CreatorControllerTest extends TestCase
 
     public function test_dashboard_requires_authentication(): void
     {
-        $this->getJson('/api/creator/dashboard')
+        $this->getJson('/api/v1/creator/dashboard')
             ->assertUnauthorized();
     }
 
@@ -30,7 +30,7 @@ class CreatorControllerTest extends TestCase
         $owner = User::factory()->create(['payout_method' => 'gcash', 'payout_details' => '09171234567']);
 
         $this->actingAs($owner, 'sanctum')
-            ->getJson('/api/creator/dashboard')
+            ->getJson('/api/v1/creator/dashboard')
             ->assertOk()
             ->assertJsonStructure(['communities', 'requestHistory', 'payoutMethod', 'payoutDetails'])
             ->assertJsonCount(0, 'communities');
@@ -66,7 +66,7 @@ class CreatorControllerTest extends TestCase
         ]);
 
         $response = $this->actingAs($owner, 'sanctum')
-            ->getJson('/api/creator/dashboard');
+            ->getJson('/api/v1/creator/dashboard');
 
         $response->assertOk()
             ->assertJsonCount(1, 'communities')
@@ -113,7 +113,7 @@ class CreatorControllerTest extends TestCase
         ]);
 
         $response = $this->actingAs($owner, 'sanctum')
-            ->getJson('/api/creator/dashboard');
+            ->getJson('/api/v1/creator/dashboard');
 
         $response->assertOk()
             ->assertJsonCount(1, 'requestHistory');
@@ -155,7 +155,7 @@ class CreatorControllerTest extends TestCase
         ]);
 
         $response = $this->actingAs($owner, 'sanctum')
-            ->getJson('/api/creator/dashboard');
+            ->getJson('/api/v1/creator/dashboard');
 
         $response->assertOk();
         $this->assertEquals(100, $response->json('communities.0.paid'));
@@ -167,7 +167,7 @@ class CreatorControllerTest extends TestCase
         Community::factory()->create(['owner_id' => $owner->id, 'price' => 0]);
 
         $this->actingAs($owner, 'sanctum')
-            ->getJson('/api/creator/dashboard')
+            ->getJson('/api/v1/creator/dashboard')
             ->assertOk()
             ->assertJsonCount(0, 'communities');
     }
@@ -180,7 +180,7 @@ class CreatorControllerTest extends TestCase
         $mock->shouldReceive('execute')->once()->andThrow(new \RuntimeException('DB error'));
 
         $this->actingAs($owner, 'sanctum')
-            ->getJson('/api/creator/dashboard')
+            ->getJson('/api/v1/creator/dashboard')
             ->assertStatus(500)
             ->assertJsonPath('message', 'Failed to load dashboard data.');
     }

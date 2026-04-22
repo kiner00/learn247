@@ -105,11 +105,11 @@ This is a running checklist — check items off as they ship. Pick any single it
 - [ ] CI check that spec is up-to-date
 - Why: Mobile team will reverse-engineer from `routes/api.php` otherwise. **Do this BEFORE mobile starts integration**, not after.
 
-### [ ] 1.8 API versioning  (~0.5–1 hr)
-- [ ] Migrate routes to `/api/v1/` prefix
-- [ ] Versioning middleware / route group
-- [ ] Update OpenAPI spec to reflect v1
-- Why: Once mobile pins to today's response shapes, breaking changes become forced-update events. Lock the contract NOW.
+### [x] 1.8 API versioning
+- [x] All mobile-facing routes wrapped in `Route::prefix('v1')->group(...)` in `routes/api.php` → surface is now `/api/v1/*`
+- [x] **Xendit webhook kept UNVERSIONED** at `/api/xendit/webhook` (configured in Xendit dashboard; moving it breaks prod integration). Comment in routes file calls this out so future edits don't nest it by accident.
+- [x] 31 test files in `tests/Feature/Api/` rewritten to hit `/api/v1/...`; webhook test path preserved. Full API suite green: 397/397.
+- Deliberately NOT in scope (flag as follow-ups): OpenAPI spec update (covered by 1.7 when it lands); removing the old unversioned `/api/*` paths isn't needed since nothing external consumed them yet (no web frontend callers; mobile hasn't shipped) — mobile simply pins to `/v1` from day one.
 
 ---
 

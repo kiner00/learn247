@@ -41,7 +41,7 @@ class CurzzoChatControllerTest extends TestCase
         $member = $this->makeFreeMember($community);
 
         $this->actingAs($member, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/curzzos/{$curzzo->id}/chat", [
+            ->postJson("/api/v1/communities/{$community->slug}/curzzos/{$curzzo->id}/chat", [
                 'message' => 'Hello',
             ])
             ->assertOk()
@@ -60,7 +60,7 @@ class CurzzoChatControllerTest extends TestCase
         $community = Community::factory()->create();
         $curzzo = Curzzo::factory()->create(['community_id' => $community->id]);
 
-        $this->postJson("/api/communities/{$community->slug}/curzzos/{$curzzo->id}/chat", [
+        $this->postJson("/api/v1/communities/{$community->slug}/curzzos/{$curzzo->id}/chat", [
             'message' => 'Hi',
         ])->assertUnauthorized();
     }
@@ -73,7 +73,7 @@ class CurzzoChatControllerTest extends TestCase
         $member = $this->makeFreeMember($community);
 
         $this->actingAs($member, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/curzzos/{$curzzo->id}/chat", [])
+            ->postJson("/api/v1/communities/{$community->slug}/curzzos/{$curzzo->id}/chat", [])
             ->assertStatus(422)
             ->assertJsonValidationErrors('message');
     }
@@ -86,7 +86,7 @@ class CurzzoChatControllerTest extends TestCase
         $member = $this->makeFreeMember($community);
 
         $this->actingAs($member, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/curzzos/{$curzzo->id}/chat", [
+            ->postJson("/api/v1/communities/{$community->slug}/curzzos/{$curzzo->id}/chat", [
                 'message' => 'Hi',
             ])
             ->assertNotFound();
@@ -100,7 +100,7 @@ class CurzzoChatControllerTest extends TestCase
         $member = $this->makeFreeMember($community);
 
         $this->actingAs($member, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/curzzos/{$curzzo->id}/chat", [
+            ->postJson("/api/v1/communities/{$community->slug}/curzzos/{$curzzo->id}/chat", [
                 'message' => 'Hi',
             ])
             ->assertForbidden()
@@ -116,7 +116,7 @@ class CurzzoChatControllerTest extends TestCase
         $curzzo = Curzzo::factory()->paidOnce()->create(['community_id' => $community->id]);
 
         $this->actingAs($owner, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/curzzos/{$curzzo->id}/chat", [
+            ->postJson("/api/v1/communities/{$community->slug}/curzzos/{$curzzo->id}/chat", [
                 'message' => 'Hi',
             ])
             ->assertOk();
@@ -140,7 +140,7 @@ class CurzzoChatControllerTest extends TestCase
         }
 
         $this->actingAs($member, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/curzzos/{$curzzo->id}/chat", [
+            ->postJson("/api/v1/communities/{$community->slug}/curzzos/{$curzzo->id}/chat", [
                 'message' => 'one more',
             ])
             ->assertStatus(429)
@@ -165,7 +165,7 @@ class CurzzoChatControllerTest extends TestCase
         ]);
 
         $this->actingAs($member, 'sanctum')
-            ->getJson("/api/communities/{$community->slug}/curzzos/{$curzzo->id}/history")
+            ->getJson("/api/v1/communities/{$community->slug}/curzzos/{$curzzo->id}/history")
             ->assertOk()
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.text', 'mine')
@@ -190,7 +190,7 @@ class CurzzoChatControllerTest extends TestCase
         ]);
 
         $this->actingAs($member, 'sanctum')
-            ->deleteJson("/api/communities/{$community->slug}/curzzos/{$curzzo->id}/history")
+            ->deleteJson("/api/v1/communities/{$community->slug}/curzzos/{$curzzo->id}/history")
             ->assertOk()
             ->assertJsonPath('ok', true);
 

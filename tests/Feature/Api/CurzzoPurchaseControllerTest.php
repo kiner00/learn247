@@ -44,7 +44,7 @@ class CurzzoPurchaseControllerTest extends TestCase
         ]);
 
         $this->actingAs($user, 'sanctum')
-            ->postJson("/api/curzzo-purchases/{$purchase->id}/check-status")
+            ->postJson("/api/v1/curzzo-purchases/{$purchase->id}/check-status")
             ->assertOk()
             ->assertJsonPath('data.id', $purchase->id)
             ->assertJsonPath('data.status', CurzzoPurchase::STATUS_PAID)
@@ -59,7 +59,7 @@ class CurzzoPurchaseControllerTest extends TestCase
         $purchase = $this->makePurchase($user);
 
         $this->actingAs($user, 'sanctum')
-            ->postJson("/api/curzzo-purchases/{$purchase->id}/check-status")
+            ->postJson("/api/v1/curzzo-purchases/{$purchase->id}/check-status")
             ->assertOk()
             ->assertJsonPath('data.status', CurzzoPurchase::STATUS_PENDING)
             ->assertJsonPath('data.is_paid', false)
@@ -71,7 +71,7 @@ class CurzzoPurchaseControllerTest extends TestCase
         $user = User::factory()->create();
         $purchase = $this->makePurchase($user);
 
-        $this->postJson("/api/curzzo-purchases/{$purchase->id}/check-status")
+        $this->postJson("/api/v1/curzzo-purchases/{$purchase->id}/check-status")
             ->assertUnauthorized();
     }
 
@@ -82,7 +82,7 @@ class CurzzoPurchaseControllerTest extends TestCase
         $purchase = $this->makePurchase($owner);
 
         $this->actingAs($stranger, 'sanctum')
-            ->postJson("/api/curzzo-purchases/{$purchase->id}/check-status")
+            ->postJson("/api/v1/curzzo-purchases/{$purchase->id}/check-status")
             ->assertForbidden();
     }
 
@@ -91,7 +91,7 @@ class CurzzoPurchaseControllerTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user, 'sanctum')
-            ->postJson('/api/curzzo-purchases/999999/check-status')
+            ->postJson('/api/v1/curzzo-purchases/999999/check-status')
             ->assertNotFound();
     }
 
@@ -115,7 +115,7 @@ class CurzzoPurchaseControllerTest extends TestCase
         $this->app->instance(XenditService::class, $xendit);
 
         $this->actingAs($user, 'sanctum')
-            ->postJson("/api/curzzo-purchases/{$purchase->id}/cancel-recurring")
+            ->postJson("/api/v1/curzzo-purchases/{$purchase->id}/cancel-recurring")
             ->assertOk()
             ->assertJsonPath('data.id', $purchase->id)
             ->assertJsonPath('data.recurring_status', 'INACTIVE');
@@ -128,7 +128,7 @@ class CurzzoPurchaseControllerTest extends TestCase
         $user = User::factory()->create();
         $purchase = $this->makePurchase($user, ['xendit_plan_id' => 'repl_x']);
 
-        $this->postJson("/api/curzzo-purchases/{$purchase->id}/cancel-recurring")
+        $this->postJson("/api/v1/curzzo-purchases/{$purchase->id}/cancel-recurring")
             ->assertUnauthorized();
     }
 
@@ -142,7 +142,7 @@ class CurzzoPurchaseControllerTest extends TestCase
         ]);
 
         $this->actingAs($stranger, 'sanctum')
-            ->postJson("/api/curzzo-purchases/{$purchase->id}/cancel-recurring")
+            ->postJson("/api/v1/curzzo-purchases/{$purchase->id}/cancel-recurring")
             ->assertForbidden();
     }
 
@@ -152,7 +152,7 @@ class CurzzoPurchaseControllerTest extends TestCase
         $purchase = $this->makePurchase($user); // no xendit_plan_id
 
         $this->actingAs($user, 'sanctum')
-            ->postJson("/api/curzzo-purchases/{$purchase->id}/cancel-recurring")
+            ->postJson("/api/v1/curzzo-purchases/{$purchase->id}/cancel-recurring")
             ->assertStatus(400);
     }
 }

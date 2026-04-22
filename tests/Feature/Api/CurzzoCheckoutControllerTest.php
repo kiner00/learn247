@@ -39,7 +39,7 @@ class CurzzoCheckoutControllerTest extends TestCase
         $this->instance(StartCurzzoCheckout::class, $action);
 
         $this->actingAs($member, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/curzzos/{$curzzo->id}/checkout")
+            ->postJson("/api/v1/communities/{$community->slug}/curzzos/{$curzzo->id}/checkout")
             ->assertOk()
             ->assertJsonPath('purchase_id', 7)
             ->assertJsonPath('checkout_url', 'https://xendit.test/invoice/xyz');
@@ -58,7 +58,7 @@ class CurzzoCheckoutControllerTest extends TestCase
         ]);
 
         $this->actingAs($member, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/curzzos/{$curzzo->id}/checkout")
+            ->postJson("/api/v1/communities/{$community->slug}/curzzos/{$curzzo->id}/checkout")
             ->assertNotFound();
     }
 
@@ -70,7 +70,7 @@ class CurzzoCheckoutControllerTest extends TestCase
         $curzzoB = Curzzo::factory()->paidOnce()->create(['community_id' => $b->id]);
 
         $this->actingAs($owner, 'sanctum')
-            ->postJson("/api/communities/{$a->slug}/curzzos/{$curzzoB->id}/checkout")
+            ->postJson("/api/v1/communities/{$a->slug}/curzzos/{$curzzoB->id}/checkout")
             ->assertNotFound();
     }
 
@@ -79,7 +79,7 @@ class CurzzoCheckoutControllerTest extends TestCase
         $community = Community::factory()->create();
         $curzzo = Curzzo::factory()->paidOnce()->create(['community_id' => $community->id]);
 
-        $this->postJson("/api/communities/{$community->slug}/curzzos/{$curzzo->id}/checkout")
+        $this->postJson("/api/v1/communities/{$community->slug}/curzzos/{$curzzo->id}/checkout")
             ->assertUnauthorized();
     }
 }

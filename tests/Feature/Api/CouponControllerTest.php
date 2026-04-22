@@ -26,7 +26,7 @@ class CouponControllerTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)
-            ->postJson('/api/coupons/WELCOME10/redeem');
+            ->postJson('/api/v1/coupons/WELCOME10/redeem');
 
         $response->assertOk()
             ->assertJsonPath('message', 'Coupon redeemed.')
@@ -58,7 +58,7 @@ class CouponControllerTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->postJson('/api/coupons/hello/redeem')
+            ->postJson('/api/v1/coupons/hello/redeem')
             ->assertOk();
     }
 
@@ -67,7 +67,7 @@ class CouponControllerTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user)
-            ->postJson('/api/coupons/NOPE/redeem')
+            ->postJson('/api/v1/coupons/NOPE/redeem')
             ->assertStatus(422)
             ->assertJsonPath('message', 'Invalid coupon code.');
     }
@@ -85,7 +85,7 @@ class CouponControllerTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->postJson('/api/coupons/DISABLED/redeem')
+            ->postJson('/api/v1/coupons/DISABLED/redeem')
             ->assertStatus(422)
             ->assertJsonPath('message', 'This coupon is no longer available.');
     }
@@ -115,7 +115,7 @@ class CouponControllerTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->postJson('/api/coupons/ONCE/redeem')
+            ->postJson('/api/v1/coupons/ONCE/redeem')
             ->assertStatus(422)
             ->assertJsonPath('message', 'You have already used this coupon.');
     }
@@ -139,7 +139,7 @@ class CouponControllerTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->postJson('/api/coupons/BASICONE/redeem')
+            ->postJson('/api/v1/coupons/BASICONE/redeem')
             ->assertStatus(422)
             ->assertJsonPath('message', 'You already have an active pro plan.');
     }
@@ -155,7 +155,7 @@ class CouponControllerTest extends TestCase
             'is_active' => true,
         ]);
 
-        $this->postJson('/api/coupons/GUEST/redeem')
+        $this->postJson('/api/v1/coupons/GUEST/redeem')
             ->assertUnauthorized();
     }
 }

@@ -40,7 +40,7 @@ class AIAssistantControllerTest extends TestCase
 
     public function test_greet_requires_authentication(): void
     {
-        $this->postJson('/api/ai/greet')
+        $this->postJson('/api/v1/ai/greet')
             ->assertUnauthorized();
     }
 
@@ -49,7 +49,7 @@ class AIAssistantControllerTest extends TestCase
         $user = User::factory()->create(['name' => 'Jane']);
 
         $this->actingAs($user, 'sanctum')
-            ->postJson('/api/ai/greet')
+            ->postJson('/api/v1/ai/greet')
             ->assertOk()
             ->assertJsonPath('message', 'Hi Jane! Join a community to get started.')
             ->assertJsonPath('conversation_id', null);
@@ -71,7 +71,7 @@ class AIAssistantControllerTest extends TestCase
         $this->instance(BuildAIContext::class, $mockContext);
 
         $this->actingAs($user, 'sanctum')
-            ->postJson('/api/ai/greet')
+            ->postJson('/api/v1/ai/greet')
             ->assertOk()
             ->assertJsonStructure(['message', 'conversation_id']);
     }
@@ -80,7 +80,7 @@ class AIAssistantControllerTest extends TestCase
 
     public function test_chat_requires_authentication(): void
     {
-        $this->postJson('/api/ai/chat', ['message' => 'hello'])
+        $this->postJson('/api/v1/ai/chat', ['message' => 'hello'])
             ->assertUnauthorized();
     }
 
@@ -89,7 +89,7 @@ class AIAssistantControllerTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user, 'sanctum')
-            ->postJson('/api/ai/chat', [])
+            ->postJson('/api/v1/ai/chat', [])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('message');
     }
@@ -99,7 +99,7 @@ class AIAssistantControllerTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user, 'sanctum')
-            ->postJson('/api/ai/chat', ['message' => str_repeat('a', 1001)])
+            ->postJson('/api/v1/ai/chat', ['message' => str_repeat('a', 1001)])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('message');
     }
@@ -109,7 +109,7 @@ class AIAssistantControllerTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user, 'sanctum')
-            ->postJson('/api/ai/chat', ['message' => 'Hello'])
+            ->postJson('/api/v1/ai/chat', ['message' => 'Hello'])
             ->assertForbidden()
             ->assertJsonPath('error', 'You must be a member of a community to use the AI assistant.');
     }
@@ -130,7 +130,7 @@ class AIAssistantControllerTest extends TestCase
         $this->instance(BuildAIContext::class, $mockContext);
 
         $this->actingAs($user, 'sanctum')
-            ->postJson('/api/ai/chat', ['message' => 'What should I do next?'])
+            ->postJson('/api/v1/ai/chat', ['message' => 'What should I do next?'])
             ->assertOk()
             ->assertJsonStructure(['message', 'conversation_id']);
     }
@@ -153,7 +153,7 @@ class AIAssistantControllerTest extends TestCase
         $this->instance(BuildAIContext::class, $mockContext);
 
         $this->actingAs($user, 'sanctum')
-            ->postJson('/api/ai/chat', [
+            ->postJson('/api/v1/ai/chat', [
                 'message' => 'Tell me more',
                 'conversation_id' => $conversationId,
             ])
@@ -192,7 +192,7 @@ class AIAssistantControllerTest extends TestCase
         $imageMock->shouldReceive('generate')->andReturn($fakeResponse);
 
         $this->actingAs($user, 'sanctum')
-            ->postJson('/api/ai/chat', ['message' => 'Generate an image of a cat'])
+            ->postJson('/api/v1/ai/chat', ['message' => 'Generate an image of a cat'])
             ->assertOk()
             ->assertJsonPath('type', 'image')
             ->assertJsonStructure(['type', 'message']);
@@ -214,7 +214,7 @@ class AIAssistantControllerTest extends TestCase
         $this->instance(BuildAIContext::class, $mockContext);
 
         $this->actingAs($user, 'sanctum')
-            ->postJson('/api/ai/chat', [
+            ->postJson('/api/v1/ai/chat', [
                 'message' => 'What lessons should I take next?',
             ])
             ->assertOk()
@@ -226,7 +226,7 @@ class AIAssistantControllerTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user, 'sanctum')
-            ->postJson('/api/ai/chat', [
+            ->postJson('/api/v1/ai/chat', [
                 'message' => 'Hello',
                 'conversation_id' => 'not-a-uuid',
             ])
@@ -260,7 +260,7 @@ class AIAssistantControllerTest extends TestCase
         \Illuminate\Support\Facades\Log::shouldReceive('error')->atLeast()->once();
 
         $this->actingAs($user, 'sanctum')
-            ->postJson('/api/ai/chat', ['message' => 'generate an image of a cat'])
+            ->postJson('/api/v1/ai/chat', ['message' => 'generate an image of a cat'])
             ->assertOk()
             ->assertJsonPath('type', 'text')
             ->assertJsonPath('message', "Sorry, I couldn't generate that image right now. Please try again later.");

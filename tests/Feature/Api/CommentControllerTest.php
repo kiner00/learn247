@@ -22,7 +22,7 @@ class CommentControllerTest extends TestCase
         $post = Post::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
 
         $response = $this->actingAs($member, 'sanctum')
-            ->postJson("/api/posts/{$post->id}/comments", ['content' => 'My comment']);
+            ->postJson("/api/v1/posts/{$post->id}/comments", ['content' => 'My comment']);
 
         $response->assertStatus(201)
             ->assertJsonPath('data.content', 'My comment');
@@ -41,7 +41,7 @@ class CommentControllerTest extends TestCase
         $post = Post::factory()->create(['community_id' => $community->id]);
 
         $this->actingAs($member, 'sanctum')
-            ->postJson("/api/posts/{$post->id}/comments", [])
+            ->postJson("/api/v1/posts/{$post->id}/comments", [])
             ->assertStatus(422)
             ->assertJsonValidationErrors(['content']);
     }
@@ -59,7 +59,7 @@ class CommentControllerTest extends TestCase
         ]);
 
         $this->actingAs($user, 'sanctum')
-            ->deleteJson("/api/comments/{$comment->id}")
+            ->deleteJson("/api/v1/comments/{$comment->id}")
             ->assertOk()
             ->assertJsonPath('message', 'Comment deleted.');
 
@@ -80,7 +80,7 @@ class CommentControllerTest extends TestCase
         ]);
 
         $this->actingAs($otherUser, 'sanctum')
-            ->deleteJson("/api/comments/{$comment->id}")
+            ->deleteJson("/api/v1/comments/{$comment->id}")
             ->assertForbidden();
 
         $this->assertDatabaseHas('comments', ['id' => $comment->id]);
@@ -91,7 +91,7 @@ class CommentControllerTest extends TestCase
         $community = Community::factory()->create(['price' => 0]);
         $post = Post::factory()->create(['community_id' => $community->id]);
 
-        $this->postJson("/api/posts/{$post->id}/comments", ['content' => 'My comment'])
+        $this->postJson("/api/v1/posts/{$post->id}/comments", ['content' => 'My comment'])
             ->assertUnauthorized();
     }
 }

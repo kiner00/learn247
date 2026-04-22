@@ -33,8 +33,15 @@ use App\Http\Controllers\Api\SubscriptionController;
 use App\Http\Controllers\Api\XenditWebhookController;
 use Illuminate\Support\Facades\Route;
 
-// ─── Webhooks (no auth) ────────────────────────────────────────────────────
+// ─── Webhooks (no auth, UNVERSIONED) ───────────────────────────────────────
+// Xendit posts to this URL from their dashboard configuration — it must not
+// move under a version prefix, or production integration breaks.
 Route::post('/xendit/webhook', XenditWebhookController::class)->middleware('throttle:60,1');
+
+// ─── v1 ────────────────────────────────────────────────────────────────────
+// All mobile-facing API lives under /api/v1. Once mobile ships, response
+// shapes here are locked: breaking changes go in /api/v2.
+Route::prefix('v1')->group(function () {
 
 // ─── Auth (public) ─────────────────────────────────────────────────────────
 Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
@@ -234,3 +241,5 @@ Route::middleware('auth:sanctum')->group(function () {
     // Curzzo purchase checkout
     Route::post('/communities/{community}/curzzos/{curzzo}/checkout', [CurzzoCheckoutController::class, 'checkout'])->middleware('throttle:10,1');
 });
+
+}); // /v1

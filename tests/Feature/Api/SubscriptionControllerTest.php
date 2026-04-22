@@ -30,7 +30,7 @@ class SubscriptionControllerTest extends TestCase
         });
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/checkout");
+            ->postJson("/api/v1/communities/{$community->slug}/checkout");
 
         $response->assertOk()
             ->assertJsonStructure(['checkout_url', 'subscription_id'])
@@ -49,7 +49,7 @@ class SubscriptionControllerTest extends TestCase
         $community = Community::factory()->create(['price' => 0]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/checkout");
+            ->postJson("/api/v1/communities/{$community->slug}/checkout");
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['community']);
@@ -66,7 +66,7 @@ class SubscriptionControllerTest extends TestCase
         ]);
 
         $response = $this->actingAs($user, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/checkout");
+            ->postJson("/api/v1/communities/{$community->slug}/checkout");
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['subscription']);
@@ -76,7 +76,7 @@ class SubscriptionControllerTest extends TestCase
     {
         $community = Community::factory()->paid(499)->create(['billing_type' => 'one_time']);
 
-        $this->postJson("/api/communities/{$community->slug}/checkout")
+        $this->postJson("/api/v1/communities/{$community->slug}/checkout")
             ->assertUnauthorized();
     }
 
@@ -102,7 +102,7 @@ class SubscriptionControllerTest extends TestCase
 
         $response = $this->actingAs($user, 'sanctum')
             ->withCookie('ref_code', 'REF123ABC')
-            ->postJson("/api/communities/{$community->slug}/checkout");
+            ->postJson("/api/v1/communities/{$community->slug}/checkout");
 
         $response->assertOk();
     }
@@ -121,7 +121,7 @@ class SubscriptionControllerTest extends TestCase
         ]);
 
         $this->actingAs($user, 'sanctum')
-            ->postJson("/api/subscriptions/{$subscription->id}/check-status")
+            ->postJson("/api/v1/subscriptions/{$subscription->id}/check-status")
             ->assertOk()
             ->assertJsonPath('data.id', $subscription->id)
             ->assertJsonPath('data.status', Subscription::STATUS_ACTIVE)
@@ -139,7 +139,7 @@ class SubscriptionControllerTest extends TestCase
         ]);
 
         $this->actingAs($user, 'sanctum')
-            ->postJson("/api/subscriptions/{$subscription->id}/check-status")
+            ->postJson("/api/v1/subscriptions/{$subscription->id}/check-status")
             ->assertOk()
             ->assertJsonPath('data.status', Subscription::STATUS_PENDING)
             ->assertJsonPath('data.is_active', false);
@@ -149,7 +149,7 @@ class SubscriptionControllerTest extends TestCase
     {
         $subscription = Subscription::factory()->create();
 
-        $this->postJson("/api/subscriptions/{$subscription->id}/check-status")
+        $this->postJson("/api/v1/subscriptions/{$subscription->id}/check-status")
             ->assertUnauthorized();
     }
 
@@ -160,7 +160,7 @@ class SubscriptionControllerTest extends TestCase
         $subscription = Subscription::factory()->create(['user_id' => $owner->id]);
 
         $this->actingAs($stranger, 'sanctum')
-            ->postJson("/api/subscriptions/{$subscription->id}/check-status")
+            ->postJson("/api/v1/subscriptions/{$subscription->id}/check-status")
             ->assertForbidden();
     }
 
@@ -169,7 +169,7 @@ class SubscriptionControllerTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user, 'sanctum')
-            ->postJson('/api/subscriptions/999999/check-status')
+            ->postJson('/api/v1/subscriptions/999999/check-status')
             ->assertNotFound();
     }
 
@@ -194,7 +194,7 @@ class SubscriptionControllerTest extends TestCase
         $this->app->instance(XenditService::class, $xendit);
 
         $this->actingAs($user, 'sanctum')
-            ->postJson("/api/subscriptions/{$subscription->id}/cancel-recurring")
+            ->postJson("/api/v1/subscriptions/{$subscription->id}/cancel-recurring")
             ->assertOk()
             ->assertJsonPath('data.id', $subscription->id)
             ->assertJsonPath('data.recurring_status', 'INACTIVE')
@@ -207,7 +207,7 @@ class SubscriptionControllerTest extends TestCase
     {
         $subscription = Subscription::factory()->create(['xendit_plan_id' => 'repl_x']);
 
-        $this->postJson("/api/subscriptions/{$subscription->id}/cancel-recurring")
+        $this->postJson("/api/v1/subscriptions/{$subscription->id}/cancel-recurring")
             ->assertUnauthorized();
     }
 
@@ -222,7 +222,7 @@ class SubscriptionControllerTest extends TestCase
         ]);
 
         $this->actingAs($stranger, 'sanctum')
-            ->postJson("/api/subscriptions/{$subscription->id}/cancel-recurring")
+            ->postJson("/api/v1/subscriptions/{$subscription->id}/cancel-recurring")
             ->assertForbidden();
     }
 
@@ -235,7 +235,7 @@ class SubscriptionControllerTest extends TestCase
         ]);
 
         $this->actingAs($user, 'sanctum')
-            ->postJson("/api/subscriptions/{$subscription->id}/cancel-recurring")
+            ->postJson("/api/v1/subscriptions/{$subscription->id}/cancel-recurring")
             ->assertStatus(400);
     }
 }

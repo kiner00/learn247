@@ -34,7 +34,7 @@ class LessonCommentControllerTest extends TestCase
         $owner = User::factory()->create();
         [$community, $course, $lesson] = $this->createClassroomStructure($owner);
 
-        $this->postJson("/api/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/comments", [
+        $this->postJson("/api/v1/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/comments", [
             'content' => 'Great lesson!',
         ])->assertUnauthorized();
     }
@@ -46,7 +46,7 @@ class LessonCommentControllerTest extends TestCase
         [$community, $course, $lesson] = $this->createClassroomStructure($owner);
 
         $this->actingAs($outsider, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/comments", [
+            ->postJson("/api/v1/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/comments", [
                 'content' => 'Great lesson!',
             ])
             ->assertForbidden();
@@ -62,7 +62,7 @@ class LessonCommentControllerTest extends TestCase
         ]);
 
         $this->actingAs($owner, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/comments", [])
+            ->postJson("/api/v1/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/comments", [])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('content');
     }
@@ -77,7 +77,7 @@ class LessonCommentControllerTest extends TestCase
         ]);
 
         $this->actingAs($owner, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/comments", [
+            ->postJson("/api/v1/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/comments", [
                 'content' => str_repeat('x', 2001),
             ])
             ->assertUnprocessable()
@@ -95,7 +95,7 @@ class LessonCommentControllerTest extends TestCase
         ]);
 
         $response = $this->actingAs($member, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/comments", [
+            ->postJson("/api/v1/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/comments", [
                 'content' => 'This was very helpful!',
             ]);
 
@@ -127,7 +127,7 @@ class LessonCommentControllerTest extends TestCase
         $mock->shouldReceive('execute')->once()->andThrow(new \RuntimeException('DB error'));
 
         $this->actingAs($member, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/comments", [
+            ->postJson("/api/v1/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/comments", [
                 'content' => 'This will fail',
             ])
             ->assertStatus(500)
@@ -145,7 +145,7 @@ class LessonCommentControllerTest extends TestCase
             'content' => 'Test comment',
         ]);
 
-        $this->deleteJson("/api/lesson-comments/{$comment->id}")
+        $this->deleteJson("/api/v1/lesson-comments/{$comment->id}")
             ->assertUnauthorized();
     }
 
@@ -160,7 +160,7 @@ class LessonCommentControllerTest extends TestCase
         ]);
 
         $this->actingAs($user, 'sanctum')
-            ->deleteJson("/api/lesson-comments/{$comment->id}")
+            ->deleteJson("/api/v1/lesson-comments/{$comment->id}")
             ->assertOk()
             ->assertJsonPath('deleted', $comment->id);
 
@@ -179,7 +179,7 @@ class LessonCommentControllerTest extends TestCase
         ]);
 
         $this->actingAs($other, 'sanctum')
-            ->deleteJson("/api/lesson-comments/{$comment->id}")
+            ->deleteJson("/api/v1/lesson-comments/{$comment->id}")
             ->assertForbidden();
     }
 
@@ -195,7 +195,7 @@ class LessonCommentControllerTest extends TestCase
         ]);
 
         $this->actingAs($admin, 'sanctum')
-            ->deleteJson("/api/lesson-comments/{$comment->id}")
+            ->deleteJson("/api/v1/lesson-comments/{$comment->id}")
             ->assertOk()
             ->assertJsonPath('deleted', $comment->id);
     }
@@ -216,7 +216,7 @@ class LessonCommentControllerTest extends TestCase
         });
 
         $this->actingAs($user, 'sanctum')
-            ->deleteJson("/api/lesson-comments/{$comment->id}")
+            ->deleteJson("/api/v1/lesson-comments/{$comment->id}")
             ->assertStatus(500)
             ->assertJsonPath('message', 'Failed to delete comment.');
     }

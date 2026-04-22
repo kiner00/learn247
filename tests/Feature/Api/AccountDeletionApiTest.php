@@ -17,7 +17,7 @@ class AccountDeletionApiTest extends TestCase
 
     public function test_delete_requires_authentication(): void
     {
-        $this->postJson('/api/account/delete')->assertUnauthorized();
+        $this->postJson('/api/v1/account/delete')->assertUnauthorized();
     }
 
     public function test_delete_soft_deletes_user_and_revokes_tokens(): void
@@ -26,7 +26,7 @@ class AccountDeletionApiTest extends TestCase
         $token = $user->createToken('mobile');
 
         $response = $this->withHeader('Authorization', 'Bearer '.$token->plainTextToken)
-            ->postJson('/api/account/delete');
+            ->postJson('/api/v1/account/delete');
 
         $response->assertOk()
             ->assertJsonPath('deletion.requested', true)
@@ -54,7 +54,7 @@ class AccountDeletionApiTest extends TestCase
             $m->shouldReceive('deactivateRecurringPlan')->with('plan_xyz')->once();
         });
 
-        $this->actingAs($user, 'sanctum')->postJson('/api/account/delete')->assertOk();
+        $this->actingAs($user, 'sanctum')->postJson('/api/v1/account/delete')->assertOk();
 
         $this->assertEquals('INACTIVE', $sub->fresh()->recurring_status);
     }
@@ -76,7 +76,7 @@ class AccountDeletionApiTest extends TestCase
             $m->shouldReceive('deactivateRecurringPlan')->andThrow(new \RuntimeException('Xendit down'));
         });
 
-        $this->actingAs($user, 'sanctum')->postJson('/api/account/delete')->assertOk();
+        $this->actingAs($user, 'sanctum')->postJson('/api/v1/account/delete')->assertOk();
 
         $this->assertSoftDeleted('users', ['id' => $user->id]);
     }
@@ -89,7 +89,7 @@ class AccountDeletionApiTest extends TestCase
         $user->delete();
 
         $this->withHeader('Authorization', 'Bearer '.$token)
-            ->getJson('/api/auth/me')
+            ->getJson('/api/v1/auth/me')
             ->assertUnauthorized();
     }
 
@@ -100,7 +100,7 @@ class AccountDeletionApiTest extends TestCase
         $user = User::factory()->create(['password' => 'Secret1!']);
         $user->delete();
 
-        $response = $this->postJson('/api/account/delete/cancel', [
+        $response = $this->postJson('/api/v1/account/delete/cancel', [
             'email' => $user->email,
             'password' => 'Secret1!',
         ]);
@@ -116,7 +116,7 @@ class AccountDeletionApiTest extends TestCase
         $user = User::factory()->create(['password' => 'Secret1!']);
         $user->delete();
 
-        $this->postJson('/api/account/delete/cancel', [
+        $this->postJson('/api/v1/account/delete/cancel', [
             'email' => $user->email,
             'password' => 'WrongPassword',
         ])->assertUnprocessable()->assertJsonValidationErrors('email');
@@ -128,7 +128,7 @@ class AccountDeletionApiTest extends TestCase
     {
         $user = User::factory()->create(['password' => 'Secret1!']);
 
-        $this->postJson('/api/account/delete/cancel', [
+        $this->postJson('/api/v1/account/delete/cancel', [
             'email' => $user->email,
             'password' => 'Secret1!',
         ])->assertUnprocessable()->assertJsonValidationErrors('email');
@@ -136,7 +136,7 @@ class AccountDeletionApiTest extends TestCase
 
     public function test_cancel_rejects_unknown_email(): void
     {
-        $this->postJson('/api/account/delete/cancel', [
+        $this->postJson('/api/v1/account/delete/cancel', [
             'email' => 'ghost@example.com',
             'password' => 'anything',
         ])->assertUnprocessable()->assertJsonValidationErrors('email');
@@ -149,7 +149,7 @@ class AccountDeletionApiTest extends TestCase
 
         $this->travel(User::DELETION_GRACE_DAYS + 1)->days();
 
-        $this->postJson('/api/account/delete/cancel', [
+        $this->postJson('/api/v1/account/delete/cancel', [
             'email' => $user->email,
             'password' => 'Secret1!',
         ])->assertUnprocessable()->assertJsonValidationErrors('email');
@@ -159,7 +159,7 @@ class AccountDeletionApiTest extends TestCase
 
     public function test_cancel_validates_required_fields(): void
     {
-        $this->postJson('/api/account/delete/cancel', [])
+        $this->postJson('/api/v1/account/delete/cancel', [])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['email', 'password']);
     }
@@ -168,14 +168,14 @@ class AccountDeletionApiTest extends TestCase
 
     public function test_status_requires_authentication(): void
     {
-        $this->getJson('/api/account/deletion-status')->assertUnauthorized();
+        $this->getJson('/api/v1/account/deletion-status')->assertUnauthorized();
     }
 
     public function test_status_reports_not_requested_for_active_user(): void
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user, 'sanctum')->getJson('/api/account/deletion-status');
+        $response = $this->actingAs($user, 'sanctum')->getJson('/api/v1/account/deletion-status');
 
         $response->assertOk()
             ->assertJsonPath('data.requested', false)
@@ -197,7 +197,7 @@ class AccountDeletionApiTest extends TestCase
         $joiner = User::factory()->create();
 
         $response = $this->actingAs($joiner, 'sanctum')
-            ->postJson("/api/communities/{$community->slug}/join");
+            ->postJson("/api/v1/communities/{$community->slug}/join");
 
         $response->assertUnprocessable()->assertJsonValidationErrors('community');
         $this->assertDatabaseMissing('community_members', [

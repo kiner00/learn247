@@ -22,7 +22,7 @@ class LikeControllerTest extends TestCase
         $post = Post::factory()->create();
 
         $response = $this->actingAs($user)
-            ->postJson("/api/posts/{$post->id}/like");
+            ->postJson("/api/v1/posts/{$post->id}/like");
 
         $response->assertOk()
             ->assertJsonPath('action', 'added')
@@ -40,12 +40,12 @@ class LikeControllerTest extends TestCase
         $user = User::factory()->create();
         $post = Post::factory()->create();
 
-        $this->actingAs($user)->postJson("/api/posts/{$post->id}/like")
+        $this->actingAs($user)->postJson("/api/v1/posts/{$post->id}/like")
             ->assertOk()
             ->assertJsonPath('action', 'added')
             ->assertJsonPath('likes_count', 1);
 
-        $this->actingAs($user)->postJson("/api/posts/{$post->id}/like")
+        $this->actingAs($user)->postJson("/api/v1/posts/{$post->id}/like")
             ->assertOk()
             ->assertJsonPath('action', 'removed')
             ->assertJsonPath('likes_count', 0);
@@ -65,7 +65,7 @@ class LikeControllerTest extends TestCase
         $comment = Comment::factory()->create();
 
         $response = $this->actingAs($user)
-            ->postJson("/api/comments/{$comment->id}/like");
+            ->postJson("/api/v1/comments/{$comment->id}/like");
 
         $response->assertOk()
             ->assertJsonPath('action', 'added')
@@ -88,7 +88,7 @@ class LikeControllerTest extends TestCase
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $owner->id]);
 
         $response = $this->actingAs($owner)
-            ->postJson("/api/posts/{$post->id}/pin");
+            ->postJson("/api/v1/posts/{$post->id}/pin");
 
         $response->assertOk()
             ->assertJsonPath('is_pinned', true)
@@ -106,7 +106,7 @@ class LikeControllerTest extends TestCase
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $nonOwner->id]);
 
         $this->actingAs($nonOwner)
-            ->postJson("/api/posts/{$post->id}/pin")
+            ->postJson("/api/v1/posts/{$post->id}/pin")
             ->assertForbidden();
     }
 
@@ -121,7 +121,7 @@ class LikeControllerTest extends TestCase
         ]);
 
         $this->actingAs($owner)
-            ->postJson("/api/posts/{$post->id}/pin")
+            ->postJson("/api/v1/posts/{$post->id}/pin")
             ->assertOk()
             ->assertJsonPath('is_pinned', true);
     }
@@ -132,7 +132,7 @@ class LikeControllerTest extends TestCase
     {
         $post = Post::factory()->create();
 
-        $this->postJson("/api/posts/{$post->id}/like")
+        $this->postJson("/api/v1/posts/{$post->id}/like")
             ->assertUnauthorized();
     }
 
@@ -140,7 +140,7 @@ class LikeControllerTest extends TestCase
     {
         $comment = Comment::factory()->create();
 
-        $this->postJson("/api/comments/{$comment->id}/like")
+        $this->postJson("/api/v1/comments/{$comment->id}/like")
             ->assertUnauthorized();
     }
 
@@ -148,7 +148,7 @@ class LikeControllerTest extends TestCase
     {
         $post = Post::factory()->create();
 
-        $this->postJson("/api/posts/{$post->id}/pin")
+        $this->postJson("/api/v1/posts/{$post->id}/pin")
             ->assertUnauthorized();
     }
 }

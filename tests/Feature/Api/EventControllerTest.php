@@ -28,7 +28,7 @@ class EventControllerTest extends TestCase
             'end_at' => now()->addDay()->addHour(),
         ]);
 
-        $response = $this->actingAs($community->owner)->getJson("/api/communities/{$community->slug}/events");
+        $response = $this->actingAs($community->owner)->getJson("/api/v1/communities/{$community->slug}/events");
 
         $response->assertOk()
             ->assertJsonStructure(['events', 'year', 'month'])
@@ -40,7 +40,7 @@ class EventControllerTest extends TestCase
         $community = Community::factory()->create();
         $owner = $community->owner;
 
-        $response = $this->actingAs($owner)->postJson("/api/communities/{$community->slug}/events", [
+        $response = $this->actingAs($owner)->postJson("/api/v1/communities/{$community->slug}/events", [
             'title' => 'New Event',
             'description' => 'Event description',
             'start_at' => now()->addDay()->toIso8601String(),
@@ -62,7 +62,7 @@ class EventControllerTest extends TestCase
         $community = Community::factory()->create();
         $nonOwner = User::factory()->create();
 
-        $response = $this->actingAs($nonOwner)->postJson("/api/communities/{$community->slug}/events", [
+        $response = $this->actingAs($nonOwner)->postJson("/api/v1/communities/{$community->slug}/events", [
             'title' => 'New Event',
             'description' => 'Event description',
             'start_at' => now()->addDay()->toIso8601String(),
@@ -87,7 +87,7 @@ class EventControllerTest extends TestCase
         ]);
 
         $response = $this->actingAs($community->owner)->postJson(
-            "/api/communities/{$community->slug}/events/{$event->id}",
+            "/api/v1/communities/{$community->slug}/events/{$event->id}",
             [
                 'title' => 'Updated Event',
                 'description' => 'Updated desc',
@@ -114,7 +114,7 @@ class EventControllerTest extends TestCase
         ]);
 
         $response = $this->actingAs($community->owner)->deleteJson(
-            "/api/communities/{$community->slug}/events/{$event->id}"
+            "/api/v1/communities/{$community->slug}/events/{$event->id}"
         );
 
         $response->assertOk()->assertJsonPath('message', 'Event deleted.');
@@ -125,7 +125,7 @@ class EventControllerTest extends TestCase
     {
         $community = Community::factory()->create();
 
-        $this->postJson("/api/communities/{$community->slug}/events", [
+        $this->postJson("/api/v1/communities/{$community->slug}/events", [
             'title' => 'Test',
             'start_at' => now()->addDay()->toIso8601String(),
             'timezone' => 'UTC',
@@ -156,7 +156,7 @@ class EventControllerTest extends TestCase
         ]);
 
         $this->actingAs($outsider)
-            ->getJson("/api/communities/{$community->slug}/events")
+            ->getJson("/api/v1/communities/{$community->slug}/events")
             ->assertOk()
             ->assertJsonCount(1, 'events')
             ->assertJsonPath('events.0.title', 'Public Event');
@@ -187,7 +187,7 @@ class EventControllerTest extends TestCase
         ]);
 
         $this->actingAs($member)
-            ->getJson("/api/communities/{$community->slug}/events")
+            ->getJson("/api/v1/communities/{$community->slug}/events")
             ->assertOk()
             ->assertJsonCount(2, 'events');
     }
@@ -206,7 +206,7 @@ class EventControllerTest extends TestCase
         ]);
 
         $this->actingAs($communityA->owner)
-            ->postJson("/api/communities/{$communityA->slug}/events/{$event->id}", [
+            ->postJson("/api/v1/communities/{$communityA->slug}/events/{$event->id}", [
                 'title' => 'Hacked',
                 'start_at' => now()->addDays(2)->toIso8601String(),
                 'timezone' => 'UTC',
@@ -230,7 +230,7 @@ class EventControllerTest extends TestCase
         ]);
 
         $this->actingAs($communityA->owner)
-            ->deleteJson("/api/communities/{$communityA->slug}/events/{$event->id}")
+            ->deleteJson("/api/v1/communities/{$communityA->slug}/events/{$event->id}")
             ->assertNotFound();
 
         $this->assertDatabaseHas('events', ['id' => $event->id]);
@@ -247,7 +247,7 @@ class EventControllerTest extends TestCase
         $this->app->instance(ManageEvent::class, $mock);
 
         $this->actingAs($community->owner)
-            ->postJson("/api/communities/{$community->slug}/events", [
+            ->postJson("/api/v1/communities/{$community->slug}/events", [
                 'title' => 'Failing Event',
                 'start_at' => now()->addDay()->toIso8601String(),
                 'timezone' => 'UTC',
@@ -274,7 +274,7 @@ class EventControllerTest extends TestCase
         $this->app->instance(ManageEvent::class, $mock);
 
         $this->actingAs($community->owner)
-            ->postJson("/api/communities/{$community->slug}/events/{$event->id}", [
+            ->postJson("/api/v1/communities/{$community->slug}/events/{$event->id}", [
                 'title' => 'Updated',
                 'start_at' => now()->addDays(2)->toIso8601String(),
                 'timezone' => 'UTC',
@@ -301,7 +301,7 @@ class EventControllerTest extends TestCase
         $this->app->instance(ManageEvent::class, $mock);
 
         $this->actingAs($community->owner)
-            ->deleteJson("/api/communities/{$community->slug}/events/{$event->id}")
+            ->deleteJson("/api/v1/communities/{$community->slug}/events/{$event->id}")
             ->assertStatus(500)
             ->assertJsonPath('message', 'Failed to delete event.');
     }
@@ -321,7 +321,7 @@ class EventControllerTest extends TestCase
         ]);
 
         $this->actingAs($nonOwner)
-            ->postJson("/api/communities/{$community->slug}/events/{$event->id}", [
+            ->postJson("/api/v1/communities/{$community->slug}/events/{$event->id}", [
                 'title' => 'Hacked',
                 'start_at' => now()->addDays(2)->toIso8601String(),
                 'timezone' => 'UTC',
@@ -344,7 +344,7 @@ class EventControllerTest extends TestCase
         ]);
 
         $this->actingAs($nonOwner)
-            ->deleteJson("/api/communities/{$community->slug}/events/{$event->id}")
+            ->deleteJson("/api/v1/communities/{$community->slug}/events/{$event->id}")
             ->assertForbidden();
     }
 
@@ -369,7 +369,7 @@ class EventControllerTest extends TestCase
         ]);
 
         $this->actingAs($owner)
-            ->getJson("/api/communities/{$community->slug}/events")
+            ->getJson("/api/v1/communities/{$community->slug}/events")
             ->assertOk()
             ->assertJsonCount(1, 'events')
             ->assertJsonPath('events.0.title', 'Open-ended Event')
@@ -406,7 +406,7 @@ class EventControllerTest extends TestCase
         ]);
 
         $this->actingAs($owner)
-            ->getJson("/api/communities/{$community->slug}/events?year=2025&month=1")
+            ->getJson("/api/v1/communities/{$community->slug}/events?year=2025&month=1")
             ->assertOk()
             ->assertJsonCount(1, 'events')
             ->assertJsonPath('events.0.title', 'Jan Event')
@@ -438,7 +438,7 @@ class EventControllerTest extends TestCase
             'visibility' => 'free',
         ]);
 
-        $this->getJson("/api/communities/{$community->slug}/events")
+        $this->getJson("/api/v1/communities/{$community->slug}/events")
             ->assertOk()
             ->assertJsonCount(1, 'events')
             ->assertJsonPath('events.0.title', 'Public Event');

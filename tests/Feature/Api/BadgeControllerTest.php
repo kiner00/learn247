@@ -15,7 +15,7 @@ class BadgeControllerTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user, 'sanctum')
-            ->getJson('/api/badges');
+            ->getJson('/api/v1/badges');
 
         $response->assertOk()
             ->assertJsonStructure([
@@ -26,7 +26,7 @@ class BadgeControllerTest extends TestCase
 
     public function test_get_badges_unauthenticated_returns_401(): void
     {
-        $this->getJson('/api/badges')
+        $this->getJson('/api/v1/badges')
             ->assertUnauthorized();
     }
 }

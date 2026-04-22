@@ -37,7 +37,7 @@ class ClassroomControllerTest extends TestCase
         ]);
 
         $this->actingAs($member)
-            ->getJson("/api/communities/{$community->slug}/courses")
+            ->getJson("/api/v1/communities/{$community->slug}/courses")
             ->assertOk()
             ->assertJsonStructure(['courses']);
     }
@@ -48,7 +48,7 @@ class ClassroomControllerTest extends TestCase
         $community = Community::factory()->create(['price' => 0]);
 
         $this->actingAs($user)
-            ->getJson("/api/communities/{$community->slug}/courses")
+            ->getJson("/api/v1/communities/{$community->slug}/courses")
             ->assertForbidden();
     }
 
@@ -58,7 +58,7 @@ class ClassroomControllerTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $response = $this->actingAs($owner)
-            ->postJson("/api/communities/{$community->slug}/courses", [
+            ->postJson("/api/v1/communities/{$community->slug}/courses", [
                 'title' => 'New Course',
                 'description' => 'Course description',
             ])
@@ -81,7 +81,7 @@ class ClassroomControllerTest extends TestCase
         CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $otherUser->id]);
 
         $this->actingAs($otherUser)
-            ->postJson("/api/communities/{$community->slug}/courses", [
+            ->postJson("/api/v1/communities/{$community->slug}/courses", [
                 'title' => 'New Course',
                 'description' => 'Course description',
             ])
@@ -92,7 +92,7 @@ class ClassroomControllerTest extends TestCase
     {
         $community = Community::factory()->create();
 
-        $this->getJson("/api/communities/{$community->slug}/courses")
+        $this->getJson("/api/v1/communities/{$community->slug}/courses")
             ->assertUnauthorized();
     }
 
@@ -100,7 +100,7 @@ class ClassroomControllerTest extends TestCase
     {
         $community = Community::factory()->create();
 
-        $this->postJson("/api/communities/{$community->slug}/courses", [
+        $this->postJson("/api/v1/communities/{$community->slug}/courses", [
             'title' => 'New Course',
         ])
             ->assertUnauthorized();
@@ -117,7 +117,7 @@ class ClassroomControllerTest extends TestCase
         ]);
 
         $response = $this->actingAs($owner)
-            ->postJson("/api/communities/{$community->slug}/courses/{$course->id}/modules", [
+            ->postJson("/api/v1/communities/{$community->slug}/courses/{$course->id}/modules", [
                 'title' => 'New Module',
             ])
             ->assertStatus(201)
@@ -146,7 +146,7 @@ class ClassroomControllerTest extends TestCase
         ]);
 
         $this->actingAs($owner)
-            ->patchJson("/api/communities/{$community->slug}/courses/{$course->id}/modules/{$module->id}", [
+            ->patchJson("/api/v1/communities/{$community->slug}/courses/{$course->id}/modules/{$module->id}", [
                 'title' => 'Updated Module',
             ])
             ->assertOk()
@@ -174,7 +174,7 @@ class ClassroomControllerTest extends TestCase
         ]);
 
         $response = $this->actingAs($owner)
-            ->postJson("/api/communities/{$community->slug}/courses/{$course->id}/modules/{$module->id}/lessons", [
+            ->postJson("/api/v1/communities/{$community->slug}/courses/{$course->id}/modules/{$module->id}/lessons", [
                 'title' => 'New Lesson',
             ])
             ->assertStatus(201)
@@ -208,7 +208,7 @@ class ClassroomControllerTest extends TestCase
         ]);
 
         $this->actingAs($owner)
-            ->patchJson("/api/communities/{$community->slug}/courses/{$course->id}/modules/{$module->id}/lessons/{$lesson->id}", [
+            ->patchJson("/api/v1/communities/{$community->slug}/courses/{$course->id}/modules/{$module->id}/lessons/{$lesson->id}", [
                 'content' => 'Updated lesson content',
             ])
             ->assertOk()
@@ -244,7 +244,7 @@ class ClassroomControllerTest extends TestCase
         ]);
 
         $this->actingAs($member)
-            ->postJson("/api/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/complete")
+            ->postJson("/api/v1/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/complete")
             ->assertOk()
             ->assertJsonPath('message', 'Lesson marked as complete!');
 
@@ -268,7 +268,7 @@ class ClassroomControllerTest extends TestCase
         ]);
 
         $this->actingAs($otherUser)
-            ->postJson("/api/communities/{$community->slug}/courses/{$course->id}/modules", [
+            ->postJson("/api/v1/communities/{$community->slug}/courses/{$course->id}/modules", [
                 'title' => 'New Module',
             ])
             ->assertForbidden();
@@ -286,7 +286,7 @@ class ClassroomControllerTest extends TestCase
         CourseLesson::create(['module_id' => $module->id, 'title' => 'Lesson 1', 'position' => 1]);
 
         $this->actingAs($member)
-            ->getJson("/api/communities/{$community->slug}/courses/{$course->id}")
+            ->getJson("/api/v1/communities/{$community->slug}/courses/{$course->id}")
             ->assertOk()
             ->assertJsonStructure(['course', 'modules', 'progress', 'certificate'])
             ->assertJsonPath('course.title', 'Test Course')
@@ -309,7 +309,7 @@ class ClassroomControllerTest extends TestCase
         QuizQuestionOption::create(['question_id' => $question->id, 'label' => '3', 'is_correct' => false]);
 
         $this->actingAs($member)
-            ->postJson("/api/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/quizzes/{$quiz->id}/submit", [
+            ->postJson("/api/v1/communities/{$community->slug}/courses/{$course->id}/lessons/{$lesson->id}/quizzes/{$quiz->id}/submit", [
                 'answers' => [$question->id => $correct->id],
             ])
             ->assertOk()
@@ -325,7 +325,7 @@ class ClassroomControllerTest extends TestCase
         $course = Course::create(['community_id' => $community->id, 'title' => 'Old Title', 'description' => 'D']);
 
         $this->actingAs($owner)
-            ->postJson("/api/communities/{$community->slug}/courses/{$course->id}/update", [
+            ->postJson("/api/v1/communities/{$community->slug}/courses/{$course->id}/update", [
                 'title' => 'New Title',
                 'description' => 'New Desc',
             ])
@@ -356,7 +356,7 @@ class ClassroomControllerTest extends TestCase
         ]);
 
         $this->actingAs($member)
-            ->getJson("/api/communities/{$community->slug}/courses")
+            ->getJson("/api/v1/communities/{$community->slug}/courses")
             ->assertOk()
             ->assertJsonStructure(['courses']);
     }
@@ -368,7 +368,7 @@ class ClassroomControllerTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $owner->id, 'price' => 500]);
 
         $this->actingAs($member)
-            ->getJson("/api/communities/{$community->slug}/courses")
+            ->getJson("/api/v1/communities/{$community->slug}/courses")
             ->assertForbidden();
     }
 
@@ -384,7 +384,7 @@ class ClassroomControllerTest extends TestCase
         ]);
 
         $this->actingAs($owner)
-            ->getJson("/api/communities/{$community->slug}/courses")
+            ->getJson("/api/v1/communities/{$community->slug}/courses")
             ->assertOk();
     }
 
@@ -398,7 +398,7 @@ class ClassroomControllerTest extends TestCase
         $module = CourseModule::create(['course_id' => $course->id, 'title' => 'M', 'position' => 1]);
 
         $this->actingAs($other)
-            ->postJson("/api/communities/{$community->slug}/courses/{$course->id}/modules/{$module->id}/lessons", [
+            ->postJson("/api/v1/communities/{$community->slug}/courses/{$course->id}/modules/{$module->id}/lessons", [
                 'title' => 'New Lesson',
             ])
             ->assertForbidden();
@@ -415,7 +415,7 @@ class ClassroomControllerTest extends TestCase
         $lesson = CourseLesson::create(['module_id' => $module->id, 'title' => 'L', 'position' => 1]);
 
         $this->actingAs($other)
-            ->patchJson("/api/communities/{$community->slug}/courses/{$course->id}/modules/{$module->id}/lessons/{$lesson->id}", [
+            ->patchJson("/api/v1/communities/{$community->slug}/courses/{$course->id}/modules/{$module->id}/lessons/{$lesson->id}", [
                 'content' => 'Hacked',
             ])
             ->assertForbidden();
@@ -429,7 +429,7 @@ class ClassroomControllerTest extends TestCase
         $course = Course::create(['community_id' => $community->id, 'title' => 'T', 'description' => 'D']);
 
         $this->actingAs($other)
-            ->postJson("/api/communities/{$community->slug}/courses/{$course->id}/update", [
+            ->postJson("/api/v1/communities/{$community->slug}/courses/{$course->id}/update", [
                 'title' => 'Hacked',
             ])
             ->assertForbidden();
@@ -444,7 +444,7 @@ class ClassroomControllerTest extends TestCase
         $module = CourseModule::create(['course_id' => $course->id, 'title' => 'M', 'position' => 1]);
 
         $this->actingAs($other)
-            ->patchJson("/api/communities/{$community->slug}/courses/{$course->id}/modules/{$module->id}", [
+            ->patchJson("/api/v1/communities/{$community->slug}/courses/{$course->id}/modules/{$module->id}", [
                 'title' => 'Hacked',
             ])
             ->assertForbidden();
@@ -474,7 +474,7 @@ class ClassroomControllerTest extends TestCase
         ]);
 
         $this->actingAs($member)
-            ->getJson("/api/communities/{$community->slug}/courses/{$course->id}")
+            ->getJson("/api/v1/communities/{$community->slug}/courses/{$course->id}")
             ->assertOk()
             ->assertJsonPath('modules.0.lessons.0.quiz.id', $quiz->id)
             ->assertJsonPath('modules.0.lessons.0.quiz.title', 'Q1')
@@ -497,7 +497,7 @@ class ClassroomControllerTest extends TestCase
         LessonCompletion::create(['user_id' => $member->id, 'lesson_id' => $lesson->id, 'community_id' => $community->id]);
 
         $this->actingAs($member)
-            ->getJson("/api/communities/{$community->slug}/courses/{$course->id}")
+            ->getJson("/api/v1/communities/{$community->slug}/courses/{$course->id}")
             ->assertOk()
             ->assertJsonPath('certificate', null)
             ->assertJsonPath('progress', 100);
@@ -514,7 +514,7 @@ class ClassroomControllerTest extends TestCase
         CourseLesson::create(['module_id' => $module->id, 'title' => 'L1', 'position' => 1]);
 
         $this->actingAs($owner)
-            ->deleteJson("/api/communities/{$community->slug}/courses/{$course->id}")
+            ->deleteJson("/api/v1/communities/{$community->slug}/courses/{$course->id}")
             ->assertOk()
             ->assertJsonPath('message', 'Course deleted.');
 
@@ -530,7 +530,7 @@ class ClassroomControllerTest extends TestCase
         $course = Course::create(['community_id' => $community->id, 'title' => 'T', 'description' => 'D']);
 
         $this->actingAs($other)
-            ->deleteJson("/api/communities/{$community->slug}/courses/{$course->id}")
+            ->deleteJson("/api/v1/communities/{$community->slug}/courses/{$course->id}")
             ->assertForbidden();
 
         $this->assertDatabaseHas('courses', ['id' => $course->id]);
@@ -548,7 +548,7 @@ class ClassroomControllerTest extends TestCase
         $file = UploadedFile::fake()->image('lesson-photo.jpg', 800, 600);
 
         $this->actingAs($owner)
-            ->postJson("/api/communities/{$community->slug}/lesson-images", [
+            ->postJson("/api/v1/communities/{$community->slug}/lesson-images", [
                 'image' => $file,
             ])
             ->assertOk()
@@ -564,7 +564,7 @@ class ClassroomControllerTest extends TestCase
         $file = UploadedFile::fake()->image('hack.jpg');
 
         $this->actingAs($other)
-            ->postJson("/api/communities/{$community->slug}/lesson-images", [
+            ->postJson("/api/v1/communities/{$community->slug}/lesson-images", [
                 'image' => $file,
             ])
             ->assertForbidden();
@@ -576,7 +576,7 @@ class ClassroomControllerTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $this->actingAs($owner)
-            ->postJson("/api/communities/{$community->slug}/lesson-images", [])
+            ->postJson("/api/v1/communities/{$community->slug}/lesson-images", [])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['image']);
     }
@@ -594,7 +594,7 @@ class ClassroomControllerTest extends TestCase
         $lesson3 = CourseLesson::create(['module_id' => $module->id, 'title' => 'L3', 'position' => 2]);
 
         $this->actingAs($owner)
-            ->postJson("/api/communities/{$community->slug}/courses/{$course->id}/modules/{$module->id}/lessons/reorder", [
+            ->postJson("/api/v1/communities/{$community->slug}/courses/{$course->id}/modules/{$module->id}/lessons/reorder", [
                 'lesson_ids' => [$lesson3->id, $lesson1->id, $lesson2->id],
             ])
             ->assertOk()
@@ -616,7 +616,7 @@ class ClassroomControllerTest extends TestCase
         $lesson2 = CourseLesson::create(['module_id' => $module->id, 'title' => 'L2', 'position' => 1]);
 
         $this->actingAs($other)
-            ->postJson("/api/communities/{$community->slug}/courses/{$course->id}/modules/{$module->id}/lessons/reorder", [
+            ->postJson("/api/v1/communities/{$community->slug}/courses/{$course->id}/modules/{$module->id}/lessons/reorder", [
                 'lesson_ids' => [$lesson2->id, $lesson1->id],
             ])
             ->assertForbidden();
