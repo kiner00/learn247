@@ -19,7 +19,7 @@ const props = defineProps({
     expiresAt:        { type: String, default: null },
 });
 
-const selectedCycle = ref(props.currentPlan !== 'free' ? props.currentCycle : 'monthly');
+const selectedCycle = ref(props.currentPlan !== 'free' ? props.currentCycle : 'annual');
 const isAnnual = computed(() => selectedCycle.value === 'annual');
 const displayBasicPrice = computed(() => isAnnual.value ? Math.round(props.basicAnnualPrice / 12) : props.basicPrice);
 const displayProPrice = computed(() => isAnnual.value ? Math.round(props.proAnnualPrice / 12) : props.proPrice);
