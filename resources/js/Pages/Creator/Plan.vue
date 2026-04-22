@@ -92,8 +92,8 @@ const comparisonRows = [
     { feature: 'AI Bots (Curzzos)',    free: false,        basic: false,        pro: true },
     { feature: 'Telegram Integration', free: false,        basic: false,        pro: true },
     { feature: 'Affiliate System',    free: false,        basic: true,         pro: true },
-    { feature: 'Certifications & Exams', free: false,     basic: false,        pro: true },
-    { feature: 'Leaderboard & Gamification', free: false, basic: false,        pro: true },
+    { feature: 'Certifications & Exams', free: false,     basic: true,         pro: true },
+    { feature: 'Leaderboard & Gamification', free: false, basic: true,         pro: true },
     { feature: 'Custom Domain',        free: false,        basic: false,        pro: true },
     { feature: 'Video Hosting',   free: false,        basic: false,        pro: true },
     { feature: 'Workflow Builder',     free: false,        basic: false,        pro: '(Soon)' },
@@ -230,6 +230,8 @@ const planLabel = { free: 'Free', basic: 'Basic', pro: 'Pro' };
                         <li class="flex items-start gap-2"><span class="text-blue-500 mt-0.5 shrink-0">✓</span> Email blast (5,000/mo)</li>
                         <li class="flex items-start gap-2"><span class="text-blue-500 mt-0.5 shrink-0">✓</span> 4.9% per transaction</li>
                         <li class="flex items-start gap-2"><span class="text-blue-500 mt-0.5 shrink-0">✓</span> ₱15 flat payout fee</li>
+                        <li class="flex items-start gap-2"><span class="text-blue-500 mt-0.5 shrink-0">✓</span> Certifications &amp; Exams</li>
+                        <li class="flex items-start gap-2"><span class="text-blue-500 mt-0.5 shrink-0">✓</span> Leaderboard &amp; Gamification</li>
                     </ul>
                     <div class="px-6 py-5 border-t border-blue-100">
                         <button
