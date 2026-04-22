@@ -24,7 +24,14 @@
                     <!-- Community name (above banner) -->
                     <div class="px-4 sm:px-6 pt-5 pb-3">
                         <h1 class="text-xl font-black text-gray-900 break-words">{{ community.name }}</h1>
-                        <span v-if="community.category" class="inline-block mt-1 text-xs font-medium px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700">{{ community.category }}</span>
+                        <div class="flex flex-wrap items-center gap-2 mt-1">
+                            <span v-if="community.category" class="inline-block text-xs font-medium px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700">{{ community.category }}</span>
+                            <span v-if="getMilestone(community.members_count)"
+                                class="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-0.5 rounded-full border"
+                                :class="getMilestone(community.members_count).classes">
+                                {{ getMilestone(community.members_count).icon }} {{ getMilestone(community.members_count).label }}
+                            </span>
+                        </div>
                     </div>
 
                     <!-- Banner (image or inline-playable video) -->
@@ -61,32 +68,46 @@
                     </div>
 
                     <div class="px-4 sm:px-6 py-4">
-                        <!-- Stats row -->
-                        <div class="flex flex-wrap items-center gap-x-4 sm:gap-x-5 gap-y-2 mb-4 text-sm text-gray-500">
-                            <span class="flex items-center gap-1.5 whitespace-nowrap">
-                                <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                                {{ community.is_private ? 'Private' : 'Public' }}
-                            </span>
-                            <span class="flex items-center gap-1.5 whitespace-nowrap">
-                                <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                {{ formatCount(community.members_count) }} members
-                            </span>
-                            <span class="flex items-center gap-1.5 whitespace-nowrap">
-                                <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/></svg>
-                                {{ community.price > 0 ? `₱${Number(community.price).toLocaleString()}${community.billing_type === 'one_time' ? '' : '/mo'}` : 'Free' }}
-                            </span>
-                            <span v-if="community.owner" class="flex items-center gap-1.5 whitespace-nowrap min-w-0">
-                                <div class="w-4 h-4 rounded-full bg-indigo-400 flex items-center justify-center text-white text-[9px] font-bold shrink-0 overflow-hidden">
+                        <!-- Meta grid (Skool-style 2×2) -->
+                        <div class="grid grid-cols-2 gap-x-6 gap-y-3 mb-4 text-sm text-gray-700">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <svg class="w-4 h-4 shrink-0 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                <span class="truncate font-medium">{{ community.is_private ? 'Private' : 'Public' }}</span>
+                            </div>
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <svg class="w-4 h-4 shrink-0 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                <span class="truncate font-medium">{{ formatCount(community.members_count) }} members</span>
+                            </div>
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <svg class="w-4 h-4 shrink-0 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/></svg>
+                                <span class="truncate font-medium">{{ community.price > 0 ? `₱${Number(community.price).toLocaleString()}${community.billing_type === 'one_time' ? '' : '/mo'}` : 'Free' }}</span>
+                            </div>
+                            <div v-if="community.owner" class="flex items-center gap-2.5 min-w-0">
+                                <div class="w-5 h-5 rounded-full bg-indigo-400 flex items-center justify-center text-white text-[10px] font-bold shrink-0 overflow-hidden">
                                     <img v-if="community.owner.avatar" :src="community.owner.avatar" class="w-full h-full object-cover" />
                                     <span v-else>{{ community.owner.name.charAt(0).toUpperCase() }}</span>
                                 </div>
-                                <span class="truncate">By {{ community.owner.name }}</span>
-                            </span>
-                            <span v-if="getMilestone(community.members_count)"
-                                class="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-0.5 rounded-full border"
-                                :class="getMilestone(community.members_count).classes">
-                                {{ getMilestone(community.members_count).icon }} {{ getMilestone(community.members_count).label }}
-                            </span>
+                                <span class="truncate font-medium">By {{ community.owner.name }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Join CTA (primary, Skool-style) -->
+                        <div v-if="!membership && !isOwner" class="mb-4">
+                            <button
+                                v-if="$page.props.auth?.user"
+                                @click="community.price > 0 ? showJoinModal = true : directJoinForm.post(`/communities/${community.slug}/join`)"
+                                :disabled="directJoinForm.processing"
+                                class="w-full py-3.5 bg-amber-400 hover:bg-amber-500 text-gray-900 text-sm font-black rounded-xl tracking-wide uppercase transition-colors disabled:opacity-50 shadow-sm"
+                            >
+                                {{ directJoinForm.processing ? 'Joining...' : (community.price > 0 ? `Join · ₱${Number(community.price).toLocaleString()}${community.billing_type === 'one_time' ? '' : '/mo'}` : 'Join Group') }}
+                            </button>
+                            <button
+                                v-else
+                                @click="showJoinModal = true"
+                                class="w-full py-3.5 bg-amber-400 hover:bg-amber-500 text-gray-900 text-sm font-black rounded-xl tracking-wide uppercase transition-colors shadow-sm"
+                            >
+                                {{ community.price > 0 ? `Join · ₱${Number(community.price).toLocaleString()}${community.billing_type === 'one_time' ? '' : '/mo'}` : 'Join Group' }}
+                            </button>
                         </div>
 
                         <!-- Description -->
@@ -115,35 +136,13 @@
                         </div>
                     </div>
 
-                    <!-- Join / Invite button -->
+                    <!-- Invite button (members only — primary Join CTA lives in main column) -->
                     <button
-                        v-if="invitedBy && !$page.props.auth?.user"
-                        @click="showJoinModal = true"
-                        class="w-full py-3 bg-amber-400 hover:bg-amber-500 text-gray-900 text-sm font-black rounded-xl tracking-wide uppercase transition-colors shadow-sm"
-                    >
-                        {{ community.price > 0 ? `Join · ₱${Number(community.price).toLocaleString()}${community.billing_type === 'one_time' ? '' : '/mo'}` : 'Join Group' }}
-                    </button>
-                    <button
-                        v-else-if="membership"
+                        v-if="membership"
                         @click="showInviteModal = true"
                         class="w-full py-2.5 bg-amber-400 hover:bg-amber-500 text-gray-900 text-sm font-bold rounded-xl transition-colors"
                     >
                         Invite People
-                    </button>
-                    <button
-                        v-else-if="$page.props.auth?.user && !isOwner"
-                        @click="community.price > 0 ? showJoinModal = true : directJoinForm.post(`/communities/${community.slug}/join`)"
-                        :disabled="directJoinForm.processing"
-                        class="w-full py-3 bg-amber-400 hover:bg-amber-500 text-gray-900 text-sm font-black rounded-xl tracking-wide uppercase transition-colors shadow-sm"
-                    >
-                        {{ directJoinForm.processing ? 'Joining...' : (community.price > 0 ? `Join · ₱${Number(community.price).toLocaleString()}${community.billing_type === 'one_time' ? '' : '/mo'}` : 'Join Group') }}
-                    </button>
-                    <button
-                        v-else-if="!$page.props.auth?.user"
-                        @click="showJoinModal = true"
-                        class="w-full py-3 bg-amber-400 hover:bg-amber-500 text-gray-900 text-sm font-black rounded-xl tracking-wide uppercase transition-colors shadow-sm"
-                    >
-                        {{ community.price > 0 ? `Join · ₱${Number(community.price).toLocaleString()}${community.billing_type === 'one_time' ? '' : '/mo'}` : 'Join Group' }}
                     </button>
                 </CommunitySidebarCard>
 
