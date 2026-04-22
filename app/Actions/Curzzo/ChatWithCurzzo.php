@@ -6,15 +6,18 @@ use App\Ai\Agents\CurzzoBot;
 use App\Models\Community;
 use App\Models\Curzzo;
 use App\Models\CurzzoMessage;
-use App\Models\CurzzoPurchase;
 use App\Models\User;
+use App\Services\Community\CurzzoAccessService;
 use App\Services\Community\CurzzoLimitService;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class ChatWithCurzzo
 {
-    public function __construct(private CurzzoLimitService $limits) {}
+    public function __construct(
+        private CurzzoLimitService $limits,
+        private CurzzoAccessService $access,
+    ) {}
 
     /**
      * Returns a ChatResult with HTTP status + JSON body. Both Web and API
@@ -27,17 +30,9 @@ class ChatWithCurzzo
         string $message,
         ?string $conversationId = null,
     ): ChatResult {
-        // Access check for paid Curzzos (owner bypasses)
-        if (! $curzzo->isFree() && $user->id !== $community->owner_id) {
-            $hasAccess = CurzzoPurchase::where('curzzo_id', $curzzo->id)
-                ->where('user_id', $user->id)
-                ->where('status', CurzzoPurchase::STATUS_PAID)
-                ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
-                ->exists();
-
-            if (! $hasAccess) {
-                return new ChatResult(403, ['error' => 'Purchase required to chat with this Curzzo.']);
-            }
+        $context = $this->access->buildContext($user, $community, collect([$curzzo->id]));
+        if (! $this->access->hasAccess($curzzo, $context)) {
+            return new ChatResult(403, ['error' => 'Purchase required to chat with this Curzzo.']);
         }
 
         // Daily limit check

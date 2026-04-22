@@ -9,7 +9,9 @@ use App\Models\CommunityMember;
 use App\Models\Curzzo;
 use App\Models\CurzzoMessage;
 use App\Models\CurzzoTopup;
+use App\Models\Subscription;
 use App\Models\User;
+use App\Services\Community\CurzzoAccessService;
 use App\Services\Community\CurzzoLimitService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use RuntimeException;
@@ -25,11 +27,11 @@ class ChatWithCurzzoTest extends TestCase
      */
     private function actionWithAgent(object $agent): ChatWithCurzzo
     {
-        return new class(app(CurzzoLimitService::class), $agent) extends ChatWithCurzzo
+        return new class(app(CurzzoLimitService::class), app(CurzzoAccessService::class), $agent) extends ChatWithCurzzo
         {
-            public function __construct(CurzzoLimitService $limits, private object $stubAgent)
+            public function __construct(CurzzoLimitService $limits, CurzzoAccessService $access, private object $stubAgent)
             {
-                parent::__construct($limits);
+                parent::__construct($limits, $access);
             }
 
             protected function makeAgent(Curzzo $curzzo, Community $community): object
@@ -84,6 +86,97 @@ class ChatWithCurzzoTest extends TestCase
 
         // No messages persisted on failure
         $this->assertDatabaseMissing('curzzo_messages', ['user_id' => $user->id]);
+    }
+
+    public function test_allows_inclusive_curzzo_for_paid_subscriber(): void
+    {
+        $owner = User::factory()->create();
+        $community = Community::factory()->paid()->create(['owner_id' => $owner->id]);
+        $curzzo = Curzzo::factory()->create([
+            'community_id' => $community->id,
+            'access_type' => 'inclusive',
+            'price' => 49.00,
+            'currency' => 'PHP',
+            'billing_type' => 'monthly',
+        ]);
+
+        $user = User::factory()->create();
+        CommunityMember::factory()->create([
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'membership_type' => CommunityMember::MEMBERSHIP_PAID,
+        ]);
+        Subscription::create([
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'status' => Subscription::STATUS_ACTIVE,
+            'expires_at' => now()->addMonth(),
+        ]);
+
+        $agent = new class
+        {
+            public function forUser($user): self
+            {
+                return $this;
+            }
+
+            public function continue($id, $as): self
+            {
+                return $this;
+            }
+
+            public function prompt($message): object
+            {
+                return new class
+                {
+                    public string $text = 'hi back';
+
+                    public string $conversationId = 'conv-inc';
+                };
+            }
+        };
+
+        $result = $this->actionWithAgent($agent)->execute($user, $community, $curzzo, 'hello');
+
+        $this->assertSame(200, $result->status);
+        $this->assertSame('hi back', $result->body['message']);
+    }
+
+    public function test_returns_403_when_paid_curzzo_not_purchased(): void
+    {
+        $owner = User::factory()->create();
+        $community = Community::factory()->create(['owner_id' => $owner->id]);
+        $curzzo = Curzzo::factory()->paidOnce()->create(['community_id' => $community->id]);
+
+        $user = User::factory()->create();
+        CommunityMember::factory()->create([
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'membership_type' => CommunityMember::MEMBERSHIP_FREE,
+        ]);
+
+        $agent = new class
+        {
+            public function forUser($user): self
+            {
+                return $this;
+            }
+
+            public function continue($id, $as): self
+            {
+                return $this;
+            }
+
+            public function prompt($message): object
+            {
+                throw new RuntimeException('should not be called');
+            }
+        };
+
+        $result = $this->actionWithAgent($agent)->execute($user, $community, $curzzo, 'hello');
+
+        $this->assertSame(403, $result->status);
+        $this->assertSame('Purchase required to chat with this Curzzo.', $result->body['error']);
     }
 
     public function test_consumes_topup_when_using_topup(): void
