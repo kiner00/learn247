@@ -18,6 +18,15 @@ class StartCurzzoCheckout
      */
     public function execute(User $user, Curzzo $curzzo, ?string $affiliateCode = null, ?string $successRedirectUrl = null): array
     {
+        // Only bot-level purchases go through Curzzo checkout. 'inclusive' bots are
+        // unlocked via the community's paid membership, and 'free'/'member_once' never bill.
+        // Guarding here prevents stale `price` on a repurposed bot from creating an invoice.
+        if (! in_array($curzzo->access_type, ['paid_once', 'paid_monthly'], true)) {
+            throw ValidationException::withMessages([
+                'curzzo' => 'This Curzzo is not available for individual purchase.',
+            ]);
+        }
+
         if ($curzzo->isFree()) {
             throw ValidationException::withMessages([
                 'curzzo' => 'This Curzzo is free. No checkout required.',

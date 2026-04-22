@@ -42,7 +42,7 @@ function stopAllPreviews() {
 function selectBot(bot) {
     stopAllPreviews();
     if (!bot.has_access) {
-        startCheckout(bot);
+        routeLockedBot(bot);
         return;
     }
     selectedCurzzo.value = bot;
@@ -51,10 +51,21 @@ function selectBot(bot) {
 
 function switchBot(bot) {
     if (!bot.has_access) {
-        startCheckout(bot);
+        routeLockedBot(bot);
         return;
     }
     selectedCurzzo.value = bot;
+}
+
+function routeLockedBot(bot) {
+    // Only per-bot paid access goes through Curzzo checkout. Inclusive/free/member_once
+    // bots unlock via community membership, so send the user to the community's About page
+    // where they can join or subscribe.
+    if (bot.access_type === 'paid_once' || bot.access_type === 'paid_monthly') {
+        startCheckout(bot);
+        return;
+    }
+    router.visit(communityPath('/about'));
 }
 
 function startCheckout(bot) {
