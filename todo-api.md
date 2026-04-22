@@ -98,12 +98,52 @@ This is a running checklist — check items off as they ship. Pick any single it
 - [x] Tests: 17 API (happy paths, auth guards, expired grace, wrong credentials, Xendit failure tolerance, soft-delete-blocks-sanctum-auth, community-join guarding) + 2 Web characterization + 4 command tests. All green; 1547/1547 across the full API/Web/Middleware sweep.
 - Deliberately NOT in scope (flag as follow-ups): scheduling `users:prune-deleted` in `app/Console/Kernel.php` (ops decision on when to run); Inertia UI page for the delete-account button; login endpoint could surface a "pending_deletion" status when credentials match a soft-deleted user (currently just returns generic invalid credentials — users discover the cancel flow via the dedicated endpoint).
 
-### [ ] 1.7 OpenAPI/Scribe spec  (~1.5–2 hr)
-- [ ] Install `knuckleswtf/scribe` or similar
-- [ ] Annotate API controllers (or generate from routes + Resources)
-- [ ] Serve at `/api/docs` (or generate static HTML)
-- [ ] CI check that spec is up-to-date
-- Why: Mobile team will reverse-engineer from `routes/api.php` otherwise. **Do this BEFORE mobile starts integration**, not after.
+### [ ] 1.7 OpenAPI/Scribe spec
+Split into 6 subtasks so the work fits in separate sessions. Each subtask ships independently: Scribe re-generates the full spec every run, so annotating one batch of controllers immediately improves the docs without blocking future batches.
+
+Global rule for every 1.7.x commit: Xendit webhook (`/api/xendit/webhook`) is excluded from generated docs — it's an external-service integration, not a mobile surface. Add to Scribe's `routes.exclude` during 1.7.1 and never revisit.
+
+Why: Mobile team will reverse-engineer from `routes/api.php` otherwise. **Do this BEFORE mobile starts integration**, not after.
+
+#### [ ] 1.7.1 Install Scribe + baseline generation  (~45 min)
+- [ ] `composer require --dev knuckleswtf/scribe`
+- [ ] `php artisan vendor:publish --tag=scribe-config`
+- [ ] Configure `config/scribe.php`: title, description, base URL, auth (Sanctum bearer), route include pattern `api/v1/*`, exclude `api/xendit/webhook`
+- [ ] First `php artisan scribe:generate` — verify output builds without errors even without a single annotation
+- [ ] Smoke-check generated docs locally; confirm Form Requests + API Resources are being picked up (Scribe reads `rules()` and `toArray()` automatically)
+- [ ] Decide where generated files live (`public/docs/` vs `storage/`) and add to `.gitignore` if generated, or commit if static
+- Scope note: NO controller annotations yet. This subtask only proves the pipeline works end-to-end.
+
+#### [ ] 1.7.2 Annotate auth + account surface  (~1 hr)
+Target controllers (mobile's first integration point):
+- [ ] `AuthController` — login, register, logout, me, forgot/reset/verify password, email verification
+- [ ] `AccountSettingsController` — profile/email/password/notifications/theme/payout/crypto/timezone, delete account, deletion status, cancel deletion
+- [ ] `KycController` — submit, status, manual-review
+- For each: add `@group`, `@authenticated` where applicable, and spot-check generated examples. Fix anything where Scribe's auto-detection produces wrong output (usually by adding `@bodyParam` for non-obvious fields or `@response` for complex/branching shapes).
+- [ ] Re-run `scribe:generate`; sanity-check that all three domains render.
+
+#### [ ] 1.7.3 Annotate content surface  (~1–1.5 hr)
+- [ ] `CommunityController` + `CommunityMemberController` + `EventController`
+- [ ] `FeedController` + `PostController` + `CommentController` + `LikeController`
+- [ ] `ClassroomController` + `LessonCommentController` + `QuizController`
+- Same pattern as 1.7.2 — `@group`, `@authenticated`, fix auto-gen misses.
+
+#### [ ] 1.7.4 Annotate commerce surface  (~1 hr)
+- [ ] `SubscriptionController` + `CurzzoPurchaseController` + `CurzzoCheckoutController` + `CurzzoTopupController`
+- [ ] `CouponController` + `PayoutRequestController` + `AffiliateController` + `CreatorController`
+- These have the subtlest payloads — pay extra attention to request/response examples; mobile will integrate checkout deeply.
+
+#### [ ] 1.7.5 Annotate chat/AI + remainder  (~1 hr)
+- [ ] `CurzzoController` + `CurzzoChatController` + `AIAssistantController`
+- [ ] `ChatController` (community chat) + `DirectMessageController`
+- [ ] `NotificationController` + `ProfileController` + `BadgeController` + `CertificateController`
+- Catch-all for anything left.
+
+#### [ ] 1.7.6 Serve at /api/docs + CI drift check  (~45 min)
+- [ ] Route `/api/docs` (or `/docs`) publicly serving the generated docs — pick Scribe's static-HTML mode and commit, OR use Scribe's Laravel route integration
+- [ ] Add a CI step: run `scribe:generate --force` and fail if `git diff --exit-code` shows changes → forces annotation updates to land with the code change that caused them
+- [ ] README snippet pointing mobile devs at the docs URL
+- Why this is the LAST subtask: running CI drift check before all controllers are annotated means every 1.7.x PR has to regenerate the universe. Keep CI quiet until docs stabilize.
 
 ### [x] 1.8 API versioning
 - [x] All mobile-facing routes wrapped in `Route::prefix('v1')->group(...)` in `routes/api.php` → surface is now `/api/v1/*`
