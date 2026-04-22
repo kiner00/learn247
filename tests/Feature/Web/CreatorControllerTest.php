@@ -528,6 +528,80 @@ class CreatorControllerTest extends TestCase
             ->assertJsonValidationErrors('cycle');
     }
 
+    // ─── validateCoupon ───────────────────────────────────────────────────────
+
+    public function test_validate_coupon_returns_discount_preview(): void
+    {
+        \App\Models\Setting::set('creator_plan_pro_price', 1999);
+        \App\Models\Coupon::create([
+            'code' => 'LAUNCH30',
+            'type' => 'discount',
+            'plan' => 'pro',
+            'applies_to' => 'annual',
+            'discount_percent' => 30,
+            'max_redemptions' => 10,
+            'is_active' => true,
+        ]);
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->postJson('/creator/plan/validate-coupon', [
+            'code' => 'LAUNCH30', 'plan' => 'pro', 'cycle' => 'annual',
+        ])
+            ->assertOk()
+            ->assertJson([
+                'code' => 'LAUNCH30',
+                'plan' => 'pro',
+                'cycle' => 'annual',
+                'discount_percent' => 30,
+            ])
+            ->assertJsonPath('discounted_price', fn ($v) => abs($v - 16791.60) < 0.01);
+    }
+
+    public function test_validate_coupon_rejects_invalid_code(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->postJson('/creator/plan/validate-coupon', [
+            'code' => 'NOPE', 'plan' => 'pro', 'cycle' => 'annual',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('code');
+    }
+
+    public function test_checkout_with_coupon_uses_discounted_price(): void
+    {
+        \App\Models\Setting::set('creator_plan_pro_price', 1999);
+        $coupon = \App\Models\Coupon::create([
+            'code' => 'LAUNCH30',
+            'type' => 'discount',
+            'plan' => 'pro',
+            'applies_to' => 'annual',
+            'discount_percent' => 30,
+            'max_redemptions' => 10,
+            'is_active' => true,
+        ]);
+
+        Http::fake([
+            '*' => Http::response([
+                'id' => 'inv_disc_1',
+                'invoice_url' => 'https://checkout.xendit.co/inv_disc_1',
+            ]),
+        ]);
+
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->postJson('/creator/plan/checkout', [
+            'plan' => 'pro',
+            'cycle' => 'annual',
+            'coupon_code' => 'LAUNCH30',
+        ])->assertOk();
+
+        $this->assertDatabaseHas('creator_subscriptions', [
+            'user_id' => $user->id,
+            'coupon_id' => $coupon->id,
+        ]);
+    }
+
     // ─── dashboard with analytics for creator plan user ──────────────────────
 
     public function test_dashboard_includes_analytics_for_basic_plan_user(): void

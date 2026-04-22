@@ -157,6 +157,57 @@ class StartCreatorPlanCheckoutTest extends TestCase
         ]);
     }
 
+    public function test_discount_coupon_reduces_charged_amount_and_persists_coupon_id(): void
+    {
+        \App\Models\Setting::set('creator_plan_pro_price', 1999);
+
+        $coupon = \App\Models\Coupon::create([
+            'code' => 'LAUNCH30',
+            'type' => \App\Models\Coupon::TYPE_DISCOUNT,
+            'plan' => 'pro',
+            'applies_to' => \App\Models\Coupon::APPLIES_TO_ANNUAL,
+            'discount_percent' => 30,
+            'max_redemptions' => 50,
+            'is_active' => true,
+        ]);
+
+        Http::fake([
+            'https://api.xendit.co/v2/invoices' => Http::response([
+                'id' => 'inv_coupon_1',
+                'invoice_url' => 'https://checkout.xendit.co/inv_coupon_1',
+            ], 200),
+        ]);
+
+        $user = User::factory()->create();
+        $action = app(StartCreatorPlanCheckout::class);
+
+        $result = $action->execute($user, CreatorSubscription::PLAN_PRO, CreatorSubscription::CYCLE_ANNUAL, 'LAUNCH30');
+
+        $this->assertDatabaseHas('creator_subscriptions', [
+            'user_id' => $user->id,
+            'plan' => 'pro',
+            'billing_cycle' => 'annual',
+            'coupon_id' => $coupon->id,
+        ]);
+
+        // 1999 × 12 × 0.70 = 16791.60
+        Http::assertSent(function ($request) {
+            return abs(($request->data()['amount'] ?? 0) - 16791.60) < 0.01;
+        });
+
+        // Coupon is NOT consumed yet — that happens on successful payment
+        $this->assertSame(0, $coupon->fresh()->times_redeemed);
+    }
+
+    public function test_checkout_rejects_invalid_coupon(): void
+    {
+        $user = User::factory()->create();
+        $action = app(StartCreatorPlanCheckout::class);
+
+        $this->expectException(ValidationException::class);
+        $action->execute($user, CreatorSubscription::PLAN_PRO, CreatorSubscription::CYCLE_ANNUAL, 'NOTREAL');
+    }
+
     public function test_xendit_failure_propagates_exception(): void
     {
         Http::fake([

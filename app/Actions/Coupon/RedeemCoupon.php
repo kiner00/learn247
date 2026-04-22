@@ -15,6 +15,7 @@ class RedeemCoupon
         $coupon = Coupon::where('code', strtoupper(trim($code)))->first();
 
         abort_unless($coupon, 422, 'Invalid coupon code.');
+        abort_unless($coupon->isPlanGrant(), 422, 'This coupon must be applied at checkout.');
         abort_unless($coupon->isRedeemable(), 422, 'This coupon is no longer available.');
         abort_if($coupon->hasBeenRedeemedBy($user->id), 422, 'You have already used this coupon.');
 

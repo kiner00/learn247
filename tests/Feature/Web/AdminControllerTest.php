@@ -1768,6 +1768,112 @@ class AdminControllerTest extends TestCase
         $response->assertSessionHasErrors('expires_at');
     }
 
+    // ── discount-type coupons ────────────────────────────────────────────────
+
+    public function test_store_discount_coupon_for_annual_success(): void
+    {
+        $admin = $this->superAdmin();
+
+        $response = $this->actingAs($admin)->post('/admin/coupons', [
+            'code' => 'LAUNCH30',
+            'type' => 'discount',
+            'plan' => 'pro',
+            'applies_to' => 'annual',
+            'discount_percent' => 30,
+            'max_redemptions' => 100,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+        $this->assertDatabaseHas('coupons', [
+            'code' => 'LAUNCH30',
+            'type' => 'discount',
+            'plan' => 'pro',
+            'applies_to' => 'annual',
+            'discount_percent' => 30,
+        ]);
+    }
+
+    public function test_store_discount_coupon_for_annual_rejects_percent_below_baseline(): void
+    {
+        $admin = $this->superAdmin();
+
+        $response = $this->actingAs($admin)->post('/admin/coupons', [
+            'code' => 'WEAK',
+            'type' => 'discount',
+            'plan' => 'pro',
+            'applies_to' => 'annual',
+            'discount_percent' => 10, // < 16.67
+            'max_redemptions' => 5,
+        ]);
+
+        $response->assertSessionHasErrors('discount_percent');
+    }
+
+    public function test_store_discount_coupon_for_both_cycles_rejects_percent_below_baseline(): void
+    {
+        $admin = $this->superAdmin();
+
+        $response = $this->actingAs($admin)->post('/admin/coupons', [
+            'code' => 'BOTHWEAK',
+            'type' => 'discount',
+            'plan' => 'both',
+            'applies_to' => 'both',
+            'discount_percent' => 15,
+            'max_redemptions' => 5,
+        ]);
+
+        $response->assertSessionHasErrors('discount_percent');
+    }
+
+    public function test_store_monthly_discount_coupon_accepts_any_positive_percent(): void
+    {
+        $admin = $this->superAdmin();
+
+        $response = $this->actingAs($admin)->post('/admin/coupons', [
+            'code' => 'MONTH5',
+            'type' => 'discount',
+            'plan' => 'pro',
+            'applies_to' => 'monthly',
+            'discount_percent' => 5,
+            'max_redemptions' => 10,
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('coupons', ['code' => 'MONTH5', 'discount_percent' => 5]);
+    }
+
+    public function test_store_discount_coupon_rejects_duration_months(): void
+    {
+        $admin = $this->superAdmin();
+
+        $response = $this->actingAs($admin)->post('/admin/coupons', [
+            'code' => 'MIXED',
+            'type' => 'discount',
+            'plan' => 'pro',
+            'applies_to' => 'annual',
+            'discount_percent' => 25,
+            'duration_months' => 6, // not allowed for discount type
+            'max_redemptions' => 5,
+        ]);
+
+        $response->assertSessionHasErrors('duration_months');
+    }
+
+    public function test_store_plan_grant_coupon_rejects_plan_both(): void
+    {
+        $admin = $this->superAdmin();
+
+        $response = $this->actingAs($admin)->post('/admin/coupons', [
+            'code' => 'BOTHGRANT',
+            'plan' => 'both',
+            'duration_months' => 1,
+            'max_redemptions' => 5,
+        ]);
+
+        $response->assertSessionHasErrors('plan');
+    }
+
     // ── toggleCoupon ────────────────────────────────────────────────────────
 
     public function test_toggle_coupon_deactivates(): void

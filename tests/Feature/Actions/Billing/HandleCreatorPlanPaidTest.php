@@ -299,6 +299,72 @@ class HandleCreatorPlanPaidTest extends TestCase
         );
     }
 
+    public function test_paid_with_coupon_increments_redemption_counter(): void
+    {
+        $coupon = \App\Models\Coupon::create([
+            'code' => 'SAVE30',
+            'type' => \App\Models\Coupon::TYPE_DISCOUNT,
+            'plan' => 'pro',
+            'applies_to' => \App\Models\Coupon::APPLIES_TO_ANNUAL,
+            'discount_percent' => 30,
+            'max_redemptions' => 10,
+            'is_active' => true,
+        ]);
+
+        $cs = $this->makeCreatorSub([
+            'xendit_id' => 'inv_cs_coupon',
+            'plan' => CreatorSubscription::PLAN_PRO,
+            'billing_cycle' => CreatorSubscription::CYCLE_ANNUAL,
+            'coupon_id' => $coupon->id,
+        ]);
+
+        $handler = app(HandleCreatorPlanPaid::class);
+        $handler->matches('inv_cs_coupon');
+        $handler->handle([
+            'amount' => 16791.60,
+            'payment_channel' => 'GCASH',
+            'currency' => 'PHP',
+            'payment_id' => 'pay_coupon',
+        ], 'evt_cs_coupon', 'PAID');
+
+        $this->assertSame(1, $coupon->fresh()->times_redeemed);
+        $this->assertDatabaseHas('coupon_redemptions', [
+            'coupon_id' => $coupon->id,
+            'user_id' => $cs->user_id,
+            'creator_subscription_id' => $cs->id,
+        ]);
+    }
+
+    public function test_paid_with_coupon_is_idempotent_on_retry(): void
+    {
+        $coupon = \App\Models\Coupon::create([
+            'code' => 'ONCE',
+            'type' => \App\Models\Coupon::TYPE_DISCOUNT,
+            'plan' => 'pro',
+            'applies_to' => \App\Models\Coupon::APPLIES_TO_ANNUAL,
+            'discount_percent' => 30,
+            'max_redemptions' => 10,
+            'is_active' => true,
+        ]);
+
+        $cs = $this->makeCreatorSub([
+            'xendit_id' => 'inv_cs_once',
+            'coupon_id' => $coupon->id,
+            'billing_cycle' => CreatorSubscription::CYCLE_ANNUAL,
+        ]);
+
+        $handler = app(HandleCreatorPlanPaid::class);
+        $handler->matches('inv_cs_once');
+
+        $handler->handle(['amount' => 1, 'payment_channel' => 'GCASH'], 'evt_once_1', 'PAID');
+        // Second attempt for same subscription — shouldn't increment again
+        $handler->matches('inv_cs_once');
+        $handler->handle(['amount' => 1, 'payment_channel' => 'GCASH'], 'evt_once_2', 'PAID');
+
+        $this->assertSame(1, $coupon->fresh()->times_redeemed);
+        $this->assertSame(1, \App\Models\CouponRedemption::where('creator_subscription_id', $cs->id)->count());
+    }
+
     public function test_handle_logs_error_and_rethrows_on_exception(): void
     {
         $cs = $this->makeCreatorSub(['xendit_id' => 'inv_cs_err']);

@@ -4,6 +4,7 @@ import axios from 'axios';
 import { ref, computed, onMounted } from 'vue';
 import { useForm, usePage, router } from '@inertiajs/vue3';
 import ConfirmModal from '@/Components/ConfirmModal.vue';
+import CouponPromptModal from '@/Components/CouponPromptModal.vue';
 import { useConfirm } from '@/composables/useConfirm';
 
 const props = defineProps({
@@ -50,17 +51,36 @@ function redeemCoupon() {
     });
 }
 
-async function subscribe(plan) {
+const couponModal = ref({ show: false, plan: null, cycle: null, originalPrice: 0 });
+
+function subscribe(plan) {
+    const cycle = selectedCycle.value;
+    const sticker = cycle === 'annual'
+        ? (plan === 'pro' ? props.proAnnualPrice : props.basicAnnualPrice)
+        : (plan === 'pro' ? props.proPrice : props.basicPrice);
+
+    couponModal.value = { show: true, plan, cycle, originalPrice: sticker };
+}
+
+async function proceedCheckout({ couponCode }) {
+    const { plan, cycle } = couponModal.value;
+    couponModal.value = { ...couponModal.value, show: false };
     processing.value = true;
     try {
         const { data } = await axios.post('/creator/plan/checkout', {
             plan,
-            cycle: selectedCycle.value,
+            cycle,
+            coupon_code: couponCode || undefined,
         });
         window.location.href = data.checkout_url;
-    } catch {
+    } catch (e) {
         processing.value = false;
+        alert(e.response?.data?.errors?.coupon_code?.[0] || e.response?.data?.errors?.code?.[0] || e.response?.data?.message || 'Failed to start checkout.');
     }
+}
+
+function cancelCouponModal() {
+    couponModal.value = { ...couponModal.value, show: false };
 }
 
 const switchCycleLoading = ref(false);
@@ -408,5 +428,13 @@ const planLabel = { free: 'Free', basic: 'Basic', pro: 'Pro' };
 
         </div>
         <ConfirmModal :show="confirmShow" :title="confirmTitle" :message="confirmMessage" :confirm-label="confirmLabel" :destructive="confirmDestructive" @confirm="onConfirm" @cancel="onCancel" />
+        <CouponPromptModal
+            :show="couponModal.show"
+            :plan="couponModal.plan"
+            :cycle="couponModal.cycle"
+            :original-price="couponModal.originalPrice"
+            @proceed="proceedCheckout"
+            @cancel="cancelCouponModal"
+        />
     </AppLayout>
 </template>

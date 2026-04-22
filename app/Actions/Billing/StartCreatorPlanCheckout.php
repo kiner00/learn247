@@ -2,6 +2,7 @@
 
 namespace App\Actions\Billing;
 
+use App\Actions\Coupon\ValidateCreatorPlanCoupon;
 use App\Billing\CheckoutContext;
 use App\Billing\CheckoutStrategyFactory;
 use App\Models\CreatorSubscription;
@@ -12,13 +13,19 @@ use Illuminate\Validation\ValidationException;
 
 class StartCreatorPlanCheckout
 {
+    public function __construct(private readonly ValidateCreatorPlanCoupon $validateCoupon) {}
+
     /**
      * @return array{creator_subscription: CreatorSubscription, checkout_url: string}
      *
      * @throws ValidationException|\RuntimeException
      */
-    public function execute(User $user, string $plan, string $cycle = CreatorSubscription::CYCLE_MONTHLY): array
-    {
+    public function execute(
+        User $user,
+        string $plan,
+        string $cycle = CreatorSubscription::CYCLE_MONTHLY,
+        ?string $couponCode = null,
+    ): array {
         if (! in_array($plan, [CreatorSubscription::PLAN_BASIC, CreatorSubscription::PLAN_PRO])) {
             throw ValidationException::withMessages(['plan' => 'Invalid plan selected.']);
         }
@@ -32,10 +39,21 @@ class StartCreatorPlanCheckout
             throw ValidationException::withMessages(['plan' => 'You already have this plan active.']);
         }
 
+        $coupon = null;
         $price = CreatorPlanPricing::priceFor($plan, $cycle);
+
+        if ($couponCode !== null && trim($couponCode) !== '') {
+            $validation = $this->validateCoupon->execute($user, $couponCode, $plan, $cycle);
+            $coupon = $validation['coupon'];
+            $price = $validation['discounted_price'];
+        }
 
         $planLabel = $plan === CreatorSubscription::PLAN_PRO ? 'Pro' : 'Basic';
         $cycleLabel = $cycle === CreatorSubscription::CYCLE_ANNUAL ? 'Annual' : 'Monthly';
+        $description = "Creator {$planLabel} Plan — {$cycleLabel}";
+        if ($coupon) {
+            $description .= " (coupon {$coupon->code})";
+        }
 
         try {
             $strategy = CheckoutStrategyFactory::make('monthly');
@@ -43,7 +61,7 @@ class StartCreatorPlanCheckout
                 user: $user,
                 amount: $price,
                 currency: 'PHP',
-                description: "Creator {$planLabel} Plan — {$cycleLabel}",
+                description: $description,
                 referenceId: "creator_plan_{$plan}_{$cycle}_{$user->id}_".time(),
                 successUrl: config('app.url').'/creator/plan?success=1',
                 failureUrl: config('app.url').'/creator/plan?failed=1',
@@ -55,6 +73,7 @@ class StartCreatorPlanCheckout
                 'user_id' => $user->id,
                 'plan' => $plan,
                 'billing_cycle' => $cycle,
+                'coupon_id' => $coupon?->id,
                 'status' => CreatorSubscription::STATUS_PENDING,
                 'xendit_id' => $result->invoiceId,
                 'xendit_invoice_url' => $result->invoiceUrl,
@@ -72,6 +91,7 @@ class StartCreatorPlanCheckout
                 'user_id' => $user->id,
                 'plan' => $plan,
                 'cycle' => $cycle,
+                'coupon_code' => $coupon?->code,
                 'error' => $e->getMessage(),
             ]);
 

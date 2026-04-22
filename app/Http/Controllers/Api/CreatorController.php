@@ -6,6 +6,7 @@ use App\Actions\Billing\CancelRecurringPlan;
 use App\Actions\Billing\EnableAutoRenew;
 use App\Actions\Billing\StartCreatorPlanCheckout;
 use App\Actions\Billing\SwitchCreatorPlanCycle;
+use App\Actions\Coupon\ValidateCreatorPlanCoupon;
 use App\Http\Controllers\Controller;
 use App\Models\CreatorSubscription;
 use App\Queries\Creator\GetCreatorDashboard;
@@ -63,6 +64,7 @@ class CreatorController extends Controller
         $data = $request->validate([
             'plan' => ['required', 'in:basic,pro'],
             'cycle' => ['sometimes', 'in:monthly,annual'],
+            'coupon_code' => ['nullable', 'string', 'max:32'],
         ]);
 
         try {
@@ -70,6 +72,7 @@ class CreatorController extends Controller
                 $request->user(),
                 $data['plan'],
                 $data['cycle'] ?? CreatorSubscription::CYCLE_MONTHLY,
+                $data['coupon_code'] ?? null,
             );
 
             return response()->json([
@@ -82,6 +85,31 @@ class CreatorController extends Controller
             Log::error('Api\CreatorController@checkout failed', ['error' => $e->getMessage(), 'user_id' => $request->user()->id]);
 
             return response()->json(['message' => 'Failed to start checkout.'], 500);
+        }
+    }
+
+    public function validateCoupon(Request $request, ValidateCreatorPlanCoupon $action): JsonResponse
+    {
+        $data = $request->validate([
+            'code' => ['required', 'string', 'max:32'],
+            'plan' => ['required', 'in:basic,pro'],
+            'cycle' => ['required', 'in:monthly,annual'],
+        ]);
+
+        try {
+            $result = $action->execute($request->user(), $data['code'], $data['plan'], $data['cycle']);
+
+            return response()->json([
+                'code' => $result['coupon']->code,
+                'plan' => $result['plan'],
+                'cycle' => $result['cycle'],
+                'original_price' => $result['original_price'],
+                'discounted_price' => $result['discounted_price'],
+                'discount_percent' => $result['discount_percent'],
+                'savings' => $result['savings'],
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['message' => $e->getMessage(), 'errors' => $e->errors()], 422);
         }
     }
 

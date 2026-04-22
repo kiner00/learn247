@@ -184,4 +184,89 @@ class CreatorControllerTest extends TestCase
             ->assertStatus(500)
             ->assertJsonPath('message', 'Failed to load dashboard data.');
     }
+
+    // ─── plan (subscription tier) ──────────────────────────────────────────
+
+    public function test_plan_endpoint_returns_pricing_and_state(): void
+    {
+        \App\Models\Setting::set('creator_plan_basic_price', 499);
+        \App\Models\Setting::set('creator_plan_pro_price', 1999);
+        \App\Models\Setting::set('creator_plan_basic_annual_price', 4990);
+        \App\Models\Setting::set('creator_plan_pro_annual_price', 19990);
+
+        $user = User::factory()->create();
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson('/api/v1/creator/plan')
+            ->assertOk()
+            ->assertJson([
+                'pricing' => [
+                    'basic_monthly' => 499,
+                    'pro_monthly' => 1999,
+                    'basic_annual' => 4990,
+                    'pro_annual' => 19990,
+                    'currency' => 'PHP',
+                ],
+                'current_plan' => 'free',
+                'current_cycle' => 'monthly',
+            ]);
+    }
+
+    public function test_validate_coupon_endpoint_returns_preview(): void
+    {
+        \App\Models\Setting::set('creator_plan_pro_price', 1999);
+        \App\Models\Coupon::create([
+            'code' => 'SAVE30',
+            'type' => 'discount',
+            'plan' => 'pro',
+            'applies_to' => 'annual',
+            'discount_percent' => 30,
+            'max_redemptions' => 10,
+            'is_active' => true,
+        ]);
+
+        $user = User::factory()->create();
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson('/api/v1/creator/plan/validate-coupon', [
+                'code' => 'SAVE30', 'plan' => 'pro', 'cycle' => 'annual',
+            ])
+            ->assertOk()
+            ->assertJson(['code' => 'SAVE30', 'discount_percent' => 30]);
+    }
+
+    public function test_api_checkout_accepts_coupon_code(): void
+    {
+        \App\Models\Setting::set('creator_plan_pro_price', 1999);
+        $coupon = \App\Models\Coupon::create([
+            'code' => 'API30',
+            'type' => 'discount',
+            'plan' => 'pro',
+            'applies_to' => 'annual',
+            'discount_percent' => 30,
+            'max_redemptions' => 10,
+            'is_active' => true,
+        ]);
+
+        \Illuminate\Support\Facades\Http::fake([
+            '*' => \Illuminate\Support\Facades\Http::response([
+                'id' => 'inv_api_1',
+                'invoice_url' => 'https://checkout.xendit.co/inv_api_1',
+            ]),
+        ]);
+
+        $user = User::factory()->create();
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson('/api/v1/creator/plan/checkout', [
+                'plan' => 'pro', 'cycle' => 'annual', 'coupon_code' => 'API30',
+            ])
+            ->assertOk()
+            ->assertJsonStructure(['checkout_url', 'subscription_id']);
+
+        $this->assertDatabaseHas('creator_subscriptions', [
+            'user_id' => $user->id,
+            'coupon_id' => $coupon->id,
+        ]);
+    }
 }

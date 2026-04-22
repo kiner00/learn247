@@ -210,6 +210,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // ─── Creator Plan (subscription tier) ──────────────────────────────────
     Route::get('/creator/plan', [CreatorController::class, 'plan']);
     Route::post('/creator/plan/checkout', [CreatorController::class, 'checkout'])->middleware('throttle:10,1');
+    Route::post('/creator/plan/validate-coupon', [CreatorController::class, 'validateCoupon'])->middleware('throttle:20,1');
     Route::post('/creator/plan/switch-cycle', [CreatorController::class, 'switchCycle'])->middleware('throttle:5,1');
     Route::post('/creator/plan/enable-auto-renew', [CreatorController::class, 'enableAutoRenew']);
     Route::post('/creator/plan/cancel-auto-renew', [CreatorController::class, 'cancelAutoRenew']);

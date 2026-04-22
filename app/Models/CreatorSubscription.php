@@ -29,6 +29,7 @@ class CreatorSubscription extends Model
         'user_id',
         'plan',
         'billing_cycle',
+        'coupon_id',
         'xendit_plan_id', 'xendit_customer_id', 'recurring_status',
         'status',
         'xendit_id',
@@ -52,6 +53,11 @@ class CreatorSubscription extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function coupon(): BelongsTo
+    {
+        return $this->belongsTo(Coupon::class);
     }
 
     public function isActive(): bool
