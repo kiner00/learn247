@@ -18,4 +18,14 @@ class RecurringCreatorPlanHandler extends AbstractRecurringCycleHandler
     {
         return CreatorSubscription::STATUS_ACTIVE;
     }
+
+    protected function extendExpiry(Model $entity): void
+    {
+        /** @var CreatorSubscription $entity */
+        $base = $entity->expires_at?->isFuture() ? $entity->expires_at : now();
+
+        $entity->update([
+            'expires_at' => $entity->isAnnual() ? $base->copy()->addYear() : $base->copy()->addMonth(),
+        ]);
+    }
 }

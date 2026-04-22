@@ -1314,12 +1314,16 @@ class AdminControllerTest extends TestCase
         $response = $this->actingAs($admin)->patch('/admin/creator-plan-pricing', [
             'basic_price' => 299,
             'pro_price' => 999,
+            'basic_annual_price' => 2990,
+            'pro_annual_price' => 9990,
         ]);
 
         $response->assertRedirect();
         $response->assertSessionHas('success', 'Creator plan pricing updated.');
         $this->assertDatabaseHas('settings', ['key' => 'creator_plan_basic_price', 'value' => '299']);
         $this->assertDatabaseHas('settings', ['key' => 'creator_plan_pro_price', 'value' => '999']);
+        $this->assertDatabaseHas('settings', ['key' => 'creator_plan_basic_annual_price', 'value' => '2990']);
+        $this->assertDatabaseHas('settings', ['key' => 'creator_plan_pro_annual_price', 'value' => '9990']);
     }
 
     public function test_update_creator_plan_pricing_validates_basic_price_required(): void

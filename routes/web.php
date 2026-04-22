@@ -462,6 +462,7 @@ Route::middleware('auth')->group(function () {
     // ─── Creator Dashboard ────────────────────────────────────────────────────
     Route::get('/creator/plan', [CreatorController::class, 'plan'])->name('creator.plan');
     Route::post('/creator/plan/checkout', [CreatorController::class, 'planCheckout'])->name('creator.plan.checkout')->middleware('throttle:10,1');
+    Route::post('/creator/plan/switch-cycle', [CreatorController::class, 'switchCycle'])->name('creator.plan.switch-cycle')->middleware('throttle:5,1');
     Route::post('/creator/plan/cancel-recurring', [RecurringCancellationController::class, 'cancelCreatorPlan'])->name('creator.plan.cancel-recurring');
     Route::post('/creator/plan/enable-auto-renew', [RecurringCancellationController::class, 'enableCreatorPlanAutoRenew'])->name('creator.plan.enable-auto-renew');
     Route::post('/creator/plan/redeem-coupon', [CreatorController::class, 'redeemCoupon'])->name('creator.plan.redeem-coupon');

@@ -222,6 +222,61 @@ class HandleCreatorPlanPaidTest extends TestCase
         ]);
     }
 
+    public function test_annual_paid_extends_by_one_year(): void
+    {
+        $cs = $this->makeCreatorSub([
+            'xendit_id' => 'inv_cs_annual',
+            'plan' => CreatorSubscription::PLAN_PRO,
+            'billing_cycle' => CreatorSubscription::CYCLE_ANNUAL,
+            'expires_at' => null,
+        ]);
+        $handler = app(HandleCreatorPlanPaid::class);
+        $handler->matches('inv_cs_annual');
+
+        $handler->handle([
+            'amount' => 19990,
+            'payment_channel' => 'GCASH',
+            'currency' => 'PHP',
+            'payment_id' => 'pay_annual',
+        ], 'evt_cs_annual', 'PAID');
+
+        $cs->refresh();
+        $this->assertEquals(CreatorSubscription::STATUS_ACTIVE, $cs->status);
+        $expectedExpiry = now()->addYear();
+        $this->assertTrue(
+            $cs->expires_at->diffInSeconds($expectedExpiry) < 5,
+            'Annual cycle should extend expiry by one year'
+        );
+    }
+
+    public function test_annual_paid_extends_from_existing_future_expiry_by_one_year(): void
+    {
+        $futureExpiry = now()->addDays(15);
+        $cs = $this->makeCreatorSub([
+            'xendit_id' => 'inv_cs_annual_renew',
+            'billing_cycle' => CreatorSubscription::CYCLE_ANNUAL,
+            'status' => CreatorSubscription::STATUS_ACTIVE,
+            'expires_at' => $futureExpiry,
+        ]);
+
+        $handler = app(HandleCreatorPlanPaid::class);
+        $handler->matches('inv_cs_annual_renew');
+
+        $handler->handle([
+            'amount' => 19990,
+            'payment_channel' => 'GCASH',
+            'currency' => 'PHP',
+            'payment_id' => 'pay_annual_renew',
+        ], 'evt_cs_annual_renew', 'PAID');
+
+        $cs->refresh();
+        $expectedExpiry = $futureExpiry->copy()->addYear();
+        $this->assertTrue(
+            $cs->expires_at->diffInSeconds($expectedExpiry) < 5,
+            'Annual renewal should extend expiry by one year from current future expiry'
+        );
+    }
+
     public function test_paid_with_null_expires_at_sets_from_now(): void
     {
         $cs = $this->makeCreatorSub(['xendit_id' => 'inv_cs_null_exp', 'expires_at' => null]);

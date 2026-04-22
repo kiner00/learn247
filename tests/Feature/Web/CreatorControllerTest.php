@@ -380,6 +380,154 @@ class CreatorControllerTest extends TestCase
         $response->assertJsonStructure(['error']);
     }
 
+    // ─── annual billing cycle ─────────────────────────────────────────────────
+
+    public function test_plan_page_exposes_both_monthly_and_annual_pricing(): void
+    {
+        $user = User::factory()->create();
+
+        \App\Models\Setting::set('creator_plan_basic_price', 499);
+        \App\Models\Setting::set('creator_plan_pro_price', 1999);
+        \App\Models\Setting::set('creator_plan_basic_annual_price', 4990);
+        \App\Models\Setting::set('creator_plan_pro_annual_price', 19990);
+
+        $response = $this->actingAs($user)->get('/creator/plan');
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->where('basicPrice', 499)
+            ->where('proPrice', 1999)
+            ->where('basicAnnualPrice', 4990)
+            ->where('proAnnualPrice', 19990)
+            ->where('currentCycle', 'monthly')
+        );
+    }
+
+    public function test_annual_checkout_persists_cycle_on_subscription(): void
+    {
+        Http::fake([
+            '*' => Http::response([
+                'id' => 'inv_creator_annual_1',
+                'invoice_url' => 'https://checkout.xendit.co/inv_creator_annual_1',
+            ]),
+        ]);
+
+        \App\Models\Setting::set('creator_plan_pro_annual_price', 19990);
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->postJson('/creator/plan/checkout', [
+            'plan' => 'pro',
+            'cycle' => 'annual',
+        ]);
+
+        $response->assertOk();
+        $this->assertDatabaseHas('creator_subscriptions', [
+            'user_id' => $user->id,
+            'plan' => 'pro',
+            'billing_cycle' => 'annual',
+            'status' => \App\Models\CreatorSubscription::STATUS_PENDING,
+        ]);
+    }
+
+    public function test_checkout_defaults_to_monthly_when_cycle_omitted(): void
+    {
+        Http::fake([
+            '*' => Http::response([
+                'id' => 'inv_creator_default_1',
+                'invoice_url' => 'https://checkout.xendit.co/inv_creator_default_1',
+            ]),
+        ]);
+
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->postJson('/creator/plan/checkout', ['plan' => 'basic'])
+            ->assertOk();
+
+        $this->assertDatabaseHas('creator_subscriptions', [
+            'user_id' => $user->id,
+            'plan' => 'basic',
+            'billing_cycle' => 'monthly',
+        ]);
+    }
+
+    public function test_plan_checkout_rejects_invalid_cycle(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->postJson('/creator/plan/checkout', [
+            'plan' => 'pro',
+            'cycle' => 'weekly',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('cycle');
+    }
+
+    // ─── switchCycle ──────────────────────────────────────────────────────────
+
+    public function test_switch_cycle_updates_billing_cycle_when_not_recurring(): void
+    {
+        $user = User::factory()->create();
+        \App\Models\CreatorSubscription::create([
+            'user_id' => $user->id,
+            'plan' => 'basic',
+            'billing_cycle' => 'monthly',
+            'status' => \App\Models\CreatorSubscription::STATUS_ACTIVE,
+            'expires_at' => now()->addMonth(),
+            'xendit_id' => 'inv_test',
+        ]);
+
+        $this->actingAs($user)->postJson('/creator/plan/switch-cycle', ['cycle' => 'annual'])
+            ->assertOk()
+            ->assertJson(['billing_cycle' => 'annual']);
+
+        $this->assertDatabaseHas('creator_subscriptions', [
+            'user_id' => $user->id,
+            'billing_cycle' => 'annual',
+        ]);
+    }
+
+    public function test_switch_cycle_rejects_same_cycle(): void
+    {
+        $user = User::factory()->create();
+        \App\Models\CreatorSubscription::create([
+            'user_id' => $user->id,
+            'plan' => 'basic',
+            'billing_cycle' => 'monthly',
+            'status' => \App\Models\CreatorSubscription::STATUS_ACTIVE,
+            'expires_at' => now()->addMonth(),
+            'xendit_id' => 'inv_test',
+        ]);
+
+        $this->actingAs($user)->postJson('/creator/plan/switch-cycle', ['cycle' => 'monthly'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('cycle');
+    }
+
+    public function test_switch_cycle_requires_active_subscription(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->postJson('/creator/plan/switch-cycle', ['cycle' => 'annual'])
+            ->assertNotFound();
+    }
+
+    public function test_switch_cycle_validates_cycle_value(): void
+    {
+        $user = User::factory()->create();
+        \App\Models\CreatorSubscription::create([
+            'user_id' => $user->id,
+            'plan' => 'basic',
+            'billing_cycle' => 'monthly',
+            'status' => \App\Models\CreatorSubscription::STATUS_ACTIVE,
+            'expires_at' => now()->addMonth(),
+            'xendit_id' => 'inv_test',
+        ]);
+
+        $this->actingAs($user)->postJson('/creator/plan/switch-cycle', ['cycle' => 'bogus'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('cycle');
+    }
+
     // ─── dashboard with analytics for creator plan user ──────────────────────
 
     public function test_dashboard_includes_analytics_for_basic_plan_user(): void

@@ -58,6 +58,14 @@ class RecurringPlanBuilder
         return $this;
     }
 
+    public function yearlyInterval(int $count = 1): self
+    {
+        $this->schedule['interval'] = 'YEAR';
+        $this->schedule['interval_count'] = $count;
+
+        return $this;
+    }
+
     public function chargeImmediately(): self
     {
         $this->data['immediate_action_type'] = 'FULL_AMOUNT';

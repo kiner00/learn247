@@ -97,6 +97,66 @@ class StartCreatorPlanCheckoutTest extends TestCase
         ]);
     }
 
+    public function test_invalid_cycle_throws_validation_exception(): void
+    {
+        $user = User::factory()->create();
+        $action = app(StartCreatorPlanCheckout::class);
+
+        $this->expectException(ValidationException::class);
+        $action->execute($user, CreatorSubscription::PLAN_BASIC, 'biweekly');
+    }
+
+    public function test_annual_checkout_uses_annual_pricing_and_persists_cycle(): void
+    {
+        \App\Models\Setting::set('creator_plan_pro_annual_price', 19990);
+
+        Http::fake([
+            'https://api.xendit.co/v2/invoices' => Http::response([
+                'id' => 'inv_pro_annual',
+                'invoice_url' => 'https://checkout.xendit.co/inv_pro_annual',
+            ], 200),
+        ]);
+
+        $user = User::factory()->create();
+        $action = app(StartCreatorPlanCheckout::class);
+
+        $result = $action->execute($user, CreatorSubscription::PLAN_PRO, CreatorSubscription::CYCLE_ANNUAL);
+
+        $this->assertEquals('https://checkout.xendit.co/inv_pro_annual', $result['checkout_url']);
+        $this->assertDatabaseHas('creator_subscriptions', [
+            'user_id' => $user->id,
+            'plan' => CreatorSubscription::PLAN_PRO,
+            'billing_cycle' => CreatorSubscription::CYCLE_ANNUAL,
+        ]);
+
+        // Verify the charged amount uses the annual setting
+        Http::assertSent(function ($request) {
+            $body = $request->data();
+
+            return ($body['amount'] ?? null) == 19990;
+        });
+    }
+
+    public function test_monthly_is_the_default_cycle(): void
+    {
+        Http::fake([
+            'https://api.xendit.co/v2/invoices' => Http::response([
+                'id' => 'inv_default',
+                'invoice_url' => 'https://checkout.xendit.co/inv_default',
+            ], 200),
+        ]);
+
+        $user = User::factory()->create();
+        $action = app(StartCreatorPlanCheckout::class);
+
+        $action->execute($user, CreatorSubscription::PLAN_BASIC);
+
+        $this->assertDatabaseHas('creator_subscriptions', [
+            'user_id' => $user->id,
+            'billing_cycle' => CreatorSubscription::CYCLE_MONTHLY,
+        ]);
+    }
+
     public function test_xendit_failure_propagates_exception(): void
     {
         Http::fake([

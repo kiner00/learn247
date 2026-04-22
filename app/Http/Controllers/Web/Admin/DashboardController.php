@@ -24,6 +24,8 @@ class DashboardController extends Controller
             'creatorPlanPricing' => [
                 'basic_price' => (float) Setting::get('creator_plan_basic_price', 499),
                 'pro_price' => (float) Setting::get('creator_plan_pro_price', 1999),
+                'basic_annual_price' => (float) Setting::get('creator_plan_basic_annual_price', 4990),
+                'pro_annual_price' => (float) Setting::get('creator_plan_pro_annual_price', 19990),
             ],
         ]));
     }
@@ -41,10 +43,14 @@ class DashboardController extends Controller
         $data = $request->validate([
             'basic_price' => 'required|numeric|min:0',
             'pro_price' => 'required|numeric|min:0',
+            'basic_annual_price' => 'required|numeric|min:0',
+            'pro_annual_price' => 'required|numeric|min:0',
         ]);
 
         Setting::set('creator_plan_basic_price', (string) $data['basic_price']);
         Setting::set('creator_plan_pro_price', (string) $data['pro_price']);
+        Setting::set('creator_plan_basic_annual_price', (string) $data['basic_annual_price']);
+        Setting::set('creator_plan_pro_annual_price', (string) $data['pro_annual_price']);
 
         return back()->with('success', 'Creator plan pricing updated.');
     }

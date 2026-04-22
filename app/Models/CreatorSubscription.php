@@ -21,9 +21,14 @@ class CreatorSubscription extends Model
 
     const PLAN_PRO = 'pro';
 
+    const CYCLE_MONTHLY = 'monthly';
+
+    const CYCLE_ANNUAL = 'annual';
+
     protected $fillable = [
         'user_id',
         'plan',
+        'billing_cycle',
         'xendit_plan_id', 'xendit_customer_id', 'recurring_status',
         'status',
         'xendit_id',
@@ -34,6 +39,15 @@ class CreatorSubscription extends Model
     protected $casts = [
         'expires_at' => 'datetime',
     ];
+
+    protected $attributes = [
+        'billing_cycle' => self::CYCLE_MONTHLY,
+    ];
+
+    public function isAnnual(): bool
+    {
+        return $this->billing_cycle === self::CYCLE_ANNUAL;
+    }
 
     public function user(): BelongsTo
     {

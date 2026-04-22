@@ -34,9 +34,10 @@ class HandleCreatorPlanPaid implements WebhookHandler
             };
 
             if ($newStatus === CreatorSubscription::STATUS_ACTIVE) {
-                $expiresAt = $creatorSub->expires_at && $creatorSub->expires_at->isFuture()
-                    ? $creatorSub->expires_at->addMonth()
-                    : now()->addMonth();
+                $base = $creatorSub->expires_at && $creatorSub->expires_at->isFuture()
+                    ? $creatorSub->expires_at
+                    : now();
+                $expiresAt = $creatorSub->isAnnual() ? $base->copy()->addYear() : $base->copy()->addMonth();
 
                 $creatorSub->update(['status' => $newStatus, 'expires_at' => $expiresAt]);
 

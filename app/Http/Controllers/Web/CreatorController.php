@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Web;
 
 use App\Actions\Billing\StartCreatorPlanCheckout;
+use App\Actions\Billing\SwitchCreatorPlanCycle;
 use App\Actions\Coupon\RedeemCoupon;
 use App\Http\Controllers\Controller;
 use App\Models\CreatorSubscription;
-use App\Models\Setting;
 use App\Queries\Creator\GetCreatorDashboard;
 use App\Services\Analytics\CreatorAnalyticsService;
+use App\Support\CreatorPlanPricing;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -28,9 +30,12 @@ class CreatorController extends Controller
             ->first();
 
         return Inertia::render('Creator/Plan', [
-            'basicPrice' => (float) Setting::get('creator_plan_basic_price', 499),
-            'proPrice' => (float) Setting::get('creator_plan_pro_price', 1999),
+            'basicPrice' => CreatorPlanPricing::priceFor(CreatorSubscription::PLAN_BASIC, CreatorSubscription::CYCLE_MONTHLY),
+            'proPrice' => CreatorPlanPricing::priceFor(CreatorSubscription::PLAN_PRO, CreatorSubscription::CYCLE_MONTHLY),
+            'basicAnnualPrice' => CreatorPlanPricing::priceFor(CreatorSubscription::PLAN_BASIC, CreatorSubscription::CYCLE_ANNUAL),
+            'proAnnualPrice' => CreatorPlanPricing::priceFor(CreatorSubscription::PLAN_PRO, CreatorSubscription::CYCLE_ANNUAL),
             'currentPlan' => $user->creatorPlan(),
+            'currentCycle' => $activeSub?->billing_cycle ?? CreatorSubscription::CYCLE_MONTHLY,
             'isAutoRenewing' => $activeSub?->isAutoRenewing() ?? false,
             'isRecurring' => $activeSub?->isRecurring() ?? false,
             'recurringStatus' => $activeSub?->recurring_status,
@@ -41,10 +46,17 @@ class CreatorController extends Controller
     public function planCheckout(Request $request, StartCreatorPlanCheckout $action)
     {
         $user = Auth::user();
-        $plan = $request->validate(['plan' => ['required', 'in:basic,pro']])['plan'];
+        $data = $request->validate([
+            'plan' => ['required', 'in:basic,pro'],
+            'cycle' => ['sometimes', 'in:monthly,annual'],
+        ]);
 
         try {
-            $result = $action->execute($user, $plan);
+            $result = $action->execute(
+                $user,
+                $data['plan'],
+                $data['cycle'] ?? CreatorSubscription::CYCLE_MONTHLY,
+            );
 
             return response()->json(['checkout_url' => $result['checkout_url']]);
         } catch (\Throwable $e) {
@@ -52,6 +64,26 @@ class CreatorController extends Controller
 
             return response()->json(['error' => 'Failed to start checkout.'], 500);
         }
+    }
+
+    public function switchCycle(Request $request, SwitchCreatorPlanCycle $action): JsonResponse
+    {
+        $user = Auth::user();
+        $cycle = $request->validate(['cycle' => ['required', 'in:monthly,annual']])['cycle'];
+
+        $creatorSub = $user->creatorSubscriptions()
+            ->where('status', CreatorSubscription::STATUS_ACTIVE)
+            ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+            ->latest()
+            ->firstOrFail();
+
+        $result = $action->execute($creatorSub, $cycle);
+
+        return response()->json([
+            'billing_cycle' => $result['creator_subscription']->billing_cycle,
+            'linking_url' => $result['linking_url'],
+            'message' => 'Billing cycle will change at your next renewal.',
+        ]);
     }
 
     public function redeemCoupon(Request $request, RedeemCoupon $action)

@@ -1,20 +1,28 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
 import axios from 'axios';
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useForm, usePage, router } from '@inertiajs/vue3';
 import ConfirmModal from '@/Components/ConfirmModal.vue';
 import { useConfirm } from '@/composables/useConfirm';
 
 const props = defineProps({
-    basicPrice:      { type: Number, default: 499 },
-    proPrice:        { type: Number, default: 1999 },
-    currentPlan:     { type: String, default: 'free' },
-    isAutoRenewing:  { type: Boolean, default: false },
-    isRecurring:     { type: Boolean, default: false },
-    recurringStatus: { type: String, default: null },
-    expiresAt:       { type: String, default: null },
+    basicPrice:       { type: Number, default: 499 },
+    proPrice:         { type: Number, default: 1999 },
+    basicAnnualPrice: { type: Number, default: 4990 },
+    proAnnualPrice:   { type: Number, default: 19990 },
+    currentPlan:      { type: String, default: 'free' },
+    currentCycle:     { type: String, default: 'monthly' },
+    isAutoRenewing:   { type: Boolean, default: false },
+    isRecurring:      { type: Boolean, default: false },
+    recurringStatus:  { type: String, default: null },
+    expiresAt:        { type: String, default: null },
 });
+
+const selectedCycle = ref(props.currentPlan !== 'free' ? props.currentCycle : 'monthly');
+const isAnnual = computed(() => selectedCycle.value === 'annual');
+const displayBasicPrice = computed(() => isAnnual.value ? Math.round(props.basicAnnualPrice / 12) : props.basicPrice);
+const displayProPrice = computed(() => isAnnual.value ? Math.round(props.proAnnualPrice / 12) : props.proPrice);
 
 const { show: confirmShow, title: confirmTitle, message: confirmMessage, confirmLabel, destructive: confirmDestructive, ask, onConfirm, onCancel } = useConfirm();
 
@@ -45,10 +53,36 @@ function redeemCoupon() {
 async function subscribe(plan) {
     processing.value = true;
     try {
-        const { data } = await axios.post('/creator/plan/checkout', { plan });
+        const { data } = await axios.post('/creator/plan/checkout', {
+            plan,
+            cycle: selectedCycle.value,
+        });
         window.location.href = data.checkout_url;
     } catch {
         processing.value = false;
+    }
+}
+
+const switchCycleLoading = ref(false);
+async function switchToAnnual() {
+    if (!(await ask({
+        title: 'Switch to Annual Billing',
+        message: 'Switch to annual billing at your next renewal? You\'ll save 2 months on your current plan. Your current period remains unchanged.',
+        confirmLabel: 'Switch to Annual',
+    }))) return;
+
+    switchCycleLoading.value = true;
+    try {
+        const { data } = await axios.post('/creator/plan/switch-cycle', { cycle: 'annual' });
+        if (data.linking_url) {
+            window.location.href = data.linking_url;
+            return;
+        }
+        router.reload();
+    } catch (e) {
+        alert(e.response?.data?.errors?.cycle?.[0] || e.response?.data?.message || 'Failed to switch billing cycle.');
+    } finally {
+        switchCycleLoading.value = false;
     }
 }
 
@@ -107,9 +141,36 @@ const planLabel = { free: 'Free', basic: 'Basic', pro: 'Pro' };
         <div class="max-w-5xl mx-auto">
 
             <!-- Header -->
-            <div class="text-center mb-10">
+            <div class="text-center mb-8">
                 <h1 class="text-3xl font-black text-gray-900">Choose Your Creator Plan</h1>
                 <p class="text-gray-500 mt-2 text-sm">Scale your community business — start free, upgrade anytime</p>
+            </div>
+
+            <!-- Monthly/Annual toggle -->
+            <div class="flex justify-center mb-8">
+                <div class="inline-flex items-center bg-gray-100 rounded-full p-1">
+                    <button
+                        type="button"
+                        @click="selectedCycle = 'monthly'"
+                        :class="[
+                            'px-5 py-2 rounded-full text-sm font-semibold transition-colors',
+                            selectedCycle === 'monthly' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700',
+                        ]"
+                    >
+                        Monthly
+                    </button>
+                    <button
+                        type="button"
+                        @click="selectedCycle = 'annual'"
+                        :class="[
+                            'px-5 py-2 rounded-full text-sm font-semibold transition-colors flex items-center gap-2',
+                            selectedCycle === 'annual' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700',
+                        ]"
+                    >
+                        Annual
+                        <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 uppercase tracking-wide">Save 2 mo</span>
+                    </button>
+                </div>
             </div>
 
             <!-- Notices -->
@@ -135,17 +196,28 @@ const planLabel = { free: 'Free', basic: 'Basic', pro: 'Pro' };
 
             <!-- Current plan banner -->
             <div v-if="currentPlan !== 'free'" class="mb-6 bg-indigo-50 border border-indigo-200 rounded-2xl px-5 py-4">
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3 flex-wrap">
                     <span class="text-xl">⭐</span>
-                    <div class="flex-1">
-                        <p class="text-sm font-bold text-indigo-800">You're on the <span class="capitalize">{{ currentPlan }}</span> plan. All your features are active.</p>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-bold text-indigo-800">
+                            You're on the <span class="capitalize">{{ currentPlan }}</span> plan
+                            <span class="text-indigo-600 font-normal">· billed {{ currentCycle }}</span>
+                        </p>
                         <p v-if="expiresAt" class="text-xs text-indigo-600 mt-0.5">
                             {{ isAutoRenewing ? 'Auto-renews' : 'Expires' }} on {{ formatDate(expiresAt) }}
                         </p>
                     </div>
-                    <div class="flex items-center gap-2 shrink-0">
+                    <div class="flex items-center gap-2 shrink-0 flex-wrap">
                         <span v-if="isAutoRenewing" class="inline-flex items-center text-xs font-medium px-2 py-1 rounded-full bg-green-100 text-green-700">Auto-Renew ON</span>
                         <span v-else-if="recurringStatus === 'INACTIVE'" class="inline-flex items-center text-xs font-medium px-2 py-1 rounded-full bg-gray-100 text-gray-500">Auto-Renew Cancelled</span>
+                        <button
+                            v-if="currentCycle === 'monthly'"
+                            @click="switchToAnnual"
+                            :disabled="switchCycleLoading"
+                            class="text-xs text-green-700 hover:text-green-800 px-3 py-1.5 border border-green-300 rounded-lg transition-colors disabled:opacity-50 font-semibold"
+                        >
+                            {{ switchCycleLoading ? 'Switching...' : 'Switch to Annual (save 2 mo)' }}
+                        </button>
                         <button
                             v-if="!isRecurring"
                             @click="enableAutoRenew"
@@ -220,8 +292,10 @@ const planLabel = { free: 'Free', basic: 'Basic', pro: 'Pro' };
                     </div>
                     <div class="px-6 py-6 border-b border-blue-100">
                         <p class="text-xs font-semibold uppercase tracking-widest text-blue-500 mb-2">Basic</p>
-                        <p class="text-4xl font-black text-gray-900">₱{{ fmt(basicPrice) }}</p>
-                        <p class="text-xs text-gray-400 mt-1">per month · billed monthly</p>
+                        <p class="text-4xl font-black text-gray-900">₱{{ fmt(displayBasicPrice) }}</p>
+                        <p class="text-xs text-gray-400 mt-1">
+                            per month · <span v-if="isAnnual">billed ₱{{ fmt(basicAnnualPrice) }} yearly</span><span v-else>billed monthly</span>
+                        </p>
                     </div>
                     <ul class="px-6 py-5 space-y-2.5 flex-1 text-sm text-gray-600">
                         <li class="flex items-start gap-2"><span class="text-blue-500 mt-0.5 shrink-0">✓</span> 3 communities</li>
@@ -255,8 +329,10 @@ const planLabel = { free: 'Free', basic: 'Basic', pro: 'Pro' };
                     </div>
                     <div class="px-6 py-6 border-b border-indigo-500">
                         <p class="text-xs font-semibold uppercase tracking-widest text-indigo-200 mb-2">Pro</p>
-                        <p class="text-4xl font-black text-white">₱{{ fmt(proPrice) }}</p>
-                        <p class="text-xs text-indigo-200 mt-1">per month · billed monthly</p>
+                        <p class="text-4xl font-black text-white">₱{{ fmt(displayProPrice) }}</p>
+                        <p class="text-xs text-indigo-200 mt-1">
+                            per month · <span v-if="isAnnual">billed ₱{{ fmt(proAnnualPrice) }} yearly</span><span v-else>billed monthly</span>
+                        </p>
                     </div>
                     <ul class="px-6 py-5 space-y-2.5 flex-1 text-sm text-indigo-100">
                         <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Unlimited communities</li>

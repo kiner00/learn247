@@ -3,10 +3,10 @@
 namespace App\Actions\Billing;
 
 use App\Models\CreatorSubscription;
-use App\Models\Setting;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Services\XenditService;
+use App\Support\CreatorPlanPricing;
 use App\Support\RecurringPlanBuilder;
 use Illuminate\Support\Facades\Log;
 
@@ -36,6 +36,7 @@ class EnableAutoRenew
             anchorDate: $subscription->expires_at,
             successUrl: config('app.url')."/communities/{$community->slug}",
             failureUrl: config('app.url')."/communities/{$community->slug}",
+            yearly: false,
         );
 
         $subscription->update([
@@ -58,21 +59,19 @@ class EnableAutoRenew
 
         $user = $creatorSub->user;
         $planLabel = $creatorSub->plan === CreatorSubscription::PLAN_PRO ? 'Pro' : 'Basic';
-        $priceKey = $creatorSub->plan === CreatorSubscription::PLAN_PRO
-            ? 'creator_plan_pro_price'
-            : 'creator_plan_basic_price';
-        $defaultPrice = $creatorSub->plan === CreatorSubscription::PLAN_PRO ? 1999 : 499;
-        $price = (float) Setting::get($priceKey, $defaultPrice);
+        $cycleLabel = $creatorSub->isAnnual() ? 'Annual' : 'Monthly';
+        $price = CreatorPlanPricing::priceFor($creatorSub->plan, $creatorSub->billing_cycle);
 
         $plan = $this->createPlan(
             user: $user,
             amount: $price,
             currency: 'PHP',
-            description: "Auto-renew: Creator {$planLabel} Plan",
-            referenceId: "creator_{$creatorSub->plan}_autorenew_{$user->id}_".time(),
+            description: "Auto-renew: Creator {$planLabel} Plan — {$cycleLabel}",
+            referenceId: "creator_{$creatorSub->plan}_{$creatorSub->billing_cycle}_autorenew_{$user->id}_".time(),
             anchorDate: $creatorSub->expires_at,
             successUrl: config('app.url').'/creator/plan?autorenew=1',
             failureUrl: config('app.url').'/creator/plan?autorenew=failed',
+            yearly: $creatorSub->isAnnual(),
         );
 
         $creatorSub->update([
@@ -93,6 +92,7 @@ class EnableAutoRenew
         ?\Carbon\Carbon $anchorDate,
         string $successUrl,
         string $failureUrl,
+        bool $yearly = false,
     ): array {
         $customerId = $user->ensureXenditCustomer($this->xendit);
 
@@ -102,11 +102,12 @@ class EnableAutoRenew
             ->amount($amount)
             ->currency($currency)
             ->description($description)
-            ->monthlyInterval()
             ->skipImmediateCharge()
             ->retryConfig(totalRetry: 3, intervalDays: 1)
             ->successReturnUrl($successUrl)
             ->failureReturnUrl($failureUrl);
+
+        $yearly ? $builder->yearlyInterval() : $builder->monthlyInterval();
 
         if ($anchorDate) {
             $builder->anchorDate($anchorDate);
