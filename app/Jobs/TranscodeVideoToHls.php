@@ -169,12 +169,12 @@ class TranscodeVideoToHls implements ShouldQueue
             'OutputGroupSettings' => [
                 'Type' => 'FILE_GROUP_SETTINGS',
                 'FileGroupSettings' => [
-                    'Destination' => "s3://{$bucket}/{$hlsPrefix}/poster",
+                    'Destination' => "s3://{$bucket}/{$hlsPrefix}/",
                 ],
             ],
             'Outputs' => [
                 [
-                    'NameModifier' => '',
+                    'NameModifier' => 'poster',
                     'ContainerSettings' => ['Container' => 'RAW'],
                     'VideoDescription' => [
                         'CodecSettings' => [
