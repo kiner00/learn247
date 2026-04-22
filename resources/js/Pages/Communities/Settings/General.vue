@@ -977,7 +977,7 @@ function saveBrand() {
                         </span>
                     </div>
                     <p class="mt-1 text-xs text-gray-400">
-                        Images: JPG / PNG / WebP, ≤15 MB · Videos: MP4 / MOV / WebM (transcoded to HLS) · {{ community.gallery_images?.length ?? 0 }}/8 items
+                        Images: JPG / PNG / WebP, ≤15 MB · Recommended 1280×720 (16:9) · Videos: MP4 / MOV / WebM (transcoded to HLS) · {{ community.gallery_images?.length ?? 0 }}/8 items
                     </p>
                     <p v-if="galleryForm.errors.image" class="mt-1 text-xs text-red-600">{{ galleryForm.errors.image }}</p>
                     <p v-if="videoUploadError" class="mt-1 text-xs text-red-600">{{ videoUploadError }}</p>
