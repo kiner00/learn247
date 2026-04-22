@@ -15,7 +15,7 @@ class CurzzoAccessService
      * Build the access context for a user viewing a community's curzzos.
      *
      * @param  Collection<int>  $curzzoIds  ids already loaded, used to batch-check paid purchases (avoids N+1)
-     * @return array{user_id: ?int, is_owner: bool, is_member: bool, is_paid_member: bool, was_ever_member: bool, paid_curzzo_ids: Collection<int>}
+     * @return array{user_id: ?int, is_owner: bool, is_member: bool, is_paid_member: bool, was_ever_member: bool, community_is_free: bool, paid_curzzo_ids: Collection<int>}
      */
     public function buildContext(?User $user, Community $community, Collection $curzzoIds): array
     {
@@ -61,6 +61,7 @@ class CurzzoAccessService
             'is_member' => $isMember,
             'is_paid_member' => $isPaidMember,
             'was_ever_member' => $wasEverMember,
+            'community_is_free' => $community->isFree(),
             'paid_curzzo_ids' => $paidCurzzoIds,
         ];
     }
@@ -73,7 +74,12 @@ class CurzzoAccessService
 
         return match ($curzzo->access_type ?? 'free') {
             'free' => $context['is_member'],
-            'inclusive' => $context['is_paid_member'],
+            // On a free community there's no paid-subscriber tier, so "included" falls
+            // back to any community member. On a paid community it means bundled with
+            // the active subscription.
+            'inclusive' => $context['community_is_free']
+                ? $context['is_member']
+                : $context['is_paid_member'],
             'paid_once', 'paid_monthly' => $context['user_id'] !== null
                 && $context['paid_curzzo_ids']->contains($curzzo->id),
             'member_once' => $context['was_ever_member'],
