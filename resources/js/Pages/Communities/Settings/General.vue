@@ -161,6 +161,14 @@ function removeGalleryItem(item) {
     router.delete(`/communities/${props.community.slug}/gallery/${item.id}`, { preserveScroll: true });
 }
 
+function toggleAutoplay(item, event) {
+    router.patch(
+        `/communities/${props.community.slug}/gallery/${item.id}`,
+        { autoplay: event.target.checked },
+        { preserveScroll: true, preserveState: true, only: ['community'] },
+    );
+}
+
 // Video upload via multipart-to-S3 + transcode-status polling.
 const galleryVideoBase = `/communities/${props.community.slug}/gallery/videos`;
 const { uploading: videoUploading, progress: videoProgress, error: videoUploadError, upload: uploadVideo } = useS3MultipartUpload({ baseUrl: galleryVideoBase });
@@ -928,6 +936,33 @@ function saveBrand() {
                 </div>
             </div>
             <p v-if="community.gallery_images?.length > 1" class="text-xs text-gray-400 mb-3 -mt-2">Drag tiles to reorder.</p>
+
+            <!-- Per-video autoplay toggles -->
+            <div
+                v-if="community.gallery_images?.some((it) => it.type === 'video' && it.transcode_status === 'completed')"
+                class="mb-4 border border-gray-200 rounded-lg divide-y divide-gray-100"
+            >
+                <div
+                    v-for="item in community.gallery_images.filter((it) => it.type === 'video' && it.transcode_status === 'completed')"
+                    :key="`autoplay-${item.id}`"
+                    class="flex items-center gap-3 px-3 py-2"
+                >
+                    <img v-if="item.poster_url" :src="item.poster_url" class="w-12 h-8 object-cover rounded bg-gray-100 flex-shrink-0" />
+                    <div v-else class="w-12 h-8 rounded bg-gray-200 flex items-center justify-center flex-shrink-0">
+                        <svg class="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                    </div>
+                    <span class="text-xs text-gray-600 flex-1">Video #{{ item.position + 1 }}</span>
+                    <label class="inline-flex items-center gap-2 text-xs text-gray-700 cursor-pointer select-none">
+                        <input
+                            type="checkbox"
+                            :checked="item.autoplay"
+                            @change="(e) => toggleAutoplay(item, e)"
+                            class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-400"
+                        />
+                        Autoplay on page load (muted)
+                    </label>
+                </div>
+            </div>
 
             <!-- Upload new -->
             <div v-if="!community.gallery_images || community.gallery_images.length < 8" class="space-y-3">

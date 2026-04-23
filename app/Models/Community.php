@@ -131,6 +131,7 @@ class Community extends Model
             'transcode_percent' => $item->transcode_percent,
             'video_ready' => $item->video_ready,
             'position' => $item->position,
+            'autoplay' => (bool) $item->autoplay,
         ])->values()->all();
     }
 

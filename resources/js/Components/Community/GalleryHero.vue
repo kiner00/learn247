@@ -42,7 +42,7 @@
                 v-else-if="item.video_ready"
                 type="button"
                 class="absolute inset-0 flex items-center justify-center group"
-                @click="playing = true"
+                @click="startUserInitiated"
                 aria-label="Play video"
             >
                 <span class="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors" />
@@ -62,6 +62,7 @@
             controls
             autoplay
             playsinline
+            :muted="autoStarted"
             :poster="item.poster_url || undefined"
         />
     </div>
@@ -77,6 +78,9 @@ const props = defineProps({
 });
 
 const playing = ref(false);
+// True when playback started via the autoplay flag (requires muted for browser policies),
+// false when the user clicked play (audio allowed).
+const autoStarted = ref(false);
 const videoEl = ref(null);
 
 const isTranscoding = computed(() =>
@@ -90,8 +94,23 @@ const hlsSource = computed(() =>
 
 useHlsPlayer(videoEl, hlsSource);
 
-// Reset playing state when the active item changes (so a video doesn't auto-resume on swap).
-watch(() => props.item?.id, () => {
-    playing.value = false;
-});
+function startUserInitiated() {
+    autoStarted.value = false;
+    playing.value = true;
+}
+
+// Reset / re-apply autoplay when the active item changes.
+watch(
+    () => [props.item?.id, props.item?.video_ready, props.item?.autoplay],
+    () => {
+        if (props.item?.type === 'video' && props.item?.video_ready && props.item?.autoplay) {
+            autoStarted.value = true;
+            playing.value = true;
+        } else {
+            autoStarted.value = false;
+            playing.value = false;
+        }
+    },
+    { immediate: true },
+);
 </script>

@@ -273,6 +273,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/communities/{community}/gallery/videos/complete', [CommunityGalleryController::class, 'completeVideoUpload'])->name('communities.gallery.videos.complete');
     Route::post('/communities/{community}/gallery/videos/abort', [CommunityGalleryController::class, 'abortVideoUpload'])->name('communities.gallery.videos.abort');
     Route::get('/communities/{community}/gallery/{item}/status', [CommunityGalleryController::class, 'transcodeStatus'])->name('communities.gallery.status');
+    Route::patch('/communities/{community}/gallery/{item}', [CommunityGalleryController::class, 'update'])->name('communities.gallery.update');
     Route::delete('/communities/{community}/gallery/{item}', [CommunityGalleryController::class, 'destroy'])->name('communities.gallery.destroy');
     Route::put('/communities/{community}/gallery/reorder', [CommunityGalleryController::class, 'reorder'])->name('communities.gallery.reorder');
     Route::post('/communities/{community}/gallery/ai-generate', [CommunityController::class, 'aiGenerateGallery'])->name('communities.gallery.ai-generate');

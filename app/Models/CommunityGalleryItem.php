@@ -15,12 +15,13 @@ class CommunityGalleryItem extends Model implements Transcodeable
     protected $fillable = [
         'community_id', 'type', 'image_path', 'video_path', 'video_hls_path',
         'poster_path', 'transcode_status', 'transcode_percent',
-        'mediaconvert_job_id', 'position',
+        'mediaconvert_job_id', 'position', 'autoplay',
     ];
 
     protected $casts = [
         'transcode_percent' => 'integer',
         'position' => 'integer',
+        'autoplay' => 'boolean',
     ];
 
     protected $appends = ['url', 'poster_url', 'video_ready'];

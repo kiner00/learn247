@@ -155,6 +155,24 @@ class CommunityGalleryController extends Controller
         );
     }
 
+    public function update(Request $request, Community $community, CommunityGalleryItem $item): RedirectResponse
+    {
+        $this->authorize('update', $community);
+        $this->ensureItemBelongsToCommunity($community, $item);
+
+        $data = $request->validate([
+            'autoplay' => ['required', 'boolean'],
+        ]);
+
+        if ($item->type !== 'video') {
+            abort(422, 'Autoplay only applies to video items.');
+        }
+
+        $item->update(['autoplay' => $data['autoplay']]);
+
+        return back()->with('success', 'Gallery item updated.');
+    }
+
     public function destroy(Request $request, Community $community, CommunityGalleryItem $item): RedirectResponse
     {
         $this->authorize('update', $community);
@@ -264,6 +282,7 @@ class CommunityGalleryController extends Controller
             'transcode_percent' => $item->transcode_percent,
             'video_ready' => $item->video_ready,
             'position' => $item->position,
+            'autoplay' => (bool) $item->autoplay,
         ];
     }
 }
