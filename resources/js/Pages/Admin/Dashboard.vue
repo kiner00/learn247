@@ -70,7 +70,7 @@
         <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm mb-8">
             <div class="px-5 py-4 border-b border-gray-100">
                 <h2 class="text-sm font-bold text-gray-900">Creator Plan Pricing</h2>
-                <p class="text-xs text-gray-400 mt-0.5">Set the monthly price for Basic and Pro plans shown on the creator upgrade page</p>
+                <p class="text-xs text-gray-400 mt-0.5">Set the monthly and annual prices for Basic and Pro plans shown on the creator upgrade page</p>
             </div>
             <form @submit.prevent="savePlanPricing" class="px-4 sm:px-5 py-4 flex flex-wrap items-end gap-3 sm:gap-4">
                 <div>
@@ -82,9 +82,25 @@
                     />
                 </div>
                 <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Basic Plan (₱/year)</label>
+                    <input
+                        v-model.number="planForm.basic_annual_price"
+                        type="number" min="0" step="1"
+                        class="w-36 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                    />
+                </div>
+                <div>
                     <label class="block text-xs font-medium text-gray-600 mb-1">Pro Plan (₱/mo)</label>
                     <input
                         v-model.number="planForm.pro_price"
+                        type="number" min="0" step="1"
+                        class="w-36 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                    />
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Pro Plan (₱/year)</label>
+                    <input
+                        v-model.number="planForm.pro_annual_price"
                         type="number" min="0" step="1"
                         class="w-36 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
                     />
@@ -437,8 +453,10 @@ const statCards = computed(() => [
 
 const page = usePage();
 const planForm = useForm({
-    basic_price: props.creatorPlanPricing.basic_price,
-    pro_price:   props.creatorPlanPricing.pro_price,
+    basic_price:        props.creatorPlanPricing.basic_price,
+    pro_price:          props.creatorPlanPricing.pro_price,
+    basic_annual_price: props.creatorPlanPricing.basic_annual_price,
+    pro_annual_price:   props.creatorPlanPricing.pro_annual_price,
 });
 
 function savePlanPricing() {
