@@ -512,7 +512,38 @@
                                     </span>
                                     <input ref="editCoverInput" type="file" accept="image/*" class="hidden" @change="onEditCoverChange" />
                                 </label>
+                                <div v-if="editCoverGenerating" class="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2 pointer-events-none">
+                                    <div class="w-6 h-6 border-2 border-white/40 border-t-white rounded-full animate-spin"></div>
+                                    <span class="text-white text-xs font-semibold">Generating cover…</span>
+                                </div>
                             </div>
+
+                            <div class="flex items-center gap-2 flex-wrap mb-1">
+                                <button type="button"
+                                    @click="editCoverPromptOpen = !editCoverPromptOpen"
+                                    :disabled="editCoverGenerating"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-indigo-200 text-indigo-600 hover:bg-indigo-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                                    Generate with AI
+                                </button>
+                                <button v-if="!editCoverGenerating" type="button"
+                                    @click="generateCoverWithAi"
+                                    class="text-xs text-gray-500 hover:text-indigo-600">
+                                    Use title + brand only
+                                </button>
+                            </div>
+                            <div v-if="editCoverPromptOpen" class="mb-2">
+                                <textarea v-model="editCoverExtraPrompt" rows="2"
+                                    placeholder="Optional: add extra guidance (e.g. 'hero holding a camera, sunrise lighting')"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"></textarea>
+                                <button type="button"
+                                    @click="generateCoverWithAi"
+                                    :disabled="editCoverGenerating"
+                                    class="mt-1 px-3 py-1.5 text-xs font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50">
+                                    {{ editCoverGenerating ? 'Generating…' : 'Generate' }}
+                                </button>
+                            </div>
+                            <p v-if="editCoverGenError" class="text-xs text-red-500 mb-1">{{ editCoverGenError }}</p>
                             <p class="text-xs text-gray-400">Recommended: 1280 × 720 px</p>
                         </div>
 
@@ -761,6 +792,34 @@ function onEditCoverChange(e) {
 
 const editCoverDropRef = ref(null);
 const { isDragging: editCoverDragging } = useDropzone(editCoverDropRef, files => onEditCoverChange(files[0]), { accept: 'image/*' });
+
+const editCoverGenerating = ref(false);
+const editCoverGenError   = ref('');
+const editCoverPromptOpen = ref(false);
+const editCoverExtraPrompt = ref('');
+
+async function generateCoverWithAi() {
+    if (!editingCourse.value || editCoverGenerating.value) return;
+    editCoverGenerating.value = true;
+    editCoverGenError.value = '';
+    try {
+        const { data } = await axios.post(
+            `/communities/${props.community.slug}/classroom/courses/${editingCourse.value.id}/generate-cover`,
+            { prompt: editCoverExtraPrompt.value || null },
+        );
+        // Cache-bust so the <img> actually refreshes when the URL is the same path.
+        const busted = data.cover_image + (data.cover_image.includes('?') ? '&' : '?') + 'v=' + Date.now();
+        editingCourse.value = { ...editingCourse.value, cover_image: busted };
+        editCoverPreview.value = null;
+        editForm.cover_image = null;
+        editCoverPromptOpen.value = false;
+        editCoverExtraPrompt.value = '';
+    } catch (err) {
+        editCoverGenError.value = err.response?.data?.error || 'Image generation failed. Please try again.';
+    } finally {
+        editCoverGenerating.value = false;
+    }
+}
 
 async function onEditVideoChange(e) {
     const file = e.target.files?.[0];

@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Actions\Classroom\GenerateCourseCover;
 use App\Actions\Classroom\ManageCourse;
+use App\Exceptions\AiBudgetExceededException;
 use App\Http\Controllers\Controller;
 use App\Models\Community;
 use App\Models\CommunityMember;
@@ -154,6 +156,37 @@ class CourseController extends Controller
         } catch (\Throwable $e) {
             Log::error('CourseController@togglePublish failed', ['error' => $e->getMessage(), 'community' => $community->id]);
             throw $e;
+        }
+    }
+
+    public function generateCover(Request $request, Community $community, Course $course, GenerateCourseCover $action): JsonResponse
+    {
+        $this->authorize('manage', $community);
+
+        $data = $request->validate([
+            'prompt' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        try {
+            $course = $action->execute($community, $course, auth()->id(), $data['prompt'] ?? null);
+
+            return response()->json([
+                'cover_image' => $course->cover_image,
+            ]);
+        } catch (AiBudgetExceededException $e) {
+            return response()->json([
+                'error' => 'AI spending cap reached. Please try again later.',
+            ], 429);
+        } catch (\Throwable $e) {
+            Log::error('CourseController@generateCover failed', [
+                'error' => $e->getMessage(),
+                'community' => $community->id,
+                'course' => $course->id,
+            ]);
+
+            return response()->json([
+                'error' => 'Image generation failed. Please try again.',
+            ], 503);
         }
     }
 
