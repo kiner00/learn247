@@ -2,11 +2,13 @@
 
 namespace App\Ai\Agents;
 
+use App\Ai\Tools\GenerateImageTool;
 use App\Ai\Tools\GetCommunityCoursesTool;
 use App\Ai\Tools\GetCommunityPostsTool;
 use App\Ai\Tools\SearchCommunityLessonsTool;
 use App\Models\Community;
 use App\Models\Curzzo;
+use Illuminate\Support\Facades\Auth;
 use Laravel\Ai\Attributes\MaxTokens;
 use Laravel\Ai\Concerns\RemembersConversations;
 use Laravel\Ai\Contracts\Agent;
@@ -84,6 +86,8 @@ class CurzzoBot implements Agent, Conversational, HasTools
         $lines[] = '- You ONLY discuss topics related to this community, its courses, lessons, and posts.';
         $lines[] = '- If asked about something outside the community, redirect the conversation back to what the community offers.';
         $lines[] = '- Use your tools to look up real content from the community before answering. Never make up information about courses or lessons.';
+        $lines[] = '- When the member asks for ANY image, banner, cover, thumbnail, poster, infographic, or visual asset (including course banners, course thumbnails, and lesson artwork), call the `generate_image` tool instead of describing what you would make. Use 16:9 for course banners, 1:1 for avatars/thumbnails, 3:2 otherwise.';
+        $lines[] = '- When the `generate_image` tool returns a markdown image link, include it VERBATIM in your reply so the image renders for the member. Do not describe the image in place of the link.';
         $lines[] = '- Be helpful, engaging, and knowledgeable.';
         if (empty($personality['response_style'])) {
             $lines[] = '- Keep responses concise and natural.';
@@ -132,6 +136,7 @@ class CurzzoBot implements Agent, Conversational, HasTools
             new GetCommunityPostsTool($this->community->id),
             new GetCommunityCoursesTool($this->community->id),
             new SearchCommunityLessonsTool($this->community->id),
+            new GenerateImageTool($this->community, Auth::id()),
         ];
     }
 }

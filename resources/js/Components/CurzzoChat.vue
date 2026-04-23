@@ -49,6 +49,29 @@ const usagePercent = computed(() => {
     return Math.min(100, (dailyUsed.value / dailyLimit.value) * 100);
 });
 
+// Splits an assistant message into text + image parts so ![alt](url) markdown
+// renders as an inline <img>. Safe for HTML because src/alt are bound, not
+// interpolated into innerHTML.
+const IMAGE_MARKDOWN = /!\[([^\]]*)\]\((https?:\/\/[^\s)]+|\/[^\s)]+)\)/g;
+function renderParts(text) {
+    if (!text) return [{ type: 'text', text: '' }];
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+    IMAGE_MARKDOWN.lastIndex = 0;
+    while ((match = IMAGE_MARKDOWN.exec(text)) !== null) {
+        if (match.index > lastIndex) {
+            parts.push({ type: 'text', text: text.slice(lastIndex, match.index).trim() });
+        }
+        parts.push({ type: 'image', alt: match[1] || 'generated image', url: match[2] });
+        lastIndex = match.index + match[0].length;
+    }
+    if (lastIndex < text.length) {
+        parts.push({ type: 'text', text: text.slice(lastIndex).trim() });
+    }
+    return parts.filter(p => p.type === 'image' || p.text);
+}
+
 function scrollToBottom() {
     nextTick(() => {
         if (chatContainer.value) {
@@ -219,11 +242,18 @@ onMounted(loadHistory);
             <template v-else>
                 <div v-for="(msg, i) in messages" :key="i"
                     class="flex" :class="msg.role === 'user' ? 'justify-end' : 'justify-start'">
-                    <div class="max-w-[80%] min-w-0 px-4 py-2.5 rounded-2xl text-sm leading-relaxed"
+                    <div class="max-w-[80%] min-w-0 px-4 py-2.5 rounded-2xl text-sm leading-relaxed space-y-2"
                         :class="msg.role === 'user'
                             ? 'bg-indigo-600 text-white rounded-br-md'
                             : 'bg-white text-gray-800 border border-gray-200 rounded-bl-md'">
-                        <p class="whitespace-pre-wrap break-words">{{ msg.text }}</p>
+                        <template v-for="(part, j) in renderParts(msg.text)" :key="j">
+                            <img v-if="part.type === 'image'"
+                                :src="part.url"
+                                :alt="part.alt"
+                                loading="lazy"
+                                class="block max-w-full rounded-lg border border-gray-200 bg-gray-50" />
+                            <p v-else-if="part.text" class="whitespace-pre-wrap break-words">{{ part.text }}</p>
+                        </template>
                     </div>
                 </div>
             </template>
