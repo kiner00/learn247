@@ -119,3 +119,24 @@ function renderHtml() {
 onMounted(() => nextTick(renderHtml));
 watch(() => props.html, () => nextTick(renderHtml));
 </script>
+
+<style>
+/* Tailwind Preflight zeroes out p/h/ul/ol margins, so TipTap-saved content
+   collapses to a wall of text. Mirror LessonEditor's in-editor typography
+   so the saved view matches the edit view. */
+.lesson-display p { margin: 0.25rem 0; line-height: 1.6; }
+.lesson-display p + p { margin-top: 0.75rem; }
+.lesson-display h2 { font-size: 1.1rem; font-weight: 700; margin: 0.75rem 0 0.25rem; }
+.lesson-display h3 { font-size: 0.95rem; font-weight: 600; margin: 0.6rem 0 0.2rem; }
+.lesson-display ul { list-style-type: disc; padding-left: 1.25rem; margin: 0.4rem 0; }
+.lesson-display ol { list-style-type: decimal; padding-left: 1.25rem; margin: 0.4rem 0; }
+.lesson-display li { margin: 0.15rem 0; }
+.lesson-display strong { font-weight: 700; }
+.lesson-display em { font-style: italic; }
+.lesson-display a { color: #4f46e5; text-decoration: underline; }
+.lesson-display code { background: #f3f4f6; padding: 0.1em 0.35em; border-radius: 4px; font-size: 0.85em; }
+.lesson-display pre { background: #1e1e2e; color: #cdd6f4; padding: 1rem; border-radius: 8px; overflow-x: auto; margin: 0.5rem 0; }
+.lesson-display pre code { background: none; padding: 0; color: inherit; font-size: 0.85rem; }
+.lesson-display img { max-width: 100%; height: auto; border-radius: 8px; margin: 0.5rem 0; }
+.lesson-display blockquote { border-left: 3px solid #e5e7eb; padding-left: 0.75rem; margin: 0.5rem 0; color: #6b7280; }
+</style>
