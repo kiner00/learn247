@@ -32,13 +32,25 @@ class DirectMessageController extends Controller
 
     public function store(Request $request, User $user, SendDirectMessage $action): JsonResponse
     {
-        $data = $request->validate(['content' => ['required', 'string', 'max:2000']]);
-        $msg = $action->execute($request->user(), $user, $data['content']);
+        $data = $request->validate([
+            'content' => ['nullable', 'string', 'max:2000'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,jpg,png,gif,webp', 'max:10240'],
+        ]);
+
+        if (empty($data['content']) && ! $request->hasFile('image')) {
+            return response()->json([
+                'message' => 'A message must include text or an image.',
+                'errors' => ['content' => ['A message must include text or an image.']],
+            ], 422);
+        }
+
+        $msg = $action->execute($request->user(), $user, $data['content'] ?? null, $request->file('image'));
 
         return response()->json([
             'message' => [
                 'id' => $msg->id,
                 'content' => $msg->content,
+                'image_url' => $msg->image_url,
                 'is_mine' => true,
                 'created_at' => $msg->created_at,
             ],

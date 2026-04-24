@@ -53,7 +53,16 @@
                             <div v-else class="w-7 shrink-0"></div>
 
                             <div class="max-w-xs">
-                                <div class="px-3.5 py-2 bg-gray-100 rounded-2xl rounded-bl-sm text-sm text-gray-800 leading-relaxed">
+                                <a
+                                    v-if="msg.image_url"
+                                    :href="msg.image_url"
+                                    target="_blank"
+                                    rel="noopener"
+                                    class="block mb-1"
+                                >
+                                    <img :src="msg.image_url" alt="Attachment" class="rounded-2xl rounded-bl-sm max-h-64 object-cover" />
+                                </a>
+                                <div v-if="msg.content" class="px-3.5 py-2 bg-gray-100 rounded-2xl rounded-bl-sm text-sm text-gray-800 leading-relaxed">
                                     {{ msg.content }}
                                 </div>
                                 <p class="text-[10px] text-gray-400 mt-0.5 ml-1">{{ formatTime(msg.created_at) }}</p>
@@ -72,7 +81,16 @@
                                 </svg>
                             </button>
                             <div class="max-w-xs">
-                                <div class="px-3.5 py-2 bg-indigo-600 rounded-2xl rounded-br-sm text-sm text-white leading-relaxed">
+                                <a
+                                    v-if="msg.image_url"
+                                    :href="msg.image_url"
+                                    target="_blank"
+                                    rel="noopener"
+                                    class="block mb-1"
+                                >
+                                    <img :src="msg.image_url" alt="Attachment" class="rounded-2xl rounded-br-sm max-h-64 object-cover ml-auto" />
+                                </a>
+                                <div v-if="msg.content" class="px-3.5 py-2 bg-indigo-600 rounded-2xl rounded-br-sm text-sm text-white leading-relaxed">
                                     {{ msg.content }}
                                 </div>
                                 <p class="text-[10px] text-gray-400 mt-0.5 text-right mr-1">{{ formatTime(msg.created_at) }}</p>
@@ -83,7 +101,36 @@
 
                 <!-- Input -->
                 <div class="px-4 py-3 border-t border-gray-100 shrink-0">
+                    <!-- Attachment preview -->
+                    <div v-if="attachmentPreview" class="mb-2 relative inline-block">
+                        <img :src="attachmentPreview" alt="Attachment preview" class="max-h-24 rounded-lg border border-gray-200" />
+                        <button
+                            type="button"
+                            @click="clearAttachment"
+                            class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-gray-900/80 text-white flex items-center justify-center text-xs hover:bg-gray-900"
+                            title="Remove attachment"
+                        >×</button>
+                    </div>
+                    <p v-if="attachmentError" class="text-xs text-red-500 mb-1">{{ attachmentError }}</p>
+
                     <form @submit.prevent="send" class="flex items-end gap-2">
+                        <!-- Attach button -->
+                        <label
+                            class="shrink-0 w-9 h-9 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:bg-gray-100 rounded-xl cursor-pointer transition-colors"
+                            title="Attach image"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+                            </svg>
+                            <input
+                                ref="fileInputEl"
+                                type="file"
+                                accept="image/jpeg,image/png,image/gif,image/webp"
+                                class="hidden"
+                                @change="onFileSelected"
+                            />
+                        </label>
+
                         <div class="flex-1">
                             <textarea
                                 v-model="content"
@@ -99,7 +146,7 @@
                         </div>
                         <button
                             type="submit"
-                            :disabled="!content.trim() || sending"
+                            :disabled="(!content.trim() && !attachment) || sending"
                             class="shrink-0 w-9 h-9 flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white rounded-xl transition-colors"
                         >
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -134,6 +181,40 @@ const content    = ref('');
 const sending    = ref(false);
 const messagesEl = ref(null);
 const inputEl    = ref(null);
+const fileInputEl = ref(null);
+const attachment = ref(null);
+const attachmentPreview = ref(null);
+const attachmentError = ref('');
+
+const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
+const ALLOWED_ATTACHMENT_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
+function onFileSelected(e) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!ALLOWED_ATTACHMENT_TYPES.includes(file.type)) {
+        attachmentError.value = 'Only JPG, PNG, GIF, or WebP images are supported.';
+        return;
+    }
+    if (file.size > MAX_ATTACHMENT_BYTES) {
+        attachmentError.value = 'Image must be 10 MB or smaller.';
+        return;
+    }
+    attachmentError.value = '';
+    attachment.value = file;
+    attachmentPreview.value = URL.createObjectURL(file);
+}
+
+function clearAttachment() {
+    attachment.value = null;
+    if (attachmentPreview.value) {
+        URL.revokeObjectURL(attachmentPreview.value);
+    }
+    attachmentPreview.value = null;
+    attachmentError.value = '';
+    if (fileInputEl.value) fileInputEl.value.value = '';
+}
 
 const avatarColors = [
     'bg-indigo-100 text-indigo-600', 'bg-violet-100 text-violet-600',
@@ -174,18 +255,34 @@ async function deleteMessage(msg) {
 
 async function send() {
     const text = content.value.trim();
-    if (!text || sending.value) return;
+    const file = attachment.value;
+    if ((!text && !file) || sending.value) return;
 
     sending.value = true;
     content.value = '';
     if (inputEl.value) inputEl.value.style.height = 'auto';
 
+    const form = new FormData();
+    if (text) form.append('content', text);
+    if (file) form.append('image', file);
+
     try {
-        const res = await axios.post(`/messages/${props.partner.username ?? props.partner.id}`, { content: text });
+        const res = await axios.post(
+            `/messages/${props.partner.username ?? props.partner.id}`,
+            form,
+            { headers: { 'Content-Type': 'multipart/form-data' } },
+        );
         messages.value.push(res.data.message);
+        clearAttachment();
         scrollToBottom(true);
-    } catch {
+    } catch (err) {
         content.value = text;
+        if (err.response?.status === 422) {
+            attachmentError.value = err.response.data?.errors?.image?.[0]
+                || err.response.data?.errors?.content?.[0]
+                || err.response.data?.message
+                || 'Message could not be sent.';
+        }
     } finally {
         sending.value = false;
     }

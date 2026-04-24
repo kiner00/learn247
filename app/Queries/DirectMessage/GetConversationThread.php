@@ -19,6 +19,7 @@ class GetConversationThread
         })->oldest()->take($limit)->get()->map(fn ($m) => [
             'id' => $m->id,
             'content' => $m->content,
+            'image_url' => $m->image_url,
             'is_mine' => $m->sender_id === $myId,
             'created_at' => $m->created_at,
         ]);
@@ -45,6 +46,7 @@ class GetConversationThread
             ->map(fn ($m) => [
                 'id' => $m->id,
                 'content' => $m->content,
+                'image_url' => $m->image_url,
                 'is_mine' => false,
                 'created_at' => $m->created_at,
             ]);

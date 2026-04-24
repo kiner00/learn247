@@ -7,6 +7,8 @@ use App\Models\CommunityMember;
 use App\Models\DirectMessage;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class DirectMessageControllerTest extends TestCase
@@ -173,7 +175,7 @@ class DirectMessageControllerTest extends TestCase
         ]);
     }
 
-    public function test_store_validates_content_required(): void
+    public function test_store_rejects_missing_content_and_image(): void
     {
         $sender = $this->createUserWithUsername();
         $receiver = $this->createUserWithUsername();
@@ -184,7 +186,62 @@ class DirectMessageControllerTest extends TestCase
             ]);
 
         $response->assertUnprocessable();
-        $response->assertJsonValidationErrors('content');
+    }
+
+    public function test_store_accepts_image_only_message(): void
+    {
+        Storage::fake();
+
+        $sender = $this->createUserWithUsername();
+        $receiver = $this->createUserWithUsername();
+
+        $response = $this->actingAs($sender)
+            ->post("/messages/{$receiver->username}", [
+                'image' => UploadedFile::fake()->image('hello.png'),
+            ], ['Accept' => 'application/json']);
+
+        $response->assertOk();
+        $response->assertJsonPath('message.is_mine', true);
+        $this->assertNotNull($response->json('message.image_url'));
+        $this->assertDatabaseHas('direct_messages', [
+            'sender_id' => $sender->id,
+            'receiver_id' => $receiver->id,
+            'content' => null,
+        ]);
+    }
+
+    public function test_store_accepts_content_plus_image(): void
+    {
+        Storage::fake();
+
+        $sender = $this->createUserWithUsername();
+        $receiver = $this->createUserWithUsername();
+
+        $response = $this->actingAs($sender)
+            ->post("/messages/{$receiver->username}", [
+                'content' => 'check this',
+                'image' => UploadedFile::fake()->image('hello.png'),
+            ], ['Accept' => 'application/json']);
+
+        $response->assertOk();
+        $response->assertJsonPath('message.content', 'check this');
+        $this->assertNotNull($response->json('message.image_url'));
+    }
+
+    public function test_store_rejects_non_image_file(): void
+    {
+        Storage::fake();
+
+        $sender = $this->createUserWithUsername();
+        $receiver = $this->createUserWithUsername();
+
+        $response = $this->actingAs($sender)
+            ->post("/messages/{$receiver->username}", [
+                'image' => UploadedFile::fake()->create('malware.exe', 50, 'application/octet-stream'),
+            ], ['Accept' => 'application/json']);
+
+        $response->assertUnprocessable();
+        $response->assertJsonValidationErrors('image');
     }
 
     public function test_store_validates_content_max_length(): void

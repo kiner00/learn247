@@ -34,6 +34,7 @@ class GetConversations
                 'user' => $partner,
                 'latest_message' => $latest ? [
                     'content' => $latest->content,
+                    'has_image' => (bool) $latest->image_url,
                     'created_at' => $latest->created_at,
                     'is_mine' => $latest->sender_id === $userId,
                 ] : null,
