@@ -29,7 +29,9 @@ class CurzzoBot implements Agent, Conversational, HasTools
 
     public function timeout(): int
     {
-        return 120;
+        // Complex image prompts can exceed 120s while the model reasons and
+        // the image provider renders. Stays under the nginx/PHP 300s ceiling.
+        return 240;
     }
 
     public function instructions(): string
