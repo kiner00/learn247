@@ -85,4 +85,34 @@ class ForgotPasswordControllerTest extends TestCase
         $this->post('/reset-password', [])
             ->assertSessionHasErrors(['token', 'email', 'password']);
     }
+
+    public function test_show_reset_renders_for_authenticated_user_and_logs_them_out(): void
+    {
+        $user = User::factory()->create(['email' => 'still-logged-in@example.com']);
+
+        $this->actingAs($user)
+            ->get('/reset-password/some-token?email=still-logged-in@example.com')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->component('Auth/ResetPassword'));
+
+        $this->assertGuest();
+    }
+
+    public function test_reset_from_authenticated_session_logs_user_out_after_success(): void
+    {
+        $user = User::factory()->create(['email' => 'auth-reset@example.com']);
+        $token = Password::broker()->createToken($user);
+
+        $this->actingAs($user)
+            ->post('/reset-password', [
+                'token' => $token,
+                'email' => $user->email,
+                'password' => 'NewPassword1!',
+                'password_confirmation' => 'NewPassword1!',
+            ])
+            ->assertRedirect(route('login'))
+            ->assertSessionHas('success');
+
+        $this->assertGuest();
+    }
 }
