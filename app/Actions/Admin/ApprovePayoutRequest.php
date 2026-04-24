@@ -2,7 +2,6 @@
 
 namespace App\Actions\Admin;
 
-use App\Models\Affiliate;
 use App\Models\Community;
 use App\Models\OwnerPayout;
 use App\Models\PayoutRequest;
@@ -24,16 +23,9 @@ class ApprovePayoutRequest
 
         $user = $payoutRequest->user;
 
-        if ($payoutRequest->type === PayoutRequest::TYPE_OWNER) {
-            $payoutMethod = $user->payout_method;
-            $payoutDetails = $user->payout_details;
-            $holderName = $user->name;
-        } else {
-            $affiliate = Affiliate::findOrFail($payoutRequest->affiliate_id);
-            $payoutMethod = $affiliate->payout_method;
-            $payoutDetails = $affiliate->payout_details;
-            $holderName = $user->name;
-        }
+        $payoutMethod = $user->payout_method;
+        $payoutDetails = $user->payout_details;
+        $holderName = $user->name;
 
         if (! PayoutChannelMap::supports($payoutMethod) || ! $payoutDetails) {
             abort(422, 'User has no valid payout method on file.');

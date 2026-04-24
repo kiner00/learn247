@@ -31,7 +31,7 @@ class BatchPayAffiliates
         }
 
         $conversions = $query->get()
-            ->filter(fn ($c) => DisbursePayout::supports($c->affiliate->payout_method ?? ''));
+            ->filter(fn ($c) => DisbursePayout::supports($c->affiliate->user?->payout_method ?? ''));
 
         $paid = 0;
         $errors = [];

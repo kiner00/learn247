@@ -179,15 +179,16 @@ class AdminControllerTest extends TestCase
         $this->mockXendit();
         $admin = $this->superAdmin();
 
-        $affiliateUser = User::factory()->create();
+        $affiliateUser = User::factory()->create([
+            'payout_method' => 'maya',
+            'payout_details' => '09179876543',
+        ]);
         $community = Community::factory()->create();
         $affiliate = Affiliate::create([
             'community_id' => $community->id,
             'user_id' => $affiliateUser->id,
             'code' => 'AFF-PAYOUT',
             'status' => Affiliate::STATUS_ACTIVE,
-            'payout_method' => 'maya',
-            'payout_details' => '09179876543',
         ]);
         PayoutRequest::create([
             'user_id' => $affiliateUser->id,
@@ -765,7 +766,10 @@ class AdminControllerTest extends TestCase
         $this->mockXendit();
         $admin = $this->superAdmin();
 
-        $affiliateUser = User::factory()->create();
+        $affiliateUser = User::factory()->create([
+            'payout_method' => 'maya',
+            'payout_details' => '09171234567',
+        ]);
         $community = Community::factory()->create();
         $affiliate = Affiliate::create([
             'community_id' => $community->id,
@@ -774,8 +778,6 @@ class AdminControllerTest extends TestCase
             'status' => Affiliate::STATUS_ACTIVE,
             'total_earned' => 100,
             'total_paid' => 0,
-            'payout_method' => 'maya',
-            'payout_details' => '09171234567',
         ]);
         $payoutRequest = PayoutRequest::create([
             'user_id' => $affiliateUser->id,

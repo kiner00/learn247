@@ -115,9 +115,9 @@ class GetPayoutsDashboard
                 'total_earned' => (float) $a->total_earned,
                 'total_paid' => (float) $a->total_paid,
                 'pending' => $a->pendingAmount(),
-                'payout_method' => $a->payout_method,
-                'payout_details' => $a->payout_details,
-                'can_disburse' => DisbursePayout::supports($a->payout_method ?? ''),
+                'payout_method' => $a->user->payout_method,
+                'payout_details' => $a->user->payout_details,
+                'can_disburse' => DisbursePayout::supports($a->user->payout_method ?? ''),
             ])
             ->filter(fn ($a) => $a['total_earned'] > 0)
             ->values();
@@ -133,12 +133,8 @@ class GetPayoutsDashboard
                 'id' => $r->id,
                 'user_name' => $r->user->name,
                 'user_email' => $r->user->email,
-                'payout_method' => $r->type === PayoutRequest::TYPE_OWNER
-                    ? $r->user->payout_method
-                    : optional(Affiliate::find($r->affiliate_id))->payout_method,
-                'payout_details' => $r->type === PayoutRequest::TYPE_OWNER
-                    ? $r->user->payout_details
-                    : optional(Affiliate::find($r->affiliate_id))->payout_details,
+                'payout_method' => $r->user->payout_method,
+                'payout_details' => $r->user->payout_details,
                 'type' => $r->type,
                 'community_name' => $r->community?->name,
                 'amount' => (float) $r->amount,

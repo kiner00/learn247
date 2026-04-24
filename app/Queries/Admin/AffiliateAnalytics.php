@@ -68,7 +68,7 @@ class AffiliateAnalytics
                 'affiliate_id' => $affiliate->id,
                 'affiliate_code' => $affiliate->code,
                 'affiliate_status' => $affiliate->status,
-                'payout_method' => $affiliate->payout_method,
+                'payout_method' => $affiliate->user?->payout_method,
                 'user_name' => $affiliate->user?->name ?? '—',
                 'user_email' => $affiliate->user?->email ?? '—',
                 'community_name' => $affiliate->community?->name ?? '—',

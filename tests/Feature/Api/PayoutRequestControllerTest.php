@@ -170,15 +170,17 @@ class PayoutRequestControllerTest extends TestCase
 
     public function test_store_affiliate_creates_payout_request_successfully(): void
     {
-        $user = User::factory()->create(['kyc_verified_at' => now()]);
+        $user = User::factory()->create([
+            'kyc_verified_at' => now(),
+            'payout_method' => 'gcash',
+            'payout_details' => '09171234567',
+        ]);
         $community = Community::factory()->create(['price' => 499]);
         $affiliate = Affiliate::create([
             'community_id' => $community->id,
             'user_id' => $user->id,
             'code' => 'AFF003',
             'status' => Affiliate::STATUS_ACTIVE,
-            'payout_method' => 'gcash',
-            'payout_details' => '09171234567',
         ]);
 
         $conversion = AffiliateConversion::create([

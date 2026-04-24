@@ -20,11 +20,13 @@ class RequestAffiliatePayout
             return ['success' => false, 'message' => 'Your affiliate membership is suspended. Renew your subscription to re-enable payouts.'];
         }
 
-        if (! $affiliate->user?->isKycVerified()) {
+        $user = $affiliate->user;
+
+        if (! $user?->isKycVerified()) {
             return ['success' => false, 'message' => 'KYC verification is required before requesting payouts. Please complete identity verification in Account Settings.'];
         }
 
-        if (! in_array($affiliate->payout_method, ['gcash', 'maya']) || ! $affiliate->payout_details) {
+        if (! in_array($user->payout_method, ['gcash', 'maya']) || ! $user->payout_details) {
             return ['success' => false, 'message' => 'Please set your payout method before requesting a payout.'];
         }
 

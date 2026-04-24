@@ -18,7 +18,11 @@ class RequestAffiliatePayoutTest extends TestCase
 
     private function makeAffiliate(array $overrides = [], array $userOverrides = []): Affiliate
     {
-        $user = User::factory()->create(array_merge(['kyc_verified_at' => now()], $userOverrides));
+        $user = User::factory()->create(array_merge([
+            'kyc_verified_at' => now(),
+            'payout_method' => 'gcash',
+            'payout_details' => '09171234567',
+        ], $userOverrides));
         $community = Community::factory()->create();
 
         return Affiliate::create(array_merge([
@@ -26,8 +30,6 @@ class RequestAffiliatePayoutTest extends TestCase
             'user_id' => $user->id,
             'code' => 'AFF-TEST-'.uniqid(),
             'status' => Affiliate::STATUS_ACTIVE,
-            'payout_method' => 'gcash',
-            'payout_details' => '09171234567',
             'total_earned' => 500,
             'total_paid' => 0,
         ], $overrides));
@@ -61,7 +63,7 @@ class RequestAffiliatePayoutTest extends TestCase
 
     public function test_missing_payout_method_returns_failure(): void
     {
-        $affiliate = $this->makeAffiliate([
+        $affiliate = $this->makeAffiliate([], [
             'payout_method' => null,
             'payout_details' => null,
         ]);
@@ -77,7 +79,7 @@ class RequestAffiliatePayoutTest extends TestCase
 
     public function test_unsupported_payout_method_returns_failure(): void
     {
-        $affiliate = $this->makeAffiliate([
+        $affiliate = $this->makeAffiliate([], [
             'payout_method' => 'paypal',
             'payout_details' => 'test@paypal.com',
         ]);
@@ -140,6 +142,37 @@ class RequestAffiliatePayoutTest extends TestCase
 
         $this->assertFalse($result['success']);
         $this->assertStringContainsString('exceeds eligible balance', $result['message']);
+    }
+
+    public function test_user_level_payout_method_is_used_when_affiliate_row_is_empty(): void
+    {
+        $affiliate = $this->makeAffiliate(
+            [
+                'payout_method' => null,
+                'payout_details' => null,
+            ],
+            [
+                'payout_method' => 'gcash',
+                'payout_details' => '09955300226',
+                'kyc_verified_at' => now(),
+            ]
+        );
+
+        $eligibility = Mockery::mock(CalculateEligibility::class);
+        $eligibility->shouldReceive('forAffiliate')->with($affiliate)->andReturn(99.50);
+
+        $action = new RequestAffiliatePayout($eligibility);
+        $result = $action->execute($affiliate, 99.50);
+
+        $this->assertTrue(
+            $result['success'],
+            'Request should succeed when the user has payout fields set, even if the affiliate row does not. Got: '.$result['message']
+        );
+        $this->assertDatabaseHas('payout_requests', [
+            'affiliate_id' => $affiliate->id,
+            'amount' => 99.50,
+            'status' => PayoutRequest::STATUS_PENDING,
+        ]);
     }
 
     public function test_successful_payout_request_creates_record(): void
