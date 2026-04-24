@@ -190,8 +190,27 @@ class GetCourseListTest extends TestCase
         $reflection = new \ReflectionMethod(GetCourseList::class, 'resolveAccess');
         $reflection->setAccessible(true);
 
-        $result = $reflection->invoke($query, $course, false, false, false, collect());
+        $result = $reflection->invoke($query, $course, false, false, false, collect(), false, false);
 
         $this->assertFalse($result);
+    }
+
+    public function test_execute_inclusive_course_accessible_to_any_member_on_free_community(): void
+    {
+        $community = Community::factory()->create(['price' => 0]);
+        $member = User::factory()->create();
+        CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $member->id]);
+
+        Course::create([
+            'community_id' => $community->id,
+            'title' => 'Inclusive Course',
+            'access_type' => Course::ACCESS_INCLUSIVE,
+            'position' => 0,
+        ]);
+
+        $query = new GetCourseList;
+        $result = $query->execute($community, $member->id);
+
+        $this->assertTrue($result->first()['has_access']);
     }
 }

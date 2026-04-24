@@ -62,8 +62,10 @@ class GetCourseList
                 ->flip()
             : collect();
 
-        return $courses->map(function ($course) use ($userId, $isOwner, $isMember, $isPaidMember, $paidEnrollmentIds, $wasEverMember, $completedLessonIds) {
-            $hasAccess = $this->resolveAccess($course, $isOwner, $isMember, $isPaidMember, $paidEnrollmentIds, $wasEverMember);
+        $communityIsFree = $community->isFree();
+
+        return $courses->map(function ($course) use ($userId, $isOwner, $isMember, $isPaidMember, $paidEnrollmentIds, $wasEverMember, $completedLessonIds, $communityIsFree) {
+            $hasAccess = $this->resolveAccess($course, $isOwner, $isMember, $isPaidMember, $paidEnrollmentIds, $wasEverMember, $communityIsFree);
 
             $lessonIds = $course->modules->flatMap(fn ($m) => $m->lessons->pluck('id'));
             $total = $lessonIds->count();
@@ -98,7 +100,7 @@ class GetCourseList
         });
     }
 
-    private function resolveAccess(Course $course, bool $isOwner, bool $isMember, bool $isPaidMember, $paidEnrollmentIds, bool $wasEverMember = false): bool
+    private function resolveAccess(Course $course, bool $isOwner, bool $isMember, bool $isPaidMember, $paidEnrollmentIds, bool $wasEverMember, bool $communityIsFree): bool
     {
         if ($isOwner) {
             return true;
@@ -109,7 +111,8 @@ class GetCourseList
         }
 
         if ($course->access_type === Course::ACCESS_INCLUSIVE) {
-            return $isPaidMember;
+            // Free communities have no paid tier — "inclusive" grants access to any member.
+            return $communityIsFree ? $isMember : $isPaidMember;
         }
 
         if (in_array($course->access_type, [Course::ACCESS_PAID_ONCE, Course::ACCESS_PAID_MONTHLY])) {
