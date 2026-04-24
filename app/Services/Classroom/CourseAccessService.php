@@ -29,6 +29,14 @@ class CourseAccessService
         }
 
         if ($course->access_type === Course::ACCESS_INCLUSIVE) {
+            // Free communities have no paid-subscriber tier, so "inclusive" falls back to
+            // any community member. Paid communities require an active subscription.
+            if ($community->isFree()) {
+                return CommunityMember::where('community_id', $community->id)
+                    ->where('user_id', $user->id)
+                    ->exists();
+            }
+
             return Subscription::where('community_id', $community->id)
                 ->where('user_id', $user->id)
                 ->where('status', Subscription::STATUS_ACTIVE)

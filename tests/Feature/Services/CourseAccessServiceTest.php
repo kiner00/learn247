@@ -106,10 +106,29 @@ class CourseAccessServiceTest extends TestCase
 
     // ── INCLUSIVE courses ─────────────────────────────────────────────────────
 
+    public function test_inclusive_course_granted_to_any_member_on_free_community(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create(['price' => 0]);
+        \App\Models\CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
+        $course = Course::factory()->create(['community_id' => $community->id, 'access_type' => Course::ACCESS_INCLUSIVE]);
+
+        $this->assertTrue($this->service->hasAccess($user, $community, $course));
+    }
+
+    public function test_inclusive_course_denied_to_non_member_on_free_community(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create(['price' => 0]);
+        $course = Course::factory()->create(['community_id' => $community->id, 'access_type' => Course::ACCESS_INCLUSIVE]);
+
+        $this->assertFalse($this->service->hasAccess($user, $community, $course));
+    }
+
     public function test_inclusive_course_granted_with_active_subscription(): void
     {
         $user = User::factory()->create();
-        $community = Community::factory()->create();
+        $community = Community::factory()->paid()->create();
         $course = Course::factory()->create(['community_id' => $community->id, 'access_type' => Course::ACCESS_INCLUSIVE]);
 
         Subscription::factory()->active()->create([
@@ -124,7 +143,7 @@ class CourseAccessServiceTest extends TestCase
     public function test_inclusive_course_granted_with_lifetime_subscription(): void
     {
         $user = User::factory()->create();
-        $community = Community::factory()->create();
+        $community = Community::factory()->paid()->create();
         $course = Course::factory()->create(['community_id' => $community->id, 'access_type' => Course::ACCESS_INCLUSIVE]);
 
         Subscription::factory()->create([
@@ -140,7 +159,7 @@ class CourseAccessServiceTest extends TestCase
     public function test_inclusive_course_denied_with_expired_subscription(): void
     {
         $user = User::factory()->create();
-        $community = Community::factory()->create();
+        $community = Community::factory()->paid()->create();
         $course = Course::factory()->create(['community_id' => $community->id, 'access_type' => Course::ACCESS_INCLUSIVE]);
 
         Subscription::factory()->create([
@@ -153,10 +172,12 @@ class CourseAccessServiceTest extends TestCase
         $this->assertFalse($this->service->hasAccess($user, $community, $course));
     }
 
-    public function test_inclusive_course_denied_with_no_subscription(): void
+    public function test_inclusive_course_denied_with_no_subscription_on_paid_community(): void
     {
         $user = User::factory()->create();
-        $community = Community::factory()->create();
+        $community = Community::factory()->paid()->create();
+        // Trial / free CommunityMember row alone must NOT grant access on a paid community.
+        \App\Models\CommunityMember::factory()->create(['community_id' => $community->id, 'user_id' => $user->id]);
         $course = Course::factory()->create(['community_id' => $community->id, 'access_type' => Course::ACCESS_INCLUSIVE]);
 
         $this->assertFalse($this->service->hasAccess($user, $community, $course));
@@ -165,8 +186,8 @@ class CourseAccessServiceTest extends TestCase
     public function test_inclusive_course_denied_with_subscription_to_different_community(): void
     {
         $user = User::factory()->create();
-        $community = Community::factory()->create();
-        $other = Community::factory()->create();
+        $community = Community::factory()->paid()->create();
+        $other = Community::factory()->paid()->create();
         $course = Course::factory()->create(['community_id' => $community->id, 'access_type' => Course::ACCESS_INCLUSIVE]);
 
         Subscription::factory()->active()->create(['community_id' => $other->id, 'user_id' => $user->id]);
