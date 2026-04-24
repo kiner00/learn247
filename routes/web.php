@@ -374,6 +374,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('/communities/{community}/classroom/courses/{course}', [CourseController::class, 'destroy'])->name('communities.classroom.courses.destroy');
         Route::post('/communities/{community}/classroom/courses/{course}/toggle-publish', [CourseController::class, 'togglePublish'])->name('communities.classroom.courses.toggle-publish');
         Route::post('/communities/{community}/classroom/courses/{course}/generate-cover', [CourseController::class, 'generateCover'])->name('communities.classroom.courses.generate-cover')->middleware('throttle:10,1');
+        Route::post('/communities/{community}/classroom/courses/{course}/generate-description', [CourseController::class, 'generateDescription'])->name('communities.classroom.courses.generate-description')->middleware('throttle:20,1');
         Route::post('/communities/{community}/classroom/courses/{course}/modules', [CourseModuleController::class, 'store'])->name('communities.classroom.modules.store');
         Route::match(['patch', 'post'], '/communities/{community}/classroom/courses/{course}/modules/{module}', [CourseModuleController::class, 'update'])->name('communities.classroom.modules.update');
         Route::delete('/communities/{community}/classroom/courses/{course}/modules/{module}', [CourseModuleController::class, 'destroy'])->name('communities.classroom.modules.destroy');

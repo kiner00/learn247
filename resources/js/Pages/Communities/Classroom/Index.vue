@@ -407,8 +407,20 @@
                     <form @submit.prevent="submitEdit">
                         <input v-model="editForm.title" type="text" required placeholder="Course title"
                             class="w-full px-3.5 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-2" />
-                        <textarea v-model="editForm.description" rows="2" placeholder="Description (optional)"
-                            class="w-full px-3.5 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none mb-3" />
+                        <div class="mb-3">
+                            <textarea v-model="editForm.description" rows="2" placeholder="Description (optional)"
+                                class="w-full px-3.5 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
+                            <div class="flex items-center gap-2 mt-1">
+                                <button type="button"
+                                    @click="generateDescriptionWithAi"
+                                    :disabled="editDescGenerating"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-indigo-200 text-indigo-600 hover:bg-indigo-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                                    {{ editDescGenerating ? 'Generating…' : 'Generate with AI' }}
+                                </button>
+                                <p v-if="editDescGenError" class="text-xs text-red-500">{{ editDescGenError }}</p>
+                            </div>
+                        </div>
 
                         <!-- Access type -->
                         <div class="mb-3">
@@ -772,6 +784,8 @@ function openEdit(course) {
     editingCourse.value    = course;
     editCoverPreview.value = null;
     editVideoPreview.value = null;
+    editDescGenError.value = '';
+    editCoverGenError.value = '';
     editForm.title         = course.title;
     editForm.description   = course.description ?? '';
     editForm.cover_image   = null;
@@ -797,6 +811,25 @@ const editCoverGenerating = ref(false);
 const editCoverGenError   = ref('');
 const editCoverPromptOpen = ref(false);
 const editCoverExtraPrompt = ref('');
+
+const editDescGenerating = ref(false);
+const editDescGenError   = ref('');
+
+async function generateDescriptionWithAi() {
+    if (!editingCourse.value || editDescGenerating.value) return;
+    editDescGenerating.value = true;
+    editDescGenError.value = '';
+    try {
+        const { data } = await axios.post(
+            `/communities/${props.community.slug}/classroom/courses/${editingCourse.value.id}/generate-description`,
+        );
+        editForm.description = data.description;
+    } catch (err) {
+        editDescGenError.value = err.response?.data?.error || 'Description generation failed. Please try again.';
+    } finally {
+        editDescGenerating.value = false;
+    }
+}
 
 async function generateCoverWithAi() {
     if (!editingCourse.value || editCoverGenerating.value) return;

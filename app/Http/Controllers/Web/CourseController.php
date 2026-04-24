@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Actions\Classroom\GenerateCourseCover;
+use App\Actions\Classroom\GenerateCourseDescription;
 use App\Actions\Classroom\ManageCourse;
 use App\Exceptions\AiBudgetExceededException;
 use App\Http\Controllers\Controller;
@@ -156,6 +157,33 @@ class CourseController extends Controller
         } catch (\Throwable $e) {
             Log::error('CourseController@togglePublish failed', ['error' => $e->getMessage(), 'community' => $community->id]);
             throw $e;
+        }
+    }
+
+    public function generateDescription(Request $request, Community $community, Course $course, GenerateCourseDescription $action): JsonResponse
+    {
+        $this->authorize('manage', $community);
+
+        try {
+            $description = $action->execute($community, $course, auth()->id());
+
+            return response()->json([
+                'description' => $description,
+            ]);
+        } catch (AiBudgetExceededException $e) {
+            return response()->json([
+                'error' => 'AI spending cap reached. Please try again later.',
+            ], 429);
+        } catch (\Throwable $e) {
+            Log::error('CourseController@generateDescription failed', [
+                'error' => $e->getMessage(),
+                'community' => $community->id,
+                'course' => $course->id,
+            ]);
+
+            return response()->json([
+                'error' => 'Description generation failed. Please try again.',
+            ], 503);
         }
     }
 
