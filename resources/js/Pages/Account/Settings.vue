@@ -1,9 +1,26 @@
 <template>
     <AppLayout title="Settings">
-        <div class="flex gap-0 items-start -mx-4 sm:-mx-6 lg:-mx-8">
+        <div class="flex flex-col md:flex-row gap-0 md:items-start -mx-4 sm:-mx-6 lg:-mx-8">
 
-            <!-- Left sidebar nav -->
-            <div class="w-52 shrink-0 py-2 px-2">
+            <!-- Mobile: horizontal scrollable tab strip -->
+            <div class="md:hidden border-b border-gray-200 bg-white sticky top-0 z-10">
+                <nav class="flex gap-1 overflow-x-auto px-4 py-2 scrollbar-none">
+                    <button
+                        v-for="item in navItems"
+                        :key="item.key"
+                        @click="activeTab = item.key"
+                        class="shrink-0 px-3 py-1.5 text-sm rounded-lg font-medium transition-colors whitespace-nowrap"
+                        :class="activeTab === item.key
+                            ? 'bg-amber-100 text-amber-800'
+                            : 'text-gray-700 hover:bg-gray-100'"
+                    >
+                        {{ item.label }}
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Desktop: left sidebar nav -->
+            <div class="hidden md:block w-52 shrink-0 py-2 px-2">
                 <nav class="space-y-0.5">
                     <button
                         v-for="item in navItems"
@@ -20,7 +37,7 @@
             </div>
 
             <!-- Main content -->
-            <div class="flex-1 min-w-0 py-2 pr-4 sm:pr-6 lg:pr-8">
+            <div class="flex-1 min-w-0 py-2 px-4 sm:px-6 md:pl-0 md:pr-6 lg:pr-8">
                 <SettingsCommunities      v-if="activeTab === 'communities'"     :memberships="memberships" />
                 <SettingsProfile          v-else-if="activeTab === 'profile'"    :profile-user="profileUser" :community-members="memberships" />
                 <SettingsKyc              v-else-if="activeTab === 'kyc'"        :kyc="kyc" />
