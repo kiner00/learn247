@@ -153,7 +153,38 @@ class GenerateImageToolTest extends TestCase
         $result = $tool->handle(new Request(['prompt' => 'anything']));
 
         $this->assertStringStartsWith('Error:', $result);
+        // The real provider error must surface so the agent can tell the member what went wrong.
+        $this->assertStringContainsString('provider exploded', $result);
         $this->assertSame([], Storage::allFiles('curzzo-chat-images/'.$community->id));
+    }
+
+    public function test_returns_error_when_prompt_exceeds_max_length(): void
+    {
+        // Provider must never be called — asserted by omitting Image::fake. Any call would error.
+        $community = Community::factory()->create();
+
+        $tool = new GenerateImageTool($community);
+        $result = $tool->handle(new Request([
+            'prompt' => str_repeat('a', GenerateImageTool::MAX_PROMPT_LENGTH + 1),
+        ]));
+
+        $this->assertStringStartsWith('Error:', $result);
+        $this->assertStringContainsString('too long', $result);
+        $this->assertStringContainsString((string) GenerateImageTool::MAX_PROMPT_LENGTH, $result);
+        $this->assertSame([], Storage::allFiles('curzzo-chat-images/'.$community->id));
+    }
+
+    public function test_accepts_prompt_exactly_at_max_length(): void
+    {
+        $this->fakeSuccess();
+        $community = Community::factory()->create();
+
+        $tool = new GenerateImageTool($community);
+        $result = $tool->handle(new Request([
+            'prompt' => str_repeat('a', GenerateImageTool::MAX_PROMPT_LENGTH),
+        ]));
+
+        $this->assertStringContainsString('![generated image](', $result);
     }
 
     public function test_blocks_generation_when_community_budget_exceeded(): void

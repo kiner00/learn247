@@ -15,6 +15,8 @@ use Laravel\Ai\Tools\Request;
 
 class GenerateImageTool implements Tool
 {
+    public const MAX_PROMPT_LENGTH = 1000;
+
     private const ALLOWED_ASPECTS = ['1:1', '3:2', '2:3', '16:9', '9:16', '4:3', '3:4'];
 
     public function __construct(
@@ -37,6 +39,11 @@ class GenerateImageTool implements Tool
         $prompt = trim($request->string('prompt', ''));
         if ($prompt === '') {
             return 'Error: prompt is required. Ask the member what the image should depict.';
+        }
+
+        $length = mb_strlen($prompt);
+        if ($length > self::MAX_PROMPT_LENGTH) {
+            return 'Error: prompt is too long ('.$length.' chars; max '.self::MAX_PROMPT_LENGTH.'). Ask the member for a shorter description focused on the key subject, mood, and composition.';
         }
 
         $aspect = $request->string('aspect_ratio', '3:2');
@@ -69,7 +76,7 @@ class GenerateImageTool implements Tool
                 'exception' => get_class($e),
             ]);
 
-            return 'Error: image generation failed. Tell the member to try again or rephrase the request.';
+            return 'Error: image generation failed ('.$e->getMessage().'). Tell the member what went wrong in plain language and suggest they try again with a shorter or simpler description.';
         }
 
         $filename = 'curzzo-chat-images/'.$this->community->id.'/'.Str::uuid().'.png';
@@ -83,7 +90,7 @@ class GenerateImageTool implements Tool
     public function schema(JsonSchema $schema): array
     {
         return [
-            'prompt' => $schema->string()->description('Detailed visual description. Include subject, mood, composition, and any on-image text. Do NOT include brand colors or style — those are merged automatically.'),
+            'prompt' => $schema->string()->description('Detailed visual description. Include subject, mood, composition, and any on-image text. Keep it under '.self::MAX_PROMPT_LENGTH.' characters. Do NOT include brand colors or style (merged automatically), Stable-Diffusion-style "NEGATIVE PROMPT:" sections, or duplicated paragraphs — the image model rejects those.'),
             'aspect_ratio' => $schema->string()->description('One of: 1:1, 3:2, 2:3, 16:9, 9:16, 4:3, 3:4. Use 16:9 for course banners, 1:1 for avatars, 3:2 for general banners.'),
         ];
     }

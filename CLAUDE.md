@@ -79,3 +79,17 @@ This ordering ensures custom instructions override defaults.
 - AI agents live in `app/Ai/Agents/`, tools in `app/Ai/Tools/`
 - Community JSON columns (`landing_page`, `gallery_images`, `brand_context`) are cast to `array` in the model
 - Forms use Inertia's `useForm()` with `transform(data => ({ ...data, _method: 'PATCH' })).post()` pattern for updates
+
+## Running tests
+
+The app runs in Docker. The PHP/Artisan container is `curzzo_app`. Run tests via `docker exec`, not directly on the host — the host has no PHP/MySQL/Redis configured for this project.
+
+```bash
+# Full suite
+docker exec curzzo_app php artisan test
+
+# Filter to a single test class or name
+docker exec curzzo_app php artisan test --filter=GenerateImageTool
+```
+
+Other containers: `curzzo_mysql`, `curzzo_redis`, `curzzo_nginx`, `curzzo_queue`, `curzzo_node`, `curzzo_mailpit`. Start them with `docker compose up -d` if they aren't running.
