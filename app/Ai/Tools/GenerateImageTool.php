@@ -91,7 +91,7 @@ class GenerateImageTool implements Tool
     {
         return [
             'prompt' => $schema->string()->description('Detailed visual description. Include subject, mood, composition, and any on-image text. Keep it under '.self::MAX_PROMPT_LENGTH.' characters. Do NOT include brand colors or style (merged automatically), Stable-Diffusion-style "NEGATIVE PROMPT:" sections, or duplicated paragraphs — the image model rejects those.'),
-            'aspect_ratio' => $schema->string()->description('One of: 1:1, 3:2, 2:3, 16:9, 9:16, 4:3, 3:4. Use 16:9 for course banners, 1:1 for avatars, 3:2 for general banners.'),
+            'aspect_ratio' => $schema->string()->description('One of: 1:1, 3:2, 2:3, 16:9, 9:16, 4:3, 3:4. Use 16:9 for course banners, 1:1 for avatars, 9:16 for vertical/story/reel formats, 3:4 for portraits of people or vertical posters, 3:2 for general banners.'),
         ];
     }
 
