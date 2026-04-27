@@ -51,6 +51,12 @@ class ChatWithCurzzo
 
         $agent = $this->makeAgent($curzzo, $community);
 
+        // PHP-FPM caps execution at 30s by default in prod; the bot's tool-call
+        // loop (image gen, course lookups) can run much longer. 300s gives a
+        // 60s buffer above CurzzoBot::timeout() so the agent's own timeout
+        // fires first and lands in the catch block cleanly.
+        set_time_limit(300);
+
         try {
             $response = $conversationId
                 ? $agent->continue($conversationId, as: $user)->prompt($message)
