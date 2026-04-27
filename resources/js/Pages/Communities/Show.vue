@@ -116,7 +116,7 @@
                                     {{
                                         checkoutForm.processing
                                             ? "Redirecting..."
-                                            : `Join · ₱${Number(community.price).toLocaleString()}/mo`
+                                            : `Join · ₱${Number(community.price).toLocaleString()}${community.billing_type === 'one_time' ? '' : '/mo'}`
                                     }}
                                 </button>
                                 <button
