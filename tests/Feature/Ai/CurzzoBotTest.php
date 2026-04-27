@@ -38,4 +38,19 @@ class CurzzoBotTest extends TestCase
         $this->assertStringContainsString('generate_image', $instructions);
         $this->assertStringContainsString('VERBATIM', $instructions);
     }
+
+    public function test_instructions_teach_vertical_aspect_ratio_for_portrait_requests(): void
+    {
+        $community = Community::factory()->create();
+        $curzzo = Curzzo::factory()->create(['community_id' => $community->id]);
+
+        $bot = new CurzzoBot($curzzo, $community);
+        $instructions = $bot->instructions();
+
+        // Regression: without these hints the model defaults vertical/portrait
+        // requests to a landscape ratio (the original 3:2 fallback).
+        $this->assertStringContainsString('9:16', $instructions);
+        $this->assertStringContainsString('vertical', $instructions);
+        $this->assertStringContainsString('portrait', $instructions);
+    }
 }

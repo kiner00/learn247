@@ -46,7 +46,7 @@ class GenerateImageTool implements Tool
             return 'Error: prompt is too long ('.$length.' chars; max '.self::MAX_PROMPT_LENGTH.'). Ask the member for a shorter description focused on the key subject, mood, and composition.';
         }
 
-        $aspect = $request->string('aspect_ratio', '3:2');
+        $aspect = (string) $request->string('aspect_ratio', '3:2');
         if (! in_array($aspect, self::ALLOWED_ASPECTS, true)) {
             $aspect = '3:2';
         }
@@ -91,7 +91,7 @@ class GenerateImageTool implements Tool
     {
         return [
             'prompt' => $schema->string()->description('Detailed visual description. Include subject, mood, composition, and any on-image text. Keep it under '.self::MAX_PROMPT_LENGTH.' characters. Do NOT include brand colors or style (merged automatically), Stable-Diffusion-style "NEGATIVE PROMPT:" sections, or duplicated paragraphs — the image model rejects those.'),
-            'aspect_ratio' => $schema->string()->description('One of: 1:1, 3:2, 2:3, 16:9, 9:16, 4:3, 3:4. Use 16:9 for course banners, 1:1 for avatars, 3:2 for general banners.'),
+            'aspect_ratio' => $schema->string()->description('Required. One of: 1:1, 3:2, 2:3, 16:9, 9:16, 4:3, 3:4. Choose by orientation: 9:16 for vertical / portrait / story / reel / phone wallpaper, 2:3 or 3:4 for other portrait formats, 16:9 for landscape course banners and YouTube thumbnails, 1:1 for square avatars/thumbnails/social posts, 3:2 as a fallback when no orientation is implied. If the user explicitly names a ratio (e.g. "9:16"), pass that exact ratio.'),
         ];
     }
 

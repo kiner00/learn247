@@ -44,7 +44,16 @@ class GenerateImageToolTest extends TestCase
 
     public function test_returns_markdown_image_link_and_stores_png(): void
     {
-        $this->fakeSuccess();
+        $capturedSize = null;
+        Image::fake(function (ImagePrompt $prompt) use (&$capturedSize) {
+            $capturedSize = $prompt->size;
+
+            return new ImageResponse(
+                collect([new GeneratedImage(base64_encode('fake-png-bytes'))]),
+                new Usage,
+                new Meta('fake', 'fake-model'),
+            );
+        });
         $community = Community::factory()->create();
 
         $tool = new GenerateImageTool($community, userId: 42);
@@ -54,6 +63,7 @@ class GenerateImageToolTest extends TestCase
         ]));
 
         $this->assertStringContainsString('![generated image](', $result);
+        $this->assertSame('16:9', $capturedSize);
 
         // The stored file lives under curzzo-chat-images/{community_id}/*.png
         $files = Storage::allFiles('curzzo-chat-images/'.$community->id);
@@ -105,6 +115,32 @@ class GenerateImageToolTest extends TestCase
         $tool->handle(new Request(['prompt' => 'A clean flat illustration']));
 
         $this->assertSame('A clean flat illustration', $captured);
+    }
+
+    public function test_forwards_vertical_aspect_ratio_to_image_provider(): void
+    {
+        $capturedSize = null;
+        Image::fake(function (ImagePrompt $prompt) use (&$capturedSize) {
+            $capturedSize = $prompt->size;
+
+            return new ImageResponse(
+                collect([new GeneratedImage(base64_encode('x'))]),
+                new Usage,
+                new Meta('fake', 'fake-model'),
+            );
+        });
+
+        $community = Community::factory()->create();
+
+        $tool = new GenerateImageTool($community);
+        $tool->handle(new Request([
+            'prompt' => 'a portrait of man standing with ford mustang',
+            'aspect_ratio' => '9:16',
+        ]));
+
+        // Regression: a vertical aspect must reach the provider untouched. Earlier
+        // tool-description guidance silently fell back to 3:2 (landscape) for 9:16 prompts.
+        $this->assertSame('9:16', $capturedSize);
     }
 
     public function test_falls_back_to_default_aspect_when_invalid(): void
