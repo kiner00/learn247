@@ -66,6 +66,8 @@ class ChatWithCurzzo
                 'exception' => get_class($e),
             ]);
 
+            \Sentry\captureException($e);
+
             return new ChatResult(503, [
                 'error' => 'The bot had trouble responding. Please try again.',
                 'conversation_id' => $conversationId,
