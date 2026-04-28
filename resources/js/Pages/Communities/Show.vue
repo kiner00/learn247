@@ -587,6 +587,24 @@
             </div>
         </Teleport>
         <ConfirmModal :show="confirmShow" :title="confirmTitle" :message="confirmMessage" :confirm-label="confirmLabel" :destructive="confirmDestructive" @confirm="onConfirm" @cancel="onCancel" />
+
+        <LandingJoinModal
+            :show="showGuestCheckoutModal"
+            :community="community"
+            :join-form="guestCheckoutForm"
+            @close="showGuestCheckoutModal = false"
+            @submit="submitGuestCheckout"
+        />
+
+        <LandingJoinModal
+            :show="showGuestFreeSubscribeModal"
+            :community="community"
+            :join-form="guestFreeSubscribeForm"
+            price-label="Free"
+            submit-label="Subscribe for Free"
+            @close="showGuestFreeSubscribeModal = false"
+            @submit="submitGuestFreeSubscribe"
+        />
     </AppLayout>
 </template>
 
@@ -603,6 +621,7 @@ import PostCard from "@/Components/Community/PostCard.vue";
 import PostModal from "@/Components/Community/PostModal.vue";
 import TrialExpiredPaywall from "@/Components/Community/TrialExpiredPaywall.vue";
 import ConfirmModal from '@/Components/ConfirmModal.vue';
+import LandingJoinModal from '@/Components/Landing/LandingJoinModal.vue';
 import { useConfirm } from '@/composables/useConfirm';
 
 const { show: confirmShow, title: confirmTitle, message: confirmMessage, confirmLabel, destructive: confirmDestructive, ask, onConfirm, onCancel } = useConfirm();
@@ -668,15 +687,45 @@ function join() {
 
 const checkoutForm = useForm({});
 function checkout() {
-    if (!requireAuth()) return;
+    if (!page.props.auth?.user) {
+        showGuestCheckoutModal.value = true;
+        return;
+    }
     checkoutForm.post(`/communities/${props.community.slug}/checkout`);
+}
+
+const showGuestCheckoutModal = ref(false);
+const guestCheckoutForm = useForm({
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+});
+function submitGuestCheckout() {
+    guestCheckoutForm.post(`/communities/${props.community.slug}/guest-checkout`);
 }
 
 const freeSubscribeForm = useForm({});
 function freeSubscribe() {
-    if (!requireAuth()) return;
+    if (!page.props.auth?.user) {
+        showGuestFreeSubscribeModal.value = true;
+        return;
+    }
     freeSubscribeForm.post(
         `/communities/${props.community.slug}/free-subscribe`,
+    );
+}
+
+const showGuestFreeSubscribeModal = ref(false);
+const guestFreeSubscribeForm = useForm({
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+});
+function submitGuestFreeSubscribe() {
+    guestFreeSubscribeForm.post(
+        `/communities/${props.community.slug}/guest-free-subscribe`,
     );
 }
 

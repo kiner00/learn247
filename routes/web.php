@@ -90,6 +90,9 @@ Route::post('/ref-checkout/{code}', [GuestCheckoutController::class, 'process'])
 // ─── Guest checkout without affiliate code (public, POST only) ───────────────
 Route::post('/communities/{community}/guest-checkout', [GuestCheckoutController::class, 'processNoAffiliate'])->name('communities.guest.checkout')->middleware('throttle:10,1');
 
+// ─── Guest free-subscribe (public, POST only) ────────────────────────────────
+Route::post('/communities/{community}/guest-free-subscribe', [FreeSubscribeController::class, 'guestStore'])->name('communities.guest.free-subscribe')->middleware('throttle:10,1');
+
 // ─── Checkout callback: auto-login + processing screen (signed URL) ──────────
 Route::get('/checkout-callback/{user}/{community}', CheckoutCallbackController::class)->name('checkout.callback');
 

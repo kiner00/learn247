@@ -2,10 +2,13 @@
 
 namespace Tests\Feature\Web;
 
+use App\Mail\TempPasswordMail;
 use App\Models\Community;
 use App\Models\CommunityMember;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class FreeSubscribeControllerTest extends TestCase
@@ -135,5 +138,94 @@ class FreeSubscribeControllerTest extends TestCase
                 ->where('user_id', $user->id)
                 ->count()
         );
+    }
+
+    public function test_guest_can_free_subscribe_and_is_logged_in(): void
+    {
+        Mail::fake();
+        $community = Community::factory()->create();
+
+        $response = $this->post(route('communities.guest.free-subscribe', $community), [
+            'first_name' => 'Mark',
+            'last_name' => 'Cruz',
+            'email' => 'mark@example.com',
+            'phone' => '+639171234567',
+        ]);
+
+        $response->assertRedirect(route('communities.classroom', $community));
+        $response->assertSessionHas('success');
+
+        $user = User::where('email', 'mark@example.com')->first();
+        $this->assertNotNull($user);
+        $this->assertTrue($user->needs_password_setup);
+        $this->assertEquals($user->id, Auth::id());
+
+        $this->assertDatabaseHas('community_members', [
+            'community_id' => $community->id,
+            'user_id' => $user->id,
+            'membership_type' => CommunityMember::MEMBERSHIP_FREE,
+        ]);
+
+        Mail::assertQueued(TempPasswordMail::class, fn ($mail) => $mail->hasTo('mark@example.com'));
+    }
+
+    public function test_guest_free_subscribe_validates_required_fields(): void
+    {
+        $community = Community::factory()->create();
+
+        $response = $this->post(route('communities.guest.free-subscribe', $community), []);
+
+        $response->assertSessionHasErrors(['first_name', 'last_name', 'email', 'phone']);
+    }
+
+    public function test_guest_free_subscribe_reuses_existing_user_without_duplicate_membership(): void
+    {
+        Mail::fake();
+        $existing = User::factory()->create(['email' => 'mark@example.com']);
+        $community = Community::factory()->create();
+
+        CommunityMember::create([
+            'community_id' => $community->id,
+            'user_id' => $existing->id,
+            'role' => CommunityMember::ROLE_MEMBER,
+            'membership_type' => CommunityMember::MEMBERSHIP_FREE,
+            'joined_at' => now(),
+        ]);
+
+        $response = $this->post(route('communities.guest.free-subscribe', $community), [
+            'first_name' => 'Mark',
+            'last_name' => 'Cruz',
+            'email' => 'mark@example.com',
+            'phone' => '+639171234567',
+        ]);
+
+        $response->assertRedirect(route('communities.classroom', $community));
+        $this->assertEquals($existing->id, Auth::id());
+
+        $this->assertEquals(
+            1,
+            CommunityMember::where('community_id', $community->id)
+                ->where('user_id', $existing->id)
+                ->count()
+        );
+
+        Mail::assertNotQueued(TempPasswordMail::class);
+    }
+
+    public function test_guest_free_subscribe_blocks_pending_deletion_communities(): void
+    {
+        $community = Community::factory()->create([
+            'deletion_requested_at' => now(),
+        ]);
+
+        $response = $this->from('/')->post(route('communities.guest.free-subscribe', $community), [
+            'first_name' => 'Mark',
+            'last_name' => 'Cruz',
+            'email' => 'mark@example.com',
+            'phone' => '+639171234567',
+        ]);
+
+        $response->assertSessionHasErrors('email');
+        $this->assertDatabaseMissing('users', ['email' => 'mark@example.com']);
     }
 }

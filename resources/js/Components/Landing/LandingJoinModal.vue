@@ -26,9 +26,9 @@
                             <div class="absolute bottom-4 left-6">
                                 <h2 class="text-xl font-black text-white">{{ community.name }}</h2>
                                 <p class="text-sm text-white/70 mt-0.5">
-                                    {{ community.price > 0
+                                    {{ priceLabel ?? (community.price > 0
                                         ? `₱${Number(community.price).toLocaleString()}${community.billing_type === 'one_time' ? '' : '/mo'}`
-                                        : 'Free' }}
+                                        : 'Free') }}
                                     &nbsp;·&nbsp; {{ formatCount(community.members_count) }} members
                                 </p>
                             </div>
@@ -88,7 +88,7 @@
                                 </div>
                                 <button type="submit" :disabled="joinForm.processing"
                                     class="w-full py-3.5 bg-amber-400 hover:bg-amber-500 text-gray-900 text-sm font-black rounded-2xl tracking-wide uppercase transition disabled:opacity-50 shadow-sm">
-                                    {{ joinForm.processing ? 'Redirecting…' : (community.price > 0 ? `Proceed to Payment · ₱${Number(community.price).toLocaleString()}` : 'Join for Free') }}
+                                    {{ joinForm.processing ? 'Redirecting…' : (submitLabel ?? (community.price > 0 ? `Proceed to Payment · ₱${Number(community.price).toLocaleString()}` : 'Join for Free')) }}
                                 </button>
                                 <p class="text-xs text-gray-400 text-center mt-4">
                                     Secure checkout powered by <strong>learn247</strong>. Your login credentials will be sent to your email after payment.
@@ -108,6 +108,8 @@ defineProps({
     community: { type: Object, required: true },
     invitedBy: { type: Object, default: null },
     joinForm: { type: Object, required: true },
+    priceLabel: { type: String, default: null },
+    submitLabel: { type: String, default: null },
 });
 
 defineEmits(['close', 'submit']);
