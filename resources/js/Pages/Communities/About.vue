@@ -111,7 +111,7 @@
                         </div>
 
                         <!-- Description -->
-                        <p v-if="community.description" class="text-sm text-gray-600 leading-relaxed">{{ community.description }}</p>
+                        <p v-if="community.description" class="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{{ community.description }}</p>
                         <p v-else class="text-sm text-gray-400 italic">No description provided.</p>
                     </div>
                 </div>
