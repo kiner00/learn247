@@ -142,7 +142,7 @@ const comparisonRows = [
     { feature: 'Analytics',            free: 'Basic',      basic: 'Advanced',   pro: 'Advanced' },
     { feature: 'Custom Branding',      free: false,        basic: false,        pro: '(Soon)' },
     { feature: 'Priority Payouts',     free: false,        basic: false,        pro: '(Soon)' },
-    { feature: 'AI Landing Page Builder', free: false,     basic: false,        pro: 'Beta ✨' },
+    { feature: 'AI Funnel Builder',    free: false,        basic: false,        pro: 'Free ✨' },
     { feature: 'AI Bots (Curzzos)',    free: false,        basic: false,        pro: true },
     { feature: 'Telegram Integration', free: false,        basic: false,        pro: true },
     { feature: 'Affiliate System',    free: false,        basic: true,         pro: true },
@@ -355,8 +355,26 @@ const planLabel = { free: 'Free', basic: 'Basic', pro: 'Pro' };
                         </p>
                     </div>
 
+                    <ul class="px-6 py-5 space-y-2.5 flex-1 text-sm text-indigo-100">
+                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Unlimited communities</li>
+                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Unlimited courses</li>
+                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Pixel / GA integrations</li>
+                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Email blast (more TBD)</li>
+                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> 2.9% per transaction</li>
+                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> ₱15 flat payout fee</li>
+                        <li class="flex items-start gap-2 opacity-60"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Custom branding <span class="text-indigo-300 text-xs ml-1">(Soon)</span></li>
+                        <li class="flex items-start gap-2 opacity-60"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Priority payouts <span class="text-indigo-300 text-xs ml-1">(Soon)</span></li>
+                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> AI Bots (Curzzos)</li>
+                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Telegram Integration</li>
+                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Affiliate System</li>
+                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Certifications &amp; Exams</li>
+                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Leaderboard &amp; Gamification</li>
+                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Custom Domain</li>
+                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Video Hosting</li>
+                    </ul>
+
                     <!-- AI Funnel Builder bonus -->
-                    <div class="mx-4 mt-4 rounded-xl bg-gradient-to-br from-amber-300 via-amber-400 to-orange-400 p-[2px] shadow-lg">
+                    <div class="mx-4 mb-4 rounded-xl bg-gradient-to-br from-amber-300 via-amber-400 to-orange-400 p-[2px] shadow-lg">
                         <div class="rounded-[10px] bg-gradient-to-br from-amber-50 to-orange-50 px-4 py-3.5">
                             <div class="flex items-center gap-1.5 mb-1.5">
                                 <span class="text-base">🎁</span>
@@ -375,24 +393,6 @@ const planLabel = { free: 'Free', basic: 'Basic', pro: 'Pro' };
                         </div>
                     </div>
 
-                    <ul class="px-6 py-5 space-y-2.5 flex-1 text-sm text-indigo-100">
-                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Unlimited communities</li>
-                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Unlimited courses</li>
-                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Pixel / GA integrations</li>
-                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Email blast (more TBD)</li>
-                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> 2.9% per transaction</li>
-                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> ₱15 flat payout fee</li>
-                        <li class="flex items-start gap-2 opacity-60"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Custom branding <span class="text-indigo-300 text-xs ml-1">(Soon)</span></li>
-                        <li class="flex items-start gap-2 opacity-60"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Priority payouts <span class="text-indigo-300 text-xs ml-1">(Soon)</span></li>
-                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> AI Landing Page Builder <span class="ml-1 bg-amber-400/20 text-amber-300 text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide">Beta</span></li>
-                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> AI Bots (Curzzos)</li>
-                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Telegram Integration</li>
-                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Affiliate System</li>
-                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Certifications &amp; Exams</li>
-                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Leaderboard &amp; Gamification</li>
-                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Custom Domain</li>
-                        <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Video Hosting</li>
-                    </ul>
                     <div class="px-6 py-5 border-t border-indigo-500">
                         <button
                             v-if="currentPlan !== 'pro'"
