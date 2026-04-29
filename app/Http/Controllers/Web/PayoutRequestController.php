@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Actions\Payout\RequestAffiliatePayout;
 use App\Actions\Payout\RequestAllAffiliatePayouts;
 use App\Actions\Payout\RequestOwnerPayout;
+use App\Actions\Payout\RequestWalletWithdrawal;
 use App\Http\Controllers\Controller;
 use App\Models\Affiliate;
 use App\Models\Community;
@@ -44,6 +45,17 @@ class PayoutRequestController extends Controller
     public function storeAffiliateAll(RequestAllAffiliatePayouts $action): RedirectResponse
     {
         $result = $action->execute(Auth::user());
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    public function storeWalletWithdrawal(Request $request, RequestWalletWithdrawal $action): RedirectResponse
+    {
+        $validated = $request->validate([
+            'amount' => ['required', 'numeric', 'min:1'],
+        ]);
+
+        $result = $action->execute(Auth::user(), (float) $validated['amount']);
 
         return back()->with($result['success'] ? 'success' : 'error', $result['message']);
     }

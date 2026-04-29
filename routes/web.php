@@ -490,6 +490,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/affiliates/{affiliate}/pixels', [AffiliateController::class, 'updatePixels'])->name('affiliates.pixels');
     Route::post('/affiliates/{affiliate}/payout-request', [PayoutRequestController::class, 'storeAffiliate'])->name('affiliates.payout-request.store')->middleware('throttle:5,1');
     Route::post('/affiliates/payout-request/all', [PayoutRequestController::class, 'storeAffiliateAll'])->name('affiliates.payout-request.all')->middleware('throttle:5,1');
+    Route::post('/wallet/withdraw', [PayoutRequestController::class, 'storeWalletWithdrawal'])->name('wallet.withdraw')->middleware('throttle:5,1');
 
     // ─── AI Assistant ─────────────────────────────────────────────────────────
     Route::post('/ai/chat', [AIAssistantController::class, 'chat'])->name('ai.chat');

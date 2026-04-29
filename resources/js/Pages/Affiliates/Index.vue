@@ -10,9 +10,20 @@
                 <!-- Wallet balance -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
                     <div class="bg-white border border-gray-200 rounded-2xl p-4">
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Wallet balance</p>
-                        <p class="text-2xl font-bold text-gray-900">₱{{ fmt(wallet?.balance ?? 0) }}</p>
-                        <p class="text-xs text-gray-400 mt-1">Settled — withdrawable</p>
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Wallet balance</p>
+                                <p class="text-2xl font-bold text-gray-900">₱{{ fmt(wallet?.balance ?? 0) }}</p>
+                                <p class="text-xs text-gray-400 mt-1">Settled — withdrawable</p>
+                            </div>
+                            <button
+                                @click="openWithdrawModal"
+                                :disabled="(wallet?.balance ?? 0) <= 0"
+                                class="text-sm bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed text-white font-semibold px-4 py-2 rounded-xl transition-colors whitespace-nowrap"
+                            >
+                                Withdraw
+                            </button>
+                        </div>
                     </div>
                     <div class="bg-white border border-gray-200 rounded-2xl p-4">
                         <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Pending in hold</p>
@@ -735,6 +746,82 @@
                 </div>
             </div>
         </Teleport>
+
+        <!-- Wallet withdrawal modal -->
+        <Teleport to="body">
+            <div
+                v-if="showWithdrawModal"
+                class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+                @click.self="showWithdrawModal = false"
+            >
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+                    <h3 class="text-base font-bold text-gray-900 mb-1">
+                        Withdraw from Wallet
+                    </h3>
+                    <p class="text-xs text-gray-400 mb-4">
+                        Available balance:
+                        <span class="font-semibold text-gray-900">
+                            ₱{{ fmt(wallet?.balance ?? 0) }}
+                        </span>
+                    </p>
+
+                    <div
+                        v-if="!payoutMethod"
+                        class="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-4 text-sm text-amber-700"
+                    >
+                        Set your payout method first.
+                        <Link
+                            href="/account/settings"
+                            class="underline font-medium"
+                        >
+                            Open Account Settings
+                        </Link>
+                    </div>
+
+                    <form
+                        @submit.prevent="submitWithdrawal"
+                        class="space-y-3"
+                    >
+                        <div>
+                            <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                                Amount
+                            </label>
+                            <input
+                                v-model.number="withdrawForm.amount"
+                                type="number"
+                                step="0.01"
+                                :max="wallet?.balance ?? 0"
+                                min="100"
+                                class="mt-1 w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                placeholder="0.00"
+                                required
+                            />
+                            <p class="text-xs text-gray-400 mt-1">
+                                Minimum ₱100. Sent via {{ payoutMethod ?? "your chosen method" }} to
+                                {{ payoutDetails ?? "—" }}.
+                            </p>
+                        </div>
+
+                        <div class="flex gap-2 pt-2">
+                            <button
+                                type="button"
+                                @click="showWithdrawModal = false"
+                                class="flex-1 py-2 bg-gray-100 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-200"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                :disabled="withdrawForm.processing || !payoutMethod"
+                                class="flex-1 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
+                            >
+                                {{ withdrawForm.processing ? "Submitting…" : "Submit Withdrawal" }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </Teleport>
     </AppLayout>
 </template>
 
@@ -789,10 +876,12 @@ const statusFilter = ref("all");
 const copied = ref(null);
 const showPayoutModal = ref(false);
 const showRequestModal = ref(false);
+const showWithdrawModal = ref(false);
 const showPixelModal = ref(false);
 const requestingAffiliate = ref(null);
 const pixelAffiliate = ref(null);
 const requestForm = reactive({ amount: 0, processing: false });
+const withdrawForm = reactive({ amount: 0, processing: false });
 const pixelForm = reactive({ facebook_pixel_id: '', tiktok_pixel_id: '', google_analytics_id: '' });
 
 const payoutForm = reactive({
@@ -849,6 +938,28 @@ async function copy(url) {
 
 function requestAll() {
     router.post("/affiliates/payout-request/all", {}, { preserveScroll: true });
+}
+
+function openWithdrawModal() {
+    withdrawForm.amount = props.wallet?.balance ?? 0;
+    showWithdrawModal.value = true;
+}
+
+function submitWithdrawal() {
+    if (withdrawForm.processing) return;
+    withdrawForm.processing = true;
+
+    router.post(
+        "/wallet/withdraw",
+        { amount: withdrawForm.amount },
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                withdrawForm.processing = false;
+                showWithdrawModal.value = false;
+            },
+        },
+    );
 }
 
 function openRequestModal(affiliate) {

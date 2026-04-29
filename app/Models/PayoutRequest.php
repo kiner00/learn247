@@ -11,6 +11,8 @@ class PayoutRequest extends Model
 
     public const TYPE_AFFILIATE = 'affiliate';
 
+    public const TYPE_WALLET = 'wallet';
+
     public const STATUS_PENDING = 'pending';
 
     public const STATUS_APPROVED = 'approved';
