@@ -369,7 +369,7 @@ class CalculateEligibilityTest extends TestCase
         ]);
 
         // Should be able to submit a new request for the same amount
-        $action = new \App\Actions\Payout\RequestOwnerPayout($query);
+        $action = new \App\Actions\Payout\RequestOwnerPayout($query, app(\App\Services\Wallet\WalletService::class));
         $result = $action->execute($owner, $community, $eligibleAmount);
 
         $this->assertTrue($result['success'], 'User should be able to submit a new payout request after rejection');

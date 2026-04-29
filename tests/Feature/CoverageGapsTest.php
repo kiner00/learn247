@@ -190,7 +190,7 @@ class CoverageGapsTest extends TestCase
         $eligibility = Mockery::mock(CalculateEligibility::class);
         $eligibility->shouldReceive('forOwner')->andReturn([1000.0, 0.0, null]);
 
-        $action = new RequestOwnerPayout($eligibility);
+        $action = new RequestOwnerPayout($eligibility, app(\App\Services\Wallet\WalletService::class));
         // Amount <= Community::PAYOUT_FEE (15.0)
         $result = $action->execute($owner, $community, 15.0);
 

@@ -2,6 +2,7 @@
 
 namespace App\Actions\Billing\WebhookHandlers;
 
+use App\Actions\Payout\RecordCreatorEarning;
 use App\Models\Payment;
 use App\Services\XenditService;
 use Illuminate\Database\Eloquent\Model;
@@ -56,6 +57,8 @@ abstract class AbstractRecurringCycleHandler
                 $payment = $this->createPaymentRecord($entity, $payload, $eventId);
 
                 $sideEffects = $this->recordAffiliateCommission($entity, $payment, $payload);
+
+                app(RecordCreatorEarning::class)->execute($payment->fresh());
 
                 $this->onPaymentSucceeded($entity, $payload);
             });

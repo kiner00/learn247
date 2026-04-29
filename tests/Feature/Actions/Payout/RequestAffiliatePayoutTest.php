@@ -40,7 +40,7 @@ class RequestAffiliatePayoutTest extends TestCase
         $affiliate = $this->makeAffiliate(['status' => Affiliate::STATUS_INACTIVE]);
 
         $eligibility = Mockery::mock(CalculateEligibility::class);
-        $action = new RequestAffiliatePayout($eligibility);
+        $action = new RequestAffiliatePayout($eligibility, app(\App\Services\Wallet\WalletService::class));
 
         $result = $action->execute($affiliate, 100);
 
@@ -53,7 +53,7 @@ class RequestAffiliatePayoutTest extends TestCase
         $affiliate = $this->makeAffiliate([], ['kyc_verified_at' => null, 'kyc_status' => User::KYC_NONE]);
 
         $eligibility = Mockery::mock(CalculateEligibility::class);
-        $action = new RequestAffiliatePayout($eligibility);
+        $action = new RequestAffiliatePayout($eligibility, app(\App\Services\Wallet\WalletService::class));
 
         $result = $action->execute($affiliate, 100);
 
@@ -69,7 +69,7 @@ class RequestAffiliatePayoutTest extends TestCase
         ]);
 
         $eligibility = Mockery::mock(CalculateEligibility::class);
-        $action = new RequestAffiliatePayout($eligibility);
+        $action = new RequestAffiliatePayout($eligibility, app(\App\Services\Wallet\WalletService::class));
 
         $result = $action->execute($affiliate, 100);
 
@@ -85,7 +85,7 @@ class RequestAffiliatePayoutTest extends TestCase
         ]);
 
         $eligibility = Mockery::mock(CalculateEligibility::class);
-        $action = new RequestAffiliatePayout($eligibility);
+        $action = new RequestAffiliatePayout($eligibility, app(\App\Services\Wallet\WalletService::class));
 
         $result = $action->execute($affiliate, 100);
 
@@ -108,7 +108,7 @@ class RequestAffiliatePayoutTest extends TestCase
         ]);
 
         $eligibility = Mockery::mock(CalculateEligibility::class);
-        $action = new RequestAffiliatePayout($eligibility);
+        $action = new RequestAffiliatePayout($eligibility, app(\App\Services\Wallet\WalletService::class));
 
         $result = $action->execute($affiliate, 100);
 
@@ -123,7 +123,7 @@ class RequestAffiliatePayoutTest extends TestCase
         $eligibility = Mockery::mock(CalculateEligibility::class);
         $eligibility->shouldReceive('forAffiliate')->with($affiliate)->andReturn(0.0);
 
-        $action = new RequestAffiliatePayout($eligibility);
+        $action = new RequestAffiliatePayout($eligibility, app(\App\Services\Wallet\WalletService::class));
         $result = $action->execute($affiliate, 100);
 
         $this->assertFalse($result['success']);
@@ -137,7 +137,7 @@ class RequestAffiliatePayoutTest extends TestCase
         $eligibility = Mockery::mock(CalculateEligibility::class);
         $eligibility->shouldReceive('forAffiliate')->with($affiliate)->andReturn(50.0);
 
-        $action = new RequestAffiliatePayout($eligibility);
+        $action = new RequestAffiliatePayout($eligibility, app(\App\Services\Wallet\WalletService::class));
         $result = $action->execute($affiliate, 100);
 
         $this->assertFalse($result['success']);
@@ -161,7 +161,7 @@ class RequestAffiliatePayoutTest extends TestCase
         $eligibility = Mockery::mock(CalculateEligibility::class);
         $eligibility->shouldReceive('forAffiliate')->with($affiliate)->andReturn(99.50);
 
-        $action = new RequestAffiliatePayout($eligibility);
+        $action = new RequestAffiliatePayout($eligibility, app(\App\Services\Wallet\WalletService::class));
         $result = $action->execute($affiliate, 99.50);
 
         $this->assertTrue(
@@ -182,7 +182,7 @@ class RequestAffiliatePayoutTest extends TestCase
         $eligibility = Mockery::mock(CalculateEligibility::class);
         $eligibility->shouldReceive('forAffiliate')->with($affiliate)->andReturn(200.0);
 
-        $action = new RequestAffiliatePayout($eligibility);
+        $action = new RequestAffiliatePayout($eligibility, app(\App\Services\Wallet\WalletService::class));
         $result = $action->execute($affiliate, 150);
 
         $this->assertTrue($result['success']);

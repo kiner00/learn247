@@ -6,11 +6,15 @@ use App\Models\Community;
 use App\Models\PayoutRequest;
 use App\Models\User;
 use App\Queries\Payout\CalculateEligibility;
+use App\Services\Wallet\WalletService;
 use App\Support\CacheKeys;
 
 class RequestOwnerPayout
 {
-    public function __construct(private CalculateEligibility $eligibility) {}
+    public function __construct(
+        private CalculateEligibility $eligibility,
+        private WalletService $wallet,
+    ) {}
 
     /**
      * @return array{success: bool, message: string}
@@ -48,7 +52,7 @@ class RequestOwnerPayout
             return ['success' => false, 'message' => 'Minimum payout amount is ₱'.(Community::PAYOUT_FEE + 1).' (must exceed the ₱'.Community::PAYOUT_FEE.' processing fee).'];
         }
 
-        PayoutRequest::create([
+        $request = PayoutRequest::create([
             'user_id' => $owner->id,
             'type' => PayoutRequest::TYPE_OWNER,
             'community_id' => $community->id,
@@ -56,6 +60,20 @@ class RequestOwnerPayout
             'eligible_amount' => $eligibleNow,
             'status' => PayoutRequest::STATUS_PENDING,
         ]);
+
+        $balance = (float) $this->wallet->balanceOf($owner)['balance'];
+        if ($balance >= $amount) {
+            $this->wallet->debit(
+                user: $owner,
+                source: $request,
+                amount: $amount,
+                status: \App\Models\WalletTransaction::STATUS_PENDING,
+                opts: [
+                    'description' => "Owner payout request — {$community->name}",
+                    'metadata' => ['payout_request_id' => $request->id],
+                ],
+            );
+        }
 
         CacheKeys::flushCreator($owner->id);
         CacheKeys::flushAdmin();

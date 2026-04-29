@@ -5,6 +5,8 @@ namespace App\Actions\Admin;
 use App\Models\Community;
 use App\Models\OwnerPayout;
 use App\Models\PayoutRequest;
+use App\Models\WalletTransaction;
+use App\Services\Wallet\WalletService;
 use App\Services\XenditService;
 use App\Support\CacheKeys;
 use App\Support\PayoutChannelMap;
@@ -15,7 +17,10 @@ use App\Support\PayoutChannelMap;
  */
 class ApprovePayoutRequest
 {
-    public function __construct(private XenditService $xendit) {}
+    public function __construct(
+        private XenditService $xendit,
+        private WalletService $wallet,
+    ) {}
 
     public function execute(PayoutRequest $payoutRequest): void
     {
@@ -70,6 +75,16 @@ class ApprovePayoutRequest
             'processed_at' => now(),
             'processed_by' => auth()->id(),
         ]);
+
+        $debit = WalletTransaction::where('source_type', $payoutRequest->getMorphClass())
+            ->where('source_id', $payoutRequest->id)
+            ->where('type', WalletTransaction::TYPE_DEBIT)
+            ->where('status', WalletTransaction::STATUS_PENDING)
+            ->first();
+
+        if ($debit) {
+            $this->wallet->transition($debit, WalletTransaction::STATUS_WITHDRAWN);
+        }
 
         CacheKeys::flushPayment($payoutRequest->community_id, $user->id);
     }

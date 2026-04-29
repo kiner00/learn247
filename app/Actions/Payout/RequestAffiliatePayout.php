@@ -4,12 +4,17 @@ namespace App\Actions\Payout;
 
 use App\Models\Affiliate;
 use App\Models\PayoutRequest;
+use App\Models\WalletTransaction;
 use App\Queries\Payout\CalculateEligibility;
+use App\Services\Wallet\WalletService;
 use App\Support\CacheKeys;
 
 class RequestAffiliatePayout
 {
-    public function __construct(private CalculateEligibility $eligibility) {}
+    public function __construct(
+        private CalculateEligibility $eligibility,
+        private WalletService $wallet,
+    ) {}
 
     /**
      * @return array{success: bool, message: string}
@@ -49,7 +54,7 @@ class RequestAffiliatePayout
             return ['success' => false, 'message' => "Amount exceeds eligible balance of {$eligibleNow}."];
         }
 
-        PayoutRequest::create([
+        $request = PayoutRequest::create([
             'user_id' => $affiliate->user_id,
             'type' => PayoutRequest::TYPE_AFFILIATE,
             'community_id' => $affiliate->community_id,
@@ -58,6 +63,20 @@ class RequestAffiliatePayout
             'eligible_amount' => $eligibleNow,
             'status' => PayoutRequest::STATUS_PENDING,
         ]);
+
+        $balance = (float) $this->wallet->balanceOf($user)['balance'];
+        if ($balance >= $amount) {
+            $this->wallet->debit(
+                user: $user,
+                source: $request,
+                amount: $amount,
+                status: WalletTransaction::STATUS_PENDING,
+                opts: [
+                    'description' => "Affiliate payout request — {$affiliate->community->name}",
+                    'metadata' => ['payout_request_id' => $request->id],
+                ],
+            );
+        }
 
         CacheKeys::flushCommunity($affiliate->community_id);
         CacheKeys::flushAdmin();

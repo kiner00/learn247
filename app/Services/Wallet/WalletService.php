@@ -209,6 +209,7 @@ class WalletService
                 WalletTransaction::STATUS_SETTLED,
                 WalletTransaction::STATUS_FAILED,
                 WalletTransaction::STATUS_WITHDRAWN,
+                WalletTransaction::STATUS_REVERSED,
             ],
             WalletTransaction::STATUS_PAID => [
                 WalletTransaction::STATUS_SETTLED,

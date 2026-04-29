@@ -21,7 +21,7 @@ class RequestOwnerPayoutTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $eligibility = Mockery::mock(CalculateEligibility::class);
-        $action = new RequestOwnerPayout($eligibility);
+        $action = new RequestOwnerPayout($eligibility, app(\App\Services\Wallet\WalletService::class));
 
         $result = $action->execute($owner, $community, 100);
 
@@ -40,7 +40,7 @@ class RequestOwnerPayoutTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $eligibility = Mockery::mock(CalculateEligibility::class);
-        $action = new RequestOwnerPayout($eligibility);
+        $action = new RequestOwnerPayout($eligibility, app(\App\Services\Wallet\WalletService::class));
 
         $result = $action->execute($owner, $community, 100);
 
@@ -54,7 +54,7 @@ class RequestOwnerPayoutTest extends TestCase
         $community = Community::factory()->create(['owner_id' => $owner->id]);
 
         $eligibility = Mockery::mock(CalculateEligibility::class);
-        $action = new RequestOwnerPayout($eligibility);
+        $action = new RequestOwnerPayout($eligibility, app(\App\Services\Wallet\WalletService::class));
 
         $result = $action->execute($owner, $community, 100);
 
@@ -77,7 +77,7 @@ class RequestOwnerPayoutTest extends TestCase
         ]);
 
         $eligibility = Mockery::mock(CalculateEligibility::class);
-        $action = new RequestOwnerPayout($eligibility);
+        $action = new RequestOwnerPayout($eligibility, app(\App\Services\Wallet\WalletService::class));
 
         $result = $action->execute($owner, $community, 100);
 
@@ -93,7 +93,7 @@ class RequestOwnerPayoutTest extends TestCase
         $eligibility = Mockery::mock(CalculateEligibility::class);
         $eligibility->shouldReceive('forOwner')->with($community)->andReturn([0.0, 0.0, null]);
 
-        $action = new RequestOwnerPayout($eligibility);
+        $action = new RequestOwnerPayout($eligibility, app(\App\Services\Wallet\WalletService::class));
         $result = $action->execute($owner, $community, 100);
 
         $this->assertFalse($result['success']);
@@ -108,7 +108,7 @@ class RequestOwnerPayoutTest extends TestCase
         $eligibility = Mockery::mock(CalculateEligibility::class);
         $eligibility->shouldReceive('forOwner')->with($community)->andReturn([50.0, 100.0, null]);
 
-        $action = new RequestOwnerPayout($eligibility);
+        $action = new RequestOwnerPayout($eligibility, app(\App\Services\Wallet\WalletService::class));
         $result = $action->execute($owner, $community, 100);
 
         $this->assertFalse($result['success']);
@@ -123,7 +123,7 @@ class RequestOwnerPayoutTest extends TestCase
         $eligibility = Mockery::mock(CalculateEligibility::class);
         $eligibility->shouldReceive('forOwner')->with($community)->andReturn([200.0, 50.0, null]);
 
-        $action = new RequestOwnerPayout($eligibility);
+        $action = new RequestOwnerPayout($eligibility, app(\App\Services\Wallet\WalletService::class));
         $result = $action->execute($owner, $community, 150);
 
         $this->assertTrue($result['success']);

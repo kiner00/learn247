@@ -6,6 +6,7 @@ use App\Actions\Affiliate\RecordAffiliateConversion;
 use App\Actions\Auth\IssueGuestPassword;
 use App\Actions\Billing\SendChaChing;
 use App\Actions\Billing\SyncMembershipFromSubscription;
+use App\Actions\Payout\RecordCreatorEarning;
 use App\Contracts\WebhookHandler;
 use App\Events\SubscriptionPaid as SubscriptionPaidEvent;
 use App\Models\Affiliate;
@@ -28,6 +29,7 @@ class HandleSubscriptionPaid implements WebhookHandler
         private readonly RecordAffiliateConversion $recordConversion,
         private readonly SendChaChing $sendChaChing,
         private readonly IssueGuestPassword $issueGuestPassword,
+        private readonly RecordCreatorEarning $recordCreatorEarning,
     ) {}
 
     public function matches(string $xenditId): bool
@@ -105,27 +107,32 @@ class HandleSubscriptionPaid implements WebhookHandler
                 }
 
                 // Record affiliate commission if this subscription came via a referral
-                // Skip cha-ching emails for pending-deletion communities (renewal payments on the way out)
                 if ($payment && $paymentStatus === Payment::STATUS_PAID && $subscription->affiliate_id) {
                     $this->recordConversion->execute($subscription->load('affiliate.community'), $payment);
+                }
 
-                    if (! $pendingDeletion) {
-                        $affiliate = $subscription->affiliate;
-                        $affiliateUser = $affiliate->user;
-                        $creator = $community->owner;
-                        $saleAmount = (float) ($payload['amount'] ?? 0);
-                        $rate = $community->affiliate_commission_rate / 100;
-                        $commission = round($saleAmount * $rate, 2);
+                // Credit creator wallet AFTER affiliate commission so the net is correct
+                if ($payment && $paymentStatus === Payment::STATUS_PAID) {
+                    $this->recordCreatorEarning->execute($payment->fresh());
+                }
 
-                        $chaChing = [
-                            'affiliate_user' => $affiliateUser,
-                            'creator' => $creator,
-                            'community' => $community,
-                            'sale_amount' => $saleAmount,
-                            'commission' => $commission,
-                            'referred_by' => $affiliateUser->name,
-                        ];
-                    }
+                // Skip cha-ching emails for pending-deletion communities (renewal payments on the way out)
+                if ($payment && $paymentStatus === Payment::STATUS_PAID && $subscription->affiliate_id && ! $pendingDeletion) {
+                    $affiliate = $subscription->affiliate;
+                    $affiliateUser = $affiliate->user;
+                    $creator = $community->owner;
+                    $saleAmount = (float) ($payload['amount'] ?? 0);
+                    $rate = $community->affiliate_commission_rate / 100;
+                    $commission = round($saleAmount * $rate, 2);
+
+                    $chaChing = [
+                        'affiliate_user' => $affiliateUser,
+                        'creator' => $creator,
+                        'community' => $community,
+                        'sale_amount' => $saleAmount,
+                        'commission' => $commission,
+                        'referred_by' => $affiliateUser->name,
+                    ];
                 } elseif ($payment && $paymentStatus === Payment::STATUS_PAID && ! $pendingDeletion) {
                     // No affiliate -- still notify creator (skip if pending deletion)
                     $creator = $community->owner;
