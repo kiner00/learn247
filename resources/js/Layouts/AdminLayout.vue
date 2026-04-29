@@ -63,6 +63,7 @@ const navItems = [
     { href: '/admin/coupons',            label: 'Coupons' },
     { href: '/admin/creator-analytics',  label: 'Creator Analytics' },
     { href: '/admin/affiliate-analytics',label: 'Affiliate Analytics' },
+    { href: '/admin/creator-plan-affiliates', label: 'Creator Plan Affiliates' },
     { href: '/admin/posts/trashed',      label: 'Trashed Posts' },
     { href: '/admin/announcements',      label: 'Announcements' },
     { href: '/admin/email-templates',    label: 'Email Templates' },

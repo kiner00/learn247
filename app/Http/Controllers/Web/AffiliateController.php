@@ -9,6 +9,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Affiliate;
 use App\Models\AffiliateConversion;
 use App\Models\Community;
+use App\Models\CreatorPlanAffiliateApplication;
+use App\Models\Setting;
 use App\Queries\Affiliate\GetAffiliateDashboard;
 use App\Queries\Affiliate\GetAffiliateStats;
 use App\Queries\Payout\CalculateEligibility;
@@ -53,11 +55,39 @@ class AffiliateController extends Controller
             'tab' => $tab,
             'wallet' => $wallet->balanceOf($user),
             'withdrawals' => $stats->withdrawals($user->id),
+            'creatorPlanAffiliate' => $this->creatorPlanAffiliateState($user),
             'analytics' => [
                 'summary' => array_merge($summary, ['avg_per_referral' => $avgPerReferral, 'best_month' => $bestMonth?->month, 'best_month_total' => (float) ($bestMonth?->total ?? 0)]),
                 'chartData' => $chartData, 'conversions' => $conversions, 'communities' => $communities, 'byComm' => $byComm,
             ],
         ]);
+    }
+
+    private function creatorPlanAffiliateState($user): array
+    {
+        $affiliate = Affiliate::creatorPlan()->where('user_id', $user->id)->first();
+        $application = CreatorPlanAffiliateApplication::where('user_id', $user->id)->latest()->first();
+
+        $rate = (float) Setting::get('creator_plan_affiliate_commission_rate', 20);
+        $maxMonths = (int) Setting::get('creator_plan_affiliate_max_months', 12);
+
+        $state = 'apply';
+        if ($affiliate) {
+            $state = 'approved';
+        } elseif ($application?->isPending()) {
+            $state = 'pending';
+        } elseif ($application?->status === CreatorPlanAffiliateApplication::STATUS_REJECTED) {
+            $state = 'rejected';
+        }
+
+        return [
+            'state' => $state,
+            'commission_rate' => $rate,
+            'max_months' => $maxMonths,
+            'code' => $affiliate?->code,
+            'referral_url' => $affiliate ? url('/ref/'.$affiliate->code) : null,
+            'rejection_reason' => $state === 'rejected' ? $application?->rejection_reason : null,
+        ];
     }
 
     public function analytics(Request $request, GetAffiliateStats $stats, AffiliateChartService $chart): Response

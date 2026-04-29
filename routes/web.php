@@ -4,6 +4,7 @@ use App\Http\Controllers\Web\AccountSettingsController;
 use App\Http\Controllers\Web\Admin\AiUsageController as AdminAiUsageController;
 use App\Http\Controllers\Web\Admin\AnnouncementController as AdminAnnouncementController;
 use App\Http\Controllers\Web\Admin\CouponController as AdminCouponController;
+use App\Http\Controllers\Web\Admin\CreatorPlanAffiliateController as AdminCreatorPlanAffiliateController;
 use App\Http\Controllers\Web\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Web\Admin\EmailTemplateController as AdminEmailTemplateController;
 use App\Http\Controllers\Web\Admin\KycController as AdminKycController;
@@ -31,6 +32,7 @@ use App\Http\Controllers\Web\CourseEnrollmentController;
 use App\Http\Controllers\Web\CourseLessonController;
 use App\Http\Controllers\Web\CourseModuleController;
 use App\Http\Controllers\Web\CreatorController;
+use App\Http\Controllers\Web\CreatorPlanAffiliateController;
 use App\Http\Controllers\Web\CurzzoChatController;
 use App\Http\Controllers\Web\CurzzoCheckoutController;
 use App\Http\Controllers\Web\CurzzoController;
@@ -156,6 +158,10 @@ Route::middleware(['auth', EnsureSuperAdmin::class])->prefix('admin')->group(fun
     Route::get('/kyc-reviews', [AdminKycController::class, 'reviews'])->name('admin.kyc-reviews');
     Route::patch('/kyc-reviews/{user}/approve', [AdminKycController::class, 'approve'])->name('admin.kyc.approve');
     Route::patch('/kyc-reviews/{user}/reject', [AdminKycController::class, 'reject'])->name('admin.kyc.reject');
+    // Creator Plan Affiliate applications
+    Route::get('/creator-plan-affiliates', [AdminCreatorPlanAffiliateController::class, 'index'])->name('admin.creator-plan-affiliates');
+    Route::patch('/creator-plan-affiliates/{application}/approve', [AdminCreatorPlanAffiliateController::class, 'approve'])->name('admin.creator-plan-affiliates.approve');
+    Route::patch('/creator-plan-affiliates/{application}/reject', [AdminCreatorPlanAffiliateController::class, 'reject'])->name('admin.creator-plan-affiliates.reject');
     // Soft delete recovery
     Route::get('/posts/trashed', [AdminPostModerationController::class, 'trashed'])->name('admin.posts.trashed');
     Route::post('/posts/{postId}/restore', [AdminPostModerationController::class, 'restore'])->name('admin.posts.restore');
@@ -482,6 +488,7 @@ Route::middleware('auth')->group(function () {
     // ─── Affiliates ───────────────────────────────────────────────────────────
     Route::get('/my-affiliates', [AffiliateController::class, 'index'])->name('affiliates.index');
     Route::get('/my-affiliates/analytics', [AffiliateController::class, 'analytics'])->name('affiliates.analytics');
+    Route::post('/my-affiliates/creator-plan/apply', [CreatorPlanAffiliateController::class, 'apply'])->name('affiliates.creator-plan.apply')->middleware('throttle:3,1');
     Route::post('/communities/{community}/affiliates', [AffiliateController::class, 'store'])->name('communities.affiliates.join');
     Route::get('/communities/{community}/affiliates', [AffiliateController::class, 'dashboard'])->name('communities.affiliates');
     Route::patch('/affiliate-conversions/{conversion}/paid', [AffiliateController::class, 'markPaid'])->name('affiliate-conversions.paid');
