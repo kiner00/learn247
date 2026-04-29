@@ -16,9 +16,10 @@ class AffiliateConversion extends Model
     public const STATUS_PAID = 'paid';
 
     protected $fillable = [
-        'affiliate_id', 'subscription_id', 'course_enrollment_id', 'certification_purchase_id', 'curzzo_purchase_id', 'payment_id', 'referred_user_id',
+        'affiliate_id', 'subscription_id', 'course_enrollment_id', 'certification_purchase_id', 'curzzo_purchase_id',
+        'creator_subscription_id', 'payment_id', 'referred_user_id',
         'sale_amount', 'platform_fee', 'commission_amount', 'creator_amount',
-        'status', 'is_lifetime', 'paid_at',
+        'status', 'is_lifetime', 'billing_month_index', 'cohort_start_at', 'paid_at',
     ];
 
     protected function casts(): array
@@ -29,6 +30,8 @@ class AffiliateConversion extends Model
             'commission_amount' => 'decimal:2',
             'creator_amount' => 'decimal:2',
             'is_lifetime' => 'boolean',
+            'billing_month_index' => 'integer',
+            'cohort_start_at' => 'datetime',
             'paid_at' => 'datetime',
         ];
     }
@@ -56,6 +59,11 @@ class AffiliateConversion extends Model
     public function certificationPurchase(): BelongsTo
     {
         return $this->belongsTo(CertificationPurchase::class);
+    }
+
+    public function creatorSubscription(): BelongsTo
+    {
+        return $this->belongsTo(CreatorSubscription::class);
     }
 
     public function referredUser(): BelongsTo
