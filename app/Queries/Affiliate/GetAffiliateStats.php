@@ -105,11 +105,8 @@ class GetAffiliateStats
     private function mapEarnedRow(AffiliateConversion $c): array
     {
         $credit = $c->walletTransactions->firstWhere('type', WalletTransaction::TYPE_CREDIT);
-        $debit = $c->walletTransactions->firstWhere('type', WalletTransaction::TYPE_DEBIT);
 
-        $status = $debit
-            ? 'withdrawn'
-            : ($credit?->status ?? ($c->status === AffiliateConversion::STATUS_PAID ? 'withdrawn' : 'settled'));
+        $status = $credit?->status ?? WalletTransaction::STATUS_SETTLED;
 
         return [
             'id' => $c->id,
@@ -130,6 +127,25 @@ class GetAffiliateStats
             'referred_phone' => $c->referredUser?->phone,
             'payment_method' => $this->paymentMethod($c),
         ];
+    }
+
+    public function withdrawals(int $userId, int $limit = 100): Collection
+    {
+        return WalletTransaction::where('user_id', $userId)
+            ->where('type', WalletTransaction::TYPE_DEBIT)
+            ->latest()
+            ->limit($limit)
+            ->get()
+            ->map(fn ($t) => [
+                'id' => $t->id,
+                'reference' => sprintf('WD-%06d', $t->id),
+                'date' => $t->created_at->toDateString(),
+                'amount' => (float) $t->amount,
+                'status' => $t->status,
+                'description' => $t->description ?? 'Withdrawal',
+                'withdrawn_at' => $t->withdrawn_at?->toDateString(),
+                'reversed_at' => $t->reversed_at?->toDateString(),
+            ]);
     }
 
     private function abandonedRows(Collection $affiliateIds, ?Carbon $from): Collection

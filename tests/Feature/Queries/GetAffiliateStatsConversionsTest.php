@@ -145,6 +145,83 @@ class GetAffiliateStatsConversionsTest extends TestCase
         $this->assertCount(0, $rows);
     }
 
+    public function test_conversions_do_not_flip_to_withdrawn_after_withdrawal(): void
+    {
+        $community = Community::factory()->create(['affiliate_commission_rate' => 10]);
+        $affiliateUser = User::factory()->create();
+        $affiliate = Affiliate::create([
+            'user_id' => $affiliateUser->id,
+            'community_id' => $community->id,
+            'code' => 'CK006',
+            'status' => Affiliate::STATUS_ACTIVE,
+        ]);
+
+        $conversion = AffiliateConversion::create([
+            'affiliate_id' => $affiliate->id,
+            'referred_user_id' => User::factory()->create()->id,
+            'sale_amount' => 500,
+            'platform_fee' => 75,
+            'commission_amount' => 50,
+            'creator_amount' => 375,
+            'status' => AffiliateConversion::STATUS_PENDING,
+        ]);
+
+        $service = app(\App\Services\Wallet\WalletService::class);
+        $service->credit($affiliateUser, $conversion, 50, WalletTransaction::STATUS_SETTLED);
+
+        $request = \App\Models\PayoutRequest::create([
+            'user_id' => $affiliateUser->id,
+            'type' => \App\Models\PayoutRequest::TYPE_WALLET,
+            'amount' => 50,
+            'eligible_amount' => 50,
+            'status' => \App\Models\PayoutRequest::STATUS_PENDING,
+        ]);
+        $service->debit($affiliateUser, $request, 50);
+
+        $rows = (new GetAffiliateStats)->conversions(collect([$affiliate->id]), 'month');
+
+        $this->assertEquals('settled', $rows->first()['status'], 'conversion should stay settled even after the wallet has been withdrawn');
+    }
+
+    public function test_withdrawals_query_returns_user_debits(): void
+    {
+        $user = User::factory()->create();
+        $community = Community::factory()->create();
+        $affiliate = Affiliate::create([
+            'user_id' => $user->id,
+            'community_id' => $community->id,
+            'code' => 'CK007',
+            'status' => Affiliate::STATUS_ACTIVE,
+        ]);
+        $conversion = AffiliateConversion::create([
+            'affiliate_id' => $affiliate->id,
+            'referred_user_id' => User::factory()->create()->id,
+            'sale_amount' => 500,
+            'platform_fee' => 0,
+            'commission_amount' => 500,
+            'creator_amount' => 0,
+            'status' => AffiliateConversion::STATUS_PENDING,
+        ]);
+
+        $service = app(\App\Services\Wallet\WalletService::class);
+        $service->credit($user, $conversion, 500, WalletTransaction::STATUS_SETTLED);
+
+        $request = \App\Models\PayoutRequest::create([
+            'user_id' => $user->id,
+            'type' => \App\Models\PayoutRequest::TYPE_WALLET,
+            'amount' => 200,
+            'eligible_amount' => 500,
+            'status' => \App\Models\PayoutRequest::STATUS_PENDING,
+        ]);
+        $service->debit($user, $request, 200, WalletTransaction::STATUS_PENDING);
+
+        $rows = (new GetAffiliateStats)->withdrawals($user->id);
+        $this->assertCount(1, $rows);
+        $this->assertEquals(200.0, $rows->first()['amount']);
+        $this->assertEquals('pending', $rows->first()['status']);
+        $this->assertStringStartsWith('WD-', $rows->first()['reference']);
+    }
+
     public function test_payment_method_is_picked_up_from_payment_metadata(): void
     {
         $community = Community::factory()->create(['affiliate_commission_rate' => 10]);

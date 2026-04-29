@@ -534,6 +534,65 @@
                         No commissions in this filter.
                     </p>
                 </div>
+
+                <!-- Withdrawals -->
+                <div class="bg-white border border-gray-200 rounded-2xl p-5 mt-5">
+                    <h2 class="text-sm font-semibold text-gray-900 mb-4">
+                        Withdrawals
+                        <span class="text-gray-400 font-normal">
+                            ({{ withdrawals.length }})
+                        </span>
+                    </h2>
+
+                    <div v-if="withdrawals.length" class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="text-left border-b border-gray-100 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                                    <th class="pb-2 pr-3">Reference</th>
+                                    <th class="pb-2 pr-3 text-right">Amount</th>
+                                    <th class="pb-2 pr-3">Description</th>
+                                    <th class="pb-2 pr-3">Status</th>
+                                    <th class="pb-2 pr-3">Requested</th>
+                                    <th class="pb-2">Completed</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-50">
+                                <tr
+                                    v-for="w in withdrawals"
+                                    :key="w.reference"
+                                    class="hover:bg-gray-50"
+                                >
+                                    <td class="py-2.5 pr-3 font-mono text-xs text-gray-500 whitespace-nowrap">
+                                        {{ w.reference }}
+                                    </td>
+                                    <td class="py-2.5 pr-3 text-gray-900 font-semibold text-right whitespace-nowrap">
+                                        −₱{{ fmt(w.amount) }}
+                                    </td>
+                                    <td class="py-2.5 pr-3 text-gray-700 max-w-72 truncate">
+                                        {{ w.description }}
+                                    </td>
+                                    <td class="py-2.5 pr-3">
+                                        <span
+                                            class="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap"
+                                            :class="withdrawalBadgeClass(w.status)"
+                                        >
+                                            {{ WITHDRAWAL_STATUS_LABELS[w.status] ?? w.status }}
+                                        </span>
+                                    </td>
+                                    <td class="py-2.5 pr-3 text-gray-500 whitespace-nowrap">
+                                        {{ w.date }}
+                                    </td>
+                                    <td class="py-2.5 text-gray-500 whitespace-nowrap">
+                                        {{ w.withdrawn_at ?? w.reversed_at ?? "—" }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p v-else class="text-sm text-gray-400 py-6 text-center">
+                        No withdrawals yet.
+                    </p>
+                </div>
             </div>
         </div>
 
@@ -840,6 +899,7 @@ const props = defineProps({
     analytics: Object,
     tab: { type: String, default: "links" },
     wallet: { type: Object, default: () => ({ balance: 0, pending_balance: 0 }) },
+    withdrawals: { type: Array, default: () => [] },
 });
 
 const TABS = [
@@ -859,16 +919,21 @@ const STATUS_FILTERS = [
     { value: "pending", label: "Pending" },
     { value: "paid", label: "Paid" },
     { value: "settled", label: "Settled" },
-    { value: "withdrawn", label: "Withdrawn" },
 ];
 
 const STATUS_LABELS = {
     pending: "Pending",
     paid: "Paid",
     settled: "Settled to Wallet",
-    withdrawn: "Withdrawn",
     failed: "Failed",
     reversed: "Reversed",
+};
+
+const WITHDRAWAL_STATUS_LABELS = {
+    pending: "Pending",
+    withdrawn: "Sent",
+    reversed: "Reversed",
+    failed: "Failed",
 };
 
 const activeTab = ref(props.tab ?? "links");
@@ -922,9 +987,17 @@ function statusBadgeClass(status) {
         "bg-amber-100 text-amber-700": status === "pending",
         "bg-blue-100 text-blue-700": status === "paid",
         "bg-emerald-100 text-emerald-700": status === "settled",
-        "bg-gray-200 text-gray-700": status === "withdrawn",
         "bg-red-100 text-red-700":
             status === "failed" || status === "reversed",
+    };
+}
+
+function withdrawalBadgeClass(status) {
+    return {
+        "bg-amber-100 text-amber-700": status === "pending",
+        "bg-emerald-100 text-emerald-700": status === "withdrawn",
+        "bg-gray-200 text-gray-700": status === "reversed",
+        "bg-red-100 text-red-700": status === "failed",
     };
 }
 

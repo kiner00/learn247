@@ -52,6 +52,7 @@ class AffiliateController extends Controller
             'communityId' => $communityId,
             'tab' => $tab,
             'wallet' => $wallet->balanceOf($user),
+            'withdrawals' => $stats->withdrawals($user->id),
             'analytics' => [
                 'summary' => array_merge($summary, ['avg_per_referral' => $avgPerReferral, 'best_month' => $bestMonth?->month, 'best_month_total' => (float) ($bestMonth?->total ?? 0)]),
                 'chartData' => $chartData, 'conversions' => $conversions, 'communities' => $communities, 'byComm' => $byComm,
