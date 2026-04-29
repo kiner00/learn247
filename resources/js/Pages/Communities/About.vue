@@ -380,7 +380,10 @@ function submitJoin() {
         value:        Number(props.community.price ?? 0),
         currency:     props.community.currency ?? 'PHP',
     }));
-    joinForm.post(`/ref-checkout/${props.invitedBy.code}`);
+    const url = props.invitedBy?.code
+        ? `/ref-checkout/${props.invitedBy.code}`
+        : `/communities/${props.community.slug}/guest-checkout`;
+    joinForm.post(url);
 }
 
 function formatCount(n) {
