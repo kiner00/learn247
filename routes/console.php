@@ -26,6 +26,9 @@ Schedule::command('tickets:remind-resolved')->dailyAt('10:00');
 // AI budget alerts: check spend thresholds hourly
 Schedule::command('ai:check-budgets')->hourly();
 
+// Wallet: promote paid credits whose hold has elapsed to settled (every 30 min)
+Schedule::command('wallet:settle-due')->everyThirtyMinutes()->withoutOverlapping();
+
 // Pulse maintenance: process server samples and trim old aggregates.
 // (Redis ingest is drained by the `pulse:work` daemon — must be added in Ploi.)
 Schedule::command('pulse:check')->everyMinute()->withoutOverlapping();
