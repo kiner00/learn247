@@ -13,6 +13,7 @@ use App\Queries\Affiliate\GetAffiliateDashboard;
 use App\Queries\Affiliate\GetAffiliateStats;
 use App\Queries\Payout\CalculateEligibility;
 use App\Services\Affiliate\AffiliateChartService;
+use App\Services\Wallet\WalletService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -20,7 +21,7 @@ use Inertia\Response;
 
 class AffiliateController extends Controller
 {
-    public function index(Request $request, GetAffiliateStats $stats, CalculateEligibility $eligibility, AffiliateChartService $chart): Response
+    public function index(Request $request, GetAffiliateStats $stats, CalculateEligibility $eligibility, AffiliateChartService $chart, WalletService $wallet): Response
     {
         $user = $request->user();
         $period = $request->query('period', 'month');
@@ -50,6 +51,7 @@ class AffiliateController extends Controller
             'period' => $period,
             'communityId' => $communityId,
             'tab' => $tab,
+            'wallet' => $wallet->balanceOf($user),
             'analytics' => [
                 'summary' => array_merge($summary, ['avg_per_referral' => $avgPerReferral, 'best_month' => $bestMonth?->month, 'best_month_total' => (float) ($bestMonth?->total ?? 0)]),
                 'chartData' => $chartData, 'conversions' => $conversions, 'communities' => $communities, 'byComm' => $byComm,

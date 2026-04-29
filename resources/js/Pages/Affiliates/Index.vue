@@ -6,6 +6,21 @@
                 <h1 class="text-2xl font-bold text-gray-900 mb-4">
                     My Affiliates
                 </h1>
+
+                <!-- Wallet balance -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+                    <div class="bg-white border border-gray-200 rounded-2xl p-4">
+                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Wallet balance</p>
+                        <p class="text-2xl font-bold text-gray-900">₱{{ fmt(wallet?.balance ?? 0) }}</p>
+                        <p class="text-xs text-gray-400 mt-1">Settled — withdrawable</p>
+                    </div>
+                    <div class="bg-white border border-gray-200 rounded-2xl p-4">
+                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Pending in hold</p>
+                        <p class="text-2xl font-bold text-amber-600">₱{{ fmt(wallet?.pending_balance ?? 0) }}</p>
+                        <p class="text-xs text-gray-400 mt-1">Settles after the 7-day hold</p>
+                    </div>
+                </div>
+
                 <div class="flex border-b border-gray-200">
                     <button
                         v-for="tab in TABS"
@@ -413,16 +428,16 @@
                     </div>
                 </div>
 
-                <!-- Conversion history -->
+                <!-- Commissions -->
                 <div class="bg-white border border-gray-200 rounded-2xl p-5">
                     <div class="flex items-center justify-between mb-4">
                         <h2 class="text-sm font-semibold text-gray-900">
-                            Conversion History
+                            Commissions
                             <span class="text-gray-400 font-normal"
-                                >(last 100)</span
+                                >(latest {{ filteredConversions.length }})</span
                             >
                         </h2>
-                        <div class="flex gap-1.5">
+                        <div class="flex gap-1.5 flex-wrap">
                             <button
                                 v-for="s in STATUS_FILTERS"
                                 :key="s.value"
@@ -445,101 +460,67 @@
                     >
                         <table class="w-full text-sm">
                             <thead>
-                                <tr class="text-left border-b border-gray-100">
-                                    <th
-                                        class="pb-2 text-xs font-semibold text-gray-400"
-                                    >
-                                        Date
-                                    </th>
-                                    <th
-                                        class="pb-2 text-xs font-semibold text-gray-400"
-                                    >
-                                        Community
-                                    </th>
-                                    <th
-                                        class="pb-2 text-xs font-semibold text-gray-400"
-                                    >
-                                        Referred
-                                    </th>
-                                    <th
-                                        class="pb-2 text-xs font-semibold text-gray-400 text-right"
-                                    >
-                                        Sale
-                                    </th>
-                                    <th
-                                        class="pb-2 text-xs font-semibold text-gray-400 text-right"
-                                    >
-                                        Commission
-                                    </th>
-                                    <th
-                                        class="pb-2 text-xs font-semibold text-gray-400"
-                                    >
-                                        Status
-                                    </th>
-                                    <th
-                                        class="pb-2 text-xs font-semibold text-gray-400"
-                                    >
-                                        Paid At
-                                    </th>
+                                <tr class="text-left border-b border-gray-100 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                                    <th class="pb-2 pr-3">Reference</th>
+                                    <th class="pb-2 pr-3 text-right">Amount</th>
+                                    <th class="pb-2 pr-3">Description</th>
+                                    <th class="pb-2 pr-3">Status</th>
+                                    <th class="pb-2 pr-3">Date</th>
+                                    <th class="pb-2 pr-3 text-center">Lifetime</th>
+                                    <th class="pb-2 pr-3">Name</th>
+                                    <th class="pb-2 pr-3">Email</th>
+                                    <th class="pb-2 pr-3">Phone</th>
+                                    <th class="pb-2">Payment Method</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-50">
                                 <tr
                                     v-for="c in filteredConversions"
-                                    :key="c.id"
+                                    :key="c.reference"
                                     class="hover:bg-gray-50"
                                 >
-                                    <td
-                                        class="py-2.5 text-gray-600 whitespace-nowrap"
-                                    >
-                                        {{ c.date }}
+                                    <td class="py-2.5 pr-3 font-mono text-xs text-gray-500 whitespace-nowrap">
+                                        {{ c.reference }}
                                     </td>
-                                    <td
-                                        class="py-2.5 text-gray-800 font-medium max-w-40 truncate"
-                                    >
-                                        {{ c.community }}
+                                    <td class="py-2.5 pr-3 text-indigo-700 font-semibold text-right whitespace-nowrap">
+                                        ₱{{ fmt(c.amount) }}
                                     </td>
-                                    <td class="py-2.5 max-w-40">
-                                        <div v-if="c.referred_name" class="font-medium text-gray-800 truncate">{{ c.referred_name }}</div>
-                                        <div v-if="c.referred_email" class="text-xs text-gray-400 truncate">{{ c.referred_email }}</div>
-                                        <span v-if="!c.referred_name && !c.referred_email" class="text-gray-400">—</span>
+                                    <td class="py-2.5 pr-3 text-gray-800 max-w-48 truncate">
+                                        {{ c.description }}
                                     </td>
-                                    <td
-                                        class="py-2.5 text-gray-600 text-right whitespace-nowrap"
-                                    >
-                                        ₱{{ fmt(c.sale_amount) }}
-                                    </td>
-                                    <td
-                                        class="py-2.5 text-indigo-700 font-semibold text-right whitespace-nowrap"
-                                    >
-                                        ₱{{ fmt(c.commission_amount) }}
-                                    </td>
-                                    <td class="py-2.5">
+                                    <td class="py-2.5 pr-3">
                                         <span
-                                            class="px-2 py-0.5 rounded-full text-xs font-medium"
-                                            :class="{
-                                                'bg-green-100 text-green-700':
-                                                    c.status === 'paid',
-                                                'bg-amber-100 text-amber-700':
-                                                    c.status === 'pending',
-                                                'bg-red-100 text-red-600':
-                                                    c.status === 'failed',
-                                            }"
+                                            class="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap"
+                                            :class="statusBadgeClass(c.status)"
                                         >
-                                            {{ c.status }}
+                                            {{ STATUS_LABELS[c.status] ?? c.status }}
                                         </span>
                                     </td>
-                                    <td
-                                        class="py-2.5 text-gray-400 whitespace-nowrap"
-                                    >
-                                        {{ c.paid_at ?? "—" }}
+                                    <td class="py-2.5 pr-3 text-gray-600 whitespace-nowrap">
+                                        {{ c.date }}
+                                    </td>
+                                    <td class="py-2.5 pr-3 text-center">
+                                        <span v-if="c.is_lifetime" class="text-emerald-600" title="Lifetime referral">✓</span>
+                                        <span v-else class="text-gray-300">—</span>
+                                    </td>
+                                    <td class="py-2.5 pr-3 text-gray-700 max-w-36 truncate">
+                                        {{ c.referred_name ?? "—" }}
+                                    </td>
+                                    <td class="py-2.5 pr-3 text-gray-500 max-w-44 truncate">
+                                        {{ c.referred_email ?? "—" }}
+                                    </td>
+                                    <td class="py-2.5 pr-3 text-gray-500 whitespace-nowrap">
+                                        {{ c.referred_phone ?? "—" }}
+                                    </td>
+                                    <td class="py-2.5 text-gray-500 capitalize whitespace-nowrap">
+                                        {{ c.payment_method ?? "—" }}
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                     <p v-else class="text-sm text-gray-400 py-6 text-center">
-                        No conversions yet.
+                        No commissions in this filter.
                     </p>
                 </div>
             </div>
@@ -771,6 +752,7 @@ const props = defineProps({
     communityId: { type: String, default: null },
     analytics: Object,
     tab: { type: String, default: "links" },
+    wallet: { type: Object, default: () => ({ balance: 0, pending_balance: 0 }) },
 });
 
 const TABS = [
@@ -789,7 +771,18 @@ const STATUS_FILTERS = [
     { value: "all", label: "All" },
     { value: "pending", label: "Pending" },
     { value: "paid", label: "Paid" },
+    { value: "settled", label: "Settled" },
+    { value: "withdrawn", label: "Withdrawn" },
 ];
+
+const STATUS_LABELS = {
+    pending: "Pending",
+    paid: "Paid",
+    settled: "Settled to Wallet",
+    withdrawn: "Withdrawn",
+    failed: "Failed",
+    reversed: "Reversed",
+};
 
 const activeTab = ref(props.tab ?? "links");
 const statusFilter = ref("all");
@@ -833,6 +826,17 @@ function fmt(n) {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     });
+}
+
+function statusBadgeClass(status) {
+    return {
+        "bg-amber-100 text-amber-700": status === "pending",
+        "bg-blue-100 text-blue-700": status === "paid",
+        "bg-emerald-100 text-emerald-700": status === "settled",
+        "bg-gray-200 text-gray-700": status === "withdrawn",
+        "bg-red-100 text-red-700":
+            status === "failed" || status === "reversed",
+    };
 }
 
 async function copy(url) {
