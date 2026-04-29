@@ -354,6 +354,27 @@ const planLabel = { free: 'Free', basic: 'Basic', pro: 'Pro' };
                             per month · <span v-if="isAnnual">billed ₱{{ fmt(proAnnualPrice) }} yearly</span><span v-else>billed monthly</span>
                         </p>
                     </div>
+
+                    <!-- AI Funnel Builder bonus -->
+                    <div class="mx-4 mt-4 rounded-xl bg-gradient-to-br from-amber-300 via-amber-400 to-orange-400 p-[2px] shadow-lg">
+                        <div class="rounded-[10px] bg-gradient-to-br from-amber-50 to-orange-50 px-4 py-3.5">
+                            <div class="flex items-center gap-1.5 mb-1.5">
+                                <span class="text-base">🎁</span>
+                                <span class="text-[10px] font-black uppercase tracking-widest text-orange-700">Limited Time Bonus</span>
+                            </div>
+                            <div class="flex items-baseline gap-2 mb-1">
+                                <span class="text-sm font-bold text-gray-400 line-through">₱2,999</span>
+                                <span class="text-sm font-black text-orange-600 uppercase tracking-wide">Free Early Access</span>
+                            </div>
+                            <p class="text-sm font-black text-gray-900 mb-2">AI Funnel Builder</p>
+                            <ul class="space-y-1 text-xs text-gray-700 font-semibold">
+                                <li class="flex items-start gap-1.5"><span class="text-orange-500 mt-0.5 shrink-0">✦</span> Generate Landing Page Design in 1-Click</li>
+                                <li class="flex items-start gap-1.5"><span class="text-orange-500 mt-0.5 shrink-0">✦</span> Guided Design Implementation</li>
+                                <li class="flex items-start gap-1.5"><span class="text-orange-500 mt-0.5 shrink-0">✦</span> Course Preview Feature</li>
+                            </ul>
+                        </div>
+                    </div>
+
                     <ul class="px-6 py-5 space-y-2.5 flex-1 text-sm text-indigo-100">
                         <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Unlimited communities</li>
                         <li class="flex items-start gap-2"><span class="text-amber-300 mt-0.5 shrink-0">★</span> Unlimited courses</li>
