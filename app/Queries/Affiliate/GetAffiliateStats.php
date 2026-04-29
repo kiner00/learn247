@@ -15,6 +15,7 @@ class GetAffiliateStats
     public function getAffiliates(User $user): Collection
     {
         return Affiliate::where('user_id', $user->id)
+            ->whereHas('community')
             ->with('community:id,name,slug')
             ->latest()
             ->get();

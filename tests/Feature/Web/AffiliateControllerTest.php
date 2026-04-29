@@ -58,6 +58,36 @@ class AffiliateControllerTest extends TestCase
             ->assertOk();
     }
 
+    public function test_affiliate_index_skips_affiliates_whose_community_was_deleted(): void
+    {
+        $user = User::factory()->create();
+
+        $live = Community::factory()->create(['affiliate_commission_rate' => 10]);
+        Affiliate::create([
+            'user_id' => $user->id,
+            'community_id' => $live->id,
+            'code' => 'AFF_LIVE',
+            'status' => Affiliate::STATUS_ACTIVE,
+        ]);
+
+        $dead = Community::factory()->create(['affiliate_commission_rate' => 10]);
+        Affiliate::create([
+            'user_id' => $user->id,
+            'community_id' => $dead->id,
+            'code' => 'AFF_DEAD',
+            'status' => Affiliate::STATUS_ACTIVE,
+        ]);
+        $dead->delete();
+
+        $response = $this->actingAs($user)->get('/my-affiliates');
+
+        $response->assertOk();
+        $page = $response->viewData('page');
+        $codes = collect($page['props']['affiliates'])->pluck('code')->all();
+        $this->assertContains('AFF_LIVE', $codes);
+        $this->assertNotContains('AFF_DEAD', $codes);
+    }
+
     public function test_affiliate_index_with_period_filter(): void
     {
         $user = User::factory()->create();
