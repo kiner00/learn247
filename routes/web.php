@@ -136,6 +136,7 @@ Route::middleware(['auth', EnsureSuperAdmin::class])->prefix('admin')->group(fun
     Route::get('/', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
     Route::patch('/settings', [AdminDashboardController::class, 'updateSettings'])->name('admin.settings.update');
     Route::patch('/creator-plan-pricing', [AdminDashboardController::class, 'updateCreatorPlanPricing'])->name('admin.creator-plan-pricing.update');
+    Route::patch('/creator-plan-affiliate-settings', [AdminDashboardController::class, 'updateCreatorPlanAffiliateSettings'])->name('admin.creator-plan-affiliate-settings.update');
     Route::get('/payouts', [AdminPayoutController::class, 'index'])->name('admin.payouts');
     Route::post('/payouts/owner/{community:id}', [AdminPayoutController::class, 'payOwner'])->name('admin.payouts.owner')->middleware('throttle:10,1');
     Route::post('/payouts/owners/batch', [AdminPayoutController::class, 'batchPayOwners'])->name('admin.payouts.owners.batch')->middleware('throttle:5,1');

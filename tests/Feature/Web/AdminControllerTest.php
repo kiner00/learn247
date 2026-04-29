@@ -1362,6 +1362,59 @@ class AdminControllerTest extends TestCase
         $response->assertSessionHasErrors('basic_price');
     }
 
+    // ── updateCreatorPlanAffiliateSettings ───────────────────────────────────
+
+    public function test_update_creator_plan_affiliate_settings_saves(): void
+    {
+        $admin = $this->superAdmin();
+
+        $response = $this->actingAs($admin)->patch('/admin/creator-plan-affiliate-settings', [
+            'commission_rate' => 25,
+            'max_months' => 6,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', 'Creator Plan affiliate settings updated.');
+        $this->assertDatabaseHas('settings', ['key' => 'creator_plan_affiliate_commission_rate', 'value' => '25']);
+        $this->assertDatabaseHas('settings', ['key' => 'creator_plan_affiliate_max_months', 'value' => '6']);
+    }
+
+    public function test_update_creator_plan_affiliate_settings_rejects_rate_over_100(): void
+    {
+        $admin = $this->superAdmin();
+
+        $response = $this->actingAs($admin)->patch('/admin/creator-plan-affiliate-settings', [
+            'commission_rate' => 150,
+            'max_months' => 12,
+        ]);
+
+        $response->assertSessionHasErrors('commission_rate');
+    }
+
+    public function test_update_creator_plan_affiliate_settings_rejects_zero_max_months(): void
+    {
+        $admin = $this->superAdmin();
+
+        $response = $this->actingAs($admin)->patch('/admin/creator-plan-affiliate-settings', [
+            'commission_rate' => 20,
+            'max_months' => 0,
+        ]);
+
+        $response->assertSessionHasErrors('max_months');
+    }
+
+    public function test_update_creator_plan_affiliate_settings_requires_super_admin(): void
+    {
+        $user = User::factory()->create(['is_super_admin' => false]);
+
+        $response = $this->actingAs($user)->patch('/admin/creator-plan-affiliate-settings', [
+            'commission_rate' => 20,
+            'max_months' => 12,
+        ]);
+
+        $response->assertForbidden();
+    }
+
     // ── toggleFeatured ──────────────────────────────────────────────────────
 
     public function test_toggle_featured_makes_community_featured(): void

@@ -27,6 +27,10 @@ class DashboardController extends Controller
                 'basic_annual_price' => (float) Setting::get('creator_plan_basic_annual_price', 4990),
                 'pro_annual_price' => (float) Setting::get('creator_plan_pro_annual_price', 19990),
             ],
+            'creatorPlanAffiliateSettings' => [
+                'commission_rate' => (float) Setting::get('creator_plan_affiliate_commission_rate', 20),
+                'max_months' => (int) Setting::get('creator_plan_affiliate_max_months', 12),
+            ],
         ]));
     }
 
@@ -53,6 +57,19 @@ class DashboardController extends Controller
         Setting::set('creator_plan_pro_annual_price', (string) $data['pro_annual_price']);
 
         return back()->with('success', 'Creator plan pricing updated.');
+    }
+
+    public function updateCreatorPlanAffiliateSettings(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'commission_rate' => 'required|numeric|min:0|max:100',
+            'max_months' => 'required|integer|min:1|max:60',
+        ]);
+
+        Setting::set('creator_plan_affiliate_commission_rate', (string) $data['commission_rate']);
+        Setting::set('creator_plan_affiliate_max_months', (string) $data['max_months']);
+
+        return back()->with('success', 'Creator Plan affiliate settings updated.');
     }
 
     public function toggleFeatured(Community $community): RedirectResponse

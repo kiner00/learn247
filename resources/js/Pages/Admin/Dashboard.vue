@@ -116,6 +116,42 @@
             </form>
         </div>
 
+        <!-- Creator Plan Affiliate Settings -->
+        <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm mb-8">
+            <div class="px-5 py-4 border-b border-gray-100">
+                <h2 class="text-sm font-bold text-gray-900">Creator Plan Affiliate</h2>
+                <p class="text-xs text-gray-400 mt-0.5">Commission paid to approved affiliates for each successful Creator Plan payment they refer. Annual = single payout, monthly is capped at the configured number of months.</p>
+            </div>
+            <form @submit.prevent="saveCreatorPlanAffiliateSettings" class="px-4 sm:px-5 py-4 flex flex-wrap items-end gap-3 sm:gap-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Commission Rate (%)</label>
+                    <input
+                        v-model.number="affiliateForm.commission_rate"
+                        type="number" min="0" max="100" step="0.5"
+                        class="w-36 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                    />
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Max Months (monthly cycle)</label>
+                    <input
+                        v-model.number="affiliateForm.max_months"
+                        type="number" min="1" max="60" step="1"
+                        class="w-36 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                    />
+                </div>
+                <button
+                    type="submit"
+                    :disabled="affiliateForm.processing"
+                    class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                >
+                    Save Affiliate Settings
+                </button>
+                <span v-if="affiliateForm.recentlySuccessful" class="text-xs text-green-600 font-medium">Saved!</span>
+                <p v-if="affiliateForm.errors.commission_rate" class="text-xs text-red-600 w-full">{{ affiliateForm.errors.commission_rate }}</p>
+                <p v-if="affiliateForm.errors.max_months" class="text-xs text-red-600 w-full">{{ affiliateForm.errors.max_months }}</p>
+            </form>
+        </div>
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
             <!-- Recent Communities -->
@@ -388,6 +424,7 @@ const props = defineProps({
     xenditBalance:       Number,
     pendingOnboarding:   { type: Object, default: () => ({ data: [], total: 0, last_page: 1, links: [] }) },
     creatorPlanPricing:  { type: Object, default: () => ({ basic_price: 499, pro_price: 1999 }) },
+    creatorPlanAffiliateSettings: { type: Object, default: () => ({ commission_rate: 20, max_months: 12 }) },
     recentPayments:      { type: Array, default: () => [] },
 });
 
@@ -461,6 +498,15 @@ const planForm = useForm({
 
 function savePlanPricing() {
     planForm.patch('/admin/creator-plan-pricing', { preserveScroll: true });
+}
+
+const affiliateForm = useForm({
+    commission_rate: props.creatorPlanAffiliateSettings.commission_rate,
+    max_months:      props.creatorPlanAffiliateSettings.max_months,
+});
+
+function saveCreatorPlanAffiliateSettings() {
+    affiliateForm.patch('/admin/creator-plan-affiliate-settings', { preserveScroll: true });
 }
 
 const maxCategoryTotal = computed(() =>
