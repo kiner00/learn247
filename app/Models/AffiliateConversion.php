@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class AffiliateConversion extends Model
 {
@@ -17,7 +18,7 @@ class AffiliateConversion extends Model
     protected $fillable = [
         'affiliate_id', 'subscription_id', 'course_enrollment_id', 'certification_purchase_id', 'curzzo_purchase_id', 'payment_id', 'referred_user_id',
         'sale_amount', 'platform_fee', 'commission_amount', 'creator_amount',
-        'status', 'paid_at',
+        'status', 'is_lifetime', 'paid_at',
     ];
 
     protected function casts(): array
@@ -27,6 +28,7 @@ class AffiliateConversion extends Model
             'platform_fee' => 'decimal:2',
             'commission_amount' => 'decimal:2',
             'creator_amount' => 'decimal:2',
+            'is_lifetime' => 'boolean',
             'paid_at' => 'datetime',
         ];
     }
@@ -59,5 +61,10 @@ class AffiliateConversion extends Model
     public function referredUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'referred_user_id');
+    }
+
+    public function walletTransactions(): MorphMany
+    {
+        return $this->morphMany(WalletTransaction::class, 'source');
     }
 }

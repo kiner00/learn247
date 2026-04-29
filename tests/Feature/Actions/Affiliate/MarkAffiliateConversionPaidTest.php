@@ -21,7 +21,7 @@ class MarkAffiliateConversionPaidTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->action = new MarkAffiliateConversionPaid;
+        $this->action = app(MarkAffiliateConversionPaid::class);
     }
 
     private function createConversion(Affiliate $affiliate, float $commission = 50): AffiliateConversion
