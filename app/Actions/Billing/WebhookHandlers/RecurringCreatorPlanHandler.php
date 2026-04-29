@@ -2,7 +2,9 @@
 
 namespace App\Actions\Billing\WebhookHandlers;
 
+use App\Actions\CreatorPlanAffiliate\RecordCreatorPlanAffiliateConversion;
 use App\Models\CreatorSubscription;
+use App\Models\Payment;
 use Illuminate\Database\Eloquent\Model;
 
 class RecurringCreatorPlanHandler extends AbstractRecurringCycleHandler
@@ -27,5 +29,11 @@ class RecurringCreatorPlanHandler extends AbstractRecurringCycleHandler
         $entity->update([
             'expires_at' => $entity->isAnnual() ? $base->copy()->addYear() : $base->copy()->addMonth(),
         ]);
+    }
+
+    protected function recordAffiliateCommission(Model $entity, Payment $payment, array $payload): ?array
+    {
+        /** @var CreatorSubscription $entity */
+        return app(RecordCreatorPlanAffiliateConversion::class)->execute($entity, $payment);
     }
 }

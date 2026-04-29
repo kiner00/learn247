@@ -73,6 +73,7 @@ class CreatorController extends Controller
                 $data['plan'],
                 $data['cycle'] ?? CreatorSubscription::CYCLE_MONTHLY,
                 $data['coupon_code'] ?? null,
+                $request->cookie('ref_code'),
             );
 
             return response()->json([

@@ -5,6 +5,7 @@ namespace App\Actions\Billing;
 use App\Actions\Coupon\ValidateCreatorPlanCoupon;
 use App\Billing\CheckoutContext;
 use App\Billing\CheckoutStrategyFactory;
+use App\Models\Affiliate;
 use App\Models\CreatorSubscription;
 use App\Models\User;
 use App\Support\CreatorPlanPricing;
@@ -25,6 +26,7 @@ class StartCreatorPlanCheckout
         string $plan,
         string $cycle = CreatorSubscription::CYCLE_MONTHLY,
         ?string $couponCode = null,
+        ?string $refCode = null,
     ): array {
         if (! in_array($plan, [CreatorSubscription::PLAN_BASIC, CreatorSubscription::PLAN_PRO])) {
             throw ValidationException::withMessages(['plan' => 'Invalid plan selected.']);
@@ -71,6 +73,7 @@ class StartCreatorPlanCheckout
 
             $creatorSubscription = CreatorSubscription::create([
                 'user_id' => $user->id,
+                'affiliate_id' => $this->resolveCreatorPlanAffiliateId($refCode, $user),
                 'plan' => $plan,
                 'billing_cycle' => $cycle,
                 'coupon_id' => $coupon?->id,
@@ -97,5 +100,23 @@ class StartCreatorPlanCheckout
 
             throw $e;
         }
+    }
+
+    private function resolveCreatorPlanAffiliateId(?string $refCode, User $user): ?int
+    {
+        if (! $refCode) {
+            return null;
+        }
+
+        $affiliate = Affiliate::creatorPlan()
+            ->where('code', $refCode)
+            ->where('status', Affiliate::STATUS_ACTIVE)
+            ->first();
+
+        if (! $affiliate || $affiliate->user_id === $user->id) {
+            return null;
+        }
+
+        return $affiliate->id;
     }
 }

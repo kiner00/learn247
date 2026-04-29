@@ -3,6 +3,7 @@
 namespace Tests\Feature\Actions\Billing;
 
 use App\Actions\Billing\StartCreatorPlanCheckout;
+use App\Models\Affiliate;
 use App\Models\CreatorSubscription;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -219,5 +220,89 @@ class StartCreatorPlanCheckoutTest extends TestCase
 
         $this->expectException(\RuntimeException::class);
         $action->execute($user, CreatorSubscription::PLAN_BASIC);
+    }
+
+    public function test_attaches_creator_plan_affiliate_when_ref_code_matches(): void
+    {
+        Http::fake([
+            'https://api.xendit.co/v2/invoices' => Http::response([
+                'id' => 'inv_ref_1',
+                'invoice_url' => 'https://checkout.xendit.co/inv_ref_1',
+            ], 200),
+        ]);
+
+        $referrer = User::factory()->create();
+        $affiliate = Affiliate::create([
+            'user_id' => $referrer->id,
+            'community_id' => null,
+            'scope' => Affiliate::SCOPE_CREATOR_PLAN,
+            'code' => 'CPAFF99',
+            'status' => Affiliate::STATUS_ACTIVE,
+        ]);
+
+        $user = User::factory()->create();
+        $action = app(StartCreatorPlanCheckout::class);
+        $action->execute($user, CreatorSubscription::PLAN_BASIC, CreatorSubscription::CYCLE_MONTHLY, null, 'CPAFF99');
+
+        $this->assertDatabaseHas('creator_subscriptions', [
+            'user_id' => $user->id,
+            'affiliate_id' => $affiliate->id,
+        ]);
+    }
+
+    public function test_ignores_self_referral(): void
+    {
+        Http::fake([
+            'https://api.xendit.co/v2/invoices' => Http::response([
+                'id' => 'inv_self_ref',
+                'invoice_url' => 'https://checkout.xendit.co/inv_self_ref',
+            ], 200),
+        ]);
+
+        $user = User::factory()->create();
+        Affiliate::create([
+            'user_id' => $user->id,
+            'community_id' => null,
+            'scope' => Affiliate::SCOPE_CREATOR_PLAN,
+            'code' => 'SELFREF',
+            'status' => Affiliate::STATUS_ACTIVE,
+        ]);
+
+        $action = app(StartCreatorPlanCheckout::class);
+        $action->execute($user, CreatorSubscription::PLAN_BASIC, CreatorSubscription::CYCLE_MONTHLY, null, 'SELFREF');
+
+        $this->assertDatabaseHas('creator_subscriptions', [
+            'user_id' => $user->id,
+            'affiliate_id' => null,
+        ]);
+    }
+
+    public function test_ignores_community_scoped_ref_code_on_creator_plan_checkout(): void
+    {
+        Http::fake([
+            'https://api.xendit.co/v2/invoices' => Http::response([
+                'id' => 'inv_wrong_scope',
+                'invoice_url' => 'https://checkout.xendit.co/inv_wrong_scope',
+            ], 200),
+        ]);
+
+        $owner = User::factory()->create();
+        $community = \App\Models\Community::factory()->create(['affiliate_commission_rate' => 10, 'owner_id' => $owner->id]);
+        Affiliate::create([
+            'user_id' => $owner->id,
+            'community_id' => $community->id,
+            'scope' => Affiliate::SCOPE_COMMUNITY,
+            'code' => 'COMMREF',
+            'status' => Affiliate::STATUS_ACTIVE,
+        ]);
+
+        $user = User::factory()->create();
+        $action = app(StartCreatorPlanCheckout::class);
+        $action->execute($user, CreatorSubscription::PLAN_BASIC, CreatorSubscription::CYCLE_MONTHLY, null, 'COMMREF');
+
+        $this->assertDatabaseHas('creator_subscriptions', [
+            'user_id' => $user->id,
+            'affiliate_id' => null,
+        ]);
     }
 }

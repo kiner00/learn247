@@ -27,6 +27,7 @@ class CreatorSubscription extends Model
 
     protected $fillable = [
         'user_id',
+        'affiliate_id',
         'plan',
         'billing_cycle',
         'coupon_id',
@@ -53,6 +54,11 @@ class CreatorSubscription extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function affiliate(): BelongsTo
+    {
+        return $this->belongsTo(Affiliate::class);
     }
 
     public function coupon(): BelongsTo

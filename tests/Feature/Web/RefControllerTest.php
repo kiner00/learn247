@@ -69,4 +69,21 @@ class RefControllerTest extends TestCase
 
         $response->assertRedirect(route('communities.about', $community->slug).'?modal=true');
     }
+
+    public function test_creator_plan_affiliate_code_redirects_to_creator_plan_page(): void
+    {
+        $user = User::factory()->create();
+        Affiliate::create([
+            'user_id' => $user->id,
+            'community_id' => null,
+            'scope' => Affiliate::SCOPE_CREATOR_PLAN,
+            'code' => 'CPAFF001',
+            'status' => Affiliate::STATUS_ACTIVE,
+        ]);
+
+        $response = $this->get('/ref/CPAFF001');
+
+        $response->assertRedirect('/creator/plan');
+        $response->assertCookie('ref_code', 'CPAFF001');
+    }
 }

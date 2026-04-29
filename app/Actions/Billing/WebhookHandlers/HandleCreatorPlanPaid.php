@@ -2,6 +2,7 @@
 
 namespace App\Actions\Billing\WebhookHandlers;
 
+use App\Actions\CreatorPlanAffiliate\RecordCreatorPlanAffiliateConversion;
 use App\Contracts\WebhookHandler;
 use App\Models\CouponRedemption;
 use App\Models\CreatorSubscription;
@@ -48,7 +49,7 @@ class HandleCreatorPlanPaid implements WebhookHandler
                     $csChannel = $payload['payment_channel'] ?? '';
                     $csProcessingFee = XenditService::collectionFee($csChannel, $csGross);
 
-                    Payment::create([
+                    $payment = Payment::create([
                         'subscription_id' => null,
                         'community_id' => null,
                         'user_id' => $creatorSub->user_id,
@@ -66,6 +67,8 @@ class HandleCreatorPlanPaid implements WebhookHandler
                     if ($creatorSub->coupon_id) {
                         $this->recordCouponRedemption($creatorSub);
                     }
+
+                    app(RecordCreatorPlanAffiliateConversion::class)->execute($creatorSub, $payment);
                 });
 
                 Log::info('Xendit webhook: creator plan activated', ['user_id' => $creatorSub->user_id]);
