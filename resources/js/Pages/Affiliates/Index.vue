@@ -51,6 +51,110 @@
 
             <!-- ── Tab: Links ─────────────────────────────────────────────────── -->
             <div v-if="activeTab === 'links'">
+                <!-- Creator Plan Affiliate card (platform-level) -->
+                <div
+                    class="mb-6 rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 to-white p-5"
+                >
+                    <div class="flex items-start justify-between gap-4 mb-3">
+                        <div class="flex items-start gap-3">
+                            <div class="text-2xl">🚀</div>
+                            <div>
+                                <h3 class="font-bold text-gray-900">
+                                    Creator Plan Affiliate
+                                </h3>
+                                <p class="text-sm text-gray-500 mt-0.5">
+                                    Earn {{ creatorPlanAffiliate.commission_rate }}% for up to {{ creatorPlanAffiliate.max_months }} months on every creator you refer to a paid plan.
+                                </p>
+                            </div>
+                        </div>
+                        <span
+                            v-if="creatorPlanAffiliate.state === 'approved'"
+                            class="text-xs font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700"
+                        >Active · {{ creatorPlanAffiliate.commission_rate }}%</span>
+                        <span
+                            v-else-if="creatorPlanAffiliate.state === 'pending'"
+                            class="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700"
+                        >Under review</span>
+                        <span
+                            v-else-if="creatorPlanAffiliate.state === 'rejected'"
+                            class="text-xs font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700"
+                        >Rejected</span>
+                    </div>
+
+                    <!-- Approved: copy link + share -->
+                    <div v-if="creatorPlanAffiliate.state === 'approved'">
+                        <div class="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2.5">
+                            <input
+                                :value="creatorPlanAffiliate.referral_url"
+                                readonly
+                                class="flex-1 bg-transparent text-sm text-gray-700 outline-none"
+                                @focus="$event.target.select()"
+                            />
+                            <button
+                                @click="copyCreatorPlanLink"
+                                class="text-sm font-semibold text-indigo-600 hover:text-indigo-700 px-2 whitespace-nowrap"
+                            >
+                                {{ copyLabel }}
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-2 mt-3">
+                            <a
+                                :href="shareTwitterUrl"
+                                target="_blank"
+                                rel="noopener"
+                                class="text-xs px-3 py-1.5 rounded-lg border border-gray-200 hover:border-indigo-300 text-gray-600 hover:text-indigo-600 transition-colors"
+                            >Share on X</a>
+                            <a
+                                :href="shareFacebookUrl"
+                                target="_blank"
+                                rel="noopener"
+                                class="text-xs px-3 py-1.5 rounded-lg border border-gray-200 hover:border-indigo-300 text-gray-600 hover:text-indigo-600 transition-colors"
+                            >Share on Facebook</a>
+                            <a
+                                :href="shareWhatsappUrl"
+                                target="_blank"
+                                rel="noopener"
+                                class="text-xs px-3 py-1.5 rounded-lg border border-gray-200 hover:border-indigo-300 text-gray-600 hover:text-indigo-600 transition-colors"
+                            >WhatsApp</a>
+                        </div>
+                    </div>
+
+                    <!-- Pending: passive state -->
+                    <p
+                        v-else-if="creatorPlanAffiliate.state === 'pending'"
+                        class="text-sm text-gray-600"
+                    >
+                        Your application is being reviewed. We'll let you know
+                        as soon as it's approved.
+                    </p>
+
+                    <!-- Rejected: show reason + re-apply -->
+                    <div v-else-if="creatorPlanAffiliate.state === 'rejected'">
+                        <p
+                            v-if="creatorPlanAffiliate.rejection_reason"
+                            class="text-sm text-red-700 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mb-3"
+                        >
+                            <span class="font-semibold">Why it was rejected:</span>
+                            {{ creatorPlanAffiliate.rejection_reason }}
+                        </p>
+                        <button
+                            @click="openCreatorPlanApply"
+                            class="text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-xl transition-colors"
+                        >
+                            Apply again
+                        </button>
+                    </div>
+
+                    <!-- Apply state -->
+                    <button
+                        v-else
+                        @click="openCreatorPlanApply"
+                        class="text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-xl transition-colors"
+                    >
+                        Apply to become a Creator Plan affiliate
+                    </button>
+                </div>
+
                 <p class="text-sm text-gray-500 mb-5">
                     Share your referral links. When someone subscribes through
                     your link, you earn the community's commission.
@@ -881,6 +985,54 @@
                 </div>
             </div>
         </Teleport>
+
+        <!-- Creator Plan Affiliate apply modal -->
+        <Teleport to="body">
+            <div
+                v-if="showCreatorPlanApplyModal"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+                @click.self="showCreatorPlanApplyModal = false"
+            >
+                <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
+                    <h3 class="text-base font-bold text-gray-900 mb-1">
+                        Apply to be a Creator Plan affiliate
+                    </h3>
+                    <p class="text-sm text-gray-500 mb-4">
+                        Tell us briefly why you'd be a great affiliate for our
+                        Creator Plan. Approved affiliates earn
+                        {{ creatorPlanAffiliate.commission_rate }}% for up to
+                        {{ creatorPlanAffiliate.max_months }} months per
+                        referred creator.
+                    </p>
+                    <form @submit.prevent="submitCreatorPlanApply">
+                        <textarea
+                            v-model="creatorPlanApplyForm.pitch"
+                            rows="4"
+                            maxlength="1000"
+                            placeholder="e.g. I run a 10k-member Discord of indie creators and have helped a few onboard to similar platforms before."
+                            class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                        />
+                        <p class="text-xs text-gray-400 mt-1">
+                            Optional, max 1000 characters.
+                        </p>
+                        <div class="flex justify-end gap-2 mt-4">
+                            <button
+                                type="button"
+                                @click="showCreatorPlanApplyModal = false"
+                                class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800"
+                            >Cancel</button>
+                            <button
+                                type="submit"
+                                :disabled="creatorPlanApplyForm.processing"
+                                class="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors disabled:opacity-50"
+                            >
+                                {{ creatorPlanApplyForm.processing ? "Submitting…" : "Submit application" }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </Teleport>
     </AppLayout>
 </template>
 
@@ -900,6 +1052,17 @@ const props = defineProps({
     tab: { type: String, default: "links" },
     wallet: { type: Object, default: () => ({ balance: 0, pending_balance: 0 }) },
     withdrawals: { type: Array, default: () => [] },
+    creatorPlanAffiliate: {
+        type: Object,
+        default: () => ({
+            state: "apply",
+            commission_rate: 20,
+            max_months: 12,
+            code: null,
+            referral_url: null,
+            rejection_reason: null,
+        }),
+    },
 });
 
 const TABS = [
@@ -948,6 +1111,51 @@ const pixelAffiliate = ref(null);
 const requestForm = reactive({ amount: 0, processing: false });
 const withdrawForm = reactive({ amount: 0, processing: false });
 const pixelForm = reactive({ facebook_pixel_id: '', tiktok_pixel_id: '', google_analytics_id: '' });
+
+const showCreatorPlanApplyModal = ref(false);
+const creatorPlanApplyForm = reactive({ pitch: '', processing: false });
+const copyLabel = ref('Copy');
+
+const shareTwitterUrl = computed(() => {
+    const url = props.creatorPlanAffiliate.referral_url ?? '';
+    const text = encodeURIComponent('Build and sell on Curzzo — join via my link:');
+    return `https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(url)}`;
+});
+
+const shareFacebookUrl = computed(() => {
+    const url = props.creatorPlanAffiliate.referral_url ?? '';
+    return `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+});
+
+const shareWhatsappUrl = computed(() => {
+    const url = props.creatorPlanAffiliate.referral_url ?? '';
+    return `https://wa.me/?text=${encodeURIComponent(`Build and sell on Curzzo — ${url}`)}`;
+});
+
+function openCreatorPlanApply() {
+    creatorPlanApplyForm.pitch = '';
+    showCreatorPlanApplyModal.value = true;
+}
+
+function submitCreatorPlanApply() {
+    creatorPlanApplyForm.processing = true;
+    router.post('/my-affiliates/creator-plan/apply', { pitch: creatorPlanApplyForm.pitch }, {
+        preserveScroll: true,
+        onFinish: () => {
+            creatorPlanApplyForm.processing = false;
+            showCreatorPlanApplyModal.value = false;
+        },
+    });
+}
+
+function copyCreatorPlanLink() {
+    const url = props.creatorPlanAffiliate.referral_url;
+    if (!url) return;
+    navigator.clipboard.writeText(url).then(() => {
+        copyLabel.value = 'Copied!';
+        setTimeout(() => { copyLabel.value = 'Copy'; }, 1500);
+    });
+}
 
 const payoutForm = reactive({
     payout_method: props.payoutMethod ?? "gcash",
